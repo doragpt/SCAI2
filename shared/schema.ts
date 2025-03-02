@@ -51,23 +51,7 @@ const baseTalentSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string()
-    .min(1, "生年月日を入力してください")
-    .refine((dateStr) => {
-      try {
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        const today = new Date();
-        const age = today.getFullYear() - date.getFullYear();
-        const monthDiff = today.getMonth() - date.getMonth();
-        const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate()) 
-          ? age - 1 
-          : age;
-        return adjustedAge >= 18;
-      } catch (e) {
-        return false;
-      }
-    }, "18歳未満の方は登録できません"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
   location: z.enum(prefectures, {
     errorMap: () => ({ message: "在住地を選択してください" })
   }),
@@ -84,6 +68,23 @@ export const talentRegisterFormSchema = baseTalentSchema.extend({
 }).refine((data) => data.privacyPolicy === true, {
   message: "個人情報の取り扱いについて同意が必要です",
   path: ["privacyPolicy"],
+}).refine((data) => {
+  try {
+    const [year, month, day] = data.birthDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    const age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())
+      ? age - 1
+      : age;
+    return adjustedAge >= 18;
+  } catch (e) {
+    return false;
+  }
+}, {
+  message: "18歳未満の方は登録できません",
+  path: ["birthDate"],
 });
 
 // 店舗用スキーマ
