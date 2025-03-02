@@ -16,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { apiRequest } from "@/lib/queryClient";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
@@ -48,7 +47,6 @@ type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
@@ -67,22 +65,53 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      const payload = {
-        displayName: data.displayName,
-        location: data.location,
-        preferredLocations: data.preferredLocations,
-        ...(data.newPassword ? {
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        } : {})
-      };
+      console.log('Mutation starting with data:', data);
 
-      const res = await apiRequest("PUT", "/api/talent/profile", payload);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "プロフィールの更新に失敗しました");
+      try {
+        const response = await fetch("/api/talent/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            displayName: data.displayName,
+            location: data.location,
+            preferredLocations: data.preferredLocations,
+            ...(data.newPassword ? {
+              currentPassword: data.currentPassword,
+              newPassword: data.newPassword,
+            } : {})
+          })
+        });
+
+        console.log('Response status:', response.status);
+        const contentType = response.headers.get("content-type");
+        console.log('Content-Type:', contentType);
+
+        if (!response.ok) {
+          let errorMessage = "プロフィールの更新に失敗しました";
+          try {
+            if (contentType?.includes("application/json")) {
+              const errorData = await response.json();
+              errorMessage = errorData.message || errorMessage;
+            } else {
+              const text = await response.text();
+              console.error('Error response text:', text);
+            }
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+          }
+          throw new Error(errorMessage);
+        }
+
+        const responseData = await response.json();
+        console.log('Update successful:', responseData);
+        return responseData;
+      } catch (error) {
+        console.error('Mutation error:', error);
+        throw error;
       }
-      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -101,6 +130,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
+    console.log('Form submitted with data:', data);
     setFormData(data);
     setShowConfirmation(true);
   };
@@ -110,7 +140,7 @@ export default function BasicInfoEdit() {
     try {
       await updateProfileMutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Update profile error:', error);
+      console.error('Confirmation error:', error);
     }
   };
 
@@ -268,11 +298,11 @@ export default function BasicInfoEdit() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting}
+              disabled={updateProfileMutation.isPending}
             >
-              {isSubmitting ? (
+              {updateProfileMutation.isPending && (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              )}
               確認する
             </Button>
           </form>
