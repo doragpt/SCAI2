@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
-  age: integer("age").notNull(),
+  age: integer("age"),  // 年齢を任意フィールドに変更
   location: text("location").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -62,13 +62,18 @@ export const applications = pgTable("applications", {
 });
 
 export const insertUserSchema = createInsertSchema(users)
-  .pick({
-    username: true,
-    password: true,
-    role: true,
-    displayName: true,
-    age: true,
-    location: true,
+  .extend({
+    role: z.enum(["talent", "store"]),
+    // roleに応じて年齢の必須チェックを変更
+    age: z.number().min(18).max(100).optional()
+      .superRefine((age, ctx) => {
+        if (ctx.parent.role === "talent" && !age) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "女性ユーザーの場合、年齢は必須です",
+          });
+        }
+      }),
   });
 
 export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
@@ -106,7 +111,6 @@ export const loginSchema = insertUserSchema.pick({
 });
 
 export type LoginData = z.infer<typeof loginSchema>;
-
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;

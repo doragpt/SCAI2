@@ -190,7 +190,13 @@ export default function AuthPage() {
                   </TabsContent>
 
                   <TabsContent value="register">
-                    <form onSubmit={storeRegisterForm.handleSubmit((data) => registerMutation.mutate(data))}>
+                    <form onSubmit={storeRegisterForm.handleSubmit((data) => {
+                      const storeData = {
+                        ...data,
+                        role: "store" as const,
+                      };
+                      registerMutation.mutate(storeData);
+                    })}>
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="username">店舗ID</Label>
@@ -203,7 +209,10 @@ export default function AuthPage() {
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
-                          <Input type="password" {...storeRegisterForm.register("password")} />
+                          <Input 
+                            type="password" 
+                            {...storeRegisterForm.register("password")} 
+                          />
                           {storeRegisterForm.formState.errors.password && (
                             <p className="text-sm text-destructive mt-1">
                               {storeRegisterForm.formState.errors.password.message}
@@ -221,15 +230,24 @@ export default function AuthPage() {
                         </div>
                         <div>
                           <Label htmlFor="location">所在地</Label>
-                          <Input {...storeRegisterForm.register("location")} placeholder="例: 東京都渋谷区" />
+                          <Input 
+                            {...storeRegisterForm.register("location")} 
+                            placeholder="例: 東京都渋谷区" 
+                          />
                           {storeRegisterForm.formState.errors.location && (
                             <p className="text-sm text-destructive mt-1">
                               {storeRegisterForm.formState.errors.location.message}
                             </p>
                           )}
                         </div>
-                        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                          {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button 
+                          type="submit" 
+                          className="w-full" 
+                          disabled={registerMutation.isPending}
+                        >
+                          {registerMutation.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
                           店舗登録する（無料）
                         </Button>
                       </div>
