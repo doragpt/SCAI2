@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
@@ -20,10 +19,13 @@ export default function AuthPage() {
 
   const registerForm = useForm({
     resolver: zodResolver(insertUserSchema),
+    defaultValues: {
+      role: "talent", // デフォルトで女性ユーザーに設定
+    },
   });
 
   if (user) {
-    return <Redirect to={user.role === "store" ? "/store" : "/talent/register"} />;
+    return <Redirect to="/talent/register" />;
   }
 
   return (
@@ -81,19 +83,6 @@ export default function AuthPage() {
                     <div>
                       <Label htmlFor="location">在住地</Label>
                       <Input {...registerForm.register("location")} placeholder="例: 東京都渋谷区" />
-                    </div>
-                    <div>
-                      <Label>アカウントタイプ</Label>
-                      <RadioGroup defaultValue="talent" onValueChange={(value) => registerForm.setValue("role", value)}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="talent" id="talent" />
-                          <Label htmlFor="talent">女性</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="store" id="store" />
-                          <Label htmlFor="store">店舗</Label>
-                        </div>
-                      </RadioGroup>
                     </div>
                     <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
                       {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
