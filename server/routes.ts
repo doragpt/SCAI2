@@ -16,6 +16,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(profiles);
   });
 
+  // Public job detail route - no authentication required
+  app.get("/api/jobs/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const profile = await storage.getStoreProfile(id);
+    if (!profile) {
+      return res.status(404).json({ message: "求人情報が見つかりませんでした" });
+    }
+    res.json(profile);
+  });
+
   // Talent profile routes
   app.post("/api/talent/profile", upload.array("photos", 30), async (req, res) => {
     try {
@@ -58,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/talent/profiles", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (req.user.role !== "scout") return res.sendStatus(403);
+    if (req.user.role !== "store") return res.sendStatus(403);
 
     const profiles = await storage.getTalentProfiles();
     res.json(profiles);
@@ -67,18 +77,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Application routes
   app.post("/api/applications", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (req.user.role !== "scout") return res.sendStatus(403);
-
     const applicationData = insertApplicationSchema.parse(req.body);
     const application = await storage.createApplication(applicationData);
     res.json(application);
   });
 
-  app.get("/api/applications/scout", async (req, res) => {
+  app.get("/api/applications/store", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (req.user.role !== "scout") return res.sendStatus(403);
+    if (req.user.role !== "store") return res.sendStatus(403);
 
-    const applications = await storage.getScoutApplications(req.user.id);
+    const applications = await storage.getStoreApplications(req.user.id);
     res.json(applications);
   });
 

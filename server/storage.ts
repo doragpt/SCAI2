@@ -13,6 +13,7 @@ export interface IStorage {
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
   getStoreApplications(storeId: number): Promise<Application[]>;
   getStoreProfiles(): Promise<StoreProfile[]>;
+  getStoreProfile(id: number): Promise<StoreProfile | undefined>;
   sessionStore: session.Store;
 }
 
@@ -76,6 +77,10 @@ export class MemStorage implements IStorage {
 
   async getStoreProfiles(): Promise<StoreProfile[]> {
     return Array.from(this.storeProfiles.values());
+  }
+
+  async getStoreProfile(id: number): Promise<StoreProfile | undefined> {
+    return this.storeProfiles.get(id);
   }
 }
 

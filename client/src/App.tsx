@@ -8,6 +8,7 @@ import AuthPage from "@/pages/auth-page";
 import TalentRegistration from "@/pages/talent-registration";
 import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
+import JobDetail from "@/pages/job-detail";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/jobs/:id" component={JobDetail} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
       <Route component={NotFound} />
     </Switch>

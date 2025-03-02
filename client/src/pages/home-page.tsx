@@ -11,16 +11,77 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { useState } from "react";
 
 const areas = [
+  // 北海道・東北
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  // 関東
   "東京23区",
   "東京都下",
   "神奈川県",
   "千葉県",
   "埼玉県",
-  "その他関東",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  // 中部
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  // 関西
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  // 中国
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  // 四国
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  // 九州・沖縄
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県",
+];
+
+const areaGroups = [
+  { label: "北海道・東北", areas: areas.slice(0, 7) },
+  { label: "関東", areas: areas.slice(7, 15) },
+  { label: "中部", areas: areas.slice(15, 24) },
+  { label: "関西", areas: areas.slice(24, 31) },
+  { label: "中国", areas: areas.slice(31, 36) },
+  { label: "四国", areas: areas.slice(36, 40) },
+  { label: "九州・沖縄", areas: areas.slice(40) },
 ];
 
 const serviceTypes = [
@@ -42,9 +103,7 @@ export default function HomePage() {
   });
 
   const filteredListings = jobListings?.filter(job => {
-    const areaMatch = selectedArea === "その他関東" ? 
-      !areas.slice(0, -1).includes(job.location) :
-      job.location.includes(selectedArea);
+    const areaMatch = job.location.includes(selectedArea);
     const typeMatch = selectedType === "all" || job.serviceType === selectedType;
     return areaMatch && typeMatch;
   });
@@ -125,10 +184,15 @@ export default function HomePage() {
                   <SelectValue placeholder="エリアを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {areas.map((area) => (
-                    <SelectItem key={area} value={area}>
-                      {area}
-                    </SelectItem>
+                  {areaGroups.map((group) => (
+                    <SelectGroup key={group.label}>
+                      <SelectLabel>{group.label}</SelectLabel>
+                      {group.areas.map((area) => (
+                        <SelectItem key={area} value={area}>
+                          {area}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
@@ -187,8 +251,8 @@ export default function HomePage() {
                           </span>
                         )}
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full mt-4 opacity-0 group-hover:opacity-100 transition-opacity"
                         asChild
                       >
