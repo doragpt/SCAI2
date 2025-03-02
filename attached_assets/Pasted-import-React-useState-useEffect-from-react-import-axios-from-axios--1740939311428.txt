@@ -1,0 +1,1238 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+// 地域データ（地方毎の都道府県リスト）
+const regions = {
+  '北海道・東北': ['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県'],
+  '関東': ['茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県'],
+  '中部': ['新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県', '静岡県', '愛知県'],
+  '近畿': ['三重県', '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県'],
+  '中国': ['鳥取県', '島根県', '岡山県', '広島県', '山口県'],
+  '四国': ['徳島県', '香川県', '愛媛県', '高知県'],
+  '九州・沖縄': ['福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'],
+};
+
+const GirlRegistration = () => {
+  const [formData, setFormData] = useState({
+    employmentType: '',
+    interviewDates: [
+      { date: '', time: '' },
+      { date: '', time: '' },
+      { date: '', time: '' }
+    ],
+    dispatchPeriod: { start: '', end: '', remarks: '' },
+    preRide: '',
+    guarantee: '',
+    unitPrice: '',
+    customUnitPrice: '',
+    waitingTime: '',
+    departure: '',
+    returnPlace: '',
+    industries: [],
+    name: { surname: '', givenName: '' },
+    nameReading: { surname: '', givenName: '' },
+    birthDate: '',
+    age: '',
+    height: '',
+    weight: '',
+    bust: '',
+    waist: '',
+    hip: '',
+    braSize: '',
+    ngRegions: [{ area: '', prefs: [] }],
+    desiredRegions: [{ area: '', prefs: [] }],
+    domicile: '',
+    idDocuments: [],
+    otherIdDocument: '',
+    residencePrefecture: '',
+    specialConditions: [],
+    panelDisplay: '',
+    diaryAvailable: '',
+    snsAccountAvailable: '',
+    snsAccountUrl: '',
+    selfDispatch: '',
+    allergies: [],
+    allergyDetails: '',
+    smoking: '',
+    smokingDetails: [],
+    smokingDetailsOther: '',
+    affiliatedStore: '',
+    affiliatedStores: [{ name: '', genjiName: '' }],
+    diaryUrls: [''],
+    foreignResponse: '',
+    foreignResponseDetail: '',
+    ngOptions: [],
+    otherNgOption: '',
+    estheticOptions: {
+      "ホイップ": '',
+      "マッサージジェル": '',
+      "極液": '',
+      "ベビードール": '',
+      "マイクロビキニ": '',
+      "ブラなしベビードール": '',
+      "トップレス": '',
+      "フルヌード": '',
+      "ノンショーツ": '',
+      "deepリンパ": '',
+      "ハンドでの抜き": '',
+      "キス": '',
+      "フェラ": '',
+      "スキン着用フェラ": '',
+    },
+    otherNgPlay: '',
+    estheticExperience: '',
+    estheticExperienceDuration: '',
+    pastExperienceStores: [''],
+    selfPR: '',
+    otherRemarks: '',
+    photos: [],
+    hairColorPhotos: [],
+  });
+
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (formData.birthDate) {
+      const birth = new Date(formData.birthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : '' }));
+    }
+  }, [formData.birthDate]);
+
+  const handleChange = (e) => {
+    const { name, value, type, files, checked } = e.target;
+    if (type === 'file') {
+      setFormData({ ...formData, [name]: files });
+    } else if (type === 'checkbox') {
+      const key = name.endsWith('[]') ? name.slice(0, -2) : name;
+      let current = formData[key] || [];
+      if (checked) {
+        current = [...current, value];
+      } else {
+        current = current.filter(v => v !== value);
+      }
+      setFormData({ ...formData, [key]: current });
+    } else if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData({
+        ...formData,
+        [parent]: { ...formData[parent], [child]: value }
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleInterviewDateChange = (index, field, value) => {
+    const newDates = [...formData.interviewDates];
+    newDates[index][field] = value;
+    setFormData({ ...formData, interviewDates: newDates });
+  };
+
+  const handleRegionChange = (type, index, field, value) => {
+    const newRegions = [...formData[type]];
+    newRegions[index][field] = value;
+    setFormData({ ...formData, [type]: newRegions });
+  };
+
+  const addRegion = (type) => {
+    setFormData({ ...formData, [type]: [...formData[type], { area: '', prefs: [] }] });
+  };
+
+  const removeRegion = (type, index) => {
+    const newRegions = formData[type].filter((_, i) => i !== index);
+    setFormData({ ...formData, [type]: newRegions });
+  };
+
+  const handleAffiliatedStoreChange = (index, field, value) => {
+    const newStores = [...formData.affiliatedStores];
+    newStores[index][field] = value;
+    setFormData({ ...formData, affiliatedStores: newStores });
+  };
+
+  const addAffiliatedStore = () => {
+    setFormData({ ...formData, affiliatedStores: [...formData.affiliatedStores, { name: '', genjiName: '' }] });
+  };
+
+  const removeAffiliatedStore = (index) => {
+    const newStores = formData.affiliatedStores.filter((_, i) => i !== index);
+    setFormData({ ...formData, affiliatedStores: newStores });
+  };
+
+  const handleDiaryUrlChange = (index, value) => {
+    const newUrls = [...formData.diaryUrls];
+    newUrls[index] = value;
+    setFormData({ ...formData, diaryUrls: newUrls });
+  };
+
+  const addDiaryUrl = () => {
+    setFormData({ ...formData, diaryUrls: [...formData.diaryUrls, ''] });
+  };
+
+  const removeDiaryUrl = (index) => {
+    const newUrls = formData.diaryUrls.filter((_, i) => i !== index);
+    setFormData({ ...formData, diaryUrls: newUrls });
+  };
+
+  const handlePastExperienceStoreChange = (index, value) => {
+    const newStores = [...formData.pastExperienceStores];
+    newStores[index] = value;
+    setFormData({ ...formData, pastExperienceStores: newStores });
+  };
+
+  const addPastExperienceStore = () => {
+    setFormData({ ...formData, pastExperienceStores: [...formData.pastExperienceStores, ''] });
+  };
+
+  const removePastExperienceStore = (index) => {
+    const newStores = formData.pastExperienceStores.filter((_, i) => i !== index);
+    setFormData({ ...formData, pastExperienceStores: newStores });
+  };
+
+  const handleEstheticOptionChange = (option, value) => {
+    setFormData({
+      ...formData,
+      estheticOptions: { ...formData.estheticOptions, [option]: value }
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('送信中…');
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (key === 'photos' || key === 'hairColorPhotos') {
+          for (const file of value) {
+            data.append(key, file);
+          }
+        } else {
+          data.append(key, JSON.stringify(value));
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        data.append(key, JSON.stringify(value));
+      } else {
+        data.append(key, value);
+      }
+    });
+    try {
+      const response = await axios.post('/api/girl/register', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMessage(`登録成功！ Girl ID: ${response.data.girl_id}`);
+    } catch (error) {
+      setMessage('登録に失敗しました。');
+      console.error(error);
+    }
+  };
+
+  const renderSpecialWarning = () => {
+    if (formData.specialConditions.some(cond => ['傷', 'タトゥー', 'アトピー', '歯科矯正'].includes(cond))) {
+      return (
+        <p style={{ color: 'red', fontWeight: 'bold' }}>
+          ※該当部分の写真を必ず送信してください。面接時に実物との差異がある場合、受け入れ不可となる可能性があります。
+        </p>
+      );
+    }
+    return null;
+  };
+
+  const renderSNSInput = () => {
+    if (formData.snsAccountAvailable === 'あり') {
+      return (
+        <div style={{ marginTop: '10px' }}>
+          <label>SNSアカウントURL:</label>
+          <input
+            type="text"
+            name="snsAccountUrl"
+            value={formData.snsAccountUrl}
+            onChange={handleChange}
+            placeholder="SNS URL"
+            style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderSmokingDetails = () => {
+    if (formData.smoking === 'する') {
+      return (
+        <div style={{ marginTop: '10px' }}>
+          <label>喫煙の詳細:</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {['紙タバコ', '電子タバコ', '両方'].map(detail => (
+              <label key={detail}>
+                <input type="checkbox" name="smokingDetails[]" value={detail} onChange={handleChange} /> {detail}
+              </label>
+            ))}
+          </div>
+          <input
+            type="text"
+            name="smokingDetailsOther"
+            value={formData.smokingDetailsOther}
+            onChange={handleChange}
+            placeholder="その他"
+            style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px', marginTop: '10px' }}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderForeignResponse = () => (
+    <div style={{ marginBottom: '20px' }}>
+      <label>外国人対応の可否 *:</label>
+      <select
+        name="foreignResponse"
+        value={formData.foreignResponse}
+        onChange={handleChange}
+        required
+        style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+      >
+        <option value="">選択</option>
+        <option value="可">可</option>
+        <option value="不可">不可</option>
+      </select>
+      {formData.foreignResponse === '可' && (
+        <div style={{ marginTop: '10px' }}>
+          <label>対応詳細 (例: 日本語対応の有無):</label>
+          <input
+            type="text"
+            name="foreignResponseDetail"
+            value={formData.foreignResponseDetail}
+            onChange={handleChange}
+            placeholder="対応詳細"
+            style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderAffiliatedStoresInput = () => {
+    if (formData.affiliatedStore === '有') {
+      return (
+        <div>
+          {formData.affiliatedStores.map((store, index) => (
+            <div key={index} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input
+                type="text"
+                value={store.name}
+                onChange={(e) => handleAffiliatedStoreChange(index, 'name', e.target.value)}
+                placeholder="店舗名"
+                style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+              />
+              <input
+                type="text"
+                value={store.genjiName}
+                onChange={(e) => handleAffiliatedStoreChange(index, 'genjiName', e.target.value)}
+                placeholder="源氏名"
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+              />
+              <button
+                type="button"
+                onClick={() => removeAffiliatedStore(index)}
+                style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addAffiliatedStore}
+            style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            + 追加
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
+      <h2 style={{ marginBottom: '20px' }}>Girl Registration</h2>
+      <form onSubmit={handleSubmit}>
+        {/* 雇用形態 */}
+        <div style={{ marginBottom: '20px' }}>
+          <label>出稼ぎor在籍 *:</label>
+          <select
+            name="employmentType"
+            value={formData.employmentType}
+            onChange={handleChange}
+            required
+            style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+          >
+            <option value="">選択してください</option>
+            <option value="在籍">在籍</option>
+            <option value="出稼ぎ">出稼ぎ</option>
+          </select>
+        </div>
+
+        {/* 在籍の場合 */}
+        {formData.employmentType === '在籍' && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ marginBottom: '10px' }}>面接希望日時 (最大3候補)</h3>
+            {formData.interviewDates.map((item, index) => (
+              <div key={index} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label>第{index + 1}候補 日付 *:</label>
+                <input
+                  type="date"
+                  value={item.date}
+                  onChange={(e) => handleInterviewDateChange(index, 'date', e.target.value)}
+                  required
+                  style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+                />
+                <label>時刻 *:</label>
+                <select
+                  value={item.time}
+                  onChange={(e) => handleInterviewDateChange(index, 'time', e.target.value)}
+                  required
+                  style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+                >
+                  <option value="">選択</option>
+                  {Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`).map(time => (
+                    <option key={time} value={time}>{time}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 出稼ぎの場合 */}
+        {formData.employmentType === '出稼ぎ' && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ marginBottom: '10px' }}>出稼ぎ希望項目</h3>
+            <div style={{ marginBottom: '10px' }}>
+              <label>希望派遣期間 *:</label>
+              <input
+                type="date"
+                name="dispatchPeriod.start"
+                value={formData.dispatchPeriod.start}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px', marginRight: '10px' }}
+              /> ～
+              <input
+                type="date"
+                name="dispatchPeriod.end"
+                value={formData.dispatchPeriod.end}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px', marginLeft: '10px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>備考 (派遣期間詳細):</label>
+              <input
+                type="text"
+                name="dispatchPeriod.remarks"
+                value={formData.dispatchPeriod.remarks}
+                onChange={handleChange}
+                style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>前乗りの可否 *:</label>
+              <select
+                name="preRide"
+                value={formData.preRide}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                <option value="可">可</option>
+                <option value="不可">不可</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>希望保証 *:</label>
+              <select
+                name="guarantee"
+                value={formData.guarantee}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                <option value="保証希望無し">保証希望無し</option>
+                <option value="店舗様にお任せ">店舗様にお任せ</option>
+                {Array.from({ length: 10 }, (_, i) => (
+                  <option key={i} value={`保証${i + 1}万円`}>{`保証${i + 1}万円`}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <label>希望単価 (60分, 1000円刻み) *:</label>
+              <select
+                name="unitPrice"
+                value={formData.unitPrice}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                <option value="希望無し">希望無し</option>
+                <option value="店舗様にお任せ">店舗様にお任せ</option>
+                {Array.from({ length: 28 }, (_, i) => (
+                  <option key={i} value={`60分${3000 + i * 1000}円`}>{`60分${3000 + i * 1000}円`}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                name="customUnitPrice"
+                value={formData.customUnitPrice}
+                onChange={handleChange}
+                placeholder="カスタム単価(数字のみ)"
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>可能待機時間 (6〜24時間) *:</label>
+              <select
+                name="waitingTime"
+                value={formData.waitingTime}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                {Array.from({ length: 24 - 6 + 1 }, (_, i) => i + 6).map((h) => (
+                  <option key={h} value={h}>{h}時間</option>
+                ))}
+              </select>
+              <span style={{ color: '#666', fontSize: '12px', marginLeft: '10px' }}>
+                (基本12時間待機〜が保証条件になります。)
+              </span>
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>出発地 *:</label>
+              <select
+                name="departure"
+                value={formData.departure}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                {Object.values(regions).flat().map((pref) => (
+                  <option key={pref} value={pref}>{pref}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>帰宅地 *:</label>
+              <select
+                name="returnPlace"
+                value={formData.returnPlace}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                {Object.values(regions).flat().map((pref) => (
+                  <option key={pref} value={pref}>{pref}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* 基本情報 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>基本情報</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <label>希望業種 *:</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+              {['デリヘル', 'ホテヘル', '箱ヘル', '風俗エステ', 'オナクラ', 'M性感'].map((ind) => (
+                <label key={ind}>
+                  <input type="checkbox" name="industries[]" value={ind} onChange={handleChange} /> {ind}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>氏名 *:</label>
+            <input
+              type="text"
+              name="name.surname"
+              value={formData.name.surname}
+              onChange={handleChange}
+              placeholder="姓 (例: 山田)"
+              required
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px', marginRight: '10px' }}
+            />
+            <input
+              type="text"
+              name="name.givenName"
+              value={formData.name.givenName}
+              onChange={handleChange}
+              placeholder="名 (例: 花子)"
+              required
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>ヨミガナ *:</label>
+            <input
+              type="text"
+              name="nameReading.surname"
+              value={formData.nameReading.surname}
+              onChange={handleChange}
+              placeholder="セイ (例: ヤマダ)"
+              required
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px', marginRight: '10px' }}
+            />
+            <input
+              type="text"
+              name="nameReading.givenName"
+              value={formData.nameReading.givenName}
+              onChange={handleChange}
+              placeholder="メイ (例: ハナコ)"
+              required
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>生年月日 *:</label>
+            <input
+              type="date"
+              name="birthDate"
+              value={formData.birthDate}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>年齢:</label>
+            <input
+              type="text"
+              name="age"
+              value={formData.age ? `${formData.age}歳` : ''}
+              readOnly
+              style={{ width: '100%', maxWidth: '100px', padding: '8px', borderRadius: '4px', backgroundColor: '#f0f0f0' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>身長 (cm) *:</label>
+            <input
+              type="number"
+              name="height"
+              value={formData.height}
+              onChange={handleChange}
+              required
+              min="120"
+              max="190"
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>体重 (kg) *:</label>
+            <input
+              type="number"
+              name="weight"
+              value={formData.weight}
+              onChange={handleChange}
+              required
+              min="30"
+              max="100"
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>バスト (cm):</label>
+            <input
+              type="number"
+              name="bust"
+              value={formData.bust}
+              onChange={handleChange}
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>ウエスト (cm):</label>
+            <input
+              type="number"
+              name="waist"
+              value={formData.waist}
+              onChange={handleChange}
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>ヒップ (cm):</label>
+            <input
+              type="number"
+              name="hip"
+              value={formData.hip}
+              onChange={handleChange}
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>ブラサイズ *:</label>
+            <select
+              name="braSize"
+              value={formData.braSize}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              {['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S'].map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </div>
+          <p style={{ color: '#666', fontSize: '12px' }}>
+            ※実際の数値を入力してください。実物との差異が保証条件に影響する可能性があります。
+          </p>
+        </div>
+
+        {/* NG地域 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>NG地域</h3>
+          {formData.ngRegions.map((region, index) => (
+            <div key={index} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <select
+                value={region.area}
+                onChange={(e) => handleRegionChange('ngRegions', index, 'area', e.target.value)}
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">地方選択</option>
+                {Object.keys(regions).map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+              {region.area && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {regions[region.area].map(pref => (
+                    <label key={pref}>
+                      <input
+                        type="checkbox"
+                        checked={region.prefs.includes(pref)}
+                        onChange={(e) => {
+                          const prefs = e.target.checked
+                            ? [...region.prefs, pref]
+                            : region.prefs.filter(p => p !== pref);
+                          handleRegionChange('ngRegions', index, 'prefs', prefs);
+                        }}
+                      />
+                      {pref}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => removeRegion('ngRegions', index)}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addRegion('ngRegions')}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            + 追加
+          </button>
+        </div>
+
+        {/* 希望地域 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>希望地域</h3>
+          {formData.desiredRegions.map((region, index) => (
+            <div key={index} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <select
+                value={region.area}
+                onChange={(e) => handleRegionChange('desiredRegions', index, 'area', e.target.value)}
+                style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">地方選択</option>
+                {Object.keys(regions).map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+              {region.area && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {regions[region.area].map(pref => (
+                    <label key={pref}>
+                      <input
+                        type="checkbox"
+                        checked={region.prefs.includes(pref)}
+                        onChange={(e) => {
+                          const prefs = e.target.checked
+                            ? [...region.prefs, pref]
+                            : region.prefs.filter(p => p !== pref);
+                          handleRegionChange('desiredRegions', index, 'prefs', prefs);
+                        }}
+                      />
+                      {pref}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => removeRegion('desiredRegions', index)}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addRegion('desiredRegions')}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            + 追加
+          </button>
+        </div>
+
+        {/* その他の情報 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>その他の情報</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <label>本籍地入り住民票の有無 *:</label>
+            <select
+              name="domicile"
+              value={formData.domicile}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="あり">あり</option>
+              <option value="なし">なし</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>持参身分証 *:</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {[
+                '運転免許証',
+                'マイナンバーカード',
+                'パスポート',
+                '写真付き住民基本台帳カード',
+                '在留カードまたは特別永住者証明書',
+                '健康保険証',
+                '卒業アルバム'
+              ].map(doc => (
+                <label key={doc} style={{ flex: '1 0 45%', maxWidth: '200px' }}>
+                  <input type="checkbox" name="idDocuments[]" value={doc} onChange={handleChange} /> {doc}
+                </label>
+              ))}
+            </div>
+            <input
+              type="text"
+              name="otherIdDocument"
+              value={formData.otherIdDocument}
+              onChange={handleChange}
+              placeholder="その他"
+              style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px', marginTop: '10px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>住まい（都道府県） *:</label>
+            <select
+              name="residencePrefecture"
+              value={formData.residencePrefecture}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '200px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              {Object.values(regions).flat().map(pref => (
+                <option key={pref} value={pref}>{pref}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>傷&タトゥー、アトピー、歯科矯正の有無:</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {['傷', 'タトゥー', 'アトピー', '歯科矯正'].map(cond => (
+                <label key={cond}>
+                  <input type="checkbox" name="specialConditions[]" value={cond} onChange={handleChange} /> {cond}
+                </label>
+              ))}
+            </div>
+            {renderSpecialWarning()}
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>パネルの顔出し *:</label>
+            <select
+              name="panelDisplay"
+              value={formData.panelDisplay}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="全出し">全出し</option>
+              <option value="口だけ隠し">口だけ隠し</option>
+              <option value="目だけ隠し">目だけ隠し</option>
+              <option value="全隠し">全隠し</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>写メ日記の可否 *:</label>
+            <select
+              name="diaryAvailable"
+              value={formData.diaryAvailable}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="可">可</option>
+              <option value="不可">不可</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>SNSアカウントの有無 *:</label>
+            <select
+              name="snsAccountAvailable"
+              value={formData.snsAccountAvailable}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="あり">あり</option>
+              <option value="なし">なし</option>
+            </select>
+            {renderSNSInput()}
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>自己派遣の可否 *:</label>
+            <select
+              name="selfDispatch"
+              value={formData.selfDispatch}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="可">可</option>
+              <option value="不可">不可</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>犬、猫、鳥等のアレルギーの有無:</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {['あり', 'なし'].map(opt => (
+                <label key={opt}>
+                  <input
+                    type="checkbox"
+                    name="allergies[]"
+                    value={opt}
+                    checked={formData.allergies.includes(opt)}
+                    onChange={handleChange}
+                  /> {opt}
+                </label>
+              ))}
+            </div>
+            {formData.allergies.includes('あり') && (
+              <textarea
+                name="allergyDetails"
+                value={formData.allergyDetails}
+                onChange={handleChange}
+                placeholder="アレルギー詳細を入力"
+                style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px', marginTop: '10px', minHeight: '80px' }}
+              />
+            )}
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>喫煙の有無 *:</label>
+            <select
+              name="smoking"
+              value={formData.smoking}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+            >
+              <option value="">選択</option>
+              <option value="する">する</option>
+              <option value="しない">しない</option>
+            </select>
+            {formData.smoking === 'する' && renderSmokingDetails()}
+          </div>
+          {/* 外国人対応（喫煙の下に配置） */}
+          {renderForeignResponse()}
+        </div>
+
+        {/* 在籍店舗情報 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>在籍店舗情報</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <label>現在の在籍店舗:</label>
+            <input
+              type="text"
+              name="affiliatedStore"
+              value={formData.affiliatedStore}
+              onChange={handleChange}
+              style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+            />
+          </div>
+          {renderAffiliatedStoresInput()}
+        </div>
+
+        {/* 写メ日記URL */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>写メ日記URL</h3>
+          {formData.diaryUrls.map((url, index) => (
+            <div
+              key={index}
+              style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}
+            >
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => handleDiaryUrlChange(index, e.target.value)}
+                placeholder="URL"
+                style={{ width: '100%', maxWidth: '400px', padding: '8px', borderRadius: '4px' }}
+              />
+              <button
+                type="button"
+                onClick={() => removeDiaryUrl(index)}
+                style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addDiaryUrl}
+            style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            + 追加
+          </button>
+        </div>
+
+        {/* 風俗エステ関連 */}
+        {formData.industries.includes('風俗エステ') && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ marginBottom: '10px' }}>風俗エステ関連</h3>
+            <div style={{ marginBottom: '10px' }}>
+              <label>エステオプション:</label>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '10px'
+                }}
+              >
+                {Object.keys(formData.estheticOptions).map(option => (
+                  <div
+                    key={option}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <label style={{ flex: '1' }}>{option}:</label>
+                    <select
+                      value={formData.estheticOptions[option]}
+                      onChange={(e) => handleEstheticOptionChange(option, e.target.value)}
+                      style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+                    >
+                      <option value="">選択</option>
+                      <option value="可">可</option>
+                      <option value="不可">不可</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <input
+                type="text"
+                name="otherNgPlay"
+                value={formData.otherNgPlay}
+                onChange={handleChange}
+                placeholder="その他NGプレイ"
+                style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px', marginTop: '10px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <label>エステ経験の有無 *:</label>
+              <select
+                name="estheticExperience"
+                value={formData.estheticExperience}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', maxWidth: '120px', padding: '8px', borderRadius: '4px' }}
+              >
+                <option value="">選択</option>
+                <option value="あり">あり</option>
+                <option value="なし">なし</option>
+              </select>
+              {formData.estheticExperience === 'あり' && (
+                <input
+                  type="text"
+                  name="estheticExperienceDuration"
+                  value={formData.estheticExperienceDuration}
+                  onChange={handleChange}
+                  placeholder="経験年数 (例: 1年)"
+                  style={{ width: '100%', maxWidth: '150px', padding: '8px', borderRadius: '4px', marginTop: '10px' }}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 過去経験店舗 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>過去経験店舗</h3>
+          {formData.pastExperienceStores.map((store, index) => (
+            <div
+              key={index}
+              style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}
+            >
+              <input
+                type="text"
+                value={store}
+                onChange={(e) => handlePastExperienceStoreChange(index, e.target.value)}
+                placeholder="店舗名"
+                style={{ width: '100%', maxWidth: '300px', padding: '8px', borderRadius: '4px' }}
+              />
+              <button
+                type="button"
+                onClick={() => removePastExperienceStore(index)}
+                style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addPastExperienceStore}
+            style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            + 追加
+          </button>
+        </div>
+
+        {/* 自己PRおよび備考 */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>自己PRおよび備考</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <label>自己PR:</label>
+            <textarea
+              name="selfPR"
+              value={formData.selfPR}
+              onChange={handleChange}
+              placeholder="自己PRを入力してください（例：過去の実績やお客様からの評価、得意なこと）"
+              style={{ width: '100%', maxWidth: '500px', padding: '8px', borderRadius: '4px', minHeight: '100px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>その他備考:</label>
+            <textarea
+              name="otherRemarks"
+              value={formData.otherRemarks}
+              onChange={handleChange}
+              placeholder="その他希望する勤務条件など、あらゆる要望を記入してください"
+              style={{ width: '100%', maxWidth: '500px', padding: '8px', borderRadius: '4px', minHeight: '100px' }}
+            />
+          </div>
+        </div>
+
+        {/* ファイルアップロード */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '10px' }}>ファイルアップロード</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <label>写真 (複数選択可) *:</label>
+            <input
+              type="file"
+              name="photos"
+              onChange={handleChange}
+              multiple
+              required
+              style={{ width: '100%', maxWidth: '300px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>髪色写真 (複数選択可) *:</label>
+            <input
+              type="file"
+              name="hairColorPhotos"
+              onChange={handleChange}
+              multiple
+              required
+              style={{ width: '100%', maxWidth: '300px' }}
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          登録する
+        </button>
+      </form>
+
+      <p
+        style={{
+          marginTop: '20px',
+          color: message.includes('成功') ? 'green' : message.includes('失敗') ? 'red' : '#666'
+        }}
+      >
+        {message}
+      </p>
+    </div>
+  );
+};
+
+export default GirlRegistration;

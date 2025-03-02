@@ -20,6 +20,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  bodyTypes,
+  cupSizes,
+  talentProfileUpdateSchema,
+} from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -27,29 +32,8 @@ import { Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
-// フォームのスキーマを定義
-const talentProfileSchema = z.object({
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  age: z.number().optional(),
-  guaranteeAmount: z.number().min(0, "日給保証額を入力してください"),
-  availableFrom: z.string().min(1, "開始可能日を入力してください"),
-  availableTo: z.string().min(1, "終了予定日を入力してください"),
-  sameDay: z.boolean(),
-  height: z.number().min(100, "身長を入力してください"),
-  weight: z.number().min(30, "体重を入力してください"),
-  bust: z.number().optional(),
-  waist: z.number().optional(),
-  hip: z.number().optional(),
-  cupSize: z.string().min(1, "カップサイズを選択してください"),
-  serviceTypes: z.array(z.string()).min(1, "希望業種を選択してください"),
-  location: z.string().min(1, "希望エリアを入力してください"),
-  employmentType: z.enum(["dispatch", "resident"]),
-  photos: z.array(z.any()).optional(), // Add photos to the schema
-});
+type TalentProfileFormData = z.infer<typeof talentProfileUpdateSchema>;
 
-type TalentProfileFormData = z.infer<typeof talentProfileSchema>;
-
-const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
 const serviceTypes = [
   { id: "deriheru", label: "デリヘル" },
   { id: "hoteheru", label: "ホテヘル" },
@@ -61,62 +45,32 @@ const serviceTypes = [
 
 export function TalentForm() {
   const { toast } = useToast();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
-  const [isEstheSelected, setIsEstheSelected] = useState(false);
+  const [facePhotos, setFacePhotos] = useState<File[]>([]);
+  const [fullBodyPhotos, setFullBodyPhotos] = useState<File[]>([]);
+  const [otherPhotos, setOtherPhotos] = useState<File[]>([]);
 
-  const form = useForm({
-    resolver: zodResolver(talentProfileSchema),
+  const form = useForm<TalentProfileFormData>({
+    resolver: zodResolver(talentProfileUpdateSchema),
     defaultValues: {
-      birthDate: "",
-      age: undefined,
-      guaranteeAmount: undefined,
-      availableFrom: "",
-      availableTo: "",
-      sameDay: false,
       height: undefined,
       weight: undefined,
       bust: undefined,
       waist: undefined,
       hip: undefined,
-      cupSize: "",
-      photos: [],
+      cupSize: undefined,
+      bodyType: undefined,
+      smoking: false,
+      tattoo: false,
+      piercing: false,
+      selfIntroduction: "",
       serviceTypes: [],
-      location: "",
-      employmentType: "dispatch", // 出稼ぎをデフォルトに
+      photoUrls: {
+        face: [],
+        fullBody: [],
+        other: [],
+      },
     },
   });
-
-  const calculateAge = (birthDate: string) => {
-    const birthday = new Date(birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birthday.getFullYear();
-    const m = today.getMonth() - birthday.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const birthDate = e.target.value;
-    form.setValue("birthDate", birthDate);
-    const age = calculateAge(birthDate);
-    setCalculatedAge(age);
-    form.setValue("age", age);
-  };
-
-  const handleServiceTypeChange = (checked: boolean, type: string) => {
-    const currentTypes = form.getValues("serviceTypes") || [];
-    let newTypes;
-    if (checked) {
-      newTypes = [...currentTypes, type];
-    } else {
-      newTypes = currentTypes.filter(t => t !== type);
-    }
-    form.setValue("serviceTypes", newTypes);
-    setIsEstheSelected(newTypes.includes("esthe"));
-  };
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -134,7 +88,6 @@ export function TalentForm() {
       });
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
       toast({
         title: "エラー",
         description: error.message,
@@ -145,50 +98,43 @@ export function TalentForm() {
 
   const onSubmit = async (values: TalentProfileFormData) => {
     try {
-      console.log('Form values:', values);
-
-      if (selectedFiles.length < 5) {
+      if (facePhotos.length < 3) {
         toast({
           title: "エラー",
-          description: "写真を最低でも5枚アップロードしてください",
+          description: "顔写真を3枚以上アップロードしてください",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (fullBodyPhotos.length < 2) {
+        toast({
+          title: "エラー",
+          description: "全身写真を2枚以上アップロードしてください",
           variant: "destructive",
         });
         return;
       }
 
       const formData = new FormData();
-      selectedFiles.forEach((file) => {
-        formData.append("photos", file);
+
+      // 写真のアップロード
+      facePhotos.forEach((file) => {
+        formData.append("facePhotos", file);
+      });
+      fullBodyPhotos.forEach((file) => {
+        formData.append("fullBodyPhotos", file);
+      });
+      otherPhotos.forEach((file) => {
+        formData.append("otherPhotos", file);
       });
 
-      // 数値フィールドを変換
-      ['age', 'guaranteeAmount', 'height', 'weight'].forEach(field => {
-        if (values[field] !== undefined) {
-          formData.append(field, values[field].toString());
+      // その他のデータを追加
+      Object.entries(values).forEach(([key, value]) => {
+        if (value !== undefined) {
+          formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
         }
       });
-
-      // 任意の数値フィールドを変換
-      ['bust', 'waist', 'hip'].forEach(field => {
-        if (values[field]) {
-          formData.append(field, values[field].toString());
-        }
-      });
-
-      // その他のフィールドを追加
-      formData.append('sameDay', String(values.sameDay));
-      formData.append('cupSize', values.cupSize);
-      formData.append('location', values.location);
-      formData.append('birthDate', values.birthDate);
-      formData.append('availableFrom', values.availableFrom);
-      formData.append('availableTo', values.availableTo);
-      formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
-      formData.append('employmentType', values.employmentType);
-
-      console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
 
       await mutation.mutateAsync(formData);
     } catch (error) {
@@ -201,230 +147,64 @@ export function TalentForm() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles((prev) => [...prev, ...files].slice(0, 30));
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="employmentType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>希望形態</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="dispatch">出稼ぎ</SelectItem>
-                  <SelectItem value="resident">在籍</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div>
-          <Label>写真 ({selectedFiles.length}/30)</Label>
-          <p className="text-sm text-muted-foreground mb-2">
-            最低でも5枚の写真が必要です（顔写真3枚、全身写真2枚）
-          </p>
-          <div className="mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("photo-upload")?.click()}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              写真をアップロード
-            </Button>
+        {/* 写真アップロード */}
+        <div className="space-y-4">
+          <div>
+            <Label>顔写真 (3枚以上必須)</Label>
             <input
-              id="photo-upload"
               type="file"
               multiple
               accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
+              onChange={(e) => setFacePhotos(Array.from(e.target.files || []))}
+              className="mt-2"
             />
           </div>
-          {selectedFiles.length > 0 && (
-            <div className="mt-4 grid grid-cols-4 gap-4">
-              {selectedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className="group relative aspect-square bg-muted rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`プレビュー ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeFile(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>生年月日</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    max={new Date().toISOString().split('T')[0]}
-                    onChange={handleBirthDateChange}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormItem>
-            <FormLabel>年齢</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                value={calculatedAge}
-                disabled
-                className="bg-muted"
-              />
-            </FormControl>
-          </FormItem>
-        </div>
-
-        <div className="space-y-4">
-          <Label>希望業種</Label>
-          <div className="grid grid-cols-2 gap-4">
-            {serviceTypes.map((type) => (
-              <div key={type.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={type.id}
-                  onCheckedChange={(checked) => {
-                    handleServiceTypeChange(checked === true, type.id);
-                  }}
-                />
-                <Label htmlFor={type.id}>{type.label}</Label>
-              </div>
-            ))}
+          <div>
+            <Label>全身写真 (2枚以上必須)</Label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setFullBodyPhotos(Array.from(e.target.files || []))}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label>その他の写真 (任意)</Label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setOtherPhotos(Array.from(e.target.files || []))}
+              className="mt-2"
+            />
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="guaranteeAmount"
-            render={({ field: { onChange, ...field } }) => (
-              <FormItem>
-                <FormLabel>日給保証（円）</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    onChange={(e) => onChange(e.target.valueAsNumber)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="availableFrom"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>開始可能日</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    {...field}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="availableTo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>終了予定日</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    {...field}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="sameDay"
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-2">
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <FormLabel className="!mt-0">当日の勤務も可能</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        {/* 基本情報 */}
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { name: 'height', label: '身長' },
-            { name: 'weight', label: '体重' }
+            { name: 'height', label: '身長 (cm)' },
+            { name: 'weight', label: '体重 (kg)' },
+            { name: 'bust', label: 'バスト (cm)' },
+            { name: 'waist', label: 'ウエスト (cm)' },
+            { name: 'hip', label: 'ヒップ (cm)' },
           ].map(({ name, label }) => (
             <FormField
               key={name}
               control={form.control}
-              name={name as any}
-              render={({ field: { onChange, ...field } }) => (
+              name={name as keyof TalentProfileFormData}
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{label} (cm)</FormLabel>
+                  <FormLabel>{label}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       {...field}
-                      onChange={(e) => onChange(e.target.valueAsNumber)}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -459,41 +239,104 @@ export function TalentForm() {
           />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { name: 'bust', label: 'バスト' },
-            { name: 'waist', label: 'ウエスト' },
-            { name: 'hip', label: 'ヒップ' }
-          ].map(({ name, label }) => (
-            <FormField
-              key={name}
-              control={form.control}
-              name={name as any}
-              render={({ field: { onChange, ...field } }) => (
-                <FormItem>
-                  <FormLabel>{label} (cm) - 任意</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => onChange(e.target.valueAsNumber)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-        </div>
-
+        {/* 体型 */}
         <FormField
           control={form.control}
-          name="location"
+          name="bodyType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>希望エリア</FormLabel>
+              <FormLabel>体型</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="選択してください" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {bodyTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 特記事項 */}
+        <div className="space-y-4">
+          <Label>特記事項</Label>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { name: 'smoking', label: '喫煙する' },
+              { name: 'tattoo', label: 'タトゥーあり' },
+              { name: 'piercing', label: 'ピアスあり' },
+            ].map(({ name, label }) => (
+              <FormField
+                key={name}
+                control={form.control}
+                name={name as keyof TalentProfileFormData}
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0">{label}</FormLabel>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 希望業種 */}
+        <div className="space-y-4">
+          <Label>希望業種</Label>
+          <div className="grid grid-cols-2 gap-4">
+            {serviceTypes.map((type) => (
+              <FormField
+                key={type.id}
+                control={form.control}
+                name="serviceTypes"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value?.includes(type.id)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...(field.value || []), type.id]
+                            : (field.value || []).filter((value) => value !== type.id);
+                          field.onChange(newValue);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0">{type.label}</FormLabel>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 自己PR */}
+        <FormField
+          control={form.control}
+          name="selfIntroduction"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>自己PR</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="例: 東京都渋谷区" />
+                <textarea
+                  {...field}
+                  className="w-full h-32 p-2 border rounded-md"
+                  placeholder="自己PRを入力してください（1000文字以内）"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

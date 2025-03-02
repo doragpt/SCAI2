@@ -56,12 +56,13 @@ export const talentProfiles = pgTable("talent_profiles", {
   tattoo: boolean("tattoo").default(false),
   piercing: boolean("piercing").default(false),
   selfIntroduction: text("self_introduction"),
-  photoUrls: json("photo_urls").$type<string[]>().default([]),
-  availability: json("availability").$type<{
-    startTime: string;
-    endTime: string;
-    days: string[];
-  }>(),
+  serviceTypes: json("service_types").$type<string[]>().default([]),
+  // 写真管理の改善
+  photoUrls: json("photo_urls").$type<{
+    face: string[];
+    fullBody: string[];
+    other: string[];
+  }>().default({ face: [], fullBody: [], other: [] }),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -70,8 +71,8 @@ export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   storeId: integer("store_id").notNull(),
-  status: text("status", { 
-    enum: ["pending", "accepted", "rejected", "withdrawn"] 
+  status: text("status", {
+    enum: ["pending", "accepted", "rejected", "withdrawn"]
   }).notNull(),
   appliedAt: timestamp("applied_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -116,11 +117,12 @@ export const talentProfileUpdateSchema = z.object({
   smoking: z.boolean(),
   tattoo: z.boolean(),
   piercing: z.boolean(),
-  selfIntroduction: z.string().max(1000, "自己紹介は1000文字以内で入力してください"),
-  availability: z.object({
-    startTime: z.string(),
-    endTime: z.string(),
-    days: z.array(z.string()),
+  selfIntroduction: z.string().max(1000, "自己PRは1000文字以内で入力してください"),
+  serviceTypes: z.array(z.string()).min(1, "希望業種を1つ以上選択してください"),
+  photoUrls: z.object({
+    face: z.array(z.string()).min(3, "顔写真を3枚以上アップロードしてください"),
+    fullBody: z.array(z.string()).min(2, "全身写真を2枚以上アップロードしてください"),
+    other: z.array(z.string()),
   }),
 });
 
