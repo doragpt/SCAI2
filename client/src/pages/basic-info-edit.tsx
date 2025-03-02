@@ -121,15 +121,15 @@ export default function BasicInfoEdit() {
         return result;
       } catch (error) {
         console.error('プロフィール更新エラー:', error);
-        throw error;
+        throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
     },
     onSuccess: (data) => {
-      // キャッシュを更新
+      // キャッシュを直接更新
       queryClient.setQueryData(["/api/talent/profile"], data);
       queryClient.setQueryData(["/api/user"], data);
 
-      // 全ての関連クエリを無効化
+      // 関連するクエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -137,6 +137,7 @@ export default function BasicInfoEdit() {
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
       });
+
       setShowConfirmation(false);
     },
     onError: (error: Error) => {

@@ -82,15 +82,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         headers: req.headers
       });
 
-      // 更新前のユーザー情報を取得
       const [currentUser] = await db
         .select()
         .from(users)
         .where(eq(users.id, req.user.id));
 
       if (!currentUser) {
+        console.error('User not found:', req.user.id);
         return res.status(404).json({ message: "ユーザーが見つかりません" });
       }
+
+      console.log('Current user found:', currentUser);
 
       // 基本情報の更新
       const result = await db
@@ -133,6 +135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select()
         .from(users)
         .where(eq(users.id, req.user.id));
+
+      if (!updatedUser) {
+        throw new Error("更新後のユーザー情報の取得に失敗しました");
+      }
 
       console.log('Profile updated successfully:', {
         userId: req.user.id,
