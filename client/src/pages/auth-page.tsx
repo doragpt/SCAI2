@@ -109,15 +109,21 @@ export default function AuthPage() {
 
   // フォームの入力状態をチェック
   const isFormValid = () => {
-    if (!registerForm) return false;
-
     const values = registerForm.getValues();
     const errors = registerForm.formState.errors;
 
-    console.log('Form values:', values);
-    console.log('Form errors:', errors);
+    console.log('Form validation check:');
+    console.log('Username:', values.username);
+    console.log('Password:', values.password);
+    console.log('Password Confirm:', values.passwordConfirm);
+    console.log('Display Name:', values.displayName);
+    console.log('Birth Date:', values.birthDate);
+    console.log('Location:', values.location);
+    console.log('Preferred Locations:', values.preferredLocations);
+    console.log('Privacy Policy:', values.privacyPolicy);
+    console.log('Form Errors:', errors);
 
-    return (
+    const isValid = 
       values.username &&
       values.password &&
       values.passwordConfirm &&
@@ -126,9 +132,11 @@ export default function AuthPage() {
       values.birthDate &&
       values.location &&
       values.preferredLocations.length > 0 &&
-      values.privacyPolicy &&
-      Object.keys(errors).length === 0
-    );
+      values.privacyPolicy === true &&
+      Object.keys(errors).length === 0;
+
+    console.log('Is form valid:', isValid);
+    return isValid;
   };
 
   return (
@@ -425,11 +433,17 @@ export default function AuthPage() {
 
                           <p>1. 個人情報の取得と利用目的</p>
                           <p>当社は、本サイトを通じて会員から取得する個人情報について、以下の目的で利用いたします。</p>
-                          <ul className="list-disc pl-4">
-                            <li>サービス提供のため</li>
-                            <li>応募情報の開示のため</li>
-                            <li>統計・分析目的のため</li>
-                          </ul>
+
+                          <p>サービス提供</p>
+                          <p>本サイトにおける求人情報のご案内や、会員認証、会員向けのサポートサービスを提供するため。</p>
+
+                          <p>応募情報の開示</p>
+                          <p>会員の同意に基づき、求人に応募する際、登録内容を応募先企業に対して開示するため。</p>
+
+                          <p>統計・分析目的</p>
+                          <p>個人が特定できない形に加工した上で、利用状況や傾向の分析、サービス改善のための統計データを作成・利用すること。</p>
+
+                          <p>※これらの目的以外に会員の個人情報を利用することはありません。</p>
 
                           <p>2. 個人情報提供の重要性</p>
                           <p>会員が本サイトの各サービスをご利用いただくためには、必要な情報の入力が求められます。なお、必須項目の入力がなされない場合、当該サービスのご利用が制限される場合がありますので、ご了承ください。</p>
@@ -447,9 +461,16 @@ export default function AuthPage() {
                           <p>4. 個人情報の管理および外部委託</p>
                           <p>当社は、取得した個人情報の漏洩、紛失、改変などを防止するため、最新のセキュリティ対策を講じた安全な環境下で個人情報を管理します。また、必要な範囲内で個人情報の取扱いを外部に委託する場合、その委託先は厳格な個人情報保護の基準を満たす業者を選定し、適切な契約を締結します。</p>
 
-                          <p>5. 会員の権利と情報変更</p>
+                          <p>5. 応募先企業での個人情報管理</p>
+                          <p>会員の同意のもと応募先企業に提供された個人情報は、各企業が独自に定めた個人情報管理規程に従って厳重に管理されます。当社は、各企業に対して適切な管理体制の維持を求めるとともに、会員の個人情報が目的外に使用されないよう啓蒙活動を行います。</p>
+
+                          <p>6. 会員の権利と情報変更</p>
                           <p>会員は、登録された個人情報の内容について、いつでも開示、訂正、削除、または利用停止を求める権利を有します。その際には、本人確認のため、氏名、住所、電話番号、生年月日、メールアドレスなどの情報をもとに手続きを進めさせていただきます。</p>
+
+                          <p>7. SSLおよびクッキーの利用</p>
+                          <p>本サイトでは、個人情報の送受信時にSSL（Secure Sockets Layer）による暗号化を実施し、安全な通信を確保しています。また、サイトの利便性向上のため、一部でクッキー（Cookie）を利用しております。ブラウザの設定によりクッキーの受け入れを拒否することも可能ですが、その場合、本サイトの一部サービスがご利用いただけなくなる可能性があります。</p>
                         </div>
+
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="privacyPolicy"
@@ -458,6 +479,7 @@ export default function AuthPage() {
                               registerForm.setValue("privacyPolicy", checked === true, {
                                 shouldValidate: true
                               });
+                              console.log('Privacy policy checked:', checked);
                             }}
                           />
                           <label
