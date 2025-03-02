@@ -71,6 +71,18 @@ export default function AuthPage() {
                       <Input type="password" {...registerForm.register("password")} />
                     </div>
                     <div>
+                      <Label htmlFor="displayName">お名前</Label>
+                      <Input {...registerForm.register("displayName")} />
+                    </div>
+                    <div>
+                      <Label htmlFor="age">年齢</Label>
+                      <Input type="number" {...registerForm.register("age", { valueAsNumber: true })} />
+                    </div>
+                    <div>
+                      <Label htmlFor="location">在住地</Label>
+                      <Input {...registerForm.register("location")} placeholder="例: 東京都渋谷区" />
+                    </div>
+                    <div>
                       <Label>アカウントタイプ</Label>
                       <RadioGroup defaultValue="talent" onValueChange={(value) => registerForm.setValue("role", value)}>
                         <div className="flex items-center space-x-2">

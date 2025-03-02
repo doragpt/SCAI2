@@ -7,28 +7,36 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "scout"] }).notNull(),
+  displayName: text("display_name").notNull(),
+  age: integer("age").notNull(),
+  location: text("location").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// 詳細プロフィールは別テーブルで管理
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   birthDate: date("birth_date").notNull(),
-  age: integer("age").notNull(),
   employmentType: text("employment_type", { enum: ["dispatch", "resident"] }).notNull(),
-  guaranteeAmount: integer("guarantee_amount").notNull(),
-  availableFrom: date("available_from").notNull(),
-  availableTo: date("available_to").notNull(),
+  guaranteeAmount: integer("guarantee_amount"),
+  availableFrom: date("available_from"),
+  availableTo: date("available_to"),
   sameDay: boolean("same_day").default(false),
-  height: integer("height").notNull(),
-  weight: integer("weight").notNull(),
+  height: integer("height"),
+  weight: integer("weight"),
   bust: integer("bust"),
   waist: integer("waist"),
   hip: integer("hip"),
-  cupSize: text("cup_size").notNull(),
-  photos: json("photos").$type<string[]>().notNull(),
+  cupSize: text("cup_size"),
+  photos: json("photos").$type<string[]>(),
   serviceTypes: json("service_types").$type<string[]>().default([]),
-  location: text("location").notNull(),
+  preferredLocations: json("preferred_locations").$type<string[]>().default([]),
+  ngLocations: json("ng_locations").$type<string[]>().default([]),
+  departureLocation: text("departure_location"),
+  returnLocation: text("return_location"),
+  workingHours: integer("working_hours"),
+  hasCompleteProfile: boolean("has_complete_profile").default(false),
 });
 
 export const scoutProfiles = pgTable("scout_profiles", {
@@ -53,11 +61,15 @@ export const applications = pgTable("applications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  role: true,
-});
+export const insertUserSchema = createInsertSchema(users)
+  .pick({
+    username: true,
+    password: true,
+    role: true,
+    displayName: true,
+    age: true,
+    location: true,
+  });
 
 export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
   .omit({
