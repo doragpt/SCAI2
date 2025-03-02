@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, date, time } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -51,7 +51,7 @@ export const smokingTypes = [
 
 // NGオプションの列挙型
 export const commonNgOptions = [
-  "AF", "聖水", "即尺", "即尺(事前に洗い済み)", 
+  "AF", "聖水", "即尺", "即尺(事前に洗い済み)",
   "撮影顔出し", "撮影顔無し"
 ] as const;
 
@@ -61,6 +61,11 @@ export const estheOptions = [
   "マイクロビキニ", "ブラなしベビードール", "トップレス",
   "フルヌード", "ノンショーツ", "deepリンパ", "ハンドでの抜き",
   "キス", "フェラ", "スキン着用フェラ"
+] as const;
+
+// 希望業種の列挙型
+export const serviceTypes = [
+  "deriheru", "hoteheru", "hakoheru", "esthe", "onakura", "mseikan"
 ] as const;
 
 export type Prefecture = typeof prefectures[number];
@@ -73,6 +78,7 @@ export type AllergyType = typeof allergyTypes[number];
 export type SmokingType = typeof smokingTypes[number];
 export type CommonNgOption = typeof commonNgOptions[number];
 export type EstheOption = typeof estheOptions[number];
+export type ServiceType = typeof serviceTypes[number];
 
 // ユーザーテーブル（既存）を拡張
 export const users = pgTable("users", {
@@ -150,7 +156,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   }[]>().default([]),
 
   // サービス
-  serviceTypes: json("service_types").$type<string[]>().default([]),
+  serviceTypes: json("service_types").$type<ServiceType[]>().default([]),
   canHomeDelivery: boolean("can_home_delivery").default(false),
   canForeign: boolean("can_foreign").default(false),
   canNonJapanese: boolean("can_non_japanese").default(false),
@@ -182,51 +188,15 @@ export const talentProfiles = pgTable("talent_profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// 応募履歴テーブル
-export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  status: text("status", {
-    enum: ["pending", "accepted", "rejected", "withdrawn"]
-  }).notNull(),
-  appliedAt: timestamp("applied_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  message: text("message"),
-  desiredStartDate: date("desired_start_date"),
-  desiredDuration: text("desired_duration"),
-});
-
-// 閲覧履歴テーブル
-export const viewHistory = pgTable("view_history", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  viewedAt: timestamp("viewed_at").defaultNow(),
-});
-
-// キープリストテーブル
-export const keepList = pgTable("keep_list", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  addedAt: timestamp("added_at").defaultNow(),
-  note: text("note"),
-});
-
-// スキーマ定義（既存）
-export const loginSchema = z.object({
-  username: z.string().min(1, "ユーザー名を入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]),
-});
-
 // バリデーションスキーマ
 export const talentProfileUpdateSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string().min(1, "姓（カナ）を入力してください"),
   firstNameKana: z.string().min(1, "名（カナ）を入力してください"),
+
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  age: z.string(),
 
   height: z.number().min(140, "身長を正しく入力してください"),
   weight: z.number().min(30, "体重を正しく入力してください"),
@@ -269,7 +239,7 @@ export const talentProfileUpdateSchema = z.object({
     photoDiaryUrl: z.string().optional(),
   })).optional(),
 
-  serviceTypes: z.array(z.string()).min(1, "希望業種を1つ以上選択してください"),
+  serviceTypes: z.array(z.enum(serviceTypes)).min(1, "希望業種を1つ以上選択してください"),
   canHomeDelivery: z.boolean(),
   canForeign: z.boolean(),
   canNonJapanese: z.boolean().optional(),
@@ -295,29 +265,44 @@ export const talentProfileUpdateSchema = z.object({
   notes: z.string().optional(),
 });
 
-// 応募作成スキーマ
-export const createApplicationSchema = z.object({
-  storeId: z.number(),
-  message: z.string().optional(),
-  desiredStartDate: z.string(),
-  desiredDuration: z.string(),
+// フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
+export const talentRegisterFormSchema = talentProfileUpdateSchema.extend({
+  passwordConfirm: z.string(),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => {
+  try {
+    const birth = new Date(data.birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  } catch (e) {
+    return false;
+  }
+}, {
+  message: "18歳未満の方は登録できません",
+  path: ["birthDate"],
 });
 
 // 型定義のエクスポート
-export type LoginData = z.infer<typeof loginSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type Application = typeof applications.$inferSelect;
-export type ViewHistory = typeof viewHistory.$inferSelect;
-export type KeepList = typeof keepList.$inferSelect;
 export type InsertTalentProfile = z.infer<typeof talentProfileUpdateSchema>;
+export type InsertTalentRegisterForm = z.infer<typeof talentRegisterFormSchema>;
+
 
 // 基本スキーマを作成
 const baseUserSchema = createInsertSchema(users).omit({ id: true, age: true });
 
-// タレント用の拡張スキーマ
-const baseTalentSchema = z.object({
+// API用のinsertスキーマ
+export const insertUserSchema = baseUserSchema.extend({
   role: z.literal("talent"),
   username: z.string()
     .min(1, "ニックネームを入力してください")
@@ -329,61 +314,55 @@ const baseTalentSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
   location: z.enum(prefectures, {
     errorMap: () => ({ message: "在住地を選択してください" })
   }),
   preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
 });
 
-
-// フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
-export const talentRegisterFormSchema = baseTalentSchema.extend({
-  passwordConfirm: z.string(),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => {
-  try {
-    const [year, month, day] = data.birthDate.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    const today = new Date();
-    const age = today.getFullYear() - date.getFullYear();
-    const monthDiff = today.getMonth() - date.getMonth();
-    const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())
-      ? age - 1
-      : age;
-    return adjustedAge >= 18;
-  } catch (e) {
-    return false;
-  }
-}, {
-  message: "18歳未満の方は登録できません",
-  path: ["birthDate"],
+// 応募履歴テーブル
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  storeId: integer("store_id").notNull(),
+  status: text("status", {
+    enum: ["pending", "accepted", "rejected", "withdrawn"]
+  }).notNull(),
+  appliedAt: timestamp("applied_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  message: text("message"),
+  desiredStartDate: date("desired_start_date"),
+  desiredDuration: text("desired_duration"),
 });
 
-// 店舗用スキーマ
-const storeUserSchema = baseUserSchema.extend({
-  role: z.literal("store"),
-  username: z.string()
-    .min(1, "店舗IDを入力してください")
-    .max(20, "店舗IDは20文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9]*$/, "半角英数字で入力してください"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
-  displayName: z.string().min(1, "店舗名を入力してください"),
-  location: z.string().min(1, "所在地を入力してください"),
+// 閲覧履歴テーブル
+export const viewHistory = pgTable("view_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  storeId: integer("store_id").notNull(),
+  viewedAt: timestamp("viewed_at").defaultNow(),
 });
 
-// API用のinsertスキーマ（パスワード確認と同意チェックを除外）
-export const insertUserSchema = z.discriminatedUnion("role", [
-  baseTalentSchema,
-  storeUserSchema,
-]);
+// キープリストテーブル
+export const keepList = pgTable("keep_list", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  storeId: integer("store_id").notNull(),
+  addedAt: timestamp("added_at").defaultNow(),
+  note: text("note"),
+});
+
+// スキーマ定義（既存）
+export const loginSchema = z.object({
+  username: z.string().min(1, "ユーザー名を入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]),
+});
+
+// 応募作成スキーマ
+export const createApplicationSchema = z.object({
+  storeId: z.number(),
+  message: z.string().optional(),
+  desiredStartDate: z.string(),
+  desiredDuration: z.string(),
+});
