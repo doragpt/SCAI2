@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTalentProfileSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +25,29 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
+
+// フォームのスキーマを定義
+const talentProfileSchema = z.object({
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  age: z.number().optional(),
+  guaranteeAmount: z.number().min(0, "日給保証額を入力してください"),
+  availableFrom: z.string().min(1, "開始可能日を入力してください"),
+  availableTo: z.string().min(1, "終了予定日を入力してください"),
+  sameDay: z.boolean(),
+  height: z.number().min(100, "身長を入力してください"),
+  weight: z.number().min(30, "体重を入力してください"),
+  bust: z.number().optional(),
+  waist: z.number().optional(),
+  hip: z.number().optional(),
+  cupSize: z.string().min(1, "カップサイズを選択してください"),
+  serviceTypes: z.array(z.string()).min(1, "希望業種を選択してください"),
+  location: z.string().min(1, "希望エリアを入力してください"),
+  employmentType: z.enum(["dispatch", "resident"]),
+  photos: z.array(z.any()).optional(), // Add photos to the schema
+});
+
+type TalentProfileFormData = z.infer<typeof talentProfileSchema>;
 
 const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
 const serviceTypes = [
@@ -44,7 +66,7 @@ export function TalentForm() {
   const [isEstheSelected, setIsEstheSelected] = useState(false);
 
   const form = useForm({
-    resolver: zodResolver(insertTalentProfileSchema),
+    resolver: zodResolver(talentProfileSchema),
     defaultValues: {
       birthDate: "",
       age: undefined,
@@ -121,7 +143,7 @@ export function TalentForm() {
     },
   });
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: TalentProfileFormData) => {
     try {
       console.log('Form values:', values);
 
