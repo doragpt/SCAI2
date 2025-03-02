@@ -16,9 +16,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) return res.sendStatus(401);
       if (req.user.role !== "talent") return res.sendStatus(403);
 
+      console.log('Files received:', req.files?.length);
+      console.log('Form data:', req.body);
+
       const files = req.files as Express.Multer.File[] | undefined;
       if (!files || files.length < 5) {
-        return res.status(400).json({ message: "写真が必要です（最低5枚：顔写真3枚、全身写真2枚）" });
+        return res.status(400).json({ message: "写真を最低でも5枚アップロードしてください" });
       }
 
       // Convert the photos to base64 strings
@@ -41,8 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Convert string boolean to actual boolean
         sameDay: req.body.sameDay === 'true',
         // Parse JSON string back to array
-        serviceTypes: JSON.parse(req.body.serviceTypes),
+        serviceTypes: JSON.parse(req.body.serviceTypes || '[]'),
       };
+
+      console.log('Processed form data:', formData);
 
       const profileData = insertTalentProfileSchema.parse(formData);
       const profile = await storage.createTalentProfile(req.user.id, profileData);

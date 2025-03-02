@@ -31,10 +31,12 @@ const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
 export function TalentForm() {
   const { toast } = useToast();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
 
   const form = useForm({
     resolver: zodResolver(insertTalentProfileSchema),
     defaultValues: {
+      birthDate: "",
       age: undefined,
       guaranteeAmount: undefined,
       availableFrom: "",
@@ -51,6 +53,25 @@ export function TalentForm() {
       location: "",
     },
   });
+
+  const calculateAge = (birthDate: string) => {
+    const birthday = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const birthDate = e.target.value;
+    form.setValue("birthDate", birthDate);
+    const age = calculateAge(birthDate);
+    setCalculatedAge(age);
+    form.setValue("age", age);
+  };
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -76,7 +97,7 @@ export function TalentForm() {
     if (selectedFiles.length < 5) {
       toast({
         title: "エラー",
-        description: "写真を最低5枚アップロードしてください（顔写真3枚、全身写真2枚）",
+        description: "写真を最低でも5枚アップロードしてください",
         variant: "destructive",
       });
       return;
@@ -88,16 +109,14 @@ export function TalentForm() {
     });
 
     // 数値フィールドを変換
-    const numericFields = ['age', 'guaranteeAmount', 'height', 'weight'];
-    numericFields.forEach(field => {
-      if (values[field]) {
+    ['age', 'guaranteeAmount', 'height', 'weight'].forEach(field => {
+      if (values[field] !== undefined) {
         formData.append(field, values[field].toString());
       }
     });
 
     // 任意の数値フィールドを変換
-    const optionalNumericFields = ['bust', 'waist', 'hip'];
-    optionalNumericFields.forEach(field => {
+    ['bust', 'waist', 'hip'].forEach(field => {
       if (values[field]) {
         formData.append(field, values[field].toString());
       }
@@ -110,6 +129,7 @@ export function TalentForm() {
     formData.append('availableFrom', values.availableFrom);
     formData.append('availableTo', values.availableTo);
     formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
+    formData.append('birthDate', values.birthDate); // Added birthDate
 
     mutation.mutate(formData);
   };
@@ -129,7 +149,7 @@ export function TalentForm() {
         <div>
           <Label>写真 ({selectedFiles.length}/30)</Label>
           <p className="text-sm text-muted-foreground mb-2">
-            必須: 顔写真3枚（無加工）、全身写真2枚（水着または下着）
+            最低でも5枚の写真が必要です（顔写真3枚、全身写真2枚）
           </p>
           <div className="mt-2">
             <Button
@@ -177,15 +197,16 @@ export function TalentForm() {
         <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="age"
-            render={({ field: { onChange, ...field } }) => (
+            name="birthDate"
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>年齢</FormLabel>
+                <FormLabel>生年月日</FormLabel>
                 <FormControl>
                   <Input 
-                    type="number" 
+                    type="date" 
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={handleBirthDateChange}
                     {...field}
-                    onChange={(e) => onChange(e.target.valueAsNumber)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -193,6 +214,20 @@ export function TalentForm() {
             )}
           />
 
+          <FormItem>
+            <FormLabel>年齢</FormLabel>
+            <FormControl>
+              <Input 
+                type="number"
+                value={calculatedAge}
+                disabled
+                className="bg-muted"
+              />
+            </FormControl>
+          </FormItem>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="guaranteeAmount"

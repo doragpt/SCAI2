@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -13,10 +13,11 @@ export const users = pgTable("users", {
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  birthDate: date("birth_date").notNull(),
   age: integer("age").notNull(),
   guaranteeAmount: integer("guarantee_amount").notNull(),
-  availableFrom: timestamp("available_from").notNull(),
-  availableTo: timestamp("available_to").notNull(),
+  availableFrom: date("available_from").notNull(),
+  availableTo: date("available_to").notNull(),
   sameDay: boolean("same_day").default(false),
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
@@ -63,6 +64,7 @@ export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
     userId: true,
   })
   .extend({
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
     availableFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
     availableTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
     bust: z.number().optional(),
