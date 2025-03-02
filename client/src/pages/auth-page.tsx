@@ -13,26 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema, type InsertUser, type LoginData, loginSchema } from "@shared/schema";
+import { insertUserSchema, type InsertUser, type LoginData, loginSchema, prefectures } from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-
-const PREFECTURES = [
-  "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
-  "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
-  "愛知県", "静岡県", "三重県", "岐阜県", "山梨県", "長野県", "新潟県", "富山県", "石川県", "福井県",
-  "大阪府", "京都府", "兵庫県", "奈良県", "和歌山県", "滋賀県",
-  "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-  "徳島県", "香川県", "愛媛県", "高知県",
-  "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
-];
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedPrefectures, setSelectedPrefectures] = useState<string[]>([]);
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -49,51 +38,9 @@ export default function AuthPage() {
     },
   });
 
-  const storeLoginForm = useForm<LoginData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      role: "store",
-    },
-  });
-
-  const storeRegisterForm = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      role: "store",
-    },
-  });
-
   const handleRegisterSubmit = async (data: InsertUser) => {
-    console.log('Selected Prefectures:', selectedPrefectures);
-    console.log('Form Data:', data);
-
-    if (selectedPrefectures.length === 0) {
-      registerForm.setError("preferredLocations", {
-        type: "manual",
-        message: "働きたい地域を選択してください"
-      });
-      return;
-    }
-
-    const formData = {
-      ...data,
-      preferredLocations: selectedPrefectures,
-    };
-
-    console.log('Submitting Form Data:', formData);
-    registerMutation.mutate(formData);
-  };
-
-  const handlePrefectureChange = (prefecture: string, checked: boolean) => {
-    setSelectedPrefectures(prev => {
-      const newPrefectures = checked 
-        ? [...prev, prefecture]
-        : prev.filter(p => p !== prefecture);
-
-      console.log('Updated Prefectures:', newPrefectures);
-      registerForm.setValue("preferredLocations", newPrefectures);
-      return newPrefectures;
-    });
+    console.log('Form Data before submission:', data);
+    registerMutation.mutate(data);
   };
 
   if (user) {
@@ -254,18 +201,27 @@ export default function AuthPage() {
                           <Label htmlFor="location">
                             在住地 <span className="text-destructive">※</span>
                           </Label>
-                          <Select {...registerForm.register("location")}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="在住地を選択してください" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PREFECTURES.map((pref) => (
-                                <SelectItem key={pref} value={pref}>
-                                  {pref}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Controller
+                            name="location"
+                            control={registerForm.control}
+                            render={({ field }) => (
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="在住地を選択してください" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {prefectures.map((pref) => (
+                                    <SelectItem key={pref} value={pref}>
+                                      {pref}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
                           {registerForm.formState.errors.location && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.location.message}
@@ -280,25 +236,36 @@ export default function AuthPage() {
                           <p className="text-sm text-muted-foreground mb-2">
                             （複数選択可）
                           </p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {PREFECTURES.map((pref) => (
-                              <div key={pref} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`pref-${pref}`}
-                                  checked={selectedPrefectures.includes(pref)}
-                                  onCheckedChange={(checked) =>
-                                    handlePrefectureChange(pref, checked === true)
-                                  }
-                                />
-                                <label
-                                  htmlFor={`pref-${pref}`}
-                                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  {pref}
-                                </label>
+                          <Controller
+                            name="preferredLocations"
+                            control={registerForm.control}
+                            render={({ field }) => (
+                              <div className="grid grid-cols-2 gap-2">
+                                {prefectures.map((pref) => (
+                                  <div key={pref} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`pref-${pref}`}
+                                      checked={field.value?.includes(pref)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValue = field.value || [];
+                                        const newValue = checked
+                                          ? [...currentValue, pref]
+                                          : currentValue.filter((p) => p !== pref);
+                                        field.onChange(newValue);
+                                        console.log('Updated preferredLocations:', newValue);
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`pref-${pref}`}
+                                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      {pref}
+                                    </label>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            )}
+                          />
                           {registerForm.formState.errors.preferredLocations && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.preferredLocations.message}
@@ -327,106 +294,7 @@ export default function AuthPage() {
               </TabsContent>
 
               <TabsContent value="store">
-                <Tabs defaultValue="login">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">ログイン</TabsTrigger>
-                    <TabsTrigger value="register">新規登録</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="login">
-                    <form onSubmit={storeLoginForm.handleSubmit((data) => loginMutation.mutate(data))}>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="username">店舗ID</Label>
-                          <Input {...storeLoginForm.register("username")} />
-                          {storeLoginForm.formState.errors.username && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeLoginForm.formState.errors.username.message}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="password">パスワード</Label>
-                          <Input type="password" {...storeLoginForm.register("password")} />
-                          {storeLoginForm.formState.errors.password && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeLoginForm.formState.errors.password.message}
-                            </p>
-                          )}
-                        </div>
-                        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                          {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          店舗管理画面へログイン
-                        </Button>
-                      </div>
-                    </form>
-                  </TabsContent>
-
-                  <TabsContent value="register">
-                    <form onSubmit={storeRegisterForm.handleSubmit((data) => {
-                      const storeData = {
-                        ...data,
-                        role: "store" as const,
-                      };
-                      registerMutation.mutate(storeData);
-                    })}>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="username">店舗ID</Label>
-                          <Input {...storeRegisterForm.register("username")} />
-                          {storeRegisterForm.formState.errors.username && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeRegisterForm.formState.errors.username.message}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="password">パスワード</Label>
-                          <Input
-                            type="password"
-                            {...storeRegisterForm.register("password")}
-                          />
-                          {storeRegisterForm.formState.errors.password && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeRegisterForm.formState.errors.password.message}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="displayName">店舗名</Label>
-                          <Input {...storeRegisterForm.register("displayName")} />
-                          {storeRegisterForm.formState.errors.displayName && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeRegisterForm.formState.errors.displayName.message}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="location">所在地</Label>
-                          <Input
-                            {...storeRegisterForm.register("location")}
-                            placeholder="例: 東京都渋谷区"
-                          />
-                          {storeRegisterForm.formState.errors.location && (
-                            <p className="text-sm text-destructive mt-1">
-                              {storeRegisterForm.formState.errors.location.message}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={registerMutation.isPending}
-                        >
-                          {registerMutation.isPending && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}
-                          店舗登録する（無料）
-                        </Button>
-                      </div>
-                    </form>
-                  </TabsContent>
-                </Tabs>
+                {/* Store registration form */}
               </TabsContent>
             </Tabs>
           </CardContent>
