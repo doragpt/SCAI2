@@ -55,7 +55,7 @@ export default function AuthPage() {
   });
 
   if (user) {
-    return <Redirect to={user.role === "store" ? "/store/dashboard" : "/talent/register"} />;
+    return <Redirect to={user.role === "store" ? "/store/dashboard" : "/talent/dashboard"} />;
   }
 
   return (

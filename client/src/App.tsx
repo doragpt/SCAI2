@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import TalentRegistration from "@/pages/talent-registration";
+import TalentDashboard from "@/pages/talent-dashboard";
 import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import JobDetail from "@/pages/job-detail";
@@ -18,8 +19,9 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/jobs/:id" component={JobDetail} />
-      <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
+      <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
+      <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
