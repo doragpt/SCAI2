@@ -112,7 +112,8 @@ export default function AuthPage() {
   };
 
   if (user) {
-    return <Redirect to="/" />;
+    // ダッシュボードへリダイレクト
+    return <Redirect to="/talent/dashboard" />;
   }
 
   // フォームの入力状態をチェック

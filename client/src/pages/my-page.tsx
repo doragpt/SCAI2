@@ -1,19 +1,18 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Settings, Camera, FileText, Calendar } from "lucide-react";
+import { Loader2, Settings, Camera, FileText, Calendar, UserIcon, Heart, Clock, Menu, Search } from "lucide-react";
 import { Redirect } from "wouter";
 import {
-  TalentProfile,
-  Application,
-  ViewHistory,
-  KeepList,
-  type User
+  type TalentProfile,
+  type Application,
+  type ViewHistory,
+  type KeepList
 } from "@shared/schema";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { Card } from "@/components/ui/card";
+
 
 export default function MyPage() {
   const { user } = useAuth();
@@ -48,85 +47,46 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ヘッダーセクション */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-start gap-6">
-            <div className="relative">
-              <div className="w-32 h-32 bg-muted rounded-lg overflow-hidden">
-                {profile?.photoUrls?.[0] ? (
-                  <img
-                    src={profile.photoUrls[0]}
-                    alt="プロフィール写真"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <Camera className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap"
-                asChild
-              >
-                <a href="/talent/profile/edit">
-                  <Settings className="h-4 w-4 mr-1" />
-                  編集
-                </a>
-              </Button>
-            </div>
-
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold">{user.displayName}</h1>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="/talent/profile/edit">
-                      <FileText className="h-4 w-4 mr-1" />
-                      基本情報編集
-                    </a>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="/talent/resume/edit">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      WEB履歴書
-                    </a>
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                  <p>身長: {profile?.height}cm</p>
-                  <p>体重: {profile?.weight}kg</p>
-                  <p>スリーサイズ: B{profile?.bust} W{profile?.waist} H{profile?.hip}</p>
-                </div>
-                <div className="space-y-1">
-                  <p>カップ: {profile?.cupSize}カップ</p>
-                  <p>体型: {profile?.bodyType}</p>
-                  <p>在住: {user.location}</p>
-                </div>
-              </div>
-            </div>
+      {/* 固定ヘッダー */}
+      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold">マイページ</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+              <Search className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* メインコンテンツ */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="applications" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="applications">応募履歴</TabsTrigger>
-            <TabsTrigger value="keepList">キープリスト</TabsTrigger>
-            <TabsTrigger value="viewHistory">閲覧履歴</TabsTrigger>
-          </TabsList>
+      <main className="pt-16 pb-16">
+        <div className="container mx-auto px-4 py-6">
+          {/* クイックアクセスメニュー */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
+              <a href="/talent/profile/edit">
+                <UserIcon className="h-6 w-6 mb-2" />
+                <span>基本情報</span>
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
+              <a href="/talent/resume/edit">
+                <FileText className="h-6 w-6 mb-2" />
+                <span>WEB履歴書</span>
+              </a>
+            </Button>
+          </div>
 
-          <TabsContent value="applications">
+          {/* メインメニュー -  Here we integrate the original application, keeplist and view history sections */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">各種履歴</h2>
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">応募履歴</h2>
+              {/* Applications */}
+              <h3 className="text-lg font-medium">応募履歴</h3>
               {applications?.length === 0 ? (
                 <Card className="p-6">
                   <p className="text-muted-foreground text-center">応募履歴はありません</p>
@@ -165,12 +125,9 @@ export default function MyPage() {
                   ))}
                 </div>
               )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="keepList">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">キープリスト</h2>
+              {/* KeepList */}
+              <h3 className="text-lg font-medium mt-6">キープリスト</h3>
               {keepList?.length === 0 ? (
                 <Card className="p-6">
                   <p className="text-muted-foreground text-center">キープリストは空です</p>
@@ -194,12 +151,9 @@ export default function MyPage() {
                   ))}
                 </div>
               )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="viewHistory">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">閲覧履歴</h2>
+              {/* ViewHistory */}
+              <h3 className="text-lg font-medium mt-6">閲覧履歴</h3>
               {viewHistory?.length === 0 ? (
                 <Card className="p-6">
                   <p className="text-muted-foreground text-center">閲覧履歴はありません</p>
@@ -221,9 +175,33 @@ export default function MyPage() {
                 </div>
               )}
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </div>
+      </main>
+
+      {/* 固定フッターナビゲーション */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-4 gap-1">
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Search className="h-5 w-5 mb-1" />
+              <span className="text-xs">お仕事検索</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Heart className="h-5 w-5 mb-1" />
+              <span className="text-xs">キープ</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Clock className="h-5 w-5 mb-1" />
+              <span className="text-xs">閲覧履歴</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Menu className="h-5 w-5 mb-1" />
+              <span className="text-xs">メニュー</span>
+            </Button>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

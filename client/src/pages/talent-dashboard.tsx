@@ -1,11 +1,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, Heart, History, MessageCircle, User } from "lucide-react";
+import { Loader2, LogOut, Heart, History, MessageCircle, UserIcon, Search, Menu } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
+import { MobileMenu } from "@/components/mobile-menu";
 
 export default function TalentDashboard() {
   const { user, logoutMutation } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (!user) {
     return (
@@ -17,61 +20,29 @@ export default function TalentDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="l-mypageHeader">
-        <p className="mypage-ttl">ー マイページ ー</p>
-        <p className="note-txt">※cookieを削除、シークレットモードで閲覧、応募をしても履歴が残らないのでご注意ください</p>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 grid grid-cols-12 gap-6">
-        {/* サイドメニュー */}
-        <div className="col-span-3">
-          <nav className="space-y-2">
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link href="/talent/dashboard">
-                マイページTOPへ
-              </Link>
+      {/* 固定ヘッダー */}
+      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold">マイページ</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+              <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link href="/">
-                SCAI TOPへ
-              </Link>
+            <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)}>
+              <Menu className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <Heart className="h-4 w-4" />
-              キープリスト
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <History className="h-4 w-4" />
-              閲覧履歴
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <MessageCircle className="h-4 w-4" />
-              応募・質問履歴
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <User className="h-4 w-4" />
-              アカウント設定
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-destructive hover:text-destructive" 
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-            >
-              {logoutMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <LogOut className="h-4 w-4 mr-2" />
-              )}
-              ログアウト
-            </Button>
-          </nav>
+          </div>
         </div>
+      </header>
 
-        {/* メインコンテンツ */}
-        <div className="col-span-9 space-y-6">
+      {/* モバイルメニュー */}
+      <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      {/* メインコンテンツ */}
+      <main className="pt-16 pb-16">
+        <div className="container mx-auto px-4 py-6">
           {/* お知らせ */}
-          <Card>
+          <Card className="mb-6">
             <CardHeader>
               <CardTitle>お知らせ</CardTitle>
             </CardHeader>
@@ -89,37 +60,102 @@ export default function TalentDashboard() {
             </CardContent>
           </Card>
 
-          {/* キープリスト */}
-          <Card>
-            <CardHeader>
-              <CardTitle>キープリスト</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">キープした求人はありません</p>
-            </CardContent>
-          </Card>
+          {/* クイックアクセスメニュー */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
+              <Link href="/talent/profile/edit">
+                <UserIcon className="h-6 w-6 mb-2" />
+                <span>基本情報</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
+              <Link href="/talent/resume/edit">
+                <MessageCircle className="h-6 w-6 mb-2" />
+                <span>WEB履歴書</span>
+              </Link>
+            </Button>
+          </div>
 
-          {/* 閲覧履歴 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>閲覧履歴</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">最近閲覧した求人はありません</p>
-            </CardContent>
-          </Card>
+          {/* メインメニュー */}
+          <div className="space-y-4">
+            <Card asChild>
+              <Link href="/talent/mypage">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <UserIcon className="h-5 w-5 mr-2" />
+                    <span>マイページ</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                </div>
+              </Link>
+            </Card>
 
-          {/* 応募・質問履歴 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>応募・質問履歴</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">まだ応募・質問していません</p>
-            </CardContent>
-          </Card>
+            <Card asChild>
+              <Link href="/talent/mypage/applications">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    <span>応募履歴</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                </div>
+              </Link>
+            </Card>
+
+            <Card asChild>
+              <Link href="/talent/mypage/keep-list">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Heart className="h-5 w-5 mr-2" />
+                    <span>キープリスト</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                </div>
+              </Link>
+            </Card>
+
+            <Card asChild>
+              <Link href="/talent/mypage/view-history">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <History className="h-5 w-5 mr-2" />
+                    <span>閲覧履歴</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                </div>
+              </Link>
+            </Card>
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* 固定フッターナビゲーション */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-4 gap-1">
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Search className="h-5 w-5 mb-1" />
+              <span className="text-xs">お仕事検索</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <Heart className="h-5 w-5 mb-1" />
+              <span className="text-xs">キープ</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
+              <History className="h-5 w-5 mb-1" />
+              <span className="text-xs">閲覧履歴</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center py-2 h-16"
+              onClick={() => setIsMenuOpen(true)}
+            >
+              <Menu className="h-5 w-5 mb-1" />
+              <span className="text-xs">メニュー</span>
+            </Button>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }
