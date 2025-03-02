@@ -65,51 +65,57 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Mutation starting with data:', data);
+      console.log('開始：プロフィール更新', data);
 
       try {
         const response = await fetch("/api/talent/profile", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
           },
           credentials: "include",
           body: JSON.stringify({
             displayName: data.displayName,
             location: data.location,
             preferredLocations: data.preferredLocations,
-            ...(data.newPassword ? {
+            ...(data.newPassword && data.currentPassword ? {
               currentPassword: data.currentPassword,
               newPassword: data.newPassword,
             } : {})
           })
         });
 
-        console.log('Response status:', response.status);
-        const contentType = response.headers.get("content-type");
-        console.log('Content-Type:', contentType);
+        console.log('サーバーレスポンス:', {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get("content-type")
+        });
 
         if (!response.ok) {
+          const contentType = response.headers.get("content-type");
           let errorMessage = "プロフィールの更新に失敗しました";
-          try {
-            if (contentType?.includes("application/json")) {
-              const errorData = await response.json();
-              errorMessage = errorData.message || errorMessage;
-            } else {
-              const text = await response.text();
-              console.error('Error response text:', text);
-            }
-          } catch (parseError) {
-            console.error('Error parsing response:', parseError);
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } else {
+            const text = await response.text();
+            console.error('エラーレスポンス:', text);
           }
           throw new Error(errorMessage);
         }
 
-        const responseData = await response.json();
-        console.log('Update successful:', responseData);
-        return responseData;
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error("サーバーから不正なレスポンスを受信しました");
+        }
+
+        const data = await response.json();
+        console.log('更新成功:', data);
+        return data;
       } catch (error) {
-        console.error('Mutation error:', error);
+        console.error('プロフィール更新エラー:', error);
         throw error;
       }
     },
@@ -130,7 +136,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('Form submitted with data:', data);
+    console.log('フォーム送信データ:', data);
     setFormData(data);
     setShowConfirmation(true);
   };
@@ -140,7 +146,7 @@ export default function BasicInfoEdit() {
     try {
       await updateProfileMutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Confirmation error:', error);
+      console.error('確認画面でのエラー:', error);
     }
   };
 
