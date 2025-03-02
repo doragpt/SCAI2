@@ -8,10 +8,13 @@ import AuthPage from "@/pages/auth-page";
 import ScoutDashboard from "@/pages/scout-dashboard";
 import TalentRegistration from "@/pages/talent-registration";
 import { ProtectedRoute } from "./lib/protected-route";
+import RootPage from "@/pages/root-page"; // Assuming this component exists
+
 
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={RootPage} />
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/scout" component={ScoutDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
