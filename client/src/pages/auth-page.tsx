@@ -35,12 +35,29 @@ export default function AuthPage() {
     defaultValues: {
       role: "talent",
       preferredLocations: [],
+      birthDate: undefined,
+      username: "",
+      password: "",
+      displayName: "",
+      location: undefined,
     },
   });
 
   const handleRegisterSubmit = async (data: InsertUser) => {
-    console.log('Form Data before submission:', data);
-    registerMutation.mutate(data);
+    try {
+      console.log('Form Data before submission:', data);
+
+      // birthDateをDate型に変換
+      const formData = {
+        ...data,
+        birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+      };
+
+      console.log('Processed Form Data:', formData);
+      registerMutation.mutate(formData);
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
   };
 
   if (user) {
@@ -140,9 +157,7 @@ export default function AuthPage() {
                           </p>
                           <Input
                             type="date"
-                            {...registerForm.register("birthDate", {
-                              valueAsDate: true
-                            })}
+                            {...registerForm.register("birthDate")}
                           />
                           {registerForm.formState.errors.birthDate && (
                             <p className="text-sm text-destructive mt-1">
@@ -252,7 +267,6 @@ export default function AuthPage() {
                                           ? [...currentValue, pref]
                                           : currentValue.filter((p) => p !== pref);
                                         field.onChange(newValue);
-                                        console.log('Updated preferredLocations:', newValue);
                                       }}
                                     />
                                     <label
