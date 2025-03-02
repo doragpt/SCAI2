@@ -27,11 +27,11 @@ export default function ScoutDashboard() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            SCAI Scout Dashboard
+            SCAI スカウトダッシュボード
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Logged in as {user?.username}
+              ログイン中: {user?.username}
             </span>
             <Button
               variant="outline"
@@ -44,7 +44,7 @@ export default function ScoutDashboard() {
               ) : (
                 <LogOut className="h-4 w-4" />
               )}
-              <span className="ml-2">Logout</span>
+              <span className="ml-2">ログアウト</span>
             </Button>
           </div>
         </div>
@@ -53,8 +53,8 @@ export default function ScoutDashboard() {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="profiles">
           <TabsList className="w-full">
-            <TabsTrigger value="profiles">Available Talent</TabsTrigger>
-            <TabsTrigger value="applications">My Applications</TabsTrigger>
+            <TabsTrigger value="profiles">利用可能なタレント</TabsTrigger>
+            <TabsTrigger value="applications">申請履歴</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profiles" className="mt-6">
@@ -63,9 +63,9 @@ export default function ScoutDashboard() {
                 <Card key={profile.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>¥{profile.guaranteeAmount.toLocaleString()} / day</span>
+                      <span>¥{profile.guaranteeAmount.toLocaleString()} / 日</span>
                       <span className="text-sm text-muted-foreground">
-                        {profile.age} years old
+                        {profile.age}歳
                       </span>
                     </CardTitle>
                   </CardHeader>
@@ -74,15 +74,15 @@ export default function ScoutDashboard() {
                       <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
                         <img
                           src={`data:image/jpeg;base64,${profile.photos[0]}`}
-                          alt="Profile"
+                          alt="プロフィール"
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>Height: {profile.height}cm</div>
-                        <div>Weight: {profile.weight}kg</div>
-                        <div>Bust: {profile.bust}cm</div>
-                        <div>Waist: {profile.waist}cm</div>
+                        <div>身長: {profile.height}cm</div>
+                        <div>体重: {profile.weight}kg</div>
+                        <div>バスト: {profile.bust}cm</div>
+                        <div>ウエスト: {profile.waist}cm</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {profile.serviceTypes.map((type) => (
@@ -96,9 +96,9 @@ export default function ScoutDashboard() {
                       </div>
                       <Button 
                         className="w-full"
-                        onClick={() => {/* TODO: Open application modal */}}
+                        onClick={() => {/* TODO: オファーモーダルを開く */}}
                       >
-                        Send Offer
+                        オファーを送る
                       </Button>
                     </div>
                   </CardContent>

@@ -31,29 +31,29 @@ export default function AuthPage() {
       <div className="flex items-center justify-center p-8">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Welcome to SCAI</CardTitle>
+            <CardTitle>SCAIへようこそ</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login">ログイン</TabsTrigger>
+                <TabsTrigger value="register">新規登録</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username">ユーザー名</Label>
                       <Input {...loginForm.register("username")} />
                     </div>
                     <div>
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">パスワード</Label>
                       <Input type="password" {...loginForm.register("password")} />
                     </div>
                     <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
                       {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Login
+                      ログイン
                     </Button>
                   </div>
                 </form>
@@ -63,29 +63,29 @@ export default function AuthPage() {
                 <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username">ユーザー名</Label>
                       <Input {...registerForm.register("username")} />
                     </div>
                     <div>
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">パスワード</Label>
                       <Input type="password" {...registerForm.register("password")} />
                     </div>
                     <div>
-                      <Label>Account Type</Label>
+                      <Label>アカウントタイプ</Label>
                       <RadioGroup defaultValue="talent" onValueChange={(value) => registerForm.setValue("role", value)}>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="talent" id="talent" />
-                          <Label htmlFor="talent">Talent</Label>
+                          <Label htmlFor="talent">タレント</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="scout" id="scout" />
-                          <Label htmlFor="scout">Business/Scout</Label>
+                          <Label htmlFor="scout">スカウト/店舗</Label>
                         </div>
                       </RadioGroup>
                     </div>
                     <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
                       {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Register
+                      登録
                     </Button>
                   </div>
                 </form>
@@ -97,10 +97,10 @@ export default function AuthPage() {
       <div className="hidden md:flex items-center justify-center bg-primary/5 p-8">
         <div className="max-w-lg">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            SCAI - AI-Powered Entertainment Recruitment
+            SCAI - AIを活用した風俗求人マッチング
           </h1>
           <p className="text-lg text-muted-foreground">
-            Join our platform to connect with top entertainment venues and talent. Our AI-powered matching system ensures the perfect fit for both parties.
+            風俗スカウトと女性のマッチングをAIで自動化。効率的な採用プロセスを実現します。
           </p>
         </div>
       </div>

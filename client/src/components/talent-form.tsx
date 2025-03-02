@@ -49,13 +49,13 @@ export function TalentForm() {
     },
     onSuccess: () => {
       toast({
-        title: "Profile Created",
-        description: "Your profile has been successfully created.",
+        title: "プロフィール作成完了",
+        description: "プロフィールが正常に作成されました。",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "エラー",
         description: error.message,
         variant: "destructive",
       });
@@ -65,8 +65,8 @@ export function TalentForm() {
   const onSubmit = (values: any) => {
     if (selectedFiles.length < 5) {
       toast({
-        title: "Error",
-        description: "Please upload at least 5 photos",
+        title: "エラー",
+        description: "写真を最低5枚アップロードしてください",
         variant: "destructive",
       });
       return;
@@ -77,11 +77,26 @@ export function TalentForm() {
       formData.append("photos", file);
     });
 
-    Object.entries(values).forEach(([key, value]) => {
-      if (key !== "photos") {
-        formData.append(key, String(value));
+    // 数値フィールドを変換
+    const numericFields = ['age', 'guaranteeAmount', 'height', 'weight', 'bust', 'waist', 'hip'];
+    numericFields.forEach(field => {
+      if (values[field]) {
+        formData.append(field, String(parseInt(values[field], 10)));
       }
     });
+
+    // 日付フィールドを変換
+    if (values.availableFrom) {
+      formData.append('availableFrom', new Date(values.availableFrom).toISOString());
+    }
+    if (values.availableTo) {
+      formData.append('availableTo', new Date(values.availableTo).toISOString());
+    }
+
+    // その他のフィールドを追加
+    formData.append('sameDay', String(values.sameDay));
+    formData.append('location', values.location);
+    formData.append('serviceTypes', JSON.stringify(values.serviceTypes));
 
     mutation.mutate(formData);
   };
@@ -98,11 +113,15 @@ export function TalentForm() {
           <FormField
             control={form.control}
             name="age"
-            render={({ field }) => (
+            render={({ field: { onChange, ...field } }) => (
               <FormItem>
-                <FormLabel>Age</FormLabel>
+                <FormLabel>年齢</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input 
+                    type="number" 
+                    {...field}
+                    onChange={(e) => onChange(e.target.valueAsNumber)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -112,11 +131,15 @@ export function TalentForm() {
           <FormField
             control={form.control}
             name="guaranteeAmount"
-            render={({ field }) => (
+            render={({ field: { onChange, ...field } }) => (
               <FormItem>
-                <FormLabel>Daily Guarantee (¥)</FormLabel>
+                <FormLabel>日給保証（円）</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input 
+                    type="number" 
+                    {...field}
+                    onChange={(e) => onChange(e.target.valueAsNumber)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,11 +149,15 @@ export function TalentForm() {
           <FormField
             control={form.control}
             name="availableFrom"
-            render={({ field }) => (
+            render={({ field: { onChange, ...field } }) => (
               <FormItem>
-                <FormLabel>Available From</FormLabel>
+                <FormLabel>開始可能日</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input 
+                    type="date" 
+                    {...field}
+                    onChange={(e) => onChange(e.target.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,11 +167,15 @@ export function TalentForm() {
           <FormField
             control={form.control}
             name="availableTo"
-            render={({ field }) => (
+            render={({ field: { onChange, ...field } }) => (
               <FormItem>
-                <FormLabel>Available To</FormLabel>
+                <FormLabel>終了予定日</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input 
+                    type="date" 
+                    {...field}
+                    onChange={(e) => onChange(e.target.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -163,82 +194,39 @@ export function TalentForm() {
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="!mt-0">Available for same day work</FormLabel>
+              <FormLabel className="!mt-0">当日の勤務も可能</FormLabel>
               <FormMessage />
             </FormItem>
           )}
         />
 
         <div className="grid md:grid-cols-3 gap-6">
-          <FormField
-            control={form.control}
-            name="height"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Height (cm)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="weight"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Weight (kg)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="bust"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bust (cm)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="waist"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Waist (cm)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="hip"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Hip (cm)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {[
+            { name: 'height', label: '身長' },
+            { name: 'weight', label: '体重' },
+            { name: 'bust', label: 'バスト' },
+            { name: 'waist', label: 'ウエスト' },
+            { name: 'hip', label: 'ヒップ' }
+          ].map(({ name, label }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name as any}
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem>
+                  <FormLabel>{label} (cm)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field}
+                      onChange={(e) => onChange(e.target.valueAsNumber)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
         </div>
 
         <FormField
@@ -246,9 +234,9 @@ export function TalentForm() {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel>希望エリア</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g. Tokyo, Shibuya" />
+                <Input {...field} placeholder="例: 東京都渋谷区" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -256,7 +244,7 @@ export function TalentForm() {
         />
 
         <div>
-          <Label>Photos ({selectedFiles.length}/30)</Label>
+          <Label>写真 ({selectedFiles.length}/30)</Label>
           <div className="mt-2">
             <Button
               type="button"
@@ -264,7 +252,7 @@ export function TalentForm() {
               onClick={() => document.getElementById("photo-upload")?.click()}
             >
               <Upload className="h-4 w-4 mr-2" />
-              Upload Photos
+              写真をアップロード
             </Button>
             <input
               id="photo-upload"
@@ -284,7 +272,7 @@ export function TalentForm() {
                 >
                   <img
                     src={URL.createObjectURL(file)}
-                    alt={`Preview ${index + 1}`}
+                    alt={`プレビュー ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -301,7 +289,7 @@ export function TalentForm() {
           {mutation.isPending && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          Create Profile
+          プロフィールを作成
         </Button>
       </form>
     </Form>

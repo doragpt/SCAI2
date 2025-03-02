@@ -5,6 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 
+const statusLabels = {
+  pending: "処理中",
+  accepted: "承諾",
+  rejected: "拒否"
+};
+
 export function ScoutApplicationView() {
   const { data: applications, isLoading } = useQuery<Application[]>({
     queryKey: ["/api/applications/scout"],
@@ -22,7 +28,7 @@ export function ScoutApplicationView() {
     return (
       <Card>
         <CardContent className="p-8 text-center text-muted-foreground">
-          You haven't made any applications yet.
+          申請履歴はありません。
         </CardContent>
       </Card>
     );
@@ -35,7 +41,7 @@ export function ScoutApplicationView() {
           <Card key={application.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Application #{application.id}</span>
+                <span>申請 #{application.id}</span>
                 <Badge
                   variant={
                     application.status === "accepted"
@@ -45,27 +51,27 @@ export function ScoutApplicationView() {
                       : "secondary"
                   }
                 >
-                  {application.status.toUpperCase()}
+                  {statusLabels[application.status]}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Offer Amount:</span>
+                  <span className="text-muted-foreground">オファー金額:</span>
                   <span className="font-medium">
-                    ¥{application.guaranteeOffer?.toLocaleString() ?? "N/A"}
+                    ¥{application.guaranteeOffer?.toLocaleString() ?? "未設定"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Submitted:</span>
+                  <span className="text-muted-foreground">申請日時:</span>
                   <span className="font-medium">
                     {new Date(application.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 {application.message && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Message:</h4>
+                    <h4 className="text-sm font-medium mb-2">メッセージ:</h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {application.message}
                     </p>

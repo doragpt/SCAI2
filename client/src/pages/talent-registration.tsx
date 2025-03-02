@@ -12,11 +12,11 @@ export default function TalentRegistration() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            SCAI Talent Registration
+            SCAI タレント登録
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Logged in as {user?.username}
+              ログイン中: {user?.username}
             </span>
             <Button
               variant="outline"
@@ -29,7 +29,7 @@ export default function TalentRegistration() {
               ) : (
                 <LogOut className="h-4 w-4" />
               )}
-              <span className="ml-2">Logout</span>
+              <span className="ml-2">ログアウト</span>
             </Button>
           </div>
         </div>
@@ -38,7 +38,7 @@ export default function TalentRegistration() {
       <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <CardTitle>Create Your Profile</CardTitle>
+            <CardTitle>プロフィール作成</CardTitle>
           </CardHeader>
           <CardContent>
             <TalentForm />
