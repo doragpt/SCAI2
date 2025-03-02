@@ -25,8 +25,12 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log('Getting user by ID:', id);
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      console.log('Found user:', user);
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id));
+
+      console.log('Found user by ID:', user);
       return user;
     } catch (error) {
       console.error('Error getting user by ID:', error);
@@ -37,8 +41,12 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       console.log('Getting user by username:', username);
-      const [user] = await db.select().from(users).where(eq(users.username, username));
-      console.log('Found user:', user);
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username));
+
+      console.log('Found user by username:', user);
       return user;
     } catch (error) {
       console.error('Error getting user by username:', error);
@@ -49,17 +57,28 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
       console.log('Creating user:', insertUser);
-      const [user] = await db
-        .insert(users)
-        .values({
-          ...insertUser,
-          createdAt: new Date(),
-          age: null,
-          birthDate: insertUser.birthDate || null,
-          preferredLocations: insertUser.preferredLocations || [],
-        })
-        .returning();
-      console.log('Created user:', user);
+
+      // トランザクションを使用してユーザー作成
+      const [user] = await db.transaction(async (tx) => {
+        const [newUser] = await tx
+          .insert(users)
+          .values({
+            ...insertUser,
+            createdAt: new Date(),
+            age: null,
+            birthDate: insertUser.birthDate || null,
+            preferredLocations: insertUser.preferredLocations || [],
+          })
+          .returning();
+
+        if (!newUser) {
+          throw new Error('ユーザーの作成に失敗しました');
+        }
+
+        return [newUser];
+      });
+
+      console.log('Created user with ID:', user.id);
       return user;
     } catch (error) {
       console.error('Error creating user:', error);

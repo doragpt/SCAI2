@@ -43,8 +43,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Registration request received:', req.body);
       const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
-      console.log('User created:', user);
+
+      // トランザクションを使用してユーザー作成
+      const user = await db.transaction(async (tx) => {
+        // 既存ユーザーチェック
+        const [existingUser] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.username, userData.username));
+
+        if (existingUser) {
+          throw new Error("このユーザー名は既に使用されています");
+        }
+
+        // パスワードのハッシュ化
+        const hashedPassword = await hashPassword(userData.password);
+
+        // ユーザー作成
+        const [newUser] = await tx
+          .insert(users)
+          .values({
+            ...userData,
+            password: hashedPassword,
+            createdAt: new Date(),
+          })
+          .returning();
+
+        if (!newUser) {
+          throw new Error("ユーザーの作成に失敗しました");
+        }
+
+        return newUser;
+      });
+
+      console.log('User created successfully:', { userId: user.id });
       res.status(201).json(user);
     } catch (error) {
       console.error('Registration error:', error);
@@ -57,74 +89,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // プロフィール更新エンドポイント
   app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
     const userId = req.user.id;
-    console.log('Profile update request for user:', userId, req.body);
+    console.log('Profile update request for user:', userId);
 
     try {
-      // まず現在のユーザー情報を取得
-      const [currentUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-
-      if (!currentUser) {
-        console.error('User not found:', userId);
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      // 基本情報の更新
-      const updateData = {
-        username: req.body.username,
-        displayName: req.body.displayName,
-        location: req.body.location,
-        preferredLocations: req.body.preferredLocations,
-      };
-
-      console.log('Updating user with data:', updateData);
-
-      // 更新処理を実行
-      const [updatedUser] = await db
-        .update(users)
-        .set(updateData)
-        .where(eq(users.id, userId))
-        .returning();
-
-      if (!updatedUser) {
-        console.error('Update failed for user:', userId);
-        throw new Error("プロフィールの更新に失敗しました");
-      }
-
-      // パスワード変更のリクエストがある場合
-      if (req.body.currentPassword && req.body.newPassword) {
-        console.log('Processing password update for user:', userId);
-
-        // 現在のパスワードを確認
-        const isPasswordValid = await comparePasswords(
-          req.body.currentPassword,
-          currentUser.password
-        );
-
-        if (!isPasswordValid) {
-          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
-        }
-
-        // 新しいパスワードをハッシュ化
-        const hashedPassword = await hashPassword(req.body.newPassword);
-
-        // パスワードを更新
-        await db
-          .update(users)
-          .set({ password: hashedPassword })
+      const updatedUser = await db.transaction(async (tx) => {
+        // 現在のユーザー情報を取得
+        const [currentUser] = await tx
+          .select()
+          .from(users)
           .where(eq(users.id, userId));
 
-        console.log('Password updated successfully for user:', userId);
-      }
+        if (!currentUser) {
+          throw new Error("ユーザーが見つかりません");
+        }
 
-      console.log('Profile updated successfully:', updatedUser);
+        // 基本情報の更新
+        const [updated] = await tx
+          .update(users)
+          .set({
+            username: req.body.username,
+            displayName: req.body.displayName,
+            location: req.body.location,
+            preferredLocations: req.body.preferredLocations,
+          })
+          .where(eq(users.id, userId))
+          .returning();
+
+        if (!updated) {
+          throw new Error("プロフィールの更新に失敗しました");
+        }
+
+        // パスワード更新が要求された場合
+        if (req.body.currentPassword && req.body.newPassword) {
+          const isPasswordValid = await comparePasswords(
+            req.body.currentPassword,
+            currentUser.password
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("現在のパスワードが正しくありません");
+          }
+
+          const hashedPassword = await hashPassword(req.body.newPassword);
+          await tx
+            .update(users)
+            .set({ password: hashedPassword })
+            .where(eq(users.id, userId));
+        }
+
+        return updated;
+      });
+
+      console.log('Profile updated successfully:', { userId });
       res.json(updatedUser);
-
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(500).json({
+      res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
         message: error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
       });
     }
@@ -201,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ログインエンドポイント
   app.post("/api/login", passport.authenticate("local"), (req: any, res) => {
-    console.log('Login successful:', req.user);
+    console.log('Login successful:', { userId: req.user.id });
     res.json(req.user);
   });
 
