@@ -63,7 +63,10 @@ export default function AuthPage() {
     },
   });
 
-  const handleRegisterSubmit = (data: any) => {
+  const handleRegisterSubmit = async (data: InsertUser) => {
+    console.log('Selected Prefectures:', selectedPrefectures);
+    console.log('Form Data:', data);
+
     if (selectedPrefectures.length === 0) {
       registerForm.setError("preferredLocations", {
         type: "manual",
@@ -77,16 +80,19 @@ export default function AuthPage() {
       preferredLocations: selectedPrefectures,
     };
 
+    console.log('Submitting Form Data:', formData);
     registerMutation.mutate(formData);
   };
 
   const handlePrefectureChange = (prefecture: string, checked: boolean) => {
     setSelectedPrefectures(prev => {
-      if (checked) {
-        return [...prev, prefecture];
-      } else {
-        return prev.filter(p => p !== prefecture);
-      }
+      const newPrefectures = checked 
+        ? [...prev, prefecture]
+        : prev.filter(p => p !== prefecture);
+
+      console.log('Updated Prefectures:', newPrefectures);
+      registerForm.setValue("preferredLocations", newPrefectures);
+      return newPrefectures;
     });
   };
 
