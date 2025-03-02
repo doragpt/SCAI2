@@ -38,6 +38,24 @@ export default function AuthPage() {
   const [formData, setFormData] = useState<TalentRegisterFormData | null>(null);
   const { toast } = useToast();
 
+  // 生年月日用のドロップダウンの選択肢を生成
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, i) => currentYear - 18 - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const [selectedYear, setSelectedYear] = useState<number>();
+  const [selectedMonth, setSelectedMonth] = useState<number>();
+  const [selectedDay, setSelectedDay] = useState<number>();
+
+  const getDaysInMonth = (year?: number, month?: number) => {
+    if (!year || !month) return [];
+    return Array.from(
+      { length: new Date(year, month, 0).getDate() },
+      (_, i) => i + 1
+    );
+  };
+
+  const days = getDaysInMonth(selectedYear, selectedMonth);
+
   const registerForm = useForm<TalentRegisterFormData>({
     resolver: zodResolver(talentRegisterFormSchema),
     defaultValues: {
@@ -52,6 +70,25 @@ export default function AuthPage() {
       privacyPolicy: false,
     },
   });
+
+  const handleDateChange = (type: 'year' | 'month' | 'day', value: number) => {
+    if (type === 'year') setSelectedYear(value);
+    if (type === 'month') setSelectedMonth(value);
+    if (type === 'day') setSelectedDay(value);
+
+    let dateStr = '';
+    if (type === 'year' && selectedMonth && selectedDay) {
+      dateStr = `${value}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    } else if (type === 'month' && selectedYear && selectedDay) {
+      dateStr = `${selectedYear}-${String(value).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    } else if (type === 'day' && selectedYear && selectedMonth) {
+      dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(value).padStart(2, '0')}`;
+    }
+
+    if (dateStr) {
+      registerForm.setValue('birthDate', dateStr, { shouldValidate: true });
+    }
+  };
 
   // 登録フォームの送信処理
   const handleRegisterSubmit = async (data: TalentRegisterFormData) => {
@@ -152,13 +189,47 @@ export default function AuthPage() {
                     <p className="text-sm text-muted-foreground mb-2">
                       ※18歳未満、高校生は登録できません
                     </p>
-                    <Input
-                      type="date"
-                      {...registerForm.register("birthDate")}
-                      max={new Date(
-                        Date.now() - 18 * 365 * 24 * 60 * 60 * 1000
-                      ).toISOString().split("T")[0]}
-                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <Select onValueChange={(value) => handleDateChange('year', Number(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="年" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}年
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select onValueChange={(value) => handleDateChange('month', Number(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="月" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {months.map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {month}月
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        onValueChange={(value) => handleDateChange('day', Number(value))}
+                        disabled={!selectedYear || !selectedMonth}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="日" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {days.map((day) => (
+                            <SelectItem key={day} value={day.toString()}>
+                              {day}日
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     {registerForm.formState.errors.birthDate && (
                       <p className="text-sm text-destructive mt-1">
                         {registerForm.formState.errors.birthDate.message}
@@ -317,8 +388,27 @@ export default function AuthPage() {
 
                   <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
                     <h3 className="font-medium">個人情報の取り扱いについて</h3>
-                    <div className="text-sm text-muted-foreground h-40 overflow-y-auto space-y-2">
-                      {/* プライバシーポリシーの内容 */}
+                    <div className="text-sm text-muted-foreground h-40 overflow-y-auto space-y-2 p-4">
+                      <p>当社は、当社が運営する求人サイト（以下「本サイト」）をご利用いただく皆様（以下「会員」）のプライバシーを最大限に尊重し、会員の皆様からご提供いただいた個人情報の管理・運用に細心の注意を払います。</p>
+
+                      <h4 className="font-medium mt-4">1. 個人情報の取得と利用目的</h4>
+                      <p>当社は、本サイトを通じて会員から取得する個人情報について、以下の目的で利用いたします：</p>
+                      <ul className="list-disc pl-4 space-y-2">
+                        <li>サービス提供（求人情報のご案内、会員認証、サポート）</li>
+                        <li>応募情報の開示（会員の同意に基づく企業への情報提供）</li>
+                        <li>統計・分析（匿名化したデータによるサービス改善）</li>
+                      </ul>
+
+                      <h4 className="font-medium mt-4">2. 個人情報の管理</h4>
+                      <p>当社は、個人情報の漏洩、紛失、改変を防止するため、適切なセキュリティ対策を実施しています。</p>
+
+                      <h4 className="font-medium mt-4">3. 個人情報の第三者提供</h4>
+                      <p>当社は、以下の場合を除き、会員の個人情報を第三者に提供することはありません：</p>
+                      <ul className="list-disc pl-4 space-y-2">
+                        <li>会員の同意がある場合</li>
+                        <li>法令に基づく場合</li>
+                        <li>人の生命、身体または財産の保護のために必要な場合</li>
+                      </ul>
                     </div>
 
                     <div className="flex items-center space-x-2">
