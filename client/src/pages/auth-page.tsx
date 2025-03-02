@@ -90,6 +90,33 @@ export default function AuthPage() {
     }
   };
 
+  const isFormValid = () => {
+    const values = registerForm.getValues();
+    const errors = registerForm.formState.errors;
+
+    // デバッグ用のログ出力
+    console.log('Form validation check:');
+    console.log('Values:', values);
+    console.log('Errors:', errors);
+
+    // 各必須フィールドの値をチェック
+    const fieldsValid =
+      values.username?.length > 0 &&
+      values.password?.length >= 8 &&
+      values.passwordConfirm === values.password &&
+      values.displayName?.length > 0 &&
+      values.birthDate?.length > 0 &&
+      values.location &&
+      Array.isArray(values.preferredLocations) &&
+      values.preferredLocations.length > 0 &&
+      values.privacyPolicy === true;
+
+    console.log('Fields valid:', fieldsValid);
+    console.log('No errors:', Object.keys(errors).length === 0);
+
+    return fieldsValid && Object.keys(errors).length === 0;
+  };
+
   // 登録フォームの送信処理
   const handleRegisterSubmit = async (data: TalentRegisterFormData) => {
     console.log("フォーム送信処理開始", data);
@@ -457,7 +484,7 @@ export default function AuthPage() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={registerMutation.isPending}
+                    disabled={!isFormValid() || registerMutation.isPending}
                   >
                     {registerMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
