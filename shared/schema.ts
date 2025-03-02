@@ -52,6 +52,7 @@ const baseTalentSchema = z.object({
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   displayName: z.string().min(1, "お名前を入力してください"),
   birthDate: z.string()
+    .min(1, "生年月日を入力してください")
     .transform((date) => new Date(date))
     .refine((date) => {
       const age = new Date().getFullYear() - date.getFullYear();
@@ -66,7 +67,7 @@ const baseTalentSchema = z.object({
 // フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
 export const talentRegisterFormSchema = baseTalentSchema.extend({
   passwordConfirm: z.string(),
-  privacyPolicy: z.boolean(),
+  privacyPolicy: z.boolean()
 }).refine((data) => data.password === data.passwordConfirm, {
   message: "パスワードが一致しません",
   path: ["passwordConfirm"],

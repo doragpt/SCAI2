@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
+import {
   talentRegisterFormSchema,
   type InsertUser,
   type LoginData,
@@ -402,13 +402,34 @@ export default function AuthPage() {
                               <li>統計・分析目的のため</li>
                             </ul>
 
-                            <p>2. 個人情報の第三者提供について</p>
-                            <p>当社は、会員の個人情報を、原則として本人の同意なく第三者へ提供することはいたしません。</p>
+                            <p>2. 個人情報提供の重要性</p>
+                            <p>会員が本サイトの各サービスをご利用いただくためには、必要な情報の入力が求められます。なお、必須項目の入力がなされない場合、当該サービスのご利用が制限される場合がありますので、ご了承ください。</p>
+
+                            <p>3. 個人情報の第三者提供について</p>
+                            <p>当社は、会員の個人情報を、原則として本人の同意なく第三者へ提供することはいたしません。ただし、以下の場合には、関係法令に基づき、会員の同意を得ずに個人情報を提供する場合があります。</p>
+                            <ul className="list-disc pl-4">
+                              <li>公衆衛生の向上や児童の健全育成のため、緊急かつ必要と判断される場合</li>
+                              <li>国や地方公共団体、またはその委託先が法令に基づく業務を遂行するために必要な場合</li>
+                              <li>裁判所、検察庁、警察等、権限を有する機関から開示を求められた場合</li>
+                              <li>会員ご本人が明示的に第三者への開示を求めた場合</li>
+                              <li>その他、法令で認められている場合</li>
+                            </ul>
+
+                            <p>4. 個人情報の管理および外部委託</p>
+                            <p>当社は、取得した個人情報の漏洩、紛失、改変などを防止するため、最新のセキュリティ対策を講じた安全な環境下で個人情報を管理します。また、必要な範囲内で個人情報の取扱いを外部に委託する場合、その委託先は厳格な個人情報保護の基準を満たす業者を選定し、適切な契約を締結します。</p>
+
+                            <p>5. 会員の権利と情報変更</p>
+                            <p>会員は、登録された個人情報の内容について、いつでも開示、訂正、削除、または利用停止を求める権利を有します。その際には、本人確認のため、氏名、住所、電話番号、生年月日、メールアドレスなどの情報をもとに手続きを進めさせていただきます。</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id="privacyPolicy"
-                              {...registerForm.register("privacyPolicy")}
+                              checked={registerForm.watch("privacyPolicy")}
+                              onCheckedChange={(checked) => {
+                                registerForm.setValue("privacyPolicy", checked === true, {
+                                  shouldValidate: true
+                                });
+                              }}
                             />
                             <label
                               htmlFor="privacyPolicy"
