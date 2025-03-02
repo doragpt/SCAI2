@@ -38,7 +38,7 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]),
 });
 
-// タレント登録用の拡張スキーマ
+// タレント用の拡張スキーマ
 const baseTalentSchema = z.object({
   role: z.literal("talent"),
   username: z.string()
@@ -53,10 +53,20 @@ const baseTalentSchema = z.object({
   displayName: z.string().min(1, "お名前を入力してください"),
   birthDate: z.string()
     .min(1, "生年月日を入力してください")
-    .transform((date) => new Date(date))
-    .refine((date) => {
-      const age = new Date().getFullYear() - date.getFullYear();
-      return age >= 18;
+    .refine((dateStr) => {
+      try {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        const today = new Date();
+        const age = today.getFullYear() - date.getFullYear();
+        const monthDiff = today.getMonth() - date.getMonth();
+        const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate()) 
+          ? age - 1 
+          : age;
+        return adjustedAge >= 18;
+      } catch (e) {
+        return false;
+      }
     }, "18歳未満の方は登録できません"),
   location: z.enum(prefectures, {
     errorMap: () => ({ message: "在住地を選択してください" })
