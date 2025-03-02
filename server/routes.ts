@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import passport from "passport";
 
 const scryptAsync = promisify(scrypt);
 
@@ -29,15 +30,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 認証チェックミドルウェア
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('Auth check:', {
-      isAuthenticated: req.isAuthenticated(),
-      session: req.session,
-      user: req.user
-    });
-
     if (!req.isAuthenticated()) {
+      console.log('認証失敗:', { session: req.session, user: req.user });
       return res.status(401).json({ message: "認証が必要です" });
     }
+    console.log('認証成功:', { userId: req.user.id });
     next();
   };
 
@@ -59,15 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // プロフィール更新エンドポイント
   app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      console.log('Profile update request:', {
-        userId,
-        body: req.body,
-        headers: req.headers
-      });
+    const userId = req.user.id;
+    console.log('Profile update request for user:', userId, req.body);
 
-      // 更新前のユーザー情報を取得
+    try {
+      // まず現在のユーザー情報を取得
       const [currentUser] = await db
         .select()
         .from(users)
@@ -78,66 +71,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "ユーザーが見つかりません" });
       }
 
-      console.log('Current user found:', currentUser);
-
       // 基本情報の更新
+      const updateData = {
+        username: req.body.username,
+        displayName: req.body.displayName,
+        location: req.body.location,
+        preferredLocations: req.body.preferredLocations,
+      };
+
+      console.log('Updating user with data:', updateData);
+
+      // 更新処理を実行
       const [updatedUser] = await db
         .update(users)
-        .set({
-          username: req.body.username,
-          displayName: req.body.displayName,
-          location: req.body.location,
-          preferredLocations: req.body.preferredLocations,
-        })
+        .set(updateData)
         .where(eq(users.id, userId))
         .returning();
 
       if (!updatedUser) {
         console.error('Update failed for user:', userId);
-        throw new Error("更新に失敗しました");
+        throw new Error("プロフィールの更新に失敗しました");
       }
 
-      console.log('User updated:', updatedUser);
-
-      // パスワード変更が要求された場合
+      // パスワード変更のリクエストがある場合
       if (req.body.currentPassword && req.body.newPassword) {
-        console.log('Password update requested for user:', userId);
+        console.log('Processing password update for user:', userId);
 
         // 現在のパスワードを確認
-        const isPasswordValid = await comparePasswords(req.body.currentPassword, currentUser.password);
+        const isPasswordValid = await comparePasswords(
+          req.body.currentPassword,
+          currentUser.password
+        );
+
         if (!isPasswordValid) {
           return res.status(400).json({ message: "現在のパスワードが正しくありません" });
         }
 
-        // 新しいパスワードをハッシュ化して更新
+        // 新しいパスワードをハッシュ化
         const hashedPassword = await hashPassword(req.body.newPassword);
+
+        // パスワードを更新
         await db
           .update(users)
           .set({ password: hashedPassword })
           .where(eq(users.id, userId));
 
-        console.log('Password updated for user:', userId);
+        console.log('Password updated successfully for user:', userId);
       }
 
-      // 最新のユーザー情報を返す
-      const [finalUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
+      console.log('Profile updated successfully:', updatedUser);
+      res.json(updatedUser);
 
-      if (!finalUser) {
-        throw new Error("更新後のユーザー情報の取得に失敗しました");
-      }
-
-      console.log('Profile update successful:', {
-        userId,
-        hasPasswordUpdate: Boolean(req.body.currentPassword && req.body.newPassword)
-      });
-
-      res.json(finalUser);
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(500).json({ message: "プロフィールの更新に失敗しました" });
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
+      });
     }
   });
 
@@ -157,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "プロフィールが見つかりません" });
       }
 
-      console.log('Profile fetch successful:', userId);
+      console.log('Profile fetch successful:', user);
       res.json(user);
     } catch (error) {
       console.error('Profile fetch error:', error);
@@ -211,20 +200,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ログインエンドポイント
-  app.post("/api/login", async (req, res) => {
-    try {
-      console.log('Login request received:', req.body);
-      const { username, password } = req.body;
-      const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "ユーザー名またはパスワードが正しくありません" });
-      }
-      res.json(user);
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ message: "ログインに失敗しました" });
-    }
+  app.post("/api/login", passport.authenticate("local"), (req: any, res) => {
+    console.log('Login successful:', req.user);
+    res.json(req.user);
   });
+
+  // ログアウトエンドポイント
+  app.post("/api/logout", (req: any, res, next) => {
+    req.logout((err: any) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -59,6 +59,11 @@ export default function BasicInfoEdit() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["/api/talent/profile"],
+    enabled: !!user,
+  });
+
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -71,8 +76,6 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
-      console.log('プロフィール更新開始:', updateData);
-
       try {
         const response = await fetch("/api/talent/profile", {
           method: "PUT",
@@ -89,14 +92,7 @@ export default function BasicInfoEdit() {
               currentPassword: updateData.currentPassword,
               newPassword: updateData.newPassword,
             } : {})
-          })
-        });
-
-        console.log('レスポンスステータス:', response.status);
-        console.log('レスポンスヘッダー:', {
-          contentType: response.headers.get("content-type"),
-          status: response.status,
-          statusText: response.statusText
+          }),
         });
 
         const data = await response.json();
@@ -105,15 +101,12 @@ export default function BasicInfoEdit() {
           throw new Error(data.message || "プロフィールの更新に失敗しました");
         }
 
-        console.log('更新成功:', data);
         return data;
       } catch (error) {
-        console.error('プロフィール更新エラー:', error);
         throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
     },
     onSuccess: (data) => {
-      // キャッシュを直接更新
       queryClient.setQueryData(["/api/user"], data);
       queryClient.setQueryData(["/api/talent/profile"], data);
 
@@ -125,7 +118,6 @@ export default function BasicInfoEdit() {
       setShowConfirmation(false);
     },
     onError: (error: Error) => {
-      console.error('更新エラー:', error);
       toast({
         title: "エラーが発生しました",
         description: error.message,
@@ -134,23 +126,14 @@ export default function BasicInfoEdit() {
     },
   });
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["/api/talent/profile"],
-  });
-
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('フォーム送信データ:', data);
     setFormData(data);
     setShowConfirmation(true);
   };
 
   const handleConfirm = async () => {
     if (!formData) return;
-    try {
-      await updateProfileMutation.mutateAsync(formData);
-    } catch (error) {
-      console.error('確認画面でのエラー:', error);
-    }
+    await updateProfileMutation.mutateAsync(formData);
   };
 
   if (!user) {
