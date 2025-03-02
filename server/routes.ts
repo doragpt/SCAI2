@@ -2,7 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { talentRegisterFormSchema, type RegisterFormData } from "@shared/schema";
+import {
+  talentRegisterFormSchema,
+  talentProfileUpdateSchema,
+  type RegisterFormData,
+  type TalentProfileUpdate,
+} from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
@@ -85,13 +90,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ログインエンドポイント
+  app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
+    const userId = req.user.id;
+    console.log('Profile update request for user:', userId);
+
+    try {
+      const updateData = talentProfileUpdateSchema.parse(req.body);
+
+      const updatedUser = await db.transaction(async (tx) => {
+        const [currentUser] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, userId));
+
+        if (!currentUser) {
+          throw new Error("ユーザーが見つかりません");
+        }
+
+        if (updateData.currentPassword && updateData.newPassword) {
+          const isPasswordValid = await comparePasswords(
+            updateData.currentPassword,
+            currentUser.password
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("現在のパスワードが正しくありません");
+          }
+
+          updateData.password = await hashPassword(updateData.newPassword);
+        }
+
+        const [updated] = await tx
+          .update(users)
+          .set({
+            ...updateData,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId))
+          .returning();
+
+        if (!updated) {
+          throw new Error("プロフィールの更新に失敗しました");
+        }
+
+        return updated;
+      });
+
+      console.log('Profile updated successfully:', { userId });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      if (error instanceof Error) {
+        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "プロフィールの更新に失敗しました"
+        });
+      }
+    }
+  });
+
+  app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('Profile fetch request for user:', userId);
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!user) {
+        console.error('User not found:', userId);
+        return res.status(404).json({ message: "プロフィールが見つかりません" });
+      }
+
+      console.log('Profile fetch successful:', user);
+      res.json(user);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
+    }
+  });
+
   app.post("/api/login", passport.authenticate("local"), (req: any, res) => {
     console.log('Login successful:', { userId: req.user.id });
     res.json(req.user);
   });
 
-  // ログアウトエンドポイント
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {
       if (err) return next(err);
