@@ -11,14 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
-  birthYear: z.string().min(1, "生年を選択してください"),
-  birthMonth: z.string().min(1, "月を選択してください"),
-  birthDay: z.string().min(1, "日を選択してください"),
   location: z.string().min(1, "居住地を選択してください"),
   preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
   currentPassword: z.string().optional(),
@@ -44,41 +45,21 @@ const basicInfoSchema = z.object({
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 
-// 年月日の選択肢を生成
-const generateYears = () => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  for (let i = currentYear - 60; i <= currentYear - 18; i++) {
-    years.push(i.toString());
-  }
-  return years;
-};
-
-const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["/api/talent/profile"],
   });
 
-  // ユーザーの生年月日を年/月/日に分割
-  const birthDate = user?.birthDate ? new Date(user.birthDate) : null;
-  const defaultYear = birthDate?.getFullYear().toString();
-  const defaultMonth = birthDate ? (birthDate.getMonth() + 1).toString().padStart(2, '0') : "";
-  const defaultDay = birthDate ? birthDate.getDate().toString().padStart(2, '0') : "";
-
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       displayName: user?.displayName ?? "",
-      birthYear: defaultYear ?? "",
-      birthMonth: defaultMonth ?? "",
-      birthDay: defaultDay ?? "",
       location: user?.location ?? "",
       preferredLocations: user?.preferredLocations ?? [],
     },
@@ -86,16 +67,11 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      // 生年月日を結合してISOString形式に変換
-      const birthDate = new Date(`${data.birthYear}-${data.birthMonth}-${data.birthDay}`).toISOString();
-
       const response = await fetch("/api/talent/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          birthDate,
-          // パスワード関連のフィールドは条件付きで送信
           ...(data.newPassword ? {
             currentPassword: data.currentPassword,
             newPassword: data.newPassword,
@@ -115,6 +91,7 @@ export default function BasicInfoEdit() {
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
       });
+      setShowConfirmation(false);
     },
     onError: (error: Error) => {
       toast({
@@ -126,9 +103,15 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
+    setFormData(data);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!formData) return;
     setIsSubmitting(true);
     try {
-      await updateProfileMutation.mutateAsync(data);
+      await updateProfileMutation.mutateAsync(formData);
     } finally {
       setIsSubmitting(false);
     }
@@ -179,73 +162,15 @@ export default function BasicInfoEdit() {
               )}
             />
 
-            <div className="space-y-4">
+            {/* 生年月日（表示のみ） */}
+            <div className="space-y-2">
               <FormLabel>生年月日</FormLabel>
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="birthYear"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="年" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {generateYears().map((year) => (
-                            <SelectItem key={year} value={year}>{year}年</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="birthMonth"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="月" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {months.map((month) => (
-                            <SelectItem key={month} value={month}>{parseInt(month)}月</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="birthDay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="日" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {days.map((day) => (
-                            <SelectItem key={day} value={day}>{parseInt(day)}日</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="p-3 bg-muted rounded-md">
+                <p>{user.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
               </div>
+              <p className="text-sm text-muted-foreground">
+                ※生年月日の修正が必要な場合は、運営にお問い合わせください。
+              </p>
             </div>
 
             <FormField
@@ -351,10 +276,55 @@ export default function BasicInfoEdit() {
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              保存する
+              確認する
             </Button>
           </form>
         </Form>
+
+        {/* 確認ダイアログ */}
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>入力内容の確認</DialogTitle>
+              <DialogDescription>
+                以下の内容で更新します。よろしいですか？
+              </DialogDescription>
+            </DialogHeader>
+            {formData && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium">表示名</p>
+                  <p>{formData.displayName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">居住地</p>
+                  <p>{formData.location}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">希望地域</p>
+                  <p>{formData.preferredLocations.join(', ')}</p>
+                </div>
+                {formData.newPassword && (
+                  <div>
+                    <p className="text-sm font-medium">パスワード</p>
+                    <p>変更あり</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+                戻る
+              </Button>
+              <Button onClick={handleConfirm} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                更新する
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
