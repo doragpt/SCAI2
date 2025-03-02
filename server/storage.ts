@@ -13,45 +13,53 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  private currentId: number;
 
   constructor() {
-    this.users = new Map();
-    this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    try {
+      console.log('Getting user by ID:', id);
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      console.log('Found user:', user);
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      throw error;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    try {
+      console.log('Getting user by username:', username);
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      console.log('Found user:', user);
+      return user;
+    } catch (error) {
+      console.error('Error getting user by username:', error);
+      throw error;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
-      console.log('Creating user with data:', insertUser);
-
-      const id = this.currentId++;
-      const user: User = {
-        ...insertUser,
-        id,
-        createdAt: new Date(),
-        age: null,
-        birthDate: insertUser.birthDate || null,
-        preferredLocations: insertUser.preferredLocations || [],
-      };
-
-      console.log('Created user object:', user);
-      this.users.set(id, user);
+      console.log('Creating user:', insertUser);
+      const [user] = await db
+        .insert(users)
+        .values({
+          ...insertUser,
+          createdAt: new Date(),
+          age: null,
+          birthDate: insertUser.birthDate || null,
+          preferredLocations: insertUser.preferredLocations || [],
+        })
+        .returning();
+      console.log('Created user:', user);
       return user;
     } catch (error) {
       console.error('Error creating user:', error);
@@ -60,4 +68,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
