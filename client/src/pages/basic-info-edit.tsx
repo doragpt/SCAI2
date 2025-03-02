@@ -99,24 +99,12 @@ export default function BasicInfoEdit() {
           statusText: response.statusText
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-          const text = await response.text();
-          console.error('エラーレスポンス:', text);
-
-          let errorMessage = "プロフィールの更新に失敗しました";
-          try {
-            const errorData = JSON.parse(text);
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch (e) {
-            console.error('JSONパースエラー:', e);
-          }
-
-          throw new Error(errorMessage);
+          throw new Error(result.message || "プロフィールの更新に失敗しました");
         }
 
-        const result = await response.json();
         console.log('更新成功:', result);
         return result;
       } catch (error) {
@@ -150,6 +138,10 @@ export default function BasicInfoEdit() {
     },
   });
 
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["/api/talent/profile"],
+  });
+
   const onSubmit = async (data: BasicInfoFormData) => {
     console.log('フォーム送信データ:', data);
     setFormData(data);
@@ -164,11 +156,6 @@ export default function BasicInfoEdit() {
       console.error('確認画面でのエラー:', error);
     }
   };
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["/api/talent/profile"],
-  });
-
 
   if (!user) {
     return <Redirect to="/auth" />;
@@ -227,7 +214,6 @@ export default function BasicInfoEdit() {
               )}
             />
 
-            {/* 生年月日（表示のみ） */}
             <div className="space-y-2">
               <FormLabel>生年月日</FormLabel>
               <div className="p-3 bg-muted rounded-md">
@@ -267,7 +253,7 @@ export default function BasicInfoEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>希望地域（複数選択可）</FormLabel>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {prefectures.map((pref) => (
                       <div key={pref} className="flex items-center space-x-2">
                         <Checkbox
@@ -288,7 +274,6 @@ export default function BasicInfoEdit() {
               )}
             />
 
-            {/* パスワード変更 */}
             <div className="space-y-4 border rounded-lg p-4">
               <h2 className="text-lg font-semibold">パスワード変更</h2>
               <FormField
@@ -332,7 +317,6 @@ export default function BasicInfoEdit() {
               />
             </div>
 
-            {/* 送信ボタン */}
             <Button
               type="submit"
               className="w-full"
@@ -346,7 +330,6 @@ export default function BasicInfoEdit() {
           </form>
         </Form>
 
-        {/* 確認ダイアログ */}
         <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
           <DialogContent>
             <DialogHeader>

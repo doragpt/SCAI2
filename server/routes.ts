@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { insertUserSchema } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { talentProfiles, applications, keepList, viewHistory, users } from "@shared/schema";
+import { users } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -95,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Current user found:', currentUser);
 
       // 基本情報の更新
-      const result = await db
+      const [updatedUser] = await db
         .update(users)
         .set({
           username: req.body.username,
@@ -106,9 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.id, req.user.id))
         .returning();
 
-      console.log('Update result:', result);
-
-      if (!result.length) {
+      if (!updatedUser) {
         throw new Error("更新に失敗しました");
       }
 
@@ -130,16 +128,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(users.id, req.user.id));
       }
 
-      // 更新後のユーザー情報を取得して返す
-      const [updatedUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, req.user.id));
-
-      if (!updatedUser) {
-        throw new Error("更新後のユーザー情報の取得に失敗しました");
-      }
-
       console.log('Profile updated successfully:', {
         userId: req.user.id,
         hasPasswordUpdate: Boolean(req.body.currentPassword && req.body.newPassword)
@@ -152,10 +140,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // タレントプロフィール取得
+  // プロフィール取得エンドポイント
   app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
-      // usersテーブルから直接ユーザー情報を取得
       const [user] = await db
         .select()
         .from(users)
