@@ -77,10 +77,18 @@ export default function AuthPage() {
     if (type === 'month') setSelectedMonth(value);
     if (type === 'day') setSelectedDay(value);
 
-    if (selectedYear && selectedMonth && selectedDay) {
-      const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    let dateStr = '';
+    if (type === 'year' && selectedMonth && selectedDay) {
+      dateStr = `${value}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    } else if (type === 'month' && selectedYear && selectedDay) {
+      dateStr = `${selectedYear}-${String(value).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    } else if (type === 'day' && selectedYear && selectedMonth) {
+      dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(value).padStart(2, '0')}`;
+    }
+
+    if (dateStr) {
+      console.log('Setting birthDate:', dateStr);
       registerForm.setValue('birthDate', dateStr, { shouldValidate: true });
-      console.log('Date string set:', dateStr); // デバッグ用
     }
   };
 
@@ -112,31 +120,27 @@ export default function AuthPage() {
     const values = registerForm.getValues();
     const errors = registerForm.formState.errors;
 
+    // デバッグ用のログ出力
     console.log('Form validation check:');
-    console.log('Username:', values.username);
-    console.log('Password:', values.password);
-    console.log('Password Confirm:', values.passwordConfirm);
-    console.log('Display Name:', values.displayName);
-    console.log('Birth Date:', values.birthDate);
-    console.log('Location:', values.location);
-    console.log('Preferred Locations:', values.preferredLocations);
-    console.log('Privacy Policy:', values.privacyPolicy);
-    console.log('Form Errors:', errors);
+    console.log('Values:', values);
+    console.log('Errors:', errors);
 
-    const isValid = 
-      values.username &&
-      values.password &&
-      values.passwordConfirm &&
-      values.password === values.passwordConfirm &&
-      values.displayName &&
-      values.birthDate &&
+    // 各フィールドの値をチェック
+    const fieldsValid =
+      values.username?.length > 0 &&
+      values.password?.length >= 8 &&
+      values.passwordConfirm === values.password &&
+      values.displayName?.length > 0 &&
+      values.birthDate?.length > 0 &&
       values.location &&
+      Array.isArray(values.preferredLocations) &&
       values.preferredLocations.length > 0 &&
-      values.privacyPolicy === true &&
-      Object.keys(errors).length === 0;
+      values.privacyPolicy === true;
 
-    console.log('Is form valid:', isValid);
-    return isValid;
+    console.log('Fields valid:', fieldsValid);
+    console.log('No errors:', Object.keys(errors).length === 0);
+
+    return fieldsValid && Object.keys(errors).length === 0;
   };
 
   return (
