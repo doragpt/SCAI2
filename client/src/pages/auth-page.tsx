@@ -24,6 +24,7 @@ import {
 } from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 type TalentRegisterFormData = ReturnType<typeof talentRegisterFormSchema.parse>;
 
@@ -31,6 +32,8 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [formData, setFormData] = useState<TalentRegisterFormData | null>(null);
 
   // 生年月日用のドロップダウンの選択肢を生成
   const currentYear = new Date().getFullYear();
@@ -101,22 +104,27 @@ export default function AuthPage() {
         return;
       }
 
-      // Remove confirmation fields before submission
-      const { passwordConfirm, privacyPolicy, ...submitData } = data;
-
-      console.log('Processed Form Data:', submitData);
-      registerMutation.mutate(submitData);
+      setFormData(data);
+      setShowConfirmation(true);
     } catch (error) {
       console.error('Form submission error:', error);
     }
   };
 
-  if (user) {
-    // ダッシュボードへリダイレクト
-    return <Redirect to="/talent/dashboard" />;
-  }
+  const handleConfirmRegistration = async () => {
+    if (!formData) return;
 
-  // フォームの入力状態をチェック
+    try {
+      // Remove confirmation fields before submission
+      const { passwordConfirm, privacyPolicy, ...submitData } = formData;
+
+      console.log('Processed Form Data:', submitData);
+      registerMutation.mutate(submitData);
+    } catch (error) {
+      console.error('Registration confirmation error:', error);
+    }
+  };
+
   const isFormValid = () => {
     const values = registerForm.getValues();
     const errors = registerForm.formState.errors;
@@ -143,6 +151,11 @@ export default function AuthPage() {
 
     return fieldsValid && Object.keys(errors).length === 0;
   };
+
+  if (user) {
+    // ダッシュボードへリダイレクト
+    return <Redirect to="/talent/dashboard" />;
+  }
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
@@ -537,6 +550,60 @@ export default function AuthPage() {
           </p>
         </div>
       </div>
+      {/* 確認ダイアログ */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>入力内容の確認</DialogTitle>
+            <DialogDescription>
+              以下の内容で登録を行います。入力内容に間違いがないことをご確認ください。
+            </DialogDescription>
+          </DialogHeader>
+          {formData && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">ニックネーム</p>
+                <p>{formData.username}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">お名前</p>
+                <p>{formData.displayName}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">生年月日</p>
+                <p>{formData.birthDate}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">居住地</p>
+                <p>{formData.location}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">希望地域</p>
+                <p>{formData.preferredLocations.join(', ')}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  ※生年月日は一度登録すると変更できません。お間違えのないようご確認ください。
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+              戻る
+            </Button>
+            <Button
+              onClick={handleConfirmRegistration}
+              disabled={registerMutation.isPending}
+            >
+              {registerMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              登録する
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
