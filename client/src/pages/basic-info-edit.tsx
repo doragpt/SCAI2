@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
@@ -59,10 +59,6 @@ export default function BasicInfoEdit() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["/api/talent/profile"],
-  });
-
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -82,7 +78,6 @@ export default function BasicInfoEdit() {
         preferredLocations: updateData.preferredLocations,
       };
 
-      // パスワード変更が要求された場合のみ追加
       if (updateData.newPassword && updateData.currentPassword) {
         Object.assign(requestData, {
           currentPassword: updateData.currentPassword,
@@ -90,25 +85,47 @@ export default function BasicInfoEdit() {
         });
       }
 
-      try {
-        const response = await apiRequest("PUT", "/api/talent/profile", requestData);
-        console.log('サーバーレスポンス:', {
-          status: response.status,
-          statusText: response.statusText,
-          contentType: response.headers.get("content-type")
-        });
+      console.log('送信するデータ:', requestData);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "プロフィールの更新に失敗しました");
+      const response = await fetch("/api/talent/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(requestData),
+      });
+
+      console.log('レスポンスステータス:', response.status);
+      console.log('レスポンスヘッダー:', {
+        contentType: response.headers.get('content-type'),
+        status: response.status,
+        statusText: response.statusText
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('エラーレスポンス:', text);
+
+        let errorMessage = "プロフィールの更新に失敗しました";
+        try {
+          const errorData = JSON.parse(text);
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (e) {
+          console.error('JSONパースエラー:', e);
         }
 
-        const responseData = await response.json();
-        console.log('更新成功:', responseData);
-        return responseData;
-      } catch (error) {
-        console.error('更新エラー:', error);
-        throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.text();
+      try {
+        return JSON.parse(result);
+      } catch (e) {
+        console.error('レスポンスのパースに失敗:', result);
+        throw new Error('サーバーからの応答を処理できませんでした');
       }
     },
     onSuccess: () => {
@@ -120,7 +137,7 @@ export default function BasicInfoEdit() {
       setShowConfirmation(false);
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
+      console.error('更新エラー:', error);
       toast({
         title: "エラーが発生しました",
         description: error.message,
@@ -137,8 +154,17 @@ export default function BasicInfoEdit() {
 
   const handleConfirm = async () => {
     if (!formData) return;
-    await updateProfileMutation.mutateAsync(formData);
+    try {
+      await updateProfileMutation.mutateAsync(formData);
+    } catch (error) {
+      console.error('確認画面でのエラー:', error);
+    }
   };
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["/api/talent/profile"],
+  });
+
 
   if (!user) {
     return <Redirect to="/auth" />;

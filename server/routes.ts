@@ -27,6 +27,20 @@ async function comparePasswords(supplied: string, stored: string) {
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // 認証チェックミドルウェア
+  const requireAuth = (req: any, res: any, next: any) => {
+    console.log('Auth check:', {
+      isAuthenticated: req.isAuthenticated(),
+      session: req.session,
+      user: req.user
+    });
+
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+    next();
+  };
+
   // ユーザー登録エンドポイント
   app.post("/api/register", async (req, res) => {
     try {
@@ -59,40 +73,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 認証チェックミドルウェア
-  const requireAuth = (req: any, res: any, next: any) => {
-    console.log('Auth check:', req.isAuthenticated());
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証が必要です" });
-    }
-    next();
-  };
-
-  // タレントプロフィール取得
-  app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
-    try {
-      const [profile] = await db
-        .select()
-        .from(talentProfiles)
-        .where(eq(talentProfiles.userId, req.user.id));
-
-      if (!profile) {
-        return res.status(404).json({ message: "プロフィールが見つかりません" });
-      }
-
-      res.json(profile);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
-    }
-  });
 
   // プロフィール更新エンドポイント
   app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
       console.log('Profile update request:', {
         userId: req.user.id,
-        body: req.body
+        body: req.body,
+        headers: req.headers
       });
 
       // 基本情報の更新
@@ -138,6 +126,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Profile update error:', error);
       res.status(500).json({ message: "プロフィールの更新に失敗しました" });
+    }
+  });
+
+  // タレントプロフィール取得
+  app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
+    try {
+      const [profile] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, req.user.id));
+
+      if (!profile) {
+        return res.status(404).json({ message: "プロフィールが見つかりません" });
+      }
+
+      res.json(profile);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
     }
   });
 
