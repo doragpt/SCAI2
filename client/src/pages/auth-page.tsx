@@ -75,7 +75,7 @@ export default function AuthPage() {
                       <RadioGroup defaultValue="talent" onValueChange={(value) => registerForm.setValue("role", value)}>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="talent" id="talent" />
-                          <Label htmlFor="talent">タレント</Label>
+                          <Label htmlFor="talent">女性</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="scout" id="scout" />

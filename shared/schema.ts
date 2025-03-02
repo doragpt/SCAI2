@@ -20,9 +20,10 @@ export const talentProfiles = pgTable("talent_profiles", {
   sameDay: boolean("same_day").default(false),
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
-  bust: integer("bust").notNull(),
-  waist: integer("waist").notNull(),
-  hip: integer("hip").notNull(),
+  bust: integer("bust"),
+  waist: integer("waist"),
+  hip: integer("hip"),
+  cupSize: text("cup_size").notNull(),
   photos: json("photos").$type<string[]>().notNull(),
   serviceTypes: json("service_types").$type<string[]>().notNull(),
   location: text("location").notNull(),
@@ -56,10 +57,19 @@ export const insertUserSchema = createInsertSchema(users).pick({
   role: true,
 });
 
-export const insertTalentProfileSchema = createInsertSchema(talentProfiles).omit({
-  id: true,  
-  userId: true,
-});
+export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
+  .omit({
+    id: true,
+    userId: true,
+  })
+  .extend({
+    availableFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
+    availableTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
+    bust: z.number().optional(),
+    waist: z.number().optional(),
+    hip: z.number().optional(),
+    cupSize: z.string(),
+  });
 
 export const insertScoutProfileSchema = createInsertSchema(scoutProfiles).omit({
   id: true,

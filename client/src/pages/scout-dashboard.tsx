@@ -53,7 +53,7 @@ export default function ScoutDashboard() {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="profiles">
           <TabsList className="w-full">
-            <TabsTrigger value="profiles">利用可能なタレント</TabsTrigger>
+            <TabsTrigger value="profiles">利用可能な女性</TabsTrigger>
             <TabsTrigger value="applications">申請履歴</TabsTrigger>
           </TabsList>
 

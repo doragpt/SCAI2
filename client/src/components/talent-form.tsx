@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Form,
   FormControl,
   FormField,
@@ -19,6 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 
+const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+
 export function TalentForm() {
   const { toast } = useToast();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -28,14 +37,15 @@ export function TalentForm() {
     defaultValues: {
       age: undefined,
       guaranteeAmount: undefined,
-      availableFrom: undefined,
-      availableTo: undefined,
+      availableFrom: "",
+      availableTo: "",
       sameDay: false,
       height: undefined,
       weight: undefined,
       bust: undefined,
       waist: undefined,
       hip: undefined,
+      cupSize: "",
       photos: [],
       serviceTypes: [],
       location: "",
@@ -78,8 +88,16 @@ export function TalentForm() {
     });
 
     // 数値フィールドを変換
-    const numericFields = ['age', 'guaranteeAmount', 'height', 'weight', 'bust', 'waist', 'hip'];
+    const numericFields = ['age', 'guaranteeAmount', 'height', 'weight'];
     numericFields.forEach(field => {
+      if (values[field]) {
+        formData.append(field, String(parseInt(values[field], 10)));
+      }
+    });
+
+    // 任意の数値フィールドを変換
+    const optionalNumericFields = ['bust', 'waist', 'hip'];
+    optionalNumericFields.forEach(field => {
       if (values[field]) {
         formData.append(field, String(parseInt(values[field], 10)));
       }
@@ -96,6 +114,7 @@ export function TalentForm() {
     // その他のフィールドを追加
     formData.append('sameDay', String(values.sameDay));
     formData.append('location', values.location);
+    formData.append('cupSize', values.cupSize);
     formData.append('serviceTypes', JSON.stringify(values.serviceTypes));
 
     mutation.mutate(formData);
@@ -145,18 +164,20 @@ export function TalentForm() {
               </FormItem>
             )}
           />
+        </div>
 
+        <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="availableFrom"
-            render={({ field: { onChange, ...field } }) => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>開始可能日</FormLabel>
                 <FormControl>
                   <Input 
                     type="date" 
                     {...field}
-                    onChange={(e) => onChange(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </FormControl>
                 <FormMessage />
@@ -167,14 +188,14 @@ export function TalentForm() {
           <FormField
             control={form.control}
             name="availableTo"
-            render={({ field: { onChange, ...field } }) => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>終了予定日</FormLabel>
                 <FormControl>
                   <Input 
                     type="date" 
                     {...field}
-                    onChange={(e) => onChange(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </FormControl>
                 <FormMessage />
@@ -203,7 +224,56 @@ export function TalentForm() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { name: 'height', label: '身長' },
-            { name: 'weight', label: '体重' },
+            { name: 'weight', label: '体重' }
+          ].map(({ name, label }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name as any}
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem>
+                  <FormLabel>{label} (cm)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field}
+                      onChange={(e) => onChange(e.target.valueAsNumber)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+
+          <FormField
+            control={form.control}
+            name="cupSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>カップサイズ</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="選択してください" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {cupSizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}カップ
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
             { name: 'bust', label: 'バスト' },
             { name: 'waist', label: 'ウエスト' },
             { name: 'hip', label: 'ヒップ' }
@@ -214,7 +284,7 @@ export function TalentForm() {
               name={name as any}
               render={({ field: { onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>{label} (cm)</FormLabel>
+                  <FormLabel>{label} (cm) - 任意</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
