@@ -63,29 +63,31 @@ export default function StoreDashboard() {
                 <Card key={profile.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>¥{profile.guaranteeAmount.toLocaleString()} / 日</span>
+                      <span>¥{profile.guaranteeAmount?.toLocaleString() ?? '未設定'} / 日</span>
                       <span className="text-sm text-muted-foreground">
-                        {profile.age}歳
+                        {profile.birthDate ? new Date().getFullYear() - new Date(profile.birthDate).getFullYear() : '年齢未設定'}歳
                       </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                        <img
-                          src={`data:image/jpeg;base64,${profile.photos[0]}`}
-                          alt="プロフィール"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      {profile.photos?.[0] && (
+                        <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={`data:image/jpeg;base64,${profile.photos[0]}`}
+                            alt="プロフィール"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>身長: {profile.height}cm</div>
-                        <div>体重: {profile.weight}kg</div>
-                        <div>バスト: {profile.bust}cm</div>
-                        <div>ウエスト: {profile.waist}cm</div>
+                        <div>身長: {profile.height ?? '未設定'}cm</div>
+                        <div>体重: {profile.weight ?? '未設定'}kg</div>
+                        <div>バスト: {profile.bust ?? '未設定'}cm</div>
+                        <div>ウエスト: {profile.waist ?? '未設定'}cm</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {profile.serviceTypes.map((type) => (
+                        {profile.serviceTypes?.map((type) => (
                           <span
                             key={type}
                             className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"

@@ -14,18 +14,33 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
 
   const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema.pick({ username: true, password: true })),
+    resolver: zodResolver(
+      insertUserSchema.pick({ username: true, password: true })
+    ),
   });
 
   const registerForm = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
-      role: "talent", // デフォルトで女性ユーザーに設定
+      role: "talent",
+    },
+  });
+
+  const storeLoginForm = useForm({
+    resolver: zodResolver(
+      insertUserSchema.pick({ username: true, password: true })
+    ),
+  });
+
+  const storeRegisterForm = useForm({
+    resolver: zodResolver(insertUserSchema),
+    defaultValues: {
+      role: "store",
     },
   });
 
   if (user) {
-    return <Redirect to="/talent/register" />;
+    return <Redirect to={user.role === "store" ? "/store/dashboard" : "/talent/register"} />;
   }
 
   return (
@@ -36,60 +51,124 @@ export default function AuthPage() {
             <CardTitle>SCAIへようこそ</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
+            <Tabs defaultValue="talent">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">ログイン</TabsTrigger>
-                <TabsTrigger value="register">新規登録</TabsTrigger>
+                <TabsTrigger value="talent">女性の方</TabsTrigger>
+                <TabsTrigger value="store">店舗様</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login">
-                <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="username">ユーザー名</Label>
-                      <Input {...loginForm.register("username")} />
-                    </div>
-                    <div>
-                      <Label htmlFor="password">パスワード</Label>
-                      <Input type="password" {...loginForm.register("password")} />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                      {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      ログイン
-                    </Button>
-                  </div>
-                </form>
+              <TabsContent value="talent">
+                <Tabs defaultValue="login">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">ログイン</TabsTrigger>
+                    <TabsTrigger value="register">新規登録</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="login">
+                    <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="username">ユーザー名</Label>
+                          <Input {...loginForm.register("username")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">パスワード</Label>
+                          <Input type="password" {...loginForm.register("password")} />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                          {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          ログイン
+                        </Button>
+                      </div>
+                    </form>
+                  </TabsContent>
+
+                  <TabsContent value="register">
+                    <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="username">ユーザー名</Label>
+                          <Input {...registerForm.register("username")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">パスワード</Label>
+                          <Input type="password" {...registerForm.register("password")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="displayName">お名前</Label>
+                          <Input {...registerForm.register("displayName")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="age">年齢</Label>
+                          <Input type="number" {...registerForm.register("age", { valueAsNumber: true })} />
+                        </div>
+                        <div>
+                          <Label htmlFor="location">在住地</Label>
+                          <Input {...registerForm.register("location")} placeholder="例: 東京都渋谷区" />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                          {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          AIマッチングを利用する（無料登録）
+                        </Button>
+                      </div>
+                    </form>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
-              <TabsContent value="register">
-                <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="username">ユーザー名</Label>
-                      <Input {...registerForm.register("username")} />
-                    </div>
-                    <div>
-                      <Label htmlFor="password">パスワード</Label>
-                      <Input type="password" {...registerForm.register("password")} />
-                    </div>
-                    <div>
-                      <Label htmlFor="displayName">お名前</Label>
-                      <Input {...registerForm.register("displayName")} />
-                    </div>
-                    <div>
-                      <Label htmlFor="age">年齢</Label>
-                      <Input type="number" {...registerForm.register("age", { valueAsNumber: true })} />
-                    </div>
-                    <div>
-                      <Label htmlFor="location">在住地</Label>
-                      <Input {...registerForm.register("location")} placeholder="例: 東京都渋谷区" />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                      {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      AIマッチングを利用する（無料登録）
-                    </Button>
-                  </div>
-                </form>
+              <TabsContent value="store">
+                <Tabs defaultValue="login">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">ログイン</TabsTrigger>
+                    <TabsTrigger value="register">新規登録</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="login">
+                    <form onSubmit={storeLoginForm.handleSubmit((data) => loginMutation.mutate({ ...data, role: "store" }))}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="username">店舗ID</Label>
+                          <Input {...storeLoginForm.register("username")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">パスワード</Label>
+                          <Input type="password" {...storeLoginForm.register("password")} />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                          {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          店舗管理画面へログイン
+                        </Button>
+                      </div>
+                    </form>
+                  </TabsContent>
+
+                  <TabsContent value="register">
+                    <form onSubmit={storeRegisterForm.handleSubmit((data) => registerMutation.mutate({...data, role: "store"}))}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="username">店舗ID</Label>
+                          <Input {...storeRegisterForm.register("username")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">パスワード</Label>
+                          <Input type="password" {...storeRegisterForm.register("password")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="displayName">店舗名</Label>
+                          <Input {...storeRegisterForm.register("displayName")} />
+                        </div>
+                        <div>
+                          <Label htmlFor="location">所在地</Label>
+                          <Input {...storeRegisterForm.register("location")} placeholder="例: 東京都渋谷区" />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                          {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          店舗登録する（無料）
+                        </Button>
+                      </div>
+                    </form>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
           </CardContent>
