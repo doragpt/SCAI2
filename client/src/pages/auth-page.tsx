@@ -15,21 +15,40 @@ import {
 } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from 'zod';
-import { insertUserSchema, type InsertUser, type LoginData, loginSchema, prefectures } from "@shared/schema";
+import { 
+  talentRegisterFormSchema,
+  type InsertUser,
+  type LoginData,
+  loginSchema,
+  prefectures
+} from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
-// RegisterFormData型を拡張
-type RegisterFormData = InsertUser & {
-  passwordConfirm: string;
-  privacyPolicy: boolean;
-};
+type TalentRegisterFormData = ReturnType<typeof talentRegisterFormSchema.parse>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+
+  // 生年月日用のドロップダウンの選択肢を生成
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, i) => currentYear - 18 - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const [selectedYear, setSelectedYear] = useState<number>();
+  const [selectedMonth, setSelectedMonth] = useState<number>();
+  const [selectedDay, setSelectedDay] = useState<number>();
+
+  const getDaysInMonth = (year?: number, month?: number) => {
+    if (!year || !month) return [];
+    return Array.from(
+      { length: new Date(year, month, 0).getDate() },
+      (_, i) => i + 1
+    );
+  };
+
+  const days = getDaysInMonth(selectedYear, selectedMonth);
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -38,23 +57,12 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm<RegisterFormData>({
-    resolver: zodResolver(
-      insertUserSchema.extend({
-        passwordConfirm: z.string(),
-        privacyPolicy: z.boolean(),
-      }).refine((data) => data.password === data.passwordConfirm, {
-        message: "パスワードが一致しません",
-        path: ["passwordConfirm"],
-      }).refine((data) => data.privacyPolicy === true, {
-        message: "個人情報の取り扱いについて同意が必要です",
-        path: ["privacyPolicy"],
-      })
-    ),
+  const registerForm = useForm<TalentRegisterFormData>({
+    resolver: zodResolver(talentRegisterFormSchema),
     defaultValues: {
-      role: "talent",
+      role: "talent" as const,
       preferredLocations: [],
-      birthDate: undefined,
+      birthDate: "",
       username: "",
       password: "",
       passwordConfirm: "",
@@ -64,21 +72,26 @@ export default function AuthPage() {
     },
   });
 
-  const handleRegisterSubmit = async (data: RegisterFormData) => {
+  const handleDateChange = (type: 'year' | 'month' | 'day', value: number) => {
+    if (type === 'year') setSelectedYear(value);
+    if (type === 'month') setSelectedMonth(value);
+    if (type === 'day') setSelectedDay(value);
+
+    if (selectedYear && selectedMonth && selectedDay) {
+      const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+      registerForm.setValue('birthDate', dateStr, { shouldValidate: true });
+    }
+  };
+
+  const handleRegisterSubmit = async (data: TalentRegisterFormData) => {
     try {
       console.log('Form Data before submission:', data);
 
-      // Remove extra fields before submission
+      // Remove confirmation fields before submission
       const { passwordConfirm, privacyPolicy, ...submitData } = data;
 
-      // Convert birthDate string to Date object
-      const formData = {
-        ...submitData,
-        birthDate: new Date(submitData.birthDate),
-      };
-
-      console.log('Processed Form Data:', formData);
-      registerMutation.mutate(formData);
+      console.log('Processed Form Data:', submitData);
+      registerMutation.mutate(submitData);
     } catch (error) {
       console.error('Form submission error:', error);
     }
@@ -103,7 +116,7 @@ export default function AuthPage() {
               </TabsList>
 
               <TabsContent value="talent">
-                <Tabs defaultValue="login">
+                <Tabs defaultValue="register">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="login">ログイン</TabsTrigger>
                     <TabsTrigger value="register">新規登録</TabsTrigger>
@@ -173,17 +186,53 @@ export default function AuthPage() {
                         </div>
 
                         <div>
-                          <Label htmlFor="birthDate">
+                          <Label>
                             生年月日 <span className="text-destructive">※</span>
                           </Label>
                           <p className="text-sm text-muted-foreground mb-2">
                             ※18歳未満、高校生は登録できません
                           </p>
-                          <Input
-                            type="date"
-                            {...registerForm.register("birthDate")}
-                            max={new Date().toISOString().split('T')[0]}
-                          />
+                          <div className="grid grid-cols-3 gap-2">
+                            <Select onValueChange={(value) => handleDateChange('year', Number(value))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="年" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {years.map((year) => (
+                                  <SelectItem key={year} value={year.toString()}>
+                                    {year}年
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select onValueChange={(value) => handleDateChange('month', Number(value))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="月" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {months.map((month) => (
+                                  <SelectItem key={month} value={month.toString()}>
+                                    {month}月
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              onValueChange={(value) => handleDateChange('day', Number(value))}
+                              disabled={!selectedYear || !selectedMonth}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="日" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {days.map((day) => (
+                                  <SelectItem key={day} value={day.toString()}>
+                                    {day}日
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           {registerForm.formState.errors.birthDate && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.birthDate.message}
@@ -199,7 +248,7 @@ export default function AuthPage() {
                             ※文字は半角8文字以上48文字以内<br />
                             半角英字小文字、半角数字はそれぞれ1種類以上必須<br />
                             (半角記号は任意)<br />
-                            ※使用可能な半角記号：! # $ % ( ) + , - . / : = ? @ [ ] ^ _ ` { } |
+                            ※使用可能な半角記号：! # $ % ( ) + , - . / : = ? @ [ ] ^ _ ` |
                           </p>
                           <div className="relative">
                             <Input
@@ -343,14 +392,16 @@ export default function AuthPage() {
                         <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
                           <h3 className="font-medium">個人情報の取り扱いについて</h3>
                           <div className="text-sm text-muted-foreground h-40 overflow-y-auto space-y-2">
-                            <p>当社は、当社が運営する求人サイト（以下「本サイト」）をご利用いただく皆様（以下「会員」）のプライバシーを最大限に尊重し、会員の皆様からご提供いただいた個人情報の管理・運用に細心の注意を払います。</p>
+                            <p>当社は、当社が運営する求人サイト（以下「本サイト」）をご利用いただく皆様（以下「会員」）のプライバシーを最大限に尊重し、会員の皆様からご提供いただいた個人情報の管理・運用に細心の注意を払います。以下、本サイトにおける個人情報の取り扱いの基本方針とその利用目的、管理方法についてご説明いたします。</p>
+
                             <p>1. 個人情報の取得と利用目的</p>
-                            <p>本サイトを通じて会員から取得する個人情報について、以下の目的で利用いたします：</p>
+                            <p>当社は、本サイトを通じて会員から取得する個人情報について、以下の目的で利用いたします。</p>
                             <ul className="list-disc pl-4">
                               <li>サービス提供のため</li>
                               <li>応募情報の開示のため</li>
                               <li>統計・分析目的のため</li>
                             </ul>
+
                             <p>2. 個人情報の第三者提供について</p>
                             <p>当社は、会員の個人情報を、原則として本人の同意なく第三者へ提供することはいたしません。</p>
                           </div>

@@ -29,7 +29,7 @@ export const users = pgTable("users", {
 });
 
 // 基本スキーマを作成
-const baseUserSchema = createInsertSchema(users).omit({ age: true });
+const baseUserSchema = createInsertSchema(users).omit({ id: true, age: true });
 
 // ログインスキーマを追加
 export const loginSchema = z.object({
@@ -38,8 +38,8 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]),
 });
 
-// タレント用スキーマ
-const talentUserSchema = baseUserSchema.extend({
+// タレント登録用の拡張スキーマ
+const baseTalentSchema = z.object({
   role: z.literal("talent"),
   username: z.string()
     .min(1, "ニックネームを入力してください")
@@ -63,6 +63,18 @@ const talentUserSchema = baseUserSchema.extend({
   preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
 });
 
+// フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
+export const talentRegisterFormSchema = baseTalentSchema.extend({
+  passwordConfirm: z.string(),
+  privacyPolicy: z.boolean(),
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+});
+
 // 店舗用スキーマ
 const storeUserSchema = baseUserSchema.extend({
   role: z.literal("store"),
@@ -77,27 +89,15 @@ const storeUserSchema = baseUserSchema.extend({
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   displayName: z.string().min(1, "店舗名を入力してください"),
   location: z.string().min(1, "所在地を入力してください"),
-  birthDate: z.date().optional(),
 });
 
-// ユーザースキーマを統合
+// API用のinsertスキーマ（パスワード確認と同意チェックを除外）
 export const insertUserSchema = z.discriminatedUnion("role", [
-  talentUserSchema,
+  baseTalentSchema,
   storeUserSchema,
 ]);
 
-// 求人情報の型定義
-export type StoreProfile = {
-  id: number;
-  businessName: string;
-  serviceType: string;
-  location: string;
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
-  transportationSupport: boolean;
-  housingSupport: boolean;
-};
-
+// 型定義のエクスポート
 export type LoginData = z.infer<typeof loginSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
