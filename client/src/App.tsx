@@ -15,6 +15,8 @@ import { AgeVerificationModal } from "@/components/age-verification-modal";
 import MyPage from "@/pages/my-page";
 import BasicInfoEdit from "@/pages/basic-info-edit";
 import Jobs from "@/pages/jobs";
+import KeepListPage from "@/pages/keep-list";
+import ViewHistoryPage from "@/pages/view-history";
 
 function Router() {
   return (
@@ -29,8 +31,8 @@ function Router() {
       <ProtectedRoute path="/talent/resume/edit" component={TalentRegistration} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/applications" component={MyPage} />
-      <ProtectedRoute path="/talent/mypage/keep-list" component={MyPage} />
-      <ProtectedRoute path="/talent/mypage/view-history" component={MyPage} />
+      <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
+      <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
       <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
       <Route component={NotFound} />
     </Switch>
