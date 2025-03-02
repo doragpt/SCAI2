@@ -16,20 +16,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const basicInfoSchema = z.object({
-  height: z.number().min(140, "身長を正しく入力してください"),
-  weight: z.number().min(30, "体重を正しく入力してください"),
-  bust: z.number().optional(),
-  waist: z.number().optional(),
-  hip: z.number().optional(),
+  height: z.coerce.number().min(140, "身長は140cm以上で入力してください").max(190, "身長は190cm以下で入力してください"),
+  weight: z.coerce.number().min(30, "体重は30kg以上で入力してください").max(100, "体重は100kg以下で入力してください"),
+  bust: z.coerce.number().min(50, "バストは50cm以上で入力してください").max(150, "バストは150cm以下で入力してください").optional(),
+  waist: z.coerce.number().min(40, "ウエストは40cm以上で入力してください").max(120, "ウエストは120cm以下で入力してください").optional(),
+  hip: z.coerce.number().min(50, "ヒップは50cm以上で入力してください").max(150, "ヒップは150cm以下で入力してください").optional(),
   cupSize: z.string().min(1, "カップサイズを選択してください"),
   bodyType: z.string().min(1, "体型を選択してください"),
-  hobby: z.string().optional(),
-  specialSkill: z.string().optional(),
-  birthPlace: z.string().optional(),
-  bloodType: z.string().optional(),
-  smoking: z.boolean().default(false),
-  tattoo: z.boolean().default(false),
-  piercing: z.boolean().default(false),
   selfIntroduction: z.string().max(1000, "自己紹介は1000文字以内で入力してください"),
 });
 
@@ -54,9 +47,6 @@ export default function BasicInfoEdit() {
       hip: profile?.hip ?? undefined,
       cupSize: profile?.cupSize ?? undefined,
       bodyType: profile?.bodyType ?? undefined,
-      smoking: profile?.smoking ?? false,
-      tattoo: profile?.tattoo ?? false,
-      piercing: profile?.piercing ?? false,
       selfIntroduction: profile?.selfIntroduction ?? "",
     },
   });
@@ -139,7 +129,7 @@ export default function BasicInfoEdit() {
                     <FormItem>
                       <FormLabel>身長 (cm)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -152,7 +142,7 @@ export default function BasicInfoEdit() {
                     <FormItem>
                       <FormLabel>体重 (kg)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -165,7 +155,7 @@ export default function BasicInfoEdit() {
                     <FormItem>
                       <FormLabel>バスト (cm)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -178,7 +168,7 @@ export default function BasicInfoEdit() {
                     <FormItem>
                       <FormLabel>ウエスト (cm)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -191,7 +181,7 @@ export default function BasicInfoEdit() {
                     <FormItem>
                       <FormLabel>ヒップ (cm)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

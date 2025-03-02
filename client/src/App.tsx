@@ -14,12 +14,14 @@ import StoreDashboard from "@/pages/store-dashboard";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import MyPage from "@/pages/my-page";
 import BasicInfoEdit from "@/pages/basic-info-edit";
+import Jobs from "@/pages/jobs";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/jobs" component={Jobs} />
       <Route path="/jobs/:id" component={JobDetail} />
       <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
