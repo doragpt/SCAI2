@@ -23,7 +23,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
 
 const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
@@ -53,8 +53,8 @@ export function TalentForm() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await apiRequest("POST", "/api/talent/profile", formData);
+    mutationFn: async (data: FormData) => {
+      const res = await apiRequest("POST", "/api/talent/profile", data);
       return res.json();
     },
     onSuccess: () => {
@@ -76,7 +76,7 @@ export function TalentForm() {
     if (selectedFiles.length < 5) {
       toast({
         title: "エラー",
-        description: "写真を最低5枚アップロードしてください",
+        description: "写真を最低5枚アップロードしてください（顔写真3枚、全身写真2枚）",
         variant: "destructive",
       });
       return;
@@ -119,9 +119,61 @@ export function TalentForm() {
     setSelectedFiles((prev) => [...prev, ...files].slice(0, 30));
   };
 
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div>
+          <Label>写真 ({selectedFiles.length}/30)</Label>
+          <p className="text-sm text-muted-foreground mb-2">
+            必須: 顔写真3枚（無加工）、全身写真2枚（水着または下着）
+          </p>
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById("photo-upload")?.click()}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              写真をアップロード
+            </Button>
+            <input
+              id="photo-upload"
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 grid grid-cols-4 gap-4">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="group relative aspect-square bg-muted rounded-lg overflow-hidden"
+                >
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`プレビュー ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -306,44 +358,6 @@ export function TalentForm() {
             </FormItem>
           )}
         />
-
-        <div>
-          <Label>写真 ({selectedFiles.length}/30)</Label>
-          <div className="mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("photo-upload")?.click()}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              写真をアップロード
-            </Button>
-            <input
-              id="photo-upload"
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-          {selectedFiles.length > 0 && (
-            <div className="mt-4 grid grid-cols-4 gap-4">
-              {selectedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className="aspect-square bg-muted rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`プレビュー ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         <Button
           type="submit"

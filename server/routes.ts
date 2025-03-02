@@ -17,15 +17,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user.role !== "talent") return res.sendStatus(403);
 
       const files = req.files as Express.Multer.File[] | undefined;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "写真が必要です" });
+      if (!files || files.length < 5) {
+        return res.status(400).json({ message: "写真が必要です（最低5枚：顔写真3枚、全身写真2枚）" });
       }
 
-      const profileData = insertTalentProfileSchema.parse({
-        ...req.body,
-        photos: files.map(file => file.buffer.toString('base64'))
-      });
+      // Convert the photos to base64 strings
+      const photos = files.map(file => file.buffer.toString('base64'));
 
+      // Parse and validate the form data
+      const formData = {
+        ...req.body,
+        // Convert string numbers to actual numbers
+        age: parseInt(req.body.age),
+        guaranteeAmount: parseInt(req.body.guaranteeAmount),
+        height: parseInt(req.body.height),
+        weight: parseInt(req.body.weight),
+        // Optional measurements
+        bust: req.body.bust ? parseInt(req.body.bust) : undefined,
+        waist: req.body.waist ? parseInt(req.body.waist) : undefined,
+        hip: req.body.hip ? parseInt(req.body.hip) : undefined,
+        // Add the photos
+        photos,
+        // Convert string boolean to actual boolean
+        sameDay: req.body.sameDay === 'true',
+        // Parse JSON string back to array
+        serviceTypes: JSON.parse(req.body.serviceTypes),
+      };
+
+      const profileData = insertTalentProfileSchema.parse(formData);
       const profile = await storage.createTalentProfile(req.user.id, profileData);
       res.json(profile);
     } catch (error) {
