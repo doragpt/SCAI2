@@ -20,19 +20,15 @@ export function AgeVerificationModal({
   onVerify,
 }: AgeVerificationModalProps) {
   const handleVerify = () => {
-    console.log("年齢確認: はい");
     onVerify(true);
     onOpenChange(false);
   };
 
   const handleDeny = () => {
-    console.log("年齢確認: いいえ");
     onVerify(false);
     onOpenChange(false);
     window.location.href = "https://www.google.com";
   };
-
-  console.log("AgeVerificationModal render:", { open });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

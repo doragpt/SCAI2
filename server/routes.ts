@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertUserSchema } from "@shared/schema";
+import { talentRegisterFormSchema } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/register", async (req, res) => {
     try {
       console.log('Registration request received:', req.body);
-      const userData = insertUserSchema.parse(req.body);
+      const userData = talentRegisterFormSchema.parse(req.body);
 
       // トランザクションを使用してユーザー作成
       const user = await db.transaction(async (tx) => {
@@ -63,8 +63,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [newUser] = await tx
           .insert(users)
           .values({
-            ...userData,
+            username: userData.username,
             password: hashedPassword,
+            role: userData.role,
+            displayName: userData.displayName,
+            location: userData.location,
+            birthDate: new Date(userData.birthDate),
+            preferredLocations: userData.preferredLocations,
             createdAt: new Date(),
           })
           .returning();
@@ -144,9 +149,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedUser);
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
-        message: error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
-      });
+      if (error instanceof Error) {
+        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "プロフィールの更新に失敗しました"
+        });
+      }
     }
   });
 
@@ -171,51 +182,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Profile fetch error:', error);
       res.status(500).json({ message: "プロフィールの取得に失敗しました" });
-    }
-  });
-
-  // 応募履歴取得
-  app.get("/api/applications", requireAuth, async (req: any, res) => {
-    try {
-      const userApplications = await db
-        .select()
-        .from(applications)
-        .where(eq(applications.userId, req.user.id));
-
-      res.json(userApplications);
-    } catch (error) {
-      console.error('Applications fetch error:', error);
-      res.status(500).json({ message: "応募履歴の取得に失敗しました" });
-    }
-  });
-
-  // キープリスト取得
-  app.get("/api/keep-list", requireAuth, async (req: any, res) => {
-    try {
-      const userKeepList = await db
-        .select()
-        .from(keepList)
-        .where(eq(keepList.userId, req.user.id));
-
-      res.json(userKeepList);
-    } catch (error) {
-      console.error('Keep list fetch error:', error);
-      res.status(500).json({ message: "キープリストの取得に失敗しました" });
-    }
-  });
-
-  // 閲覧履歴取得
-  app.get("/api/view-history", requireAuth, async (req: any, res) => {
-    try {
-      const userViewHistory = await db
-        .select()
-        .from(viewHistory)
-        .where(eq(viewHistory.userId, req.user.id));
-
-      res.json(userViewHistory);
-    } catch (error) {
-      console.error('View history fetch error:', error);
-      res.status(500).json({ message: "閲覧履歴の取得に失敗しました" });
     }
   });
 
