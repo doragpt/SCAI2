@@ -25,7 +25,8 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
 const basicInfoSchema = z.object({
-  displayName: z.string().min(1, "表示名を入力してください"),
+  username: z.string().min(1, "ニックネームを入力してください"),
+  displayName: z.string().min(1, "本名を入力してください"),
   location: z.string().min(1, "居住地を選択してください"),
   preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
   currentPassword: z.string().optional(),
@@ -61,6 +62,7 @@ export default function BasicInfoEdit() {
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
+      username: user?.username ?? "",
       displayName: user?.displayName ?? "",
       location: user?.location ?? "",
       preferredLocations: user?.preferredLocations ?? [],
@@ -79,6 +81,7 @@ export default function BasicInfoEdit() {
           },
           credentials: "include",
           body: JSON.stringify({
+            username: updateData.username,
             displayName: updateData.displayName,
             location: updateData.location,
             preferredLocations: updateData.preferredLocations,
@@ -126,7 +129,6 @@ export default function BasicInfoEdit() {
       }
     },
     onSuccess: () => {
-      // キャッシュを無効化
       queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -180,7 +182,6 @@ export default function BasicInfoEdit() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ヘッダー */}
       <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Button variant="ghost" size="icon" asChild className="mr-2">
@@ -193,16 +194,29 @@ export default function BasicInfoEdit() {
         </div>
       </header>
 
-      {/* メインコンテンツ */}
       <main className="container mx-auto px-4 py-20">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ニックネーム</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>表示名</FormLabel>
+                  <FormLabel>本名</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -342,7 +356,11 @@ export default function BasicInfoEdit() {
             {formData && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium">表示名</p>
+                  <p className="text-sm font-medium">ニックネーム</p>
+                  <p>{formData.username}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">本名</p>
                   <p>{formData.displayName}</p>
                 </div>
                 <div>

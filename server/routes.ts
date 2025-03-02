@@ -51,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(user);
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(400).json({ 
+      res.status(400).json({
         message: error instanceof Error ? error.message : "ユーザー登録に失敗しました"
       });
     }
@@ -83,14 +83,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // 基本情報の更新
-      await db
+      const result = await db
         .update(users)
         .set({
+          username: req.body.username,
           displayName: req.body.displayName,
           location: req.body.location,
           preferredLocations: req.body.preferredLocations,
         })
-        .where(eq(users.id, req.user.id));
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      console.log('Update result:', result);
 
       // パスワード変更が要求された場合
       if (req.body.currentPassword && req.body.newPassword) {
