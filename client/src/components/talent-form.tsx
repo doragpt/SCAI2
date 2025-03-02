@@ -76,6 +76,10 @@ export function TalentForm() {
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
       const res = await apiRequest("POST", "/api/talent/profile", data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -85,6 +89,7 @@ export function TalentForm() {
       });
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "エラー",
         description: error.message,
@@ -93,45 +98,61 @@ export function TalentForm() {
     },
   });
 
-  const onSubmit = (values: any) => {
-    if (selectedFiles.length < 5) {
+  const onSubmit = async (values: any) => {
+    try {
+      console.log('Form values:', values);
+
+      if (selectedFiles.length < 5) {
+        toast({
+          title: "エラー",
+          description: "写真を最低でも5枚アップロードしてください",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append("photos", file);
+      });
+
+      // 数値フィールドを変換
+      ['age', 'guaranteeAmount', 'height', 'weight'].forEach(field => {
+        if (values[field] !== undefined) {
+          formData.append(field, values[field].toString());
+        }
+      });
+
+      // 任意の数値フィールドを変換
+      ['bust', 'waist', 'hip'].forEach(field => {
+        if (values[field]) {
+          formData.append(field, values[field].toString());
+        }
+      });
+
+      // その他のフィールドを追加
+      formData.append('sameDay', String(values.sameDay));
+      formData.append('cupSize', values.cupSize);
+      formData.append('location', values.location);
+      formData.append('birthDate', values.birthDate);
+      formData.append('availableFrom', values.availableFrom);
+      formData.append('availableTo', values.availableTo);
+      formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
+
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      await mutation.mutateAsync(formData);
+    } catch (error) {
+      console.error('Form submission error:', error);
       toast({
         title: "エラー",
-        description: "写真を最低でも5枚アップロードしてください",
+        description: error instanceof Error ? error.message : "プロフィールの作成に失敗しました",
         variant: "destructive",
       });
-      return;
     }
-
-    const formData = new FormData();
-    selectedFiles.forEach((file) => {
-      formData.append("photos", file);
-    });
-
-    // 数値フィールドを変換
-    ['age', 'guaranteeAmount', 'height', 'weight'].forEach(field => {
-      if (values[field] !== undefined) {
-        formData.append(field, values[field].toString());
-      }
-    });
-
-    // 任意の数値フィールドを変換
-    ['bust', 'waist', 'hip'].forEach(field => {
-      if (values[field]) {
-        formData.append(field, values[field].toString());
-      }
-    });
-
-    // その他のフィールドを追加
-    formData.append('sameDay', String(values.sameDay));
-    formData.append('cupSize', values.cupSize);
-    formData.append('location', values.location);
-    formData.append('availableFrom', values.availableFrom);
-    formData.append('availableTo', values.availableTo);
-    formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
-    formData.append('birthDate', values.birthDate); // Added birthDate
-
-    mutation.mutate(formData);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,8 +223,8 @@ export function TalentForm() {
               <FormItem>
                 <FormLabel>生年月日</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     max={new Date().toISOString().split('T')[0]}
                     onChange={handleBirthDateChange}
                     {...field}
@@ -217,7 +238,7 @@ export function TalentForm() {
           <FormItem>
             <FormLabel>年齢</FormLabel>
             <FormControl>
-              <Input 
+              <Input
                 type="number"
                 value={calculatedAge}
                 disabled
@@ -235,8 +256,8 @@ export function TalentForm() {
               <FormItem>
                 <FormLabel>日給保証（円）</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     {...field}
                     onChange={(e) => onChange(e.target.valueAsNumber)}
                   />
@@ -255,8 +276,8 @@ export function TalentForm() {
               <FormItem>
                 <FormLabel>開始可能日</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     {...field}
                     min={new Date().toISOString().split('T')[0]}
                   />
@@ -273,8 +294,8 @@ export function TalentForm() {
               <FormItem>
                 <FormLabel>終了予定日</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     {...field}
                     min={new Date().toISOString().split('T')[0]}
                   />
@@ -315,8 +336,8 @@ export function TalentForm() {
                 <FormItem>
                   <FormLabel>{label} (cm)</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
+                    <Input
+                      type="number"
                       {...field}
                       onChange={(e) => onChange(e.target.valueAsNumber)}
                     />
@@ -367,8 +388,8 @@ export function TalentForm() {
                 <FormItem>
                   <FormLabel>{label} (cm) - 任意</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
+                    <Input
+                      type="number"
                       {...field}
                       onChange={(e) => onChange(e.target.valueAsNumber)}
                     />

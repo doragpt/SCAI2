@@ -24,26 +24,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "写真を最低でも5枚アップロードしてください" });
       }
 
-      // Convert the photos to base64 strings
-      const photos = files.map(file => file.buffer.toString('base64'));
+      // 日付フィールドのフォーマット変換を確認
+      console.log('Date fields:', {
+        birthDate: req.body.birthDate,
+        availableFrom: req.body.availableFrom,
+        availableTo: req.body.availableTo,
+      });
 
-      // Parse and validate the form data
+      // フォームデータの処理
       const formData = {
         ...req.body,
-        // Convert string numbers to actual numbers
         age: parseInt(req.body.age),
         guaranteeAmount: parseInt(req.body.guaranteeAmount),
         height: parseInt(req.body.height),
         weight: parseInt(req.body.weight),
-        // Optional measurements
         bust: req.body.bust ? parseInt(req.body.bust) : undefined,
         waist: req.body.waist ? parseInt(req.body.waist) : undefined,
         hip: req.body.hip ? parseInt(req.body.hip) : undefined,
-        // Add the photos
-        photos,
-        // Convert string boolean to actual boolean
+        photos: files.map(file => file.buffer.toString('base64')),
         sameDay: req.body.sameDay === 'true',
-        // Parse JSON string back to array
         serviceTypes: JSON.parse(req.body.serviceTypes || '[]'),
       };
 
@@ -54,7 +53,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       console.error('Profile creation error:', error);
-      res.status(400).json({ message: error instanceof Error ? error.message : "プロフィールの作成に失敗しました" });
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "プロフィールの作成に失敗しました"
+      });
     }
   });
 

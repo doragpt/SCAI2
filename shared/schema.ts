@@ -26,7 +26,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   hip: integer("hip"),
   cupSize: text("cup_size").notNull(),
   photos: json("photos").$type<string[]>().notNull(),
-  serviceTypes: json("service_types").$type<string[]>().notNull(),
+  serviceTypes: json("service_types").$type<string[]>().default([]),
   location: text("location").notNull(),
 });
 
@@ -71,6 +71,7 @@ export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
     waist: z.number().optional(),
     hip: z.number().optional(),
     cupSize: z.string(),
+    serviceTypes: z.array(z.string()).default([]),
   });
 
 export const insertScoutProfileSchema = createInsertSchema(scoutProfiles).omit({
