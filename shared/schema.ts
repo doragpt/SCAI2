@@ -15,6 +15,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   userId: integer("user_id").notNull(),
   birthDate: date("birth_date").notNull(),
   age: integer("age").notNull(),
+  employmentType: text("employment_type", { enum: ["dispatch", "resident"] }).notNull(),
   guaranteeAmount: integer("guarantee_amount").notNull(),
   availableFrom: date("available_from").notNull(),
   availableTo: date("available_to").notNull(),
@@ -70,7 +71,7 @@ export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
     bust: z.number().optional(),
     waist: z.number().optional(),
     hip: z.number().optional(),
-    cupSize: z.string(),
+    employmentType: z.enum(["dispatch", "resident"]),
     serviceTypes: z.array(z.string()).default([]),
   });
 

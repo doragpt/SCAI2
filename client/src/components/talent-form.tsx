@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -27,11 +28,20 @@ import { Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
 
 const cupSizes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+const serviceTypes = [
+  { id: "deriheru", label: "デリヘル" },
+  { id: "hoteheru", label: "ホテヘル" },
+  { id: "hakoheru", label: "箱ヘル" },
+  { id: "esthe", label: "風俗エステ" },
+  { id: "onakura", label: "オナクラ" },
+  { id: "mseikan", label: "M性感" },
+];
 
 export function TalentForm() {
   const { toast } = useToast();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
+  const [isEstheSelected, setIsEstheSelected] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(insertTalentProfileSchema),
@@ -51,6 +61,7 @@ export function TalentForm() {
       photos: [],
       serviceTypes: [],
       location: "",
+      employmentType: "dispatch", // 出稼ぎをデフォルトに
     },
   });
 
@@ -71,6 +82,18 @@ export function TalentForm() {
     const age = calculateAge(birthDate);
     setCalculatedAge(age);
     form.setValue("age", age);
+  };
+
+  const handleServiceTypeChange = (checked: boolean, type: string) => {
+    const currentTypes = form.getValues("serviceTypes") || [];
+    let newTypes;
+    if (checked) {
+      newTypes = [...currentTypes, type];
+    } else {
+      newTypes = currentTypes.filter(t => t !== type);
+    }
+    form.setValue("serviceTypes", newTypes);
+    setIsEstheSelected(newTypes.includes("esthe"));
   };
 
   const mutation = useMutation({
@@ -138,6 +161,7 @@ export function TalentForm() {
       formData.append('availableFrom', values.availableFrom);
       formData.append('availableTo', values.availableTo);
       formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
+      formData.append('employmentType', values.employmentType);
 
       console.log('FormData entries:');
       for (let [key, value] of formData.entries()) {
@@ -167,6 +191,28 @@ export function TalentForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="employmentType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>希望形態</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="選択してください" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="dispatch">出稼ぎ</SelectItem>
+                  <SelectItem value="resident">在籍</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div>
           <Label>写真 ({selectedFiles.length}/30)</Label>
           <p className="text-sm text-muted-foreground mb-2">
@@ -246,6 +292,23 @@ export function TalentForm() {
               />
             </FormControl>
           </FormItem>
+        </div>
+
+        <div className="space-y-4">
+          <Label>希望業種</Label>
+          <div className="grid grid-cols-2 gap-4">
+            {serviceTypes.map((type) => (
+              <div key={type.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={type.id}
+                  onCheckedChange={(checked) => {
+                    handleServiceTypeChange(checked === true, type.id);
+                  }}
+                />
+                <Label htmlFor={type.id}>{type.label}</Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
