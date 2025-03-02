@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, MapPin, Banknote, Clock, Building, Calendar, Phone } from "lucide-react";
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
@@ -97,8 +97,8 @@ export default function StoreDashboard() {
                         ))}
                       </div>
                       <Button 
-                        className="w-full"
-                        onClick={() => {/* TODO: オファーモーダルを開く */}}
+                        className="w-full" 
+                        onClick={() => window.alert('申請機能は開発中です')}
                       >
                         応募を確認する
                       </Button>

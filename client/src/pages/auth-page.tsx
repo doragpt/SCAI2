@@ -6,33 +6,35 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, type InsertUser, type LoginData, loginSchema } from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
 
-  const loginForm = useForm({
-    resolver: zodResolver(
-      insertUserSchema.pick({ username: true, password: true })
-    ),
+  const loginForm = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      role: "talent",
+    },
   });
 
-  const registerForm = useForm({
+  const registerForm = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       role: "talent",
     },
   });
 
-  const storeLoginForm = useForm({
-    resolver: zodResolver(
-      insertUserSchema.pick({ username: true, password: true })
-    ),
+  const storeLoginForm = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      role: "store",
+    },
   });
 
-  const storeRegisterForm = useForm({
+  const storeRegisterForm = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       role: "store",
@@ -70,10 +72,20 @@ export default function AuthPage() {
                         <div>
                           <Label htmlFor="username">ユーザー名</Label>
                           <Input {...loginForm.register("username")} />
+                          {loginForm.formState.errors.username && (
+                            <p className="text-sm text-destructive mt-1">
+                              {loginForm.formState.errors.username.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
                           <Input type="password" {...loginForm.register("password")} />
+                          {loginForm.formState.errors.password && (
+                            <p className="text-sm text-destructive mt-1">
+                              {loginForm.formState.errors.password.message}
+                            </p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
                           {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -89,22 +101,47 @@ export default function AuthPage() {
                         <div>
                           <Label htmlFor="username">ユーザー名</Label>
                           <Input {...registerForm.register("username")} />
+                          {registerForm.formState.errors.username && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.username.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
                           <Input type="password" {...registerForm.register("password")} />
+                          {registerForm.formState.errors.password && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.password.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="displayName">お名前</Label>
                           <Input {...registerForm.register("displayName")} />
+                          {registerForm.formState.errors.displayName && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.displayName.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="age">年齢</Label>
                           <Input type="number" {...registerForm.register("age", { valueAsNumber: true })} />
+                          {registerForm.formState.errors.age && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.age.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="location">在住地</Label>
                           <Input {...registerForm.register("location")} placeholder="例: 東京都渋谷区" />
+                          {registerForm.formState.errors.location && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.location.message}
+                            </p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
                           {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -124,15 +161,25 @@ export default function AuthPage() {
                   </TabsList>
 
                   <TabsContent value="login">
-                    <form onSubmit={storeLoginForm.handleSubmit((data) => loginMutation.mutate({ ...data, role: "store" }))}>
+                    <form onSubmit={storeLoginForm.handleSubmit((data) => loginMutation.mutate(data))}>
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="username">店舗ID</Label>
                           <Input {...storeLoginForm.register("username")} />
+                          {storeLoginForm.formState.errors.username && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeLoginForm.formState.errors.username.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
                           <Input type="password" {...storeLoginForm.register("password")} />
+                          {storeLoginForm.formState.errors.password && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeLoginForm.formState.errors.password.message}
+                            </p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
                           {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -143,23 +190,43 @@ export default function AuthPage() {
                   </TabsContent>
 
                   <TabsContent value="register">
-                    <form onSubmit={storeRegisterForm.handleSubmit((data) => registerMutation.mutate({...data, role: "store"}))}>
+                    <form onSubmit={storeRegisterForm.handleSubmit((data) => registerMutation.mutate(data))}>
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="username">店舗ID</Label>
                           <Input {...storeRegisterForm.register("username")} />
+                          {storeRegisterForm.formState.errors.username && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeRegisterForm.formState.errors.username.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
                           <Input type="password" {...storeRegisterForm.register("password")} />
+                          {storeRegisterForm.formState.errors.password && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeRegisterForm.formState.errors.password.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="displayName">店舗名</Label>
                           <Input {...storeRegisterForm.register("displayName")} />
+                          {storeRegisterForm.formState.errors.displayName && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeRegisterForm.formState.errors.displayName.message}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="location">所在地</Label>
                           <Input {...storeRegisterForm.register("location")} placeholder="例: 東京都渋谷区" />
+                          {storeRegisterForm.formState.errors.location && (
+                            <p className="text-sm text-destructive mt-1">
+                              {storeRegisterForm.formState.errors.location.message}
+                            </p>
+                          )}
                         </div>
                         <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
                           {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

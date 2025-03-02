@@ -97,6 +97,16 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   createdAt: true,
 });
 
+// LoginData型を追加
+export const loginSchema = insertUserSchema.pick({
+  username: true,
+  password: true,
+}).extend({
+  role: z.enum(["talent", "store"]),
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
