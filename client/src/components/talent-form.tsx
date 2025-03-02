@@ -254,6 +254,65 @@ export function TalentForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* 名前入力 */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>姓</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="山田" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>名</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="花子" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastNameKana"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>姓（カナ）</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="ヤマダ" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="firstNameKana"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>名（カナ）</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="ハナコ" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* 写真アップロード */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
