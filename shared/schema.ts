@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
-  age: integer("age"),  // 年齢を任意フィールドに変更
+  age: integer("age"),
   location: text("location").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -61,35 +61,31 @@ export const applications = pgTable("applications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users)
-  .extend({
-    role: z.enum(["talent", "store"]),
-    // roleに応じて年齢の必須チェックを変更
-    age: z.number().min(18).max(100).optional()
-      .superRefine((age, ctx) => {
-        if (ctx.parent.role === "talent" && !age) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "女性ユーザーの場合、年齢は必須です",
-          });
-        }
-      }),
-  });
+// 基本スキーマを作成
+const baseUserSchema = createInsertSchema(users).omit({ age: true });
+
+// タレント用スキーマ
+const talentUserSchema = baseUserSchema.extend({
+  role: z.literal("talent"),
+  age: z.number().min(18).max(100),
+});
+
+// 店舗用スキーマ
+const storeUserSchema = baseUserSchema.extend({
+  role: z.literal("store"),
+  age: z.number().optional(),
+});
+
+// ユーザースキーマを統合
+export const insertUserSchema = z.discriminatedUnion("role", [
+  talentUserSchema,
+  storeUserSchema,
+]);
 
 export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
   .omit({
     id: true,
     userId: true,
-  })
-  .extend({
-    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
-    availableFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
-    availableTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "正しい日付形式を入力してください"),
-    bust: z.number().optional(),
-    waist: z.number().optional(),
-    hip: z.number().optional(),
-    employmentType: z.enum(["dispatch", "resident"]),
-    serviceTypes: z.array(z.string()).default([]),
   });
 
 export const insertStoreProfileSchema = createInsertSchema(storeProfiles).omit({
@@ -103,7 +99,7 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
 });
 
 // LoginData型を追加
-export const loginSchema = insertUserSchema.pick({
+export const loginSchema = baseUserSchema.pick({
   username: true,
   password: true,
 }).extend({
