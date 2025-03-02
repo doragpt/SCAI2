@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Redirect, Link } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Form,
   FormControl,
@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
@@ -54,6 +55,7 @@ type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
@@ -72,52 +74,45 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
+      console.log('プロフィール更新開始:', updateData);
+
+      const requestData = {
+        displayName: updateData.displayName,
+        location: updateData.location,
+        preferredLocations: updateData.preferredLocations,
+      };
+
+      // パスワード変更が要求された場合のみ追加
+      if (updateData.newPassword && updateData.currentPassword) {
+        Object.assign(requestData, {
+          currentPassword: updateData.currentPassword,
+          newPassword: updateData.newPassword,
+        });
+      }
+
       try {
-        const payload = {
-          displayName: updateData.displayName,
-          location: updateData.location,
-          preferredLocations: updateData.preferredLocations,
-        };
-
-        // パスワード変更がある場合のみ追加
-        if (updateData.newPassword && updateData.currentPassword) {
-          Object.assign(payload, {
-            currentPassword: updateData.currentPassword,
-            newPassword: updateData.newPassword,
-          });
-        }
-
-        const response = await fetch("/api/talent/profile", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(payload),
+        const response = await apiRequest("PUT", "/api/talent/profile", requestData);
+        console.log('サーバーレスポンス:', {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get("content-type")
         });
 
         if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          let errorMessage = "プロフィールの更新に失敗しました";
-
-          if (contentType?.includes("application/json")) {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          }
-
-          throw new Error(errorMessage);
+          const errorData = await response.json();
+          throw new Error(errorData.message || "プロフィールの更新に失敗しました");
         }
 
-        return await response.json();
+        const responseData = await response.json();
+        console.log('更新成功:', responseData);
+        return responseData;
       } catch (error) {
-        if (error instanceof Error) {
-          throw error;
-        }
-        throw new Error("プロフィールの更新中にエラーが発生しました");
+        console.error('更新エラー:', error);
+        throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
       toast({
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
@@ -125,6 +120,7 @@ export default function BasicInfoEdit() {
       setShowConfirmation(false);
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "エラーが発生しました",
         description: error.message,
@@ -134,6 +130,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = (data: BasicInfoFormData) => {
+    console.log('フォーム送信データ:', data);
     setFormData(data);
     setShowConfirmation(true);
   };
