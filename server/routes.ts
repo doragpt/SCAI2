@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(users.username, userData.username));
 
         if (existingUser) {
-          throw new Error("このユーザー名は既に使用されています");
+          throw new Error("このニックネームは既に使用されています");
         }
 
         // パスワードのハッシュ化
