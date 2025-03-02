@@ -116,19 +116,20 @@ export default function BasicInfoEdit() {
           throw new Error(errorMessage);
         }
 
-        const result = await response.text();
-        try {
-          return JSON.parse(result);
-        } catch (e) {
-          console.error('レスポンスのパースに失敗:', result);
-          throw new Error('サーバーからの応答を処理できませんでした');
-        }
+        const result = await response.json();
+        console.log('更新成功:', result);
+        return result;
       } catch (error) {
         console.error('プロフィール更新エラー:', error);
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // キャッシュを更新
+      queryClient.setQueryData(["/api/talent/profile"], data);
+      queryClient.setQueryData(["/api/user"], data);
+
+      // 全ての関連クエリを無効化
       queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 

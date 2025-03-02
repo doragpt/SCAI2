@@ -82,6 +82,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         headers: req.headers
       });
 
+      // 更新前のユーザー情報を取得
+      const [currentUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id));
+
+      if (!currentUser) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
       // 基本情報の更新
       const result = await db
         .update(users)
@@ -96,16 +106,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Update result:', result);
 
+      if (!result.length) {
+        throw new Error("更新に失敗しました");
+      }
+
       // パスワード変更が要求された場合
       if (req.body.currentPassword && req.body.newPassword) {
         console.log('Password update requested');
-        const user = await storage.getUser(req.user.id);
-        if (!user) {
-          return res.status(404).json({ message: "ユーザーが見つかりません" });
-        }
 
         // 現在のパスワードを確認
-        const isPasswordValid = await comparePasswords(req.body.currentPassword, user.password);
+        const isPasswordValid = await comparePasswords(req.body.currentPassword, currentUser.password);
         if (!isPasswordValid) {
           return res.status(400).json({ message: "現在のパスワードが正しくありません" });
         }
@@ -118,8 +128,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(users.id, req.user.id));
       }
 
-      // 更新後のユーザー情報を取得
-      const updatedUser = await storage.getUser(req.user.id);
+      // 更新後のユーザー情報を取得して返す
+      const [updatedUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id));
+
       console.log('Profile updated successfully:', {
         userId: req.user.id,
         hasPasswordUpdate: Boolean(req.body.currentPassword && req.body.newPassword)
