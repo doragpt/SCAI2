@@ -99,14 +99,14 @@ export default function BasicInfoEdit() {
           statusText: response.statusText
         });
 
-        const result = await response.json();
+        const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.message || "プロフィールの更新に失敗しました");
+          throw new Error(data.message || "プロフィールの更新に失敗しました");
         }
 
-        console.log('更新成功:', result);
-        return result;
+        console.log('更新成功:', data);
+        return data;
       } catch (error) {
         console.error('プロフィール更新エラー:', error);
         throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
@@ -114,12 +114,8 @@ export default function BasicInfoEdit() {
     },
     onSuccess: (data) => {
       // キャッシュを直接更新
-      queryClient.setQueryData(["/api/talent/profile"], data);
       queryClient.setQueryData(["/api/user"], data);
-
-      // 関連するクエリを無効化して再取得を強制
-      queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.setQueryData(["/api/talent/profile"], data);
 
       toast({
         title: "プロフィールを更新しました",
