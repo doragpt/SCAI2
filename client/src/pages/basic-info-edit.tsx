@@ -6,24 +6,16 @@ import { z } from "zod";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { type TalentProfile } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const basicInfoSchema = z.object({
-  height: z.coerce.number().min(140, "身長は140cm以上で入力してください").max(190, "身長は190cm以下で入力してください"),
-  weight: z.coerce.number().min(30, "体重は30kg以上で入力してください").max(100, "体重は100kg以下で入力してください"),
-  bust: z.coerce.number().min(50, "バストは50cm以上で入力してください").max(150, "バストは150cm以下で入力してください").optional(),
-  waist: z.coerce.number().min(40, "ウエストは40cm以上で入力してください").max(120, "ウエストは120cm以下で入力してください").optional(),
-  hip: z.coerce.number().min(50, "ヒップは50cm以上で入力してください").max(150, "ヒップは150cm以下で入力してください").optional(),
-  cupSize: z.string().min(1, "カップサイズを選択してください"),
-  bodyType: z.string().min(1, "体型を選択してください"),
-  selfIntroduction: z.string().max(1000, "自己紹介は1000文字以内で入力してください"),
+  displayName: z.string().min(1, "表示名を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.string().min(1, "居住地を選択してください"),
+  preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
 });
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
@@ -33,21 +25,17 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: profile, isLoading } = useQuery<TalentProfile>({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ["/api/talent/profile"],
   });
 
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
-      height: profile?.height ?? undefined,
-      weight: profile?.weight ?? undefined,
-      bust: profile?.bust ?? undefined,
-      waist: profile?.waist ?? undefined,
-      hip: profile?.hip ?? undefined,
-      cupSize: profile?.cupSize ?? undefined,
-      bodyType: profile?.bodyType ?? undefined,
-      selfIntroduction: profile?.selfIntroduction ?? "",
+      displayName: user?.displayName ?? "",
+      birthDate: user?.birthDate ?? "",
+      location: user?.location ?? "",
+      preferredLocations: user?.preferredLocations ?? [],
     },
   });
 
@@ -118,157 +106,60 @@ export default function BasicInfoEdit() {
       <main className="container mx-auto px-4 py-20">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* スリーサイズ */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">スリーサイズ</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="height"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>身長 (cm)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>体重 (kg)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bust"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>バスト (cm)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="waist"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ウエスト (cm)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="hip"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ヒップ (cm)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cupSize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>カップ</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"].map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}カップ
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>表示名</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <Separator />
+            <FormField
+              control={form.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>生年月日</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* 体型・特徴 */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">体型・特徴</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bodyType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>体型</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["スリム", "普通", "グラマー", "ぽっちゃり"].map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* 自己紹介 */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">自己紹介</h2>
-              <FormField
-                control={form.control}
-                name="selfIntroduction"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        placeholder="自己紹介を入力してください"
-                        className="min-h-[200px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>居住地</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="preferredLocations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>希望地域</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* 送信ボタン */}
             <Button
