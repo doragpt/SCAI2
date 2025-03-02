@@ -69,13 +69,18 @@ export default function BasicInfoEdit() {
     mutationFn: async (data: BasicInfoFormData) => {
       const response = await fetch("/api/talent/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
-          ...data,
+          displayName: data.displayName,
+          location: data.location,
+          preferredLocations: data.preferredLocations,
           ...(data.newPassword ? {
             currentPassword: data.currentPassword,
             newPassword: data.newPassword,
-          } : {}),
+          } : {})
         }),
       });
 
