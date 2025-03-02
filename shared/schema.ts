@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["talent", "scout"] }).notNull(),
+  role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
   age: integer("age").notNull(),
   location: text("location").notNull(),
@@ -39,7 +39,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   hasCompleteProfile: boolean("has_complete_profile").default(false),
 });
 
-export const scoutProfiles = pgTable("scout_profiles", {
+export const storeProfiles = pgTable("store_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   businessName: text("business_name").notNull(),
@@ -52,9 +52,9 @@ export const scoutProfiles = pgTable("scout_profiles", {
 });
 
 export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(), 
+  id: serial("id").primaryKey(),
   talentId: integer("talent_id").notNull(),
-  scoutId: integer("scout_id").notNull(),
+  storeId: integer("store_id").notNull(),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull(),
   guaranteeOffer: integer("guarantee_offer"),
   message: text("message"),
@@ -87,7 +87,7 @@ export const insertTalentProfileSchema = createInsertSchema(talentProfiles)
     serviceTypes: z.array(z.string()).default([]),
   });
 
-export const insertScoutProfileSchema = createInsertSchema(scoutProfiles).omit({
+export const insertStoreProfileSchema = createInsertSchema(storeProfiles).omit({
   id: true,
   userId: true,
 });
@@ -100,5 +100,5 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type ScoutProfile = typeof scoutProfiles.$inferSelect;
+export type StoreProfile = typeof storeProfiles.$inferSelect;
 export type Application = typeof applications.$inferSelect;

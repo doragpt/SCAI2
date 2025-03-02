@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, type TalentProfile, type ScoutProfile, type Application } from "@shared/schema";
+import { users, type User, type InsertUser, type TalentProfile, type StoreProfile, type Application } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -11,13 +11,15 @@ export interface IStorage {
   createTalentProfile(userId: number, profile: Omit<TalentProfile, "id" | "userId">): Promise<TalentProfile>;
   getTalentProfiles(): Promise<TalentProfile[]>;
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
-  getScoutApplications(scoutId: number): Promise<Application[]>;
+  getStoreApplications(storeId: number): Promise<Application[]>;
+  getStoreProfiles(): Promise<StoreProfile[]>;
   sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private talentProfiles: Map<number, TalentProfile>;
+  private storeProfiles: Map<number, StoreProfile>;
   private applications: Map<number, Application>;
   private currentId: number;
   sessionStore: session.Store;
@@ -25,6 +27,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.talentProfiles = new Map();
+    this.storeProfiles = new Map();
     this.applications = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
@@ -67,8 +70,12 @@ export class MemStorage implements IStorage {
     return newApplication;
   }
 
-  async getScoutApplications(scoutId: number): Promise<Application[]> {
-    return Array.from(this.applications.values()).filter(app => app.scoutId === scoutId);
+  async getStoreApplications(storeId: number): Promise<Application[]> {
+    return Array.from(this.applications.values()).filter(app => app.storeId === storeId);
+  }
+
+  async getStoreProfiles(): Promise<StoreProfile[]> {
+    return Array.from(this.storeProfiles.values());
   }
 }
 

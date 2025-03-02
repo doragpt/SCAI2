@@ -23,7 +23,7 @@ export default function AuthPage() {
   });
 
   if (user) {
-    return <Redirect to={user.role === "scout" ? "/scout" : "/talent/register"} />;
+    return <Redirect to={user.role === "store" ? "/store" : "/talent/register"} />;
   }
 
   return (
@@ -90,14 +90,14 @@ export default function AuthPage() {
                           <Label htmlFor="talent">女性</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="scout" id="scout" />
-                          <Label htmlFor="scout">スカウト/店舗</Label>
+                          <RadioGroupItem value="store" id="store" />
+                          <Label htmlFor="store">店舗</Label>
                         </div>
                       </RadioGroup>
                     </div>
                     <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
                       {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      登録
+                      AIマッチングを利用する（無料登録）
                     </Button>
                   </div>
                 </form>
@@ -109,10 +109,10 @@ export default function AuthPage() {
       <div className="hidden md:flex items-center justify-center bg-primary/5 p-8">
         <div className="max-w-lg">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            SCAI - AIを活用した風俗求人マッチング
+            SCAI - AIを活用した求人マッチング
           </h1>
           <p className="text-lg text-muted-foreground">
-            風俗スカウトと女性のマッチングをAIで自動化。効率的な採用プロセスを実現します。
+            AIがあなたに最適な求人情報をご提案。効率的な求人探しをサポートします。
           </p>
         </div>
       </div>

@@ -3,12 +3,18 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import multer from "multer";
-import { insertTalentProfileSchema, insertApplicationSchema } from "@shared/schema";
+import { insertTalentProfileSchema } from "@shared/schema";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Public job listings route - no authentication required
+  app.get("/api/jobs/public", async (req, res) => {
+    const profiles = await storage.getStoreProfiles();
+    res.json(profiles);
+  });
 
   // Talent profile routes
   app.post("/api/talent/profile", upload.array("photos", 30), async (req, res) => {
@@ -24,14 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "写真を最低でも5枚アップロードしてください" });
       }
 
-      // 日付フィールドのフォーマット変換を確認
-      console.log('Date fields:', {
-        birthDate: req.body.birthDate,
-        availableFrom: req.body.availableFrom,
-        availableTo: req.body.availableTo,
-      });
 
-      // フォームデータの処理
       const formData = {
         ...req.body,
         age: parseInt(req.body.age),
@@ -45,8 +44,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sameDay: req.body.sameDay === 'true',
         serviceTypes: JSON.parse(req.body.serviceTypes || '[]'),
       };
-
-      console.log('Processed form data:', formData);
 
       const profileData = insertTalentProfileSchema.parse(formData);
       const profile = await storage.createTalentProfile(req.user.id, profileData);
@@ -84,6 +81,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const applications = await storage.getScoutApplications(req.user.id);
     res.json(applications);
   });
+
+  // Protected store profile routes
+  app.get("/api/store/applications", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (req.user.role !== "store") return res.sendStatus(403);
+
+    const applications = await storage.getStoreApplications(req.user.id);
+    res.json(applications);
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

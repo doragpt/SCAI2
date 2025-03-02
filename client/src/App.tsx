@@ -5,18 +5,17 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import ScoutDashboard from "@/pages/scout-dashboard";
+import StoreDashboard from "@/pages/store-dashboard";
 import TalentRegistration from "@/pages/talent-registration";
 import { ProtectedRoute } from "./lib/protected-route";
-import RootPage from "@/pages/root-page"; // Assuming this component exists
-
+import HomePage from "@/pages/home-page";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={RootPage} />
+      <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/scout" component={ScoutDashboard} />
+      <ProtectedRoute path="/store" component={StoreDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
       <Route component={NotFound} />
     </Switch>

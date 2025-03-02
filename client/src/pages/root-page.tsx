@@ -17,5 +17,5 @@ export default function RootPage() {
     return <Redirect to="/auth" />;
   }
 
-  return <Redirect to={user.role === "scout" ? "/scout" : "/talent/register"} />;
+  return <Redirect to={user.role === "store" ? "/store" : "/talent/register"} />;
 }
