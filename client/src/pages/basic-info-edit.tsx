@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
@@ -67,29 +67,22 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      const response = await fetch("/api/talent/profile", {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          displayName: data.displayName,
-          location: data.location,
-          preferredLocations: data.preferredLocations,
-          ...(data.newPassword ? {
-            currentPassword: data.currentPassword,
-            newPassword: data.newPassword,
-          } : {})
-        }),
-      });
+      const payload = {
+        displayName: data.displayName,
+        location: data.location,
+        preferredLocations: data.preferredLocations,
+        ...(data.newPassword ? {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        } : {})
+      };
 
-      if (!response.ok) {
-        const error = await response.json();
+      const res = await apiRequest("PUT", "/api/talent/profile", payload);
+      if (!res.ok) {
+        const error = await res.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
       }
-
-      return response.json();
+      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -114,11 +107,10 @@ export default function BasicInfoEdit() {
 
   const handleConfirm = async () => {
     if (!formData) return;
-    setIsSubmitting(true);
     try {
       await updateProfileMutation.mutateAsync(formData);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Update profile error:', error);
     }
   };
 
@@ -129,7 +121,7 @@ export default function BasicInfoEdit() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -321,10 +313,10 @@ export default function BasicInfoEdit() {
               <Button variant="outline" onClick={() => setShowConfirmation(false)}>
                 戻る
               </Button>
-              <Button onClick={handleConfirm} disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button onClick={handleConfirm} disabled={updateProfileMutation.isPending}>
+                {updateProfileMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
+                )}
                 更新する
               </Button>
             </DialogFooter>
