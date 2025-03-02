@@ -13,6 +13,7 @@ import JobDetail from "@/pages/job-detail";
 import StoreDashboard from "@/pages/store-dashboard";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import MyPage from "@/pages/my-page";
+import BasicInfoEdit from "@/pages/basic-info-edit";
 
 function Router() {
   return (
@@ -22,7 +23,8 @@ function Router() {
       <Route path="/jobs/:id" component={JobDetail} />
       <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
-      <ProtectedRoute path="/talent/profile/edit" component={TalentRegistration} />
+      <ProtectedRoute path="/talent/profile/edit" component={BasicInfoEdit} />
+      <ProtectedRoute path="/talent/resume/edit" component={TalentRegistration} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/applications" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={MyPage} />

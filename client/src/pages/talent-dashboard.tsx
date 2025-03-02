@@ -25,8 +25,10 @@ export default function TalentDashboard() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold">マイページ</h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/jobs">
+                <Search className="h-5 w-5" />
+              </Link>
             </Button>
             <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)}>
               <Menu className="h-5 w-5" />
@@ -133,17 +135,23 @@ export default function TalentDashboard() {
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
         <div className="container mx-auto">
           <div className="grid grid-cols-4 gap-1">
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
-              <Search className="h-5 w-5 mb-1" />
-              <span className="text-xs">お仕事検索</span>
+            <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
+              <Link href="/jobs">
+                <Search className="h-5 w-5 mb-1" />
+                <span className="text-xs">お仕事検索</span>
+              </Link>
             </Button>
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
-              <Heart className="h-5 w-5 mb-1" />
-              <span className="text-xs">キープ</span>
+            <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
+              <Link href="/talent/mypage/keep-list">
+                <Heart className="h-5 w-5 mb-1" />
+                <span className="text-xs">キープ</span>
+              </Link>
             </Button>
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16">
-              <History className="h-5 w-5 mb-1" />
-              <span className="text-xs">閲覧履歴</span>
+            <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
+              <Link href="/talent/mypage/view-history">
+                <History className="h-5 w-5 mb-1" />
+                <span className="text-xs">閲覧履歴</span>
+              </Link>
             </Button>
             <Button
               variant="ghost"
