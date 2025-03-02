@@ -51,7 +51,8 @@ const talentUserSchema = baseUserSchema.extend({
     .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.date()
+  birthDate: z.string()
+    .transform((date) => new Date(date))
     .refine((date) => {
       const age = new Date().getFullYear() - date.getFullYear();
       return age >= 18;

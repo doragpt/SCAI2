@@ -15,13 +15,21 @@ import {
 } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from 'zod';
 import { insertUserSchema, type InsertUser, type LoginData, loginSchema, prefectures } from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
+// RegisterFormData型を拡張
+type RegisterFormData = InsertUser & {
+  passwordConfirm: string;
+  privacyPolicy: boolean;
+};
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -30,27 +38,43 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+  const registerForm = useForm<RegisterFormData>({
+    resolver: zodResolver(
+      insertUserSchema.extend({
+        passwordConfirm: z.string(),
+        privacyPolicy: z.boolean(),
+      }).refine((data) => data.password === data.passwordConfirm, {
+        message: "パスワードが一致しません",
+        path: ["passwordConfirm"],
+      }).refine((data) => data.privacyPolicy === true, {
+        message: "個人情報の取り扱いについて同意が必要です",
+        path: ["privacyPolicy"],
+      })
+    ),
     defaultValues: {
       role: "talent",
       preferredLocations: [],
       birthDate: undefined,
       username: "",
       password: "",
+      passwordConfirm: "",
       displayName: "",
       location: undefined,
+      privacyPolicy: false,
     },
   });
 
-  const handleRegisterSubmit = async (data: InsertUser) => {
+  const handleRegisterSubmit = async (data: RegisterFormData) => {
     try {
       console.log('Form Data before submission:', data);
 
-      // birthDateをDate型に変換
+      // Remove extra fields before submission
+      const { passwordConfirm, privacyPolicy, ...submitData } = data;
+
+      // Convert birthDate string to Date object
       const formData = {
-        ...data,
-        birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+        ...submitData,
+        birthDate: new Date(submitData.birthDate),
       };
 
       console.log('Processed Form Data:', formData);
@@ -61,7 +85,7 @@ export default function AuthPage() {
   };
 
   if (user) {
-    return <Redirect to={user.role === "store" ? "/store/dashboard" : "/talent/dashboard"} />;
+    return <Redirect to="/" />;
   }
 
   return (
@@ -158,6 +182,7 @@ export default function AuthPage() {
                           <Input
                             type="date"
                             {...registerForm.register("birthDate")}
+                            max={new Date().toISOString().split('T')[0]}
                           />
                           {registerForm.formState.errors.birthDate && (
                             <p className="text-sm text-destructive mt-1">
@@ -196,6 +221,34 @@ export default function AuthPage() {
                           {registerForm.formState.errors.password && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.password.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="passwordConfirm">
+                            パスワード（確認） <span className="text-destructive">※</span>
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              type={showPasswordConfirm ? "text" : "password"}
+                              {...registerForm.register("passwordConfirm")}
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-2 top-1/2 -translate-y-1/2"
+                              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                            >
+                              {showPasswordConfirm ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
+                          {registerForm.formState.errors.passwordConfirm && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.passwordConfirm.message}
                             </p>
                           )}
                         </div>
@@ -283,6 +336,39 @@ export default function AuthPage() {
                           {registerForm.formState.errors.preferredLocations && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.preferredLocations.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+                          <h3 className="font-medium">個人情報の取り扱いについて</h3>
+                          <div className="text-sm text-muted-foreground h-40 overflow-y-auto space-y-2">
+                            <p>当社は、当社が運営する求人サイト（以下「本サイト」）をご利用いただく皆様（以下「会員」）のプライバシーを最大限に尊重し、会員の皆様からご提供いただいた個人情報の管理・運用に細心の注意を払います。</p>
+                            <p>1. 個人情報の取得と利用目的</p>
+                            <p>本サイトを通じて会員から取得する個人情報について、以下の目的で利用いたします：</p>
+                            <ul className="list-disc pl-4">
+                              <li>サービス提供のため</li>
+                              <li>応募情報の開示のため</li>
+                              <li>統計・分析目的のため</li>
+                            </ul>
+                            <p>2. 個人情報の第三者提供について</p>
+                            <p>当社は、会員の個人情報を、原則として本人の同意なく第三者へ提供することはいたしません。</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="privacyPolicy"
+                              {...registerForm.register("privacyPolicy")}
+                            />
+                            <label
+                              htmlFor="privacyPolicy"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              個人情報の取り扱いについて同意する
+                            </label>
+                          </div>
+                          {registerForm.formState.errors.privacyPolicy && (
+                            <p className="text-sm text-destructive">
+                              {registerForm.formState.errors.privacyPolicy.message}
                             </p>
                           )}
                         </div>
