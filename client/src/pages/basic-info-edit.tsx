@@ -23,7 +23,6 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { apiRequest } from "@/lib/queryClient";
 
 const basicInfoSchema = z.object({
   displayName: z.string().min(1, "表示名を入力してください"),
@@ -72,64 +71,65 @@ export default function BasicInfoEdit() {
     mutationFn: async (updateData: BasicInfoFormData) => {
       console.log('プロフィール更新開始:', updateData);
 
-      const requestData = {
-        displayName: updateData.displayName,
-        location: updateData.location,
-        preferredLocations: updateData.preferredLocations,
-      };
-
-      if (updateData.newPassword && updateData.currentPassword) {
-        Object.assign(requestData, {
-          currentPassword: updateData.currentPassword,
-          newPassword: updateData.newPassword,
+      try {
+        const response = await fetch("/api/talent/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            displayName: updateData.displayName,
+            location: updateData.location,
+            preferredLocations: updateData.preferredLocations,
+            ...(updateData.newPassword && updateData.currentPassword ? {
+              currentPassword: updateData.currentPassword,
+              newPassword: updateData.newPassword,
+            } : {})
+          })
         });
-      }
 
-      console.log('送信するデータ:', requestData);
+        console.log('レスポンスステータス:', response.status);
+        console.log('レスポンスヘッダー:', {
+          contentType: response.headers.get("content-type"),
+          status: response.status,
+          statusText: response.statusText
+        });
 
-      const response = await fetch("/api/talent/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(requestData),
-      });
+        if (!response.ok) {
+          const text = await response.text();
+          console.error('エラーレスポンス:', text);
 
-      console.log('レスポンスステータス:', response.status);
-      console.log('レスポンスヘッダー:', {
-        contentType: response.headers.get('content-type'),
-        status: response.status,
-        statusText: response.statusText
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('エラーレスポンス:', text);
-
-        let errorMessage = "プロフィールの更新に失敗しました";
-        try {
-          const errorData = JSON.parse(text);
-          if (errorData.message) {
-            errorMessage = errorData.message;
+          let errorMessage = "プロフィールの更新に失敗しました";
+          try {
+            const errorData = JSON.parse(text);
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+          } catch (e) {
+            console.error('JSONパースエラー:', e);
           }
-        } catch (e) {
-          console.error('JSONパースエラー:', e);
+
+          throw new Error(errorMessage);
         }
 
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.text();
-      try {
-        return JSON.parse(result);
-      } catch (e) {
-        console.error('レスポンスのパースに失敗:', result);
-        throw new Error('サーバーからの応答を処理できませんでした');
+        const result = await response.text();
+        try {
+          return JSON.parse(result);
+        } catch (e) {
+          console.error('レスポンスのパースに失敗:', result);
+          throw new Error('サーバーからの応答を処理できませんでした');
+        }
+      } catch (error) {
+        console.error('プロフィール更新エラー:', error);
+        throw error;
       }
     },
     onSuccess: () => {
+      // キャッシュを無効化
       queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
       toast({
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
@@ -146,7 +146,7 @@ export default function BasicInfoEdit() {
     },
   });
 
-  const onSubmit = (data: BasicInfoFormData) => {
+  const onSubmit = async (data: BasicInfoFormData) => {
     console.log('フォーム送信データ:', data);
     setFormData(data);
     setShowConfirmation(true);

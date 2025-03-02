@@ -73,7 +73,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // プロフィール更新エンドポイント
   app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
@@ -132,16 +131,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // タレントプロフィール取得
   app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
-      const [profile] = await db
+      // usersテーブルから直接ユーザー情報を取得
+      const [user] = await db
         .select()
-        .from(talentProfiles)
-        .where(eq(talentProfiles.userId, req.user.id));
+        .from(users)
+        .where(eq(users.id, req.user.id));
 
-      if (!profile) {
+      if (!user) {
         return res.status(404).json({ message: "プロフィールが見つかりません" });
       }
 
-      res.json(profile);
+      res.json(user);
     } catch (error) {
       console.error('Profile fetch error:', error);
       res.status(500).json({ message: "プロフィールの取得に失敗しました" });
