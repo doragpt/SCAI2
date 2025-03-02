@@ -80,18 +80,17 @@ export type CommonNgOption = typeof commonNgOptions[number];
 export type EstheOption = typeof estheOptions[number];
 export type ServiceType = typeof serviceTypes[number];
 
-// ユーザーテーブル（既存）を拡張
+// ユーザーテーブル
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
-  age: integer("age"),
-  location: text("location").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   birthDate: date("birth_date"),
-  preferredLocations: json("preferred_locations").$type<Prefecture[]>().default([]),
+  preferredLocations: json("preferred_locations").$type<string[]>().default([]),
 });
 
 // タレントプロフィールテーブル
@@ -188,90 +187,33 @@ export const talentProfiles = pgTable("talent_profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// バリデーションスキーマ
-export const talentProfileUpdateSchema = z.object({
-  lastName: z.string().min(1, "姓を入力してください"),
-  firstName: z.string().min(1, "名を入力してください"),
-  lastNameKana: z.string().min(1, "姓（カナ）を入力してください"),
-  firstNameKana: z.string().min(1, "名（カナ）を入力してください"),
-
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  age: z.string(),
-
-  height: z.number().min(140, "身長を正しく入力してください"),
-  weight: z.number().min(30, "体重を正しく入力してください"),
-  bust: z.number().optional(),
-  waist: z.number().optional(),
-  hip: z.number().optional(),
-  cupSize: z.enum(cupSizes),
-  bodyType: z.enum(bodyTypes),
-
-  photoUrls: z.object({
-    urls: z.array(z.string()),
-    tags: z.record(z.array(z.enum(photoTags))),
-  }),
-
-  faceVisibility: z.enum(faceVisibilityTypes),
-  hasResidenceCard: z.boolean(),
-  availableIds: z.array(z.enum(idTypes)),
-
-  ngAreas: z.array(z.enum(prefectures)),
-  preferredAreas: z.array(z.enum(prefectures)),
-  residence: z.string().min(1, "居住地を入力してください"),
-
-  smoking: z.boolean(),
-  smokingTypes: z.array(z.enum(smokingTypes)).optional(),
-  tattoo: z.boolean(),
-  piercing: z.boolean(),
-  allergies: z.object({
-    types: z.array(z.enum(allergyTypes)),
-    others: z.array(z.string()),
-  }),
-
-  canPhotoDiary: z.boolean(),
-  hasSnsAccount: z.boolean(),
-  snsUrls: z.array(z.string()).optional(),
-
-  hasCurrentStore: z.boolean(),
-  currentStores: z.array(z.object({
-    storeName: z.string(),
-    stageName: z.string(),
-    photoDiaryUrl: z.string().optional(),
-  })).optional(),
-
-  serviceTypes: z.array(z.enum(serviceTypes)).min(1, "希望業種を1つ以上選択してください"),
-  canHomeDelivery: z.boolean(),
-  canForeign: z.boolean(),
-  canNonJapanese: z.boolean().optional(),
-
-  ngOptions: z.object({
-    common: z.array(z.enum(commonNgOptions)),
-    others: z.array(z.string()),
-  }),
-
-  estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)),
-    ngOptions: z.array(z.string()),
-    hasExperience: z.boolean(),
-    experienceMonths: z.number().optional(),
-  }).optional(),
-
-  previousStores: z.array(z.object({
-    storeName: z.string(),
-    period: z.string().optional(),
-  })),
-
-  selfIntroduction: z.string().max(1000, "自己PRは1000文字以内で入力してください"),
-  notes: z.string().optional(),
-});
 
 // フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
-export const talentRegisterFormSchema = talentProfileUpdateSchema.extend({
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
   passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
   privacyPolicy: z.boolean()
 }).refine((data) => data.privacyPolicy === true, {
   message: "個人情報の取り扱いについて同意が必要です",
   path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
 }).refine((data) => {
   try {
     const birth = new Date(data.birthDate);
@@ -290,34 +232,11 @@ export const talentRegisterFormSchema = talentProfileUpdateSchema.extend({
   path: ["birthDate"],
 });
 
-// 型定義のエクスポート
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = z.infer<typeof talentProfileUpdateSchema>;
-export type InsertTalentRegisterForm = z.infer<typeof talentRegisterFormSchema>;
-
-
-// 基本スキーマを作成
-const baseUserSchema = createInsertSchema(users).omit({ id: true, age: true });
-
-// API用のinsertスキーマ
-export const insertUserSchema = baseUserSchema.extend({
-  role: z.literal("talent"),
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(/^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"),
-  displayName: z.string().min(1, "お名前を入力してください"),
-  location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+// ログインスキーマ
+export const loginSchema = z.object({
+  username: z.string().min(1, "ニックネームを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]),
 });
 
 // 応募履歴テーブル
@@ -352,17 +271,9 @@ export const keepList = pgTable("keep_list", {
   note: text("note"),
 });
 
-// スキーマ定義（既存）
-export const loginSchema = z.object({
-  username: z.string().min(1, "ユーザー名を入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]),
-});
 
-// 応募作成スキーマ
-export const createApplicationSchema = z.object({
-  storeId: z.number(),
-  message: z.string().optional(),
-  desiredStartDate: z.string(),
-  desiredDuration: z.string(),
-});
+// 型定義のエクスポート
+export type User = typeof users.$inferSelect;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
+export type InsertUser = z.infer<typeof talentRegisterFormSchema>;
+export type LoginData = z.infer<typeof loginSchema>;

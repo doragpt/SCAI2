@@ -19,7 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   talentRegisterFormSchema,
   loginSchema,
-  prefectures
+  prefectures,
 } from "@shared/schema";
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -32,31 +32,13 @@ type TalentRegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
-  const { user, registerMutation, loginMutation } = useAuth();
+  const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [formData, setFormData] = useState<TalentRegisterFormData | null>(null);
   const { toast } = useToast();
-
-  // 生年月日用のドロップダウンの選択肢を生成
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 60 }, (_, i) => currentYear - 18 - i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const [selectedYear, setSelectedYear] = useState<number>();
-  const [selectedMonth, setSelectedMonth] = useState<number>();
-  const [selectedDay, setSelectedDay] = useState<number>();
-
-  const getDaysInMonth = (year?: number, month?: number) => {
-    if (!year || !month) return [];
-    return Array.from(
-      { length: new Date(year, month, 0).getDate() },
-      (_, i) => i + 1
-    );
-  };
-
-  const days = getDaysInMonth(selectedYear, selectedMonth);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -81,6 +63,24 @@ export default function AuthPage() {
       privacyPolicy: false,
     },
   });
+
+  // 生年月日用のドロップダウンの選択肢を生成
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, i) => currentYear - 18 - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const [selectedYear, setSelectedYear] = useState<number>();
+  const [selectedMonth, setSelectedMonth] = useState<number>();
+  const [selectedDay, setSelectedDay] = useState<number>();
+
+  const getDaysInMonth = (year?: number, month?: number) => {
+    if (!year || !month) return [];
+    return Array.from(
+      { length: new Date(year, month, 0).getDate() },
+      (_, i) => i + 1
+    );
+  };
+
+  const days = getDaysInMonth(selectedYear, selectedMonth);
 
   const handleDateChange = (type: 'year' | 'month' | 'day', value: number) => {
     if (type === 'year') setSelectedYear(value);
@@ -110,8 +110,7 @@ export default function AuthPage() {
     console.log('Values:', values);
     console.log('Errors:', errors);
 
-    // 各必須フィールドの値をチェック
-    const fieldsValid =
+    return (
       values.username?.length > 0 &&
       values.password?.length >= 8 &&
       values.passwordConfirm === values.password &&
@@ -120,24 +119,19 @@ export default function AuthPage() {
       values.location &&
       Array.isArray(values.preferredLocations) &&
       values.preferredLocations.length > 0 &&
-      values.privacyPolicy === true;
-
-    console.log('Fields valid:', fieldsValid);
-    console.log('No errors:', Object.keys(errors).length === 0);
-
-    return fieldsValid && Object.keys(errors).length === 0;
+      values.privacyPolicy === true &&
+      Object.keys(errors).length === 0
+    );
   };
 
   // 登録フォームの送信処理
   const handleRegisterSubmit = async (data: TalentRegisterFormData) => {
     console.log("フォーム送信処理開始", data);
     try {
-      if (!data.birthDate) {
-        toast({
-          title: "エラー",
-          description: "生年月日を入力してください",
-          variant: "destructive",
-        });
+      // フォームのバリデーションチェック
+      const isValid = await registerForm.trigger();
+      if (!isValid) {
+        console.log("フォームバリデーションエラー:", registerForm.formState.errors);
         return;
       }
 
@@ -145,7 +139,7 @@ export default function AuthPage() {
       setFormData(data);
 
       // 年齢確認ダイアログを表示
-      console.log("年齢確認ダイアログを表示");
+      console.log("年齢確認ダイアログを表示します");
       setShowAgeVerification(true);
     } catch (error) {
       console.error('Form submission error:', error);
@@ -204,8 +198,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      <div className="flex items-center justify-center p-8">
+    <div className="min-h-screen flex">
+      {/* フォーム部分 */}
+      <div className="flex-1 flex items-center justify-center p-8">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>SCAIへようこそ</CardTitle>
@@ -579,7 +574,8 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className="hidden md:flex items-center justify-center bg-primary/5 p-8">
+      {/* 右側のヒーローセクション */}
+      <div className="hidden md:flex flex-1 bg-primary/5 items-center justify-center p-8">
         <div className="max-w-lg">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             SCAI - AIを活用した求人マッチング
