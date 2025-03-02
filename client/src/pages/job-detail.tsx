@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { SEO } from "@/lib/seo";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -54,9 +56,45 @@ export default function JobDetail() {
 
   const { monthlyMin, monthlyMax } = calculateMonthlyIncome();
 
+  const breadcrumbItems = [
+    { label: "トップ", href: "/" },
+    { label: job.location, href: `/?area=${encodeURIComponent(job.location)}` },
+    { label: job.businessName },
+  ];
+
+  const seoData = {
+    title: `${job.businessName}の求人情報`,
+    description: `${job.location}エリアの${job.serviceType}求人。日給${job.minimumGuarantee?.toLocaleString()}円～${job.maximumGuarantee?.toLocaleString()}円。交通費支給、寮完備など充実した待遇をご用意。`,
+    jobPosting: {
+      title: `${job.businessName}スタッフ募集`,
+      description: `${job.location}エリアの${job.serviceType}求人。未経験者歓迎、充実した待遇をご用意しています。`,
+      datePosted: new Date().toISOString(),
+      employmentType: "アルバイト",
+      hiringOrganization: {
+        name: job.businessName,
+        address: {
+          addressLocality: job.location,
+          addressRegion: "東京都",
+        },
+      },
+      jobLocation: {
+        addressLocality: job.location,
+        addressRegion: "東京都",
+      },
+      baseSalary: {
+        minValue: job.minimumGuarantee || 0,
+        maxValue: job.maximumGuarantee || 0,
+        currency: "JPY",
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO {...seoData} />
       <main className="container mx-auto px-4 py-8">
+        <Breadcrumb items={breadcrumbItems} />
+
         <Card className="mb-8">
           <CardHeader>
             <div className="flex justify-between items-start">
@@ -85,6 +123,7 @@ export default function JobDetail() {
                 <TabsTrigger value="details">店舗情報</TabsTrigger>
                 <TabsTrigger value="requirements">応募資格</TabsTrigger>
                 <TabsTrigger value="benefits">待遇</TabsTrigger>
+                <TabsTrigger value="interviews">スタッフインタビュー</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4">
@@ -148,6 +187,29 @@ export default function JobDetail() {
                           <span>即日入居可能</span>
                         </div>
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="interviews">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="space-y-8">
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-medium mb-2">Aさん（24歳）の体験談</h4>
+                        <p className="text-muted-foreground">
+                          未経験でしたが、スタッフさんが丁寧に教えてくれて安心して働き始められました。
+                          待機室も完全個室で、プライバシーが守られているので快適に過ごせています。
+                        </p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-medium mb-2">Bさん（22歳）の体験談</h4>
+                        <p className="text-muted-foreground">
+                          リピーターのお客様が多く、安定した収入が得られます。
+                          自由出勤制なので、自分のペースで働けるのも魅力です。
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
