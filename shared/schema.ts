@@ -97,14 +97,10 @@ export const users = pgTable("users", {
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-
-  // 基本情報
   lastName: text("last_name").notNull(),
   firstName: text("first_name").notNull(),
   lastNameKana: text("last_name_kana").notNull(),
   firstNameKana: text("first_name_kana").notNull(),
-
-  // 身体的特徴
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
   bust: integer("bust"),
@@ -112,26 +108,16 @@ export const talentProfiles = pgTable("talent_profiles", {
   hip: integer("hip"),
   cupSize: text("cup_size", { enum: cupSizes }),
   bodyType: text("body_type", { enum: bodyTypes }),
-
-  // 写真管理
   photoUrls: json("photo_urls").$type<{
     urls: string[];
     tags: Record<string, PhotoTag[]>;
   }>().default({ urls: [], tags: {} }),
-
-  // パネル設定
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
-
-  // 身分証明書
   hasResidenceCard: boolean("has_residence_card").default(false),
   availableIds: json("available_ids").$type<IdType[]>().default([]),
-
-  // 希望・NG条件
   ngAreas: json("ng_areas").$type<Prefecture[]>().default([]),
   preferredAreas: json("preferred_areas").$type<Prefecture[]>().default([]),
   residence: text("residence").notNull(),
-
-  // 健康・生活
   smoking: boolean("smoking").default(false),
   smokingTypes: json("smoking_types").$type<SmokingType[]>().default([]),
   tattoo: boolean("tattoo").default(false),
@@ -140,53 +126,40 @@ export const talentProfiles = pgTable("talent_profiles", {
     types: AllergyType[];
     others: string[];
   }>().default({ types: [], others: [] }),
-
-  // SNS・写メ日記
   canPhotoDiary: boolean("can_photo_diary").default(false),
   hasSnsAccount: boolean("has_sns_account").default(false),
   snsUrls: json("sns_urls").$type<string[]>().default([]),
-
-  // 在籍情報
   hasCurrentStore: boolean("has_current_store").default(false),
   currentStores: json("current_stores").$type<{
     storeName: string;
     stageName: string;
     photoDiaryUrl?: string;
   }[]>().default([]),
-
-  // サービス
   serviceTypes: json("service_types").$type<ServiceType[]>().default([]),
   canHomeDelivery: boolean("can_home_delivery").default(false),
   canForeign: boolean("can_foreign").default(false),
   canNonJapanese: boolean("can_non_japanese").default(false),
-
-  // NGオプション
   ngOptions: json("ng_options").$type<{
     common: CommonNgOption[];
     others: string[];
   }>().default({ common: [], others: [] }),
-
-  // エステ専用オプション
   estheOptions: json("esthe_options").$type<{
     available: EstheOption[];
     ngOptions: string[];
     hasExperience: boolean;
     experienceMonths?: number;
   }>().default({ available: [], ngOptions: [], hasExperience: false }),
-
-  // 経験
   previousStores: json("previous_stores").$type<{
     storeName: string;
     period?: string;
   }[]>().default([]),
-
-  // PR・備考
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
-
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// 基本のユーザースキーマ
+export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // フォーム用の拡張スキーマ（パスワード確認と同意チェックを含む）
 export const talentRegisterFormSchema = z.object({
@@ -232,6 +205,12 @@ export const talentRegisterFormSchema = z.object({
   path: ["birthDate"],
 });
 
+// プロフィール更新用スキーマ
+export const talentProfileUpdateSchema = talentRegisterFormSchema.partial().extend({
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+});
+
 // ログインスキーマ
 export const loginSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
@@ -239,41 +218,24 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]),
 });
 
-// 応募履歴テーブル
-export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  status: text("status", {
-    enum: ["pending", "accepted", "rejected", "withdrawn"]
-  }).notNull(),
-  appliedAt: timestamp("applied_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  message: text("message"),
-  desiredStartDate: date("desired_start_date"),
-  desiredDuration: text("desired_duration"),
+// 店舗プロフィールスキーマ
+export const storeProfileSchema = z.object({
+  id: z.number(),
+  businessName: z.string(),
+  location: z.string(),
+  serviceType: z.string(),
+  minimumGuarantee: z.number().optional(),
+  maximumGuarantee: z.number().optional(),
+  transportationSupport: z.boolean(),
+  housingSupport: z.boolean(),
 });
-
-// 閲覧履歴テーブル
-export const viewHistory = pgTable("view_history", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  viewedAt: timestamp("viewed_at").defaultNow(),
-});
-
-// キープリストテーブル
-export const keepList = pgTable("keep_list", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  storeId: integer("store_id").notNull(),
-  addedAt: timestamp("added_at").defaultNow(),
-  note: text("note"),
-});
-
 
 // 型定義のエクスポート
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type InsertUser = z.infer<typeof talentRegisterFormSchema>;
+export type InsertUser = typeof users.$inferInsert;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+export type StoreProfile = z.infer<typeof storeProfileSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;

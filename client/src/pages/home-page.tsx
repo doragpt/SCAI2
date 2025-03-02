@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { StoreProfile } from "@shared/schema";
+import { type User } from "@shared/schema";
 import { Loader2, MapPin, Banknote, Clock, Building } from "lucide-react";
 import {
   Select,
@@ -14,6 +14,18 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { SEO } from "@/lib/seo";
+
+// 仮のStoreProfile型定義
+interface StoreProfile {
+  id: number;
+  businessName: string;
+  location: string;
+  serviceType: string;
+  minimumGuarantee?: number;
+  maximumGuarantee?: number;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+}
 
 const areaGroups = [
   { label: "北海道・東北", areas: ["北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県"] },

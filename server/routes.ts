@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { talentRegisterFormSchema } from "@shared/schema";
+import { talentRegisterFormSchema, type RegisterFormData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
@@ -28,7 +28,6 @@ async function comparePasswords(supplied: string, stored: string) {
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // 認証チェックミドルウェア
   const requireAuth = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) {
       console.log('認証失敗:', { session: req.session, user: req.user });
@@ -38,15 +37,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
-  // ユーザー登録エンドポイント
   app.post("/api/register", async (req, res) => {
     try {
       console.log('Registration request received:', req.body);
       const userData = talentRegisterFormSchema.parse(req.body);
 
-      // トランザクションを使用してユーザー作成
       const user = await db.transaction(async (tx) => {
-        // 既存ユーザーチェック
         const [existingUser] = await tx
           .select()
           .from(users)
@@ -56,10 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("このニックネームは既に使用されています");
         }
 
-        // パスワードのハッシュ化
         const hashedPassword = await hashPassword(userData.password);
 
-        // ユーザー作成
         const [newUser] = await tx
           .insert(users)
           .values({
@@ -88,100 +82,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({
         message: error instanceof Error ? error.message : "ユーザー登録に失敗しました"
       });
-    }
-  });
-
-  // プロフィール更新エンドポイント
-  app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
-    const userId = req.user.id;
-    console.log('Profile update request for user:', userId);
-
-    try {
-      const updatedUser = await db.transaction(async (tx) => {
-        // 現在のユーザー情報を取得
-        const [currentUser] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.id, userId));
-
-        if (!currentUser) {
-          throw new Error("ユーザーが見つかりません");
-        }
-
-        // 基本情報の更新
-        const [updated] = await tx
-          .update(users)
-          .set({
-            username: req.body.username,
-            displayName: req.body.displayName,
-            location: req.body.location,
-            preferredLocations: req.body.preferredLocations,
-          })
-          .where(eq(users.id, userId))
-          .returning();
-
-        if (!updated) {
-          throw new Error("プロフィールの更新に失敗しました");
-        }
-
-        // パスワード更新が要求された場合
-        if (req.body.currentPassword && req.body.newPassword) {
-          const isPasswordValid = await comparePasswords(
-            req.body.currentPassword,
-            currentUser.password
-          );
-
-          if (!isPasswordValid) {
-            throw new Error("現在のパスワードが正しくありません");
-          }
-
-          const hashedPassword = await hashPassword(req.body.newPassword);
-          await tx
-            .update(users)
-            .set({ password: hashedPassword })
-            .where(eq(users.id, userId));
-        }
-
-        return updated;
-      });
-
-      console.log('Profile updated successfully:', { userId });
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('Profile update error:', error);
-      if (error instanceof Error) {
-        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
-          message: error.message
-        });
-      } else {
-        res.status(500).json({
-          message: "プロフィールの更新に失敗しました"
-        });
-      }
-    }
-  });
-
-  // プロフィール取得エンドポイント
-  app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      console.log('Profile fetch request for user:', userId);
-
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-
-      if (!user) {
-        console.error('User not found:', userId);
-        return res.status(404).json({ message: "プロフィールが見つかりません" });
-      }
-
-      console.log('Profile fetch successful:', user);
-      res.json(user);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
     }
   });
 

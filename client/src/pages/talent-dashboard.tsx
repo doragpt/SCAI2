@@ -80,53 +80,37 @@ export default function TalentDashboard() {
 
           {/* メインメニュー */}
           <div className="space-y-4">
-            <Card asChild>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/mypage">
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <UserIcon className="h-5 w-5 mr-2" />
-                    <span>マイページ</span>
-                  </div>
-                  <span className="text-muted-foreground">→</span>
-                </div>
+                <UserIcon className="h-5 w-5" />
+                <span>マイページ</span>
+                <span className="ml-auto text-muted-foreground">→</span>
               </Link>
-            </Card>
+            </Button>
 
-            <Card asChild>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/mypage/applications">
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    <span>応募履歴</span>
-                  </div>
-                  <span className="text-muted-foreground">→</span>
-                </div>
+                <MessageCircle className="h-5 w-5" />
+                <span>応募履歴</span>
+                <span className="ml-auto text-muted-foreground">→</span>
               </Link>
-            </Card>
+            </Button>
 
-            <Card asChild>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/mypage/keep-list">
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Heart className="h-5 w-5 mr-2" />
-                    <span>キープリスト</span>
-                  </div>
-                  <span className="text-muted-foreground">→</span>
-                </div>
+                <Heart className="h-5 w-5" />
+                <span>キープリスト</span>
+                <span className="ml-auto text-muted-foreground">→</span>
               </Link>
-            </Card>
+            </Button>
 
-            <Card asChild>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/mypage/view-history">
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <History className="h-5 w-5 mr-2" />
-                    <span>閲覧履歴</span>
-                  </div>
-                  <span className="text-muted-foreground">→</span>
-                </div>
+                <History className="h-5 w-5" />
+                <span>閲覧履歴</span>
+                <span className="ml-auto text-muted-foreground">→</span>
               </Link>
-            </Card>
+            </Button>
           </div>
         </div>
       </main>
