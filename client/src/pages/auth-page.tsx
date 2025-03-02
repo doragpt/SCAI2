@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema, type InsertUser, type LoginData, loginSchema } from "@shared/schema";
@@ -25,6 +32,7 @@ const PREFECTURES = [
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedPrefectures, setSelectedPrefectures] = useState<string[]>([]);
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -37,6 +45,7 @@ export default function AuthPage() {
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       role: "talent",
+      preferredLocations: [],
     },
   });
 
@@ -53,6 +62,33 @@ export default function AuthPage() {
       role: "store",
     },
   });
+
+  const handleRegisterSubmit = (data: any) => {
+    if (selectedPrefectures.length === 0) {
+      registerForm.setError("preferredLocations", {
+        type: "manual",
+        message: "働きたい地域を選択してください"
+      });
+      return;
+    }
+
+    const formData = {
+      ...data,
+      preferredLocations: selectedPrefectures,
+    };
+
+    registerMutation.mutate(formData);
+  };
+
+  const handlePrefectureChange = (prefecture: string, checked: boolean) => {
+    setSelectedPrefectures(prev => {
+      if (checked) {
+        return [...prev, prefecture];
+      } else {
+        return prev.filter(p => p !== prefecture);
+      }
+    });
+  };
 
   if (user) {
     return <Redirect to={user.role === "store" ? "/store/dashboard" : "/talent/dashboard"} />;
@@ -125,7 +161,7 @@ export default function AuthPage() {
                   </TabsContent>
 
                   <TabsContent value="register">
-                    <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
+                    <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)}>
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="username">
@@ -212,10 +248,18 @@ export default function AuthPage() {
                           <Label htmlFor="location">
                             在住地 <span className="text-destructive">※</span>
                           </Label>
-                          <Input
-                            {...registerForm.register("location")}
-                            placeholder="例: 東京都渋谷区"
-                          />
+                          <Select {...registerForm.register("location")}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="在住地を選択してください" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PREFECTURES.map((pref) => (
+                                <SelectItem key={pref} value={pref}>
+                                  {pref}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           {registerForm.formState.errors.location && (
                             <p className="text-sm text-destructive mt-1">
                               {registerForm.formState.errors.location.message}
@@ -233,7 +277,13 @@ export default function AuthPage() {
                           <div className="grid grid-cols-2 gap-2">
                             {PREFECTURES.map((pref) => (
                               <div key={pref} className="flex items-center space-x-2">
-                                <Checkbox id={`pref-${pref}`} />
+                                <Checkbox
+                                  id={`pref-${pref}`}
+                                  checked={selectedPrefectures.includes(pref)}
+                                  onCheckedChange={(checked) =>
+                                    handlePrefectureChange(pref, checked === true)
+                                  }
+                                />
                                 <label
                                   htmlFor={`pref-${pref}`}
                                   className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -243,6 +293,11 @@ export default function AuthPage() {
                               </div>
                             ))}
                           </div>
+                          {registerForm.formState.errors.preferredLocations && (
+                            <p className="text-sm text-destructive mt-1">
+                              {registerForm.formState.errors.preferredLocations.message}
+                            </p>
+                          )}
                         </div>
 
                         <p className="text-sm text-muted-foreground">
