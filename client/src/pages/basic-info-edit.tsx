@@ -1,12 +1,19 @@
-import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,10 +71,22 @@ export default function BasicInfoEdit() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: BasicInfoFormData) => {
-      console.log('開始：プロフィール更新', data);
-
+    mutationFn: async (updateData: BasicInfoFormData) => {
       try {
+        const payload = {
+          displayName: updateData.displayName,
+          location: updateData.location,
+          preferredLocations: updateData.preferredLocations,
+        };
+
+        // パスワード変更がある場合のみ追加
+        if (updateData.newPassword && updateData.currentPassword) {
+          Object.assign(payload, {
+            currentPassword: updateData.currentPassword,
+            newPassword: updateData.newPassword,
+          });
+        }
+
         const response = await fetch("/api/talent/profile", {
           method: "PUT",
           headers: {
@@ -75,21 +94,7 @@ export default function BasicInfoEdit() {
             "Accept": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({
-            displayName: data.displayName,
-            location: data.location,
-            preferredLocations: data.preferredLocations,
-            ...(data.newPassword && data.currentPassword ? {
-              currentPassword: data.currentPassword,
-              newPassword: data.newPassword,
-            } : {})
-          })
-        });
-
-        console.log('サーバーレスポンス:', {
-          status: response.status,
-          statusText: response.statusText,
-          contentType: response.headers.get("content-type")
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -99,24 +104,17 @@ export default function BasicInfoEdit() {
           if (contentType?.includes("application/json")) {
             const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
-          } else {
-            const text = await response.text();
-            console.error('エラーレスポンス:', text);
           }
+
           throw new Error(errorMessage);
         }
 
-        const contentType = response.headers.get("content-type");
-        if (!contentType?.includes("application/json")) {
-          throw new Error("サーバーから不正なレスポンスを受信しました");
-        }
-
-        const data = await response.json();
-        console.log('更新成功:', data);
-        return data;
+        return await response.json();
       } catch (error) {
-        console.error('プロフィール更新エラー:', error);
-        throw error;
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error("プロフィールの更新中にエラーが発生しました");
       }
     },
     onSuccess: () => {
@@ -135,19 +133,14 @@ export default function BasicInfoEdit() {
     },
   });
 
-  const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('フォーム送信データ:', data);
+  const onSubmit = (data: BasicInfoFormData) => {
     setFormData(data);
     setShowConfirmation(true);
   };
 
   const handleConfirm = async () => {
     if (!formData) return;
-    try {
-      await updateProfileMutation.mutateAsync(formData);
-    } catch (error) {
-      console.error('確認画面でのエラー:', error);
-    }
+    await updateProfileMutation.mutateAsync(formData);
   };
 
   if (!user) {
