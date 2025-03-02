@@ -11,7 +11,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import JobDetail from "@/pages/job-detail";
 import StoreDashboard from "@/pages/store-dashboard";
-import { AgeVerificationModal } from "@/components/age-verification-modal";
 import MyPage from "@/pages/my-page";
 import BasicInfoEdit from "@/pages/basic-info-edit";
 import Jobs from "@/pages/jobs";
@@ -43,7 +42,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AgeVerificationModal />
         <Router />
         <Toaster />
       </AuthProvider>

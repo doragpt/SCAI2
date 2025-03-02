@@ -15,19 +15,27 @@ interface AgeVerificationModalProps {
   onVerify: (verified: boolean) => void;
 }
 
-export function AgeVerificationModal({ open, onOpenChange, onVerify }: AgeVerificationModalProps) {
+export function AgeVerificationModal({
+  open,
+  onOpenChange,
+  onVerify,
+}: AgeVerificationModalProps) {
+  console.log("AgeVerificationModal rendered:", { open });
+
   const handleVerify = () => {
+    console.log("年齢確認: はい");
     onVerify(true);
   };
 
   const handleDeny = () => {
+    console.log("年齢確認: いいえ");
     onVerify(false);
     window.location.href = "https://www.google.com";
   };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="sm:max-w-[425px]">
         <AlertDialogHeader>
           <AlertDialogTitle>年齢確認</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
@@ -36,7 +44,7 @@ export function AgeVerificationModal({ open, onOpenChange, onVerify }: AgeVerifi
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <Button variant="secondary" onClick={handleDeny}>
+          <Button variant="outline" onClick={handleDeny}>
             いいえ
           </Button>
           <Button onClick={handleVerify}>
