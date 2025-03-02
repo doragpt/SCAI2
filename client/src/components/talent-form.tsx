@@ -91,7 +91,7 @@ export function TalentForm() {
     const numericFields = ['age', 'guaranteeAmount', 'height', 'weight'];
     numericFields.forEach(field => {
       if (values[field]) {
-        formData.append(field, String(parseInt(values[field], 10)));
+        formData.append(field, values[field].toString());
       }
     });
 
@@ -99,23 +99,17 @@ export function TalentForm() {
     const optionalNumericFields = ['bust', 'waist', 'hip'];
     optionalNumericFields.forEach(field => {
       if (values[field]) {
-        formData.append(field, String(parseInt(values[field], 10)));
+        formData.append(field, values[field].toString());
       }
     });
 
-    // 日付フィールドを変換
-    if (values.availableFrom) {
-      formData.append('availableFrom', new Date(values.availableFrom).toISOString());
-    }
-    if (values.availableTo) {
-      formData.append('availableTo', new Date(values.availableTo).toISOString());
-    }
-
     // その他のフィールドを追加
     formData.append('sameDay', String(values.sameDay));
-    formData.append('location', values.location);
     formData.append('cupSize', values.cupSize);
-    formData.append('serviceTypes', JSON.stringify(values.serviceTypes));
+    formData.append('location', values.location);
+    formData.append('availableFrom', values.availableFrom);
+    formData.append('availableTo', values.availableTo);
+    formData.append('serviceTypes', JSON.stringify(values.serviceTypes || []));
 
     mutation.mutate(formData);
   };

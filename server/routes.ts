@@ -12,16 +12,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Talent profile routes
   app.post("/api/talent/profile", upload.array("photos", 30), async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (req.user.role !== "talent") return res.sendStatus(403);
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "talent") return res.sendStatus(403);
 
-    const profileData = insertTalentProfileSchema.parse({
-      ...req.body,
-      photos: (req.files as Express.Multer.File[]).map(file => file.buffer.toString('base64'))
-    });
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "写真が必要です" });
+      }
 
-    const profile = await storage.createTalentProfile(req.user.id, profileData);
-    res.json(profile);
+      const profileData = insertTalentProfileSchema.parse({
+        ...req.body,
+        photos: files.map(file => file.buffer.toString('base64'))
+      });
+
+      const profile = await storage.createTalentProfile(req.user.id, profileData);
+      res.json(profile);
+    } catch (error) {
+      console.error('Profile creation error:', error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "プロフィールの作成に失敗しました" });
+    }
   });
 
   app.get("/api/talent/profiles", async (req, res) => {
