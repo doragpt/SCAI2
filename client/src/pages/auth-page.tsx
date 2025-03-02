@@ -94,9 +94,9 @@ export default function AuthPage() {
                         <div>
                           <Label htmlFor="password">パスワード</Label>
                           <div className="relative">
-                            <Input 
-                              type={showPassword ? "text" : "password"} 
-                              {...loginForm.register("password")} 
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              {...loginForm.register("password")}
                             />
                             <button
                               type="button"
@@ -149,11 +149,11 @@ export default function AuthPage() {
                           <p className="text-sm text-muted-foreground mb-2">
                             ※18歳未満、高校生は登録できません
                           </p>
-                          <Input 
+                          <Input
                             type="date"
-                            {...registerForm.register("birthDate", { 
-                              valueAsDate: true 
-                            })} 
+                            {...registerForm.register("birthDate", {
+                              valueAsDate: true
+                            })}
                           />
                           {registerForm.formState.errors.birthDate && (
                             <p className="text-sm text-destructive mt-1">
@@ -170,12 +170,12 @@ export default function AuthPage() {
                             ※文字は半角8文字以上48文字以内<br />
                             半角英字小文字、半角数字はそれぞれ1種類以上必須<br />
                             (半角記号は任意)<br />
-                            ※半角記号は!#$%()+,-./:=?@[]^_`{|}が入力可能
+                            ※使用可能な半角記号：! # $ % ( ) + , - . / : = ? @ [ ] ^ _ ` { } |
                           </p>
                           <div className="relative">
-                            <Input 
-                              type={showPassword ? "text" : "password"} 
-                              {...registerForm.register("password")} 
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              {...registerForm.register("password")}
                             />
                             <button
                               type="button"
@@ -212,9 +212,9 @@ export default function AuthPage() {
                           <Label htmlFor="location">
                             在住地 <span className="text-destructive">※</span>
                           </Label>
-                          <Input 
-                            {...registerForm.register("location")} 
-                            placeholder="例: 東京都渋谷区" 
+                          <Input
+                            {...registerForm.register("location")}
+                            placeholder="例: 東京都渋谷区"
                           />
                           {registerForm.formState.errors.location && (
                             <p className="text-sm text-destructive mt-1">
@@ -249,9 +249,9 @@ export default function AuthPage() {
                           <span className="text-destructive">※</span>は必須項目です
                         </p>
 
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
+                        <Button
+                          type="submit"
+                          className="w-full"
                           disabled={registerMutation.isPending}
                         >
                           {registerMutation.isPending && (
@@ -321,9 +321,9 @@ export default function AuthPage() {
                         </div>
                         <div>
                           <Label htmlFor="password">パスワード</Label>
-                          <Input 
-                            type="password" 
-                            {...storeRegisterForm.register("password")} 
+                          <Input
+                            type="password"
+                            {...storeRegisterForm.register("password")}
                           />
                           {storeRegisterForm.formState.errors.password && (
                             <p className="text-sm text-destructive mt-1">
@@ -342,9 +342,9 @@ export default function AuthPage() {
                         </div>
                         <div>
                           <Label htmlFor="location">所在地</Label>
-                          <Input 
-                            {...storeRegisterForm.register("location")} 
-                            placeholder="例: 東京都渋谷区" 
+                          <Input
+                            {...storeRegisterForm.register("location")}
+                            placeholder="例: 東京都渋谷区"
                           />
                           {storeRegisterForm.formState.errors.location && (
                             <p className="text-sm text-destructive mt-1">
@@ -352,9 +352,9 @@ export default function AuthPage() {
                             </p>
                           )}
                         </div>
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
+                        <Button
+                          type="submit"
+                          className="w-full"
                           disabled={registerMutation.isPending}
                         >
                           {registerMutation.isPending && (
