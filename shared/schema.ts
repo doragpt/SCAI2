@@ -85,6 +85,18 @@ export const insertUserSchema = z.discriminatedUnion("role", [
   storeUserSchema,
 ]);
 
+// 求人情報の型定義
+export type StoreProfile = {
+  id: number;
+  businessName: string;
+  serviceType: string;
+  location: string;
+  minimumGuarantee?: number;
+  maximumGuarantee?: number;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+};
+
 export type LoginData = z.infer<typeof loginSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
