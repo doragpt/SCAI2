@@ -8,30 +8,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
 
-export function AgeVerificationModal() {
-  const [open, setOpen] = useState(false);
-  const [, setLocation] = useLocation();
+interface AgeVerificationModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onVerify: (verified: boolean) => void;
+}
 
-  useEffect(() => {
-    const verified = localStorage.getItem("age-verified");
-    if (!verified) {
-      setOpen(true);
-    }
-  }, []);
-
+export function AgeVerificationModal({ open, onOpenChange, onVerify }: AgeVerificationModalProps) {
   const handleVerify = () => {
-    localStorage.setItem("age-verified", "true");
-    setOpen(false);
+    onVerify(true);
   };
 
   const handleDeny = () => {
+    onVerify(false);
     window.location.href = "https://www.google.com";
   };
 
   return (
-    <AlertDialog open={open}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>年齢確認</AlertDialogTitle>

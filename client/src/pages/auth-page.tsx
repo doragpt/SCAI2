@@ -25,6 +25,7 @@ import {
 import { Redirect } from "wouter";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AgeVerificationModal } from "@/components/age-verification-modal";
 
 type TalentRegisterFormData = ReturnType<typeof talentRegisterFormSchema.parse>;
 
@@ -33,6 +34,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [formData, setFormData] = useState<TalentRegisterFormData | null>(null);
 
   // 生年月日用のドロップダウンの選択肢を生成
@@ -90,17 +92,22 @@ export default function AuthPage() {
     }
 
     if (dateStr) {
-      console.log('Setting birthDate:', dateStr);
       registerForm.setValue('birthDate', dateStr, { shouldValidate: true });
     }
   };
 
   const handleRegisterSubmit = async (data: TalentRegisterFormData) => {
     try {
-      console.log('Form Data before submission:', data);
-
       if (!data.birthDate) {
         console.error('生年月日が設定されていません');
+        return;
+      }
+
+      // 年齢確認ダイアログを表示
+      const verified = localStorage.getItem("age-verified");
+      if (!verified) {
+        setFormData(data);
+        setShowAgeVerification(true);
         return;
       }
 
@@ -117,11 +124,17 @@ export default function AuthPage() {
     try {
       // Remove confirmation fields before submission
       const { passwordConfirm, privacyPolicy, ...submitData } = formData;
-
-      console.log('Processed Form Data:', submitData);
       registerMutation.mutate(submitData);
     } catch (error) {
       console.error('Registration confirmation error:', error);
+    }
+  };
+
+  const handleAgeVerification = (verified: boolean) => {
+    setShowAgeVerification(false);
+    if (verified && formData) {
+      localStorage.setItem("age-verified", "true");
+      setShowConfirmation(true);
     }
   };
 
@@ -153,7 +166,6 @@ export default function AuthPage() {
   };
 
   if (user) {
-    // ダッシュボードへリダイレクト
     return <Redirect to="/talent/dashboard" />;
   }
 
@@ -550,6 +562,12 @@ export default function AuthPage() {
           </p>
         </div>
       </div>
+      {/* 年齢確認ダイアログ */}
+      <AgeVerificationModal
+        open={showAgeVerification}
+        onOpenChange={setShowAgeVerification}
+        onVerify={handleAgeVerification}
+      />
       {/* 確認ダイアログ */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent>
