@@ -95,15 +95,18 @@ const serviceTypes = [
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [selectedArea, setSelectedArea] = useState<string>("東京23区");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedArea, setSelectedArea] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("all");
 
   const { data: jobListings, isLoading } = useQuery<StoreProfile[]>({
     queryKey: ["/api/jobs/public"],
   });
 
+  const currentAreaGroup = areaGroups.find(group => group.label === selectedRegion);
+
   const filteredListings = jobListings?.filter(job => {
-    const areaMatch = job.location.includes(selectedArea);
+    const areaMatch = !selectedArea || job.location.includes(selectedArea);
     const typeMatch = selectedType === "all" || job.serviceType === selectedType;
     return areaMatch && typeMatch;
   });
@@ -179,23 +182,39 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
             <h3 className="text-2xl font-bold">新着求人情報</h3>
             <div className="flex gap-4 mt-4 md:mt-0">
-              <Select value={selectedArea} onValueChange={setSelectedArea}>
+              <Select value={selectedRegion} onValueChange={(value) => {
+                setSelectedRegion(value);
+                setSelectedArea("");
+              }}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="エリアを選択" />
                 </SelectTrigger>
                 <SelectContent>
                   {areaGroups.map((group) => (
-                    <SelectGroup key={group.label}>
-                      <SelectLabel>{group.label}</SelectLabel>
-                      {group.areas.map((area) => (
-                        <SelectItem key={area} value={area}>
-                          {area}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
+                    <SelectItem key={group.label} value={group.label}>
+                      {group.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select
+                value={selectedArea}
+                onValueChange={setSelectedArea}
+                disabled={!selectedRegion}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={selectedRegion ? "地域を選択" : "エリアを選択してください"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentAreaGroup?.areas.map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="業種を選択" />
