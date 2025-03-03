@@ -6,31 +6,37 @@ import cors from "cors";
 
 const app = express();
 
-// CORSミドルウェアの設定を改善
+// CORSミドルウェアの設定をさらに緩和
 app.use(cors({
-  origin: true, // すべてのオリジンを許可（開発環境用）
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: true,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// リクエストロギングの改善
+// リクエストロギングの強化
 app.use((req, res, next) => {
   const start = Date.now();
-  console.log('Request received:', {
+  console.log('Detail Request Info:', {
     method: req.method,
     path: req.path,
-    origin: req.headers.origin,
-    host: req.headers.host,
+    headers: {
+      ...req.headers,
+      authorization: req.headers.authorization ? '[HIDDEN]' : undefined
+    },
+    query: req.query,
+    body: req.method !== 'GET' ? req.body : undefined,
     timestamp: new Date().toISOString()
   });
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    console.log('Response sent:', {
+    console.log('Detail Response Info:', {
       method: req.method,
       path: req.path,
       status: res.statusCode,
@@ -50,16 +56,19 @@ app.use((req, res, next) => {
 
     const server = await registerRoutes(app);
 
-    // エラーハンドリングミドルウェア
+    // エラーハンドリングミドルウェアの強化
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error("Server error:", {
+      console.error("Detailed Server Error:", {
         error: err,
+        name: err.name,
         message: err.message,
+        code: err.code,
         stack: err.stack,
         timestamp: new Date().toISOString()
       });
 
       res.status(err.status || 500).json({
+        error: true,
         message: err.message || "Internal Server Error",
         timestamp: new Date().toISOString()
       });
@@ -73,12 +82,12 @@ app.use((req, res, next) => {
       port: 5000,
       host: "0.0.0.0",
     }, () => {
-      log(`Server started: http://0.0.0.0:5000`);
+      log(`Server started at http://0.0.0.0:5000`);
       log(`Environment: ${app.get("env")}`);
-      log(`CORS: enabled for all origins`);
+      log(`CORS: Enabled with full access`);
     });
   } catch (error) {
-    console.error("Server startup error:", error);
+    console.error("Detailed Startup Error:", error);
     process.exit(1);
   }
 })();

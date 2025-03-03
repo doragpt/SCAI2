@@ -2,21 +2,22 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // APIのベースURL設定の改善
 const API_BASE_URL = (() => {
-  if (process.env.NODE_ENV === "development") {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    return `${protocol}//${hostname}:5000`;
-  }
-  return "";
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return process.env.NODE_ENV === "development"
+    ? `${protocol}//${hostname}:5000`
+    : "";
 })();
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({ message: res.statusText }));
-    console.error("API Error:", {
+    console.error("Detailed API Error:", {
       status: res.status,
       statusText: res.statusText,
       data,
+      url: res.url,
+      type: res.type,
       timestamp: new Date().toISOString()
     });
     throw new Error(data.message || res.statusText);
@@ -30,6 +31,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest"
   };
 
   const token = localStorage.getItem("auth_token");
@@ -39,10 +41,11 @@ export async function apiRequest(
 
   const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-  console.log("API Request:", {
+  console.log("Detailed API Request:", {
     method,
     url: fullUrl,
-    headers: { ...headers, Authorization: token ? "Bearer [HIDDEN]" : undefined },
+    headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
+    data: data ? "[HIDDEN]" : undefined,
     timestamp: new Date().toISOString()
   });
 
@@ -52,15 +55,20 @@ export async function apiRequest(
       headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
+      mode: "cors",
     });
 
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-    console.error("API Request Failed:", {
+    console.error("Detailed API Request Failed:", {
       method,
       url: fullUrl,
-      error,
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : error,
       timestamp: new Date().toISOString()
     });
     throw error;
@@ -72,7 +80,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      "X-Requested-With": "XMLHttpRequest"
+    };
 
     const token = localStorage.getItem("auth_token");
     if (token) {
@@ -86,6 +96,7 @@ export const getQueryFn: <T>(options: {
       const res = await fetch(fullUrl, {
         headers,
         credentials: "include",
+        mode: "cors",
       });
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -95,9 +106,13 @@ export const getQueryFn: <T>(options: {
       await throwIfResNotOk(res);
       return await res.json();
     } catch (error) {
-      console.error("Query Failed:", {
+      console.error("Detailed Query Failed:", {
         url: fullUrl,
-        error,
+        error: error instanceof Error ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        } : error,
         timestamp: new Date().toISOString()
       });
       throw error;
