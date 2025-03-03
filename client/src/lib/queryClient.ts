@@ -96,7 +96,7 @@ export async function updateTalentProfile(data: any) {
     // キャッシュの更新処理
     queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
 
-    // ローカルストレージにも保存
+    // ローカルストレージに保存
     localStorage.setItem('talentProfile', JSON.stringify(updatedProfile));
 
     // キャッシュを無効化して再取得を強制
