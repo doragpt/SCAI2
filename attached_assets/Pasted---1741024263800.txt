@@ -1,0 +1,191 @@
+以下は、フロントエンドとバックエンドそれぞれで考えられる具体的な修正指示例です。コードの実際の構造に合わせて適宜読み替えてください。
+
+---
+
+## 【フロントエンド側の修正】
+
+### 1. 更新後の状態反映とローカルストレージの連携
+- **対象ファイル:**  
+  例: `client/src/components/TalentForm.tsx`（またはプロフィール編集画面コンポーネント）
+
+### 修正例:
+1. **フォーム送信ハンドラの修正**  
+   - 保存API呼び出し後に、最新のユーザーデータで状態を更新し、ローカルストレージにも保存する  
+   ```jsx
+   import React, { useState, useEffect } from 'react';
+   import { updateProfileAPI, fetchProfileAPI } from '../api/profile';
+   import { showSuccess, showError } from '../utils/notifications';
+
+   const TalentForm = () => {
+     const [formData, setFormData] = useState({
+       name: '',
+       age: '',
+       webResume: '',
+       // その他必要なフィールド…
+     });
+
+     // ページ読み込み時にローカルストレージまたはAPIからユーザー情報を取得
+     useEffect(() => {
+       const storedData = localStorage.getItem('userProfile');
+       if (storedData) {
+         setFormData(JSON.parse(storedData));
+       } else {
+         fetchProfileAPI()
+           .then(res => {
+             setFormData(res.data);
+             localStorage.setItem('userProfile', JSON.stringify(res.data));
+           })
+           .catch(err => console.error('プロフィール取得エラー', err));
+       }
+     }, []);
+
+     // 入力値が変更されるたびにローカルストレージに保存
+     useEffect(() => {
+       localStorage.setItem('userProfile', JSON.stringify(formData));
+     }, [formData]);
+
+     const handleSave = async (e) => {
+       e.preventDefault();
+       try {
+         const response = await updateProfileAPI(formData);
+         // サーバーから返された最新のユーザーデータで状態を更新
+         setFormData(response.data);
+         localStorage.setItem('userProfile', JSON.stringify(response.data));
+         showSuccess('プロフィールを更新しました。');
+       } catch (error) {
+         console.error('更新エラー:', error);
+         showError('プロフィールの更新に失敗しました。');
+       }
+     };
+
+     return (
+       <form onSubmit={handleSave}>
+         {/* 各入力フィールド（例: name, age, webResumeなど） */}
+         <input
+           type="text"
+           value={formData.name}
+           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+           placeholder="お名前"
+         />
+         {/* 他のフィールドも同様に */}
+         {/* プログレスバーコンポーネント */}
+         <ProgressBar progress={calculateProgress(formData)} />
+         <button type="submit">保存</button>
+       </form>
+     );
+   };
+
+   // calculateProgress: 入力完了率を計算する関数
+   const calculateProgress = (data) => {
+     const totalFields = 3; // 必須項目数など
+     let completed = 0;
+     if(data.name) completed++;
+     if(data.age) completed++;
+     if(data.webResume) completed++;
+     return (completed / totalFields) * 100;
+   };
+
+   export default TalentForm;
+   ```
+   ※ 上記は例示です。実際の入力項目や状態管理の仕組みに合わせて調整してください。
+
+2. **バリデーションとエラーハンドリングの追加**  
+   - 必須項目に対して、未入力の場合は保存処理をブロックし、ユーザーにエラーメッセージを表示する。  
+   例：React Hook Form や Formik を利用すると実装が簡単になります。  
+
+---
+
+## 【バックエンド側の修正】
+
+### 1. プロフィール更新APIの修正
+- **対象ファイル:**  
+  例: `server/src/controllers/UserController.ts` または `ProfileController.ts`
+
+### 修正例:
+1. **更新処理の実装**  
+   - リクエストで送信されたフィールド（例：`name`, `age`, `webResume`）をユーザーオブジェクトに正しくセットし、DBに保存する  
+   ```typescript
+   // 例: Express + Mongoose または ORM を利用している場合
+   export const updateProfile = async (req, res) => {
+     try {
+       const userId = req.user.id; // 認証済みユーザーID
+       const { name, age, webResume } = req.body;
+
+       // ユーザー取得
+       const user = await User.findById(userId);
+       if (!user) {
+         return res.status(404).json({ message: 'User not found' });
+       }
+
+       // フィールドの更新（フロント側が送信するフィールド名に合わせる）
+       if (name) user.name = name;
+       if (age) user.age = age;
+       if (webResume) user.webResume = webResume;
+
+       // DBに保存
+       await user.save();
+
+       // 最新データを返す
+       return res.status(200).json(user);
+     } catch (error) {
+       console.error('Profile update error:', error);
+       return res.status(500).json({ message: 'サーバーエラー: プロフィール更新に失敗しました' });
+     }
+   };
+   ```
+   ※ 使用しているORMやDBに合わせて、保存処理の記述を調整してください。
+
+2. **ルート設定の確認**  
+   - APIルートが正しく設定されているか、例えば `PATCH /api/profile` としてルーティングされているか確認してください。
+   ```typescript
+   // 例: routes/profileRoutes.ts
+   import express from 'express';
+   import { updateProfile } from '../controllers/UserController';
+   const router = express.Router();
+   router.patch('/profile', updateProfile);
+   export default router;
+   ```
+
+---
+
+## 【統合確認とテスト】
+
+1. **フロントエンドからのAPI呼び出し**  
+   - 環境変数（例: `VITE_API_URL`）を使い、正しいバックエンドURLに対してリクエストを送っているか確認してください。  
+   - Viteの場合、`.env` に `VITE_API_URL=http://localhost:5000` のように定義し、API呼び出しは `fetch(`${import.meta.env.VITE_API_URL}/api/profile`)` で行います。
+
+2. **キャッシュ・状態管理の連携**  
+   - プロフィール更新後に、フロント側で更新されたユーザーデータがローカルストレージやグローバル状態に反映されることを確認します。  
+   - ページ再読み込み後も、保存された最新情報が表示されるか、またはAPIから最新データを取得して表示されることをテストしてください。
+
+3. **エラーハンドリングの動作確認**  
+   - サーバー側で、必須項目の入力漏れなどに対して正しいエラーが返され、フロントエンドがそのエラーをユーザーに通知するか確認します。
+
+---
+
+## 最終的な指示例
+
+エンジニア（AI）に対して、以下のように指示してください：
+
+---
+「現在、女性マイページの基本情報とWeb履歴書の更新後のデータ保持に問題があるため、以下の修正をお願いします。
+
+【フロントエンド側】  
+1. **状態更新の修正:**  
+   - プロフィール更新APIの呼び出し後、受け取った最新ユーザーデータで状態を更新し、ローカルストレージに保存する処理を追加してください。（例: `updateProfileAPI` の成功時に `setUserProfile(response.data)` とする）  
+2. **ローカルストレージ連携:**  
+   - ページ読み込み時にローカルストレージに保存されたプロフィール情報を復元するようにし、ユーザーが再読み込みしても最新情報が表示されるようにしてください。  
+3. **バリデーション:**  
+   - 必須項目の入力が不足している場合、適切なエラーメッセージを表示し、保存処理が実行されないようにしてください。
+
+【バックエンド側】  
+1. **プロフィール更新APIの修正:**  
+   - 送信されるフィールド（`name`, `age`, `webResume` など）を正しくユーザーオブジェクトにマッピングし、データベースに保存する処理を確認してください。  
+   - 更新が成功した場合、最新のユーザー情報をレスポンスとして返すようにしてください。（例: `res.status(200).json(user)`）  
+2. **ルート設定:**  
+   - APIルートが正しく設定され、フロントエンドからのリクエストが確実にこのエンドポイントに届くようにしてください。
+
+これらの修正が完了したら、更新後のプロフィール情報がページ再読み込み後も正しく表示されるか、Web履歴書の入力内容が失われずに保存されるかをテストしてください。よろしくお願いします。」
+---
+
+以上の指示で、問題箇所を具体的に修正できるはずです。必要に応じて、該当するコードブロックのサンプルを参照しながら進めてください。

@@ -12,14 +12,19 @@ import { Loader2, PenSquare } from "lucide-react";
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
-  const { data: profile, isLoading } = useQuery<TalentProfileData>({
+  const { data: profile, isLoading, error } = useQuery<TalentProfileData>({
     queryKey: ["/api/talent/profile"],
     enabled: !!user, // ユーザーが存在する場合のみクエリを実行
     staleTime: 0, // 常に最新のデータを取得
     refetchOnMount: true, // コンポーネントマウント時に再取得
     refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+    retry: 2, // エラー時のリトライ回数を増やす
+    onError: (error) => {
+      console.error("Profile fetch error:", error);
+    }
   });
 
+  // ローディング状態の処理
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -28,6 +33,26 @@ export default function ProfileViewPage() {
     );
   }
 
+  // エラー状態の処理
+  if (error) {
+    return (
+      <div className="container max-w-2xl py-8">
+        <Card className="p-6">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-semibold text-red-600">エラーが発生しました</h1>
+            <p className="text-muted-foreground">
+              プロフィールの取得中にエラーが発生しました。
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              再読み込み
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // プロフィールが存在しない場合
   if (!profile) {
     return (
       <div className="container max-w-2xl py-8">

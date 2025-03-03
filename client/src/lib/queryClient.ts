@@ -78,19 +78,28 @@ export async function apiRequest(
 
 // プロフィール更新用の関数
 export async function updateTalentProfile(data: any) {
-  const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
-  const updatedProfile = await response.json();
+  try {
+    // APIリクエストを実行
+    const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
+    const updatedProfile = await response.json();
 
-  // キャッシュを強制的に無効化し、新しいデータで更新
-  queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
-  // 強制的に再取得を行う
-  await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-  await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+    // キャッシュの更新処理
+    queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
 
-  return updatedProfile;
+    // 強制的に再取得を実行
+    await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE], exact: true });
+
+    // ローカルストレージにも保存
+    localStorage.setItem('cachedProfile', JSON.stringify(updatedProfile));
+
+    return updatedProfile;
+  } catch (error) {
+    console.error("Profile update failed:", error);
+    throw error;
+  }
 }
 
-// クエリ関数の生成
 export const getQueryFn: <T>({
   on401,
 }: {
@@ -110,14 +119,13 @@ export const getQueryFn: <T>({
       const url = queryKey[0] as string;
       const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-      console.log("Query Request:", {
-        method: "GET",
-        url: fullUrl,
-        headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
-        timestamp: new Date().toISOString()
-      });
-
       try {
+        // キャッシュされたデータを確認
+        const cachedData = localStorage.getItem('cachedProfile');
+        if (cachedData && url === QUERY_KEYS.TALENT_PROFILE) {
+          return JSON.parse(cachedData);
+        }
+
         const res = await fetch(fullUrl, {
           headers,
           credentials: "include",
@@ -128,7 +136,14 @@ export const getQueryFn: <T>({
         }
 
         await throwIfResNotOk(res);
-        return await res.json();
+        const data = await res.json();
+
+        // プロフィールデータの場合はローカルストレージに保存
+        if (url === QUERY_KEYS.TALENT_PROFILE) {
+          localStorage.setItem('cachedProfile', JSON.stringify(data));
+        }
+
+        return data;
       } catch (error) {
         console.error("Query Failed:", {
           url: fullUrl,
@@ -149,7 +164,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 0, // キャッシュを常に無効化
-      cacheTime: 0, // キャッシュを保持しない
+      cacheTime: 1000 * 60 * 5, // 5分間キャッシュを保持
       refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
       refetchOnMount: true, // コンポーネントマウント時に再取得
       refetchOnReconnect: true, // 再接続時に再取得

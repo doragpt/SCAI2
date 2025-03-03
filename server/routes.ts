@@ -252,11 +252,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'estheOptions'
         ];
 
-        // 更新データの準備
+        // 更新データの準備（数値フィールドの処理を含む）
         const processedData = {
           ...updateData,
           userId,
           updatedAt: new Date(),
+          // 数値フィールドの明示的な処理
+          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
+          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
+          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
         };
 
         // JSONBフィールドを適切に処理
@@ -321,6 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
 
 
   app.post("/api/logout", (req: any, res, next) => {
