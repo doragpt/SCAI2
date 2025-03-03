@@ -75,7 +75,9 @@ export async function apiRequest(
   }
 }
 
-export const getQueryFn: <T>(options: {
+export const getQueryFn: <T>({
+  on401,
+}: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
@@ -92,6 +94,13 @@ export const getQueryFn: <T>(options: {
     const url = queryKey[0] as string;
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
+    console.log("Query Request:", {
+      method: "GET",
+      url: fullUrl,
+      headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
+      timestamp: new Date().toISOString()
+    });
+
     try {
       const res = await fetch(fullUrl, {
         headers,
@@ -105,7 +114,7 @@ export const getQueryFn: <T>(options: {
       await throwIfResNotOk(res);
       return await res.json();
     } catch (error) {
-      console.error("Detailed Query Failed:", {
+      console.error("Query Failed:", {
         url: fullUrl,
         error: error instanceof Error ? {
           name: error.name,
@@ -126,8 +135,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
       retry: false,
+      staleTime: 0, // キャッシュの有効期限を0に設定して常に最新データを取得
     },
     mutations: {
       retry: false,
