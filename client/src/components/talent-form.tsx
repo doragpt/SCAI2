@@ -154,12 +154,12 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      // 空の数値フィールドをnullに変換
+      // 数値フィールドの処理
       const processedData = {
         ...data,
-        bust: data.bust || null,
-        waist: data.waist || null,
-        hip: data.hip || null,
+        bust: data.bust === undefined || data.bust === "" ? null : Number(data.bust),
+        waist: data.waist === undefined || data.waist === "" ? null : Number(data.waist),
+        hip: data.hip === undefined || data.hip === "" ? null : Number(data.hip),
       };
 
       const response = await apiRequest("POST", "/api/talent/profile", processedData);
