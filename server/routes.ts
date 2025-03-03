@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import {
   talentProfileSchema,
@@ -11,9 +10,25 @@ import { eq, sql } from "drizzle-orm";
 import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import passport from "passport";
+import { generateToken, verifyToken } from "./jwt";
+import { authenticate, authorize } from "./middleware/auth";
 
 const scryptAsync = promisify(scrypt);
+
+// パスワードハッシュ化関数
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+// パスワード検証関数
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
 
 // JSONB用のヘルパー関数
 const toJsonb = (value: any) => {
@@ -21,57 +36,30 @@ const toJsonb = (value: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
-
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      console.log('認証失敗:', { session: req.session, user: req.user });
-      return res.status(401).json({ message: "認証が必要です" });
-    }
-    console.log('認証成功:', { userId: req.user.id });
-    next();
-  };
-
+  // 認証エンドポイント
   app.post("/api/register", async (req, res) => {
     try {
       console.log('Registration request received:', req.body);
-      const userData = talentRegisterFormSchema.parse(req.body);
 
-      const user = await db.transaction(async (tx) => {
-        const [existingUser] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.username, userData.username));
+      const hashedPassword = await hashPassword(req.body.password);
 
-        if (existingUser) {
-          throw new Error("このニックネームは既に使用されています");
-        }
+      const [user] = await db
+        .insert(users)
+        .values({
+          ...req.body,
+          password: hashedPassword,
+          createdAt: new Date(),
+        })
+        .returning();
 
-        const hashedPassword = await hashPassword(userData.password);
+      if (!user) {
+        throw new Error("ユーザーの作成に失敗しました");
+      }
 
-        const [newUser] = await tx
-          .insert(users)
-          .values({
-            username: userData.username,
-            password: hashedPassword,
-            role: userData.role,
-            displayName: userData.displayName,
-            location: userData.location,
-            birthDate: new Date(userData.birthDate),
-            preferredLocations: userData.preferredLocations,
-            createdAt: new Date(),
-          })
-          .returning();
+      // JWTトークンを生成
+      const token = generateToken(user);
 
-        if (!newUser) {
-          throw new Error("ユーザーの作成に失敗しました");
-        }
-
-        return newUser;
-      });
-
-      console.log('User created successfully:', { userId: user.id });
-      res.status(201).json(user);
+      res.status(201).json({ user, token });
     } catch (error) {
       console.error('Registration error:', error);
       res.status(400).json({
@@ -80,92 +68,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/talent/profile", requireAuth, async (req: any, res) => {
-    const userId = req.user.id;
-    console.log('Profile update request for user:', userId);
-
+  app.post("/api/login", async (req, res) => {
     try {
-      const updateData = talentProfileUpdateSchema.parse(req.body);
-
-      const updatedUser = await db.transaction(async (tx) => {
-        const [currentUser] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.id, userId));
-
-        if (!currentUser) {
-          throw new Error("ユーザーが見つかりません");
-        }
-
-        if (updateData.currentPassword && updateData.newPassword) {
-          const isPasswordValid = await comparePasswords(
-            updateData.currentPassword,
-            currentUser.password
-          );
-
-          if (!isPasswordValid) {
-            throw new Error("現在のパスワードが正しくありません");
-          }
-
-          updateData.password = await hashPassword(updateData.newPassword);
-        }
-
-        const [updated] = await tx
-          .update(users)
-          .set({
-            ...updateData,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, userId))
-          .returning();
-
-        if (!updated) {
-          throw new Error("プロフィールの更新に失敗しました");
-        }
-
-        return updated;
-      });
-
-      console.log('Profile updated successfully:', { userId });
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('Profile update error:', error);
-      if (error instanceof Error) {
-        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
-          message: error.message
-        });
-      } else {
-        res.status(500).json({
-          message: "プロフィールの更新に失敗しました"
-        });
-      }
-    }
-  });
-
-  app.get("/api/talent/profile", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      console.log('Profile fetch request for user:', userId);
+      const { username, password } = req.body;
 
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, userId));
+        .where(eq(users.username, username));
 
-      if (!user) {
-        console.error('User not found:', userId);
+      if (!user || !(await comparePasswords(password, user.password))) {
+        return res.status(401).json({ message: "認証に失敗しました" });
+      }
+
+      // JWTトークンを生成
+      const token = generateToken(user);
+
+      res.json({ user, token });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: "ログインに失敗しました" });
+    }
+  });
+
+  // 認証が必要なエンドポイント
+  app.get("/api/talent/profile", authenticate, async (req: any, res) => {
+    try {
+      const [profile] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, req.user.id));
+
+      if (!profile) {
         return res.status(404).json({ message: "プロフィールが見つかりません" });
       }
 
-      console.log('Profile fetch successful:', user);
-      res.json(user);
+      res.json(profile);
     } catch (error) {
       console.error('Profile fetch error:', error);
       res.status(500).json({ message: "プロフィールの取得に失敗しました" });
     }
   });
 
-  app.post("/api/talent/profile", requireAuth, async (req: any, res) => {
+  app.post("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       console.log('Profile creation request received:', req.body);
 
@@ -254,12 +199,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req: any, res) => {
-    console.log('Login successful:', { userId: req.user.id });
-    res.json(req.user);
+  app.put("/api/talent/profile", authenticate, async (req: any, res) => {
+    //This section is largely unchanged from original, but uses authenticate middleware.  Error handling could be improved for consistency.
+    const userId = req.user.id;
+    console.log('Profile update request for user:', userId);
+
+    try {
+      const updateData = talentProfileUpdateSchema.parse(req.body);
+
+      const updatedUser = await db.transaction(async (tx) => {
+        const [currentUser] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, userId));
+
+        if (!currentUser) {
+          throw new Error("ユーザーが見つかりません");
+        }
+
+        if (updateData.currentPassword && updateData.newPassword) {
+          const isPasswordValid = await comparePasswords(
+            updateData.currentPassword,
+            currentUser.password
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("現在のパスワードが正しくありません");
+          }
+
+          updateData.password = await hashPassword(updateData.newPassword);
+        }
+
+        const [updated] = await tx
+          .update(users)
+          .set({
+            ...updateData,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId))
+          .returning();
+
+        if (!updated) {
+          throw new Error("プロフィールの更新に失敗しました");
+        }
+
+        return updated;
+      });
+
+      console.log('Profile updated successfully:', { userId });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      if (error instanceof Error) {
+        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "プロフィールの更新に失敗しました"
+        });
+      }
+    }
+  });
+
+
+  app.get("/api/talent/profile", authenticate, async (req: any, res) => {
+    //This section is largely unchanged from original, but uses authenticate middleware.  Error handling could be improved for consistency.
+    try {
+      const userId = req.user.id;
+      console.log('Profile fetch request for user:', userId);
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!user) {
+        console.error('User not found:', userId);
+        return res.status(404).json({ message: "プロフィールが見つかりません" });
+      }
+
+      console.log('Profile fetch successful:', user);
+      res.json(user);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
+    }
   });
 
   app.post("/api/logout", (req: any, res, next) => {
+    //Logout functionality remains largely unchanged.
     req.logout((err: any) => {
       if (err) return next(err);
       res.sendStatus(200);

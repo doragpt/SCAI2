@@ -38,7 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "ログインに失敗しました");
       }
-      return await res.json();
+      const { user, token } = await res.json();
+      // Store the token in localStorage
+      localStorage.setItem("auth_token", token);
+      return user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -63,7 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "登録に失敗しました");
       }
-      return await res.json();
+      const { user, token } = await res.json();
+      // Store the token in localStorage
+      localStorage.setItem("auth_token", token);
+      return user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -87,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         throw new Error("ログアウトに失敗しました");
       }
+      // Remove the token from localStorage
+      localStorage.removeItem("auth_token");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
