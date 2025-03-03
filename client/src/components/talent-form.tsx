@@ -152,13 +152,14 @@ export const TalentForm: React.FC = () => {
       ngOptions: [],
     },
     hasEstheExperience: false,
-    estheExperiencePeriod: undefined,
+    estheExperiencePeriod: "",
   };
 
-  // フォームの設定
+  // フォームの設定を修正
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     defaultValues,
+    mode: "onChange", // バリデーションモードを変更
   });
 
   const { mutate: createProfile, isPending } = useMutation({
@@ -167,28 +168,35 @@ export const TalentForm: React.FC = () => {
         // 数値フィールドの処理
         const processedData = {
           ...data,
-          bust: data.bust === "" ? null : data.bust,
-          waist: data.waist === "" ? null : data.waist,
-          hip: data.hip === "" ? null : data.hip,
+          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
         };
+
+        console.log('APIリクエスト送信データ:', processedData);
 
         const response = await apiRequest("POST", "/api/talent/profile", processedData);
         if (!response.ok) {
           const errorData = await response.json();
+          console.error('APIエラーレスポンス:', errorData);
           throw new Error(errorData.message || 'プロフィールの作成に失敗しました');
         }
         return response.json();
       } catch (error) {
-        console.error('送信エラー:', error);
+        console.error('API通信エラー:', error);
         throw error;
       }
     },
     onSuccess: () => {
-      toast({ title: 'プロフィールが作成されました。' });
+      toast({
+        title: 'プロフィールが作成されました',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
+      console.error('ミューテーションエラー:', error);
       toast({
-        title: 'プロフィールの作成に失敗しました。',
+        title: 'エラーが発生しました',
         description: error.message,
         variant: 'destructive',
       });
@@ -208,10 +216,19 @@ export const TalentForm: React.FC = () => {
   const onSubmit = (data: TalentProfileData) => {
     try {
       console.log('送信前データ:', data);
-      if (!form.formState.isValid) {
+      console.log('フォームエラー:', form.formState.errors);
+      console.log('フォーム状態:', {
+        isValid: form.formState.isValid,
+        isDirty: form.formState.isDirty,
+        isSubmitting: form.formState.isSubmitting,
+      });
+
+      // フォームのバリデーションチェック
+      if (Object.keys(form.formState.errors).length > 0) {
         console.log('バリデーションエラー:', form.formState.errors);
         return;
       }
+
       createProfile(data);
     } catch (error) {
       console.error('送信エラー:', error);
@@ -912,7 +929,7 @@ export const TalentForm: React.FC = () => {
           <div className="flex gap-2 mt-2">
             <Input
               placeholder="写メ日記のURLを入力"
-              onKeyPress={(e) => {
+              onKeyPress={(e) =>{
                 if (e.key === 'Enter') {
                   const url = e.currentTarget.value.trim();
                   if (url) {
@@ -945,7 +962,12 @@ export const TalentForm: React.FC = () => {
           {form.formState.errors.notes && <FormErrorMessage message={form.formState.errors.notes.message as string} />}
         </FormField>
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        {/* Submit button */}
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isPending || Object.keys(form.formState.errors).length > 0}
+        >
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
