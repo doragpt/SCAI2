@@ -39,6 +39,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown } from "lucide-react";
+import { X } from "lucide-react";
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -465,18 +466,18 @@ export const TalentForm: React.FC = () => {
           <CollapsibleContent className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               {estheOptions.map((option) => (
-                <div key={option.name} className="flex items-center space-x-2">
+                <div key={option} className="flex items-center space-x-2">
                   <Checkbox
-                    checked={form.watch("estheOptions.available").includes(option.name)}
+                    checked={form.watch("estheOptions.available").includes(option)}
                     onCheckedChange={(checked) => {
                       const current = form.watch("estheOptions.available");
                       const updated = checked
-                        ? [...current, option.name]
-                        : current.filter(o => o !== option.name);
+                        ? [...current, option]
+                        : current.filter(o => o !== option);
                       form.setValue("estheOptions.available", updated);
                     }}
                   />
-                  <label className="text-sm">{option.name}</label>
+                  <label className="text-sm">{option}</label>
                 </div>
               ))}
             </div>
