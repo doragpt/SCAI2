@@ -904,20 +904,25 @@ export const TalentForm: React.FC = () => {
           </div>
         </FormField>
 
-        {/* Added Photo Diary URL Field */}
-        <FormField label="写メ日記URL(任意)">
+        {/* Modified Photo Diary URL Field */}
+        <FormField label="写メ日記が確認できる店舗URL">
           <div className="flex flex-wrap gap-2">
             {form.watch("photoDiaryUrls").map((url, index) => (
-              <Badge key={index} variant="secondary">
-                {url}
-                <Button
+              <Badge key={index} variant="secondary" className="flex items-center">
+                <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">
+                  {url}
+                </a>                <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="ml-1 h-4 w-4 p-0"
+                  className="h-4 w-4 p-0"
                   onClick={() => {
                     const current = form.watch("photoDiaryUrls");
-                    form.setValue("photoDiaryUrls", current.filter((_, i) => i !== index));
+                    form.setValue(
+                      "photoDiaryUrls",
+                      current.filter((_, i) => i !== index),
+                      { shouldValidate: true }
+                    );
                   }}
                 >
                   <X className="h-3 w-3" />
@@ -927,19 +932,34 @@ export const TalentForm: React.FC = () => {
           </div>
           <div className="flex gap-2 mt-2">
             <Input
-              placeholder="写メ日記のURLを入力"
+              placeholder="写メ日記が確認できる店舗のURLを入力"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
                   const url = e.currentTarget.value.trim();
                   if (url) {
                     const current = form.watch("photoDiaryUrls") || [];
-                    form.setValue("photoDiaryUrls", [...current, url]);
+                    form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
                     e.currentTarget.value = '';
                   }
                 }
               }}
             />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const input = document.querySelector('input[placeholder="写メ日記が確認できる店舗のURLを入力"]') as HTMLInputElement;
+                const url = input?.value.trim();
+                if (url) {
+                  const current = form.watch("photoDiaryUrls") || [];
+                  form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
+                  if (input) input.value = '';
+                }
+              }}
+            >
+              追加
+            </Button>
           </div>
         </FormField>
 

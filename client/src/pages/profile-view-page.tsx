@@ -95,10 +95,10 @@ export default function ProfileViewPage() {
               <div>
                 <p className="text-sm text-muted-foreground">持参可能な身分証明書</p>
                 <ul className="list-disc list-inside mt-2">
-                  {profile.availableIds.types.map((type) => (
+                  {profile.availableIds?.types?.map((type) => (
                     <li key={type}>{type}</li>
                   ))}
-                  {profile.availableIds.others.map((other) => (
+                  {profile.availableIds?.others?.map((other) => (
                     <li key={other}>{other}</li>
                   ))}
                 </ul>
@@ -169,17 +169,36 @@ export default function ProfileViewPage() {
               </div>
             </div>
 
+            {/* 写メ日記URL */}
+            {profile.photoDiaryUrls && profile.photoDiaryUrls.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <h2 className="text-lg font-medium">写メ日記が確認できる店舗URL</h2>
+                  <ul className="list-disc list-inside">
+                    {profile.photoDiaryUrls.map((url, index) => (
+                      <li key={index}>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          {url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+
             {/* NGオプション */}
-            {(profile.ngOptions.common.length > 0 || profile.ngOptions.others.length > 0) && (
+            {(profile.ngOptions?.common?.length > 0 || profile.ngOptions?.others?.length > 0) && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">NGオプション</h2>
                   <ul className="list-disc list-inside">
-                    {profile.ngOptions.common.map((option) => (
+                    {profile.ngOptions?.common?.map((option) => (
                       <li key={option}>{option}</li>
                     ))}
-                    {profile.ngOptions.others.map((option) => (
+                    {profile.ngOptions?.others?.map((option) => (
                       <li key={option}>{option}</li>
                     ))}
                   </ul>
@@ -188,16 +207,16 @@ export default function ProfileViewPage() {
             )}
 
             {/* アレルギー */}
-            {profile.allergies.hasAllergy && (
+            {profile.allergies?.hasAllergy && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">アレルギー</h2>
                   <ul className="list-disc list-inside">
-                    {profile.allergies.types.map((type) => (
+                    {profile.allergies?.types?.map((type) => (
                       <li key={type}>{type}</li>
                     ))}
-                    {profile.allergies.others.map((other) => (
+                    {profile.allergies?.others?.map((other) => (
                       <li key={other}>{other}</li>
                     ))}
                   </ul>
@@ -206,16 +225,16 @@ export default function ProfileViewPage() {
             )}
 
             {/* 喫煙 */}
-            {profile.smoking.enabled && (
+            {profile.smoking?.enabled && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">喫煙</h2>
                   <ul className="list-disc list-inside">
-                    {profile.smoking.types.map((type) => (
+                    {profile.smoking?.types?.map((type) => (
                       <li key={type}>{type}</li>
                     ))}
-                    {profile.smoking.others.map((other) => (
+                    {profile.smoking?.others?.map((other) => (
                       <li key={other}>{other}</li>
                     ))}
                   </ul>
@@ -224,13 +243,13 @@ export default function ProfileViewPage() {
             )}
 
             {/* SNSアカウント */}
-            {profile.hasSnsAccount && profile.snsUrls.length > 0 && (
+            {profile.hasSnsAccount && profile.snsUrls?.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">SNSアカウント</h2>
                   <ul className="list-disc list-inside">
-                    {profile.snsUrls.map((url) => (
+                    {profile.snsUrls?.map((url) => (
                       <li key={url}>{url}</li>
                     ))}
                   </ul>
@@ -239,12 +258,12 @@ export default function ProfileViewPage() {
             )}
 
             {/* 在籍店舗 */}
-            {profile.currentStores.length > 0 && (
+            {profile.currentStores?.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">現在の在籍店舗</h2>
-                  {profile.currentStores.map((store, index) => (
+                  {profile.currentStores?.map((store, index) => (
                     <div key={index} className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">店舗名</p>
@@ -261,13 +280,13 @@ export default function ProfileViewPage() {
             )}
 
             {/* 過去の在籍店舗 */}
-            {profile.previousStores.length > 0 && (
+            {profile.previousStores?.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium">過去の在籍店舗</h2>
                   <ul className="list-disc list-inside">
-                    {profile.previousStores.map((store, index) => (
+                    {profile.previousStores?.map((store, index) => (
                       <li key={index}>{store.storeName}</li>
                     ))}
                   </ul>
@@ -276,7 +295,7 @@ export default function ProfileViewPage() {
             )}
 
             {/* エステオプション */}
-            {profile.estheOptions.available.length > 0 && (
+            {profile.estheOptions?.available?.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-4">
@@ -284,16 +303,16 @@ export default function ProfileViewPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">可能なオプション</p>
                     <ul className="list-disc list-inside mt-2">
-                      {profile.estheOptions.available.map((option) => (
+                      {profile.estheOptions?.available?.map((option) => (
                         <li key={option}>{option}</li>
                       ))}
                     </ul>
                   </div>
-                  {profile.estheOptions.ngOptions.length > 0 && (
+                  {profile.estheOptions?.ngOptions?.length > 0 && (
                     <div>
                       <p className="text-sm text-muted-foreground">NGオプション</p>
                       <ul className="list-disc list-inside mt-2">
-                        {profile.estheOptions.ngOptions.map((option, index) => (
+                        {profile.estheOptions?.ngOptions?.map((option, index) => (
                           <li key={index}>{option}</li>
                         ))}
                       </ul>
