@@ -107,8 +107,11 @@ export const users = pgTable("users", {
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  name: text("name").notNull(),
-  location: text("location").notNull(),
+  lastName: text("last_name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastNameKana: text("last_name_kana").notNull(),
+  firstNameKana: text("first_name_kana").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
   nearestStation: text("nearest_station").notNull(),
   availableIds: json("available_ids").$type<{
     types: IdType[];
@@ -143,6 +146,10 @@ export const talentProfiles = pgTable("talent_profiles", {
   currentStores: json("current_stores").$type<{
     storeName: string;
     stageName: string;
+  }[]>().default([]),
+  previousStores: json("previous_stores").$type<{
+    storeName: string;
+    period: string;
   }[]>().default([]),
   photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
   selfIntroduction: text("self_introduction"),
@@ -190,8 +197,17 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
-  name: z.string().min(1, "名前を入力してください"),
-  location: z.string().min(1, "在住地を入力してください"),
+  lastName: z.string().min(1, "姓を入力してください"),
+  firstName: z.string().min(1, "名を入力してください"),
+  lastNameKana: z.string()
+    .min(1, "姓（カナ）を入力してください")
+    .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
+  firstNameKana: z.string()
+    .min(1, "名（カナ）を入力してください")
+    .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "都道府県を選択してください",
+  }),
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
   availableIds: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
@@ -234,6 +250,10 @@ export const talentProfileSchema = z.object({
   currentStores: z.array(z.object({
     storeName: z.string(),
     stageName: z.string(),
+  })),
+  previousStores: z.array(z.object({
+    storeName: z.string(),
+    period: z.string(),
   })),
   photoDiaryUrls: z.array(z.string()),
   selfIntroduction: z.string().optional(),

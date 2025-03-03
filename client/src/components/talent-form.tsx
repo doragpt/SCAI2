@@ -22,6 +22,7 @@ import {
   faceVisibilityTypes,
   commonNgOptions,
   idTypes,
+  prefectures,
   type AllergyType,
   type SmokingType,
   type TalentProfileData,
@@ -75,7 +76,7 @@ const SwitchField: React.FC<{
         onCheckedChange={onCheckedChange}
       />
       <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? "可" : "不可"}
+        {checked ? "有り" : "無し"}
       </span>
     </div>
   </div>
@@ -83,11 +84,19 @@ const SwitchField: React.FC<{
 
 export const TalentForm: React.FC = () => {
   const { toast } = useToast();
+  const [otherIds, setOtherIds] = useState<string[]>([]);
+  const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
+  const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
+  const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     defaultValues: {
-      name: "",
-      location: "",
+      lastName: "",
+      firstName: "",
+      lastNameKana: "",
+      firstNameKana: "",
+      location: undefined,
       nearestStation: "",
       availableIds: {
         types: [],
@@ -120,6 +129,7 @@ export const TalentForm: React.FC = () => {
       hasSnsAccount: false,
       snsUrls: [],
       currentStores: [],
+      previousStores: [],
       photoDiaryUrls: [],
       selfIntroduction: "",
       notes: "",
@@ -149,20 +159,51 @@ export const TalentForm: React.FC = () => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* 1. 名前（必須） */}
-        <FormField label="名前" required>
-          <Input
-            {...form.register("name")}
-            placeholder="お名前を入力してください"
-          />
-        </FormField>
+        <div className="grid md:grid-cols-2 gap-4">
+          <FormField label="姓" required>
+            <Input
+              {...form.register("lastName")}
+              placeholder="姓を入力してください"
+            />
+          </FormField>
+          <FormField label="名" required>
+            <Input
+              {...form.register("firstName")}
+              placeholder="名を入力してください"
+            />
+          </FormField>
+          <FormField label="姓（カナ）" required>
+            <Input
+              {...form.register("lastNameKana")}
+              placeholder="セイを入力してください"
+            />
+          </FormField>
+          <FormField label="名（カナ）" required>
+            <Input
+              {...form.register("firstNameKana")}
+              placeholder="メイを入力してください"
+            />
+          </FormField>
+        </div>
 
         {/* 2. 在住地と最寄り駅（必須） */}
         <div className="grid md:grid-cols-2 gap-4">
           <FormField label="在住地" required>
-            <Input
-              {...form.register("location")}
-              placeholder="在住地を入力してください"
-            />
+            <Select
+              value={form.watch("location")}
+              onValueChange={(value) => form.setValue("location", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="都道府県を選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                {prefectures.map((pref) => (
+                  <SelectItem key={pref} value={pref}>
+                    {pref}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="最寄り駅" required>
             <Input
@@ -190,6 +231,44 @@ export const TalentForm: React.FC = () => {
                 <label className="text-sm">{type}</label>
               </div>
             ))}
+          </div>
+          <div className="mt-4">
+            <Label>その他の身分証明書</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {otherIds.map((id) => (
+                <Badge key={id} variant="secondary">
+                  {id}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-1 h-4 w-4 p-0"
+                    onClick={() => {
+                      setOtherIds(otherIds.filter(i => i !== id));
+                      form.setValue("availableIds.others", otherIds.filter(i => i !== id));
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="その他の身分証明書を入力"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const value = e.currentTarget.value.trim();
+                    if (value && !otherIds.includes(value)) {
+                      const newIds = [...otherIds, value];
+                      setOtherIds(newIds);
+                      form.setValue("availableIds.others", newIds);
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+              />
+            </div>
           </div>
         </FormField>
 
@@ -283,7 +362,7 @@ export const TalentForm: React.FC = () => {
 
         {/* 10-11. 写メ日記と自宅への派遣 */}
         <SwitchField
-          label="写メ日記"
+          label="写メ日記の投稿可否"
           required
           checked={form.watch("canPhotoDiary")}
           onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked)}
@@ -315,6 +394,44 @@ export const TalentForm: React.FC = () => {
                 <label className="text-sm">{option}</label>
               </div>
             ))}
+          </div>
+          <div className="mt-4">
+            <Label>その他のNGオプション</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {otherNgOptions.map((option) => (
+                <Badge key={option} variant="secondary">
+                  {option}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-1 h-4 w-4 p-0"
+                    onClick={() => {
+                      setOtherNgOptions(otherNgOptions.filter(o => o !== option));
+                      form.setValue("ngOptions.others", otherNgOptions.filter(o => o !== option));
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="その他のNGオプションを入力"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const value = e.currentTarget.value.trim();
+                    if (value && !otherNgOptions.includes(value)) {
+                      const newOptions = [...otherNgOptions, value];
+                      setOtherNgOptions(newOptions);
+                      form.setValue("ngOptions.others", newOptions);
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+              />
+            </div>
           </div>
         </FormField>
 
@@ -351,6 +468,44 @@ export const TalentForm: React.FC = () => {
                 </div>
               ))}
             </div>
+            <div>
+              <Label>その他のアレルギー</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {otherAllergies.map((allergy) => (
+                  <Badge key={allergy} variant="secondary">
+                    {allergy}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 h-4 w-4 p-0"
+                      onClick={() => {
+                        setOtherAllergies(otherAllergies.filter(a => a !== allergy));
+                        form.setValue("allergies.others", otherAllergies.filter(a => a !== allergy));
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="その他のアレルギーを入力"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = e.currentTarget.value.trim();
+                      if (value && !otherAllergies.includes(value)) {
+                        const newAllergies = [...otherAllergies, value];
+                        setOtherAllergies(newAllergies);
+                        form.setValue("allergies.others", newAllergies);
+                        e.currentTarget.value = '';
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -385,6 +540,44 @@ export const TalentForm: React.FC = () => {
                   <label className="text-sm">{type}</label>
                 </div>
               ))}
+            </div>
+            <div>
+              <Label>その他の喫煙種類</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {otherSmokingTypes.map((type) => (
+                  <Badge key={type} variant="secondary">
+                    {type}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 h-4 w-4 p-0"
+                      onClick={() => {
+                        setOtherSmokingTypes(otherSmokingTypes.filter(t => t !== type));
+                        form.setValue("smoking.others", otherSmokingTypes.filter(t => t !== type));
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="その他の喫煙種類を入力"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = e.currentTarget.value.trim();
+                      if (value && !otherSmokingTypes.includes(value)) {
+                        const newTypes = [...otherSmokingTypes, value];
+                        setOtherSmokingTypes(newTypes);
+                        form.setValue("smoking.others", newTypes);
+                        e.currentTarget.value = '';
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -438,7 +631,7 @@ export const TalentForm: React.FC = () => {
           </div>
         )}
 
-        {/* 16-17. 在籍店舗と写メ日記URL */}
+        {/* 16-17. 現在在籍店舗と過去経験店舗 */}
         <FormField label="現在在籍中の店舗">
           <div className="space-y-4">
             {form.watch("currentStores").map((store, index) => (
@@ -487,7 +680,58 @@ export const TalentForm: React.FC = () => {
           </div>
         </FormField>
 
-        <FormField label="写メ日記URL">
+        <FormField label="過去経験店舗">
+          <div className="space-y-4">
+            {form.watch("previousStores").map((store, index) => (
+              <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                <Input
+                  placeholder="店舗名"
+                  value={store.storeName}
+                  onChange={(e) => {
+                    const current = form.watch("previousStores");
+                    current[index].storeName = e.target.value;
+                    form.setValue("previousStores", [...current]);
+                  }}
+                />
+                <Input
+                  placeholder="在籍期間（例：2023年4月～2023年12月）"
+                  value={store.period}
+                  onChange={(e) => {
+                    const current = form.watch("previousStores");
+                    current[index].period = e.target.value;
+                    form.setValue("previousStores", [...current]);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = form.watch("previousStores");
+                    form.setValue("previousStores", current.filter((_, i) => i !== index));
+                  }}
+                >
+                  削除
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const current = form.watch("previousStores");
+                form.setValue("previousStores", [...current, { storeName: '', period: '' }]);
+              }}
+            >
+              店舗を追加
+            </Button>
+          </div>
+        </FormField>
+
+        <FormField
+          label="写メ日記が確認できるURL"
+          description="写メ日記が確認できる場合出稼ぎ条件で有利に働く場合があります。"
+        >
           <div className="flex flex-wrap gap-2">
             {form.watch("photoDiaryUrls").map((url, index) => (
               <Badge key={index} variant="secondary">
@@ -528,7 +772,9 @@ export const TalentForm: React.FC = () => {
         <FormField label="自己PR">
           <textarea
             className="w-full h-32 p-2 border rounded-md"
-            placeholder="自己PRを入力してください（1000文字以内）"
+            placeholder="例：経験豊富な接客業で培った会話力と、明るい性格を活かして、お客様に楽しい時間を提供できます。
+また、マッサージの技術には自信があり、お客様からも好評をいただいています。
+体型維持のために週3回のジムトレーニングを欠かさず、清潔感も大切にしています。"
             {...form.register("selfIntroduction")}
           />
         </FormField>
