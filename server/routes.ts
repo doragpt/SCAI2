@@ -87,19 +87,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 認証が必要なエンドポイント
   app.get("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
+      const userId = req.user.id;
+      console.log('Profile fetch request for user:', userId);
+
+      // まずユーザー情報を取得
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!user) {
+        console.error('User not found:', userId);
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      // プロフィール情報を取得
       const [profile] = await db
         .select()
         .from(talentProfiles)
-        .where(eq(talentProfiles.userId, req.user.id));
+        .where(eq(talentProfiles.userId, userId));
 
+      // プロフィールが存在しない場合は404を返す
       if (!profile) {
-        return res.status(404).json({ message: "プロフィールが見つかりません" });
+        console.log('Profile not found for user:', userId);
+        return res.status(404).json({
+          message: "プロフィールが見つかりません",
+          isNewUser: true  // フロントエンド側で新規ユーザーかどうかを判断するためのフラグ
+        });
       }
 
+      console.log('Profile fetch successful:', { userId });
       res.json(profile);
     } catch (error) {
       console.error('Profile fetch error:', error);
-      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
+      res.status(500).json({
+        message: "プロフィールの取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -274,29 +298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-  app.get("/api/talent/profile", authenticate, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      console.log('Profile fetch request for user:', userId);
-
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-
-      if (!user) {
-        console.error('User not found:', userId);
-        return res.status(404).json({ message: "プロフィールが見つかりません" });
-      }
-
-      console.log('Profile fetch successful:', user);
-      res.json(user);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      res.status(500).json({ message: "プロフィールの取得に失敗しました" });
-    }
-  });
 
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {

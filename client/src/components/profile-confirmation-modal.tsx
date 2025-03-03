@@ -14,7 +14,7 @@ interface ProfileConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  profileData: TalentProfileData;
+  profileData?: TalentProfileData; // データをオプショナルに変更
 }
 
 export function ProfileConfirmationModal({
@@ -23,6 +23,11 @@ export function ProfileConfirmationModal({
   onConfirm,
   profileData,
 }: ProfileConfirmationModalProps) {
+  // データがない場合は早期リターン
+  if (!profileData) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -59,41 +64,49 @@ export function ProfileConfirmationModal({
             </div>
 
             {/* 身分証明書 */}
-            <div className="space-y-2">
-              <h3 className="font-medium">身分証明書</h3>
-              <div>
-                <p className="text-sm text-muted-foreground">持参可能な身分証明書</p>
-                <ul className="list-disc list-inside">
-                  {profileData.availableIds.types.map((type) => (
-                    <li key={type}>{type}</li>
-                  ))}
-                  {profileData.availableIds.others.map((other) => (
-                    <li key={other}>{other}</li>
-                  ))}
-                </ul>
+            {profileData.availableIds && (
+              <div className="space-y-2">
+                <h3 className="font-medium">身分証明書</h3>
+                <div>
+                  <p className="text-sm text-muted-foreground">持参可能な身分証明書</p>
+                  <ul className="list-disc list-inside">
+                    {profileData.availableIds.types?.map((type) => (
+                      <li key={type}>{type}</li>
+                    ))}
+                    {profileData.availableIds.others?.map((other) => (
+                      <li key={other}>{other}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">本籍地入りの住民票</p>
+                  <p>{profileData.canProvideResidenceRecord ? "提供可能" : "提供不可"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">本籍地入りの住民票</p>
-                <p>{profileData.canProvideResidenceRecord ? "提供可能" : "提供不可"}</p>
-              </div>
-            </div>
+            )}
 
             {/* 身体的特徴 */}
             <div className="space-y-2">
               <h3 className="font-medium">身体的特徴</h3>
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">身長</p>
-                  <p>{profileData.height}cm</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">体重</p>
-                  <p>{profileData.weight}kg</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">カップサイズ</p>
-                  <p>{profileData.cupSize}カップ</p>
-                </div>
+                {profileData.height && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">身長</p>
+                    <p>{profileData.height}cm</p>
+                  </div>
+                )}
+                {profileData.weight && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">体重</p>
+                    <p>{profileData.weight}kg</p>
+                  </div>
+                )}
+                {profileData.cupSize && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">カップサイズ</p>
+                    <p>{profileData.cupSize}カップ</p>
+                  </div>
+                )}
                 {profileData.bust && (
                   <div>
                     <p className="text-sm text-muted-foreground">バスト</p>
@@ -134,8 +147,8 @@ export function ProfileConfirmationModal({
               </div>
             </div>
 
-            {/* NGオプション */}
-            {(profileData.ngOptions.common.length > 0 || profileData.ngOptions.others.length > 0) && (
+            {/* 各種オプション */}
+            {profileData.ngOptions && (profileData.ngOptions.common.length > 0 || profileData.ngOptions.others.length > 0) && (
               <div className="space-y-2">
                 <h3 className="font-medium">NGオプション</h3>
                 <ul className="list-disc list-inside">
@@ -150,14 +163,14 @@ export function ProfileConfirmationModal({
             )}
 
             {/* アレルギー */}
-            {profileData.allergies.hasAllergy && (
+            {profileData.allergies?.hasAllergy && (
               <div className="space-y-2">
                 <h3 className="font-medium">アレルギー</h3>
                 <ul className="list-disc list-inside">
-                  {profileData.allergies.types.map((type) => (
+                  {profileData.allergies.types?.map((type) => (
                     <li key={type}>{type}</li>
                   ))}
-                  {profileData.allergies.others.map((other) => (
+                  {profileData.allergies.others?.map((other) => (
                     <li key={other}>{other}</li>
                   ))}
                 </ul>
@@ -165,14 +178,14 @@ export function ProfileConfirmationModal({
             )}
 
             {/* 喫煙 */}
-            {profileData.smoking.enabled && (
+            {profileData.smoking?.enabled && (
               <div className="space-y-2">
                 <h3 className="font-medium">喫煙</h3>
                 <ul className="list-disc list-inside">
-                  {profileData.smoking.types.map((type) => (
+                  {profileData.smoking.types?.map((type) => (
                     <li key={type}>{type}</li>
                   ))}
-                  {profileData.smoking.others.map((other) => (
+                  {profileData.smoking.others?.map((other) => (
                     <li key={other}>{other}</li>
                   ))}
                 </ul>
@@ -180,7 +193,7 @@ export function ProfileConfirmationModal({
             )}
 
             {/* SNSアカウント */}
-            {profileData.hasSnsAccount && profileData.snsUrls.length > 0 && (
+            {profileData.hasSnsAccount && profileData.snsUrls && profileData.snsUrls.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-medium">SNSアカウント</h3>
                 <ul className="list-disc list-inside">
@@ -191,69 +204,7 @@ export function ProfileConfirmationModal({
               </div>
             )}
 
-            {/* 在籍店舗 */}
-            {profileData.currentStores.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">現在の在籍店舗</h3>
-                {profileData.currentStores.map((store, index) => (
-                  <div key={index} className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">店舗名</p>
-                      <p>{store.storeName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">源氏名</p>
-                      <p>{store.stageName}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* 過去の在籍店舗 */}
-            {profileData.previousStores.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">過去の在籍店舗</h3>
-                <ul className="list-disc list-inside">
-                  {profileData.previousStores.map((store, index) => (
-                    <li key={index}>{store.storeName}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* エステオプション */}
-            {profileData.estheOptions.available.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">エステオプション</h3>
-                <div>
-                  <p className="text-sm text-muted-foreground">可能なオプション</p>
-                  <ul className="list-disc list-inside">
-                    {profileData.estheOptions.available.map((option) => (
-                      <li key={option}>{option}</li>
-                    ))}
-                  </ul>
-                </div>
-                {profileData.estheOptions.ngOptions.length > 0 && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">NGオプション</p>
-                    <ul className="list-disc list-inside">
-                      {profileData.estheOptions.ngOptions.map((option, index) => (
-                        <li key={index}>{option}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {profileData.hasEstheExperience && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">エステ経験</p>
-                    <p>経験あり（{profileData.estheExperiencePeriod}）</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 自己PR */}
+            {/* その他の情報 */}
             {profileData.selfIntroduction && (
               <div className="space-y-2">
                 <h3 className="font-medium">自己PR</h3>
@@ -261,7 +212,6 @@ export function ProfileConfirmationModal({
               </div>
             )}
 
-            {/* その他備考 */}
             {profileData.notes && (
               <div className="space-y-2">
                 <h3 className="font-medium">その他備考</h3>
