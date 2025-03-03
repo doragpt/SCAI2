@@ -1,0 +1,100 @@
+### 1. 発生しているエラーの原因と修正案  
+エラーメッセージ「`malformed array literal: "[]"`」は、データベースに配列リテラル`[]`が不正な形式で渡されたことが原因です。コードを確認すると、ユーザ登録やプロフィール登録時に**JSON配列**をそのままデータベースに挿入しています。例えばユーザ登録処理では、希望勤務地`preferredLocations`（都道府県の配列）をそのまま`.values()`に渡しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=throw%20new%20Error%28,.returning%28%29%3B%20if))。また、プロフィール作成処理でもSNSリンクや店舗履歴等の配列フィールド（`snsUrls`, `currentStores` など）を`...profileData`で展開して直接挿入しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=profile%20%3D%20await%20db,userId))。  
+
+これらの配列フィールドに**値が空（長さ0）**の場合、ORM（Drizzle ORM）が生成するSQLがPostgreSQLで誤って解釈され、「`"[]"`」（空のJSON配列）が不正な配列リテラルとみなされることでエラーが発生します。特に、Drizzle ORMには「要素数が1つの配列を挿入する際に`[]`を外してオブジェクトや文字列単体で渡してしまう不具合」が報告されています。その結果、空配列や要素数1の配列が正しく`JSON`型として渡らず、PostgreSQLが`[]`を未知の配列型リテラルと解釈してエラーとなる可能性があります。  
+
+**修正方法:** 配列フィールドをデータベースに保存する際、**空配列や単一要素配列の扱い**に注意します。以下のような修正を行うと効果的です:  
+
+- **空配列をデフォルト値に任せる:** 挿入時に値が空の配列フィールドはSQLに含めず、テーブル定義で設定したデフォルト値（空配列）に任せます。例えばプロフィール作成時のコードを修正し、空配列の場合は`.values()`オブジェクトからそのキーを削除します。簡便には、挿入値を組み立てる際に条件分岐を入れます:  
+
+  ```typescript
+  const profileValues: any = { 
+    userId: req.user.id, 
+    createdAt: new Date(), 
+    updatedAt: new Date() 
+  };
+  // プロフィールデータの各フィールドを必要に応じて追加
+  if (profileData.snsUrls && profileData.snsUrls.length > 0) {
+    profileValues.snsUrls = profileData.snsUrls;
+  }
+  if (profileData.currentStores && profileData.currentStores.length > 0) {
+    profileValues.currentStores = profileData.currentStores;
+  }
+  // ... 他のフィールドも同様に ...
+  await tx.insert(talentProfiles).values(profileValues).returning();
+  ```  
+
+  上記のようにすることで、例えば`snsUrls`が空配列`[]`の場合は挿入SQLに含めず、テーブル側のデフォルト`[]`を利用できます。  
+
+- **Drizzle ORMのアップデート/ワークアラウンド:** 根本的にはORM側の問題なので、最新版のDrizzle ORMにアップデートし不具合が修正されていないか確認します。現行バージョンではまだ問題がある場合、一時的な対策として**手動でJSON文字列に変換**して渡す方法もあります。例えば、単一要素配列を扱う際に `sql`タグを用いて```sql`${JSON.stringify(value)}::json` ```のようにJSONリテラルとしてキャストする手法です。ただし、この方法は煩雑になるため、まずは上記のように**空配列を除外**する対応でエラーを回避し、将来的にORMの修正を取り入れることをおすすめします。  
+
+以上の修正により、不正な`[]`リテラルがデータベースに渡ることを防ぎ、エラーを解消できます。  
+
+### 2. コードの整合性チェック  
+提出されたリポジトリのコードについて、API連携からバリデーション、データベースまで一貫性を確認しました。不具合の可能性がある点や改善すべき点を以下に指摘します。
+
+- **API連携の処理:** 基本的な認証・セッション処理は実装されていますが、一部重複や不整合があります。`passport`と`express-session`の設定自体は適切であり、`LocalStrategy`でユーザ認証しセッションに保存する流れも問題ありません ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=app,return)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=passport.serializeUser%28%28user%2C%20done%29%20%3D,api%2Flogin))。ただ、ユーザ登録・ログインAPIの実装が`auth.ts`と`routes.ts`の双方に存在しており、同じエンドポイントが二重定義されています（`/api/register`, `/api/login`, `/api/logout`） ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=storage.getUser%28id%29%3B%20done%28null%2C%20user%29%3B%20%7D%29%3B%20app.post%28,%7B%20if%20%28err)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=res.status%28401%29.json%28%7B%20message%3A%20,location))。この重複により、想定しない挙動やメンテナンス性の低下が懸念されます。実際、`setupAuth`内で定義した登録処理と、`registerRoutes`内の登録処理では実装内容も異なっているため（後述のパスワードハッシュや自動ログインの有無など）、片方に統一すべきです。  
+
+- **フォームバリデーション:** フロントエンド/バックエンド双方でZodによる入力バリデーションが行われており、おおむね適切です。例えば、バスト・ウエスト・ヒップは`z.number().optional()`相当の定義（`z.union([z.number(), z.undefined()]).optional()`)になっており**任意入力**として扱われています ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=,z.number%28%29%2C%20z.undefined%28%29%5D%29.optional%28%29%2C%20faceVisibility))。必須項目についても`min()`や`required_error`でチェックされており、ユーザ名・パスワード・各プロフィール項目に妥当性検証が効いています。  
+
+  ただし、いくつか改善点があります。まず、**数値項目の空文字対策**です。現在、バストなどの項目は未入力ならキー自体がリクエストから欠如すると仮定していますが、もし空文字`""`が送られた場合は`z.number()`のパースに失敗します。フロント側で未入力項目は送信しない実装なら問題ありませんが、サーバ側でも安全策として空文字を`undefined`に変換する処理を入れると堅牢になります（例：`z.string().transform(val => val === "" ? undefined : Number(val)).optional()`のような変換）。また、誕生日`birthDate`は現在文字列で受け取り`new Date()`していますが、フォーマットチェックや将来年齢計算のためにZodで`z.coerce.date()`を使うなどの方法で**日付型として検証**してもよいでしょう。  
+
+- **データ変換処理:** サーバ側でのデータ型の取り扱いを確認したところ、一部不一致や不要な変換が見られました。例えば、`users`テーブルに関してコード上は`updatedAt`を更新しようとしていますが ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=.update%28users%29%20.set%28,log%28%27Profile%20fetch%20request%20for))、スキーマ定義では`users`テーブルに`updatedAt`カラムが存在しません（定義は`createdAt`までで終了している） ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=Database%20tables%20export%20const%20users,Talent%20profiles%20table%20export%20const))。このままではユーザ情報更新時にデータベースに存在しないカラムを更新しようとしてエラーになります。**修正:** `users`スキーマに`updatedAt`（タイムスタンプ型）を追加するか、もしくはコード側でユーザ更新時の`updatedAt`設定を外す必要があります。一般的にはユーザテーブルにも更新日時カラムを設けるのが望ましいでしょう。  
+
+  また、`storage.createUser`内では存在しない`age`フィールドを挿入しようとしています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/storage.ts?raw=true#:~:text=Promise%20,console.log%28%27Created%20user%20with))。これは過去の名残と思われます（現在は生年月日から計算する方針に変更した可能性）。このコードは実行されていないようですが、不要なフィールドは削除するのが望ましいです。  
+
+  次に、**JSON/配列フィールドの変換**についてです。プロフィール関連のJSONカラム（例：`preferredLocations`, `ngOptions`, `snsUrls`等）は適切にJavaScriptオブジェクト/配列として扱われています。ただし、前述のとおり空配列の扱いにバグがあり、挿入時に不適切なリテラルになる問題が確認されました。この部分は修正が必要です（上記1章で修正案を提示済み）。なお、Zodスキーマ上はこれら配列は`z.array(...).optional()`あるいは必須配列になっており、未選択時は空配列が来る設計なので、**コード側で空配列を適切に処理**することが重要です。  
+
+- **データベースとの整合性:** スキーマ定義と実際のコード操作にいくつか不整合が見られました。上で述べた`updatedAt`カラムの欠如や`age`フィールドの不使用に加え、**テーブル間の役割の実装差**もあります。`users.role`で「talent（タレント）」「store（店舗）」を区別していますが、現在の実装ではタレント用のプロフィール`talentProfiles`のみ存在し、店舗ユーザ用のプロフィールや詳細情報のテーブルは未実装です。にもかかわらず、ユーザ登録時に`role: "talent"`を要求しており ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=,lastNameKana%3A%20z.string%28%29%20.min%281))、コード上も`talent`固定で処理しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=throw%20new%20Error%28,.returning%28%29%3B%20if))。将来的に店舗ユーザの情報を扱うには、新たに`storeProfiles`テーブルを設けるか、少なくとも店舗ユーザ登録のフローを別途用意する必要があります。現状では`role: "store"`で登録する手段がないため、**コードとデータモデルに未実装部分がある**状態です。この点は今後の拡張に留意が必要です。  
+
+  さらに、**取得APIの応答内容**についても確認しました。`GET /api/talent/profile`エンドポイントでは、ログイン中ユーザのプロフィールを取得していますが、実装上は`users`テーブルからの情報のみ返しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=%7D%29%3B%20%7D%20%7D%20%7D%29%3B%20app.get%28,log%28%27Profile%20creation%20request%20received))。`talentProfiles`の詳細（身長や体重など）は結合されていません。そのため、クライアントがプロフィール表示を求めた場合に十分な情報が返っていない可能性があります。データベースにはユーザ基本情報とプロフィール詳細が別テーブルで存在するため、**必要に応じて結合クエリや追加のクエリでプロフィール詳細を取得**する実装が求められます。現状ではプロフィール未作成の場合の404処理はありますが、作成済みの場合に限りユーザ情報＋プロフィール情報を統合して返すとより整合的です。  
+
+- **エンドポイントのバリデーションチェック:** エンドポイントごとの認可・検証もおおむね実装されていますが、改善の余地があります。`requireAuth`ミドルウェアで認証済みユーザであることを確認しており、プロフィール作成・取得・更新APIはログイン必須になっています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=timingSafeEqual%28hashedBuf%2C%20suppliedBuf%29%3B%20,%3D%20await%20tx%20.select)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=res.status%28201%29.json%28user%29%3B%20%7D%20catch%20%28error%29%20,id))。一方で、**ユーザの権限チェック**が不足しています。例えば現在、店舗ユーザがログインしていても`/api/talent/profile`作成APIを呼ぶことが技術的に可能であり、自身をタレントとして登録できてしまいます。これはロールの概念に反するため、各APIで`req.user.role`を確認し、タレント専用APIには`role==="talent"`のユーザのみアクセス許可するなどの対策が必要です。  
+
+  また、ユーザ登録APIでは既に存在するニックネームのチェックを行い重複を排除しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=db.transaction%28async%20%28tx%29%20%3D,%7D%20return%20newUser%3B))。この処理自体は正しいですが、同様のロジックが`auth.ts`内の実装と二重になっている点に注意が必要です ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=storage.getUser%28id%29%3B%20done%28null%2C%20user%29%3B%20%7D%29%3B%20app.post%28,const%20user%20%3D%20await))（前述のルート重複問題）。今後修正時には一方に集約し、検証ロジックが一貫するようにしましょう。  
+
+  エラー処理に関しては、エラーハンドリング用のミドルウェア（最後の`app.use`）も定義されています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/index.ts?raw=true#:~:text=%E3%83%87%E3%83%BC%E3%82%BF%E3%83%99%E3%83%BC%E3%82%B9%E6%8E%A5%E7%B6%9A%E3%83%86%E3%82%B9%E3%83%88%20const%20isDbConnected%20%3D%20await,%7B%20log%28%60%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E8%B5%B7%E5%8B%95%E3%81%97%E3%81%BE%E3%81%97%E3%81%9F))。ただし各ルートで`try-catch`により個別に`res.status(...).json({ message: ... })`を返しているため、このグローバルなエラーハンドラに到達するケースは少ないようです。結果として、**データベースエラーのメッセージがそのままクライアントに返される**状況があります（例えば冒頭の`"malformed array literal"`エラーはサーバからそのままJSONメッセージとして返されました）。この点はセキュリティおよびUXの観点から、後述するように改善を検討してください。  
+
+### 3. 改善できる点の提案  
+上記の検証結果を踏まえ、コードの品質・セキュリティ・ユーザ体験を向上させるための具体的な改善提案を以下にまとめます。
+
+- **コードのリファクタリング:**  
+  - *重複コードの排除:* `auth.ts`内と`routes.ts`内で重複している認証関連ルート定義を統一しましょう。推奨されるアプローチは、最新の実装内容に揃えて一方を削除することです。例えば、`auth.ts`内の`app.post("/api/register")`や`app.post("/api/login")`の定義は`routes.ts`側でより詳細に実装されているため、`auth.ts`側を削除し、セッション設定とPassport初期化のみを`setupAuth`に残すと良いでしょう ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=storage.getUser%28id%29%3B%20done%28null%2C%20user%29%3B%20%7D%29%3B%20app.post%28,%7B%20if%20%28err)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=console,location))。これにより、修正箇所の一元化とバグの防止が期待できます。  
+  - *ストレージ層の整理:* `storage.ts`でデータアクセスロジックをクラス化していますが、現状では直接`db`を操作するコードと混在しています。今後の規模拡大を考えると、ストレージクラス（Repository層）経由でDB操作を行うよう統一するか、逆に簡潔さを優先してストレージクラスを廃止するかを決める必要があります。一貫した方針に沿って実装を整理してください。もしストレージを活用するなら、ユーザ登録やプロフィール登録処理も`storage`経由で呼び出すよう変更できます。その際、`storage.createUser`の中身を最新のトランザクション＆バリデーションロジック（既存ユーザ確認やパスワードハッシュ処理など）に更新してください。  
+  - *不要コードの削除:* 未使用の変数やフィールドは削除しましょう。例えば`storage.createUser`内の`age`項目や、使われていない`connect-pg-simple`の依存などが挙げられます。依存パッケージについては、将来的にPostgreSQL上でセッション管理を行う予定で残している場合、メモリストアとの切替コードを用意するなど、意図が明確になるようにしておくと良いでしょう。  
+
+- **セキュリティ面での改善:**  
+  - *パスワード取扱い:* 現在、パスワードはSalt付きのScryptハッシュとしてデータベースに保存しており適切です ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=db.transaction%28async%20%28tx%29%20%3D,%7D%20return%20newUser%3B)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=throw%20new%20Error%28,.returning%28%29%3B%20if))。実装もNode標準の`crypto.scrypt`と`timingSafeEqual`で行われており、セキュアに比較しています ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=randomBytes%2C%20timingSafeEqual%20%7D%20from%20,export%20async%20function))。さらに強固にするため、ハッシュ化に使うパラメータ(N値やsalt長)が十分であることを確認してください。必要なら業界標準のbcrypt/argon2ライブラリを導入するのも一案です。  
+  - *エラーメッセージ制御:* 内部エラーがそのままクライアントに露出しないようにしましょう。現状はcatch節で`error.message`を返す実装が多いため、データベース由来のエラー（SQLエラーなど）がユーザに見えてしまう可能性があります ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=%28%21newUser%29%20%7B%20throw%20new%20Error%28,api%2Ftalent%2Fprofile)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=%28error%29%20,%7D%29%3B%20%7D%20%7D))。改善策として、想定内のエラー（バリデーション違反や既存ユーザ重複など）はカスタムメッセージを投げ、それ以外の予期せぬエラーはログには詳細を残しつつ、クライアントには汎用的なエラーメッセージ（例えば「サーバエラーが発生しました」等）を返すよう統一します。既に用意されているエラーハンドリングミドルウェア ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/index.ts?raw=true#:~:text=%E3%83%87%E3%83%BC%E3%82%BF%E3%83%99%E3%83%BC%E3%82%B9%E6%8E%A5%E7%B6%9A%E3%83%86%E3%82%B9%E3%83%88%20const%20isDbConnected%20%3D%20await,%7B%20log%28%60%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E8%B5%B7%E5%8B%95%E3%81%97%E3%81%BE%E3%81%97%E3%81%9F))を活用し、各ルートでは`next(error)`で任せる実装にすると、重複を減らしつつ集中管理が可能です。  
+  - *セッション管理:* セッションストアに現在MemoryStoreを用いていますが ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/storage.ts?raw=true#:~:text=%7D%20from%20,id%2C%20id))、本番環境ではメモリストアだとサーバ再起動でセッションが消える問題や、メモリリークの懸念があります。前述の`connect-pg-simple`を活用し、PostgreSQL上にセッションを永続化する運用を検討してください（`sessionSettings.store`にpgSessionインスタンスを設定）。その際、セッションクッキーに`secure: true`（HTTPS下で有効）や`sameSite`属性を付与し、セッションIDの安全性も高めましょう。  
+  - *ロールごとのアクセス制御:* 先述のように、エンドポイント毎にユーザのロールを確認し、不正なアクセスを防止してください。特にタレントプロフィール関連APIは`role==="talent"`のユーザに限定し、将来的に店舗ユーザ専用API（例えば店舗情報更新など）には`role==="store"`のみ許可するといった実装を追加します。これにより、本来許可しない操作が行われるリスクを低減できます。  
+
+- **ユーザーエクスペリエンス向上の提案:**  
+  - *登録後の自動ログイン:* 現状、ユーザ登録APIではユーザ作成後にそのまま201が返されていますが、直後にログイン状態にはなっていません ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/routes.ts?raw=true#:~:text=birthDate%3A%20new%20Date%28userData,console.error%28%27Registration))。UX向上のため、登録成功時にPassportで自動ログインさせると良いでしょう。具体的には、`req.login(newUser, ...)`を用いてセッションにログイン情報を保存し、登録APIのレスポンスとしてログイン済みユーザ情報を返すようにします ([github.com](https://github.com/doragpt/SCAI2/blob/main/server/auth.ts?raw=true#:~:text=storage.createUser%28,%7B%20if%20%28err))。こうすることで、ユーザは登録後すぐにサービスを利用開始でき、ログインの手間が省けます。  
+  - *プロフィール情報の更新機能:* 一度作成したタレントプロフィールを後から編集できるようにすることを検討してください。現在、プロフィール作成APIはありますが、更新APIが実装されていません（ユーザの基本情報更新APIはありますが、身長・体重などプロフィール詳細項目は更新されません）。例えば`PUT /api/talent/profile/details`のようなエンドポイントを追加し、`talentProfiles`テーブルの各項目（バスト・ウエスト等を含む）を更新可能にするとユーザビリティが向上します。  
+  - *プロフィール取得APIの拡充:* プロフィール閲覧用に、ユーザ基本情報とタレント詳細情報を統合して返すAPIレスポンスが望ましいです。提案として、`GET /api/talent/profile`の処理で`users`テーブルの情報に加え関連する`talentProfiles`レコードを結合し、例えば以下のようなオブジェクトを返すようにします。  
+    ```json
+    {
+      "id": 1,
+      "username": "example",
+      "displayName": "...",
+      "location": "...",
+      "preferredLocations": [...],
+      "profile": {
+         "height": ...,
+         "weight": ...,
+         "bust": ...,
+         "waist": ...,
+         // ...その他プロフィール項目...
+      }
+    }
+    ```  
+    これによりクライアント側でユーザ情報とプロフィール情報を別々に取得・統合する手間を省けます。  
+  - *入力フォームのUX:* フロントエンド側になりますが、バリデーションエラー時のメッセージをユーザに分かりやすく提示してください。現在Zodで日本語メッセージを定義している箇所 ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=,Talent%20profile%20schema%20export%20const)) ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=nearestStation%3A%20z.string%28%29.min%281%2C%20,z.number%28%29%2C%20z.undefined%28%29%5D%29.optional%28%29%2C%20faceVisibility))は非常に有用です。同様に、任意項目を未入力で送信した場合はエラーにならない工夫（グレーアウトや任意表示の明示など）も実装しておくと親切です。  
+
+- **追加実装が望ましい機能:**  
+  - *店舗ユーザ向け機能:* 今後`role: "store"`のユーザ登録を受け付けるのであれば、店舗側のプロフィール管理機能を実装する必要があります。例えば店舗の基本情報（店舗名・住所・連絡先等）を登録・編集するエンドポイントや、店舗がタレントを検索・閲覧できるエンドポイントなどが考えられます。現在用意されている定数`serviceTypes`（デリヘル、ホテヘル等）を見ると業種カテゴリを扱う予定と思われます ([github.com](https://github.com/doragpt/SCAI2/blob/main/shared/schema.ts?raw=true#:~:text=as%20const%3B%20export%20const%20allergyTypes,export%20type%20CupSize%20%3D%20typeof))。タレントプロフィールに自分のサービス種別を設定する項目を追加したり、店舗ユーザは自店舗の業種に応じてタレントをフィルタリングできる検索APIを用意したりすると、アプリケーションの実用性が増すでしょう。  
+  - *写真アップロード機能:* プロフィール写真や日記画像などをアップロードする機能も考慮できます。すでに`multer`や`storage`モジュールが含まれているため（ただ現状未使用）、エンドポイントを追加して画像ファイルを受け取り、サーバ側で保存・`photoDiaryUrls`等のフィールドにファイルパスを追加する処理を実装できます。この際、ファイルサイズや形式のバリデーション、保存先ストレージの選定（サーバローカルかクラウドストレージか）などセキュリティと利便性を考慮した設計が必要です。  
+  - *その他のUX改善:* ユーザが入力した所在地から近隣の駅を選択できるように駅データをプリセットする、選択肢の多い項目（NGオプションやアレルギー等）はチェックボックスリストで入力ミスを防ぐ、といったフロント側の工夫も考えられます。バックエンドとしては、これら定数リスト（都道府県やオプション類）を提供するAPIを作り、フロントが動的に取得するようにすると、定数の追加変更をサーバサイドで一元管理できるメリットがあります。  
+
+以上の改善提案により、システム全体の安定性とユーザ満足度を高めることができるでしょう。必要に応じてコードの修正箇所を特定しながら進め、テストを通じてエラーが解消されていることを確認してください。

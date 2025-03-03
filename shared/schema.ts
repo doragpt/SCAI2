@@ -230,9 +230,18 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.number().optional(),
-  waist: z.number().optional(),
-  hip: z.number().optional(),
+  bust: z.preprocess(
+    (val) => val === "" ? undefined : Number(val),
+    z.number().optional()
+  ),
+  waist: z.preprocess(
+    (val) => val === "" ? undefined : Number(val),
+    z.number().optional()
+  ),
+  hip: z.preprocess(
+    (val) => val === "" ? undefined : Number(val),
+    z.number().optional()
+  ),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
@@ -253,15 +262,15 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()),
   }),
   hasSnsAccount: z.boolean(),
-  snsUrls: z.array(z.string()),
+  snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
     stageName: z.string(),
-  })),
+  })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
-  })),
-  photoDiaryUrls: z.array(z.string()),
+  })).default([]),
+  photoDiaryUrls: z.array(z.string()).default([]),
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
   estheOptions: z.object({
