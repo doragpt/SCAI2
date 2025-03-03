@@ -6,14 +6,12 @@ import cors from "cors";
 
 const app = express();
 
-// CORSミドルウェアの設定をさらに緩和
+// CORSミドルウェアの設定を修正
 app.use(cors({
-  origin: true,
+  origin: true, // すべてのオリジンを許可
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  preflightContinue: true,
-  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());

@@ -56,7 +56,6 @@ export async function apiRequest(
       headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
-      mode: "same-origin", // CORSモードを調整
     });
 
     await throwIfResNotOk(res);
@@ -97,7 +96,6 @@ export const getQueryFn: <T>(options: {
       const res = await fetch(fullUrl, {
         headers,
         credentials: "include",
-        mode: "same-origin", // CORSモードを調整
       });
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
