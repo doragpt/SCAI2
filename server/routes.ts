@@ -23,7 +23,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('ヘルスチェックリクエスト受信:', {
       headers: req.headers,
       method: req.method,
-      path: req.path
+      path: req.path,
+      timestamp: new Date().toISOString()
     });
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
@@ -275,7 +276,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   app.get("/api/talent/profile", authenticate, async (req: any, res) => {
-    //This section is largely unchanged from original, but uses authenticate middleware.  Error handling could be improved for consistency.
     try {
       const userId = req.user.id;
       console.log('Profile fetch request for user:', userId);
@@ -299,7 +299,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/logout", (req: any, res, next) => {
-    //Logout functionality remains largely unchanged.
     req.logout((err: any) => {
       if (err) return next(err);
       res.sendStatus(200);

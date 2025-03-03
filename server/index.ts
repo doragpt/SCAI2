@@ -36,7 +36,8 @@ app.use((req, res, next) => {
   console.log('Request Headers:', {
     origin: req.headers.origin,
     host: req.headers.host,
-    authorization: req.headers.authorization ? 'Present' : 'Not Present'
+    authorization: req.headers.authorization ? 'Present' : 'Not Present',
+    timestamp: new Date().toISOString()
   });
 
   res.on("finish", () => {
@@ -69,7 +70,13 @@ app.use((req, res, next) => {
 
     // エラーハンドリングミドルウェアの改善
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error("Server error:", err);
+      console.error("Server error:", {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        timestamp: new Date().toISOString()
+      });
+
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       const details = process.env.NODE_ENV === "development" ? err.stack : undefined;
