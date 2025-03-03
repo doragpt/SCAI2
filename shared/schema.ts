@@ -233,17 +233,46 @@ export const talentProfileSchema = z.object({
   }),
 
   // 任意フィールド
-  bust: z.string().optional().transform(val => val ? Number(val) : undefined),
-  waist: z.string().optional().transform(val => val ? Number(val) : undefined),
-  hip: z.string().optional().transform(val => val ? Number(val) : undefined),
+  bust: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
+    if (val === "" || val === undefined) return undefined;
+    return typeof val === "string" ? Number(val) : val;
+  }),
+  waist: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
+    if (val === "" || val === undefined) return undefined;
+    return typeof val === "string" ? Number(val) : val;
+  }),
+  hip: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
+    if (val === "" || val === undefined) return undefined;
+    return typeof val === "string" ? Number(val) : val;
+  }),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
+
+  // その他のフィールド（デフォルト値付き）
   canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
+  hasSnsAccount: z.boolean().default(false),
+  hasEstheExperience: z.boolean().default(false),
 
-  // オブジェクトと配列のデフォルト値設定
+  // 任意テキストフィールド
+  selfIntroduction: z.string().optional().default(""),
+  notes: z.string().optional().default(""),
+  estheExperiencePeriod: z.string().optional(),
+
+  // 配列フィールド（デフォルト値付き）
+  snsUrls: z.array(z.string()).default([]),
+  currentStores: z.array(z.object({
+    storeName: z.string(),
+    stageName: z.string(),
+  })).default([]),
+  previousStores: z.array(z.object({
+    storeName: z.string(),
+  })).default([]),
+  photoDiaryUrls: z.array(z.string()).default([]),
+
+  // オブジェクトフィールド（デフォルト値付き）
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -261,27 +290,10 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
 
-  hasSnsAccount: z.boolean().default(false),
-  snsUrls: z.array(z.string()).default([]),
-  currentStores: z.array(z.object({
-    storeName: z.string(),
-    stageName: z.string(),
-  })).default([]),
-  previousStores: z.array(z.object({
-    storeName: z.string(),
-  })).default([]),
-  photoDiaryUrls: z.array(z.string()).default([]),
-
-  selfIntroduction: z.string().optional(),
-  notes: z.string().optional(),
-
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)).default([]),
     ngOptions: z.array(z.string()).default([]),
   }).default({ available: [], ngOptions: [] }),
-
-  hasEstheExperience: z.boolean().default(false),
-  estheExperiencePeriod: z.string().optional(),
 });
 
 // Export types

@@ -156,8 +156,7 @@ export const TalentForm: React.FC = () => {
     mutationFn: async (data: TalentProfileData) => {
       // フォームデータの整形
       const formData = {
-        ...data,
-        // すべての配列フィールドのデフォルト値を保証
+        // デフォルト値の設定
         snsUrls: [],
         currentStores: [],
         previousStores: [],
@@ -180,7 +179,14 @@ export const TalentForm: React.FC = () => {
           available: [],
           ngOptions: [],
         },
-        // オーバーライド
+        // 任意テキストフィールドのデフォルト値
+        selfIntroduction: "",
+        notes: "",
+        // 数値フィールドの処理
+        bust: data.bust === "" ? undefined : data.bust,
+        waist: data.waist === "" ? undefined : data.waist,
+        hip: data.hip === "" ? undefined : data.hip,
+        // 他のフィールドをオーバーライド
         ...data,
       };
 
