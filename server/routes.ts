@@ -282,7 +282,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        return updated;
+        // 更新されたプロフィールを再取得して返す
+        const [freshProfile] = await tx
+          .select()
+          .from(talentProfiles)
+          .where(eq(talentProfiles.userId, userId));
+
+        return freshProfile;
       });
 
       console.log('Profile updated successfully:', {
@@ -302,18 +308,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof Error) {
         const status = error.message === "プロフィールが見つかりません" ? 404 : 400;
         res.status(status).json({
+          error: true,
           message: error.message,
           timestamp: new Date().toISOString()
         });
       } else {
         res.status(500).json({
+          error: true,
           message: "プロフィールの更新に失敗しました",
           timestamp: new Date().toISOString()
         });
       }
     }
   });
-
 
 
   app.post("/api/logout", (req: any, res, next) => {

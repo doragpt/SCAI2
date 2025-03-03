@@ -16,6 +16,8 @@ export default function ProfileViewPage() {
     queryKey: ["/api/talent/profile"],
     enabled: !!user, // ユーザーが存在する場合のみクエリを実行
     staleTime: 0, // 常に最新のデータを取得
+    refetchOnMount: true, // コンポーネントマウント時に再取得
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
   });
 
   if (isLoading) {

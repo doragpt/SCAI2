@@ -9,9 +9,7 @@ export const QUERY_KEYS = {
 const API_BASE_URL = (() => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
-  return process.env.NODE_ENV === "development"
-    ? `${protocol}//${hostname}`
-    : "";
+  return `${protocol}//${hostname}`;
 })();
 
 async function throwIfResNotOk(res: Response) {
@@ -85,11 +83,14 @@ export async function updateTalentProfile(data: any) {
 
   // キャッシュを強制的に無効化し、新しいデータで更新
   queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
+  // 強制的に再取得を行う
   await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+  await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
 
   return updatedProfile;
 }
 
+// クエリ関数の生成
 export const getQueryFn: <T>({
   on401,
 }: {
@@ -144,13 +145,14 @@ export const getQueryFn: <T>({
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // キャッシュを無効にし、常に最新データを取得
-      cacheTime: 0,
+      staleTime: 0, // キャッシュを常に無効化
+      cacheTime: 0, // キャッシュを保持しない
       refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+      refetchOnMount: true, // コンポーネントマウント時に再取得
+      refetchOnReconnect: true, // 再接続時に再取得
       retry: 1,
       queryFn: getQueryFn({ on401: "throw" }),
     },
