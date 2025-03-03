@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,14 @@ const SwitchField: React.FC<{
   onCheckedChange: (checked: boolean) => void;
   description?: string;
   valueLabels?: { checked: string; unchecked: string };
-}> = ({ label, required = false, checked, onCheckedChange, description, valueLabels = { checked: "有り", unchecked: "無し" } }) => (
+}> = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" },
+}) => (
   <div className="flex flex-row items-center justify-between rounded-lg border p-4">
     <div className="space-y-0.5">
       <div className="flex items-center gap-2">
@@ -85,10 +92,7 @@ const SwitchField: React.FC<{
       )}
     </div>
     <div className="flex items-center gap-2">
-      <Switch
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-      />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
       <span className={checked ? "text-primary" : "text-muted-foreground"}>
         {checked ? valueLabels.checked : valueLabels.unchecked}
       </span>
@@ -105,7 +109,9 @@ interface TalentFormProps {
   onProgressChange?: (progress: number) => void;
 }
 
-export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
+export const TalentForm: React.FC<TalentFormProps> = ({
+  onProgressChange,
+}) => {
   const { toast } = useToast();
   const [otherIds, setOtherIds] = useState<string[]>([]);
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
@@ -113,7 +119,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState2(false);
-  const [formDataToConfirm, setFormDataToConfirm] = useState2<TalentProfileData | null>(null);
+  const [formDataToConfirm, setFormDataToConfirm] = useState2<
+    TalentProfileData | null
+  >(null);
   const [, setLocation] = useLocation();
   const [formProgress, setFormProgress] = useState(0);
 
@@ -176,7 +184,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
-        console.log('送信前データ:', data);
+        console.log("送信前データ:", data);
 
         // フォームデータの整形
         const processedData = {
@@ -211,39 +219,43 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
           },
         };
 
-        console.log('APIリクエスト送信データ:', processedData);
+        console.log("APIリクエスト送信データ:", processedData);
 
-        const response = await apiRequest("POST", "/api/talent/profile", processedData);
+        const response = await apiRequest(
+          "POST",
+          "/api/talent/profile",
+          processedData
+        );
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('APIエラーレスポンス:', errorData);
-          throw new Error(errorData.message || 'プロフィールの作成に失敗しました');
+          console.error("APIエラーレスポンス:", errorData);
+          throw new Error(errorData.message || "プロフィールの作成に失敗しました");
         }
         return response.json();
       } catch (error) {
-        console.error('API通信エラー:', error);
+        console.error("API通信エラー:", error);
         throw error;
       }
     },
     onSuccess: () => {
       toast({
-        title: 'プロフィールが作成されました',
-        variant: 'default',
+        title: "プロフィールが作成されました",
+        variant: "default",
       });
     },
     onError: (error: Error) => {
-      console.error('ミューテーションエラー:', error);
+      console.error("ミューテーションエラー:", error);
       toast({
-        title: 'エラーが発生しました',
+        title: "エラーが発生しました",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     },
   });
 
   // フォームの状態をログ出力
   useEffect(() => {
-    console.log('フォームの状態:', {
+    console.log("フォームの状態:", {
       values: form.getValues(),
       errors: form.formState.errors,
       isValid: form.formState.isValid,
@@ -251,92 +263,132 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
     });
   }, [form.formState]);
 
-
   const calculateProgress = (formData: TalentProfileData) => {
     const requiredFields = [
-      'lastName',
-      'firstName',
-      'lastNameKana',
-      'firstNameKana',
-      'location',
-      'nearestStation',
-      'availableIds',
-      'canProvideResidenceRecord',
-      'height',
-      'weight',
-      'cupSize',
-      'faceVisibility',
+      { name: "lastName", label: "姓" },
+      { name: "firstName", label: "名" },
+      { name: "lastNameKana", label: "姓（カナ）" },
+      { name: "firstNameKana", label: "名（カナ）" },
+      { name: "location", label: "在住地" },
+      { name: "nearestStation", label: "最寄り駅" },
+      { name: "availableIds", label: "身分証明書" },
+      { name: "canProvideResidenceRecord", label: "住民票" },
+      { name: "height", label: "身長" },
+      { name: "weight", label: "体重" },
+      { name: "cupSize", label: "カップサイズ" },
+      { name: "faceVisibility", label: "顔出し" },
     ];
 
-    const completedFields = requiredFields.filter(field => {
-      const value = formData[field];
-      if (field === 'availableIds') {
-        return value?.types?.length > 0;
+    const completedFields = requiredFields.filter((field) => {
+      const value = formData[field.name];
+      if (field.name === "availableIds") {
+        return formData.availableIds?.types?.length > 0;
       }
-      return value !== undefined && value !== null && value !== '';
+      return value !== undefined && value !== null && value !== "";
     });
 
-    return Math.round((completedFields.length / requiredFields.length) * 100);
+    const progress = Math.round((completedFields.length / requiredFields.length) * 100);
+
+    // 進捗状況の詳細をコンソールに出力
+    console.log("フォーム進捗状況:", {
+      total: requiredFields.length,
+      completed: completedFields.length,
+      progress: progress,
+      completedFields: completedFields.map((f) => f.name),
+      remainingFields: requiredFields
+        .filter((field) => !completedFields.find((cf) => cf.name === field.name))
+        .map((f) => f.label),
+    });
+
+    return {
+      progress,
+      completedFields: completedFields.map((f) => f.name),
+      remainingFields: requiredFields
+        .filter((field) => !completedFields.find((cf) => cf.name === field.name))
+        .map((f) => f.label),
+    };
   };
 
-  const saveFormToLocalStorage = (data: TalentProfileData) => {
+  const saveFormToLocalStorage = useCallback((data: TalentProfileData) => {
     try {
-      localStorage.setItem('talentFormData', JSON.stringify(data));
-      console.log('フォームデータを保存しました');
+      const serializedData = JSON.stringify(data);
+      localStorage.setItem("talentFormData", serializedData);
+      console.log("フォームデータを保存しました:", {
+        timestamp: new Date().toISOString(),
+        dataSize: new Blob([serializedData]).size,
+      });
     } catch (error) {
-      console.error('フォームデータの保存に失敗:', error);
-    }
-  };
-
-  useEffect(() => {
-    const progress = calculateProgress(form.getValues());
-    setFormProgress(progress);
-    if (onProgressChange) {
-      onProgressChange(progress);
-    }
-  }, [form.watch(), onProgressChange]);
-
-  useEffect(() => {
-    const savedData = localStorage.getItem('talentFormData');
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        form.reset(parsedData);
-        console.log('保存されたフォームデータを復元しました');
-      } catch (error) {
-        console.error('フォームデータの復元に失敗:', error);
-      }
+      console.error("フォームデータの保存に失敗:", error);
+      toast({
+        title: "データの保存に失敗しました",
+        description: "入力内容の保存中にエラーが発生しました。",
+        variant: "destructive",
+      });
     }
   }, []);
 
   useEffect(() => {
-    const formData = form.getValues();
-    saveFormToLocalStorage(formData);
-  }, [form.watch()]);
+    const { progress, remainingFields } = calculateProgress(form.getValues());
+    setFormProgress(progress);
+    if (onProgressChange) {
+      onProgressChange(progress);
+    }
+
+    // 未入力の必須項目がある場合、トースト通知を表示
+    if (remainingFields.length > 0 && form.formState.isDirty) {
+      toast({
+        title: "必須項目が未入力です",
+        description: `以下の項目を入力してください：${remainingFields.join(", ")}`,
+        variant: "default",
+      });
+    }
+  }, [form.watch(), onProgressChange]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const formData = form.getValues();
+      saveFormToLocalStorage(formData);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [form.watch(), saveFormToLocalStorage]);
+
+  useEffect(() => {
+    const savedData = localStorage.getItem("talentFormData");
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        form.reset(parsedData);
+        console.log("保存されたフォームデータを復元しました");
+      } catch (error) {
+        console.error("フォームデータの復元に失敗:", error);
+      }
+    }
+  }, []);
 
   const onSubmit = async (data: TalentProfileData) => {
     try {
-      console.log('送信前データ:', data);
-      console.log('フォームエラー:', form.formState.errors);
+      console.log("送信前データ:", data);
+      console.log("フォームエラー:", form.formState.errors);
 
       if (Object.keys(form.formState.errors).length > 0) {
-        console.log('バリデーションエラー:', form.formState.errors);
+        console.log("バリデーションエラー:", form.formState.errors);
         return;
       }
 
       setFormDataToConfirm(data);
       setIsConfirmationOpen(true);
       // 成功時にlocalStorageをクリア
-      localStorage.removeItem('talentFormData');
+      localStorage.removeItem("talentFormData");
     } catch (error) {
-      console.error('送信エラー:', error);
+      console.error("送信エラー:", error);
     }
   };
 
   const handleModalClose = () => {
     setIsConfirmationOpen(false);
     // フォームデータをlocalStorageに保存
-    localStorage.setItem('talentFormData', JSON.stringify(formDataToConfirm));
+    localStorage.setItem("talentFormData", JSON.stringify(formDataToConfirm));
   };
 
   const handleConfirm = async () => {
@@ -347,7 +399,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
       // 成功したらプロフィール表示ページに遷移
       setLocation("/talent/profile");
     } catch (error) {
-      console.error('プロフィール作成エラー:', error);
+      console.error("プロフィール作成エラー:", error);
     }
   };
 
@@ -370,28 +422,36 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 {...form.register("lastName")}
                 placeholder="姓を入力してください"
               />
-              {form.formState.errors.lastName && <FormErrorMessage message={form.formState.errors.lastName.message as string} />}
+              {form.formState.errors.lastName && (
+                <FormErrorMessage message={form.formState.errors.lastName.message as string} />
+              )}
             </FormField>
             <FormField label="名" required>
               <Input
                 {...form.register("firstName")}
                 placeholder="名を入力してください"
               />
-              {form.formState.errors.firstName && <FormErrorMessage message={form.formState.errors.firstName.message as string} />}
+              {form.formState.errors.firstName && (
+                <FormErrorMessage message={form.formState.errors.firstName.message as string} />
+              )}
             </FormField>
             <FormField label="姓（カナ）" required>
               <Input
                 {...form.register("lastNameKana")}
                 placeholder="セイを入力してください"
               />
-              {form.formState.errors.lastNameKana && <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />}
+              {form.formState.errors.lastNameKana && (
+                <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />
+              )}
             </FormField>
             <FormField label="名（カナ）" required>
               <Input
                 {...form.register("firstNameKana")}
                 placeholder="メイを入力してください"
               />
-              {form.formState.errors.firstNameKana && <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />}
+              {form.formState.errors.firstNameKana && (
+                <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />
+              )}
             </FormField>
           </div>
 
@@ -413,14 +473,18 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.location && <FormErrorMessage message={form.formState.errors.location.message as string} />}
+              {form.formState.errors.location && (
+                <FormErrorMessage message={form.formState.errors.location.message as string} />
+              )}
             </FormField>
             <FormField label="最寄り駅" required>
               <Input
                 {...form.register("nearestStation")}
                 placeholder="最寄り駅を入力してください"
               />
-              {form.formState.errors.nearestStation && <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />}
+              {form.formState.errors.nearestStation && (
+                <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />
+              )}
             </FormField>
           </div>
         </div>
@@ -438,7 +502,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                       const current = form.watch("availableIds.types");
                       const updated = checked
                         ? [...current, type]
-                        : current.filter(t => t !== type);
+                        : current.filter((t) => t !== type);
                       form.setValue("availableIds.types", updated);
                     }}
                   />
@@ -458,8 +522,11 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                       size="sm"
                       className="ml-1 h-4 w-4 p-0"
                       onClick={() => {
-                        setOtherIds(otherIds.filter(i => i !== id));
-                        form.setValue("availableIds.others", otherIds.filter(i => i !== id));
+                        setOtherIds(otherIds.filter((i) => i !== id));
+                        form.setValue(
+                          "availableIds.others",
+                          otherIds.filter((i) => i !== id)
+                        );
                       }}
                     >
                       <X className="h-3 w-3" />
@@ -471,13 +538,13 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 <Input
                   placeholder="その他の身分証明書を入力"
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       const value = e.currentTarget.value.trim();
                       if (value && !otherIds.includes(value)) {
                         const newIds = [...otherIds, value];
                         setOtherIds(newIds);
                         form.setValue("availableIds.others", newIds);
-                        e.currentTarget.value = '';
+                        e.currentTarget.value = "";
                       }
                     }
                   }}
@@ -494,7 +561,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
             label="本籍地入りの住民票の用意"
             required
             checked={form.watch("canProvideResidenceRecord")}
-            onCheckedChange={(checked) => form.setValue("canProvideResidenceRecord", checked)}
+            onCheckedChange={(checked) =>
+              form.setValue("canProvideResidenceRecord", checked)
+            }
           />
         </div>
 
@@ -509,7 +578,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 min={130}
                 max={190}
               />
-              {form.formState.errors.height && <FormErrorMessage message={form.formState.errors.height.message as string} />}
+              {form.formState.errors.height && (
+                <FormErrorMessage message={form.formState.errors.height.message as string} />
+              )}
             </FormField>
             <FormField label="体重 (kg)" required>
               <Input
@@ -518,7 +589,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 min={30}
                 max={150}
               />
-              {form.formState.errors.weight && <FormErrorMessage message={form.formState.errors.weight.message as string} />}
+              {form.formState.errors.weight && (
+                <FormErrorMessage message={form.formState.errors.weight.message as string} />
+              )}
             </FormField>
             <FormField label="カップサイズ" required>
               <Select
@@ -536,13 +609,15 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.cupSize && <FormErrorMessage message={form.formState.errors.cupSize.message as string} />}
+              {form.formState.errors.cupSize && (
+                <FormErrorMessage message={form.formState.errors.cupSize.message as string} />
+              )}
             </FormField>
             <FormField label="バスト (cm) (任意)">
               <Input
                 type="text"
                 {...form.register("bust", {
-                  setValueAs: (value: string) => value === "" ? null : Number(value)
+                  setValueAs: (value: string) => (value === "" ? null : Number(value)),
                 })}
                 placeholder="未入力可"
               />
@@ -554,7 +629,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
               <Input
                 type="text"
                 {...form.register("waist", {
-                  setValueAs: (value: string) => value === "" ? null : Number(value)
+                  setValueAs: (value: string) => (value === "" ? null : Number(value)),
                 })}
                 placeholder="未入力可"
               />
@@ -566,7 +641,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
               <Input
                 type="text"
                 {...form.register("hip", {
-                  setValueAs: (value: string) => value === "" ? null : Number(value)
+                  setValueAs: (value: string) => (value === "" ? null : Number(value)),
                 })}
                 placeholder="未入力可"
               />
@@ -596,7 +671,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.errors.faceVisibility && <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />}
+            {form.formState.errors.faceVisibility && (
+              <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />
+            )}
           </FormField>
         </div>
 
@@ -607,7 +684,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
             label="写メ日記の投稿可否"
             required
             checked={form.watch("canPhotoDiary")}
-            onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked, { shouldValidate: true })}
+            onCheckedChange={(checked) =>
+              form.setValue("canPhotoDiary", checked, { shouldValidate: true })
+            }
             valueLabels={{ checked: "可能", unchecked: "不可" }}
           />
 
@@ -615,7 +694,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
             label="自宅への派遣"
             required
             checked={form.watch("canHomeDelivery")}
-            onCheckedChange={(checked) => form.setValue("canHomeDelivery", checked, { shouldValidate: true })}
+            onCheckedChange={(checked) =>
+              form.setValue("canHomeDelivery", checked, { shouldValidate: true })
+            }
             valueLabels={{ checked: "可能", unchecked: "不可" }}
             description="自宅での接客が可能な場合は「可能」を選択してください"
           />
@@ -634,7 +715,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                       const current = form.watch("ngOptions.common");
                       const updated = checked
                         ? [...current, option]
-                        : current.filter(o => o !== option);
+                        : current.filter((o) => o !== option);
                       form.setValue("ngOptions.common", updated);
                     }}
                   />
@@ -654,8 +735,11 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                       size="sm"
                       className="ml-1 h-4 w-4 p-0"
                       onClick={() => {
-                        setOtherNgOptions(otherNgOptions.filter(o => o !== option));
-                        form.setValue("ngOptions.others", otherNgOptions.filter(o => o !== option));
+                        setOtherNgOptions(otherNgOptions.filter((o) => o !== option));
+                        form.setValue(
+                          "ngOptions.others",
+                          otherNgOptions.filter((o) => o !== option)
+                        );
                       }}
                     >
                       <X className="h-3 w-3" />
@@ -667,13 +751,13 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 <Input
                   placeholder="その他のNGオプションを入力"
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       const value = e.currentTarget.value.trim();
                       if (value && !otherNgOptions.includes(value)) {
                         const newOptions = [...otherNgOptions, value];
                         setOtherNgOptions(newOptions);
                         form.setValue("ngOptions.others", newOptions);
-                        e.currentTarget.value = '';
+                        e.currentTarget.value = "";
                       }
                     }
                   }}
@@ -705,7 +789,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                         const current = form.watch("estheOptions.available");
                         const updated = checked
                           ? [...current, option]
-                          : current.filter(o => o !== option);
+                          : current.filter((o) => o !== option);
                         form.setValue("estheOptions.available", updated);
                       }}
                     />
@@ -723,7 +807,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                     const value = e.target.value;
                     form.setValue(
                       "estheOptions.ngOptions",
-                      value ? value.split(",").map(v => v.trim()) : []
+                      value ? value.split(",").map((v) => v.trim()) : []
                     );
                   }}
                 />
@@ -747,7 +831,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                       placeholder="経験期間を入力（例：2年）"
                       {...form.register("estheExperiencePeriod")}
                     />
-                    {form.formState.errors.estheExperiencePeriod && <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />}
+                    {form.formState.errors.estheExperiencePeriod && (
+                      <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />
+                    )}
                   </div>
                 )}
               </div>
@@ -782,7 +868,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                         const current = form.watch("allergies.types");
                         const updated = checked
                           ? [...current, type]
-                          : current.filter(t => t !== type);
+                          : current.filter((t) => t !== type);
                         form.setValue("allergies.types", updated);
                       }}
                     />
@@ -802,8 +888,11 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                         size="sm"
                         className="ml-1 h-4 w-4 p-0"
                         onClick={() => {
-                          setOtherAllergies(otherAllergies.filter(a => a !== allergy));
-                          form.setValue("allergies.others", otherAllergies.filter(a => a !== allergy));
+                          setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
+                          form.setValue(
+                            "allergies.others",
+                            otherAllergies.filter((a) => a !== allergy)
+                          );
                         }}
                       >
                         <X className="h-3 w-3" />
@@ -815,13 +904,13 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   <Input
                     placeholder="その他のアレルギーを入力"
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         const value = e.currentTarget.value.trim();
                         if (value && !otherAllergies.includes(value)) {
                           const newAllergies = [...otherAllergies, value];
                           setOtherAllergies(newAllergies);
                           form.setValue("allergies.others", newAllergies);
-                          e.currentTarget.value = '';
+                          e.currentTarget.value = "";
                         }
                       }
                     }}
@@ -831,76 +920,87 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
             </div>
           )}
 
-          <SwitchField
-            label="喫煙"
-            required
-            checked={form.watch("smoking.enabled")}
-            onCheckedChange={(checked) => {
-              form.setValue("smoking", {
-                enabled: checked,
-                types: [],
-                others: [],
-              }, { shouldValidate: true });
-            }}
-          />
 
-          {form.watch("smoking.enabled") && (
-            <div className="ml-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {smokingTypes.map((type) => (
-                  <div key={type} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={form.watch("smoking.types").includes(type)}
-                      onCheckedChange={(checked) => {
-                        const current = form.watch("smoking.types");
-                        const updated = checked
-                          ? [...current, type]
-                          : current.filter(t => t !== type);
-                        form.setValue("smoking.types", updated);
-                      }}
-                    />
-                    <label className="text-sm">{type}</label>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {otherSmokingTypes.map((type) => (
-                  <Badge key={type} variant="secondary">
-                    {type}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="ml-1 h-4 w-4 p-0"
-                      onClick={() => {
-                        setOtherSmokingTypes(otherSmokingTypes.filter(t => t !== type));
-                        form.setValue("smoking.others", otherSmokingTypes.filter(t => t !== type));
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  placeholder="その他の喫煙種類を入力"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      const value = e.currentTarget.value.trim();
-                      if (value && !otherSmokingTypes.includes(value)) {
-                        const newTypes = [...otherSmokingTypes, value];
-                        setOtherSmokingTypes(newTypes);
-                        form.setValue("smoking.others", newTypes);
-                        e.currentTarget.value = '';
+          {/* 喫煙セクション */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">喫煙</h3><pre>
+            <SwitchField
+              label="喫煙"
+              required
+              checked={form.watch("smoking.enabled")}
+              onCheckedChange={(checked) => {
+                form.setValue(
+                  "smoking",
+                  {
+                    enabled: checked,
+                    types: [],
+                    others: [],
+                  },
+                  { shouldValidate: true }
+                );
+              }}
+            />
+
+            {form.watch("smoking.enabled") && (
+              <div className="ml-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {smokingTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={form.watch("smoking.types").includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = form.watch("smoking.types");
+                          const updated = checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type);
+                          form.setValue("smoking.types", updated);
+                        }}
+                      />
+                      <label className="text-sm">{type}</label>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {otherSmokingTypes.map((type) => (
+                    <Badge key={type} variant="secondary">
+                      {type}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="ml-1 h-4 w-4 p-0"
+                        onClick={() => {
+                          setOtherSmokingTypes(otherSmokingTypes.filter((t) => t !== type));
+                          form.setValue(
+                            "smoking.others",
+                            otherSmokingTypes.filter((t) => t !== type)
+                          );
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    placeholder="その他の喫煙種類を入力"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        const value = e.currentTarget.value.trim();
+                        if (value && !otherSmokingTypes.includes(value)) {
+                          const newTypes = [...otherSmokingTypes, value];
+                          setOtherSmokingTypes(newTypes);
+                          form.setValue("smoking.others", newTypes);
+                          e.currentTarget.value = "";
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
         {/* 15. SNSアカウント */}
         <div className="space-y-6">
@@ -943,12 +1043,12 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   <Input
                     placeholder="SNSのURLを入力"
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         const url = e.currentTarget.value.trim();
                         if (url) {
                           const current = form.watch("snsUrls");
                           form.setValue("snsUrls", [...current, url]);
-                          e.currentTarget.value = '';
+                          e.currentTarget.value = "";
                         }
                       }
                     }}
@@ -1002,7 +1102,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                 variant="outline"
                 onClick={() => {
                   const current = form.watch("currentStores");
-                  form.setValue("currentStores", [...current, { storeName: '', stageName: '' }]);
+                  form.setValue("currentStores", [...current, { storeName: "", stageName: "" }]);
                 }}
               >
                 店舗を追加
@@ -1118,13 +1218,13 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
               <Input
                 placeholder="写メ日記が確認できる店舗のURLを入力"
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     const url = e.currentTarget.value.trim();
                     if (url) {
                       const current = form.watch("photoDiaryUrls") || [];
                       form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                      e.currentTarget.value = '';
+                      e.currentTarget.value = "";
                     }
                   }
                 }}
@@ -1138,7 +1238,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   if (url) {
                     const current = form.watch("photoDiaryUrls") || [];
                     form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                    if (input) input.value = '';
+                    if (input) input.value = "";
                   }
                 }}
               >
@@ -1148,29 +1248,31 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
           </FormField>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isPending}
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              送信中...
-            </>
-          ) : (
-            'プロフィールを作成'
-          )}
-        </Button>
-        {formDataToConfirm && (
-          <ProfileConfirmationModal
-            isOpen={isConfirmationOpen}
-            onClose={handleModalClose}
-            onConfirm={handleConfirm}
-            profileData={formDataToConfirm}
-          />
-        )}
+        {/* 送信ボタンセクション */}
+        <div className="flex justify-end space-x-4 mt-8">
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                送信中...
+              </>
+            ) : (
+              "プロフィールを保存"
+            )}
+          </Button>
+        </div>
       </form>
+
+      {/* 確認モーダル */}
+      <ProfileConfirmationModal
+        open={isConfirmationOpen}
+        onOpenChange={setIsConfirmationOpen}
+        onConfirm={handleConfirm}
+        onClose={handleModalClose}
+        formData={formDataToConfirm}
+      />
     </Form>
   );
 };
+
+</pre>

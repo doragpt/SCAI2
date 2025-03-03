@@ -1,0 +1,85 @@
+現在のSCAIコードを解析し、統合性の確認とエラーの修正点を特定します。特に、以下の点を重点的にチェックします。
+
+1. **タレントプロフィールフォームのシンタックスエラー**
+   - `<div>`タグの閉じ忘れや、JSXの構造的な不整合を特定
+   - `<form>`タグが適切に閉じられているかを確認
+
+2. **認証機能のエラーハンドリング**
+   - JWT認証の処理が適切に行われているかをチェック
+   - エラー発生時のレスポンス処理が適切かどうかを確認
+
+3. **プログレスバーとローカルストレージの実装**
+   - ユーザーの進捗が正しく保存・復元されるかを確認
+   - フォーム入力データがリロード時に保持されるかのテスト
+
+コード全体を解析し、統合性の問題がないかを確認した上で、適切な修正案を提案します。解析が完了次第、詳細な指示をお送りします。
+
+# SCAI Code Analysis and Integrity Review
+
+## 1. タレントプロフィールフォームのエラー (Talent Profile Form Errors)  
+In the `talent-form.tsx` component, check for **JSX structural inconsistencies**, such as unclosed or misnested tags. React **requires every opening tag to have a matching closing tag** (or be self-closing for empty elements) ([Writing Markup with JSX – React](https://react.dev/learn/writing-markup-with-jsx#:~:text=JSX%20requires%20tags%20to%20be,li)). Forgetting to close a `<form>` or `<div>` will break the JSX structure and lead to rendering errors. In fact, an unclosed tag (like a `<p>` in an example) can cause **unexpected behavior and rendering issues**, whereas properly closing it fixes the problem ([Common Mistakes: Not Closing JSX Tags Properly in React.js](https://codedamn.com/news/reactjs/not-closing-jsx-tags-properly#:~:text=Closing%20JSX%20tags%20properly%20ensures,find%20bugs%20in%20your%20application)). 
+
+**Proposed Fix:** Go through the JSX and ensure all tags are properly nested and closed in the correct order. For example, if a `<form>` tag was opened and not closed, add the corresponding `</form>` at the appropriate place. The same applies to any `<div>` or other container tags – close them in the reverse order they were opened. After these corrections, the JSX will be well-formed. Using a linter or JSX-aware editor can help catch these issues early (for instance, **ESLint** with the React plugin flags unclosed tags) ([Common Mistakes: Not Closing JSX Tags Properly in React.js](https://codedamn.com/news/reactjs/not-closing-jsx-tags-properly#:~:text=How%20can%20I%20ensure%20that,closing%20my%20JSX%20tags%20correctly)). Once the tags are properly closed, the talent profile form’s markup will be structurally sound and any related UI errors should be resolved.
+
+## 2. 認証機能のエラーハンドリング (Authentication Feature Error Handling)  
+Review the **JWT token issuance and verification** logic to ensure it’s implemented correctly. When the server generates a JWT (e.g. at login), it should use the correct secret/key and include necessary claims (like user ID, expiration time, etc.). On the verification side, use the same secret/key to validate the token and check that it hasn’t expired. If you’re using a library like `jsonwebtoken` in Node/Next.js, use `jwt.sign()` for creation and `jwt.verify()` for validation. Confirm that the token’s payload is decoded only after successful verification (to prevent accepting tampered tokens). In code, this often means wrapping the verify call in a try/catch or checking the error in a callback. For example, a Next.js API route might do: 
+
+```ts
+try {
+  const user = jwt.verify(token, SECRET_KEY);
+  // proceed with authenticated action
+} catch (err) {
+  // handle error
+}
+``` 
+
+Ensure the code follows this pattern so that an invalid or expired JWT doesn’t slip through. Proper verification will catch tokens that are tampered with or expired and throw an error, which we can then handle ([jsonwebtokenを使ってシンプルな認証機能を作成 #Node.js - Qiita](https://qiita.com/Hirohana/items/601712a9801237c1f44b#:~:text=,%E2%91%A3%E3%81%AFJWT%E3%83%88%E3%83%BC%E3%82%AF%E3%83%B3%E3%81%8C%E6%94%B9%E3%81%96%E3%82%93%E3%81%95%E3%82%8C%E3%81%A6%E3%81%84%E3%81%9F%E3%82%8A%E6%9C%89%E5%8A%B9%E6%9C%9F%E9%99%90%E3%81%8C%E5%88%87%E3%82%8C%E3%81%A6%E3%81%84%E3%81%9F%E5%A0%B4%E5%90%88%E3%81%AF%E3%82%A8%E3%83%A9%E3%83%BC%E3%83%8F%E3%83%B3%E3%83%89%E3%83%AA%E3%83%B3%E3%82%B0%E3%81%95%E3%82%8Ccatch%E5%8F%A5%E3%81%AB%E9%A3%9B%E3%81%B3%E3%80%81%60%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E6%83%85%E5%A0%B1%E3%81%8C%E5%8F%96%E5%BE%97%E3%81%A7%E3%81%8D%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F%20%60%E3%81%A8%E3%81%84%E3%81%86%E3%83%A1%E3%83%83%E3%82%BB%E3%83%BC%E3%82%B8%E3%82%92json%E3%81%A8%E3%81%97%E3%81%A6%E8%BF%94%E5%8D%B4%E3%81%97%E3%81%A6%E3%81%84%E3%81%BE%E3%81%99%E3%80%82)).
+
+Next, focus on **error handling for authentication failures**. The application should respond gracefully when authentication fails, rather than simply crashing or doing nothing. In the JWT verify `catch` block (or `err` callback), send an appropriate HTTP error code (401 Unauthorized) and an informative message. For example, if token verification fails, you might return a JSON response like `{ message: "Authentication failed. Invalid or expired token." }` with a 401 status ([jsonwebtokenを使ってシンプルな認証機能を作成 #Node.js - Qiita](https://qiita.com/Hirohana/items/601712a9801237c1f44b#:~:text=return%20NextResponse.json%28,)). On the frontend, ensure this message is displayed to the user (e.g. show a notification or redirect to login). Avoid exposing sensitive details of the error in the message — a generic message is sufficient, while the actual error (e.g. “TokenExpiredError” or other exception info) can be logged on the server for debugging. 
+
+It's also good to differentiate error causes for a better user experience. For instance, if the JWT is expired, you could detect that specific error type and show a message like “Session expired, please log in again.” ([javascript - How to gracefully catch jsonwebtoken errors in node & express? - Stack Overflow](https://stackoverflow.com/questions/35618298/how-to-gracefully-catch-jsonwebtoken-errors-in-node-express#:~:text=if%20%28err%29%20,console.log%28err%29%3B)). The code snippet below illustrates handling a token expiration error: 
+
+```js
+if (err.name === "TokenExpiredError") {
+    res.status(401).json({ message: "Session timeout – please log in again." });
+} else {
+    res.status(401).json({ message: "Invalid token." });
+}
+``` 
+
+This way, users get a clear indication of what went wrong. Additionally, **log the error details** (e.g. `console.error(err)` or use a logging service) on the backend. Logging ensures that developers can review authentication failures later – for example, to see if there are many “JWT expired” events which might indicate the need to extend token life or implement refresh logic. In summary, make sure JWT issuance/verification is robust and that any authentication failure triggers a user-facing error message and an internal log, rather than an unhandled exception.
+
+## 3. プログレスバーとローカルストレージの実装 (Progress Bar & Local Storage Implementation)  
+Verify that the **input progress is correctly reflected in the progress bar** and that it updates in real-time as the user fills out the form. A progress indicator is important to give users visual feedback on how far along they are ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=It%20is%20generally%20good%20practice,below%20%E2%80%94%20generated%20by%20v0)), so the logic driving it should accurately represent the form state. Ensure that as the user completes sections or fields of the talent profile, the progress bar’s state is updated. For example, if the form is multi-step, the code might calculate progress as `currentStepIndex / (totalSteps - 1)` (for a percentage) and adjust the bar’s width accordingly ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=className%3D%22h,div)) ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=The%20component%20uses%20,and%20highlight%20the%20current%20step)). If it’s a single-page form with many fields, the progress could be the percentage of required fields that are filled. Double-check that this calculation is triggered whenever the user makes progress (e.g., on each step navigation or field completion). If the bar isn’t moving when it should, tie its state to form updates (using React state or context that updates on each change). With correct implementation, the progress bar will increment as the user advances, preventing them from feeling lost or unsure how much is left.
+
+The **localStorage persistence** aspect should ensure that user data (and progress) remains intact even after a page reload or browser refresh. Losing form progress is frustrating and can lead users to abandon the process ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=One%20of%20the%20most%20frustrating,localStorage)), so it’s important that the app saves the data continuously. Check that whenever the user enters data into the profile form, the data is being saved to `localStorage`. A common pattern is to use React’s hooks to watch form state changes: for instance, using a `useEffect` that runs on every state update to call `localStorage.setItem`. For example: 
+
+```js
+// After state update (e.g. form values or step index changes)
+useEffect(() => {
+  localStorage.setItem('talentProfileData', JSON.stringify(formData));
+}, [formData]);
+``` 
+
+This snippet serializes the form data to a JSON string and stores it under a key (here `'talentProfileData'`) whenever `formData` changes ([How to Save State to LocalStorage & Persist on Refresh with React.js - Space Jelly](https://spacejelly.dev/posts/how-to-save-state-to-localstorage-persist-on-refresh-with-react-js#:~:text=Inside%20our%20useEffect%20hook%2C%20let%E2%80%99s,add%20our%20value%20to%20localStorage)). Make sure your code is doing something similar – it might be on each step completion or on each field blur event (either approach is fine ([Multistep Forms in React with Awesome UX – Persistent State - Andy Fry.co](https://andyfry.co/multi-step-form-persistent-state/#:~:text=I%20like%20the%20,function%20for%20doing%20just%20that)) ([Multistep Forms in React with Awesome UX – Persistent State - Andy Fry.co](https://andyfry.co/multi-step-form-persistent-state/#:~:text=const%20handleBlur%20%3D%20%28%29%20%3D,state%22%2C%20JSON.stringify%28state%29%29%3B))). 
+
+Likewise, on component load, the code should **retrieve any saved data from localStorage** to repopulate the form. This can be done with another effect (or during initialization) that runs once on mount, reads the stored item, and if present, parses it and restores it into the form state ([How to Save State to LocalStorage & Persist on Refresh with React.js - Space Jelly](https://spacejelly.dev/posts/how-to-save-state-to-localstorage-persist-on-refresh-with-react-js#:~:text=useEffect%28%28%29%20%3D,)). For example: 
+
+```js
+useEffect(() => {
+  const saved = localStorage.getItem('talentProfileData');
+  if (saved) {
+    setFormData(JSON.parse(saved));
+  }
+}, []);
+``` 
+
+By doing this, if the user refreshes the page, the form will load with whatever they had already input, and you can also **restore the progress bar** to the correct state. In fact, it’s a good practice to save not just the form fields but also the current step or progress value in storage, so that you know exactly where the user left off ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=type%20StoredFormState%20%3D%20,string%2C%20unknown%3E)). If your `formData` state includes everything (fields and maybe a step index), then storing that single object is enough. Otherwise, consider storing an object like `{ currentStep: X, fields: { ... } }` in localStorage. This way, after reload, you can set the form fields and also set the progress indicator (or step) to the saved `currentStep`. The LogRocket team, for example, suggests saving both the form values and the current step index to ensure users continue *exactly* where they left off ([Building a reusable multi-step form with React Hook Form and Zod - LogRocket Blog](https://blog.logrocket.com/building-reusable-multi-step-form-react-hook-form-zod/#:~:text=type%20StoredFormState%20%3D%20,string%2C%20unknown%3E)).
+
+**Proposed Fix/Verification:** Ensure the code implements both saving and loading from localStorage as described. If any part is missing, add the appropriate logic. Test the flow: fill out part of the form, refresh the page, and confirm that all entered data reappears and the progress bar still reflects the completed portion (not reset to 0). Also test that the progress bar updates as you continue filling out after a reload. With these measures, the input progress will correctly persist across sessions, providing a smooth user experience.
+
+## まとめと全体確認 (Overall Integrity Check)  
+By addressing the points above, the code’s structural and functional integrity will be maintained. Fixing the JSX markup in the talent profile form ensures the UI renders correctly and prevents runtime errors. Robust JWT issuance and verification with proper error handling will secure the authentication flow and improve reliability (no crashes on bad tokens, and users get clear feedback on auth issues). Implementing the progress bar updates and localStorage persistence will create a seamless form experience, where users can see their progress and won’t lose data on refresh. 
+
+Beyond these specific fixes, it’s wise to run the entire codebase through automated tests or linters to catch any other potential integration problems. Ensuring consistency in coding practices (for example, always closing tags, handling promises/errors, etc.) and testing each feature helps maintain overall integrity. After applying the fixes, monitor the application behavior: the form should submit without HTML structure errors, login/registration should handle wrong credentials or expired sessions gracefully, and users should be able to resume their talent profile input anytime without losing progress. These changes will uphold the integration integrity of SCAI’s codebase and provide a more robust user experience across the board. 
+
