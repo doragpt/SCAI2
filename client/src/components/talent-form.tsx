@@ -104,7 +104,6 @@ export const TalentForm: React.FC = () => {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
 
-  // フォームのデフォルト値部分を修正
   const defaultValues: TalentProfileData = {
     lastName: "",
     firstName: "",
@@ -155,11 +154,10 @@ export const TalentForm: React.FC = () => {
     estheExperiencePeriod: "",
   };
 
-  // フォームの設定を修正
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     defaultValues,
-    mode: "onChange", // バリデーションモードを変更
+    mode: "onChange",
   });
 
   const { mutate: createProfile, isPending } = useMutation({
@@ -168,9 +166,33 @@ export const TalentForm: React.FC = () => {
         // 数値フィールドの処理
         const processedData = {
           ...data,
+          // 数値フィールドの処理
           bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
           waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
           hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+          // 空配列の初期化
+          ngOptions: {
+            common: data.ngOptions?.common || [],
+            others: data.ngOptions?.others || [],
+          },
+          allergies: {
+            types: data.allergies?.types || [],
+            others: data.allergies?.others || [],
+            hasAllergy: data.allergies?.hasAllergy || false,
+          },
+          smoking: {
+            enabled: data.smoking?.enabled || false,
+            types: data.smoking?.types || [],
+            others: data.smoking?.others || [],
+          },
+          snsUrls: data.snsUrls || [],
+          currentStores: data.currentStores || [],
+          previousStores: data.previousStores || [],
+          photoDiaryUrls: data.photoDiaryUrls || [],
+          estheOptions: {
+            available: data.estheOptions?.available || [],
+            ngOptions: data.estheOptions?.ngOptions || [],
+          },
         };
 
         console.log('APIリクエスト送信データ:', processedData);
@@ -891,8 +913,7 @@ export const TalentForm: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                const current = form.watch("previousStores");
+              onClick={() => {                const current = form.watch("previousStores");
                 form.setValue(
                   "previousStores",
                   [...current, { storeName: '' }],

@@ -1,0 +1,90 @@
+原因の分析と問題箇所
+結論: フロントエンドでフォームデータをAPIリクエスト用に整形する際、空配列のまま送信しているフィールドが原因です。これによりバックエンドでPostgreSQLの配列型への挿入時に"[]"という文字列リテラルが解釈され、malformed array literalエラーが発生しています​
+PGANALYZE.COM
+​
+GITHUB.COM
+。主な該当箇所は以下のとおりです。
+client/src/components/talent-form.tsx – フォーム送信処理（mutationFn内）でデータを整形する部分。ここでavailableIds.othersやngOptions.othersなどをそのまま含めており、中身が空の配列 [] でも送信している。
+client/src/lib/queryClient.ts – apiRequest関数でリクエストボディをJSONシリアライズしています。ここでは特に問題ないものの、Content-Type ヘッダが適切に設定されているか確認が必要です。
+サーバー側 /api/talent/profile エンドポイント実装 – Express + Drizzle ORM による受け取り処理。リクエストボディ中の空配列がPostgreSQLのTEXT[]カラムにそのまま挿入され、"[]"という不正な配列リテラルとして扱われエラーになっています。サーバー側で空配列を適切な形式（空のリテラル {} か NULL）に変換していないことが問題です。
+修正方法の提案
+1. フロントエンド側で空配列を送信しない（推奨）
+フォームデータ送信前に、空の配列フィールドを除去またはnullに変換します。これによりバックエンドに"[]"が渡らなくなり、エラーを未然に防げます。
+修正ファイル: client/src/components/talent-form.tsx
+フォーム送信処理内（useMutationのmutationFn）でprocessedDataを組み立てている箇所を修正します。例えば以下のように、各others配列が空の場合は送信データから除外します。
+tsx
+コピーする
+// 修正前（空配列 [] も含めて送信している）
+const processedData = {
+    ...formValues,
+    availableIds: {
+        ...formValues.availableIds,
+        others: formValues.availableIds.others  // 中身が空でもそのまま
+    },
+    // ...（ngOptions、allergiesも同様）
+};
+
+// 修正後（空配列なら除去 or nullに変換）
+const { availableIds, ngOptions, allergies, ...otherFields } = formValues;
+const processedData = {
+    ...otherFields,
+    // othersが空ならフィールド除去（送信しない）
+    availableIds: {
+        ...availableIds,
+        ...(availableIds.others.length > 0 ? { others: availableIds.others } : {})
+    },
+    ngOptions: {
+        ...ngOptions,
+        ...(ngOptions.others.length > 0 ? { others: ngOptions.others } : {})
+    },
+    allergies: {
+        ...allergies,
+        ...(allergies.others.length > 0 ? { others: allergies.others } : {})
+    }
+};
+上記修正により、例えばavailableIds.othersが空配列[]の場合はprocessedDataからothersキーが削除されます（空配列を送らない）。必要に応じて、削除ではなくnullをセットすることも検討できます。※ポイント: others以外の選択肢リスト（チェックボックス等）の値と結合して一つの配列にする実装であれば、空配列時にnullをセットする処理でも同様の効果があります。要は最終的なAPIリクエストボディに"others": []が含まれないようにすることが重要です。
+修正ファイル: client/src/lib/queryClient.ts
+apiRequest関数でリクエストを送る際、headers: { 'Content-Type': 'application/json' }が設定されているか確認します。もし未設定であれば追加してください。例えば:
+tsx
+コピーする
+return fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+});
+これによりサーバーが正しくJSONとして配列を受け取れるようになります（通常fetchは自動でJSONと認識しますが、明示しておくと安心です）。
+2. バックエンド側で空配列を適切に扱う
+念のためサーバー側でも対策を行います。リクエストボディ中の該当フィールドが空配列の場合、データベース挿入前にnullまたはPostgreSQLの空配列リテラル{}に変換します。これにより、ドライバーが"[]"という文字列を扱うことを防ぎます。
+修正ファイル: サーバー側APIエンドポイント実装（例: server/index.ts または server/routes/talentProfile.ts）
+/api/talent/profile のリクエストハンドラ内で、データベースに渡す前に以下の処理を追加します。
+ts
+コピーする
+// Expressのハンドラ内 – リクエストボディ取得
+const { availableIds, ngOptions, allergies, ...otherData } = req.body;
+
+// 空配列をnullに置き換え
+const cleanedData = {
+    ...otherData,
+    available_ids: (Array.isArray(availableIds) && availableIds.length === 0)
+                   ? null : availableIds,
+    ng_options: (Array.isArray(ngOptions) && ngOptions.length === 0)
+                   ? null : ngOptions,
+    allergies: (Array.isArray(allergies) && allergies.length === 0)
+                   ? null : allergies,
+};
+
+// cleanedDataを使ってDB挿入（Drizzle ORM）
+await db.insert(talentProfileTable).values(cleanedData);
+ポイント: 上記では、該当フィールドが空配列ならnullをセットしています。PostgreSQLのTEXT[]カラムはNULLも格納可能（スキーマでNOT NULL指定がなければ）なので、これで「値なし（空）」を表現できます​
+PGANALYZE.COM
+。こうすることで、ドライバが誤って"[]"というリテラル文字列を解釈することはなくなります。もし空の配列自体を格納したい場合（NULLではなく空リストを明示的に保存したい）、Drizzle ORMで空配列を正しく扱う必要があります。現時点では空のJavaScript配列を直接挿入するとエラーになるため、一旦nullで代用するか、sql\ARRAY[]::TEXT[]`のように**空配列リテラル**を用いる実装に改める必要があります（複雑になるためnull`保存が簡易な解決策です）。
+変更箇所まとめ
+上記を踏まえ、確実にエラーを解消するための変更は以下のとおりです。
+client/src/components/talent-form.tsx – フォームデータ整形時に空配列を取り除く（約XX行目のprocessedData作成部分を修正）。
+client/src/lib/queryClient.ts – APIリクエスト時にJSONヘッダをセット（約YY行目にヘッダ設定を追加）。
+サーバー側 /api/talent/profile ハンドラ – リクエスト受信後、DB保存前に空配列をnullに変換する処理を追加（該当関数内のDB保存直前）。
+これらの修正により、空の配列フィールドが原因で発生していた"malformed array literal: \"[]\"エラーは確実に解消されます。また、データベースには「その他」が未入力の場合はNULL（または空リスト）として保存されるため、要件どおり正常に動作します。参考資料: PostgreSQLでのmalformed array literalエラーの説明​
+PGANALYZE.COM
+およびNode/Postgresでの同種問題の議論​
+GITHUB.COM
+（配列を文字列で渡すとエラーになるケース）。

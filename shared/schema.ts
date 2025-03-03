@@ -217,11 +217,14 @@ export const talentProfileSchema = z.object({
     required_error: "都道府県を選択してください",
   }),
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
+
+  // オブジェクトフィールド
   availableIds: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
-    others: z.array(z.string()),
+    others: z.array(z.string()).default([]),
   }),
-  canProvideResidenceRecord: z.boolean(),
+
+  // 数値フィールド
   height: z.number()
     .min(130, "身長は130cm以上で入力してください")
     .max(190, "身長は190cm以下で入力してください"),
@@ -232,7 +235,7 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // バスト・ウエスト・ヒップの型定義を修正
+  // 任意の数値フィールド
   bust: z.number().nullable().optional(),
   waist: z.number().nullable().optional(),
   hip: z.number().nullable().optional(),
@@ -242,42 +245,43 @@ export const talentProfileSchema = z.object({
     required_error: "パネルの顔出し設定を選択してください",
   }),
 
-  // Boolean フィールド
+  // Booleanフィールド
+  canProvideResidenceRecord: z.boolean(),
   canPhotoDiary: z.boolean(),
   canHomeDelivery: z.boolean(),
   hasSnsAccount: z.boolean(),
   hasEstheExperience: z.boolean(),
 
-  // オブジェクトフィールド
+  // 配列を含むオブジェクトフィールド
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
-  }),
+  }).default({ common: [], others: [] }),
 
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)),
     others: z.array(z.string()),
     hasAllergy: z.boolean(),
-  }),
+  }).default({ types: [], others: [], hasAllergy: false }),
 
   smoking: z.object({
     enabled: z.boolean(),
     types: z.array(z.enum(smokingTypes)),
     others: z.array(z.string()),
-  }),
+  }).default({ enabled: false, types: [], others: [] }),
 
   // 配列フィールド
-  snsUrls: z.array(z.string()),
+  snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
     stageName: z.string(),
-  })),
+  })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
-  })),
-  photoDiaryUrls: z.array(z.string()),
+  })).default([]),
+  photoDiaryUrls: z.array(z.string()).default([]),
 
-  // テキストフィールド
+  // オプショナルフィールド
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
   estheExperiencePeriod: z.string().optional(),
@@ -286,10 +290,10 @@ export const talentProfileSchema = z.object({
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)),
     ngOptions: z.array(z.string()),
-  }),
+  }).default({ available: [], ngOptions: [] }),
 });
 
-// Export types
+// Export types（変更なし）
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
