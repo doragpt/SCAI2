@@ -6,22 +6,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { TalentProfileData } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/lib/queryClient";
 import { Loader2, PenSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: profile, isLoading, error } = useQuery<TalentProfileData>({
-    queryKey: ["/api/talent/profile"],
-    enabled: !!user, // ユーザーが存在する場合のみクエリを実行
-    staleTime: 0, // 常に最新のデータを取得
-    refetchOnMount: true, // コンポーネントマウント時に再取得
-    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
-    retry: 2, // エラー時のリトライ回数を増やす
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    retry: 2,
     onError: (error) => {
       console.error("Profile fetch error:", error);
-    }
+      toast({
+        title: "エラーが発生しました",
+        description: "プロフィールの取得に失敗しました。",
+        variant: "destructive",
+      });
+    },
   });
 
   // ローディング状態の処理

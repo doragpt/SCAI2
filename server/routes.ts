@@ -216,12 +216,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUT /api/talent/profile のエンドポイントを修正
   app.put("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
       console.log('Profile update request received:', {
         userId,
-        data: req.body,
+        requestData: req.body,
         timestamp: new Date().toISOString()
       });
 
@@ -239,7 +240,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // リクエストデータをバリデーション
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
-        // JSONBフィールドの定義
+        // 数値フィールドの処理
+        const processedData = {
+          ...updateData,
+          userId,
+          updatedAt: new Date(),
+          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
+          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
+          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
+        };
+
+        // JSONBフィールドのリスト
         const jsonbFields = [
           'availableIds',
           'ngOptions',
@@ -252,21 +263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'estheOptions'
         ];
 
-        // 更新データの準備（数値フィールドの処理を含む）
-        const processedData = {
-          ...updateData,
-          userId,
-          updatedAt: new Date(),
-          // 数値フィールドの明示的な処理
-          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
-          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
-          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
-        };
-
-        // JSONBフィールドを適切に処理
+        // 更新データの準備
         const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
           if (value === undefined) return acc;
 
+          // JSONBフィールドの場合は型キャストを行う
           if (jsonbFields.includes(key)) {
             acc[key] = sql`${JSON.stringify(value)}::jsonb`;
           } else {
@@ -274,6 +275,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return acc;
         }, {} as Record<string, any>);
+
+        console.log('Prepared update values:', {
+          userId,
+          updateValues,
+          timestamp: new Date().toISOString()
+        });
 
         // プロフィールを更新
         const [updated] = await tx
@@ -286,19 +293,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        // 更新されたプロフィールを再取得して返す
+        // 更新されたプロフィールを再取得
         const [freshProfile] = await tx
           .select()
           .from(talentProfiles)
           .where(eq(talentProfiles.userId, userId));
 
-        return freshProfile;
-      });
+        console.log('Profile update successful:', {
+          userId,
+          profileId: freshProfile.id,
+          updatedData: freshProfile,
+          timestamp: new Date().toISOString()
+        });
 
-      console.log('Profile updated successfully:', {
-        userId,
-        profileId: updatedProfile.id,
-        timestamp: new Date().toISOString()
+        return freshProfile;
       });
 
       res.json(updatedProfile);
@@ -306,6 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Profile update error:', {
         error,
         userId: req.user.id,
+        requestBody: req.body,
         timestamp: new Date().toISOString()
       });
 
@@ -325,7 +334,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-
 
 
   app.post("/api/logout", (req: any, res, next) => {

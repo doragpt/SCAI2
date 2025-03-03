@@ -79,19 +79,29 @@ export async function apiRequest(
 // プロフィール更新用の関数
 export async function updateTalentProfile(data: any) {
   try {
+    console.log("Updating profile with data:", {
+      timestamp: new Date().toISOString(),
+      userId: data.userId
+    });
+
     // APIリクエストを実行
     const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
     const updatedProfile = await response.json();
 
+    console.log("Profile update successful:", {
+      timestamp: new Date().toISOString(),
+      userId: updatedProfile.userId
+    });
+
     // キャッシュの更新処理
     queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
 
-    // 強制的に再取得を実行
+    // キャッシュを無効化して再取得を強制
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE], exact: true });
 
     // ローカルストレージにも保存
-    localStorage.setItem('cachedProfile', JSON.stringify(updatedProfile));
+    localStorage.setItem('talentProfile', JSON.stringify(updatedProfile));
 
     return updatedProfile;
   } catch (error) {
@@ -120,10 +130,17 @@ export const getQueryFn: <T>({
       const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
       try {
-        // キャッシュされたデータを確認
-        const cachedData = localStorage.getItem('cachedProfile');
-        if (cachedData && url === QUERY_KEYS.TALENT_PROFILE) {
-          return JSON.parse(cachedData);
+        // プロフィールデータの場合、まずローカルストレージをチェック
+        if (url === QUERY_KEYS.TALENT_PROFILE) {
+          const cachedProfile = localStorage.getItem('talentProfile');
+          if (cachedProfile) {
+            const profileData = JSON.parse(cachedProfile);
+            console.log("Using cached profile data:", {
+              timestamp: new Date().toISOString(),
+              userId: profileData.userId
+            });
+            return profileData;
+          }
         }
 
         const res = await fetch(fullUrl, {
@@ -140,7 +157,11 @@ export const getQueryFn: <T>({
 
         // プロフィールデータの場合はローカルストレージに保存
         if (url === QUERY_KEYS.TALENT_PROFILE) {
-          localStorage.setItem('cachedProfile', JSON.stringify(data));
+          localStorage.setItem('talentProfile', JSON.stringify(data));
+          console.log("Updated cached profile data:", {
+            timestamp: new Date().toISOString(),
+            userId: data.userId
+          });
         }
 
         return data;
