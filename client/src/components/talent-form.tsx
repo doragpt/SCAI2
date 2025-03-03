@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -168,8 +168,18 @@ export const TalentForm: React.FC = () => {
   });
 
   const onSubmit = (data: TalentProfileData) => {
+    console.log('Form data:', data);
+    console.log('Form errors:', form.formState.errors);
     createProfile(data);
   };
+
+  useEffect(() => {
+    console.log('Form state:', {
+      errors: form.formState.errors,
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+    });
+  }, [form.formState]);
 
   return (
     <Form {...form}>
