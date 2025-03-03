@@ -9,7 +9,7 @@ const app = express();
 // CORSミドルウェアの設定を改善
 app.use(cors({
   origin: process.env.NODE_ENV === "development" 
-    ? ["http://localhost:3000", "http://localhost:5000", "https://*.replit.dev"]
+    ? ["http://localhost:5000", "https://*.replit.dev"]
     : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -96,7 +96,7 @@ app.use((req, res, next) => {
       log(`環境: ${app.get("env")}`);
       log(`CORS設定: ${JSON.stringify({
         origin: process.env.NODE_ENV === "development" 
-          ? ["http://localhost:3000", "http://localhost:5000", "https://*.replit.dev"]
+          ? ["http://localhost:5000", "https://*.replit.dev"]
           : true,
         credentials: true
       })}`);
