@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
+import { Progress } from "@/components/ui/progress";
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,7 +44,7 @@ import { X } from "lucide-react";
 import { cleanEmptyArrays } from "@/utils/cleanData";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import { useState as useState2 } from "react";
-import { useLocation } from "wouter"; // Added import
+import { useLocation } from "wouter";
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -113,7 +114,8 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState2(false);
   const [formDataToConfirm, setFormDataToConfirm] = useState2<TalentProfileData | null>(null);
-  const [, setLocation] = useLocation(); // Initialize setLocation
+  const [, setLocation] = useLocation();
+  const [formProgress, setFormProgress] = useState(0);
 
   const defaultValues: TalentProfileData = {
     lastName: "",
@@ -249,7 +251,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
     });
   }, [form.formState]);
 
-  // フォームの進捗を計算する関数
+
   const calculateProgress = (formData: TalentProfileData) => {
     const requiredFields = [
       'lastName',
@@ -277,14 +279,40 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
     return Math.round((completedFields.length / requiredFields.length) * 100);
   };
 
-  // フォームの状態が変更されたときに進捗を更新
+  const saveFormToLocalStorage = (data: TalentProfileData) => {
+    try {
+      localStorage.setItem('talentFormData', JSON.stringify(data));
+      console.log('フォームデータを保存しました');
+    } catch (error) {
+      console.error('フォームデータの保存に失敗:', error);
+    }
+  };
+
   useEffect(() => {
+    const progress = calculateProgress(form.getValues());
+    setFormProgress(progress);
     if (onProgressChange) {
-      const progress = calculateProgress(form.getValues());
       onProgressChange(progress);
     }
   }, [form.watch(), onProgressChange]);
 
+  useEffect(() => {
+    const savedData = localStorage.getItem('talentFormData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        form.reset(parsedData);
+        console.log('保存されたフォームデータを復元しました');
+      } catch (error) {
+        console.error('フォームデータの復元に失敗:', error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const formData = form.getValues();
+    saveFormToLocalStorage(formData);
+  }, [form.watch()]);
 
   const onSubmit = async (data: TalentProfileData) => {
     try {
@@ -311,14 +339,6 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
     localStorage.setItem('talentFormData', JSON.stringify(formDataToConfirm));
   };
 
-  useEffect(() => {
-    const savedData = localStorage.getItem('talentFormData');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      form.reset(parsedData);
-    }
-  }, []);
-
   const handleConfirm = async () => {
     if (!formDataToConfirm) return;
 
@@ -334,7 +354,14 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* 1. 名前（必須） */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <Label>入力進捗</Label>
+            <span className="text-sm text-muted-foreground">{formProgress}%</span>
+          </div>
+          <Progress value={formProgress} className="h-2" />
+        </div>
+
         <div className="space-y-6">
           <h3 className="text-lg font-semibold">基本情報</h3>
           <div className="grid md:grid-cols-2 gap-4">
