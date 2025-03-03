@@ -91,6 +91,11 @@ const SwitchField: React.FC<{
   </div>
 );
 
+// FormErrorMessage component
+const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
+  <p className="text-sm text-destructive mt-1">{message}</p>
+);
+
 export const TalentForm: React.FC = () => {
   const { toast } = useToast();
   const [otherIds, setOtherIds] = useState<string[]>([]);
@@ -148,7 +153,7 @@ export const TalentForm: React.FC = () => {
         ngOptions: []
       },
       hasEstheExperience: false,
-      estheExperiencePeriod: undefined
+      estheExperiencePeriod: undefined,
     },
   });
 
@@ -157,12 +162,14 @@ export const TalentForm: React.FC = () => {
       // フォームデータの整形
       const sanitizedData = { ...data };
 
-      // バスト・ウエスト・ヒップの処理
+      // バスト・ウエスト・ヒップが空の場合は削除
       ['bust', 'waist', 'hip'].forEach(field => {
         if (!sanitizedData[field] || sanitizedData[field] === "") {
-          delete sanitizedData[field];  // 空の場合はフィールドを削除
+          delete sanitizedData[field];
         }
       });
+
+      console.log('送信データ:', sanitizedData);
 
       const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
       if (!response.ok) {
@@ -180,27 +187,32 @@ export const TalentForm: React.FC = () => {
         description: error.message,
         variant: 'destructive',
       });
+      console.error('エラー詳細:', error);
     },
   });
 
-  const onSubmit = (data: TalentProfileData) => {
-    console.log('Form data:', data);
-    console.log('Form errors:', form.formState.errors);
-    if (!form.formState.isValid) {
-      console.log('Form is invalid:', form.formState);
-      return;
-    }
-    createProfile(data);
-  };
-
+  // フォームの状態をログ出力
   useEffect(() => {
-    console.log('Form state:', {
+    console.log('フォームの状態:', {
       values: form.getValues(),
       errors: form.formState.errors,
       isValid: form.formState.isValid,
       isDirty: form.formState.isDirty,
     });
   }, [form.formState]);
+
+  const onSubmit = (data: TalentProfileData) => {
+    try {
+      console.log('送信前データ:', data);
+      if (!form.formState.isValid) {
+        console.log('バリデーションエラー:', form.formState.errors);
+        return;
+      }
+      createProfile(data);
+    } catch (error) {
+      console.error('送信エラー:', error);
+    }
+  };
 
   return (
     <Form {...form}>
@@ -212,24 +224,28 @@ export const TalentForm: React.FC = () => {
               {...form.register("lastName")}
               placeholder="姓を入力してください"
             />
+            {form.formState.errors.lastName && <FormErrorMessage message={form.formState.errors.lastName.message as string} />}
           </FormField>
           <FormField label="名" required>
             <Input
               {...form.register("firstName")}
               placeholder="名を入力してください"
             />
+            {form.formState.errors.firstName && <FormErrorMessage message={form.formState.errors.firstName.message as string} />}
           </FormField>
           <FormField label="姓（カナ）" required>
             <Input
               {...form.register("lastNameKana")}
               placeholder="セイを入力してください"
             />
+            {form.formState.errors.lastNameKana && <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />}
           </FormField>
           <FormField label="名（カナ）" required>
             <Input
               {...form.register("firstNameKana")}
               placeholder="メイを入力してください"
             />
+            {form.formState.errors.firstNameKana && <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />}
           </FormField>
         </div>
 
@@ -251,12 +267,14 @@ export const TalentForm: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            {form.formState.errors.location && <FormErrorMessage message={form.formState.errors.location.message as string} />}
           </FormField>
           <FormField label="最寄り駅" required>
             <Input
               {...form.register("nearestStation")}
               placeholder="最寄り駅を入力してください"
             />
+            {form.formState.errors.nearestStation && <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />}
           </FormField>
         </div>
 
@@ -336,6 +354,7 @@ export const TalentForm: React.FC = () => {
               min={130}
               max={190}
             />
+            {form.formState.errors.height && <FormErrorMessage message={form.formState.errors.height.message as string} />}
           </FormField>
           <FormField label="体重 (kg)" required>
             <Input
@@ -344,6 +363,7 @@ export const TalentForm: React.FC = () => {
               min={30}
               max={150}
             />
+            {form.formState.errors.weight && <FormErrorMessage message={form.formState.errors.weight.message as string} />}
           </FormField>
           <FormField label="カップサイズ" required>
             <Select
@@ -361,6 +381,7 @@ export const TalentForm: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            {form.formState.errors.cupSize && <FormErrorMessage message={form.formState.errors.cupSize.message as string} />}
           </FormField>
           <FormField label="バスト (cm) (任意)">
             <Input
@@ -368,6 +389,7 @@ export const TalentForm: React.FC = () => {
               {...form.register("bust")}
               placeholder="未入力可"
             />
+            {form.formState.errors.bust && <FormErrorMessage message={form.formState.errors.bust.message as string} />}
           </FormField>
           <FormField label="ウエスト (cm) (任意)">
             <Input
@@ -375,6 +397,7 @@ export const TalentForm: React.FC = () => {
               {...form.register("waist")}
               placeholder="未入力可"
             />
+            {form.formState.errors.waist && <FormErrorMessage message={form.formState.errors.waist.message as string} />}
           </FormField>
           <FormField label="ヒップ (cm) (任意)">
             <Input
@@ -382,6 +405,7 @@ export const TalentForm: React.FC = () => {
               {...form.register("hip")}
               placeholder="未入力可"
             />
+            {form.formState.errors.hip && <FormErrorMessage message={form.formState.errors.hip.message as string} />}
           </FormField>
         </div>
 
@@ -402,6 +426,7 @@ export const TalentForm: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
+          {form.formState.errors.faceVisibility && <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />}
         </FormField>
 
         {/* 10-11. 写メ日記と自宅への派遣 */}
@@ -543,6 +568,7 @@ export const TalentForm: React.FC = () => {
                     placeholder="経験期間を入力（例：2年）"
                     {...form.register("estheExperiencePeriod")}
                   />
+                  {form.formState.errors.estheExperiencePeriod && <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />}
                 </div>
               )}
             </div>
@@ -892,6 +918,7 @@ export const TalentForm: React.FC = () => {
 体型維持のために週3回のジムトレーニングを欠かさず、清潔感も大切にしています。"
             {...form.register("selfIntroduction")}
           />
+          {form.formState.errors.selfIntroduction && <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />}
         </FormField>
 
         <FormField label="その他備考(任意)">
@@ -900,17 +927,18 @@ export const TalentForm: React.FC = () => {
             placeholder="その他の要望がありましたらご記入ください"
             {...form.register("notes")}
           />
+          {form.formState.errors.notes && <FormErrorMessage message={form.formState.errors.notes.message as string} />}
         </FormField>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isPending}
-        >
-          {isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <Button type="submit" disabled={isPending || !form.formState.isValid}>
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              送信中...
+            </>
+          ) : (
+            'プロフィールを作成'
           )}
-          プロフィールを作成
         </Button>
       </form>
     </Form>
