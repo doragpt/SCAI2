@@ -51,6 +51,7 @@ export const commonNgOptions = [
   "撮影顔無し"
 ] as const;
 
+// エステオプションの配列定義を修正
 export const estheOptions = [
   "ホイップ",
   "マッサージジェル",
@@ -62,10 +63,10 @@ export const estheOptions = [
   "フルヌード",
   "ノンショーツ",
   "deepリンパ",
-  "ハンドでの抜き",
+  "ハンド抜き",
   "キス",
   "フェラ",
-  "スキン着用フェラ"
+  "スキンフェラ"
 ] as const;
 
 export const serviceTypes = [
@@ -87,6 +88,7 @@ export type IdType = typeof idTypes[number];
 export type AllergyType = typeof allergyTypes[number];
 export type SmokingType = typeof smokingTypes[number];
 export type CommonNgOption = typeof commonNgOptions[number];
+// 型定義を更新
 export type EstheOption = typeof estheOptions[number];
 export type ServiceType = typeof serviceTypes[number];
 
@@ -201,6 +203,7 @@ export const talentRegisterFormSchema = z.object({
 });
 
 // Talent profile schema
+// スキーマの更新
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
@@ -236,6 +239,7 @@ export const talentProfileSchema = z.object({
   }),
   canPhotoDiary: z.boolean(),
   canHomeDelivery: z.boolean(),
+  // NGオプションを任意に変更
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
@@ -262,11 +266,12 @@ export const talentProfileSchema = z.object({
   photoDiaryUrls: z.array(z.string()),
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
+  // エステオプションのスキーマを修正
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)),
     ngOptions: z.array(z.string()),
-  }),
-  hasEstheExperience: z.boolean(),
+  }).optional(),
+  hasEstheExperience: z.boolean().optional(),
   estheExperiencePeriod: z.string().optional(),
 });
 
