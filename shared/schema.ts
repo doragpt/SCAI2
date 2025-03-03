@@ -233,9 +233,30 @@ export const talentProfileSchema = z.object({
   }),
 
   // 任意フィールド（バスト・ウエスト・ヒップ）
-  bust: z.number().nullable().optional(),
-  waist: z.number().nullable().optional(),
-  hip: z.number().nullable().optional(),
+  bust: z.preprocess(
+    (val) => {
+      if (val === "" || val === undefined || val === null) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    },
+    z.number().nullable().optional()
+  ),
+  waist: z.preprocess(
+    (val) => {
+      if (val === "" || val === undefined || val === null) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    },
+    z.number().nullable().optional()
+  ),
+  hip: z.preprocess(
+    (val) => {
+      if (val === "" || val === undefined || val === null) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    },
+    z.number().nullable().optional()
+  ),
 
   // その他の必須フィールド
   faceVisibility: z.enum(faceVisibilityTypes, {

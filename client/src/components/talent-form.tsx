@@ -393,26 +393,38 @@ export const TalentForm: React.FC = () => {
           <FormField label="バスト (cm) (任意)">
             <Input
               type="text"
-              {...form.register("bust")}
+              {...form.register("bust", {
+                setValueAs: (value) => (value === "" ? null : Number(value))
+              })}
               placeholder="未入力可"
             />
-            {form.formState.errors.bust && <FormErrorMessage message={form.formState.errors.bust.message as string} />}
+            {form.formState.errors.bust && (
+              <FormErrorMessage message={form.formState.errors.bust.message as string} />
+            )}
           </FormField>
           <FormField label="ウエスト (cm) (任意)">
             <Input
               type="text"
-              {...form.register("waist")}
+              {...form.register("waist", {
+                setValueAs: (value) => (value === "" ? null : Number(value))
+              })}
               placeholder="未入力可"
             />
-            {form.formState.errors.waist && <FormErrorMessage message={form.formState.errors.waist.message as string} />}
+            {form.formState.errors.waist && (
+              <FormErrorMessage message={form.formState.errors.waist.message as string} />
+            )}
           </FormField>
           <FormField label="ヒップ (cm) (任意)">
             <Input
               type="text"
-              {...form.register("hip")}
+              {...form.register("hip", {
+                setValueAs: (value) => (value === "" ? null : Number(value))
+              })}
               placeholder="未入力可"
             />
-            {form.formState.errors.hip && <FormErrorMessage message={form.formState.errors.hip.message as string} />}
+            {form.formState.errors.hip && (
+              <FormErrorMessage message={form.formState.errors.hip.message as string} />
+            )}
           </FormField>
         </div>
 
