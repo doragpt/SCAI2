@@ -1,9 +1,19 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveVite, log } from "./vite";
 import { db, sql } from "./db";
+import cors from "cors";
 
 const app = express();
+
+// CORSミドルウェアを追加
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -99,7 +109,7 @@ async function testDatabaseConnection() {
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {
-      serveStatic(app);
+      serveVite(app);
     }
 
     // サーバー起動

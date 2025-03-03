@@ -25,13 +25,24 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  console.log(`Sending ${method} request to ${url} with headers:`, headers);
+  console.log(`API Request: ${method} ${url}`, {
+    headers: { ...headers, Authorization: token ? "Bearer [HIDDEN]" : undefined },
+    data: data ? JSON.stringify(data) : undefined
+  });
 
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
   });
+
+  if (!res.ok) {
+    console.error(`API Error: ${method} ${url}`, {
+      status: res.status,
+      statusText: res.statusText,
+      data: await res.json().catch(() => null)
+    });
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -51,11 +62,21 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    console.log(`Sending GET request to ${queryKey[0]} with headers:`, headers);
+    console.log(`Query Request: GET ${queryKey[0]}`, {
+      headers: { ...headers, Authorization: token ? "Bearer [HIDDEN]" : undefined }
+    });
 
     const res = await fetch(queryKey[0] as string, {
       headers,
     });
+
+    if (!res.ok) {
+      console.error(`Query Error: GET ${queryKey[0]}`, {
+        status: res.status,
+        statusText: res.statusText,
+        data: await res.json().catch(() => null)
+      });
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
