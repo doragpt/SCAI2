@@ -1,0 +1,87 @@
+現状のコードを見る限り、Drizzle ORM が JSONB 型のカラムに空の配列（"[]"）を渡す際、PostgreSQL の配列リテラルとして解釈されエラーになっていると考えられます。つまり、空の配列が文字列 "[]" として送信され、PostgreSQL のネイティブ配列入力関数がそれを解釈できずに「malformed array literal」となる状態です。
+
+この問題を解決するために、以下の２点の対策を検討してください。
+
+① Insert 時に JSONB 型へ明示的なキャストを行う
+Drizzle ORM の insert クエリで、JSONB カラムへ渡す各フィールドについて、値を JSON.stringify で文字列化し、SQL 内で明示的に ::jsonb とキャストする方法です。これにより、たとえ空の配列でも PostgreSQL は正しい JSONB 値として解釈します。
+
+たとえば、routes.ts のプロフィール作成エンドポイント内の insert 部分を以下のように修正します。
+
+まず、ファイル上部にヘルパー関数を追加します。
+※この関数は、渡された値を JSON.stringify して、SQL のパラメータとして ::jsonb とキャストするものです。
+
+ts
+コピーする
+import { sql } from 'drizzle-orm';
+
+// JSONB 用のヘルパー関数
+const toJsonb = (value: any) => {
+  return sql`${JSON.stringify(value)}::jsonb`;
+};
+次に、insert クエリの箇所で、JSONB カラムに渡す値をすべて toJsonb(...) でラップします。
+例：
+
+ts
+コピーする
+const [newProfile] = await tx
+  .insert(talentProfiles)
+  .values({
+    userId: req.user.id,
+    lastName: profileData.lastName,
+    firstName: profileData.firstName,
+    lastNameKana: profileData.lastNameKana,
+    firstNameKana: profileData.firstNameKana,
+    location: profileData.location,
+    nearestStation: profileData.nearestStation,
+    availableIds: toJsonb(profileData.availableIds),
+    canProvideResidenceRecord: profileData.canProvideResidenceRecord,
+    height: profileData.height,
+    weight: profileData.weight,
+    cupSize: profileData.cupSize,
+    bust: profileData.bust,
+    waist: profileData.waist,
+    hip: profileData.hip,
+    faceVisibility: profileData.faceVisibility,
+    canPhotoDiary: profileData.canPhotoDiary,
+    canHomeDelivery: profileData.canHomeDelivery,
+    ngOptions: toJsonb(profileData.ngOptions),
+    allergies: toJsonb(profileData.allergies),
+    smoking: toJsonb(profileData.smoking),
+    hasSnsAccount: profileData.hasSnsAccount,
+    snsUrls: toJsonb(profileData.snsUrls),
+    currentStores: toJsonb(profileData.currentStores),
+    previousStores: toJsonb(profileData.previousStores),
+    photoDiaryUrls: toJsonb(profileData.photoDiaryUrls),
+    selfIntroduction: profileData.selfIntroduction,
+    notes: profileData.notes,
+    estheExperiencePeriod: profileData.estheExperiencePeriod,
+    estheOptions: toJsonb(profileData.estheOptions),
+    hasEstheExperience: profileData.hasEstheExperience,
+    updatedAt: new Date(),
+  })
+  .returning();
+この方法により、たとえ各 JSONB フィールドが空の配列の場合でも、PostgreSQL 側では例えば "[]"::jsonb として正しく受け取られ、エラーが回避されるはずです。
+
+② もしキャストを行わずに対処する場合
+もう一つの方法は、フロントエンド／バックエンドどちらかで「空の配列」を渡さず、空の場合はオブジェクトごと挿入しない、または null を渡すようにする方法です。ただし、Zod スキーマでは必須の配列となっているため、スキーマ自体の修正（.nullable() や .optional() の導入）も必要になります。
+
+この方法は既存のスキーマやフロントエンドの実装を大幅に変更する可能性があるため、まずは【①】の明示的なキャストを試すのをおすすめします。
+
+必要なファイル情報
+1. routes.ts
+すでに提供いただいたコードの中で、プロフィール作成のエンドポイント内の insert クエリ部分（app.post("/api/talent/profile", …) 内）を上記のように修正してください。
+具体的には、...profileData を展開する代わりに、各 JSONB フィールド（availableIds, ngOptions, allergies, smoking, snsUrls, currentStores, previousStores, photoDiaryUrls, estheOptions）を toJsonb(...) でラップするようにします。
+
+2. schema.ts
+こちらは既に jsonb 型を使用しており、基本的な部分は問題なさそうです。
+※ただし、Drizzle ORM の場合、default([]) などの指定がそのまま SQL の DEFAULT 句に反映されるので、必要であればデフォルト値も確認してください。
+
+3. queryClient.ts, talent-form.tsx, db.ts
+これらは現状のコードで大きな問題はないように見受けられます。特に、talent-form.tsx では送信前に整形しており、値自体は正しい JSON オブジェクトになっているようです。
+
+まとめ
+現状のエラーは、JSONB カラムに対して空の配列が「[]」という文字列リテラルとして渡され、PostgreSQL の配列パーサーがそれを解釈できないために発生しています。
+【推奨】アプローチ①：
+
+routes.ts 内で、insert クエリ実行時に各 JSONB フィールドの値を JSON.stringify し、明示的に ::jsonb でキャストするように変更してください。
+これにより、空の配列も正しく JSONB として渡され、エラーが解消されるはずです。

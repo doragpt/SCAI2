@@ -7,7 +7,7 @@ import {
   type TalentProfileData,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -15,18 +15,10 @@ import passport from "passport";
 
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
+// JSONB用のヘルパー関数
+const toJsonb = (value: any) => {
+  return sql`${JSON.stringify(value)}::jsonb`;
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -186,33 +178,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hip: req.body.hip === "" || req.body.hip === undefined ? null : Number(req.body.hip),
       };
 
-      // デフォルト値を持つオブジェクトをマージ
-      const mergedData = {
-        ...requestData,
-        ngOptions: {
-          ...{ common: [], others: [] },
-          ...(requestData.ngOptions || {}),
-        },
-        allergies: {
-          ...{ types: [], others: [], hasAllergy: false },
-          ...(requestData.allergies || {}),
-        },
-        smoking: {
-          ...{ enabled: false, types: [], others: [] },
-          ...(requestData.smoking || {}),
-        },
-        estheOptions: {
-          ...{ available: [], ngOptions: [] },
-          ...(requestData.estheOptions || {}),
-        },
-        snsUrls: requestData.snsUrls || [],
-        currentStores: requestData.currentStores || [],
-        previousStores: requestData.previousStores || [],
-        photoDiaryUrls: requestData.photoDiaryUrls || [],
-      };
-
       // バリデーション
-      const profileData = talentProfileSchema.parse(mergedData);
+      const profileData = talentProfileSchema.parse(requestData);
 
       const profile = await db.transaction(async (tx) => {
         // 既存のプロフィールチェック
@@ -225,12 +192,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールは既に作成されています");
         }
 
-        // 新しいプロフィールの作成
+        // プロフィールの作成（JSONB型のカラムを明示的にキャスト）
         const [newProfile] = await tx
           .insert(talentProfiles)
           .values({
             userId: req.user.id,
-            ...profileData,
+            lastName: profileData.lastName,
+            firstName: profileData.firstName,
+            lastNameKana: profileData.lastNameKana,
+            firstNameKana: profileData.firstNameKana,
+            location: profileData.location,
+            nearestStation: profileData.nearestStation,
+            availableIds: toJsonb(profileData.availableIds),
+            canProvideResidenceRecord: profileData.canProvideResidenceRecord,
+            height: profileData.height,
+            weight: profileData.weight,
+            cupSize: profileData.cupSize,
+            bust: profileData.bust,
+            waist: profileData.waist,
+            hip: profileData.hip,
+            faceVisibility: profileData.faceVisibility,
+            canPhotoDiary: profileData.canPhotoDiary,
+            canHomeDelivery: profileData.canHomeDelivery,
+            ngOptions: toJsonb(profileData.ngOptions),
+            allergies: toJsonb(profileData.allergies),
+            smoking: toJsonb(profileData.smoking),
+            hasSnsAccount: profileData.hasSnsAccount,
+            snsUrls: toJsonb(profileData.snsUrls),
+            currentStores: toJsonb(profileData.currentStores),
+            previousStores: toJsonb(profileData.previousStores),
+            photoDiaryUrls: toJsonb(profileData.photoDiaryUrls),
+            selfIntroduction: profileData.selfIntroduction,
+            notes: profileData.notes,
+            estheOptions: toJsonb(profileData.estheOptions),
+            hasEstheExperience: profileData.hasEstheExperience,
+            estheExperiencePeriod: profileData.estheExperiencePeriod,
             updatedAt: new Date(),
           })
           .returning();
