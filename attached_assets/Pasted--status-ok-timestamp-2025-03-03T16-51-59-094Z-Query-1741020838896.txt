@@ -1,0 +1,43 @@
+{"status":"ok","timestamp":"2025-03-03T16:51:59.094Z"}
+と表示されています。
+
+が、トップのページコンソールではこのように出てます。
+
+Query Request: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/health 
+Object {headers: {…}, timestamp: "2025-03-03T16:52:04.005Z"}
+Query Request: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/jobs/public 
+Object {headers: {…}, timestamp: "2025-03-03T16:52:04.008Z"}
+Query Request: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/user 
+Object {headers: {…}, timestamp: "2025-03-03T16:52:04.010Z"}
+Query Request Failed: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/health 
+Object {error: TypeError, timestamp: "2025-03-03T16:52:04.116Z"}
+
+Failed to fetch
+Query Request Failed: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/user 
+Object {error: TypeError, timestamp: "2025-03-03T16:52:04.118Z"}
+
+Query Request Failed: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/jobs/public 
+Object {error: TypeError, timestamp: "2025-03-03T16:52:04.119Z"}
+
+Failed to fetch
+Failed to fetch
+Query Request: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/health 
+Object {headers: {…}, timestamp: "2025-03-03T16:52:05.117Z"}
+Query Request Failed: GET https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev:5000/api/health 
+Object {error: TypeError, timestamp: "2025-03-03T16:52:05.235Z"}
+
+Failed to fetch
+
+[plugin:runtime-error-plugin] Failed to fetch
+/home/runner/workspace/client/src/lib/queryClient.ts:91:25
+89 |  
+90 |      try {
+91 |        const res = await fetch(fullUrl, {
+   |                          ^
+92 |          headers,
+93 |          credentials: "include",
+
+    at /home/runner/workspace/client/src/lib/queryClient.ts:91:25
+    at Object.fetchFn [as fn] (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=928f53c5:840:14
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.

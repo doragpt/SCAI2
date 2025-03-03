@@ -8,13 +8,10 @@ const app = express();
 
 // CORSミドルウェアの設定を改善
 app.use(cors({
-  origin: process.env.NODE_ENV === "development" 
-    ? ["http://localhost:5000", "https://*.replit.dev"]
-    : true,
+  origin: true, // すべてのオリジンを許可（開発環境用）
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Content-Type-Options'],
 }));
 
 app.use(express.json());
@@ -23,37 +20,23 @@ app.use(express.urlencoded({ extended: false }));
 // リクエストロギングの改善
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  // ヘッダー情報のログ出力を追加
-  console.log('Request Headers:', {
+  console.log('Request received:', {
+    method: req.method,
+    path: req.path,
     origin: req.headers.origin,
     host: req.headers.host,
-    authorization: req.headers.authorization ? 'Present' : 'Not Present',
     timestamp: new Date().toISOString()
   });
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
+    console.log('Response sent:', {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
   });
 
   next();
@@ -61,14 +44,13 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // 必須環境変数のチェック
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URLが設定されていません");
     }
 
     const server = await registerRoutes(app);
 
-    // エラーハンドリングミドルウェアの改善
+    // エラーハンドリングミドルウェア
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error("Server error:", {
         error: err,
@@ -77,36 +59,23 @@ app.use((req, res, next) => {
         timestamp: new Date().toISOString()
       });
 
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      const details = process.env.NODE_ENV === "development" ? err.stack : undefined;
-
-      res.status(status).json({ 
-        message,
-        details,
+      res.status(err.status || 500).json({
+        message: err.message || "Internal Server Error",
         timestamp: new Date().toISOString()
       });
     });
 
-    // 開発環境の場合はViteをセットアップ
     if (app.get("env") === "development") {
       await setupVite(app, server);
     }
 
-    // サーバー起動設定の改善
     server.listen({
       port: 5000,
       host: "0.0.0.0",
-      reusePort: true,
     }, () => {
-      log(`サーバーを起動しました: http://0.0.0.0:5000`);
-      log(`環境: ${app.get("env")}`);
-      log(`CORS設定: ${JSON.stringify({
-        origin: process.env.NODE_ENV === "development" 
-          ? ["http://localhost:5000", "https://*.replit.dev"]
-          : true,
-        credentials: true
-      })}`);
+      log(`Server started: http://0.0.0.0:5000`);
+      log(`Environment: ${app.get("env")}`);
+      log(`CORS: enabled for all origins`);
     });
   } catch (error) {
     console.error("Server startup error:", error);
