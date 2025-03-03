@@ -164,22 +164,40 @@ export const TalentForm: React.FC = () => {
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
+        console.log('送信前データ:', data);
+
         // フォームデータの整形
-        const sanitizedData = { ...data };
-
-        // バスト・ウエスト・ヒップの処理
-        ['bust', 'waist', 'hip'].forEach(field => {
-          const value = sanitizedData[field];
-          if (value === "" || value === undefined) {
-            sanitizedData[field] = null;
-          } else {
-            const numValue = Number(value);
-            sanitizedData[field] = isNaN(numValue) ? null : numValue;
-          }
-        });
-
-        // 空配列を削除
-        const processedData = cleanEmptyArrays(sanitizedData);
+        const processedData = {
+          ...data,
+          // 数値フィールドの処理
+          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+          // オブジェクトフィールドのデフォルト値設定
+          ngOptions: {
+            common: data.ngOptions?.common ?? [],
+            others: data.ngOptions?.others ?? [],
+          },
+          allergies: {
+            types: data.allergies?.types ?? [],
+            others: data.allergies?.others ?? [],
+            hasAllergy: data.allergies?.hasAllergy ?? false,
+          },
+          smoking: {
+            enabled: data.smoking?.enabled ?? false,
+            types: data.smoking?.types ?? [],
+            others: data.smoking?.others ?? [],
+          },
+          // 配列フィールドのデフォルト値設定
+          snsUrls: data.snsUrls ?? [],
+          currentStores: data.currentStores ?? [],
+          previousStores: data.previousStores ?? [],
+          photoDiaryUrls: data.photoDiaryUrls ?? [],
+          estheOptions: {
+            available: data.estheOptions?.available ?? [],
+            ngOptions: data.estheOptions?.ngOptions ?? [],
+          },
+        };
 
         console.log('APIリクエスト送信データ:', processedData);
 

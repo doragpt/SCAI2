@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Profile creation request received:', req.body);
 
-      // リクエストデータの整形
+      // リクエストデータを整形
       const requestData = {
         ...req.body,
         // 数値フィールドの処理
@@ -186,23 +186,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hip: req.body.hip === "" || req.body.hip === undefined ? null : Number(req.body.hip),
       };
 
-      // 空のフィールドにデフォルト値を設定
-      const defaultFields = {
-        ngOptions: { common: [], others: [] },
-        allergies: { types: [], others: [], hasAllergy: false },
-        smoking: { enabled: false, types: [], others: [] },
-        snsUrls: [],
-        currentStores: [],
-        previousStores: [],
-        photoDiaryUrls: [],
-        estheOptions: { available: [], ngOptions: [] },
+      // デフォルト値を持つオブジェクトをマージ
+      const mergedData = {
+        ...requestData,
+        ngOptions: {
+          ...{ common: [], others: [] },
+          ...(requestData.ngOptions || {}),
+        },
+        allergies: {
+          ...{ types: [], others: [], hasAllergy: false },
+          ...(requestData.allergies || {}),
+        },
+        smoking: {
+          ...{ enabled: false, types: [], others: [] },
+          ...(requestData.smoking || {}),
+        },
+        estheOptions: {
+          ...{ available: [], ngOptions: [] },
+          ...(requestData.estheOptions || {}),
+        },
+        snsUrls: requestData.snsUrls || [],
+        currentStores: requestData.currentStores || [],
+        previousStores: requestData.previousStores || [],
+        photoDiaryUrls: requestData.photoDiaryUrls || [],
       };
 
-      // データを結合
-      const profileData = talentProfileSchema.parse({
-        ...defaultFields,
-        ...requestData,
-      });
+      // バリデーション
+      const profileData = talentProfileSchema.parse(mergedData);
 
       const profile = await db.transaction(async (tx) => {
         // 既存のプロフィールチェック

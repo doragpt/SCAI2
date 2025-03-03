@@ -1,0 +1,114 @@
+リポジトリの schema.ts および routes.ts を解析し、エラーの根本原因を特定しました。
+
+現在のエラー invalid_type: expected: "array", received: "undefined" は、フロントエンドで JSON データを送信する際に、配列が未定義（undefined）の状態で API に渡っていることが原因です。
+
+この問題を修正するために、統合性の取れた修正案を作成し、どのファイルのどの部分を変更すべきかを詳細に指示します。
+
+詳細な修正手順をお伝えしますので、少々お待ちください。
+
+Research completed in 5m· 20 件の情報源
+エラーの原因:
+talentProfileSchema で 配列型のフィールドに undefined が渡っていることが原因です。具体的には、以下のような ネストしたオブジェクト内の配列フィールドが問題となっていました。
+ngOptions.others
+allergies.types
+smoking.others
+estheOptions.available など
+これらはいずれもZodスキーマ上「配列」であることを要求していますが、リクエストデータ中で 値が設定されていない（undefined のまま） になっていました。その結果、Zodによるバリデーション時に「invalid_type: expected: "array", received: "undefined"」というエラーが発生しています。原因を詳細に分析すると:
+フロントエンド（client/src/components/talent-form.tsx）でフォーム送信時にデータを整形する際、空の配列フィールドが undefined として扱われていたことがあります。例えば、チェックボックスや選択肢で何も選ばれなかった場合、本来 空配列 [] を送るべきところがキーごと存在しなかったり、undefined のままになっていました。
+talent-form.tsx 内の mutationFn では、一度 sanitizedData を作成した後に processedData オブジェクトを構築しています。しかし当初の実装では、ネストしたオブジェクトごと || 演算子でデフォルトを適用しており、内部の配列までは補完していませんでした。そのため、オブジェクト自体は存在しても中の配列プロパティが定義されておらず、結果的に undefined が渡されています。
+例：sanitizedData.allergies が { types: ["花粉"], hasAllergy: true } のように others プロパティを欠いている場合、sanitizedData.allergies || { ...デフォルト } の処理ではオブジェクト自体が存在するためデフォルトが適用されず、内部の others は未定義のままとなります。
+サーバー側（server/routes.ts）では、受け取ったリクエストボディ（req.body）を直接 talentProfileSchema.parse(req.body) に渡しており、未定義のフィールドが含まれるとバリデーションエラーになります。サーバー側でもデフォルト値 defaultFields を用意して ...（スプレッド）でリクエストデータと結合していますが、この結合は シャロー（浅い）マージであり、ネストオブジェクト内の欠損フィールドまでは補完できていませんでした。
+例：defaultFields.allergies は { types: [], others: [], hasAllergy: false } ですが、リクエストデータに { allergies: { types: ["花粉"] } } が含まれると、シャローマージ結果は { allergies: { types: ["花粉"] } } となり、others と hasAllergy が失われます。これにより、スキーマで必須の allergies.others 等が undefined となりエラーが発生していました。
+以上から、根本原因は「空配列フィールドやネストしたオブジェクト内の未入力フィールドを適切に初期化せず送信していたこと」にあります。
+修正方法:
+フロントエンド・バックエンド双方で対応可能ですが、以下の二方面からの対策を行うことで確実に問題を解消します。
+1. フロントエンド側の修正
+フォームデータ送信前に、未定義の配列フィールドを空配列[]で初期化します。また、ネストしたオブジェクトについては内部の各フィールドまでデフォルト値を補完します。これによりリクエストデータに必ず配列が含まれるようにし、undefined を送り出さないようにします。具体的には、client/src/components/talent-form.tsx 内で processedData を組み立てている箇所を修正します（約2480行目付近のコメント「// 空配列を持つオブジェクトフィールドのデフォルト値設定」が目印です）。元のコードでは例えば次のようになっていました。
+typescript
+コピーする
+// 修正前の processedData 作成例（抜粋）
+const processedData = {
+  ...sanitizedData,
+  ngOptions: sanitizedData.ngOptions || { common: [], others: [] },
+  allergies: sanitizedData.allergies || { types: [], others: [], hasAllergy: false },
+  smoking: sanitizedData.smoking || { enabled: false, types: [], others: [] },
+  // ...（他のフィールドも同様）
+};
+この実装だと、sanitizedData.allergies が存在する場合そのまま使われ、内部の types や others が空でも補完されません。そこで、各プロパティ毎にデフォルトを適用するよう変更します。以下は修正案です。
+typescript
+コピーする
+// 修正後の processedData 作成例（抜粋）
+const processedData = {
+  ...sanitizedData,
+  ngOptions: {
+    common: sanitizedData.ngOptions?.common ?? [],      // commonがundefinedなら空配列
+    others: sanitizedData.ngOptions?.others ?? []       // othersがundefinedなら空配列
+  },
+  allergies: {
+    types: sanitizedData.allergies?.types ?? [],        // typesがundefinedなら空配列
+    others: sanitizedData.allergies?.others ?? [],      // othersがundefinedなら空配列
+    hasAllergy: sanitizedData.allergies?.hasAllergy ?? false  // hasAllergyがundefinedならfalse
+  },
+  smoking: {
+    enabled: sanitizedData.smoking?.enabled ?? false,   // enabledがundefinedならfalse
+    types: sanitizedData.smoking?.types ?? [],          // typesがundefinedなら空配列
+    others: sanitizedData.smoking?.others ?? []         // othersがundefinedなら空配列
+  },
+  snsUrls: sanitizedData.snsUrls ?? [],
+  currentStores: sanitizedData.currentStores ?? [],
+  previousStores: sanitizedData.previousStores ?? [],
+  photoDiaryUrls: sanitizedData.photoDiaryUrls ?? [],
+  estheOptions: {
+    available: sanitizedData.estheOptions?.available ?? [],  // availableがundefinedなら空配列
+    ngOptions: sanitizedData.estheOptions?.ngOptions ?? []   // ngOptionsがundefinedなら空配列
+  }
+};
+このように修正することで、フォーム入力されなかった項目についても空の配列やデフォルト値がセットされるため、リクエストデータ中に該当フィールドが確実に存在します。結果として、バックエンドに渡す前に undefined を排除できます。
+2. バックエンド側の修正
+念のためサーバー側でも受け取ったデータに不足しているフィールドを補完する処理を追加します。server/routes.ts 内で talentProfileSchema.parse({...}) を呼ぶ前に、リクエストデータにデフォルト値をマージしておきます。修正箇所は routes.ts の **defaultFields を定義している部分（約1055行目付近）から、talentProfileSchema.parse({...}) を実行する部分（約1077行目付近）**です。現在は以下のようになっています（イメージ）：
+typescript
+コピーする
+// 修正前（イメージ）
+const defaultFields = { 
+  ngOptions: { common: [], others: [] },
+  allergies: { types: [], others: [], hasAllergy: false },
+  smoking: { enabled: false, types: [], others: [] },
+  // ... 他のフィールド省略
+};
+const profileData = talentProfileSchema.parse({
+  ...defaultFields,
+  ...requestData
+});
+上記の問題点は、...requestData によるシャローな上書きで ネストしたオブジェクト全体が置き換わってしまう ことでした。そこで、ネスト内部でのマージ処理を追加します。例えば以下のように修正します。
+typescript
+コピーする
+// 修正後（defaultFieldsとrequestDataのディープマージ例）
+const mergedData = {
+  ...defaultFields,
+  ...requestData,
+  ngOptions: {
+    ...defaultFields.ngOptions,
+    ...(requestData.ngOptions || {})   // リクエスト側にあれば上書き
+  },
+  allergies: {
+    ...defaultFields.allergies,
+    ...(requestData.allergies || {})
+  },
+  smoking: {
+    ...defaultFields.smoking,
+    ...(requestData.smoking || {})
+  },
+  estheOptions: {
+    ...defaultFields.estheOptions,
+    ...(requestData.estheOptions || {})
+  }
+};
+const profileData = talentProfileSchema.parse(mergedData);
+このようにしておけば、リクエストに含まれないフィールドは defaultFields の値で埋められ、含まれる場合も欠けている部分だけデフォルトが補完されます。例えばリクエストデータの allergies に types しか無くても、others と hasAllergy はデフォルトのまま保持されます。結果として talentProfileSchema.parse に完全なデータが渡されるため、バリデーションエラーが解消されます。（※ なお、Zodスキーマ自体にも .default() 指定があるためキーごと欠落していればデフォルトが適用されますが、上記修正により**「キーはあるが中身が空」というケースにも対応**できます。）
+3. PostgreSQL JSONカラムへの考慮
+上記修正により、データベースに挿入するJSONフィールドにも undefined が入り込まなくなります。PostgreSQLのJSON型カラムには undefined を直接保存できないため（NULLまたは値を入れる必要があります）、フロント・バック双方での対策によって 常に適切な値（空配列やfalseなど）が設定されることは重要です。この修正後は、その点でも安全に挿入処理が行えます。
+具体的な修正手順:
+フロントエンドのフォームデータ処理修正 – client/src/components/talent-form.tsx を開き、約2480行目付近の processedData を構築しているコードを修正します。上記「フロントエンド側の修正」で示したように、sanitizedDataからprocessedDataを作る部分で各配列フィールドにデフォルト値を設定してください。特に、ngOptions, allergies, smoking, estheOptions の各オブジェクト内フィールドについて、プロパティごとに ?? [] や ?? false を用いて補完する実装に変更します（||でオブジェクト全体を代入していた箇所を置き換えます）。
+バックエンドのリクエストデータ補完処理追加 – server/routes.ts を開き、talentProfileSchema.parse({...}) を呼ぶ直前の部分を修正します。defaultFields と requestData の結合処理を見直し、上記のコード例のように ネストしたオブジェクトをマージしてください。具体的には、ngOptions, allergies, smoking, estheOptions についてそれぞれ defaultFields と requestData をスプレッド展開で統合し、不足する配列やブーリアン値を埋める処理を入れます。これにより、talentProfileSchema.parse(mergedData) に渡すデータが完全な形になります。
+コードの確認とテスト – 修正箇所を保存したら、サーバーを再起動し、該当のタレントプロフィール作成フォームから実際にリクエストを送信してみます。空の配列フィールドを含む入力（例えば何も選択しない、テキストを入れない等）で送信し、エラーが再発しないことを確認してください。加えて、コンソールのログ（フロントの console.log('APIリクエスト送信データ:', processedData) やサーバー側のエラーログ）にも undefined が含まれていないことをチェックします。
+以上の修正を実施することで、「expected: array, received: undefined」エラーは解消されます。フォーム未入力の項目についても適切に空配列やデフォルト値が補填された状態で送信されるため、バックエンドのスキーマバリデーションを確実に通過します。最終的に、エラーなくプロフィールデータが作成・保存できるようになり、今後同様の未定義値によるバリデーションエラーは発生しなくなることが期待できます。
