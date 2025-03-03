@@ -1,24 +1,27 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// APIのベースURL設定の改善
+// キャッシュのキー定数
+export const QUERY_KEYS = {
+  TALENT_PROFILE: "/api/talent/profile",
+} as const;
+
+// APIのベースURL設定
 const API_BASE_URL = (() => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
-  // Replitの開発環境に合わせて設定を調整
   return process.env.NODE_ENV === "development"
-    ? `${protocol}//${hostname}`  // ポート指定を削除
+    ? `${protocol}//${hostname}`
     : "";
 })();
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({ message: res.statusText }));
-    console.error("Detailed API Error:", {
+    console.error("API Error:", {
       status: res.status,
       statusText: res.statusText,
       data,
       url: res.url,
-      type: res.type,
       timestamp: new Date().toISOString()
     });
     throw new Error(data.message || res.statusText);
@@ -42,7 +45,7 @@ export async function apiRequest(
 
   const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-  console.log("Detailed API Request:", {
+  console.log("API Request:", {
     method,
     url: fullUrl,
     headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
@@ -61,7 +64,7 @@ export async function apiRequest(
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-    console.error("Detailed API Request Failed:", {
+    console.error("API Request Failed:", {
       method,
       url: fullUrl,
       error: error instanceof Error ? {
@@ -73,6 +76,18 @@ export async function apiRequest(
     });
     throw error;
   }
+}
+
+// プロフィール更新用の関数
+export async function updateTalentProfile(data: any) {
+  const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
+  const updatedProfile = await response.json();
+
+  // キャッシュを強制的に無効化し、新しいデータで更新
+  queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
+  await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+
+  return updatedProfile;
 }
 
 export const getQueryFn: <T>({
@@ -129,33 +144,18 @@ export const getQueryFn: <T>({
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 
-// キャッシュのキー定数を追加
-export const QUERY_KEYS = {
-  TALENT_PROFILE: "/api/talent/profile",
-} as const;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 0, // キャッシュを無効にし、常に最新データを取得
+      cacheTime: 0,
+      refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+      retry: 1,
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 0,
     },
     mutations: {
-      retry: false,
+      retry: 1,
     },
   },
 });
-
-// プロフィール更新用のミューテーション関数を追加
-export async function updateProfile(data: any) {
-  const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
-  const updatedProfile = await response.json();
-
-  // キャッシュを無効化して再取得を強制
-  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-
-  return updatedProfile;
-}

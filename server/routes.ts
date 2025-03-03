@@ -239,6 +239,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // リクエストデータをバリデーション
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
+        // JSONBフィールドの定義
+        const jsonbFields = [
+          'availableIds',
+          'ngOptions',
+          'allergies',
+          'smoking',
+          'snsUrls',
+          'currentStores',
+          'previousStores',
+          'photoDiaryUrls',
+          'estheOptions'
+        ];
+
         // 更新データの準備
         const processedData = {
           ...updateData,
@@ -246,10 +259,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date(),
         };
 
+        // JSONBフィールドを適切に処理
+        const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
+          if (value === undefined) return acc;
+
+          if (jsonbFields.includes(key)) {
+            acc[key] = sql`${JSON.stringify(value)}::jsonb`;
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        }, {} as Record<string, any>);
+
         // プロフィールを更新
         const [updated] = await tx
           .update(talentProfiles)
-          .set(processedData)
+          .set(updateValues)
           .where(eq(talentProfiles.userId, userId))
           .returning();
 
@@ -257,13 +282,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        console.log('Profile updated successfully:', {
-          userId,
-          profileId: updated.id,
-          timestamp: new Date().toISOString()
-        });
-
         return updated;
+      });
+
+      console.log('Profile updated successfully:', {
+        userId,
+        profileId: updatedProfile.id,
+        timestamp: new Date().toISOString()
       });
 
       res.json(updatedProfile);
