@@ -240,10 +240,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // リクエストデータをバリデーション
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
+        // 編集不可フィールドのリスト
+        const immutableFields = ['birthDate'];
+
         // 既存のデータと新しいデータをマージ
         const processedData = {
           ...currentProfile, // 既存のデータをベースに
           ...updateData, // 新しいデータで上書き
+          // 編集不可フィールドは既存の値を維持
+          ...immutableFields.reduce((acc, field) => ({
+            ...acc,
+            [field]: currentProfile[field]
+          }), {}),
           userId, // userIdは必ず設定
           updatedAt: new Date(), // 更新日時は現在時刻
           // 数値フィールドの特別処理
@@ -301,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        // 更新されたプロフィールを再取得
+        // 更新されたプロフィールを再取得して返す
         const [freshProfile] = await tx
           .select()
           .from(talentProfiles)
