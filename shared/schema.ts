@@ -232,10 +232,10 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // 任意フィールド（バスト・ウエスト・ヒップ）
-  bust: z.union([z.number(), z.null()]).optional(),
-  waist: z.union([z.number(), z.null()]).optional(),
-  hip: z.union([z.number(), z.null()]).optional(),
+  // バスト・ウエスト・ヒップの型定義を修正
+  bust: z.number().nullable().optional(),
+  waist: z.number().nullable().optional(),
+  hip: z.number().nullable().optional(),
 
   // その他の必須フィールド
   faceVisibility: z.enum(faceVisibilityTypes, {

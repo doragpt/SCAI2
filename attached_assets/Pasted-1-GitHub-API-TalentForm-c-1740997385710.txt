@@ -1,0 +1,77 @@
+1. エラー内容の特定
+GitHubリポジトリのコードおよび実行時ログから、問題のエラーはプロフィール作成API呼び出し時に発生しています。フロントエンドの「TalentForm」コンポーネント内でcreateProfileミューテーションを実行すると、バックエンドからHTTP 400エラーが返り、レスポンスボディに"message":"malformed array literal: \"[]\""というエラーが含まれています。このメッセージはPostgreSQLデータベースが配列リテラルのパースに失敗した際に出るもので、"[]"（空の配列を示す文字列）を不正な形式だと判断したことを示しています​
+PGANALYZE.COM
+。実際、フロント側コードでもresponse.okでない場合にエラーレスポンスを取得し、errorData.messageをログに出力・例外送出しています​
+GITHUB.COM
+。そのログ出力により上記メッセージが確認でき、API通信時に送信した配列データのフォーマットに問題がある可能性が強まります。エラーが発生した箇所は、TalentFormコンポーネント内のフォーム送信処理（プロフィール登録処理）です。コード上では、React Hook Formで収集したフォームデータをcreateProfileミューテーション（React QueryのuseMutation）で送信する際にエラーが検出されています​
+GITHUB.COM
+​
+GITHUB.COM
+。従って、「400 Bad Request: malformed array literal '[]'」は、TalentFormのミューテーション実行時（/api/talent/profileへのPOSTリクエスト）に発生していると特定できます。2. コードの解析
+フロントエンド側の関連コードを詳細に確認したところ、フォーム送信データ中の配列フィールドの扱いに起因するフォーマット不整合が疑われます。client/src/components/talent-form.tsxには「プロフィール作成」フォームが定義されており、複数の配列型入力フィールドがあります。例えば:
+本人確認書類の種類リスト availableIds.types（複数選択、配列）と備考 availableIds.others（文字列配列）、
+NG項目 ngOptions.common・ngOptions.others（配列）、
+アレルギー allergies.types・allergies.others（配列）等、
+これらはZodスキーマtalentProfileSchemaで配列として定義されています​
+GITHUB.COM
+​
+GITHUB.COM
+。フォームの初期値defaultValuesを見ると、これら配列フィールドはいずれも空配列で初期化されています​
+GITHUB.COM
+​
+GITHUB.COM
+。たとえば availableIds.types: [], availableIds.others: [] のように空の配列がデフォルト設定されています。ユーザーがこれらフィールドに何も入力しなければ、その値は空配列のままフォームデータに残ります。フォーム送信処理では、React Hook Formから得たデータオブジェクトdataを少し加工したうえでAPIリクエストしています。該当コードを見ると、数値フィールド（バスト・ウエスト・ヒップ）の空文字をnullに変換する処理を行った後、processedDataというオブジェクトを作成し、それをapiRequest関数に渡しています​
+GITHUB.COM
+​
+GITHUB.COM
+。重要なのは、このprocessedData作成時に配列フィールドの特別な変換や除外を行っていない点です。...dataによりフォームの全フィールドを展開しており、空配列フィールドもそのままprocessedDataに含まれます​
+GITHUB.COM
+。従って、例えばavailableIds.othersが[]（空配列）であれば、processedData.availableIds.othersも[]のままです。このprocessedDataを用いて、client/src/lib/queryClient.tsのapiRequest関数が実際のHTTPリクエストを送信します。apiRequestは第3引数にデータが渡された場合、自動的にJSON文字列化してリクエストボディに設定し、Content-Type: application/jsonヘッダを付与しています​
+GITHUB.COM
+。今回processedDataが渡されているので、空配列も含めJSON.stringifyされたJSONがリクエストボディになります。JSON上で空配列は "[]" ではなく [] と表現されますから、ネットワーク上のリクエスト自体は正しいJSONフォーマットです。問題はバックエンド側でこのデータを処理する際に発生します。推測されるシナリオは、バックエンド（おそらくExpress＋Drizzle ORM）でリクエストボディをそのままデータベース挿入に使用し、PostgreSQLの配列カラムに空配列を渡した際の取り扱いです。PostgreSQLでは空の配列リテラルは{}で表現されるため、挿入SQLを文字列組み立てする場合に'[]'のように不正な形式で渡すとエラーになります​
+PGANALYZE.COM
+。Drizzle ORMでは通常、JSの配列を正しくParameterizeしてくれますが、ネストしたオブジェクト構造や空配列の扱いに何らかの不備があると、配列フィールドが文字列として渡されてしまう可能性があります。その結果、PostgreSQLは "[]"（文字列リテラルとしての角括弧二つ）を受け取り、「malformed array literal」と投げたと考えられます。実際、エラーメッセージに"\"[]\""とクオート付きで[]が出ていることから、データベースには空配列が文字列"[]"として渡された**ように推察できます。つまり、フロントからは正しくJSONで送っているものの、**バックエンド側でその空配列を適切な形式に変換できていない**のが原因です。特に、availableIds, ngOptions, allergies`といったネスト構造のフィールド**は、そのままではデータベースの各カラムに対応しないため、サーバー側で展開・変換が必要ですが、それが行われず不整合が起きている可能性があります。3. 修正案の提示
+以上の分析から、バックエンドが期待するデータ形式にフロントエンドの送信フォーマットを合わせる修正が必要です。具体的には、空の配列フィールドをそのまま送らない/適切に変換する対応を取ります。以下に考えられる修正方法を示します。
+(A) フロントエンド側で配列フィールドのデータ整形を行う:
+TalentFormコンポーネント内のミューテーション関数で、APIリクエスト送信前に空配列を持つプロパティを削除または別の値に置き換えます。例えば、processedDataを構築する際に、空の配列はundefinedやnullに変えておき、バックエンドに送信します（バックエンドでnullを受け入れるかデフォルト値が設定されていれば、エラーを回避できます）。擬似コード例:
+ts
+コピーする
+const processedData = { ...data, ...（数値変換） };
+if (processedData.availableIds.others.length === 0) {
+    delete processedData.availableIds.others;  // 空配列フィールドを削除
+}
+// 他の空配列フィールドについても同様に処理
+この修正により、不要な空配列フィールドはリクエストボディから除外されるため、バックエンド側で"[]"が渡される事態を防げます。実装箇所としては、talent-form.tsxのmutationFn内、processedDataを作成している直後（約2501～2510行目）で上記のような処理を追加すると良いでしょう​
+GITHUB.COM
+。さらに、バックエンドのデータベーススキーマに合わせてネストしたオブジェクトをフラットに展開して送信する方法も検討してください。例えば、データベースのカラムがavailable_id_types（text配列）とavailable_id_others（text配列）に分かれているなら、フロントからも以下のように平坦化します。
+ts
+コピーする
+const processedData = {
+    ...data,
+    bust: ..., waist: ..., hip: ...,
+    availableIdTypes: data.availableIds.types,
+    availableIdOthers: data.availableIds.others,
+    // ... 以下、ngOptionsやallergies等も同様に
+};
+そして元のavailableIdsオブジェクトは送らないようにします。こうすることで、バックエンドが直接期待するフィールド名・型に一致するデータを送り、ORMが正しく配列型を処理できるようになります。
+(B) バックエンド側での対処（併せて検討）:
+基本的にはフロント修正(A)で対応可能ですが、バックエンドにも安全策を講じることが望ましいです。サーバー側でリクエストを受け取った後、データベースに渡す前に空配列やネスト構造を処理するコードを追加します。たとえば、Expressのルータで:
+js
+コピーする
+if (req.body.availableIds?.others?.length === 0) {
+    req.body.availableIds.others = null; // または [] やデフォルト値に置き換え
+}
+といったチェックを行い、ORMに渡すデータをクリーンアップします。また、Drizzle ORMを使っている場合は空配列の挿入バグが報告されている可能性もあるため（実際、類似のIssueが存在します​
+GITHUB.COM
+）、ORMのアップデートやワークアラウンドも検討してください。いずれにせよ、バックエンドで**"[]"という文字列がデータベースに渡らないようにする**のが重要です。
+以上を踏まえ、最も簡単な修正はフロントエンドの送信データ整形です。具体的には、client/src/components/talent-form.tsxの**createProfileミューテーション実行前**に上記(A)の処理を実装します（該当箇所: 2500行目付近）​
+GITHUB.COM
+。例えば空配列フィールドを検出して削除・除去するコードを追加してください。また、可能であればバックエンドの受け取り処理も確認し、期待フォーマットに合うようprocessedDataの構造を修正します。該当コードはtalent-form.tsxのapiRequest呼び出し部分（2516行目付近）で送信データを組み立てているので​
+GITHUB.COM
+、この直前でデータ整形を行うと効果的です。まとめると、空の配列データがそのまま送信されることが原因で発生しているエラーです。フロント側で空配列を適切な形式（送らないか、null等）に変換してから送信することで、バックエンドでのパースエラーを防げます。また、バックエンドの実装とDBスキーマに照らし合わせて、フロント送信データのキー名や構造を合わせることも重要です。以上の修正により、"malformed array literal: \"[]\""エラーは解消されるでしょう。​
+GITHUB.COM
+​
+GITHUB.COM
+参考: PostgreSQLの「malformed array literal」エラーは、配列型カラムに対してフォーマット不正な文字列を渡した際に起きる一般的な現象です​
+PGANALYZE.COM
+。今回の場合もそれに該当し、配列データ送信フォーマットの見直しで対応可能です。
