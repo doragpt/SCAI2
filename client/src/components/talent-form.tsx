@@ -417,7 +417,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
 
         {/* フォームの各セクションをdivで包む */}
         <div className="space-y-6">
-          {/* 1. 基本情報 */}
+          {/* 1. 基本情報セクション */}
           <div>
             <h3 className="text-lg font-semibold">基本情報</h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -460,7 +460,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             </div>
           </div>
 
-          {/* 2. 在住地と最寄り駅（必須） */}
+          {/* 2. 住所情報セクション */}
           <div>
             <h3 className="text-lg font-semibold">住所情報</h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -851,84 +851,88 @@ export const TalentForm: React.FC<TalentFormProps> = ({
           {/* 13-14. アレルギーと喫煙 */}
           <div className="space-y-6">
             <h3 className="text-lg font-semibold">アレルギー・喫煙</h3>
-            <SwitchField
-              label="アレルギー"
-              required
-              checked={form.watch("allergies.hasAllergy")}
-              onCheckedChange={(checked) => {
-                form.setValue("allergies", {
-                  types: [],
-                  others: [],
-                  hasAllergy: checked,
-                }, { shouldValidate: true });
-              }}
-            />
 
-            {form.watch("allergies.hasAllergy") && (
-              <div className="ml-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {allergyTypes.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={form.watch("allergies.types").includes(type)}
-                        onCheckedChange={(checked) => {
-                          const current = form.watch("allergies.types");
-                          const updated = checked
-                            ? [...current, type]
-                            : current.filter((t) => t !== type);
-                          form.setValue("allergies.types", updated);
-                        }}
-                      />
-                      <label className="text-sm">{type}</label>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <Label>その他のアレルギー</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {otherAllergies.map((allergy) => (
-                      <Badge key={allergy} variant="secondary">
-                        {allergy}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="ml-1 h-4 w-4 p-0"
-                          onClick={() => {
-                            setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
-                            form.setValue(
-                              "allergies.others",
-                              otherAllergies.filter((a) => a !== allergy)
-                            );
+            {/* アレルギーサブセクション */}
+            <div>
+              <SwitchField
+                label="アレルギー"
+                required
+                checked={form.watch("allergies.hasAllergy")}
+                onCheckedChange={(checked) => {
+                  form.setValue("allergies", {
+                    types: [],
+                    others: [],
+                    hasAllergy: checked,
+                  }, { shouldValidate: true });
+                }}
+              />
+
+              {form.watch("allergies.hasAllergy") && (
+                <div className="ml-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {allergyTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch("allergies.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("allergies.types");
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("allergies.types", updated);
                           }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
+                        />
+                        <label className="text-sm">{type}</label>
+                      </div>
                     ))}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="その他のアレルギーを入力"
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          const value = e.currentTarget.value.trim();
-                          if (value && !otherAllergies.includes(value)) {
-                            const newAllergies = [...otherAllergies, value];
-                            setOtherAllergies(newAllergies);
-                            form.setValue("allergies.others", newAllergies);
-                            e.currentTarget.value = "";
+                  <div>
+                    <Label>その他のアレルギー</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {otherAllergies.map((allergy) => (
+                        <Badge key={allergy} variant="secondary">
+                          {allergy}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => {
+                              setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
+                              form.setValue(
+                                "allergies.others",
+                                otherAllergies.filter((a) => a !== allergy)
+                              );
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        placeholder="その他のアレルギーを入力"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const value = e.currentTarget.value.trim();
+                            if (value && !otherAllergies.includes(value)) {
+                              const newAllergies = [...otherAllergies, value];
+                              setOtherAllergies(newAllergies);
+                              form.setValue("allergies.others", newAllergies);
+                              e.currentTarget.value = "";                            }
                           }
-                        }
-                      }}
-                    />
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* 喫煙セクション */}
-            <div className="mt-6"><h3 className="text-lg font-semibold">喫煙</h3>
+            {/* 喫煙サブセクション */}
+            <div>
+              <h3 className="text-lg font-semibold">喫煙</h3>
               <SwitchField
                 label="喫煙"
                 required
@@ -1002,279 +1006,280 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                 </div>
               )}
             </div>
+          </div>
 
-            {/* SNSアカウントセクション */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold">SNSアカウント</h3>
-              <SwitchField
-                label="SNSアカウント"
-                required
-                checked={form.watch("hasSnsAccount")}
-                onCheckedChange={(checked) => {
-                  form.setValue("hasSnsAccount", checked, { shouldValidate: true });
-                  if (!checked) {
-                    form.setValue("snsUrls", []);
-                  }
-                }}
-              />
+          {/* 5. SNSアカウントセクション */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">SNSアカウント</h3>
+            <SwitchField
+              label="SNSアカウント"
+              required
+              checked={form.watch("hasSnsAccount")}
+              onCheckedChange={(checked) => {
+                form.setValue("hasSnsAccount", checked, { shouldValidate: true });
+                if (!checked) {
+                  form.setValue("snsUrls", []);
+                }
+              }}
+            />
 
-              {form.watch("hasSnsAccount") && (
-                <div className="ml-4 space-y-4">
-                  <FormField label="SNSアカウントのURL">
-                    <div className="flex flex-wrap gap-2">
-                      {form.watch("snsUrls").map((url, index) => (
-                        <Badge key={index} variant="secondary">
-                          {url}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
-                              const current = form.watch("snsUrls");
-                              form.setValue("snsUrls", current.filter((_, i) => i !== index));
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="SNSのURLを入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const url = e.currentTarget.value.trim();
-                            if (url) {
-                              const current = form.watch("snsUrls");
-                              form.setValue("snsUrls", [...current, url]);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                  </FormField>
-                </div>
-              )}
-            </div>
-
-            {/* 16-17. 現在在籍店舗と過去経験店舗 */}
-            <div>
-              <h3 className="text-lg font-semibold">勤務先</h3>
-              <FormField label="現在在籍中の店舗">
-                <div className="space-y-4">
-                  {form.watch("currentStores").map((store, index) => (
-                    <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                      <Input
-                        placeholder="店舗名"
-                        value={store.storeName}
-                        onChange={(e) => {
-                          const current = form.watch("currentStores");
-                          current[index].storeName = e.target.value;
-                          form.setValue("currentStores", [...current]);
-                        }}
-                      />
-                      <Input
-                        placeholder="源氏名"
-                        value={store.stageName}
-                        onChange={(e) => {
-                          const current = form.watch("currentStores");
-                          current[index].stageName = e.target.value;
-                          form.setValue("currentStores", [...current]);
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const current = form.watch("currentStores");
-                          form.setValue("currentStores", current.filter((_, i) => i !== index));
-                        }}
-                      >
-                        削除
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const current = form.watch("currentStores");
-                      form.setValue("currentStores", [...current, { storeName: "", stageName: "" }]);
-                    }}
-                  >
-                    店舗を追加
-                  </Button>
-                </div>
-              </FormField>
-
-              <FormField label="過去経験店舗">
-                <div className="space-y-4">
-                  {form.watch("previousStores").map((store, index) => (
-                    <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                      <Input
-                        placeholder="店舗名"
-                        value={store.storeName}
-                        onChange={(e) => {
-                          const current = [...form.watch("previousStores")];
-                          current[index] = { storeName: e.target.value };
-                          form.setValue("previousStores", current, { shouldValidate: true });
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="ml-1 h-4 w-4 p-0"
-                        onClick={() => {
-                          const current = form.watch("previousStores");
-                          form.setValue(
-                            "previousStores",
-                            current.filter((_, i) => i !== index),
-                            { shouldValidate: true }
-                          );
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const current = form.watch("previousStores") || [];
-                      form.setValue(
-                        "previousStores",
-                        [...current, { storeName: "" }],
-                        { shouldValidate: true }
-                      );
-                    }}
-                  >
-                    店舗を追加
-                  </Button>
-                </div>
-              </FormField>
-            </div>
-
-            {/* 18-19. 自己PRとその他備考 */}
-            <div>
-              <h3 className="text-lg font-semibold">その他</h3>
-              <FormField label="自己PR(任意)">
-                <textarea
-                  className="w-full h-32 p-2 border rounded-md"
-                  placeholder="自己PRを入力してください"
-                  {...form.register("selfIntroduction")}
-                />
-                {form.formState.errors.selfIntroduction && (
-                  <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />
-                )}
-              </FormField>
-
-              <FormField label="その他備考(任意)">
-                <textarea
-                  className="w-full h-32 p-2 border rounded-md"
-                  placeholder="その他の要望がありましたらご記入ください"
-                  {...form.register("notes")}
-                />
-                {form.formState.errors.notes && (
-                  <FormErrorMessage message={form.formState.errors.notes.message as string} />
-                )}
-              </FormField>
-            </div>
-
-            {/* Modified Photo Diary URL Field */}
-            <div>
-              <h3 className="text-lg font-semibold">写メ日記URL</h3>
-              <FormField label="写メ日記が確認できる店舗URL">
-                <div className="flex flex-wrap gap-2">
-                  {form.watch("photoDiaryUrls").map((url, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center">
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">
+            {form.watch("hasSnsAccount") && (
+              <div className="ml-4 space-y-4">
+                <FormField label="SNSアカウントのURL">
+                  <div className="flex flex-wrap gap-2">
+                    {form.watch("snsUrls").map((url, index) => (
+                      <Badge key={index} variant="secondary">
                         {url}
-                      </a>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0"
-                        onClick={() => {
-                          const current = form.watch("photoDiaryUrls");
-                          form.setValue(
-                            "photoDiaryUrls",
-                            current.filter((_, i) => i !== index),
-                            { shouldValidate: true }
-                          );
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    placeholder="写メ日記が確認できる店舗のURLを入力"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        const url = e.currentTarget.value.trim();
-                        if (url) {
-                          const current = form.watch("photoDiaryUrls") || [];
-                          form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                          e.currentTarget.value = "";
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-1 h-4 w-4 p-0"
+                          onClick={() => {
+                            const current = form.watch("snsUrls");
+                            form.setValue("snsUrls", current.filter((_, i) => i !== index));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="SNSのURLを入力"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          const url = e.currentTarget.value.trim();
+                          if (url) {
+                            const current = form.watch("snsUrls");
+                            form.setValue("snsUrls", [...current, url]);
+                            e.currentTarget.value = "";
+                          }
                         }
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const input = document.querySelector('input[placeholder="写メ日記が確認できる店舗のURLを入力"]') as HTMLInputElement;
-                      const url = input?.value.trim();
+                      }}
+                    />
+                  </div>
+                </FormField>
+              </div>
+            )}
+          </div>
+
+          {/* 6. 現在在籍店舗と過去経験店舗 */}
+          <div>
+            <h3 className="text-lg font-semibold">勤務先</h3>
+            <FormField label="現在在籍中の店舗">
+              <div className="space-y-4">
+                {form.watch("currentStores").map((store, index) => (
+                  <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                    <Input
+                      placeholder="店舗名"
+                      value={store.storeName}
+                      onChange={(e) => {
+                        const current = form.watch("currentStores");
+                        current[index].storeName = e.target.value;
+                        form.setValue("currentStores", [...current]);
+                      }}
+                    />
+                    <Input
+                      placeholder="源氏名"
+                      value={store.stageName}
+                      onChange={(e) => {
+                        const current = form.watch("currentStores");
+                        current[index].stageName = e.target.value;
+                        form.setValue("currentStores", [...current]);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const current = form.watch("currentStores");
+                        form.setValue("currentStores", current.filter((_, i) => i !== index));
+                      }}
+                    >
+                      削除
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const current = form.watch("currentStores");
+                    form.setValue("currentStores", [...current, { storeName: "", stageName: "" }]);
+                  }}
+                >
+                  店舗を追加
+                </Button>
+              </div>
+            </FormField>
+
+            <FormField label="過去経験店舗">
+              <div className="space-y-4">
+                {form.watch("previousStores").map((store, index) => (
+                  <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                    <Input
+                      placeholder="店舗名"
+                      value={store.storeName}
+                      onChange={(e) => {
+                        const current = [...form.watch("previousStores")];
+                        current[index] = { storeName: e.target.value };
+                        form.setValue("previousStores", current, { shouldValidate: true });
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 h-4 w-4 p-0"
+                      onClick={() => {
+                        const current = form.watch("previousStores");
+                        form.setValue(
+                          "previousStores",
+                          current.filter((_, i) => i !== index),
+                          { shouldValidate: true }
+                        );
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const current = form.watch("previousStores") || [];
+                    form.setValue(
+                      "previousStores",
+                      [...current, { storeName: "" }],
+                      { shouldValidate: true }
+                    );
+                  }}
+                >
+                  店舗を追加
+                </Button>
+              </div>
+            </FormField>
+          </div>
+
+          {/* 7. 自己PRとその他備考 */}
+          <div>
+            <h3 className="text-lg font-semibold">その他</h3>
+            <FormField label="自己PR(任意)">
+              <textarea
+                className="w-full h-32 p-2 border rounded-md"
+                placeholder="自己PRを入力してください"
+                {...form.register("selfIntroduction")}
+              />
+              {form.formState.errors.selfIntroduction && (
+                <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />
+              )}
+            </FormField>
+
+            <FormField label="その他備考(任意)">
+              <textarea
+                className="w-full h-32 p-2 border rounded-md"
+                placeholder="その他の要望がありましたらご記入ください"
+                {...form.register("notes")}
+              />
+              {form.formState.errors.notes && (
+                <FormErrorMessage message={form.formState.errors.notes.message as string} />
+              )}
+            </FormField>
+          </div>
+
+          {/* Modified Photo Diary URL Field */}
+          <div>
+            <h3 className="text-lg font-semibold">写メ日記URL</h3>
+            <FormField label="写メ日記が確認できる店舗URL">
+              <div className="flex flex-wrap gap-2">
+                {form.watch("photoDiaryUrls").map((url, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center">
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">
+                      {url}
+                    </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0"
+                      onClick={() => {
+                        const current = form.watch("photoDiaryUrls");
+                        form.setValue(
+                          "photoDiaryUrls",
+                          current.filter((_, i) => i !== index),
+                          { shouldValidate: true }
+                        );
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="写メ日記が確認できる店舗のURLを入力"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const url = e.currentTarget.value.trim();
                       if (url) {
                         const current = form.watch("photoDiaryUrls") || [];
                         form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                        if (input) input.value = "";
+                        e.currentTarget.value = "";
                       }
-                    }}
-                  >
-                    追加
-                  </Button>
-                </div>
-              </FormField>
-            </div>
-
-            {/* 送信ボタンセクション */}
-            <div className="flex justify-end space-x-4 mt-8">
-              <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    送信中...
-                  </>
-                ) : (
-                  "プロフィールを保存"
-                )}
-              </Button>
-            </div>
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const input = document.querySelector('input[placeholder="写メ日記が確認できる店舗のURLを入力"]') as HTMLInputElement;
+                    const url = input?.value.trim();
+                    if (url) {
+                      const current = form.watch("photoDiaryUrls") || [];
+                      form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
+                      if (input) input.value = "";
+                    }
+                  }}
+                >
+                  追加
+                </Button>
+              </div>
+            </FormField>
           </div>
-        </form>
 
-        {/* 確認モーダル */}
-        <ProfileConfirmationModal
-          open={isConfirmationOpen}
-          onOpenChange={setIsConfirmationOpen}
-          onConfirm={handleConfirm}
-          onClose={handleModalClose}
-          formData={formDataToConfirm}
-        />
-      </Form>
-    );
-  };
+          {/* 送信ボタンセクション */}
+          <div className="flex justify-end space-x-4 mt-8">
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  送信中...
+                </>
+              ) : (
+                "プロフィールを保存"
+              )}
+            </Button>
+          </div>
+        </div>
+      </form>
 
-  export default TalentForm;
+      {/* 確認モーダル */}
+      <ProfileConfirmationModal
+        open={isConfirmationOpen}
+        onOpenChange={setIsConfirmationOpen}
+        onConfirm={handleConfirm}
+        onClose={handleModalClose}
+        formData={formDataToConfirm}
+      />
+    </Form>
+  );
+};
+
+export default TalentForm;
