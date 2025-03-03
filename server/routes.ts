@@ -217,10 +217,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/talent/profile", authenticate, async (req: any, res) => {
-    const userId = req.user.id;
-    console.log('Profile update request for user:', userId);
-
     try {
+      const userId = req.user.id;
+      console.log('Profile update request received:', {
+        userId,
+        data: req.body,
+        timestamp: new Date().toISOString()
+      });
+
       // リクエストデータをバリデーション
       const updateData = talentProfileUpdateSchema.parse(req.body);
 
@@ -235,12 +239,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールが見つかりません");
         }
 
-        // 更新データから数値フィールドを処理
+        // 更新データの準備
         const processedData = {
           ...updateData,
-          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
-          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
-          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
+          userId,
+          updatedAt: new Date(),
         };
 
         // JSONBフィールドを適切に処理
@@ -258,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
           if (jsonbFields.includes(key) && value !== undefined) {
-            acc[key] = toJsonb(value);
+            acc[key] = sql`${JSON.stringify(value)}::jsonb`;
           } else if (value !== undefined) {
             acc[key] = value;
           }
@@ -268,10 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // プロフィールを更新
         const [updated] = await tx
           .update(talentProfiles)
-          .set({
-            ...updateValues,
-            updatedAt: new Date(),
-          })
+          .set(updateValues)
           .where(eq(talentProfiles.userId, userId))
           .returning();
 
@@ -279,20 +279,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
+        console.log('Profile updated successfully:', {
+          userId,
+          profileId: updated.id,
+          timestamp: new Date().toISOString()
+        });
+
         return updated;
       });
 
-      console.log('Profile updated successfully:', { userId });
       res.json(updatedProfile);
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Profile update error:', {
+        error,
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
       if (error instanceof Error) {
-        res.status(error.message === "プロフィールが見つかりません" ? 404 : 400).json({
-          message: error.message
+        const status = error.message === "プロフィールが見つかりません" ? 404 : 400;
+        res.status(status).json({
+          message: error.message,
+          timestamp: new Date().toISOString()
         });
       } else {
         res.status(500).json({
-          message: "プロフィールの更新に失敗しました"
+          message: "プロフィールの更新に失敗しました",
+          timestamp: new Date().toISOString()
         });
       }
     }
