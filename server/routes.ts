@@ -173,12 +173,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile creation endpoint
   app.post("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
       console.log('Profile creation request received:', req.body);
 
-      // リクエストデータのバリデーション
-      const profileData = talentProfileSchema.parse(req.body);
+      // リクエストデータの整形
+      const requestData = {
+        ...req.body,
+        // 数値フィールドの処理
+        bust: req.body.bust === "" ? null : req.body.bust,
+        waist: req.body.waist === "" ? null : req.body.waist,
+        hip: req.body.hip === "" ? null : req.body.hip,
+      };
+
+      // バリデーション
+      const profileData = talentProfileSchema.parse(requestData);
 
       const profile = await db.transaction(async (tx) => {
         // 既存のプロフィールチェック

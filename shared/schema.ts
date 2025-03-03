@@ -219,7 +219,7 @@ export const talentProfileSchema = z.object({
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
   availableIds: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
-    others: z.array(z.string()).default([]),
+    others: z.array(z.string()),
   }),
   canProvideResidenceRecord: z.boolean(),
   height: z.number()
@@ -233,81 +233,60 @@ export const talentProfileSchema = z.object({
   }),
 
   // 任意フィールド（バスト・ウエスト・ヒップ）
-  bust: z.preprocess(
-    (val) => {
-      if (val === "" || val === undefined || val === null) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    },
-    z.number().nullable().optional()
-  ),
-  waist: z.preprocess(
-    (val) => {
-      if (val === "" || val === undefined || val === null) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    },
-    z.number().nullable().optional()
-  ),
-  hip: z.preprocess(
-    (val) => {
-      if (val === "" || val === undefined || val === null) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    },
-    z.number().nullable().optional()
-  ),
+  bust: z.union([z.number(), z.null()]).optional(),
+  waist: z.union([z.number(), z.null()]).optional(),
+  hip: z.union([z.number(), z.null()]).optional(),
 
   // その他の必須フィールド
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
 
-  // その他のフィールド（デフォルト値付き）
-  canPhotoDiary: z.boolean().default(false),
-  canHomeDelivery: z.boolean().default(false),
-  hasSnsAccount: z.boolean().default(false),
-  hasEstheExperience: z.boolean().default(false),
+  // Boolean フィールド
+  canPhotoDiary: z.boolean(),
+  canHomeDelivery: z.boolean(),
+  hasSnsAccount: z.boolean(),
+  hasEstheExperience: z.boolean(),
 
-  // オブジェクトフィールド（デフォルト値付き）
+  // オブジェクトフィールド
   ngOptions: z.object({
-    common: z.array(z.enum(commonNgOptions)).default([]),
-    others: z.array(z.string()).default([]),
-  }).default({ common: [], others: [] }),
+    common: z.array(z.enum(commonNgOptions)),
+    others: z.array(z.string()),
+  }),
 
   allergies: z.object({
-    types: z.array(z.enum(allergyTypes)).default([]),
-    others: z.array(z.string()).default([]),
-    hasAllergy: z.boolean().default(false),
-  }).default({ types: [], others: [], hasAllergy: false }),
+    types: z.array(z.enum(allergyTypes)),
+    others: z.array(z.string()),
+    hasAllergy: z.boolean(),
+  }),
 
   smoking: z.object({
-    enabled: z.boolean().default(false),
-    types: z.array(z.enum(smokingTypes)).default([]),
-    others: z.array(z.string()).default([]),
-  }).default({ enabled: false, types: [], others: [] }),
+    enabled: z.boolean(),
+    types: z.array(z.enum(smokingTypes)),
+    others: z.array(z.string()),
+  }),
 
-  // 配列フィールド（デフォルト値付き）
-  snsUrls: z.array(z.string()).default([]),
+  // 配列フィールド
+  snsUrls: z.array(z.string()),
   currentStores: z.array(z.object({
     storeName: z.string(),
     stageName: z.string(),
-  })).default([]),
+  })),
   previousStores: z.array(z.object({
     storeName: z.string(),
-  })).default([]),
-  photoDiaryUrls: z.array(z.string()).default([]),
+  })),
+  photoDiaryUrls: z.array(z.string()),
 
-  // 任意テキストフィールド
-  selfIntroduction: z.string().optional().default(""),
-  notes: z.string().optional().default(""),
+  // テキストフィールド
+  selfIntroduction: z.string().optional(),
+  notes: z.string().optional(),
   estheExperiencePeriod: z.string().optional(),
 
   // エステオプション
   estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)).default([]),
-    ngOptions: z.array(z.string()).default([]),
-  }).default({ available: [], ngOptions: [] }),
+    available: z.array(z.enum(estheOptions)),
+    ngOptions: z.array(z.string()),
+  }),
 });
 
 // Export types

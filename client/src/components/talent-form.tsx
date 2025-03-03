@@ -104,78 +104,75 @@ export const TalentForm: React.FC = () => {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
 
+  // フォームのデフォルト値部分を修正
+  const defaultValues: TalentProfileData = {
+    lastName: "",
+    firstName: "",
+    lastNameKana: "",
+    firstNameKana: "",
+    location: undefined,
+    nearestStation: "",
+    availableIds: {
+      types: [],
+      others: [],
+    },
+    canProvideResidenceRecord: false,
+    height: 150,
+    weight: 45,
+    cupSize: undefined,
+    bust: null,
+    waist: null,
+    hip: null,
+    faceVisibility: undefined,
+    canPhotoDiary: false,
+    canHomeDelivery: false,
+    ngOptions: {
+      common: [],
+      others: [],
+    },
+    allergies: {
+      types: [],
+      others: [],
+      hasAllergy: false,
+    },
+    smoking: {
+      enabled: false,
+      types: [],
+      others: [],
+    },
+    hasSnsAccount: false,
+    snsUrls: [],
+    currentStores: [],
+    previousStores: [],
+    photoDiaryUrls: [],
+    selfIntroduction: "",
+    notes: "",
+    estheOptions: {
+      available: [],
+      ngOptions: [],
+    },
+    hasEstheExperience: false,
+    estheExperiencePeriod: undefined,
+  };
+
+  // フォームの設定
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    defaultValues: {
-      lastName: "",
-      firstName: "",
-      lastNameKana: "",
-      firstNameKana: "",
-      location: undefined,
-      nearestStation: "",
-      availableIds: {
-        types: [],
-        others: [],
-      },
-      canProvideResidenceRecord: false,
-      height: 150,
-      weight: 45,
-      cupSize: undefined,
-      bust: undefined,
-      waist: undefined,
-      hip: undefined,
-      faceVisibility: undefined,
-      canPhotoDiary: false,
-      canHomeDelivery: false,
-      ngOptions: {
-        common: [],
-        others: [],
-      },
-      allergies: {
-        types: [],
-        others: [],
-        hasAllergy: false,
-      },
-      smoking: {
-        enabled: false,
-        types: [],
-        others: [],
-      },
-      hasSnsAccount: false,
-      snsUrls: [],
-      currentStores: [],
-      previousStores: [],
-      photoDiaryUrls: [],
-      selfIntroduction: "",
-      notes: "",
-      estheOptions: {
-        available: [],
-        ngOptions: []
-      },
-      hasEstheExperience: false,
-      estheExperiencePeriod: undefined,
-    },
+    defaultValues,
   });
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
-        // フォームデータの整形
-        const sanitizedData = { ...data };
-
         // 数値フィールドの処理
-        ['bust', 'waist', 'hip'].forEach(field => {
-          const value = sanitizedData[field];
-          if (value === "" || value === undefined) {
-            sanitizedData[field] = null;
-          } else {
-            const numValue = Number(value);
-            sanitizedData[field] = isNaN(numValue) ? null : numValue;
-          }
-        });
+        const processedData = {
+          ...data,
+          bust: data.bust === "" ? null : data.bust,
+          waist: data.waist === "" ? null : data.waist,
+          hip: data.hip === "" ? null : data.hip,
+        };
 
-        // APIリクエストを送信
-        const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
+        const response = await apiRequest("POST", "/api/talent/profile", processedData);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || 'プロフィールの作成に失敗しました');
@@ -394,7 +391,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="text"
               {...form.register("bust", {
-                setValueAs: (value) => (value === "" ? null : Number(value))
+                setValueAs: (value: string) => value === "" ? null : Number(value)
               })}
               placeholder="未入力可"
             />
@@ -406,7 +403,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="text"
               {...form.register("waist", {
-                setValueAs: (value) => (value === "" ? null : Number(value))
+                setValueAs: (value: string) => value === "" ? null : Number(value)
               })}
               placeholder="未入力可"
             />
@@ -418,7 +415,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="text"
               {...form.register("hip", {
-                setValueAs: (value) => (value === "" ? null : Number(value))
+                setValueAs: (value: string) => value === "" ? null : Number(value)
               })}
               placeholder="未入力可"
             />
