@@ -849,7 +849,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
           </div>
 
           {/* 13-14. アレルギーと喫煙 */}
-          <div>
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">アレルギー・喫煙</h3>
             <SwitchField
               label="アレルギー"
@@ -924,13 +924,11 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                     />
                   </div>
                 </div>
-              </</div>
+              </div>
             )}
 
-
             {/* 喫煙セクション */}
-            <div>
-              <h3 className="text-lg font-semibold">喫煙</h3>
+            <div className="mt-6"><h3 className="text-lg font-semibold">喫煙</h3>
               <SwitchField
                 label="喫煙"
                 required
@@ -1006,7 +1004,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             </div>
 
             {/* SNSアカウントセクション */}
-            <div>
+            <div className="space-y-6">
               <h3 className="text-lg font-semibold">SNSアカウント</h3>
               <SwitchField
                 label="SNSアカウント"
