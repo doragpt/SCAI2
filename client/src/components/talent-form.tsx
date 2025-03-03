@@ -162,12 +162,6 @@ export const TalentForm: React.FC = () => {
       // フォームデータの整形
       const sanitizedData = { ...data };
 
-      // バスト・ウエスト・ヒップが空の場合は削除
-      ['bust', 'waist', 'hip'].forEach(field => {
-        if (!sanitizedData[field] || sanitizedData[field] === "") {
-          delete sanitizedData[field];
-        }
-      });
 
       // 配列フィールドのデフォルト値を保証
       const defaultArrayFields = {
@@ -195,6 +189,7 @@ export const TalentForm: React.FC = () => {
         },
       };
 
+      // デフォルト値とユーザー入力を結合
       const processedData = {
         ...defaultArrayFields,
         ...sanitizedData,

@@ -204,7 +204,7 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
-  // 必須フィールド
+  // 既存の必須フィールドはそのまま
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string()
@@ -232,7 +232,7 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // 任意フィールド - バスト・ウエスト・ヒップ
+  // バスト・ウエスト・ヒップの型定義を修正
   bust: z.union([z.string(), z.undefined()])
     .optional()
     .transform(val => {
@@ -255,17 +255,16 @@ export const talentProfileSchema = z.object({
       return isNaN(num) ? undefined : num;
     }),
 
+  // その他のフィールド
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
-
-  // その他のフィールド（デフォルト値付き）
   canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
   hasSnsAccount: z.boolean().default(false),
   hasEstheExperience: z.boolean().default(false),
 
-  // オブジェクトフィールド（デフォルト値付き）
+  // オブジェクトフィールドのデフォルト値設定
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -283,12 +282,7 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
 
-  estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)).default([]),
-    ngOptions: z.array(z.string()).default([]),
-  }).default({ available: [], ngOptions: [] }),
-
-  // 配列フィールド（デフォルト値付き）
+  // 配列フィールドのデフォルト値設定
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
@@ -299,10 +293,16 @@ export const talentProfileSchema = z.object({
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
-  // 任意テキストフィールド
+  // オプショナルフィールド
   selfIntroduction: z.string().optional().default(""),
   notes: z.string().optional().default(""),
   estheExperiencePeriod: z.string().optional(),
+
+  // エステオプション
+  estheOptions: z.object({
+    available: z.array(z.enum(estheOptions)).default([]),
+    ngOptions: z.array(z.string()).default([]),
+  }).default({ available: [], ngOptions: [] }),
 });
 
 // Export types
