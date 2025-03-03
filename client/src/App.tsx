@@ -18,6 +18,7 @@ import KeepListPage from "@/pages/keep-list";
 import ViewHistoryPage from "@/pages/view-history";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useState, useEffect } from "react";
+import ProfileViewPage from "@/pages/profile-view-page";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/jobs/:id" component={JobDetail} />
       <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
+      <ProtectedRoute path="/talent/profile" component={ProfileViewPage} />
       <ProtectedRoute path="/talent/profile/edit" component={BasicInfoEdit} />
       <ProtectedRoute path="/talent/resume/edit" component={TalentRegistration} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
