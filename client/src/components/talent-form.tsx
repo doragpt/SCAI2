@@ -153,8 +153,14 @@ export const TalentForm: React.FC = () => {
   });
 
   const { mutate: createProfile, isPending } = useMutation({
-    mutationFn: (data: TalentProfileData) =>
-      apiRequest("/api/talent/profile", { method: "POST", body: data }),
+    mutationFn: async (data: TalentProfileData) => {
+      const response = await apiRequest("POST", "/api/talent/profile", data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'プロフィールの作成に失敗しました');
+      }
+      return response.json();
+    },
     onSuccess: () => {
       toast({ title: 'プロフィールが作成されました。' });
     },
@@ -346,7 +352,7 @@ export const TalentForm: React.FC = () => {
               </SelectContent>
             </Select>
           </FormField>
-          <FormField label="バスト (cm)">
+          <FormField label="バスト (cm) (任意)">
             <Input
               type="number"
               {...form.register("bust", { valueAsNumber: true })}
@@ -354,7 +360,7 @@ export const TalentForm: React.FC = () => {
               max={120}
             />
           </FormField>
-          <FormField label="ウエスト (cm)">
+          <FormField label="ウエスト (cm) (任意)">
             <Input
               type="number"
               {...form.register("waist", { valueAsNumber: true })}
@@ -362,7 +368,7 @@ export const TalentForm: React.FC = () => {
               max={100}
             />
           </FormField>
-          <FormField label="ヒップ (cm)">
+          <FormField label="ヒップ (cm) (任意)">
             <Input
               type="number"
               {...form.register("hip", { valueAsNumber: true })}

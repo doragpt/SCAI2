@@ -203,7 +203,6 @@ export const talentRegisterFormSchema = z.object({
 });
 
 // Talent profile schema
-// スキーマの更新
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
@@ -231,9 +230,9 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.number().optional(),
-  waist: z.number().optional(),
-  hip: z.number().optional(),
+  bust: z.number().nullable().optional(),
+  waist: z.number().nullable().optional(),
+  hip: z.number().nullable().optional(),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
