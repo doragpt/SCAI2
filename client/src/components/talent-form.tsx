@@ -163,36 +163,31 @@ export const TalentForm: React.FC = () => {
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
-        // 数値フィールドの処理
+        // フォームデータの整形
+        const sanitizedData = { ...data };
+
+        // バスト・ウエスト・ヒップの処理
+        ['bust', 'waist', 'hip'].forEach(field => {
+          const value = sanitizedData[field];
+          if (value === "" || value === undefined) {
+            sanitizedData[field] = null;
+          } else {
+            const numValue = Number(value);
+            sanitizedData[field] = isNaN(numValue) ? null : numValue;
+          }
+        });
+
+        // 空配列を持つオブジェクトフィールドのデフォルト値設定
         const processedData = {
-          ...data,
-          // 数値フィールドの処理
-          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
-          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
-          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
-          // 空配列の初期化
-          ngOptions: {
-            common: data.ngOptions?.common || [],
-            others: data.ngOptions?.others || [],
-          },
-          allergies: {
-            types: data.allergies?.types || [],
-            others: data.allergies?.others || [],
-            hasAllergy: data.allergies?.hasAllergy || false,
-          },
-          smoking: {
-            enabled: data.smoking?.enabled || false,
-            types: data.smoking?.types || [],
-            others: data.smoking?.others || [],
-          },
-          snsUrls: data.snsUrls || [],
-          currentStores: data.currentStores || [],
-          previousStores: data.previousStores || [],
-          photoDiaryUrls: data.photoDiaryUrls || [],
-          estheOptions: {
-            available: data.estheOptions?.available || [],
-            ngOptions: data.estheOptions?.ngOptions || [],
-          },
+          ...sanitizedData,
+          ngOptions: sanitizedData.ngOptions || { common: [], others: [] },
+          allergies: sanitizedData.allergies || { types: [], others: [], hasAllergy: false },
+          smoking: sanitizedData.smoking || { enabled: false, types: [], others: [] },
+          snsUrls: sanitizedData.snsUrls || [],
+          currentStores: sanitizedData.currentStores || [],
+          previousStores: sanitizedData.previousStores || [],
+          photoDiaryUrls: sanitizedData.photoDiaryUrls || [],
+          estheOptions: sanitizedData.estheOptions || { available: [], ngOptions: [] },
         };
 
         console.log('APIリクエスト送信データ:', processedData);
@@ -913,7 +908,8 @@ export const TalentForm: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {                const current = form.watch("previousStores");
+              onClick={() => {
+                const current = form.watch("previousStores");
                 form.setValue(
                   "previousStores",
                   [...current, { storeName: '' }],
@@ -927,67 +923,32 @@ export const TalentForm: React.FC = () => {
         </FormField>
 
         {/* 18-19. 自己PRとその他備考 */}
-        <FormField label="写メ日記URL(任意)">
-          <div className="flex flex-wrap gap-2">
-            {form.watch("photoDiaryUrls").map((url, index) => (
-              <Badge key={index} variant="secondary">
-                {url}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="ml-1 h-4 w-4 p-0"
-                  onClick={() => {
-                    const current = form.watch("photoDiaryUrls");
-                    form.setValue("photoDiaryUrls", current.filter((_, i) => i !== index));
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Input
-              placeholder="写メ日記のURLを入力"
-              onKeyPress={(e) =>{
-                if (e.key === 'Enter') {
-                  const url = e.currentTarget.value.trim();
-                  if (url) {
-                    const current = form.watch("photoDiaryUrls");
-                    form.setValue("photoDiaryUrls", [...current, url]);
-                    e.currentTarget.value = '';
-                  }
-                }
-              }}
-            />
-          </div>
-        </FormField>
-
         <FormField label="自己PR(任意)">
           <textarea
             className="w-full h-32 p-2 border rounded-md"
-            placeholder="例：経験豊富な接客業で培った会話力と、明るい性格を活かしてお客様に楽しい時間を提供できます。
-また、マッサージの技術には自信があり、お客様からも好評をいただいています。
-体型維持のために週3回のジムトレーニングを欠かさず、清潔感も大切にしています。"
+            placeholder="自己PRを入力してください"
             {...form.register("selfIntroduction")}
           />
-          {form.formState.errors.selfIntroduction && <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />}
+          {form.formState.errors.selfIntroduction && (
+            <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />
+          )}
         </FormField>
 
         <FormField label="その他備考(任意)">
           <textarea
-            className="w-full h-32 p-2 border rounded-md"            placeholder="その他の要望がありましたらご記入ください"
+            className="w-full h-32 p-2 border rounded-md"
+            placeholder="その他の要望がありましたらご記入ください"
             {...form.register("notes")}
           />
-          {form.formState.errors.notes && <FormErrorMessage message={form.formState.errors.notes.message as string} />}
+          {form.formState.errors.notes && (
+            <FormErrorMessage message={form.formState.errors.notes.message as string} />
+          )}
         </FormField>
 
-        {/* Submit button */}
         <Button 
           type="submit" 
           className="w-full"
-          disabled={isPending || Object.keys(form.formState.errors).length > 0}
+          disabled={isPending}
         >
           {isPending ? (
             <>

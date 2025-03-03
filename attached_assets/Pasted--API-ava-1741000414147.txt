@@ -1,0 +1,59 @@
+原因 – 空の配列がそのまま送信されていたため
+調査の結果、クライアント側で空の配列 ([]) を含むデータをそのままAPIに送信していることが原因と判明しました。例えば、フォームの初期値では availableIds.others や ngOptions.others、allergies.others、snsUrls など多数のフィールドが空配列のまま定義されています​
+GITHUB.COM
+。これらはユーザーが入力しない限り [] のまま維持され、mutationFn 内で生成される processedData にそのまま展開されています​
+GITHUB.COM
+。上記 processedData は apiRequest 関数でJSONシリアライズされ、そのままリクエストボディとして送信されています​
+GITHUB.COM
+（空配列も "[]" という文字列に変換されます）。サーバー側では、対応するデータベースのカラムがJSON型（例：ng_options, allergies など）として定義されており、デフォルト値として空の配列やオブジェクトが設定されています​
+GITHUB.COM
+。ところがDrizzle ORM経由で空のJSON配列[]がそのまま渡されると、PostgreSQLはこれを正しくパースできずエラーが発生します。実際、Stack Overflow上でもDrizzle ORMが配列データを正しくJSONに変換できず「"[]" が malformed array literal エラーを引き起こす事例が報告されています​
+STACKOVERFLOW.COM
+。これは、空の配列や要素数1の配列を渡した際に、Drizzle/pgドライバが適切なフォーマット（{}のようなPostgres配列リテラル or JSON文字列）に変換せず、生の"[]"がPostgresに渡ってしまうことが原因です。以上より、空の配列フィールドをそのまま送信していたことが根本原因であり、これを回避する必要があります。
+修正方針 – 空配列を送信せずデフォルト値に任せる
+**解決策は、リクエスト送信前に空の配列フィールドをリクエストデータから除去またはnullに変換し、PostgreSQL側で用意されたデフォルト値（空配列）を適用させることです。**具体的には、client/src/components/talent-form.tsx のミューテーション関数内で processedData を作成した直後に、空配列フィールドを削除する処理を追加します。以下に修正すべきコードブロック例を示します（※コメントは説明用に付加）：
+tsx
+コピーする
+// ... 前略 ...
+const processedData = {
+  ...data,
+  bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+  waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+  hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+};
+
+// ★ 空の配列フィールドを除去してデフォルト値に任せる
+if (processedData.ngOptions.common.length === 0 && processedData.ngOptions.others.length === 0) {
+  delete processedData.ngOptions;
+}
+if (processedData.allergies.types.length === 0 && processedData.allergies.others.length === 0 && !processedData.allergies.hasAllergy) {
+  delete processedData.allergies;
+}
+if (processedData.smoking.types.length === 0 && processedData.smoking.others.length === 0 && !processedData.smoking.enabled) {
+  delete processedData.smoking;
+}
+if (processedData.estheOptions.available.length === 0 && processedData.estheOptions.ngOptions.length === 0) {
+  delete processedData.estheOptions;
+}
+// トップレベルの配列フィールドもチェック
+if (processedData.snsUrls.length === 0) delete processedData.snsUrls;
+if (processedData.currentStores.length === 0) delete processedData.currentStores;
+if (processedData.previousStores.length === 0) delete processedData.previousStores;
+if (processedData.photoDiaryUrls.length === 0) delete processedData.photoDiaryUrls;
+
+// デバッグ用ログ（修正前と挙動確認）
+console.log('APIリクエスト送信データ(修正後):', processedData);
+
+const response = await apiRequest("POST", "/api/talent/profile", processedData);
+上記のように空の配列プロパティをリクエストオブジェクトから削除することで、該当フィールドを含めずにAPIリクエストが送信されます。サーバー側ではこれらフィールドに対しデータベースで設定されたデフォルト（空配列または空オブジェクト）が適用されるため、結果的に「空の配列」を正しく扱うことができます。
+修正後の動作確認
+修正を加えたら、以下のようなシナリオでテストしてください：
+空配列フィールドの送信テスト: すべての「その他」項目を空のまま（何も入力せず）プロフィール登録を実行します。修正前は発生していた 400: {"message":"malformed array literal: \"[]\""} エラーが発生しないことを確認してください。
+通常入力のテスト: 身分証やNG項目で「その他」に何か文字列を入力した場合や、SNSリンクを1件入力した場合なども試し、正常に登録できることを確認します。空配列フィールドを除去するロジックを追加しても、実際に値が入っている場合はそのフィールドがそのまま送信され、従来通り保存できることを確認してください。
+以上の修正により、空の配列が原因の 「malformed array literal: "[]"」エラー は解消されるはずです。これでプロフィール作成APIは、空の配列フィールドがあってもエラーを返さず正常に動作するようになります。もし他にも同様の入力フォームがある場合は、同様の対策（空配列の除去 or null化）を施すことをお勧めします。併せてご確認ください。参考資料: 空の配列リテラルによるPostgreSQLエラーの報告​
+STACKOVERFLOW.COM
+および該当コード箇所の抜粋​
+GITHUB.COM
+​
+GITHUB.COM
+。今回の修正で、データベースのデフォルト値（空のJSON配列/オブジェクト）を活用し、安全に空配列を処理しています。

@@ -173,18 +173,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Profile creation endpoint
   app.post("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
       console.log('Profile creation request received:', req.body);
 
-      // リクエストデータを整形
+      // リクエストデータの整形
       const requestData = {
         ...req.body,
         // 数値フィールドの処理
         bust: req.body.bust === "" || req.body.bust === undefined ? null : Number(req.body.bust),
         waist: req.body.waist === "" || req.body.waist === undefined ? null : Number(req.body.waist),
         hip: req.body.hip === "" || req.body.hip === undefined ? null : Number(req.body.hip),
+        // 配列フィールドのデフォルト値設定
+        ngOptions: req.body.ngOptions || { common: [], others: [] },
+        allergies: req.body.allergies || { types: [], others: [], hasAllergy: false },
+        smoking: req.body.smoking || { enabled: false, types: [], others: [] },
+        snsUrls: req.body.snsUrls || [],
+        currentStores: req.body.currentStores || [],
+        previousStores: req.body.previousStores || [],
+        photoDiaryUrls: req.body.photoDiaryUrls || [],
+        estheOptions: req.body.estheOptions || { available: [], ngOptions: [] },
       };
 
       // バリデーション
