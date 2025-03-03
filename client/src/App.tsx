@@ -16,6 +16,8 @@ import BasicInfoEdit from "@/pages/basic-info-edit";
 import Jobs from "@/pages/jobs";
 import KeepListPage from "@/pages/keep-list";
 import ViewHistoryPage from "@/pages/view-history";
+import { AgeVerificationModal } from "@/components/age-verification-modal";
+import { useState, useEffect } from "react";
 
 function Router() {
   return (
@@ -39,6 +41,37 @@ function Router() {
 }
 
 export default function App() {
+  const [showAgeVerification, setShowAgeVerification] = useState(true);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
+
+  useEffect(() => {
+    const verified = localStorage.getItem("ageVerified");
+    if (verified === "true") {
+      setIsAgeVerified(true);
+      setShowAgeVerification(false);
+    }
+  }, []);
+
+  const handleAgeVerification = (verified: boolean) => {
+    if (verified) {
+      localStorage.setItem("ageVerified", "true");
+      setIsAgeVerified(true);
+    } else {
+      window.location.href = "https://www.google.com";
+    }
+    setShowAgeVerification(false);
+  };
+
+  if (!isAgeVerified && showAgeVerification) {
+    return (
+      <AgeVerificationModal
+        open={showAgeVerification}
+        onOpenChange={setShowAgeVerification}
+        onVerify={handleAgeVerification}
+      />
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
