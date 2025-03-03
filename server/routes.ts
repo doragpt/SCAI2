@@ -184,19 +184,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bust: req.body.bust === "" || req.body.bust === undefined ? null : Number(req.body.bust),
         waist: req.body.waist === "" || req.body.waist === undefined ? null : Number(req.body.waist),
         hip: req.body.hip === "" || req.body.hip === undefined ? null : Number(req.body.hip),
-        // 配列フィールドのデフォルト値設定
-        ngOptions: req.body.ngOptions || { common: [], others: [] },
-        allergies: req.body.allergies || { types: [], others: [], hasAllergy: false },
-        smoking: req.body.smoking || { enabled: false, types: [], others: [] },
-        snsUrls: req.body.snsUrls || [],
-        currentStores: req.body.currentStores || [],
-        previousStores: req.body.previousStores || [],
-        photoDiaryUrls: req.body.photoDiaryUrls || [],
-        estheOptions: req.body.estheOptions || { available: [], ngOptions: [] },
       };
 
-      // バリデーション
-      const profileData = talentProfileSchema.parse(requestData);
+      // 空のフィールドにデフォルト値を設定
+      const defaultFields = {
+        ngOptions: { common: [], others: [] },
+        allergies: { types: [], others: [], hasAllergy: false },
+        smoking: { enabled: false, types: [], others: [] },
+        snsUrls: [],
+        currentStores: [],
+        previousStores: [],
+        photoDiaryUrls: [],
+        estheOptions: { available: [], ngOptions: [] },
+      };
+
+      // データを結合
+      const profileData = talentProfileSchema.parse({
+        ...defaultFields,
+        ...requestData,
+      });
 
       const profile = await db.transaction(async (tx) => {
         // 既存のプロフィールチェック

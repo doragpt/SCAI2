@@ -1,0 +1,174 @@
+以下は、クライアント側で送信データに含まれる空の配列が原因となっていると仮定した、統合的かつ徹底的な修正手順です。これにより、バックエンドに「空の配列」が送られることを防ぎ、PostgreSQL の「malformed array literal: \"[]\"」エラーを回避できます。
+
+---
+
+## 【1】ヘルパー関数で空の配列フィールドを削除する
+
+まず、空の配列が含まれるフィールドを再帰的にチェックし、もし空の配列ならそのキーを除去するユーティリティ関数を作成します。  
+新規ファイルとして、たとえば `client/src/utils/cleanData.ts` を作成してください。
+
+```ts
+// client/src/utils/cleanData.ts
+/**
+ * オブジェクト内の空の配列（[]）を再帰的に削除する関数
+ * 空の配列は undefined として扱い、後でそのキーを削除する。
+ */
+export function cleanEmptyArrays(obj: any): any {
+  if (Array.isArray(obj)) {
+    // 配列が空の場合は undefined を返す（キー削除の対象）
+    if (obj.length === 0) {
+      return undefined;
+    }
+    // 配列が空でなければ、各要素に対して再帰的に処理
+    return obj
+      .map(cleanEmptyArrays)
+      // 要素が undefined になったものは除去
+      .filter((item) => item !== undefined);
+  } else if (obj !== null && typeof obj === 'object') {
+    const cleaned: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      const cleanedValue = cleanEmptyArrays(value);
+      // undefined でなければ設定（つまり、空配列の場合はキー自体を削除）
+      if (cleanedValue !== undefined) {
+        cleaned[key] = cleanedValue;
+      }
+    });
+    return cleaned;
+  }
+  return obj;
+}
+```
+
+---
+
+## 【2】talent-form.tsx で送信データを整形する
+
+次に、フォーム送信時に生成するデータ（`processedData`）に対して、先ほどのヘルパー関数を適用します。  
+対象ファイルは `client/src/components/talent-form.tsx` です。  
+以下は修正例です（コメント内に具体的な箇所の説明を記載しています）。
+
+```tsx
+// client/src/components/talent-form.tsx
+
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useMutation } from 'react-query';
+import { apiRequest } from '../lib/queryClient';
+import { cleanEmptyArrays } from '../utils/cleanData';
+
+export default function TalentForm() {
+  const { register, handleSubmit, getValues } = useForm();
+  
+  // フォーム送信時の処理
+  const mutation = useMutation(async (data: any) => {
+    // 例：数値変換や空文字 -> null 変換など、既存の変換処理
+    const processedData = {
+      ...data,
+      bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+      waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+      hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+      // その他の変換があればここに記載
+    };
+
+    // ★ ここで送信前に空の配列フィールドを削除する
+    const cleanedData = cleanEmptyArrays(processedData);
+
+    // デバッグ用：送信データをコンソール出力して確認
+    console.log('APIリクエスト送信データ(修正後):', cleanedData);
+
+    // 修正後の cleanedData を使って API リクエストを送信
+    const response = await apiRequest("POST", "/api/talent/profile", cleanedData);
+    return response;
+  });
+
+  const onSubmit = (data: any) => {
+    mutation.mutate(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* フォーム項目。例: */}
+      <input {...register("lastName")} placeholder="姓" />
+      <input {...register("firstName")} placeholder="名" />
+      {/* … 他のフォーム項目 … */}
+      <button type="submit">プロフィール作成</button>
+    </form>
+  );
+}
+```
+
+この修正では、  
+- **`cleanEmptyArrays`** 関数が再帰的に空の配列フィールド（例えば `availableIds.others`、`ngOptions.others`、`allergies.others`、`snsUrls`、`currentStores` など）を削除します。  
+- 結果として、空の配列が含まれたキーは API 送信データから完全に除外されるので、サーバー側に `"[]"` という文字列が送られず、PostgreSQL が誤解釈する問題を防げます。
+
+---
+
+## 【3】queryClient.ts の確認
+
+念のため、APIリクエスト時のヘッダ設定も確認してください。  
+対象ファイル： `client/src/lib/queryClient.ts`
+
+```ts
+// client/src/lib/queryClient.ts
+export async function apiRequest(method: string, url: string, data?: any) {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`${response.status}: ${JSON.stringify(errorData)}`);
+  }
+  return response.json();
+}
+```
+
+この部分は問題がなければそのままで大丈夫です。
+
+---
+
+## 【4】サーバー側（バックエンド）の確認
+
+もしサーバー側でもデータ変換の問題が懸念される場合、受信したデータをそのまま DB 挿入する前にログを出力して、不要なフィールドが存在しないか確認してください。  
+たとえば、Express のルータ内で以下のようにログ出力を追加し、`req.body` を確認します。
+
+```js
+// 例: server/routes/talentProfile.js または index.ts 内
+app.post('/api/talent/profile', async (req, res) => {
+  console.log('受信データ:', req.body);
+  // その後、データ整形や挿入処理
+  try {
+    // DB 挿入処理
+    await db.insert(talentProfileTable).values(req.body);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('DB挿入エラー:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+```
+
+これにより、クライアント側で送信されるデータが空の配列キーを含んでいないか、または `null` となっているかを確認できます。
+
+---
+
+## 【5】テストと動作確認
+
+1. **修正後、フォームの「その他」などの空の配列フィールドがある状態でプロフィール作成を実行**し、ブラウザのコンソールで出力された `APIリクエスト送信データ(修正後)` を確認してください。  
+   - 空の配列を含むキーが削除されていることを確認してください。
+
+2. **API が 400 エラーを返さず、正常に登録が完了すること**を確認してください。
+
+3. **実際にデータベースに保存されるデータを確認**し、必要なフィールドはデフォルト値または入力値が適用され、エラーが出ないことを確認してください。
+
+---
+
+この手順により、統合的にクライアント側で送信データの整形を行い、空の配列による不正なリテラルが発生しないようにできます。  
+上記の変更をすべて実施後、再度動作確認をお願いします。  
+なお、サーバー側でのログも併せて確認することで、どのフィールドが原因となっているのかより明確に判断できるはずです。

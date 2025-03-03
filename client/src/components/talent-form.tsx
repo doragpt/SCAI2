@@ -40,6 +40,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown } from "lucide-react";
 import { X } from "lucide-react";
+import { cleanEmptyArrays } from "@/utils/cleanData";
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -177,18 +178,8 @@ export const TalentForm: React.FC = () => {
           }
         });
 
-        // 空配列を持つオブジェクトフィールドのデフォルト値設定
-        const processedData = {
-          ...sanitizedData,
-          ngOptions: sanitizedData.ngOptions || { common: [], others: [] },
-          allergies: sanitizedData.allergies || { types: [], others: [], hasAllergy: false },
-          smoking: sanitizedData.smoking || { enabled: false, types: [], others: [] },
-          snsUrls: sanitizedData.snsUrls || [],
-          currentStores: sanitizedData.currentStores || [],
-          previousStores: sanitizedData.previousStores || [],
-          photoDiaryUrls: sanitizedData.photoDiaryUrls || [],
-          estheOptions: sanitizedData.estheOptions || { available: [], ngOptions: [] },
-        };
+        // 空配列を削除
+        const processedData = cleanEmptyArrays(sanitizedData);
 
         console.log('APIリクエスト送信データ:', processedData);
 
