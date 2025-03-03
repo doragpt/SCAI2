@@ -445,7 +445,7 @@ export const TalentForm: React.FC = () => {
               types: [],
               others: [],
               hasAllergy: checked,
-            });
+            }, { shouldValidate: true });
           }}
         />
 
@@ -518,7 +518,7 @@ export const TalentForm: React.FC = () => {
               enabled: checked,
               types: [],
               others: [],
-            });
+            }, { shouldValidate: true });
           }}
         />
 
@@ -587,7 +587,12 @@ export const TalentForm: React.FC = () => {
           label="SNSアカウント"
           required
           checked={form.watch("hasSnsAccount")}
-          onCheckedChange={(checked) => form.setValue("hasSnsAccount", checked)}
+          onCheckedChange={(checked) => {
+            form.setValue("hasSnsAccount", checked, { shouldValidate: true });
+            if (!checked) {
+              form.setValue("snsUrls", []);
+            }
+          }}
         />
 
         {form.watch("hasSnsAccount") && (
@@ -690,16 +695,7 @@ export const TalentForm: React.FC = () => {
                   onChange={(e) => {
                     const current = form.watch("previousStores");
                     current[index].storeName = e.target.value;
-                    form.setValue("previousStores", [...current]);
-                  }}
-                />
-                <Input
-                  placeholder="在籍期間（例：2023年4月～2023年12月）"
-                  value={store.period}
-                  onChange={(e) => {
-                    const current = form.watch("previousStores");
-                    current[index].period = e.target.value;
-                    form.setValue("previousStores", [...current]);
+                    form.setValue("previousStores", [...current], { shouldValidate: true });
                   }}
                 />
                 <Button
@@ -708,7 +704,11 @@ export const TalentForm: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     const current = form.watch("previousStores");
-                    form.setValue("previousStores", current.filter((_, i) => i !== index));
+                    form.setValue(
+                      "previousStores",
+                      current.filter((_, i) => i !== index),
+                      { shouldValidate: true }
+                    );
                   }}
                 >
                   削除
@@ -720,7 +720,11 @@ export const TalentForm: React.FC = () => {
               variant="outline"
               onClick={() => {
                 const current = form.watch("previousStores");
-                form.setValue("previousStores", [...current, { storeName: '', period: '' }]);
+                form.setValue(
+                  "previousStores",
+                  [...current, { storeName: '' }],
+                  { shouldValidate: true }
+                );
               }}
             >
               店舗を追加
