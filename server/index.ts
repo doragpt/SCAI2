@@ -8,7 +8,9 @@ const app = express();
 
 // CORSミドルウェアを追加
 app.use(cors({
-  origin: true,
+  origin: process.env.NODE_ENV === "development" 
+    ? ["http://localhost:3000", "http://localhost:5000"]
+    : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -78,6 +80,12 @@ app.use((req, res, next) => {
       reusePort: true,
     }, () => {
       log(`サーバーを起動しました: http://0.0.0.0:5000`);
+      log(`環境: ${app.get("env")}`);
+      log(`CORS設定: ${JSON.stringify({
+        origin: process.env.NODE_ENV === "development" 
+          ? ["http://localhost:3000", "http://localhost:5000"]
+          : true
+      })}`);
     });
   } catch (error) {
     console.error("Server startup error:", error);

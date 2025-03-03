@@ -2,7 +2,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // APIのベースURL設定
 const API_BASE_URL = process.env.NODE_ENV === "development" 
-  ? "http://localhost:5000"
+  ? window.location.protocol + "//" + window.location.hostname + ":5000"
   : "";
 
 async function throwIfResNotOk(res: Response) {
@@ -17,12 +17,9 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const headers: Record<string, string> = {};
-
-  // データがある場合はContent-Typeを設定
-  if (data) {
-    headers["Content-Type"] = "application/json";
-  }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
 
   // トークンがある場合はAuthorizationヘッダーを追加
   const token = localStorage.getItem("auth_token");
@@ -56,7 +53,6 @@ export async function apiRequest(
   return res;
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
@@ -97,6 +93,8 @@ export const getQueryFn: <T>(options: {
     await throwIfResNotOk(res);
     return await res.json();
   };
+
+type UnauthorizedBehavior = "returnNull" | "throw";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
