@@ -3,7 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
   talentProfileSchema,
+  talentProfileUpdateSchema,
   type TalentProfileData,
+  type TalentProfileUpdate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
@@ -200,43 +202,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/talent/profile", authenticate, async (req: any, res) => {
-    //This section is largely unchanged from original, but uses authenticate middleware.  Error handling could be improved for consistency.
     const userId = req.user.id;
     console.log('Profile update request for user:', userId);
 
     try {
+      // リクエストデータをバリデーション
       const updateData = talentProfileUpdateSchema.parse(req.body);
 
-      const updatedUser = await db.transaction(async (tx) => {
-        const [currentUser] = await tx
+      const updatedProfile = await db.transaction(async (tx) => {
+        // 現在のプロフィールを取得
+        const [currentProfile] = await tx
           .select()
-          .from(users)
-          .where(eq(users.id, userId));
+          .from(talentProfiles)
+          .where(eq(talentProfiles.userId, userId));
 
-        if (!currentUser) {
-          throw new Error("ユーザーが見つかりません");
+        if (!currentProfile) {
+          throw new Error("プロフィールが見つかりません");
         }
 
-        if (updateData.currentPassword && updateData.newPassword) {
-          const isPasswordValid = await comparePasswords(
-            updateData.currentPassword,
-            currentUser.password
-          );
+        // 更新データから数値フィールドを処理
+        const processedData = {
+          ...updateData,
+          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
+          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
+          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
+        };
 
-          if (!isPasswordValid) {
-            throw new Error("現在のパスワードが正しくありません");
+        // JSONBフィールドを適切に処理
+        const jsonbFields = [
+          'availableIds',
+          'ngOptions',
+          'allergies',
+          'smoking',
+          'snsUrls',
+          'currentStores',
+          'previousStores',
+          'photoDiaryUrls',
+          'estheOptions'
+        ];
+
+        const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
+          if (jsonbFields.includes(key) && value !== undefined) {
+            acc[key] = toJsonb(value);
+          } else if (value !== undefined) {
+            acc[key] = value;
           }
+          return acc;
+        }, {} as Record<string, any>);
 
-          updateData.password = await hashPassword(updateData.newPassword);
-        }
-
+        // プロフィールを更新
         const [updated] = await tx
-          .update(users)
+          .update(talentProfiles)
           .set({
-            ...updateData,
+            ...updateValues,
             updatedAt: new Date(),
           })
-          .where(eq(users.id, userId))
+          .where(eq(talentProfiles.userId, userId))
           .returning();
 
         if (!updated) {
@@ -247,11 +268,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log('Profile updated successfully:', { userId });
-      res.json(updatedUser);
+      res.json(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', error);
       if (error instanceof Error) {
-        res.status(error.message === "ユーザーが見つかりません" ? 404 : 500).json({
+        res.status(error.message === "プロフィールが見つかりません" ? 404 : 400).json({
           message: error.message
         });
       } else {

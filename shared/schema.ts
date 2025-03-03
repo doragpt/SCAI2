@@ -301,6 +301,27 @@ export const talentProfileSchema = z.object({
   }).default({ available: [], ngOptions: [] }),
 });
 
+// スキーマ定義の最後に追加
+export const talentProfileUpdateSchema = talentProfileSchema.extend({
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        return val.length >= 8 && val.length <= 48 && /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/.test(val);
+      },
+      {
+        message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+      }
+    ),
+}).omit({
+  userId: true
+}).partial();
+
+// 型定義エクスポートを追加
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
