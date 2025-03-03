@@ -4,8 +4,9 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 const API_BASE_URL = (() => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
+  // Replitの開発環境に合わせて設定を調整
   return process.env.NODE_ENV === "development"
-    ? `${protocol}//${hostname}:5000`
+    ? `${protocol}//${hostname}`  // ポート指定を削除
     : "";
 })();
 
@@ -55,7 +56,7 @@ export async function apiRequest(
       headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
-      mode: "cors",
+      mode: "same-origin", // CORSモードを調整
     });
 
     await throwIfResNotOk(res);
@@ -96,7 +97,7 @@ export const getQueryFn: <T>(options: {
       const res = await fetch(fullUrl, {
         headers,
         credentials: "include",
-        mode: "cors",
+        mode: "same-origin", // CORSモードを調整
       });
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
