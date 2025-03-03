@@ -96,12 +96,12 @@ export async function updateTalentProfile(data: any) {
     // キャッシュの更新処理
     queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
 
+    // ローカルストレージにも保存
+    localStorage.setItem('talentProfile', JSON.stringify(updatedProfile));
+
     // キャッシュを無効化して再取得を強制
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE], exact: true });
-
-    // ローカルストレージにも保存
-    localStorage.setItem('talentProfile', JSON.stringify(updatedProfile));
 
     return updatedProfile;
   } catch (error) {
