@@ -9,6 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,15 +28,17 @@ import {
   commonNgOptions,
   idTypes,
   prefectures,
+  estheOptions,
   type AllergyType,
   type SmokingType,
+  type EstheOption,
   type TalentProfileData,
   talentProfileSchema,
 } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, Tag } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -89,8 +96,7 @@ export const TalentForm: React.FC = () => {
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
-  const [estheOptions, setEstheOptions] = useState([{name: "オプション1", checked: false}, {name: "オプション2", checked: false}]);
-
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -447,60 +453,72 @@ export const TalentForm: React.FC = () => {
         </FormField>
 
         {/* エステオプション */}
-        <FormField label="風俗エステ用可能オプション">
-          <div className="grid grid-cols-2 gap-4">
-            {form.watch("estheOptions.available").map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={form.watch("estheOptions.available").includes(option)}
-                  onCheckedChange={(checked) => {
-                    const current = form.watch("estheOptions.available");
-                    const updated = checked
-                      ? [...current, option]
-                      : current.filter(o => o !== option);
-                    form.setValue("estheOptions.available", updated);
-                  }}
-                />
-                <label className="text-sm">{option}</label>
-              </div>
-            ))}
-          </div>
+        <Collapsible
+          open={isEstheOpen}
+          onOpenChange={setIsEstheOpen}
+          className="border rounded-lg p-4"
+        >
+          <CollapsibleTrigger className="flex items-center justify-between w-full">
+            <span className="font-medium">風俗エステ用可能オプション</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isEstheOpen ? 'transform rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {estheOptions.map((option) => (
+                <div key={option.name} className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={form.watch("estheOptions.available").includes(option.name)}
+                    onCheckedChange={(checked) => {
+                      const current = form.watch("estheOptions.available");
+                      const updated = checked
+                        ? [...current, option.name]
+                        : current.filter(o => o !== option.name);
+                      form.setValue("estheOptions.available", updated);
+                    }}
+                  />
+                  <label className="text-sm">{option.name}</label>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-4">
-            <Label>その他NGプレイ</Label>
-            <Input
-              placeholder="その他のNGプレイを入力"
-              value={form.watch("estheOptions.ngOptions").join(", ")}
-              onChange={(e) => {
-                const value = e.target.value;
-                form.setValue("estheOptions.ngOptions", value ? value.split(",").map(v => v.trim()) : []);
-              }}
-            />
-          </div>
+            <div className="mt-4">
+              <Label>その他NGプレイ</Label>
+              <Input
+                placeholder="その他のNGプレイを入力"
+                value={form.watch("estheOptions.ngOptions").join(", ")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  form.setValue(
+                    "estheOptions.ngOptions",
+                    value ? value.split(",").map(v => v.trim()) : []
+                  );
+                }}
+              />
+            </div>
 
-          <div className="mt-4">
-            <SwitchField
-              label="エステ経験"
-              checked={form.watch("hasEstheExperience")}
-              onCheckedChange={(checked) => {
-                form.setValue("hasEstheExperience", checked, { shouldValidate: true });
-                if (!checked) {
-                  form.setValue("estheExperiencePeriod", undefined);
-                }
-              }}
-            />
+            <div className="mt-4">
+              <SwitchField
+                label="エステ経験"
+                checked={form.watch("hasEstheExperience")}
+                onCheckedChange={(checked) => {
+                  form.setValue("hasEstheExperience", checked, { shouldValidate: true });
+                  if (!checked) {
+                    form.setValue("estheExperiencePeriod", undefined);
+                  }
+                }}
+              />
 
-            {form.watch("hasEstheExperience") && (
-              <div className="mt-2">
-                <Input
-                  placeholder="経験期間を入力（例：2年）"
-                  {...form.register("estheExperiencePeriod")}
-                />
-              </div>
-            )}
-          </div>
-        </FormField>
-
+              {form.watch("hasEstheExperience") && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="経験期間を入力（例：2年）"
+                    {...form.register("estheExperiencePeriod")}
+                  />
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* 13-14. アレルギーと喫煙 */}
         <SwitchField
