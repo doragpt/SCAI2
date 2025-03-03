@@ -204,7 +204,7 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
-  // 既存の必須フィールドは変更なし
+  // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string()
@@ -231,30 +231,37 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  // 任意フィールドの修正
-  bust: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
-  waist: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
-  hip: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
+
+  // 任意フィールド
+  bust: z.string().optional().transform(val => val ? Number(val) : undefined),
+  waist: z.string().optional().transform(val => val ? Number(val) : undefined),
+  hip: z.string().optional().transform(val => val ? Number(val) : undefined),
+
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
-  canPhotoDiary: z.boolean(),
-  canHomeDelivery: z.boolean(),
+  canPhotoDiary: z.boolean().default(false),
+  canHomeDelivery: z.boolean().default(false),
+
+  // オブジェクトと配列のデフォルト値設定
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
   }).default({ common: [], others: [] }),
+
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)).default([]),
     others: z.array(z.string()).default([]),
-    hasAllergy: z.boolean(),
+    hasAllergy: z.boolean().default(false),
   }).default({ types: [], others: [], hasAllergy: false }),
+
   smoking: z.object({
-    enabled: z.boolean(),
+    enabled: z.boolean().default(false),
     types: z.array(z.enum(smokingTypes)).default([]),
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
-  hasSnsAccount: z.boolean(),
+
+  hasSnsAccount: z.boolean().default(false),
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
@@ -264,13 +271,16 @@ export const talentProfileSchema = z.object({
     storeName: z.string(),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
+
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
+
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)).default([]),
     ngOptions: z.array(z.string()).default([]),
   }).default({ available: [], ngOptions: [] }),
-  hasEstheExperience: z.boolean(),
+
+  hasEstheExperience: z.boolean().default(false),
   estheExperiencePeriod: z.string().optional(),
 });
 

@@ -154,36 +154,37 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      // 配列フィールドのデフォルト値を保証
-      const processedData = {
+      // フォームデータの整形
+      const formData = {
         ...data,
-        // 空の配列フィールドにデフォルト値を設定
-        snsUrls: data.snsUrls || [],
-        currentStores: data.currentStores || [],
-        previousStores: data.previousStores || [],
-        photoDiaryUrls: data.photoDiaryUrls || [],
-        // NGオプションなどのオブジェクトにもデフォルト値を設定
+        // すべての配列フィールドのデフォルト値を保証
+        snsUrls: [],
+        currentStores: [],
+        previousStores: [],
+        photoDiaryUrls: [],
         ngOptions: {
-          common: data.ngOptions?.common || [],
-          others: data.ngOptions?.others || [],
+          common: [],
+          others: [],
         },
         allergies: {
-          types: data.allergies?.types || [],
-          others: data.allergies?.others || [],
-          hasAllergy: data.allergies?.hasAllergy || false,
+          types: [],
+          others: [],
+          hasAllergy: false,
         },
         smoking: {
-          enabled: data.smoking?.enabled || false,
-          types: data.smoking?.types || [],
-          others: data.smoking?.others || [],
+          enabled: false,
+          types: [],
+          others: [],
         },
         estheOptions: {
-          available: data.estheOptions?.available || [],
-          ngOptions: data.estheOptions?.ngOptions || [],
+          available: [],
+          ngOptions: [],
         },
+        // オーバーライド
+        ...data,
       };
 
-      const response = await apiRequest("POST", "/api/talent/profile", processedData);
+      const response = await apiRequest("POST", "/api/talent/profile", formData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'プロフィールの作成に失敗しました');
@@ -383,26 +384,23 @@ export const TalentForm: React.FC = () => {
           </FormField>
           <FormField label="バスト (cm) (任意)">
             <Input
-              type="number"
+              type="text"
               {...form.register("bust")}
-              min={65}
-              max={120}
+              placeholder="未入力可"
             />
           </FormField>
           <FormField label="ウエスト (cm) (任意)">
             <Input
-              type="number"
+              type="text"
               {...form.register("waist")}
-              min={50}
-              max={100}
+              placeholder="未入力可"
             />
           </FormField>
           <FormField label="ヒップ (cm) (任意)">
             <Input
-              type="number"
+              type="text"
               {...form.register("hip")}
-              min={65}
-              max={120}
+              placeholder="未入力可"
             />
           </FormField>
         </div>
