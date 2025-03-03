@@ -154,6 +154,12 @@ export const talentProfiles = pgTable("talent_profiles", {
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
+  estheOptions: json("esthe_options").$type<{
+    available: EstheOption[];
+    ngOptions: string[];
+  }>().default({ available: [], ngOptions: [] }),
+  hasEstheExperience: boolean("has_esthe_experience").default(false),
+  estheExperiencePeriod: text("esthe_experience_period"),
 });
 
 // Login and registration schemas
@@ -233,7 +239,7 @@ export const talentProfileSchema = z.object({
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
-  }),
+  }).optional(),
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)),
     others: z.array(z.string()),
@@ -256,6 +262,12 @@ export const talentProfileSchema = z.object({
   photoDiaryUrls: z.array(z.string()),
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
+  estheOptions: z.object({
+    available: z.array(z.enum(estheOptions)),
+    ngOptions: z.array(z.string()),
+  }),
+  hasEstheExperience: z.boolean(),
+  estheExperiencePeriod: z.string().optional(),
 });
 
 // Export types

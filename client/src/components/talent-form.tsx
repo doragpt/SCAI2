@@ -52,14 +52,15 @@ const FormField: React.FC<{
   </div>
 );
 
-// SwitchField component for consistent switch styling
+// SwitchField component
 const SwitchField: React.FC<{
   label: string;
   required?: boolean;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   description?: string;
-}> = ({ label, required = false, checked, onCheckedChange, description }) => (
+  valueLabels?: { checked: string; unchecked: string };
+}> = ({ label, required = false, checked, onCheckedChange, description, valueLabels = { checked: "有り", unchecked: "無し" } }) => (
   <div className="flex flex-row items-center justify-between rounded-lg border p-4">
     <div className="space-y-0.5">
       <div className="flex items-center gap-2">
@@ -76,7 +77,7 @@ const SwitchField: React.FC<{
         onCheckedChange={onCheckedChange}
       />
       <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? "有り" : "無し"}
+        {checked ? valueLabels.checked : valueLabels.unchecked}
       </span>
     </div>
   </div>
@@ -88,6 +89,8 @@ export const TalentForm: React.FC = () => {
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+  const [estheOptions, setEstheOptions] = useState([{name: "オプション1", checked: false}, {name: "オプション2", checked: false}]);
+
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -133,6 +136,12 @@ export const TalentForm: React.FC = () => {
       photoDiaryUrls: [],
       selfIntroduction: "",
       notes: "",
+      estheOptions: {
+        available: [],
+        ngOptions: []
+      },
+      hasEstheExperience: false,
+      estheExperiencePeriod: undefined
     },
   });
 
@@ -365,19 +374,21 @@ export const TalentForm: React.FC = () => {
           label="写メ日記の投稿可否"
           required
           checked={form.watch("canPhotoDiary")}
-          onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked)}
+          onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked, { shouldValidate: true })}
+          valueLabels={{ checked: "可能", unchecked: "不可" }}
         />
 
         <SwitchField
           label="自宅への派遣"
           required
           checked={form.watch("canHomeDelivery")}
-          onCheckedChange={(checked) => form.setValue("canHomeDelivery", checked)}
-          description="自宅での接客が可能な場合は「可」を選択してください"
+          onCheckedChange={(checked) => form.setValue("canHomeDelivery", checked, { shouldValidate: true })}
+          valueLabels={{ checked: "可能", unchecked: "不可" }}
+          description="自宅での接客が可能な場合は「可能」を選択してください"
         />
 
-        {/* 12. NGオプション（必須） */}
-        <FormField label="NGオプション" required>
+        {/* 12. NGオプション（任意） */}
+        <FormField label="NGオプション">
           <div className="grid grid-cols-2 gap-4">
             {commonNgOptions.map((option) => (
               <div key={option} className="flex items-center space-x-2">
@@ -434,6 +445,62 @@ export const TalentForm: React.FC = () => {
             </div>
           </div>
         </FormField>
+
+        {/* エステオプション */}
+        <FormField label="風俗エステ用可能オプション">
+          <div className="grid grid-cols-2 gap-4">
+            {form.watch("estheOptions.available").map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox
+                  checked={form.watch("estheOptions.available").includes(option)}
+                  onCheckedChange={(checked) => {
+                    const current = form.watch("estheOptions.available");
+                    const updated = checked
+                      ? [...current, option]
+                      : current.filter(o => o !== option);
+                    form.setValue("estheOptions.available", updated);
+                  }}
+                />
+                <label className="text-sm">{option}</label>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <Label>その他NGプレイ</Label>
+            <Input
+              placeholder="その他のNGプレイを入力"
+              value={form.watch("estheOptions.ngOptions").join(", ")}
+              onChange={(e) => {
+                const value = e.target.value;
+                form.setValue("estheOptions.ngOptions", value ? value.split(",").map(v => v.trim()) : []);
+              }}
+            />
+          </div>
+
+          <div className="mt-4">
+            <SwitchField
+              label="エステ経験"
+              checked={form.watch("hasEstheExperience")}
+              onCheckedChange={(checked) => {
+                form.setValue("hasEstheExperience", checked, { shouldValidate: true });
+                if (!checked) {
+                  form.setValue("estheExperiencePeriod", undefined);
+                }
+              }}
+            />
+
+            {form.watch("hasEstheExperience") && (
+              <div className="mt-2">
+                <Input
+                  placeholder="経験期間を入力（例：2年）"
+                  {...form.register("estheExperiencePeriod")}
+                />
+              </div>
+            )}
+          </div>
+        </FormField>
+
 
         {/* 13-14. アレルギーと喫煙 */}
         <SwitchField
