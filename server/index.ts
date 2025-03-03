@@ -6,20 +6,21 @@ import cors from "cors";
 
 const app = express();
 
-// CORSミドルウェアを追加
+// CORSミドルウェアの設定を改善
 app.use(cors({
   origin: process.env.NODE_ENV === "development" 
-    ? ["http://localhost:3000", "http://localhost:5000"]
+    ? ["http://localhost:3000", "http://localhost:5000", "https://*.replit.dev"]
     : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'X-Content-Type-Options'],
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// リクエストロギング
+// リクエストロギングの改善
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -30,6 +31,13 @@ app.use((req, res, next) => {
     capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
+
+  // ヘッダー情報のログ出力を追加
+  console.log('Request Headers:', {
+    origin: req.headers.origin,
+    host: req.headers.host,
+    authorization: req.headers.authorization ? 'Present' : 'Not Present'
+  });
 
   res.on("finish", () => {
     const duration = Date.now() - start;
@@ -59,13 +67,18 @@ app.use((req, res, next) => {
 
     const server = await registerRoutes(app);
 
-    // エラーハンドリングミドルウェア
+    // エラーハンドリングミドルウェアの改善
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error("Server error:", err);
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
+      const details = process.env.NODE_ENV === "development" ? err.stack : undefined;
 
-      res.status(status).json({ message });
+      res.status(status).json({ 
+        message,
+        details,
+        timestamp: new Date().toISOString()
+      });
     });
 
     // 開発環境の場合はViteをセットアップ
@@ -73,7 +86,7 @@ app.use((req, res, next) => {
       await setupVite(app, server);
     }
 
-    // サーバー起動
+    // サーバー起動設定の改善
     server.listen({
       port: 5000,
       host: "0.0.0.0",
@@ -83,8 +96,9 @@ app.use((req, res, next) => {
       log(`環境: ${app.get("env")}`);
       log(`CORS設定: ${JSON.stringify({
         origin: process.env.NODE_ENV === "development" 
-          ? ["http://localhost:3000", "http://localhost:5000"]
-          : true
+          ? ["http://localhost:3000", "http://localhost:5000", "https://*.replit.dev"]
+          : true,
+        credentials: true
       })}`);
     });
   } catch (error) {

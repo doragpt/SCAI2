@@ -923,7 +923,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
 
           {/* 喫煙セクション */}
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold">喫煙</h3>
+            <h3 className="textlg font-semibold">喫煙</h3>
             <SwitchField
               label="喫煙"
               required
