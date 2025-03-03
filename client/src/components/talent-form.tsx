@@ -159,50 +159,28 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      // フォームデータの整形
-      const sanitizedData = { ...data };
+      try {
+        // フォームデータの整形
+        const sanitizedData = { ...data };
 
+        // バスト・ウエスト・ヒップが空の場合の処理
+        ['bust', 'waist', 'hip'].forEach(field => {
+          if (!sanitizedData[field] || sanitizedData[field] === "") {
+            delete sanitizedData[field];
+          }
+        });
 
-      // 配列フィールドのデフォルト値を保証
-      const defaultArrayFields = {
-        snsUrls: [],
-        currentStores: [],
-        previousStores: [],
-        photoDiaryUrls: [],
-        ngOptions: {
-          common: [],
-          others: [],
-        },
-        allergies: {
-          types: [],
-          others: [],
-          hasAllergy: false,
-        },
-        smoking: {
-          enabled: false,
-          types: [],
-          others: [],
-        },
-        estheOptions: {
-          available: [],
-          ngOptions: [],
-        },
-      };
-
-      // デフォルト値とユーザー入力を結合
-      const processedData = {
-        ...defaultArrayFields,
-        ...sanitizedData,
-      };
-
-      console.log('送信データ:', processedData);
-
-      const response = await apiRequest("POST", "/api/talent/profile", processedData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'プロフィールの作成に失敗しました');
+        // APIリクエストを送信
+        const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'プロフィールの作成に失敗しました');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('送信エラー:', error);
+        throw error;
       }
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'プロフィールが作成されました。' });
@@ -949,14 +927,13 @@ export const TalentForm: React.FC = () => {
 
         <FormField label="その他備考(任意)">
           <textarea
-            className="w-full h-24 p-2 border rounded-md"
-            placeholder="その他の要望がありましたらご記入ください"
+            className="w-full h-32 p-2 border rounded-md"            placeholder="その他の要望がありましたらご記入ください"
             {...form.register("notes")}
           />
           {form.formState.errors.notes && <FormErrorMessage message={form.formState.errors.notes.message as string} />}
         </FormField>
 
-        <Button type="submit" disabled={isPending || !form.formState.isValid}>
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -204,7 +204,7 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
-  // 既存の必須フィールドはそのまま
+  // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string()
@@ -233,38 +233,15 @@ export const talentProfileSchema = z.object({
   }),
 
   // バスト・ウエスト・ヒップの型定義を修正
-  bust: z.union([z.string(), z.undefined()])
-    .optional()
-    .transform(val => {
-      if (!val || val === "") return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    }),
-  waist: z.union([z.string(), z.undefined()])
-    .optional()
-    .transform(val => {
-      if (!val || val === "") return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    }),
-  hip: z.union([z.string(), z.undefined()])
-    .optional()
-    .transform(val => {
-      if (!val || val === "") return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    }),
+  bust: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  waist: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  hip: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
 
-  // その他のフィールド
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
-  canPhotoDiary: z.boolean().default(false),
-  canHomeDelivery: z.boolean().default(false),
-  hasSnsAccount: z.boolean().default(false),
-  hasEstheExperience: z.boolean().default(false),
 
-  // オブジェクトフィールドのデフォルト値設定
+  // 配列フィールドのデフォルト値設定
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -282,7 +259,13 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
 
-  // 配列フィールドのデフォルト値設定
+  // その他のフィールド
+  canPhotoDiary: z.boolean().default(false),
+  canHomeDelivery: z.boolean().default(false),
+  hasSnsAccount: z.boolean().default(false),
+  hasEstheExperience: z.boolean().default(false),
+
+  // 配列フィールド
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
@@ -293,7 +276,7 @@ export const talentProfileSchema = z.object({
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
-  // オプショナルフィールド
+  // 任意テキストフィールド
   selfIntroduction: z.string().optional().default(""),
   notes: z.string().optional().default(""),
   estheExperiencePeriod: z.string().optional(),
