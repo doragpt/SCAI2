@@ -157,9 +157,10 @@ export const TalentForm: React.FC = () => {
       // 数値フィールドの処理
       const processedData = {
         ...data,
-        bust: data.bust === undefined || data.bust === "" ? null : Number(data.bust),
-        waist: data.waist === undefined || data.waist === "" ? null : Number(data.waist),
-        hip: data.hip === undefined || data.hip === "" ? null : Number(data.hip),
+        // 空文字やundefinedの場合はundefinedとして送信
+        bust: data.bust === "" || data.bust === undefined ? undefined : Number(data.bust),
+        waist: data.waist === "" || data.waist === undefined ? undefined : Number(data.waist),
+        hip: data.hip === "" || data.hip === undefined ? undefined : Number(data.hip),
         // 配列フィールドが空の場合は空配列を設定
         snsUrls: data.snsUrls || [],
         photoDiaryUrls: data.photoDiaryUrls || [],
@@ -369,8 +370,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="number"
               {...form.register("bust", {
-                setValueAs: v => v === "" ? null : Number(v),
-                valueAsNumber: true,
+                setValueAs: v => v === "" ? undefined : Number(v),
               })}
               min={65}
               max={120}
@@ -380,8 +380,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="number"
               {...form.register("waist", {
-                setValueAs: v => v === "" ? null : Number(v),
-                valueAsNumber: true,
+                setValueAs: v => v === "" ? undefined : Number(v),
               })}
               min={50}
               max={100}
@@ -391,8 +390,7 @@ export const TalentForm: React.FC = () => {
             <Input
               type="number"
               {...form.register("hip", {
-                setValueAs: v => v === "" ? null : Number(v),
-                valueAsNumber: true,
+                setValueAs: v => v === "" ? undefined : Number(v),
               })}
               min={65}
               max={120}
