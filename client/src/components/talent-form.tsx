@@ -41,6 +41,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown } from "lucide-react";
 import { X } from "lucide-react";
 import { cleanEmptyArrays } from "@/utils/cleanData";
+import { ProfileConfirmationModal } from "./profile-confirmation-modal";
+import { useState as useState2 } from "react";
+import { useLocation } from "wouter"; // Added import
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -104,6 +107,9 @@ export const TalentForm: React.FC = () => {
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState2(false);
+  const [formDataToConfirm, setFormDataToConfirm] = useState2<TalentProfileData | null>(null);
+  const [, setLocation] = useLocation(); // Initialize setLocation
 
   const defaultValues: TalentProfileData = {
     lastName: "",
@@ -255,9 +261,23 @@ export const TalentForm: React.FC = () => {
         return;
       }
 
-      createProfile(data);
+      // 確認モーダルを表示
+      setFormDataToConfirm(data);
+      setIsConfirmationOpen(true);
     } catch (error) {
       console.error('送信エラー:', error);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!formDataToConfirm) return;
+
+    try {
+      await createProfile(formDataToConfirm);
+      // 成功したらプロフィール表示ページに遷移
+      setLocation("/talent/profile");
+    } catch (error) {
+      console.error('プロフィール作成エラー:', error);
     }
   };
 
@@ -887,14 +907,13 @@ export const TalentForm: React.FC = () => {
         <FormField label="過去経験店舗">
           <div className="space-y-4">
             {form.watch("previousStores").map((store, index) => (
-              <div key={index} className="grid gap-4 p-4 border rounded-lg">
+              <div key={index} className="grid gap-4 p-4 border roundedlg">
                 <Input
                   placeholder="店舗名"
                   value={store.storeName}
                   onChange={(e) => {
                     const current = form.watch("previousStores");
                     current[index].storeName = e.target.value;
-                    form.setValue("previousStores", [...current], { shouldValidate: true });
                   }}
                 />
                 <Button
@@ -954,8 +973,8 @@ export const TalentForm: React.FC = () => {
           )}
         </FormField>
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full"
           disabled={isPending}
         >
@@ -969,6 +988,14 @@ export const TalentForm: React.FC = () => {
           )}
         </Button>
       </form>
+      {formDataToConfirm && (
+        <ProfileConfirmationModal
+          isOpen={isConfirmationOpen}
+          onClose={() => setIsConfirmationOpen(false)}
+          onConfirm={handleConfirm}
+          profileData={formDataToConfirm}
+        />
+      )}
     </Form>
   );
 };
