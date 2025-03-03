@@ -170,11 +170,16 @@ export const TalentForm: React.FC = () => {
   const onSubmit = (data: TalentProfileData) => {
     console.log('Form data:', data);
     console.log('Form errors:', form.formState.errors);
+    if (!form.formState.isValid) {
+      console.log('Form is invalid:', form.formState);
+      return;
+    }
     createProfile(data);
   };
 
   useEffect(() => {
     console.log('Form state:', {
+      values: form.getValues(),
       errors: form.formState.errors,
       isValid: form.formState.isValid,
       isDirty: form.formState.isDirty,
@@ -890,7 +895,7 @@ export const TalentForm: React.FC = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={!form.formState.isValid || isPending}
+          disabled={isPending}
         >
           {isPending && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
