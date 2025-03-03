@@ -836,43 +836,40 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
                   </div>
                 ))}
               </div>
-              <div>
-                <Label>その他の喫煙種類</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {otherSmokingTypes.map((type) => (
-                    <Badge key={type} variant="secondary">
-                      {type}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="ml-1 h-4 w-4 p-0"
-                        onClick={() => {
-                          setOtherSmokingTypes(otherSmokingTypes.filter(t => t !== type));
-                          form.setValue("smoking.others", otherSmokingTypes.filter(t => t !== type));
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    placeholder="その他の喫煙種類を入力"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        const value = e.currentTarget.value.trim();
-                        if (value && !otherSmokingTypes.includes(value)) {
-                          const newTypes = [...otherSmokingTypes, value];
-                          setOtherSmokingTypes(newTypes);
-                          form.setValue("smoking.others", newTypes);
-                          e.currentTarget.value = '';
-                        }
+              <div className="flex flex-wrap gap-2 mt-2">
+                {otherSmokingTypes.map((type) => (
+                  <Badge key={type} variant="secondary">
+                    {type}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 h-4 w-4 p-0"
+                      onClick={() => {
+                        setOtherSmokingTypes(otherSmokingTypes.filter(t => t !== type));
+                        form.setValue("smoking.others", otherSmokingTypes.filter(t => t !== type));
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="その他の喫煙種類を入力"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = e.currentTarget.value.trim();
+                      if (value && !otherSmokingTypes.includes(value)) {
+                        const newTypes = [...otherSmokingTypes, value];
+                        setOtherSmokingTypes(newTypes);
+                        form.setValue("smoking.others", newTypes);
+                        e.currentTarget.value = '';
                       }
-                    }}
-                  />
-                </div>
+                    }
+                  }}
+                />
               </div>
             </div>
           )}
@@ -898,7 +895,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({ onProgressChange }) => {
               <FormField label="SNSアカウントのURL">
                 <div className="flex flex-wrap gap-2">
                   {form.watch("snsUrls").map((url, index) => (
-                    <                    <Badge key={index} variant="secondary">
+                    <Badge key={index} variant="secondary">
                       {url}
                       <Button
                         type="button"

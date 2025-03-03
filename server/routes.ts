@@ -17,27 +17,17 @@ import { authenticate, authorize } from "./middleware/auth";
 
 const scryptAsync = promisify(scrypt);
 
-// パスワードハッシュ化関数
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-// パスワード検証関数
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
-
-// JSONB用のヘルパー関数
-const toJsonb = (value: any) => {
-  return sql`${JSON.stringify(value)}::jsonb`;
-};
-
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ヘルスチェックエンドポイントを追加
+  app.get("/api/health", (req, res) => {
+    console.log('ヘルスチェックリクエスト受信:', {
+      headers: req.headers,
+      method: req.method,
+      path: req.path
+    });
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // 認証エンドポイント
   app.post("/api/register", async (req, res) => {
     try {
@@ -319,3 +309,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// パスワードハッシュ化関数
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+// パスワード検証関数
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
+// JSONB用のヘルパー関数
+const toJsonb = (value: any) => {
+  return sql`${JSON.stringify(value)}::jsonb`;
+};

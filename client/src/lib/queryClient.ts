@@ -1,5 +1,10 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// APIのベースURL設定
+const API_BASE_URL = process.env.NODE_ENV === "development" 
+  ? "http://localhost:5000"
+  : "";
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({ message: res.statusText }));
@@ -25,19 +30,22 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  console.log(`API Request: ${method} ${url}`, {
+  const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+  console.log(`API Request: ${method} ${fullUrl}`, {
     headers: { ...headers, Authorization: token ? "Bearer [HIDDEN]" : undefined },
     data: data ? JSON.stringify(data) : undefined
   });
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
   });
 
   if (!res.ok) {
-    console.error(`API Error: ${method} ${url}`, {
+    console.error(`API Error: ${method} ${fullUrl}`, {
       status: res.status,
       statusText: res.statusText,
       data: await res.json().catch(() => null)
@@ -62,16 +70,20 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    console.log(`Query Request: GET ${queryKey[0]}`, {
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    console.log(`Query Request: GET ${fullUrl}`, {
       headers: { ...headers, Authorization: token ? "Bearer [HIDDEN]" : undefined }
     });
 
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetch(fullUrl, {
       headers,
+      credentials: "include",
     });
 
     if (!res.ok) {
-      console.error(`Query Error: GET ${queryKey[0]}`, {
+      console.error(`Query Error: GET ${fullUrl}`, {
         status: res.status,
         statusText: res.statusText,
         data: await res.json().catch(() => null)

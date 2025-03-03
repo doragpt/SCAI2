@@ -19,6 +19,7 @@ import ViewHistoryPage from "@/pages/view-history";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useState, useEffect } from "react";
 import ProfileViewPage from "@/pages/profile-view-page";
+import { ConnectionTest } from "@/components/connection-test";
 
 function Router() {
   return (
@@ -77,8 +78,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <div className="min-h-screen">
+          <ConnectionTest />
+          <Router />
+          <Toaster />
+        </div>
       </AuthProvider>
     </QueryClientProvider>
   );

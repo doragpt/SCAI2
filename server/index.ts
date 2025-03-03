@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveVite, log } from "./vite";
+import { setupVite, log } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
 
@@ -48,50 +48,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// データベース接続テスト（タイムアウト付き）
-async function testDatabaseConnection() {
-  try {
-    log("データベース接続を開始...");
-    log(`DATABASE_URL: ${process.env.DATABASE_URL ? "設定済み" : "未設定"}`);
-    log(`PGHOST: ${process.env.PGHOST || "未設定"}`);
-    log(`PGPORT: ${process.env.PGPORT || "未設定"}`);
-    log(`PGDATABASE: ${process.env.PGDATABASE || "未設定"}`);
-    log(`PGUSER: ${process.env.PGUSER ? "設定済み" : "未設定"}`);
-    log(`PGPASSWORD: ${process.env.PGPASSWORD ? "設定済み" : "未設定"}`);
-
-    // タイムアウト付きでクエリを実行
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("データベース接続がタイムアウトしました")), 5000);
-    });
-
-    const queryPromise = db.execute(sql`SELECT 1`);
-    await Promise.race([queryPromise, timeoutPromise]);
-
-    log("データベース接続テスト成功");
-    return true;
-  } catch (error) {
-    log("データベース接続エラーの詳細:");
-    if (error instanceof Error) {
-      log(`エラーメッセージ: ${error.message}`);
-      log(`スタックトレース: ${error.stack}`);
-    } else {
-      log(`不明なエラー: ${error}`);
-    }
-    return false;
-  }
-}
-
 (async () => {
   try {
     // 必須環境変数のチェック
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URLが設定されていません");
-    }
-
-    // データベース接続テスト
-    const isDbConnected = await testDatabaseConnection();
-    if (!isDbConnected) {
-      throw new Error("データベース接続に失敗しました");
     }
 
     const server = await registerRoutes(app);
@@ -108,8 +69,6 @@ async function testDatabaseConnection() {
     // 開発環境の場合はViteをセットアップ
     if (app.get("env") === "development") {
       await setupVite(app, server);
-    } else {
-      serveVite(app);
     }
 
     // サーバー起動
