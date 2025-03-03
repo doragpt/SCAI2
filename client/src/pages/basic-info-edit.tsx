@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Form,
   FormControl,
@@ -77,32 +78,34 @@ export default function BasicInfoEdit() {
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
       try {
-        const response = await fetch("/api/talent/profile", {
-          method: "PUT",
+        console.log('プロフィール更新リクエスト:', {
+          data: updateData,
           headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            username: updateData.username,
-            displayName: updateData.displayName,
-            location: updateData.location,
-            preferredLocations: updateData.preferredLocations,
-            ...(updateData.newPassword && updateData.currentPassword ? {
-              currentPassword: updateData.currentPassword,
-              newPassword: updateData.newPassword,
-            } : {})
-          }),
+            Authorization: localStorage.getItem("auth_token") ? "Bearer " + localStorage.getItem("auth_token") : "未設定"
+          }
         });
 
-        const data = await response.json();
+        const response = await apiRequest("PUT", "/api/talent/profile", {
+          username: updateData.username,
+          displayName: updateData.displayName,
+          location: updateData.location,
+          preferredLocations: updateData.preferredLocations,
+          ...(updateData.newPassword && updateData.currentPassword ? {
+            currentPassword: updateData.currentPassword,
+            newPassword: updateData.newPassword,
+          } : {})
+        });
 
         if (!response.ok) {
+          const data = await response.json();
           throw new Error(data.message || "プロフィールの更新に失敗しました");
         }
 
-        return data;
+        const updatedProfile = await response.json();
+        console.log('プロフィール更新成功:', updatedProfile);
+        return updatedProfile;
       } catch (error) {
+        console.error('プロフィール更新エラー:', error);
         throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
     },
