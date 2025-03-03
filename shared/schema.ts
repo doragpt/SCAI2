@@ -239,7 +239,6 @@ export const talentProfileSchema = z.object({
   }),
   canPhotoDiary: z.boolean(),
   canHomeDelivery: z.boolean(),
-  // NGオプションを任意に変更
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
@@ -266,7 +265,6 @@ export const talentProfileSchema = z.object({
   photoDiaryUrls: z.array(z.string()),
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
-  // エステオプションのスキーマを修正
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)),
     ngOptions: z.array(z.string()),

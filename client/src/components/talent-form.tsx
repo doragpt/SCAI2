@@ -154,7 +154,7 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: (data: TalentProfileData) =>
-      apiRequest('/api/talent/profile', { method: 'POST', body: data }),
+      apiRequest("/api/talent/profile", { method: "POST", body: data }),
     onSuccess: () => {
       toast({ title: 'プロフィールが作成されました。' });
     },
@@ -222,7 +222,7 @@ export const TalentForm: React.FC = () => {
           <FormField label="在住地" required>
             <Select
               value={form.watch("location")}
-              onValueChange={(value) => form.setValue("location", value)}
+              onValueChange={(value) => form.setValue("location", value, { shouldValidate: true })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="都道府県を選択してください" />
@@ -833,10 +833,8 @@ export const TalentForm: React.FC = () => {
           </div>
         </FormField>
 
-        <FormField
-          label="写メ日記が確認できるURL"
-          description="写メ日記が確認できる場合出稼ぎ条件で有利に働く場合があります。"
-        >
+        {/* 18-19. 自己PRとその他備考 */}
+        <FormField label="写メ日記URL(任意)">
           <div className="flex flex-wrap gap-2">
             {form.watch("photoDiaryUrls").map((url, index) => (
               <Badge key={index} variant="secondary">
@@ -873,8 +871,7 @@ export const TalentForm: React.FC = () => {
           </div>
         </FormField>
 
-        {/* 18-19. 自己PRとその他備考 */}
-        <FormField label="自己PR">
+        <FormField label="自己PR(任意)">
           <textarea
             className="w-full h-32 p-2 border rounded-md"
             placeholder="例：経験豊富な接客業で培った会話力と、明るい性格を活かして、お客様に楽しい時間を提供できます。
@@ -884,7 +881,7 @@ export const TalentForm: React.FC = () => {
           />
         </FormField>
 
-        <FormField label="その他備考">
+        <FormField label="その他備考(任意)">
           <textarea
             className="w-full h-24 p-2 border rounded-md"
             placeholder="その他の要望がありましたらご記入ください"
