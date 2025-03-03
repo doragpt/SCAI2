@@ -240,14 +240,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // リクエストデータをバリデーション
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
-        // 数値フィールドの処理
+        // 既存のデータと新しいデータをマージ
         const processedData = {
-          ...updateData,
-          userId,
-          updatedAt: new Date(),
-          bust: updateData.bust === "" || updateData.bust === undefined ? null : Number(updateData.bust),
-          waist: updateData.waist === "" || updateData.waist === undefined ? null : Number(updateData.waist),
-          hip: updateData.hip === "" || updateData.hip === undefined ? null : Number(updateData.hip),
+          ...currentProfile, // 既存のデータをベースに
+          ...updateData, // 新しいデータで上書き
+          userId, // userIdは必ず設定
+          updatedAt: new Date(), // 更新日時は現在時刻
+          // 数値フィールドの特別処理
+          bust: updateData.bust === "" || updateData.bust === undefined 
+            ? currentProfile.bust // 未設定の場合は既存の値を維持
+            : Number(updateData.bust),
+          waist: updateData.waist === "" || updateData.waist === undefined 
+            ? currentProfile.waist
+            : Number(updateData.waist),
+          hip: updateData.hip === "" || updateData.hip === undefined 
+            ? currentProfile.hip
+            : Number(updateData.hip),
         };
 
         // JSONBフィールドのリスト
@@ -263,13 +271,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'estheOptions'
         ];
 
-        // 更新データの準備
+        // 更新データの準備（JSONBフィールドの処理）
         const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
           if (value === undefined) return acc;
 
           // JSONBフィールドの場合は型キャストを行う
           if (jsonbFields.includes(key)) {
-            acc[key] = sql`${JSON.stringify(value)}::jsonb`;
+            acc[key] = value !== null ? sql`${JSON.stringify(value)}::jsonb` : null;
           } else {
             acc[key] = value;
           }

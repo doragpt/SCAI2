@@ -84,6 +84,9 @@ export async function updateTalentProfile(data: any) {
       userId: data.userId
     });
 
+    // 既存のデータを取得
+    const existingProfile = queryClient.getQueryData([QUERY_KEYS.TALENT_PROFILE]);
+
     // APIリクエストを実行
     const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
     const updatedProfile = await response.json();
@@ -93,17 +96,23 @@ export async function updateTalentProfile(data: any) {
       userId: updatedProfile.userId
     });
 
+    // 既存のデータと新しいデータをマージ
+    const mergedProfile = {
+      ...existingProfile,
+      ...updatedProfile,
+    };
+
     // キャッシュの更新処理
-    queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
+    queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], mergedProfile);
 
     // ローカルストレージに保存
-    localStorage.setItem('talentProfile', JSON.stringify(updatedProfile));
+    localStorage.setItem('talentProfile', JSON.stringify(mergedProfile));
 
     // キャッシュを無効化して再取得を強制
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE], exact: true });
 
-    return updatedProfile;
+    return mergedProfile;
   } catch (error) {
     console.error("Profile update failed:", error);
     throw error;
