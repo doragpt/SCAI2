@@ -1,0 +1,54 @@
+エラーメッセージ
+
+php
+コピーする
+malformed array literal: "[]"
+は、PostgreSQL が渡された空の配列リテラル "[]" を正しく解釈できないために発生しています。PostgreSQL のネイティブな配列リテラルは空の場合 "{}" となるべきですが、現在のコードでは JSON カラムに対して "[]" が渡されており、これが原因でエラーになっています。
+
+原因のポイント：
+
+あなたのスキーマ定義では、空の配列（例: others: []）が各 JSON カラムのデフォルト値として設定されています。
+しかし、Drizzle ORM と Neon Database（PostgreSQL）間のやり取りで、これらの値が PG の配列リテラルとして扱われようとしており、空の配列リテラル "[]" は正しくないためエラーになります。
+解決策：2つのアプローチがあります。
+
+【アプローチ A】 JSON ではなく JSONB カラムを使用する
+PostgreSQL では、jsonb 型のカラムは、JavaScript のオブジェクトや配列をそのまま JSON として保存でき、空の配列も問題なく扱えます。ほとんどの場合、jsonb のほうが検索性能や操作性も良いのでおすすめです。
+
+修正手順
+スキーマのインポート部分の修正
+現在、schema.ts の先頭は次のようになっています。
+
+ts
+コピーする
+import { pgTable, text, serial, integer, boolean, timestamp, date, json } from "drizzle-orm/pg-core";
+これを json ではなく jsonb をインポートするように変更します。
+
+ts
+コピーする
+import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb } from "drizzle-orm/pg-core";
+各 JSON カラムの定義を変更する
+例えば、以下の部分：
+
+ts
+コピーする
+preferredLocations: json("preferred_locations").$type<string[]>().default([]),
+availableIds: json("available_ids").$type<{ types: IdType[]; others: string[]; }>().default({ types: [], others: [] }),
+ngOptions: json("ng_options").$type<{ common: CommonNgOption[]; others: string[]; }>().default({ common: [], others: [] }),
+allergies: json("allergies").$type<{ types: AllergyType[]; others: string[]; hasAllergy: boolean; }>().default({ types: [], others: [], hasAllergy: false }),
+smoking: json("smoking").$type<{ enabled: boolean; types: SmokingType[]; others: string[]; }>().default({ enabled: false, types: [], others: [] }),
+snsUrls: json("sns_urls").$type<string[]>().default([]),
+currentStores: json("current_stores").$type<{ storeName: string; stageName: string; }[]>().default([]),
+previousStores: json("previous_stores").$type<{ storeName: string; }[]>().default([]),
+photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
+estheOptions: json("esthe_options").$type<{ available: EstheOption[]; ngOptions: string[]; }>().default({ available: [], ngOptions: [] }),
+をそれぞれ jsonb に変更します。たとえば、
+
+ts
+コピーする
+preferredLocations: jsonb("preferred_locations").$type<string[]>().default([]),
+availableIds: jsonb("available_ids").$type<{ types: IdType[]; others: string[]; }>().default({ types: [], others: [] }),
+// 以下同様に全て json から jsonb に変更
+データベース側の変更
+この修正により、データベースのカラム型も JSONB になっている必要があります。既存のテーブルがある場合は、マイグレーションまたはテーブル再作成が必要になるかもしれません。
+
+この変更により、空の配列は JSONB として保存され、"[]" のまま正しく扱われるようになります。 Neon Database も JSONB 型に対しては正しい JSON 値として処理するため、エラーは解消されるはずです。

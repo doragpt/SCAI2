@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -101,7 +101,7 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   birthDate: date("birth_date"),
-  preferredLocations: json("preferred_locations").$type<string[]>().default([]),
+  preferredLocations: jsonb("preferred_locations").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -115,7 +115,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   firstNameKana: text("first_name_kana").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   nearestStation: text("nearest_station").notNull(),
-  availableIds: json("available_ids").$type<{
+  availableIds: jsonb("available_ids").$type<{
     types: IdType[];
     others: string[];
   }>().default({ types: [], others: [] }),
@@ -129,34 +129,34 @@ export const talentProfiles = pgTable("talent_profiles", {
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
   canPhotoDiary: boolean("can_photo_diary").default(false),
   canHomeDelivery: boolean("can_home_delivery").default(false),
-  ngOptions: json("ng_options").$type<{
+  ngOptions: jsonb("ng_options").$type<{
     common: CommonNgOption[];
     others: string[];
   }>().default({ common: [], others: [] }),
-  allergies: json("allergies").$type<{
+  allergies: jsonb("allergies").$type<{
     types: AllergyType[];
     others: string[];
     hasAllergy: boolean;
   }>().default({ types: [], others: [], hasAllergy: false }),
-  smoking: json("smoking").$type<{
+  smoking: jsonb("smoking").$type<{
     enabled: boolean;
     types: SmokingType[];
     others: string[];
   }>().default({ enabled: false, types: [], others: [] }),
   hasSnsAccount: boolean("has_sns_account").default(false),
-  snsUrls: json("sns_urls").$type<string[]>().default([]),
-  currentStores: json("current_stores").$type<{
+  snsUrls: jsonb("sns_urls").$type<string[]>().default([]),
+  currentStores: jsonb("current_stores").$type<{
     storeName: string;
     stageName: string;
   }[]>().default([]),
-  previousStores: json("previous_stores").$type<{
+  previousStores: jsonb("previous_stores").$type<{
     storeName: string;
   }[]>().default([]),
-  photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
+  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]),
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  estheOptions: json("esthe_options").$type<{
+  estheOptions: jsonb("esthe_options").$type<{
     available: EstheOption[];
     ngOptions: string[];
   }>().default({ available: [], ngOptions: [] }),
