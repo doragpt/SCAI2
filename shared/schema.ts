@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -107,31 +107,27 @@ export const users = pgTable("users", {
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  height: integer("height").notNull(),
-  weight: integer("weight").notNull(),
-  bust: integer("bust"),
-  waist: integer("waist"),
-  hip: integer("hip"),
-  cupSize: text("cup_size", { enum: cupSizes }),
-  bodyType: text("body_type", { enum: bodyTypes }),
-  photoUrls: json("photo_urls").$type<{
-    urls: string[];
-    tags: Record<string, PhotoTag[]>;
-    hasCurrent: boolean;
-  }>().default({ urls: [], tags: {}, hasCurrent: false }),
-  faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
-  canPhotoDiary: boolean("can_photo_diary").default(false),
-  photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
+  name: text("name").notNull(),
+  location: text("location").notNull(),
+  nearestStation: text("nearest_station").notNull(),
   availableIds: json("available_ids").$type<{
     types: IdType[];
     others: string[];
   }>().default({ types: [], others: [] }),
-  hasSnsAccount: boolean("has_sns_account").default(false),
-  snsUrls: json("sns_urls").$type<string[]>().default([]),
-  currentStores: json("current_stores").$type<{
-    storeName: string;
-    stageName: string;
-  }[]>().default([]),
+  canProvideResidenceRecord: boolean("can_provide_residence_record").default(false),
+  height: integer("height").notNull(),
+  weight: integer("weight").notNull(),
+  cupSize: text("cup_size", { enum: cupSizes }).notNull(),
+  bust: integer("bust"),
+  waist: integer("waist"),
+  hip: integer("hip"),
+  faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
+  canPhotoDiary: boolean("can_photo_diary").default(false),
+  canHomeDelivery: boolean("can_home_delivery").default(false),
+  ngOptions: json("ng_options").$type<{
+    common: CommonNgOption[];
+    others: string[];
+  }>().default({ common: [], others: [] }),
   allergies: json("allergies").$type<{
     types: AllergyType[];
     others: string[];
@@ -142,16 +138,15 @@ export const talentProfiles = pgTable("talent_profiles", {
     types: SmokingType[];
     others: string[];
   }>().default({ enabled: false, types: [], others: [] }),
-  serviceTypes: json("service_types").$type<ServiceType[]>().default([]),
-  canSelfDispatch: boolean("can_self_dispatch").default(false),
-  ngOptions: json("ng_options").$type<{
-    common: CommonNgOption[];
-    others: string[];
-  }>().default({ common: [], others: [] }),
-  estheOptions: json("esthe_options").$type<{
-    available: EstheOption[];
-    ngOptions: string[];
-  }>().default({ available: [], ngOptions: [] }),
+  hasSnsAccount: boolean("has_sns_account").default(false),
+  snsUrls: json("sns_urls").$type<string[]>().default([]),
+  currentStores: json("current_stores").$type<{
+    storeName: string;
+    stageName: string;
+  }[]>().default([]),
+  photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
+  selfIntroduction: text("self_introduction"),
+  notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -195,35 +190,35 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
+  name: z.string().min(1, "名前を入力してください"),
+  location: z.string().min(1, "在住地を入力してください"),
+  nearestStation: z.string().min(1, "最寄り駅を入力してください"),
+  availableIds: z.object({
+    types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
+    others: z.array(z.string()),
+  }),
+  canProvideResidenceRecord: z.boolean(),
   height: z.number()
     .min(130, "身長は130cm以上で入力してください")
     .max(190, "身長は190cm以下で入力してください"),
   weight: z.number()
     .min(30, "体重は30kg以上で入力してください")
     .max(150, "体重は150kg以下で入力してください"),
+  cupSize: z.enum(cupSizes, {
+    required_error: "カップサイズを選択してください",
+  }),
   bust: z.number().optional(),
   waist: z.number().optional(),
   hip: z.number().optional(),
-  cupSize: z.enum(cupSizes).optional(),
-  bodyType: z.enum(bodyTypes),
-  photoUrls: z.object({
-    urls: z.array(z.string()),
-    tags: z.record(z.array(z.enum(photoTags))),
-    hasCurrent: z.boolean(),
+  faceVisibility: z.enum(faceVisibilityTypes, {
+    required_error: "パネルの顔出し設定を選択してください",
   }),
-  faceVisibility: z.enum(faceVisibilityTypes),
   canPhotoDiary: z.boolean(),
-  photoDiaryUrls: z.array(z.string()),
-  availableIds: z.object({
-    types: z.array(z.enum(idTypes)),
+  canHomeDelivery: z.boolean(),
+  ngOptions: z.object({
+    common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
   }),
-  hasSnsAccount: z.boolean(),
-  snsUrls: z.array(z.string()),
-  currentStores: z.array(z.object({
-    storeName: z.string(),
-    stageName: z.string(),
-  })),
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)),
     others: z.array(z.string()),
@@ -234,16 +229,15 @@ export const talentProfileSchema = z.object({
     types: z.array(z.enum(smokingTypes)),
     others: z.array(z.string()),
   }),
-  serviceTypes: z.array(z.enum(serviceTypes)),
-  canSelfDispatch: z.boolean(),
-  ngOptions: z.object({
-    common: z.array(z.enum(commonNgOptions)),
-    others: z.array(z.string()),
-  }),
-  estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)),
-    ngOptions: z.array(z.string()),
-  }),
+  hasSnsAccount: z.boolean(),
+  snsUrls: z.array(z.string()),
+  currentStores: z.array(z.object({
+    storeName: z.string(),
+    stageName: z.string(),
+  })),
+  photoDiaryUrls: z.array(z.string()),
+  selfIntroduction: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 // Export types
