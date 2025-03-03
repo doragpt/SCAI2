@@ -103,11 +103,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Talent profiles table
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-
-  // 基本情報
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
   bust: integer("bust"),
@@ -115,71 +114,86 @@ export const talentProfiles = pgTable("talent_profiles", {
   hip: integer("hip"),
   cupSize: text("cup_size", { enum: cupSizes }),
   bodyType: text("body_type", { enum: bodyTypes }),
-
-  // 写真管理
   photoUrls: json("photo_urls").$type<{
     urls: string[];
     tags: Record<string, PhotoTag[]>;
-    hasCurrent: boolean; // 現在の髪色写真があるかどうか
+    hasCurrent: boolean;
   }>().default({ urls: [], tags: {}, hasCurrent: false }),
-
-  // パネル設定
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
   canPhotoDiary: boolean("can_photo_diary").default(false),
   photoDiaryUrls: json("photo_diary_urls").$type<string[]>().default([]),
-
-  // 身分証明書
   availableIds: json("available_ids").$type<{
     types: IdType[];
     others: string[];
   }>().default({ types: [], others: [] }),
-
-  // SNS
   hasSnsAccount: boolean("has_sns_account").default(false),
   snsUrls: json("sns_urls").$type<string[]>().default([]),
-
-  // 在籍情報
   currentStores: json("current_stores").$type<{
     storeName: string;
     stageName: string;
   }[]>().default([]),
-
-  // 健康・生活
   allergies: json("allergies").$type<{
     types: AllergyType[];
     others: string[];
     hasAllergy: boolean;
   }>().default({ types: [], others: [], hasAllergy: false }),
-
-  smoking: boolean("smoking").default(false),
-  smokingTypes: json("smoking_types").$type<{
+  smoking: json("smoking").$type<{
+    enabled: boolean;
     types: SmokingType[];
     others: string[];
-  }>().default({ types: [], others: [] }),
-
-  // サービス
+  }>().default({ enabled: false, types: [], others: [] }),
   serviceTypes: json("service_types").$type<ServiceType[]>().default([]),
   canSelfDispatch: boolean("can_self_dispatch").default(false),
-
-  // NGオプション
   ngOptions: json("ng_options").$type<{
     common: CommonNgOption[];
     others: string[];
   }>().default({ common: [], others: [] }),
-
-  // エステオプション
   estheOptions: json("esthe_options").$type<{
     available: EstheOption[];
     ngOptions: string[];
   }>().default({ available: [], ngOptions: [] }),
-
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Zod schema definitions
+// Login and registration schemas
+export const loginSchema = z.object({
+  username: z.string().min(1, "ニックネームを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]),
+});
+
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
-// タレントプロフィールスキーマ
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+// Talent profile schema
 export const talentProfileSchema = z.object({
   height: z.number()
     .min(130, "身長は130cm以上で入力してください")
@@ -192,52 +206,40 @@ export const talentProfileSchema = z.object({
   hip: z.number().optional(),
   cupSize: z.enum(cupSizes).optional(),
   bodyType: z.enum(bodyTypes),
-
   photoUrls: z.object({
     urls: z.array(z.string()),
     tags: z.record(z.array(z.enum(photoTags))),
     hasCurrent: z.boolean(),
-  }).refine((data) => data.urls.length > 0 && data.tags["現在の髪色"]?.length > 0, {
-    message: "現在の髪色の写真を1枚以上選択してください",
   }),
-
   faceVisibility: z.enum(faceVisibilityTypes),
   canPhotoDiary: z.boolean(),
   photoDiaryUrls: z.array(z.string()),
-
   availableIds: z.object({
     types: z.array(z.enum(idTypes)),
     others: z.array(z.string()),
   }),
-
   hasSnsAccount: z.boolean(),
   snsUrls: z.array(z.string()),
-
   currentStores: z.array(z.object({
     storeName: z.string(),
     stageName: z.string(),
   })),
-
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)),
     others: z.array(z.string()),
     hasAllergy: z.boolean(),
   }),
-
   smoking: z.object({
     enabled: z.boolean(),
     types: z.array(z.enum(smokingTypes)),
     others: z.array(z.string()),
   }),
-
   serviceTypes: z.array(z.enum(serviceTypes)),
   canSelfDispatch: z.boolean(),
-
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
   }),
-
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)),
     ngOptions: z.array(z.string()),
@@ -250,3 +252,5 @@ export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type TalentProfileData = z.infer<typeof talentProfileSchema>;
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;

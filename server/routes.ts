@@ -3,14 +3,12 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import {
-  talentRegisterFormSchema,
-  talentProfileUpdateSchema,
-  type RegisterFormData,
-  type TalentProfileUpdate,
+  talentProfileSchema,
+  type TalentProfileData,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users } from "@shared/schema";
+import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import passport from "passport";
@@ -172,6 +170,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Profile fetch error:', error);
       res.status(500).json({ message: "プロフィールの取得に失敗しました" });
+    }
+  });
+
+  app.post("/api/talent/profile", requireAuth, async (req: any, res) => {
+    try {
+      console.log('Profile creation request received:', req.body);
+      const profileData = talentProfileSchema.parse(req.body);
+
+      const profile = await db.transaction(async (tx) => {
+        const [existingProfile] = await tx
+          .select()
+          .from(talentProfiles)
+          .where(eq(talentProfiles.userId, req.user.id));
+
+        if (existingProfile) {
+          throw new Error("プロフィールは既に作成されています");
+        }
+
+        const [newProfile] = await tx
+          .insert(talentProfiles)
+          .values({
+            userId: req.user.id,
+            ...profileData,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        if (!newProfile) {
+          throw new Error("プロフィールの作成に失敗しました");
+        }
+
+        return newProfile;
+      });
+
+      console.log('Profile created successfully:', { userId: req.user.id, profileId: profile.id });
+      res.status(201).json(profile);
+    } catch (error) {
+      console.error('Profile creation error:', error);
+      if (error instanceof Error) {
+        res.status(400).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "プロフィールの作成に失敗しました"
+        });
+      }
     }
   });
 

@@ -89,7 +89,6 @@ const HealthOptions: React.FC<HealthOptionsProps> = ({
     onSmokingChange({ ...smoking, others: newTypes });
   };
 
-
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -243,8 +242,7 @@ const HealthOptions: React.FC<HealthOptionsProps> = ({
   );
 };
 
-
-// SNSOptions.tsx component
+// SNSOptions component
 interface SNSOptionsProps {
   hasSnsAccount: boolean;
   onHasSnsAccountChange: (hasAccount: boolean) => void;
@@ -324,8 +322,7 @@ const SNSOptions: React.FC<SNSOptionsProps> = ({
   );
 };
 
-
-// StoreInformation.tsx component
+// StoreInformation component
 interface StoreInformationProps {
   currentStores: {
     storeName: string;
@@ -460,10 +457,12 @@ export const TalentForm: React.FC = () => {
       others: [] as string[]
     }
   });
+
   const [snsState, setSnsState] = useState({
     hasSnsAccount: false,
     snsUrls: [] as string[]
   });
+
   const [storeState, setStoreState] = useState({
     currentStores: [{ storeName: '', stageName: '' }],
     photoDiaryUrls: [] as string[]
@@ -472,6 +471,10 @@ export const TalentForm: React.FC = () => {
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     defaultValues: {
+      height: 0,
+      weight: 0,
+      bodyType: "普通",
+      faceVisibility: "全出し",
       allergies: {
         types: [],
         others: [],
@@ -485,19 +488,24 @@ export const TalentForm: React.FC = () => {
       hasSnsAccount: false,
       snsUrls: [],
       currentStores: [],
-      photoDiaryUrls: []
+      photoDiaryUrls: [],
+      serviceTypes: [],
+      availableIds: {
+        types: [],
+        others: []
+      }
     }
   });
 
-  const { mutate: createProfile, isLoading: mutationIsPending } = useMutation({
-    mutationFn: (data: TalentProfileData) => apiRequest('/talent', { method: 'POST', body: data }),
+  const { mutate: createProfile, isPending } = useMutation({
+    mutationFn: (data: TalentProfileData) => apiRequest('/api/talent/profile', { method: 'POST', body: data }),
     onSuccess: () => {
       toast({ title: 'プロフィールが作成されました。' });
     },
     onError: (err) => {
       toast({
         title: 'プロフィールの作成に失敗しました。',
-        description: err.message,
+        description: err instanceof Error ? err.message : '不明なエラーが発生しました。',
         variant: 'destructive',
       });
     },
@@ -510,8 +518,6 @@ export const TalentForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* ... existing form fields ... */}
-
         <HealthOptions
           allergies={healthState.allergies}
           onAllergiesChange={(allergies) => {
@@ -554,9 +560,9 @@ export const TalentForm: React.FC = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={!form.formState.isValid || form.formState.isSubmitting}
+          disabled={!form.formState.isValid || isPending}
         >
-          {form.formState.isSubmitting && (
+          {isPending && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
           プロフィールを作成
