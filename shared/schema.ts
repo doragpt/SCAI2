@@ -204,6 +204,7 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
+  // 既存の必須フィールドは変更なし
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string()
@@ -218,7 +219,7 @@ export const talentProfileSchema = z.object({
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
   availableIds: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
-    others: z.array(z.string()),
+    others: z.array(z.string()).default([]),
   }),
   canProvideResidenceRecord: z.boolean(),
   height: z.number()
@@ -230,37 +231,29 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.preprocess(
-    (val) => val === "" ? undefined : Number(val),
-    z.number().optional()
-  ),
-  waist: z.preprocess(
-    (val) => val === "" ? undefined : Number(val),
-    z.number().optional()
-  ),
-  hip: z.preprocess(
-    (val) => val === "" ? undefined : Number(val),
-    z.number().optional()
-  ),
+  // 任意フィールドの修正
+  bust: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
+  waist: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
+  hip: z.string().transform(val => val === "" ? undefined : Number(val)).optional(),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
   canPhotoDiary: z.boolean(),
   canHomeDelivery: z.boolean(),
   ngOptions: z.object({
-    common: z.array(z.enum(commonNgOptions)),
-    others: z.array(z.string()),
-  }),
+    common: z.array(z.enum(commonNgOptions)).default([]),
+    others: z.array(z.string()).default([]),
+  }).default({ common: [], others: [] }),
   allergies: z.object({
-    types: z.array(z.enum(allergyTypes)),
-    others: z.array(z.string()),
+    types: z.array(z.enum(allergyTypes)).default([]),
+    others: z.array(z.string()).default([]),
     hasAllergy: z.boolean(),
-  }),
+  }).default({ types: [], others: [], hasAllergy: false }),
   smoking: z.object({
     enabled: z.boolean(),
-    types: z.array(z.enum(smokingTypes)),
-    others: z.array(z.string()),
-  }),
+    types: z.array(z.enum(smokingTypes)).default([]),
+    others: z.array(z.string()).default([]),
+  }).default({ enabled: false, types: [], others: [] }),
   hasSnsAccount: z.boolean(),
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
@@ -274,10 +267,10 @@ export const talentProfileSchema = z.object({
   selfIntroduction: z.string().optional(),
   notes: z.string().optional(),
   estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)),
-    ngOptions: z.array(z.string()),
-  }).optional(),
-  hasEstheExperience: z.boolean().optional(),
+    available: z.array(z.enum(estheOptions)).default([]),
+    ngOptions: z.array(z.string()).default([]),
+  }).default({ available: [], ngOptions: [] }),
+  hasEstheExperience: z.boolean(),
   estheExperiencePeriod: z.string().optional(),
 });
 

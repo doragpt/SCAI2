@@ -154,18 +154,33 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      // 数値フィールドと配列の処理
+      // 配列フィールドのデフォルト値を保証
       const processedData = {
         ...data,
-        // 空の数値フィールドをundefinedとして送信
-        bust: data.bust === "" ? undefined : data.bust,
-        waist: data.waist === "" ? undefined : data.waist,
-        hip: data.hip === "" ? undefined : data.hip,
-        // 配列フィールドのデフォルト値を保証
+        // 空の配列フィールドにデフォルト値を設定
         snsUrls: data.snsUrls || [],
         currentStores: data.currentStores || [],
         previousStores: data.previousStores || [],
         photoDiaryUrls: data.photoDiaryUrls || [],
+        // NGオプションなどのオブジェクトにもデフォルト値を設定
+        ngOptions: {
+          common: data.ngOptions?.common || [],
+          others: data.ngOptions?.others || [],
+        },
+        allergies: {
+          types: data.allergies?.types || [],
+          others: data.allergies?.others || [],
+          hasAllergy: data.allergies?.hasAllergy || false,
+        },
+        smoking: {
+          enabled: data.smoking?.enabled || false,
+          types: data.smoking?.types || [],
+          others: data.smoking?.others || [],
+        },
+        estheOptions: {
+          available: data.estheOptions?.available || [],
+          ngOptions: data.estheOptions?.ngOptions || [],
+        },
       };
 
       const response = await apiRequest("POST", "/api/talent/profile", processedData);
@@ -369,9 +384,7 @@ export const TalentForm: React.FC = () => {
           <FormField label="バスト (cm) (任意)">
             <Input
               type="number"
-              {...form.register("bust", {
-                setValueAs: v => v === "" ? undefined : Number(v),
-              })}
+              {...form.register("bust")}
               min={65}
               max={120}
             />
@@ -379,9 +392,7 @@ export const TalentForm: React.FC = () => {
           <FormField label="ウエスト (cm) (任意)">
             <Input
               type="number"
-              {...form.register("waist", {
-                setValueAs: v => v === "" ? undefined : Number(v),
-              })}
+              {...form.register("waist")}
               min={50}
               max={100}
             />
@@ -389,9 +400,7 @@ export const TalentForm: React.FC = () => {
           <FormField label="ヒップ (cm) (任意)">
             <Input
               type="number"
-              {...form.register("hip", {
-                setValueAs: v => v === "" ? undefined : Number(v),
-              })}
+              {...form.register("hip")}
               min={65}
               max={120}
             />
