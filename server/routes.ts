@@ -225,9 +225,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      // リクエストデータをバリデーション
-      const updateData = talentProfileUpdateSchema.parse(req.body);
-
       const updatedProfile = await db.transaction(async (tx) => {
         // 現在のプロフィールを取得
         const [currentProfile] = await tx
@@ -239,6 +236,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールが見つかりません");
         }
 
+        // リクエストデータをバリデーション
+        const updateData = talentProfileUpdateSchema.parse(req.body);
+
         // 更新データの準備
         const processedData = {
           ...updateData,
@@ -246,32 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date(),
         };
 
-        // JSONBフィールドを適切に処理
-        const jsonbFields = [
-          'availableIds',
-          'ngOptions',
-          'allergies',
-          'smoking',
-          'snsUrls',
-          'currentStores',
-          'previousStores',
-          'photoDiaryUrls',
-          'estheOptions'
-        ];
-
-        const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
-          if (jsonbFields.includes(key) && value !== undefined) {
-            acc[key] = sql`${JSON.stringify(value)}::jsonb`;
-          } else if (value !== undefined) {
-            acc[key] = value;
-          }
-          return acc;
-        }, {} as Record<string, any>);
-
         // プロフィールを更新
         const [updated] = await tx
           .update(talentProfiles)
-          .set(updateValues)
+          .set(processedData)
           .where(eq(talentProfiles.userId, userId))
           .returning();
 
@@ -310,6 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
 
 
   app.post("/api/logout", (req: any, res, next) => {

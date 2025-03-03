@@ -14,13 +14,8 @@ export default function ProfileViewPage() {
 
   const { data: profile, isLoading } = useQuery<TalentProfileData>({
     queryKey: ["/api/talent/profile"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/talent/profile");
-      if (!response.ok) {
-        throw new Error("プロフィールの取得に失敗しました");
-      }
-      return response.json();
-    },
+    enabled: !!user, // ユーザーが存在する場合のみクエリを実行
+    staleTime: 0, // 常に最新のデータを取得
   });
 
   if (isLoading) {

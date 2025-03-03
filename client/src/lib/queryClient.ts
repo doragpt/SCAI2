@@ -81,53 +81,58 @@ export const getQueryFn: <T>({
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const headers: Record<string, string> = {
-      "X-Requested-With": "XMLHttpRequest"
-    };
+    async ({ queryKey }) => {
+      const headers: Record<string, string> = {
+        "X-Requested-With": "XMLHttpRequest"
+      };
 
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const url = queryKey[0] as string;
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    console.log("Query Request:", {
-      method: "GET",
-      url: fullUrl,
-      headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
-      timestamp: new Date().toISOString()
-    });
-
-    try {
-      const res = await fetch(fullUrl, {
-        headers,
-        credentials: "include",
-      });
-
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      await throwIfResNotOk(res);
-      return await res.json();
-    } catch (error) {
-      console.error("Query Failed:", {
+      const url = queryKey[0] as string;
+      const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+      console.log("Query Request:", {
+        method: "GET",
         url: fullUrl,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : error,
+        headers: { ...headers, Authorization: token ? "[HIDDEN]" : undefined },
         timestamp: new Date().toISOString()
       });
-      throw error;
-    }
-  };
+
+      try {
+        const res = await fetch(fullUrl, {
+          headers,
+          credentials: "include",
+        });
+
+        if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+          return null;
+        }
+
+        await throwIfResNotOk(res);
+        return await res.json();
+      } catch (error) {
+        console.error("Query Failed:", {
+          url: fullUrl,
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          } : error,
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+    };
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
+// キャッシュのキー定数を追加
+export const QUERY_KEYS = {
+  TALENT_PROFILE: "/api/talent/profile",
+} as const;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -136,10 +141,21 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       retry: false,
-      staleTime: 0, // キャッシュの有効期限を0に設定して常に最新データを取得
+      staleTime: 0,
     },
     mutations: {
       retry: false,
     },
   },
 });
+
+// プロフィール更新用のミューテーション関数を追加
+export async function updateProfile(data: any) {
+  const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
+  const updatedProfile = await response.json();
+
+  // キャッシュを無効化して再取得を強制
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+
+  return updatedProfile;
+}
