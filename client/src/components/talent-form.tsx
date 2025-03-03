@@ -169,9 +169,40 @@ export const TalentForm: React.FC = () => {
         }
       });
 
-      console.log('送信データ:', sanitizedData);
+      // 配列フィールドのデフォルト値を保証
+      const defaultArrayFields = {
+        snsUrls: [],
+        currentStores: [],
+        previousStores: [],
+        photoDiaryUrls: [],
+        ngOptions: {
+          common: [],
+          others: [],
+        },
+        allergies: {
+          types: [],
+          others: [],
+          hasAllergy: false,
+        },
+        smoking: {
+          enabled: false,
+          types: [],
+          others: [],
+        },
+        estheOptions: {
+          available: [],
+          ngOptions: [],
+        },
+      };
 
-      const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
+      const processedData = {
+        ...defaultArrayFields,
+        ...sanitizedData,
+      };
+
+      console.log('送信データ:', processedData);
+
+      const response = await apiRequest("POST", "/api/talent/profile", processedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'プロフィールの作成に失敗しました');
@@ -913,7 +944,7 @@ export const TalentForm: React.FC = () => {
         <FormField label="自己PR(任意)">
           <textarea
             className="w-full h-32 p-2 border rounded-md"
-            placeholder="例：経験豊富な接客業で培った会話力と、明るい性格を活かして、お客様に楽しい時間を提供できます。
+            placeholder="例：経験豊富な接客業で培った会話力と、明るい性格を活かしてお客様に楽しい時間を提供できます。
 また、マッサージの技術には自信があり、お客様からも好評をいただいています。
 体型維持のために週3回のジムトレーニングを欠かさず、清潔感も大切にしています。"
             {...form.register("selfIntroduction")}

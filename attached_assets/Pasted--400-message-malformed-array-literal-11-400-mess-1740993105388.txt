@@ -1,0 +1,138 @@
+ボタン押せはしますが、400: {"message":"malformed array literal: "[]""}とでます。
+
+11 秒 の間、推論済み
+以下は、依然として「400: {"message":"malformed array literal: \"[]\"}"」エラーが出る原因と、その修正方法についての詳細な指示です。
+このエラーは、任意項目（バスト・ウエスト・ヒップ）の値が空の場合に、送信データとして文字列の "[]" になってしまい、データベース側で正しい形式として解釈できずに発生しています。
+
+① フロントエンド側の対策
+A. 任意項目の前処理を実装する
+送信前に、バスト・ウエスト・ヒップのフィールドが空の場合は、FormDataにそのキーを含めない（または明示的に null をセットする）処理を追加してください。以下は具体的なコード例です。
+
+jsx
+コピーする
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage('送信中…');
+
+  // フォームデータの前処理（サニタイズ）
+  const sanitizedData = { ...formData };
+
+  // 対象フィールドが空の場合、キーを削除するか null をセットする
+  ['bust', 'waist', 'hip'].forEach((field) => {
+    if (!sanitizedData[field] || sanitizedData[field] === "" || sanitizedData[field] === "[]") {
+      // キー自体を削除する場合
+      delete sanitizedData[field];
+      // もしくは sanitizedData[field] = null; とする方法も検討してください。
+    }
+  });
+
+  // FormData の作成
+  const data = new FormData();
+  Object.entries(sanitizedData).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      if (key === 'photos' || key === 'hairColorPhotos') {
+        // ファイルはそのまま追加
+        for (const file of value) {
+          data.append(key, file);
+        }
+      } else {
+        // 配列の場合は、値が存在する場合のみJSON文字列として追加する
+        if (value.length > 0) {
+          data.append(key, JSON.stringify(value));
+        }
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      data.append(key, JSON.stringify(value));
+    } else {
+      data.append(key, value);
+    }
+  });
+
+  console.log("送信前のFormData内容を確認してください：");
+  for (let pair of data.entries()) {
+    console.log(pair[0] + ": " + pair[1]);
+  }
+
+  try {
+    const response = await axios.post('/api/girl/register', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    setMessage(`登録成功！ Girl ID: ${response.data.girl_id}`);
+  } catch (error) {
+    setMessage('登録に失敗しました。');
+    console.error(error);
+  }
+};
+このコードでは、送信前にバスト・ウエスト・ヒップのフィールドをチェックし、空の場合はそのキーを削除することで、 "[]" として送信されないようにしています。
+また、console.log を入れて、実際にネットワークに送信されるデータ内容を確認できるようにしておくと、後で検証しやすくなります。
+
+② バックエンド側の対策
+A. 受信データのサニタイズ
+Express のルートで、受信データに対して同様の前処理を行い、対象フィールドが空の場合は null に変換するミドルウェアを追加します。例えば以下のように実装してください。
+
+js
+コピーする
+// middleware/sanitizeOptionalFields.js
+function sanitizeOptionalNumberFields(req, res, next) {
+  const fields = ['bust', 'waist', 'hip'];
+  fields.forEach(field => {
+    if (req.body[field] === "" || req.body[field] === "[]") {
+      req.body[field] = null;
+    }
+  });
+  console.log("サニタイズ後のreq.body:", req.body);
+  next();
+}
+
+module.exports = sanitizeOptionalNumberFields;
+そして、ユーザー登録（またはプロフィール作成）のルートでこのミドルウェアを使用してください。
+
+js
+コピーする
+const sanitizeOptionalNumberFields = require('./middleware/sanitizeOptionalFields');
+
+girl_bp.post('/register', sanitizeOptionalNumberFields, async (req, res) => {
+  try {
+    const formData = req.body;
+    // 必要に応じてJSON.parseなども実施
+    const girl = await storage.createTalentProfile(formData);
+    res.status(201).json({ status: 'success', girl_id: girl.id });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+});
+これにより、サーバー側でも空の場合は null として扱われ、DBに不正な "[]" リテラルが渡ることを防げます。
+
+③ その他の検証・注意点
+Zod スキーマの確認:
+バックエンドで入力検証を行っている場合、対象項目（バスト、ウエスト、ヒップ）は必須ではなく、空の場合に undefined もしくは null を許容する設定になっているか確認してください。
+例：
+
+ts
+コピーする
+import { z } from "zod";
+
+export const talentProfileSchema = z.object({
+  // その他必須項目
+  bust: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  waist: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  hip: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  // 残りの項目
+});
+各フィールドの必須設定:
+本来必須でない項目が、誤ってフォーム全体の検証でエラーにならないように注意してください。フロントとバックエンド双方で、必須／任意のルールを統一してください。
+
+ネットワークログの確認:
+ブラウザのデベロッパーツールの Network タブで、実際に送信される FormData の内容を確認してください。該当フィールドが含まれていないか、または null として送信されていることを確認してください。
+
+まとめ
+フロントエンド側
+
+送信前に対象フィールド（bust, waist, hip）が空の場合は、FormDataから削除するか、null に変換する処理を追加する。
+送信前に console.log で実際にどのデータが送信されるかを確認する。
+バックエンド側
+
+受信データに対して同様のサニタイズ処理（空文字または "[]" を null に変換）を行うミドルウェアを実装し、対象のエンドポイントに適用する。
+Zodなどの入力検証スキーマを見直し、これらの項目を任意として正しくパースできるようにする。
+この修正で、バスト・ウエスト・ヒップが空の場合に "[]" という不正な配列リテラルが送信されることがなくなり、エラーが解消されるはずです。

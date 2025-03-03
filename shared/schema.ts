@@ -233,18 +233,27 @@ export const talentProfileSchema = z.object({
   }),
 
   // 任意フィールド - バスト・ウエスト・ヒップ
-  bust: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
-    if (val === "" || val === undefined) return undefined;
-    return typeof val === "string" ? Number(val) : val;
-  }),
-  waist: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
-    if (val === "" || val === undefined) return undefined;
-    return typeof val === "string" ? Number(val) : val;
-  }),
-  hip: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
-    if (val === "" || val === undefined) return undefined;
-    return typeof val === "string" ? Number(val) : val;
-  }),
+  bust: z.union([z.string(), z.undefined()])
+    .optional()
+    .transform(val => {
+      if (!val || val === "") return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    }),
+  waist: z.union([z.string(), z.undefined()])
+    .optional()
+    .transform(val => {
+      if (!val || val === "") return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    }),
+  hip: z.union([z.string(), z.undefined()])
+    .optional()
+    .transform(val => {
+      if (!val || val === "") return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    }),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
