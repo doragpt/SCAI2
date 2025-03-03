@@ -230,9 +230,9 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.union([z.number(), z.undefined()]).optional(),
-  waist: z.union([z.number(), z.undefined()]).optional(),
-  hip: z.union([z.number(), z.undefined()]).optional(),
+  bust: z.number().optional(),
+  waist: z.number().optional(),
+  hip: z.number().optional(),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
@@ -241,7 +241,7 @@ export const talentProfileSchema = z.object({
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)),
     others: z.array(z.string()),
-  }).optional(),
+  }),
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)),
     others: z.array(z.string()),

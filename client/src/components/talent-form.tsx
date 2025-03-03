@@ -178,10 +178,10 @@ export const TalentForm: React.FC = () => {
     onSuccess: () => {
       toast({ title: 'プロフィールが作成されました。' });
     },
-    onError: (err) => {
+    onError: (error: Error) => {
       toast({
         title: 'プロフィールの作成に失敗しました。',
-        description: err instanceof Error ? err.message : '不明なエラーが発生しました。',
+        description: error.message,
         variant: 'destructive',
       });
     },
