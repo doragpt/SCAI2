@@ -232,7 +232,7 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // 任意フィールド
+  // 任意フィールド - バスト・ウエスト・ヒップ
   bust: z.union([z.string(), z.number(), z.undefined()]).optional().transform(val => {
     if (val === "" || val === undefined) return undefined;
     return typeof val === "string" ? Number(val) : val;
@@ -246,11 +246,10 @@ export const talentProfileSchema = z.object({
     return typeof val === "string" ? Number(val) : val;
   }),
 
+  // その他のフィールド（デフォルト値付き）
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
-
-  // その他のフィールド（デフォルト値付き）
   canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
   hasSnsAccount: z.boolean().default(false),

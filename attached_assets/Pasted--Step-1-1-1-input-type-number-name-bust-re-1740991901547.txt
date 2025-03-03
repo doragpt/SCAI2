@@ -1,0 +1,131 @@
+【Step 1】フロントエンド側の修正
+1.1 任意項目として扱うための確認
+既にフォーム上からは、<input type="number" name="bust" ... /> などで必須属性（required）が外れているか確認してください。
+→ チェック：HTMLタグに required が付いていないこと。
+1.2 FormData 生成時に空の場合の処理を追加
+送信直前に、対象フィールドが空の場合はキー自体を削除する、もしくは値を null に変換する処理を実装します。例えば、handleSubmit 内で以下のように修正してください。
+
+jsx
+コピーする
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage('送信中…');
+
+  // フォームデータをコピーして前処理する
+  const sanitizedData = { ...formData };
+
+  // 対象フィールド（bust, waist, hip）について、空文字または "[]" があれば削除または null に変換する
+  ['bust', 'waist', 'hip'].forEach((field) => {
+    if (!sanitizedData[field] || sanitizedData[field] === "" || sanitizedData[field] === "[]") {
+      // キー自体を削除する場合
+      delete sanitizedData[field];
+      // ※もしくは sanitizedData[field] = null; として明示的に null をセットしてもOK
+    }
+  });
+
+  // FormDataにsanitizedDataを追加する
+  const data = new FormData();
+  Object.entries(sanitizedData).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      if (key === 'photos' || key === 'hairColorPhotos') {
+        for (const file of value) {
+          data.append(key, file);
+        }
+      } else {
+        // 空の配列の場合はキーを含めない（または JSON.stringify(null) を設定）
+        if (value.length > 0) {
+          data.append(key, JSON.stringify(value));
+        }
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      data.append(key, JSON.stringify(value));
+    } else {
+      data.append(key, value);
+    }
+  });
+
+  try {
+    const response = await axios.post('/api/girl/register', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    setMessage(`登録成功！ Girl ID: ${response.data.girl_id}`);
+  } catch (error) {
+    setMessage('登録に失敗しました。');
+    console.error(error);
+  }
+};
+この処理で、バスト、ウエスト、ヒップが空の場合は送信データに含まれなくなるため、バックエンドで「[]」という不正な配列リテラルとして扱われることが防げます。
+
+【Step 2】バックエンド側の修正
+2.1 受信データの前処理ミドルウェアの追加
+バックエンド（Express）のルートで、受信データに対して対象フィールドを検査し、空文字や "[]" になっている場合は null に変換する前処理を行います。たとえば、routes/girl_routes.js 内の登録処理の冒頭に以下を追加してください。
+
+js
+コピーする
+// 受信データの前処理ミドルウェア例
+function sanitizeOptionalNumberFields(req, res, next) {
+  const fields = ['bust', 'waist', 'hip'];
+  fields.forEach((field) => {
+    if (req.body[field] === "" || req.body[field] === "[]") {
+      req.body[field] = null;
+    }
+  });
+  next();
+}
+そして、ユーザー登録のルートにこのミドルウェアを追加します。
+
+js
+コピーする
+girl_bp.post('/register', sanitizeOptionalNumberFields, async (req, res) => {
+  try {
+    // ここで req.body の各フィールドは既に正しく前処理済み
+    const formData = req.body;
+    // たとえば、データベース挿入前に JSON.parse したり、
+    // もしくはそのまま ORM のメソッドに渡す
+    const girl = await storage.createTalentProfile(formData);
+    res.status(201).json({ status: 'success', girl_id: girl.id });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+});
+2.2 Zodスキーマの見直し
+もしバックエンド側でZodを使用して入力を検証している場合、バスト・ウエスト・ヒップは任意項目として定義されているか確認してください。たとえば、shared/schema.ts 内で次のように定義します：
+
+ts
+コピーする
+import { z } from "zod";
+
+export const talentProfileSchema = z.object({
+  employmentType: z.string(),
+  // ... その他の必須フィールド ...
+  bust: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  waist: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  hip: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  // ... 残りのフィールド ...
+});
+これにより、入力値が空文字または "[]" の場合は undefined として扱われ、必須チェックに引っかからなくなります。
+
+【Step 3】全体のテストと確認
+フロントエンド:
+
+バスト、ウエスト、ヒップを空にした状態でフォームを送信し、実際に送信される FormData の内容をブラウザのデベロッパーツール（Networkタブ）で確認してください。対象フィールドが含まれていない、または null として送信されているか確認します。
+バックエンド:
+
+APIログやコンソール出力で、受信した req.body 内のバスト、ウエスト、ヒップが null になっているか確認します。
+その後、データベース挿入が正常に行われ、エラーが出ないことを確認してください。
+ユーザ登録処理の動作確認:
+
+ユーザー重複エラーについては、前述の重複チェックロジックとDB側の一意性制約を確認してください。既に同じメールやユーザ名が登録されていないか、または登録前に適切に検証されるかテストしてください。
+まとめ
+フロントエンド側:
+
+バスト・ウエスト・ヒップの入力値が空の場合、FormDataに含めない（または null として送信）ように前処理を追加。
+この処理により、空のフィールドが "[]" として送信されるのを防ぐ。
+バックエンド側:
+
+受信データの前処理ミドルウェアで、対象フィールドが空の場合に null に変換する処理を追加。
+Zodスキーマを見直し、これらの項目を任意項目として正しく扱う。
+全体の検証:
+
+フロントとバックエンド双方でデータ形式の整合性を確認し、エラーが解消されることをテストする。

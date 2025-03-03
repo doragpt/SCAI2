@@ -155,42 +155,16 @@ export const TalentForm: React.FC = () => {
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       // フォームデータの整形
-      const formData = {
-        // デフォルト値の設定
-        snsUrls: [],
-        currentStores: [],
-        previousStores: [],
-        photoDiaryUrls: [],
-        ngOptions: {
-          common: [],
-          others: [],
-        },
-        allergies: {
-          types: [],
-          others: [],
-          hasAllergy: false,
-        },
-        smoking: {
-          enabled: false,
-          types: [],
-          others: [],
-        },
-        estheOptions: {
-          available: [],
-          ngOptions: [],
-        },
-        // 任意テキストフィールドのデフォルト値
-        selfIntroduction: "",
-        notes: "",
-        // 数値フィールドの処理
-        bust: data.bust === "" ? undefined : data.bust,
-        waist: data.waist === "" ? undefined : data.waist,
-        hip: data.hip === "" ? undefined : data.hip,
-        // 他のフィールドをオーバーライド
-        ...data,
-      };
+      const sanitizedData = { ...data };
 
-      const response = await apiRequest("POST", "/api/talent/profile", formData);
+      // バスト・ウエスト・ヒップの処理
+      ['bust', 'waist', 'hip'].forEach(field => {
+        if (!sanitizedData[field] || sanitizedData[field] === "") {
+          delete sanitizedData[field];  // 空の場合はフィールドを削除
+        }
+      });
+
+      const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'プロフィールの作成に失敗しました');
