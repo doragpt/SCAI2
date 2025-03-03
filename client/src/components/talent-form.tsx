@@ -154,7 +154,15 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      const response = await apiRequest("POST", "/api/talent/profile", data);
+      // 空の数値フィールドをnullに変換
+      const processedData = {
+        ...data,
+        bust: data.bust || null,
+        waist: data.waist || null,
+        hip: data.hip || null,
+      };
+
+      const response = await apiRequest("POST", "/api/talent/profile", processedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'プロフィールの作成に失敗しました');
@@ -355,7 +363,10 @@ export const TalentForm: React.FC = () => {
           <FormField label="バスト (cm) (任意)">
             <Input
               type="number"
-              {...form.register("bust", { valueAsNumber: true })}
+              {...form.register("bust", {
+                setValueAs: v => v === "" ? null : Number(v),
+                valueAsNumber: true,
+              })}
               min={65}
               max={120}
             />
@@ -363,7 +374,10 @@ export const TalentForm: React.FC = () => {
           <FormField label="ウエスト (cm) (任意)">
             <Input
               type="number"
-              {...form.register("waist", { valueAsNumber: true })}
+              {...form.register("waist", {
+                setValueAs: v => v === "" ? null : Number(v),
+                valueAsNumber: true,
+              })}
               min={50}
               max={100}
             />
@@ -371,7 +385,10 @@ export const TalentForm: React.FC = () => {
           <FormField label="ヒップ (cm) (任意)">
             <Input
               type="number"
-              {...form.register("hip", { valueAsNumber: true })}
+              {...form.register("hip", {
+                setValueAs: v => v === "" ? null : Number(v),
+                valueAsNumber: true,
+              })}
               min={65}
               max={120}
             />
