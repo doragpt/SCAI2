@@ -160,6 +160,11 @@ export const TalentForm: React.FC = () => {
         bust: data.bust === undefined || data.bust === "" ? null : Number(data.bust),
         waist: data.waist === undefined || data.waist === "" ? null : Number(data.waist),
         hip: data.hip === undefined || data.hip === "" ? null : Number(data.hip),
+        // 配列フィールドが空の場合は空配列を設定
+        snsUrls: data.snsUrls || [],
+        photoDiaryUrls: data.photoDiaryUrls || [],
+        currentStores: data.currentStores || [],
+        previousStores: data.previousStores || [],
       };
 
       const response = await apiRequest("POST", "/api/talent/profile", processedData);

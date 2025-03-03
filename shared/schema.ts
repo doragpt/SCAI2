@@ -230,9 +230,9 @@ export const talentProfileSchema = z.object({
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.number().nullable().optional(),
-  waist: z.number().nullable().optional(),
-  hip: z.number().nullable().optional(),
+  bust: z.union([z.number(), z.null()]).optional(),
+  waist: z.union([z.number(), z.null()]).optional(),
+  hip: z.union([z.number(), z.null()]).optional(),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
