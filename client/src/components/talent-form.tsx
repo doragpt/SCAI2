@@ -163,18 +163,22 @@ export const TalentForm: React.FC = () => {
         // フォームデータの整形
         const sanitizedData = { ...data };
 
-        // バスト・ウエスト・ヒップが空の場合の処理
+        // 数値フィールドの処理
         ['bust', 'waist', 'hip'].forEach(field => {
-          if (!sanitizedData[field] || sanitizedData[field] === "") {
-            delete sanitizedData[field];
+          const value = sanitizedData[field];
+          if (value === "" || value === undefined) {
+            sanitizedData[field] = null;
+          } else {
+            const numValue = Number(value);
+            sanitizedData[field] = isNaN(numValue) ? null : numValue;
           }
         });
 
         // APIリクエストを送信
         const response = await apiRequest("POST", "/api/talent/profile", sanitizedData);
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'プロフィールの作成に失敗しました');
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'プロフィールの作成に失敗しました');
         }
         return response.json();
       } catch (error) {
@@ -191,7 +195,6 @@ export const TalentForm: React.FC = () => {
         description: error.message,
         variant: 'destructive',
       });
-      console.error('エラー詳細:', error);
     },
   });
 

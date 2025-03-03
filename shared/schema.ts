@@ -204,7 +204,7 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 export const talentProfileSchema = z.object({
-  // 必須フィールド
+  // 必須フィールド（変更なし）
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string()
@@ -232,16 +232,23 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // バスト・ウエスト・ヒップの型定義を修正
-  bust: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
-  waist: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
-  hip: z.preprocess((a) => (a === "" || a === "[]" ? undefined : Number(a)), z.number().optional()),
+  // 任意フィールド（バスト・ウエスト・ヒップ）
+  bust: z.number().nullable().optional(),
+  waist: z.number().nullable().optional(),
+  hip: z.number().nullable().optional(),
 
+  // その他の必須フィールド
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
 
-  // 配列フィールドのデフォルト値設定
+  // その他のフィールド（デフォルト値付き）
+  canPhotoDiary: z.boolean().default(false),
+  canHomeDelivery: z.boolean().default(false),
+  hasSnsAccount: z.boolean().default(false),
+  hasEstheExperience: z.boolean().default(false),
+
+  // オブジェクトフィールド（デフォルト値付き）
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -259,13 +266,7 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
 
-  // その他のフィールド
-  canPhotoDiary: z.boolean().default(false),
-  canHomeDelivery: z.boolean().default(false),
-  hasSnsAccount: z.boolean().default(false),
-  hasEstheExperience: z.boolean().default(false),
-
-  // 配列フィールド
+  // 配列フィールド（デフォルト値付き）
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),

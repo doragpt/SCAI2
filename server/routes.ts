@@ -176,9 +176,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/talent/profile", requireAuth, async (req: any, res) => {
     try {
       console.log('Profile creation request received:', req.body);
+
+      // リクエストデータのバリデーション
       const profileData = talentProfileSchema.parse(req.body);
 
       const profile = await db.transaction(async (tx) => {
+        // 既存のプロフィールチェック
         const [existingProfile] = await tx
           .select()
           .from(talentProfiles)
@@ -188,12 +191,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールは既に作成されています");
         }
 
+        // 新しいプロフィールの作成
         const [newProfile] = await tx
           .insert(talentProfiles)
           .values({
             userId: req.user.id,
             ...profileData,
-            createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
