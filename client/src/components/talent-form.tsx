@@ -411,7 +411,7 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* 店舗情報（1箇所にまとめる） */}
+            {/* 店舗情報（その他の前に移動） */}
             <div>
               <h3 className="text-lg font-semibold mb-4">店舗情報</h3>
               <div className="space-y-6">
@@ -709,31 +709,6 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* 写メ日記と自宅への派遣 */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">その他</h3>
-              <SwitchField
-                label="写メ日記の投稿可否"
-                required
-                checked={form.watch("canPhotoDiary")}
-                onCheckedChange={(checked) =>
-                  form.setValue("canPhotoDiary", checked, { shouldValidate: true })
-                }
-                valueLabels={{ checked: "可能", unchecked: "不可" }}
-              />
-
-              <SwitchField
-                label="自宅への派遣"
-                required
-                checked={form.watch("canHomeDelivery")}
-                onCheckedChange={(checked) =>
-                  form.setValue("canHomeDelivery", checked, { shouldValidate: true })
-                }
-                valueLabels={{ checked: "可能", unchecked: "不可" }}
-                description="自宅での接客が可能な場合は「可能」を選択してください"
-              />
-            </div>
-
 
             {/* NGオプション */}
             <div>
@@ -948,8 +923,8 @@ export const TalentForm: React.FC = () => {
                                 form.setValue("allergies.others", newAllergies);
                                 e.currentTarget.value = "";
                               }
-                              }
-                            }}
+                            }
+                          }}
                         />
                       </div>
                     </div>

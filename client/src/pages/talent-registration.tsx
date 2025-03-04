@@ -3,12 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TalentForm } from "@/components/talent-form";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { useState } from "react";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
-  const [formProgress, setFormProgress] = useState(0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,24 +42,12 @@ export default function TalentRegistration() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>入力の進捗</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Progress value={formProgress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">
-                必須項目の入力状況: {formProgress}%
-              </p>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Web履歴書作成</CardTitle>
             </CardHeader>
             <CardContent>
-              <TalentForm onProgressChange={setFormProgress} />
+              <TalentForm />
             </CardContent>
           </Card>
         </div>
