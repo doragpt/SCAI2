@@ -8,7 +8,7 @@ export const AIMatchingChat = () => {
   const [messages, setMessages] = useState<Array<{ type: 'ai' | 'user', content: string }>>([
     {
       type: 'ai',
-      content: 'AIマッチングへようこそ！\nここではあなたの希望にそって最適な提案をします。\nまずは出稼ぎをお探しか、在籍をお探しかをお聞かせください！'
+      content: 'SCAIマッチングへようこそ！\nここではあなたの希望にそって最適な提案をします。\nまずは出稼ぎをお探しか、在籍をお探しかをお聞かせください！'
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
