@@ -34,7 +34,7 @@ import {
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { CheckIcon } from "@/components/icons/check";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useLocation } from "wouter"; // Replaced next/navigation with wouter
 import { WORK_TYPES_WITH_DESCRIPTION } from "@/constants/work-types";
 import { GUARANTEE_OPTIONS } from "@/constants/guarantee-options";
 import { TIME_OPTIONS } from "@/constants/time-options";
@@ -43,10 +43,10 @@ import { prefectures } from "@/constants/prefectures";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
 import { useProfile } from "@/hooks/use-profile";
 import { useMatching } from "@/hooks/use-matching";
-import StoreDetailModal from "@/components/store-detail-modal";
+import { StoreDetailModal } from "@/components/store-detail-modal";
 import ProfileCheckDialog from "@/components/profile-check-dialog";
-import { cn } from "@/utils/cn";
-import { MapPin, Star } from "@/components/icons";
+import { cn } from "@/lib/utils";
+import { MapPin, Star } from "lucide-react";
 
 
 interface Store {
@@ -95,7 +95,7 @@ export const AIMatchingChat = () => {
   const [showProfileCheck, setShowProfileCheck] = useState(false);
   const { profileData, updateProfile } = useProfile();
   const { startMatching, matchingResults, setCurrentPage, currentPage } = useMatching();
-  const searchParams = useSearchParams();
+  const [location] = useLocation(); //Replaced useSearchParams
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
