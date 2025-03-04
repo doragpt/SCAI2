@@ -1,23 +1,33 @@
 export const WORK_TYPES_WITH_DESCRIPTION = [
   {
-    id: 'hotel-health',
-    label: 'ホテルヘルス',
-    description: '接客とマッサージを中心としたサービスを提供',
+    id: 'store-health',
+    label: '店舗型ヘルス',
+    description: '店舗型の健全な性的サービスを提供',
   },
   {
     id: 'delivery-health',
     label: 'デリバリーヘルス',
-    description: '出張型のマッサージ・エステサービスを提供',
+    description: '出張型の健全な性的サービスを提供',
   },
   {
-    id: 'soap-land',
-    label: 'ソープランド',
-    description: '高級店舗型のマッサージ・エステサービスを提供',
+    id: 'hotel-health',
+    label: 'ホテルヘルス',
+    description: 'ホテル型の健全な性的サービスを提供',
   },
   {
-    id: 'esthe',
-    label: 'エステ',
-    description: 'アロマやオイルを使用したリラクゼーションサービスを提供',
+    id: 'fuzoku-esthe',
+    label: '風俗エステ',
+    description: 'エステと性的サービスを組み合わせたサービスを提供',
+  },
+  {
+    id: 'm-seikan',
+    label: 'M性感',
+    description: 'M向けの性的サービスを提供',
+  },
+  {
+    id: 'onakura',
+    label: 'オナクラ',
+    description: '手技による性的サービスを提供',
   },
 ];
 
