@@ -278,7 +278,17 @@ export const AIMatchingChat = () => {
         content: formatConditionsMessage(conditions, selectedType)
       }, {
         type: 'ai',
-        content: '記入したものの情報に間違いはないか確認してね！\n間違いが無ければマッチングをはじめるよ！'
+        content: `入力内容に間違いがないか確認してください。\n
+修正が必要な場合は「修正する」を、このまま進める場合は「マッチングを開始する」を選択してください。\n
+マッチングを開始すると、以下の2つの方法から選択できます：\n
+1️⃣ 自動マッチング
+・AIが条件に合う店舗に直接連絡
+・できるだけ早く働きたい方におすすめ
+・面接や採用までの時間を短縮\n
+2️⃣ 手動マッチング
+・AIが条件に合う店舗を一覧表示
+・じっくり店舗を選びたい方におすすめ
+・店舗の詳細情報を確認可能`
       }]);
 
       setShowConfirmationButtons(true);
@@ -296,21 +306,6 @@ export const AIMatchingChat = () => {
       setMessages(prev => [...prev, {
         type: 'user',
         content: 'マッチングを開始する'
-      }, {
-        type: 'ai',
-        content: `確認してくれてありがとう！\n
-マッチングの方法を2つご用意しています：\n
-1️⃣ 自動で確認
-● AIが条件に合う店舗に直接連絡
-● できるだけ早く働きたい方におすすめ
-● 面接や採用までの時間を短縮できます
-● 希望条件に合う店舗から順次ご連絡があります\n
-2️⃣ ピックアップしてから確認
-● AIが条件に合う店舗を一覧で表示
-● じっくり店舗を選びたい方におすすめ
-● 気になる店舗を選んでから連絡できます
-● 店舗の詳細情報も確認できます\n
-どちらの方法でマッチングを進めますか？`
       }]);
       setShowConfirmationButtons(false);
       setShowMatchingOptions(true);
@@ -899,6 +894,83 @@ export const AIMatchingChat = () => {
         </Card>
       )}
 
+      {/* 確認/修正ボタン */}
+      {showConfirmationButtons && (
+        <Card className="border-t sticky bottom-0 bg-background">
+          <div className="p-6">
+            <div className="flex flex-col gap-4">
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium">入力内容の確認</h3>
+                <p className="text-sm text-muted-foreground">
+                  内容を確認し、マッチングを開始するか修正するかを選択してください
+                </p>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="min-w-[140px]"
+                  onClick={() => {
+                    setShowConfirmationButtons(false);
+                    setShowForm(true);
+                  }}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  修正する
+                </Button>
+                <Button
+                  size="lg"
+                  className="min-w-[140px]"
+                  onClick={handleStartMatching}
+                >
+                  マッチングを開始する
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* マッチング方法選択 */}
+      {showMatchingOptions && (
+        <Card className="border-t sticky bottom-0 bg-background">
+          <div className="p-6">
+            <div className="flex flex-col gap-6">
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium">マッチング方法の選択</h3>
+                <p className="text-sm text-muted-foreground">
+                  希望に合わせて最適なマッチング方法をお選びください
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handleAutoMatching}>
+                  <div className="space-y-3">
+                    <h4 className="font-medium">自動でマッチング</h4>
+                    <ul className="text-sm text-muted-foreground space-y-2">
+                      <li>• AIが条件に合う店舗に直接連絡</li>
+                      <li>• できるだけ早く働きたい方におすすめ</li>
+                      <li>• 面接や採用までの時間を短縮</li>
+                      <li>• 希望条件に合う店舗から順次連絡</li>
+                    </ul>
+                  </div>
+                </Card>
+                <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handlePickupMatching}>
+                  <div className="space-y-3">
+                    <h4 className="font-medium">ピックアップしてから確認</h4>
+                    <ul className="text-sm text-muted-foreground space-y-2">
+                      <li>• AIが条件に合う店舗を一覧表示</li>
+                      <li>• じっくり店舗を選びたい方におすすめ</li>
+                      <li>• 店舗の詳細情報を確認可能</li>
+                      <li>• 気になる店舗を選んで連絡</li>
+                    </ul>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="p-4 border-t bg-background">
         {!selectedType && !isLoading && (
           <div className="flex gap-4 justify-center">
@@ -911,40 +983,6 @@ export const AIMatchingChat = () => {
                 {type}
               </Button>
             ))}
-          </div>
-        )}
-
-        {showConfirmationButtons && (
-          <div className="flex gap-4 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowConfirmationButtons(false);
-                setShowForm(true);
-              }}
-            >
-              修正する
-            </Button>
-            <Button onClick={handleStartMatching}>
-              マッチングを開始する
-            </Button>
-          </div>
-        )}
-
-        {showMatchingOptions && (
-          <div className="flex gap-4 justify-center">
-            <Button
-              className="flex-1 max-w-[200px]"
-              onClick={handleAutoMatching}
-            >
-              自動で確認する
-            </Button>
-            <Button
-              className="flex-1 max-w-[200px]"
-              onClick={handlePickupMatching}
-            >
-              ピックアップしてから確認する
-            </Button>
           </div>
         )}
 
