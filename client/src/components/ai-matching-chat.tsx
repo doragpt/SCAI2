@@ -1063,9 +1063,11 @@ export const AIMatchingChat = () => {
           </DialogHeader>
           <ScrollArea className="h-[60vh]">
             <div className="space-y-6 p-4">
+              {/* ウェブ履歴書セクション */}
               <div className="space-y-4 border-b pb-4">
                 <h3 className="text-lg font-medium">ウェブ履歴書の情報</h3>
                 <div className="grid grid-cols-2 gap-4">
+                  {/* 基本情報 */}
                   <div>
                     <Label>お名前</Label>
                     <p className="text-sm">{profileData?.lastName} {profileData?.firstName}</p>
@@ -1082,6 +1084,8 @@ export const AIMatchingChat = () => {
                     <Label>最寄り駅</Label>
                     <p className="text-sm">{profileData?.nearestStation}</p>
                   </div>
+
+                  {/* スリーサイズ情報 */}
                   <div>
                     <Label>身長</Label>
                     <p className="text-sm">{profileData?.height}cm</p>
@@ -1098,9 +1102,106 @@ export const AIMatchingChat = () => {
                     <Label>カップサイズ</Label>
                     <p className="text-sm">{profileData?.cupSize}</p>
                   </div>
+
+                  {/* 身分証明書 */}
+                  <div className="col-span-2">
+                    <Label>身分証明書</Label>
+                    <p className="text-sm">
+                      {profileData?.availableIds?.types?.join('、')}
+                      {profileData?.availableIds?.others?.length > 0 && 
+                        `、${profileData.availableIds.others.join('、')}`}
+                    </p>
+                  </div>
+
+                  {/* パネル設定 */}
+                  <div>
+                    <Label>顔出し設定</Label>
+                    <p className="text-sm">{profileData?.faceVisibility}</p>
+                  </div>
+                  <div>
+                    <Label>写メ日記</Label>
+                    <p className="text-sm">{profileData?.canPhotoDiary ? '対応可能' : '対応不可'}</p>
+                  </div>
+
+                  {/* NGオプション */}
+                  {profileData?.ngOptions && (
+                    <div className="col-span-2">
+                      <Label>NGオプション</Label>
+                      <p className="text-sm">
+                        {profileData.ngOptions.common?.join('、')}
+                        {profileData.ngOptions.others?.length > 0 && 
+                          `、${profileData.ngOptions.others.join('、')}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* アレルギー */}
+                  {profileData?.allergies?.hasAllergy && (
+                    <div className="col-span-2">
+                      <Label>アレルギー</Label>
+                      <p className="text-sm">
+                        {profileData.allergies.types?.join('、')}
+                        {profileData.allergies.others?.length > 0 && 
+                          `、${profileData.allergies.others.join('、')}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 喫煙 */}
+                  {profileData?.smoking?.enabled && (
+                    <div className="col-span-2">
+                      <Label>喫煙</Label>
+                      <p className="text-sm">
+                        {profileData.smoking.types?.join('、')}
+                        {profileData.smoking.others?.length > 0 && 
+                          `、${profileData.smoking.others.join('、')}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* エステ経験 */}
+                  {profileData?.hasEstheExperience && (
+                    <>
+                      <div className="col-span-2">
+                        <Label>エステ経験</Label>
+                        <p className="text-sm">あり（{profileData.estheExperiencePeriod}）</p>
+                      </div>
+                      {profileData.estheOptions && (
+                        <div className="col-span-2">
+                          <Label>対応可能なオプション</Label>
+                          <p className="text-sm">
+                            {profileData.estheOptions.available?.join('、')}
+                            {profileData.estheOptions.ngOptions?.length > 0 && (
+                              <>
+                                <br />
+                                <span className="text-destructive">NG: {profileData.estheOptions.ngOptions.join('、')}</span>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* 自己PR */}
+                  {profileData?.selfIntroduction && (
+                    <div className="col-span-2">
+                      <Label>自己PR</Label>
+                      <p className="text-sm whitespace-pre-wrap">{profileData.selfIntroduction}</p>
+                    </div>
+                  )}
+
+                  {/* その他備考 */}
+                  {profileData?.notes && (
+                    <div className="col-span-2">
+                      <Label>その他備考</Label>
+                      <p className="text-sm whitespace-pre-wrap">{profileData.notes}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
+              {/* 入力条件セクション */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">希望条件</h3>
                 <div className="whitespace-pre-line bg-muted/50 p-4 rounded-lg">
