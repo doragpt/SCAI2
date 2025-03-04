@@ -6,6 +6,8 @@ export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
 } as const;
 
+type UnauthorizedBehavior = "returnNull" | "throw";
+
 // APIのベースURL設定
 const API_BASE_URL = (() => {
   const protocol = window.location.protocol;
@@ -26,6 +28,75 @@ async function throwIfResNotOk(res: Response) {
     throw new Error(data.message || res.statusText);
   }
 }
+
+// Query Function の定義（先に移動）
+export const getQueryFn = <T>({
+  on401,
+}: {
+  on401: UnauthorizedBehavior;
+}): QueryFunction<T> =>
+  async ({ queryKey }) => {
+    const headers: Record<string, string> = {
+      "X-Requested-With": "XMLHttpRequest"
+    };
+
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    try {
+      // プロフィールデータの場合、まずローカルストレージをチェック
+      if (url === QUERY_KEYS.TALENT_PROFILE) {
+        const cachedProfile = localStorage.getItem('talentProfile');
+        if (cachedProfile) {
+          const profileData = JSON.parse(cachedProfile) as T;
+          console.log("Using cached profile data:", {
+            timestamp: new Date().toISOString(),
+            userId: (profileData as TalentProfileData).userId
+          });
+          return profileData;
+        }
+      }
+
+      const res = await fetch(fullUrl, {
+        headers,
+        credentials: "include",
+      });
+
+      if (on401 === "returnNull" && res.status === 401) {
+        return null as T;
+      }
+
+      await throwIfResNotOk(res);
+      const data = await res.json() as T;
+
+      // プロフィールデータの場合はローカルストレージに保存
+      if (url === QUERY_KEYS.TALENT_PROFILE) {
+        localStorage.setItem('talentProfile', JSON.stringify(data));
+        console.log("Updated cached profile data:", {
+          timestamp: new Date().toISOString(),
+          userId: (data as TalentProfileData).userId
+        });
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Query Failed:", {
+        url: fullUrl,
+        error: error instanceof Error ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        } : error,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  };
 
 export async function apiRequest(
   method: string,
@@ -126,7 +197,7 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
   }
 }
 
-// React Query クライアントの設定
+// React Query クライアントの設定（後ろに移動）
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -142,73 +213,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-export const getQueryFn = <T>({
-  on401,
-}: {
-  on401: UnauthorizedBehavior;
-}): QueryFunction<T> =>
-  async ({ queryKey }) => {
-    const headers: Record<string, string> = {
-      "X-Requested-With": "XMLHttpRequest"
-    };
-
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const url = queryKey[0] as string;
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    try {
-      // プロフィールデータの場合、まずローカルストレージをチェック
-      if (url === QUERY_KEYS.TALENT_PROFILE) {
-        const cachedProfile = localStorage.getItem('talentProfile');
-        if (cachedProfile) {
-          const profileData = JSON.parse(cachedProfile) as T;
-          console.log("Using cached profile data:", {
-            timestamp: new Date().toISOString(),
-            userId: (profileData as TalentProfileData).userId
-          });
-          return profileData;
-        }
-      }
-
-      const res = await fetch(fullUrl, {
-        headers,
-        credentials: "include",
-      });
-
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null as T;
-      }
-
-      await throwIfResNotOk(res);
-      const data = await res.json() as T;
-
-      // プロフィールデータの場合はローカルストレージに保存
-      if (url === QUERY_KEYS.TALENT_PROFILE) {
-        localStorage.setItem('talentProfile', JSON.stringify(data));
-        console.log("Updated cached profile data:", {
-          timestamp: new Date().toISOString(),
-          userId: (data as TalentProfileData).userId
-        });
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Query Failed:", {
-        url: fullUrl,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : error,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  };
-
-type UnauthorizedBehavior = "returnNull" | "throw";
