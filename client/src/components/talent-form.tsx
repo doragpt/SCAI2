@@ -45,7 +45,7 @@ import { cleanEmptyArrays } from "@/utils/cleanData";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import { useState as useState2 } from "react";
 import { useLocation } from "wouter";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 // FormField wrapper component for consistent styling
@@ -1178,9 +1178,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({
               </div>
             </FormField>
 
-            {/* 写メ日記URL - 現在在籍中の店舗の直後に移動 */}
-            <div>
-              <h3 className="text-lg font-semibold">写メ日記URL</h3>
+
+            {/* 写メ日記URL - 現在在籍中の店舗の直後に配置 */}
+            <FormField label="写メ日記が確認できる店舗URL">
               <div className="space-y-4">
                 {form.watch("photoDiaryUrls").map((url, index) => (
                   <div key={index} className="flex items-center gap-2">
@@ -1228,7 +1228,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>
+            </FormField>
 
             <FormField label="過去経験店舗">
               <div className="space-y-4">
@@ -1324,26 +1324,29 @@ export const TalentForm: React.FC<TalentFormProps> = ({
 
       {/* 確認モーダル */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <Dialog.Overlay />
-        <Dialog.Content>
-          <Dialog.Header>
-            <Dialog.Title>確認</Dialog.Title>
-            <Button variant="ghost" onClick={() => setShowConfirmation(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </Dialog.Header>
-          <Dialog.Description>
-            入力内容を確認してください。よろしければ「確認」ボタンを押してください。
-          </Dialog.Description>
-          <Dialog.Footer>
-            <Button variant="default" onClick={handleModalClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認</DialogTitle>
+            <DialogDescription>
+              入力内容を確認してください。よろしければ「確認」ボタンを押してください。
+            </DialogDescription>
+          </DialogHeader>
+          {formDataToConfirm && (
+            <div className="py-4">
+              <div className="space-y-4">
+                {/* フォームデータの表示 */}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleModalClose}>
               キャンセル
             </Button>
-            <Button type="submit" onClick={handleConfirm}>
+            <Button onClick={handleConfirm}>
               確認
             </Button>
-          </Dialog.Footer>
-        </Dialog.Content>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </Form>
   );
