@@ -6,9 +6,9 @@ import cors from "cors";
 
 const app = express();
 
-// CORSミドルウェアの設定を修正
+// CORSミドルウェアの設定
 app.use(cors({
-  origin: true, // すべてのオリジンを許可
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -17,15 +17,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// リクエストロギングの強化
+// 詳細なリクエストロギングミドルウェア
 app.use((req, res, next) => {
   const start = Date.now();
-  console.log('Detail Request Info:', {
+  log('Request received:', {
     method: req.method,
     path: req.path,
     headers: {
       ...req.headers,
-      authorization: req.headers.authorization ? '[HIDDEN]' : undefined
+      authorization: req.headers.authorization ? '[HIDDEN]' : undefined,
+      cookie: req.headers.cookie ? '[HIDDEN]' : undefined
     },
     query: req.query,
     body: req.method !== 'GET' ? req.body : undefined,
@@ -34,7 +35,7 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    console.log('Detail Response Info:', {
+    log('Response sent:', {
       method: req.method,
       path: req.path,
       status: res.statusCode,
@@ -46,46 +47,90 @@ app.use((req, res, next) => {
   next();
 });
 
+// ヘルスチェックエンドポイント
+app.get('/health', async (_req, res) => {
+  try {
+    // 最小限のデータベース接続テスト
+    await db.execute(sql`SELECT 1`);
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      env: app.get('env'),
+      database: true
+    });
+  } catch (error) {
+    log('Health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      env: app.get('env'),
+      database: false,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// メインのアプリケーション起動処理
 (async () => {
   try {
+    // 環境変数のチェック
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URLが設定されていません");
     }
 
+    log('Starting server initialization...');
+
+    // 初期データベース接続テスト
+    try {
+      log('Testing database connection...');
+      await db.execute(sql`SELECT 1`);
+      log('Database connection successful');
+    } catch (error) {
+      log('Database connection failed:', error);
+      // エラーをスローせずに、アプリケーションは続行
+      log('Warning: Database connection failed, but continuing application startup');
+    }
+
+    log('Registering routes...');
     const server = await registerRoutes(app);
 
-    // エラーハンドリングミドルウェアの強化
+    // エラーハンドリングミドルウェア
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error("Detailed Server Error:", {
+      log("Server error:", {
         error: err,
         name: err.name,
         message: err.message,
         code: err.code,
-        stack: err.stack,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
         timestamp: new Date().toISOString()
       });
 
       res.status(err.status || 500).json({
         error: true,
-        message: err.message || "Internal Server Error",
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
         timestamp: new Date().toISOString()
       });
     });
 
     if (app.get("env") === "development") {
+      log('Setting up Vite in development mode...');
       await setupVite(app, server);
     }
 
-    server.listen({
-      port: 5000,
-      host: "0.0.0.0",
-    }, () => {
-      log(`Server started at http://0.0.0.0:5000`);
+    // ポート設定の取得とログ出力
+    const port = process.env.PORT || 5000;
+    log(`Using port: ${port} (from ${process.env.PORT ? 'environment' : 'default'})`);
+
+    // サーバー起動
+    server.listen(port, "0.0.0.0", () => {
+      log(`Server started at http://0.0.0.0:${port}`);
       log(`Environment: ${app.get("env")}`);
       log(`CORS: Enabled with full access`);
+      log(`Database: Connection attempted`);
     });
   } catch (error) {
-    console.error("Detailed Startup Error:", error);
+    log("Fatal startup error:", error);
     process.exit(1);
   }
 })();
