@@ -1,0 +1,198 @@
+1. バックエンド側の修正
+(1) プロフィール更新ロジックの見直し
+問題点:
+
+PATCH リクエストで送信されない編集不可フィールド（例：生年月日）が、更新処理の際に null で上書きされている。
+修正手順:
+
+既存のプロフィールを取得し、リクエストデータとマージする
+現在、更新APIが以下のようになっていると仮定します（例：UserController.js や ProfileController.ts）：
+
+js
+コピーする
+// 修正前（誤った例）
+user.name = req.body.name;
+user.age = req.body.age;
+user.birthdate = req.body.birthdate;  // ← この行が問題：birthdateがリクエストに含まれない場合、undefined/NULLで上書きされる
+user.webResume = req.body.webResume;
+await user.save();
+修正例:
+編集不可フィールド（ここでは birthdate）は、リクエストに明示的に含まれていない場合、既存の値をそのまま保持するようにします。以下のようにマージ処理を実装してください。
+
+js
+コピーする
+// 例: Node.js/Express + Mongooseの場合
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 既存データをオブジェクトとして取得
+    const currentData = user.toObject();
+
+    // リクエストから送信されたデータを新しいオブジェクトにマージ
+    // ※ 編集不可フィールド（birthdate）は、リクエストに含まれていなければ currentData.birthdate をそのまま使う
+    const updatedData = {
+      ...currentData,
+      ...req.body,
+      // 明示的に編集不可フィールドを上書きしない
+      birthdate: currentData.birthdate,
+    };
+
+    // マージ結果で更新
+    user.set(updatedData);
+    await user.save();
+
+    // 完全なプロフィールデータを返す
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    return res.status(500).json({ message: 'プロフィール更新に失敗しました' });
+  }
+};
+確認:
+
+Postman や curl を使って、PATCH /api/profile にリクエストを送信し、レスポンスJSONに birthdate フィールドが正しく含まれていることを確認してください。
+更新時に、birthdate が変更されず、その他の編集可能なフィールドだけが更新されるかをチェックしてください。
+2. フロントエンド側の修正
+(1) 状態管理とローカルストレージの連携
+問題点:
+
+プロフィール更新後、フロントエンドの状態やローカルストレージが更新されず、古い（または空の）値が表示されている。
+修正手順:
+
+API呼び出し後の状態更新:
+プロフィール更新APIの呼び出し部分（例：TalentForm.tsx や ProfileEdit.jsx）で、APIから返された最新のユーザーデータで状態（state）とローカルストレージを更新してください。
+
+jsx
+コピーする
+// 例: Reactの場合
+const handleSave = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await updateProfileAPI(formData);
+    // APIから返された最新のユーザーデータを利用して状態を更新
+    setProfile(response.data);
+    localStorage.setItem('userProfile', JSON.stringify(response.data));
+    showSuccess('プロフィールを更新しました。');
+  } catch (error) {
+    console.error('更新エラー:', error);
+    showError('プロフィールの更新に失敗しました。');
+  }
+};
+初期化処理の修正:
+ページ読み込み時に、localStorageまたはAPIからプロフィール情報を取得する処理で、保存された birthdate や webResume など全てのフィールドが正しく読み込まれているか確認してください。
+
+jsx
+コピーする
+useEffect(() => {
+  const storedData = localStorage.getItem('userProfile');
+  if (storedData) {
+    setProfile(JSON.parse(storedData));
+  } else {
+    fetchProfileAPI()
+      .then((res) => {
+        setProfile(res.data);
+        localStorage.setItem('userProfile', JSON.stringify(res.data));
+      })
+      .catch((err) => console.error('プロフィール取得エラー', err));
+  }
+}, []);
+(2) ウェブ履歴書のフォーム修正
+問題点:
+
+ウェブ履歴書のフォーム送信処理で、入力値が正しく取得されない、もしくはバックエンドに送信されていない可能性があります。
+修正手順:
+
+フォームの入力バインディングの確認:
+各入力フィールドに対して、双方向バインディング（Reactの場合、value と onChange で管理）を実装し、フォームデータがformDataというstateに正しく格納されるようにします。
+
+jsx
+コピーする
+<input
+  type="text"
+  value={formData.webResume || ''}
+  onChange={(e) => setFormData({ ...formData, webResume: e.target.value })}
+  placeholder="履歴書内容を入力してください"
+/>
+送信ハンドラの見直し:
+保存ボタン押下時に、フォームの状態全体が正しくAPIに送信されるよう、送信処理を再確認してください。バックエンドが期待するフィールド名（例：webResume）と一致しているか、またAPIのエンドポイントやHTTPメソッド（PATCHかPOSTか）を確認します。
+
+エラーハンドリング:
+サーバーからのエラーレスポンスを適切にキャッチし、ユーザーにエラーメッセージを表示するようにします。
+
+jsx
+コピーする
+saveWebResume(formData)
+  .then((res) => {
+    showSuccess('ウェブ履歴書が更新されました。');
+    setProfile((prev) => ({ ...prev, webResume: res.data.webResume }));
+    localStorage.setItem('userProfile', JSON.stringify(res.data));
+  })
+  .catch((err) => {
+    console.error('履歴書更新エラー:', err);
+    showError('ウェブ履歴書の更新に失敗しました。');
+  });
+3. 修正実施の順番と統合テスト
+推奨する実施順序
+バックエンド修正の適用とテスト
+
+上記のプロフィール更新ロジックの修正（既存データのマージ処理）を最初に実装してください。
+Postmanやcurlで、PATCHリクエストを送信し、レスポンスに birthdate が含まれていること、また更新した他のフィールドが正しく保存されていることを確認してください。
+フロントエンド修正の適用とテスト
+
+プロフィール更新後の状態更新とローカルストレージ連携の実装を行い、APIから返された最新のユーザーデータで画面状態を更新することを確認してください。
+特に、更新後にダッシュボード経由で基本情報画面に戻った場合でも、birthdate や webResume などのデータが維持されていることをテストします。
+ウェブ履歴書フォームの動作確認
+
+ウェブ履歴書の入力内容が正しく送信され、更新され、再読み込み後にも保持されるかをテストしてください。
+エラーハンドリングが適切に行われているか、必要に応じてバリデーションの追加も確認してください。
+統合テスト
+
+すべての修正を適用後、ユーザー登録、ログイン、プロフィール編集、ウェブ履歴書更新の一連のフローを通してテストし、すべてのデータが正しく表示されること、再読み込み後も更新内容が保持されることを確認してください。
+最終確認
+
+修正が完了し、各機能が正しく統合されて動作することを確認できたら、エンジニア（AI）からユーザー（あなた）にテスト依頼を出すようにしてください。
+最終指示例（エンジニア向け）
+「現在、プロフィール更新時に生年月日が未設定になり、ウェブ履歴書の内容も正しく保存されない問題が残っています。以下の手順に従って修正を実施してください。
+
+【バックエンド側】
+PATCH /api/profile エンドポイントの処理を見直し、既存のユーザーデータを取得してから、リクエストボディの更新データとマージするようにしてください。
+編集不可フィールド（例: birthdate）は、リクエストに含まれていなければ既存の値をそのまま保持するようにします。
+例:
+js
+コピーする
+const existingProfile = await User.findById(userId);
+const updatedData = {
+  ...existingProfile.toObject(),
+  ...req.body,
+  birthdate: existingProfile.birthdate, // 編集不可フィールドは上書きしない
+};
+user.set(updatedData);
+await user.save();
+return res.status(200).json(user);
+保存後のレスポンスに、更新後の全プロフィール情報（特に birthdate と webResume）が正しく含まれていることを確認してください。
+【フロントエンド側】
+プロフィール更新フォームの送信ハンドラを修正し、APIから返された最新のユーザーデータで状態（state）と localStorage を更新するようにしてください。
+例:
+jsx
+コピーする
+updateProfileAPI(formData)
+  .then(response => {
+    setProfile(response.data);
+    localStorage.setItem('userProfile', JSON.stringify(response.data));
+    showSuccess('プロフィールを更新しました。');
+  })
+  .catch(error => {
+    showError('プロフィール更新に失敗しました。');
+  });
+ページ初期化時（例えば、基本情報画面のマウント時）に localStorage や API からユーザーデータを取得し、birthdate や webResume を含む完全なプロフィール状態を復元するようにしてください。
+【ウェブ履歴書フォームの修正】
+各入力フィールドが正しく双方向バインディングされ、フォーム送信時に正しいキー（例: webResume）でデータが送信されていることを確認してください。
+送信後、バックエンドから返されたデータでフォームの状態を更新し、ページ再読み込み時にも最新情報が反映されるようにしてください。
+【統合テスト】
+上記修正を全て適用後、プロフィール更新 → ダッシュボード → 基本情報画面への遷移を行い、更新内容（特に生年月日およびウェブ履歴書）が保持されていることをユーザーにテストしてもらってください。
+問題が解消されているかを確認し、改善されていなければ再度詳細なログを確認して調整してください。
