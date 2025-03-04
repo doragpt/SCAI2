@@ -103,7 +103,7 @@ export const TalentForm: React.FC = () => {
     firstName: "",
     lastNameKana: "",
     firstNameKana: "",
-    location: "東京都", // Set a default prefecture
+    location: "東京都",
     nearestStation: "",
     availableIds: {
       types: [],
@@ -112,11 +112,11 @@ export const TalentForm: React.FC = () => {
     canProvideResidenceRecord: false,
     height: 150,
     weight: 45,
-    cupSize: "D", // Set a default cup size
+    cupSize: "D",
     bust: null,
     waist: null,
     hip: null,
-    faceVisibility: "全隠し", // Set a default face visibility
+    faceVisibility: "全隠し",
     canPhotoDiary: false,
     canHomeDelivery: false,
     ngOptions: {
@@ -241,25 +241,85 @@ export const TalentForm: React.FC = () => {
     return isNaN(num) ? null : num;
   };
 
-  // Update form submission logic
+  // Update form submission logic with better debugging and validation
   const onSubmit = async (data: TalentProfileData) => {
-    if (!form.formState.isValid) {
+    // デバッグ用のログ出力
+    console.log('Form submission data:', data);
+    console.log('Form validation errors:', form.formState.errors);
+    console.log('Form dirty fields:', form.formState.dirtyFields);
+    console.log('Form touched fields:', form.formState.touchedFields);
+
+    // バリデーションエラーの確認
+    if (Object.keys(form.formState.errors).length > 0) {
+      const fieldNames: { [key: string]: string } = {
+        lastName: "姓",
+        firstName: "名",
+        lastNameKana: "姓（カナ）",
+        firstNameKana: "名（カナ）",
+        location: "在住地",
+        nearestStation: "最寄り駅",
+        availableIds: "身分証明書",
+        height: "身長",
+        weight: "体重",
+        cupSize: "カップサイズ",
+        faceVisibility: "顔出し設定",
+      };
+
+      const errorMessages = Object.entries(form.formState.errors)
+        .map(([key, error]) => {
+          const fieldName = fieldNames[key] || key;
+          return `${fieldName}：${error?.message}`;
+        })
+        .join('\n');
+
       toast({
         title: "入力エラー",
-        description: "必須項目を入力してください",
+        description: `以下の項目を確認してください：\n${errorMessages}`,
         variant: "destructive",
       });
       return;
     }
 
-    const processedData = {
-      ...data,
-      bust: processNumericField(data.bust?.toString()),
-      waist: processNumericField(data.waist?.toString()),
-      hip: processNumericField(data.hip?.toString()),
-    };
-
     try {
+      // データの型変換を明示的に行う
+      const processedData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+        waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+        hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+        // 必須フィールドの確認
+        availableIds: {
+          types: data.availableIds?.types || [],
+          others: data.availableIds?.others || [],
+        },
+        ngOptions: {
+          common: data.ngOptions?.common || [],
+          others: data.ngOptions?.others || [],
+        },
+        allergies: {
+          types: data.allergies?.types || [],
+          others: data.allergies?.others || [],
+          hasAllergy: data.allergies?.hasAllergy || false,
+        },
+        smoking: {
+          enabled: data.smoking?.enabled || false,
+          types: data.smoking?.types || [],
+          others: data.smoking?.others || [],
+        },
+        // 必須フィールドの値を確実に設定
+        location: data.location,
+        cupSize: data.cupSize,
+        faceVisibility: data.faceVisibility,
+        lastName: data.lastName,
+        firstName: data.firstName,
+        lastNameKana: data.lastNameKana,
+        firstNameKana: data.firstNameKana,
+        nearestStation: data.nearestStation,
+      };
+
+      console.log('Processed data being sent:', processedData);
       await createProfile(processedData);
     } catch (error) {
       console.error("送信エラー:", error);
@@ -276,7 +336,7 @@ export const TalentForm: React.FC = () => {
     const current = form.watch("currentStores") || [];
     form.setValue("currentStores", [
       ...current,
-      { storeName: "", stageName: "" } as StoreEntry
+      { storeName: "", stageName: "" } as StoreEntry,
     ]);
   };
 
@@ -284,7 +344,7 @@ export const TalentForm: React.FC = () => {
     const current = form.watch("currentStores");
     current[index] = {
       ...current[index],
-      [field]: value
+      [field]: value,
     };
     form.setValue("currentStores", [...current]);
   };
@@ -293,7 +353,7 @@ export const TalentForm: React.FC = () => {
     const current = form.watch("previousStores") || [];
     form.setValue("previousStores", [
       ...current,
-      { storeName: "", stageName: "" } as StoreEntry
+      { storeName: "", stageName: "" } as StoreEntry,
     ]);
   };
 
@@ -301,7 +361,7 @@ export const TalentForm: React.FC = () => {
     const current = form.watch("previousStores");
     current[index] = {
       ...current[index],
-      [field]: value
+      [field]: value,
     };
     form.setValue("previousStores", [...current]);
   };
