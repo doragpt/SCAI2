@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { workTypes, prefectures } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -14,12 +15,64 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// 定数定義
+const GUARANTEE_OPTIONS = [
+  { value: "none", label: "希望無し" },
+  { value: "1", label: "保証1万" },
+  { value: "2", label: "保証2万" },
+  { value: "3", label: "保証3万" },
+  { value: "4", label: "保証4万" },
+  { value: "5", label: "保証5万" },
+  { value: "6", label: "保証6万" },
+  { value: "7", label: "保証7万" },
+  { value: "8", label: "保証8万" },
+  { value: "9", label: "保証9万" },
+  { value: "10", label: "保証10万以上" },
+];
+
+const TIME_OPTIONS = [
+  { value: "none", label: "希望無し" },
+  { value: "30", label: "30分" },
+  { value: "40", label: "40分" },
+  { value: "50", label: "50分" },
+  { value: "60", label: "60分" },
+  { value: "70", label: "70分" },
+  { value: "80", label: "80分" },
+  { value: "90", label: "90分" },
+  { value: "100", label: "100分" },
+  { value: "110", label: "110分" },
+  { value: "120", label: "120分" },
+];
+
+const RATE_OPTIONS = [
+  { value: "none", label: "希望無し" },
+  { value: "8000", label: "8,000円" },
+  { value: "9000", label: "9,000円" },
+  { value: "10000", label: "10,000円" },
+  { value: "12000", label: "12,000円" },
+  { value: "15000", label: "15,000円" },
+  { value: "18000", label: "18,000円" },
+  { value: "20000", label: "20,000円" },
+  { value: "25000", label: "25,000円" },
+  { value: "30000", label: "30,000円" },
+];
+
+const WORK_TYPES = [
+  { id: "store-health", label: "店舗型ヘルス" },
+  { id: "hotel-health", label: "ホテルヘルス" },
+  { id: "delivery-health", label: "デリバリーヘルス" },
+  { id: "esthe", label: "風俗エステ" },
+  { id: "mseikan", label: "M性感" },
+  { id: "onakura", label: "オナクラ" },
+] as const;
+
 type WorkingConditions = {
   workPeriodStart?: string;
   workPeriodEnd?: string;
   canArrivePreviousDay?: boolean;
-  desiredGuarantee?: number;
-  desiredRate?: number;
+  desiredGuarantee?: string;
+  desiredTime?: string;
+  desiredRate?: string;
   waitingHours?: number;
   departureLocation?: string;
   returnLocation?: string;
@@ -27,6 +80,7 @@ type WorkingConditions = {
   ngLocations: string[];
   notes?: string;
   interviewDates?: string[];
+  workTypes: string[];
 };
 
 export const AIMatchingChat = () => {
@@ -41,8 +95,22 @@ export const AIMatchingChat = () => {
   const [conditions, setConditions] = useState<WorkingConditions>({
     preferredLocations: [],
     ngLocations: [],
+    workTypes: [],
   });
   const [showForm, setShowForm] = useState(false);
+
+  const handleBack = () => {
+    if (showForm) {
+      setShowForm(false);
+      setSelectedType(null);
+      setConditions({
+        preferredLocations: [],
+        ngLocations: [],
+        workTypes: [],
+      });
+      setMessages([messages[0]]);
+    }
+  };
 
   const handleWorkTypeSelect = async (type: string) => {
     setIsLoading(true);
@@ -110,6 +178,48 @@ export const AIMatchingChat = () => {
       {/* 条件入力フォーム */}
       {showForm && selectedType && (
         <Card className="p-6 space-y-6">
+          {/* 戻るボタン */}
+          <div className="flex justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>選択しなおす</span>
+            </Button>
+          </div>
+
+          {/* 業種選択 */}
+          <div className="space-y-2">
+            <Label>希望業種（複数選択可）</Label>
+            <div className="grid grid-cols-2 gap-4">
+              {WORK_TYPES.map((type) => (
+                <div key={type.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={type.id}
+                    checked={conditions.workTypes.includes(type.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setConditions({
+                          ...conditions,
+                          workTypes: [...conditions.workTypes, type.id]
+                        });
+                      } else {
+                        setConditions({
+                          ...conditions,
+                          workTypes: conditions.workTypes.filter(t => t !== type.id)
+                        });
+                      }
+                    }}
+                  />
+                  <Label htmlFor={type.id}>{type.label}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {selectedType === '出稼ぎ' ? (
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -147,27 +257,65 @@ export const AIMatchingChat = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>希望保証（万円）</Label>
-                <Input
-                  type="number"
-                  placeholder="希望無しの場合は空欄"
-                  onChange={(e) => setConditions({
+                <Label>希望保証</Label>
+                <Select
+                  onValueChange={(value) => setConditions({
                     ...conditions,
-                    desiredGuarantee: e.target.value ? Number(e.target.value) : undefined
+                    desiredGuarantee: value
                   })}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="希望保証を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GUARANTEE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>希望単価（万円）</Label>
-                <Input
-                  type="number"
-                  placeholder="希望無しの場合は空欄"
-                  onChange={(e) => setConditions({
-                    ...conditions,
-                    desiredRate: e.target.value ? Number(e.target.value) : undefined
-                  })}
-                />
+                <Label>希望単価</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <Select
+                    onValueChange={(value) => setConditions({
+                      ...conditions,
+                      desiredTime: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="時間を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    onValueChange={(value) => setConditions({
+                      ...conditions,
+                      desiredRate: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="金額を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RATE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -334,15 +482,44 @@ export const AIMatchingChat = () => {
                 ))}
 
                 <div className="space-y-2">
-                  <Label>希望単価（万円）</Label>
-                  <Input
-                    type="number"
-                    placeholder="希望無しの場合は空欄"
-                    onChange={(e) => setConditions({
-                      ...conditions,
-                      desiredRate: e.target.value ? Number(e.target.value) : undefined
-                    })}
-                  />
+                  <Label>希望単価</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Select
+                      onValueChange={(value) => setConditions({
+                        ...conditions,
+                        desiredTime: value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="時間を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIME_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      onValueChange={(value) => setConditions({
+                        ...conditions,
+                        desiredRate: value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="金額を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RATE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
