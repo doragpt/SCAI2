@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,12 +68,24 @@ export default function BasicInfoEdit() {
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
-      username: user?.username ?? "",
-      displayName: user?.displayName ?? "",
-      location: user?.location ?? "",
-      preferredLocations: user?.preferredLocations ?? [],
+      username: "",
+      displayName: "",
+      location: "",
+      preferredLocations: [],
     },
   });
+
+  // プロフィールデータが取得できたら、フォームの値を更新
+  useEffect(() => {
+    if (profile && user) {
+      form.reset({
+        username: user.username,
+        displayName: user.displayName,
+        location: user.location,
+        preferredLocations: user.preferredLocations || [],
+      });
+    }
+  }, [profile, user, form.reset]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
@@ -85,7 +97,7 @@ export default function BasicInfoEdit() {
           }
         });
 
-        const response = await apiRequest("PUT", "/api/talent/profile", {
+        const response = await apiRequest("PATCH", "/api/user", {
           username: updateData.username,
           displayName: updateData.displayName,
           location: updateData.location,
@@ -110,8 +122,10 @@ export default function BasicInfoEdit() {
       }
     },
     onSuccess: (data) => {
+      // ユーザーデータとプロフィールデータの両方を更新
       queryClient.setQueryData(["/api/user"], data);
-      queryClient.setQueryData(["/api/talent/profile"], data);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
 
       toast({
         title: "プロフィールを更新しました",
@@ -212,7 +226,7 @@ export default function BasicInfoEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>居住地</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="都道府県を選択" />
