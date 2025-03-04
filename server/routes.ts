@@ -509,6 +509,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ユーザー基本情報の更新エンドポイント
+  app.patch("/api/user", authenticate, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('User update request received:', {
+        userId,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // ユーザー情報の更新
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          displayName: req.body.displayName,
+          location: req.body.location,
+          preferredLocations: req.body.preferredLocations,
+          username: req.body.username,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        throw new Error("ユーザー情報の更新に失敗しました");
+      }
+
+      // パスワード情報を除外
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      console.log('User update successful:', {
+        userId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('User update error:', {
+        error,
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"
+      });
+    }
+  });
+
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {
       if (err) return next(err);

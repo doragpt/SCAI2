@@ -128,6 +128,42 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
   }
 }
 
+// ユーザー情報更新用の関数
+export async function updateUserProfile(data: {
+  displayName?: string;
+  location?: string;
+  preferredLocations?: string[];
+  username?: string;
+}) {
+  try {
+    console.log("Starting user profile update:", {
+      timestamp: new Date().toISOString(),
+      updateData: data
+    });
+
+    const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
+    const updatedUser = await response.json();
+
+    // キャッシュの更新
+    queryClient.setQueryData([QUERY_KEYS.USER], updatedUser);
+
+    // キャッシュを無効化して再取得
+    await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
+    await queryClient.refetchQueries({
+      queryKey: [QUERY_KEYS.USER],
+      exact: true
+    });
+
+    return updatedUser;
+  } catch (error) {
+    console.error("User profile update failed:", {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 // React Query クライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
