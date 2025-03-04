@@ -5,7 +5,6 @@ import {
   talentProfileSchema,
   talentProfileUpdateSchema,
   type TalentProfileData,
-  type TalentProfileUpdate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
@@ -13,20 +12,56 @@ import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
-import { authenticate, authorize } from "./middleware/auth";
+import { authenticate } from "./middleware/auth";
 
 const scryptAsync = promisify(scrypt);
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // ヘルスチェックエンドポイントを追加
+  // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
-    console.log('ヘルスチェックリクエスト受信:', {
-      headers: req.headers,
-      method: req.method,
-      path: req.path,
-      timestamp: new Date().toISOString()
-    });
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // ユーザー情報取得エンドポイント
+  app.get("/api/user", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id));
+
+      if (!user) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      // パスワードハッシュを除外して返す
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("User fetch error:", error);
+      res.status(500).json({
+        message: "ユーザー情報の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人情報取得エンドポイント
+  app.get("/api/jobs/public", async (req, res) => {
+    try {
+      // 仮実装：空の配列を返す
+      res.json([]);
+    } catch (error) {
+      console.error("Public jobs fetch error:", error);
+      res.status(500).json({
+        message: "求人情報の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   });
 
   // 認証エンドポイント

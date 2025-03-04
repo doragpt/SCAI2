@@ -4,6 +4,8 @@ import type { TalentProfileData } from "@shared/schema";
 // キャッシュのキー定数
 export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
+  USER: "/api/user",
+  JOBS: "/api/jobs/public"
 } as const;
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -15,91 +17,7 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ message: res.statusText }));
-    console.error("API Error:", {
-      status: res.status,
-      statusText: res.statusText,
-      data,
-      url: res.url,
-      timestamp: new Date().toISOString()
-    });
-    throw new Error(data.message || res.statusText);
-  }
-}
-
-// Query Function の定義
-export const getQueryFn = <T>({
-  on401,
-}: {
-  on401: UnauthorizedBehavior;
-}): QueryFunction<T> =>
-  async ({ queryKey }) => {
-    const headers: Record<string, string> = {
-      "X-Requested-With": "XMLHttpRequest"
-    };
-
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const url = queryKey[0] as string;
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    try {
-      // プロフィールデータの場合、まずローカルストレージをチェック
-      if (url === QUERY_KEYS.TALENT_PROFILE) {
-        const cachedProfile = localStorage.getItem('talentProfile');
-        if (cachedProfile) {
-          const profileData = JSON.parse(cachedProfile) as T;
-          console.log("Using cached profile data:", {
-            timestamp: new Date().toISOString(),
-            type: typeof profileData,
-            keys: Object.keys(profileData)
-          });
-          return profileData;
-        }
-      }
-
-      const res = await fetch(fullUrl, {
-        headers,
-        credentials: "include",
-      });
-
-      if (on401 === "returnNull" && res.status === 401) {
-        return null as T;
-      }
-
-      await throwIfResNotOk(res);
-      const data = await res.json() as T;
-
-      // プロフィールデータの場合はローカルストレージに保存
-      if (url === QUERY_KEYS.TALENT_PROFILE && data) {
-        localStorage.setItem('talentProfile', JSON.stringify(data));
-        console.log("Updated cached profile data:", {
-          timestamp: new Date().toISOString(),
-          type: typeof data,
-          keys: Object.keys(data)
-        });
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Query Failed:", {
-        url: fullUrl,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : error,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  };
-
+// APIリクエスト用の基本関数
 export async function apiRequest(
   method: string,
   url: string,
@@ -115,9 +33,8 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
   try {
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
     const res = await fetch(fullUrl, {
       method,
       headers,
@@ -125,12 +42,16 @@ export async function apiRequest(
       credentials: "include",
     });
 
-    await throwIfResNotOk(res);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(errorData.message || res.statusText);
+    }
+
     return res;
   } catch (error) {
     console.error("API Request Failed:", {
       method,
-      url: fullUrl,
+      url,
       error: error instanceof Error ? {
         name: error.name,
         message: error.message,
@@ -142,6 +63,40 @@ export async function apiRequest(
   }
 }
 
+// クエリ関数
+export const getQueryFn = <T>({
+  on401,
+}: {
+  on401: UnauthorizedBehavior;
+}): QueryFunction<T> =>
+  async ({ queryKey }) => {
+    try {
+      const url = queryKey[0] as string;
+      const res = await apiRequest("GET", url);
+
+      if (res.status === 401) {
+        if (on401 === "returnNull") {
+          return null as T;
+        }
+        throw new Error("認証が必要です");
+      }
+
+      const data = await res.json() as T;
+      return data;
+    } catch (error) {
+      console.error("Query Failed:", {
+        queryKey,
+        error: error instanceof Error ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        } : error,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  };
+
 // プロフィール更新用の関数
 export async function updateTalentProfile(data: Partial<TalentProfileData>) {
   try {
@@ -150,63 +105,25 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
       updateData: data
     });
 
-    // 既存のデータを取得
-    const existingProfile = queryClient.getQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE]);
-    if (!existingProfile) {
-      throw new Error("既存のプロフィールデータが見つかりません");
-    }
-
-    // APIリクエストを実行
     const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "プロフィールの更新に失敗しました");
-    }
-
     const updatedProfile = await response.json() as TalentProfileData;
 
-    // 編集不可フィールドの保護
-    const protectedFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
-    const mergedProfile = {
-      ...existingProfile,
-      ...updatedProfile,
-      ...protectedFields.reduce((acc, field) => ({
-        ...acc,
-        [field]: existingProfile[field]
-      }), {})
-    };
-
-    console.log("Profile merge result:", {
-      timestamp: new Date().toISOString(),
-      existingFields: Object.keys(existingProfile),
-      updatedFields: Object.keys(updatedProfile),
-      mergedFields: Object.keys(mergedProfile)
-    });
-
     // キャッシュの更新
-    queryClient.setQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE], mergedProfile);
-
-    // ローカルストレージの更新
-    localStorage.setItem('talentProfile', JSON.stringify(mergedProfile));
+    queryClient.setQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
 
     // キャッシュを無効化して強制的に再取得
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-
-    // 即時に再フェッチを実行
-    await queryClient.refetchQueries({ 
+    await queryClient.refetchQueries({
       queryKey: [QUERY_KEYS.TALENT_PROFILE],
       exact: true
     });
 
-    return mergedProfile;
+    return updatedProfile;
   } catch (error) {
     console.error("Profile update failed:", {
       error,
       timestamp: new Date().toISOString()
     });
-
-    // エラー時にキャッシュを無効化
-    await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     throw error;
   }
 }
