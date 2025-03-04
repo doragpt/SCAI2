@@ -1,3 +1,4 @@
+import { Store } from "@shared/types/store";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,12 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 interface StoreDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  store: {
-    id: number;
-    name: string;
-    location: string;
-    rating: number;
-    matches: string[];
+  store: Store & {
     description?: string;
     workingHours?: string;
     requirements?: string[];

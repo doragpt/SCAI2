@@ -1,26 +1,19 @@
 import { MatchingStatusDialog } from "@/components/matching-status-dialog";
-import { Bot, User } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Checkbox,
-  CheckboxGroup,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Switch,
-  Label,
-  Input,
-} from "@/components/ui/forms";
-import { Loader2 } from "@/components/ui/loader";
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,38 +24,42 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft } from "@/components/icons/arrow-left";
-import { CheckIcon } from "@/components/icons/check";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useLocation } from "wouter"; // Replaced next/navigation with wouter
-import { WORK_TYPES_WITH_DESCRIPTION } from "@/constants/work-types";
-import { GUARANTEE_OPTIONS } from "@/constants/guarantee-options";
-import { TIME_OPTIONS } from "@/constants/time-options";
-import { RATE_OPTIONS } from "@/constants/rate-options";
-import { prefectures } from "@/constants/prefectures";
-import { formatConditionsMessage } from "@/utils/format-conditions-message";
-import { useProfile } from "@/hooks/use-profile";
-import { useMatching } from "@/hooks/use-matching";
+import { useLocation } from "wouter";
+import { Loader2, Bot, User, CheckIcon, MapPin, Star, Building2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { StoreDetailModal } from "@/components/store-detail-modal";
 import ProfileCheckDialog from "@/components/profile-check-dialog";
-import { cn } from "@/lib/utils";
-import { MapPin, Star } from "lucide-react";
 
+// 型定義
+interface Message {
+  type: "ai" | "user";
+  content: string;
+}
 
 interface Store {
   id: number;
   name: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  responseTime?: string;
   location: string;
-  matches: string[];
   rating: number;
+  matches: string[];
   checked?: boolean;
+  status?: 'pending' | 'accepted' | 'rejected';
+  responseTime?: string;
 }
 
+// コンポーネント
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     { type: "ai", content: "SCAIマッチングを開始します！" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,11 +88,11 @@ export const AIMatchingChat = () => {
   const [selectedStore, setSelectedStore] = useState<any>(null);
   const [workTypes, setWorkTypes] = useState(["出稼ぎ", "在籍"]);
   const [showSummaryDialog, setShowSummaryDialog] = useState(false);
-  const [checkedStores, setCheckedStores] = useState<any[]>([]);
+  const [checkedStores, setCheckedStores] = useState<Store[]>([]);
   const [showProfileCheck, setShowProfileCheck] = useState(false);
   const { profileData, updateProfile } = useProfile();
-  const { startMatching, matchingResults, setCurrentPage, currentPage } = useMatching();
-  const [location] = useLocation(); //Replaced useSearchParams
+  const { startMatching, matchingResults, setCurrentPage, currentPage, setMatchingResults } = useMatching();
+  const [location] = useLocation();
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -127,7 +124,7 @@ export const AIMatchingChat = () => {
     setIsLoading(false);
   };
 
-  const handleStoreCheck = (result: any) => {
+  const handleStoreCheck = (result: Store) => {
     setCheckedStores((prev) => {
       const isChecked = prev.some((item) => item.id === result.id);
       if (isChecked) {
@@ -138,7 +135,7 @@ export const AIMatchingChat = () => {
     });
   };
 
-  const handleShowStoreDetail = (store: any) => {
+  const handleShowStoreDetail = (store: Store) => {
     setSelectedStore(store);
     setShowStoreDetail(true);
   };
@@ -175,14 +172,14 @@ export const AIMatchingChat = () => {
       setShowMatchingOptions(false);
       setMatchingState('searching');
 
-      // モックデータの生成
+      // モックデータの生成 - 実際の実装では店舗検索APIを使用
       const mockStores: Store[] = Array.from({ length: 5 }, (_, i) => ({
         id: i + 1,
         name: `店舗${i + 1}`,
-        status: 'pending',
         location: '東京都',
         matches: ['条件1', '条件2'],
-        rating: Math.random()
+        rating: 4.5,
+        status: 'pending'
       }));
       setMatchingStores(mockStores);
 
@@ -201,6 +198,7 @@ export const AIMatchingChat = () => {
         }]);
       }, 5000);
 
+      // 別の店舗の応答シミュレーション
       setTimeout(() => {
         setMatchingStores(prev => prev.map(store =>
           store.id === 2 ? {
@@ -220,8 +218,42 @@ export const AIMatchingChat = () => {
   };
 
   const handlePickupMatching = () => {
-    setMatchingState('listing');
-    setShowMatchingOptions(false);
+    try {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: 'ピックアップしてから確認する'
+      }, {
+        type: 'ai',
+        content: 'では合いそうな店舗をリストアップするね！'
+      }]);
+
+      // 店舗検索のシミュレーション
+      setTimeout(() => {
+        const mockResults = Array.from({ length: 25 }, (_, i) => ({
+          id: i + 1,
+          name: `店舗${i + 1}`,
+          location: '東京都',
+          rating: Math.random(),
+          matches: ['希望時給', '勤務時間帯', '業態'],
+          checked: false
+        }));
+
+        setMatchingResults(mockResults);
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: `お待たせ！あなたに合いそうな店舗は${mockResults.length}件程あったよ！\nまずは10件、リストアップするね！`
+        }]);
+
+        setMatchingState('listing');
+        setShowMatchingOptions(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error in handlePickupMatching:', error);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
+      }]);
+    }
   };
 
   const handleProfileCheckConfirm = () => {
@@ -944,7 +976,6 @@ export const AIMatchingChat = () => {
         </div>
       )}
 
-      {/* マッチング方法選択画面 */}
       {showMatchingOptions && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
@@ -1043,23 +1074,22 @@ export const AIMatchingChat = () => {
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <div className="absolute inset-0 animate-pulse bg-primary/5 rounded-full" />
                 </div>
-                <div className="text-center space-y-4">
-                  <h3 className="text-lg font-medium">マッチング処理を実行中...</h3>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      AIがあなたの希望条件に合う店舗を探しています。
-                      <br />
-                      条件に合う店舗が見つかり次第、自動で連絡を取らせていただきます。
-                    </p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 店舗への連絡は24時間以内に完了</li>
-                      <li>• 返信があり次第すぐにお知らせ</li>
+                <div className="text-center space-y-2">
+                  <h3 className="font-medium">マッチング処理中...</h3>
+                  <p className="text-sm text-muted-foreground">
+                    条件に合う店舗を探しています
+                  </p>
+                  <div className="text-sm text-muted-foreground space-y-1 text-left">
+                    <p>自動マッチングの進行状況：</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>• 適切な店舗の検索</li>
+                      <li>• 店舗への連絡と条件確認</li>
                       <li>• 複数の店舗から返信がある場合もあり</li>
                     </ul>
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => setShowMatchingStatus(true)}
+                    onClick={handleShowMatchingStatus}
                   >
                     マッチング状況を確認
                   </Button>
@@ -1384,6 +1414,12 @@ export const AIMatchingChat = () => {
         onClose={() => setShowProfileCheck(false)}
         onConfirm={handleProfileCheckConfirm}
         profileData={profileData}
+      />
+      {/* マッチング状況確認ダイアログの追加 */}
+      <MatchingStatusDialog
+        isOpen={showMatchingStatus}
+        onClose={() => setShowMatchingStatus(false)}
+        stores={matchingStores}
       />
     </div>
   );

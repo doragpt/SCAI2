@@ -1,4 +1,3 @@
-```typescript
 import {
   Dialog,
   DialogContent,
@@ -103,4 +102,3 @@ export function MatchingStatusDialog({
     </Dialog>
   );
 }
-```
