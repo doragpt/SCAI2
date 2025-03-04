@@ -515,6 +515,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // ユーザー基本情報の更新エンドポイント
+  app.patch("/api/user", authenticate, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('User update request received:', {
+        userId,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 現在のユーザー情報を取得
+      const [currentUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!currentUser) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      // 更新可能なフィールド
+      const updatableFields = ['username', 'displayName', 'location', 'preferredLocations'];
+
+      // 更新データの準備
+      const updateData = Object.entries(req.body).reduce((acc, [key, value]) => {
+        if (updatableFields.includes(key)) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      // 更新データに必ずタイムスタンプを追加
+      updateData.updatedAt = new Date();
+
+      // ユーザー情報の更新
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        throw new Error("ユーザー情報の更新に失敗しました");
+      }
+
+      // パスワード情報を除外
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      console.log('User update successful:', {
+        userId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('User update error:', {
+        error,
+        userId: req.user?.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // JSONレスポンスを返す
+      res.status(400).json({
+        error: true,
+        message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"
+      });
+    }
+  });
+
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {
       if (err) return next(err);
