@@ -11,6 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -31,7 +41,7 @@ import ProfileCheckDialog from "@/components/profile-check-dialog";
 import { useProfile } from "@/hooks/use-profile";
 import { useMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
-import { formatConditionsMessage } from "@/utils/format-conditions-message"; // 追加：formatConditionsMessage関数のインポート
+import { formatConditionsMessage } from "@/utils/format-conditions-message";
 
 // 型定義
 interface Message {
@@ -990,18 +1000,17 @@ export const AIMatchingChat = () => {
                       <div className="space-y-2">
                         <h4 className="text-lg font-medium flex items-center gap-2">
                           <Bot className="h-5 w-5 text-primary" />
-                          自動でマッチング
-                        </h4>
+                          自動でマッチング                        </h4>
                         <p className="text-sm text-muted-foreground">
                           AIが自動で店舗とのマッチングを行います
                         </p>
                       </div>
-                      <div classNamediv className="space-y-2">
+                      <div className="space-y-2">
                         <h5 className="text-sm font-medium">おすすめのケース</h5>
                         <ul className="text-sm text-muted-foreground space-y-1">
                           <li>• できるだけ早く働きたい</li>
-                          <li>• 希望条件が明確</li>
-                          <li>• 店舗選びを任せたい</li>
+                          <li>• 複数の店舗から選びたい</li>
+                          <li>• 自分で店舗を探す時間がない</li>
                         </ul>
                       </div>
                       <div className="space-y-2">
