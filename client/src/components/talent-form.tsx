@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   allergyTypes,
   smokingTypes,
@@ -21,9 +21,6 @@ import {
   idTypes,
   prefectures,
   estheOptions,
-  type AllergyType,
-  type SmokingType,
-  type EstheOption,
   type TalentProfileData,
   talentProfileSchema,
 } from "@shared/schema";
@@ -31,7 +28,6 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
 
 // FormField wrapper component
 const FormField: React.FC<{
@@ -92,20 +88,13 @@ const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
   <p className="text-sm text-destructive mt-1">{message}</p>
 );
 
-interface TalentFormProps {
-  onProgressChange?: (progress: number) => void;
-}
-
-export const TalentForm: React.FC<TalentFormProps> = ({
-  onProgressChange,
-}) => {
+export const TalentForm: React.FC = () => {
   const { toast } = useToast();
   const [otherIds, setOtherIds] = useState<string[]>([]);
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [formProgress, setFormProgress] = useState(0);
   const [currentStoreInput, setCurrentStoreInput] = useState("");
   const [photoDiaryInput, setPhotoDiaryInput] = useState("");
   const [, setLocation] = useLocation();
@@ -199,20 +188,19 @@ export const TalentForm: React.FC<TalentFormProps> = ({
         };
 
         const response = await apiRequest("POST", "/api/talent/profile", processedData);
+        const responseData = await response.json();
 
         if (response.status === 303) {
-          const errorData = await response.json();
           toast({
             title: "プロフィール情報",
-            description: errorData.message,
+            description: responseData.message,
           });
-          setLocation(errorData.redirect);
+          setLocation(responseData.redirect);
           return;
         }
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "プロフィールの作成に失敗しました");
+          throw new Error(responseData.message || "プロフィールの作成に失敗しました");
         }
 
         return response.json();
@@ -236,41 +224,6 @@ export const TalentForm: React.FC<TalentFormProps> = ({
       });
     },
   });
-
-  useEffect(() => {
-    const progress = calculateProgress(form.getValues());
-    setFormProgress(progress);
-    if (onProgressChange) {
-      onProgressChange(progress);
-    }
-  }, [form.watch(), onProgressChange]);
-
-  const calculateProgress = (formData: TalentProfileData) => {
-    const requiredFields = [
-      "lastName",
-      "firstName",
-      "lastNameKana",
-      "firstNameKana",
-      "location",
-      "nearestStation",
-      "availableIds",
-      "canProvideResidenceRecord",
-      "height",
-      "weight",
-      "cupSize",
-      "faceVisibility",
-    ];
-
-    const completedFields = requiredFields.filter((field) => {
-      const value = formData[field as keyof TalentProfileData];
-      if (field === "availableIds") {
-        return formData.availableIds.types.length > 0;
-      }
-      return value !== undefined && value !== null && value !== "";
-    });
-
-    return Math.round((completedFields.length / requiredFields.length) * 100);
-  };
 
   const onSubmit = async (data: TalentProfileData) => {
     if (!form.formState.isValid) {
@@ -312,21 +265,8 @@ export const TalentForm: React.FC<TalentFormProps> = ({
         </div>
       </header>
 
-      {/* 進捗バー */}
-      <div className="fixed top-16 left-0 right-0 bg-white z-40 border-b">
-        <div className="container mx-auto px-4 py-2">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label>入力進捗</Label>
-              <span className="text-sm text-muted-foreground">{formProgress}%</span>
-            </div>
-            <Progress value={formProgress} className="h-2" />
-          </div>
-        </div>
-      </div>
-
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 pt-32 pb-32">
+      <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
           <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* 基本情報セクション */}
@@ -474,7 +414,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                 </FormField>
               </div>
 
-              {/* 在籍店舗情報 */}
+              {/* 店舗情報 */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">在籍店舗情報</h3>
                 <div className="space-y-4">
@@ -545,12 +485,19 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                   <FormField label="写メ日記URL">
                     <div className="space-y-4">
                       {form.watch("photoDiaryUrls").map((url, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input value={url} disabled />
+                        <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                          <Input 
+                            value={url} 
+                            onChange={(e) => {
+                              const current = form.watch("photoDiaryUrls");
+                              current[index] = e.target.value;
+                              form.setValue("photoDiaryUrls", [...current]);
+                            }}
+                          />
                           <Button
                             type="button"
-                            variant="ghost"
-                            size="icon"
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               const current = form.watch("photoDiaryUrls");
                               form.setValue(
@@ -559,29 +506,20 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                               );
                             }}
                           >
-                            <X className="h-4 w-4" />
+                            削除
                           </Button>
                         </div>
                       ))}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="写メ日記のURLを入力"
-                          value={photoDiaryInput}
-                          onChange={(e) => setPhotoDiaryInput(e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            if (photoDiaryInput.trim()) {
-                              const current = form.watch("photoDiaryUrls") || [];
-                              form.setValue("photoDiaryUrls", [...current, photoDiaryInput.trim()]);
-                              setPhotoDiaryInput("");
-                            }
-                          }}
-                        >
-                          URLを追加
-                        </Button>
-                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const current = form.watch("photoDiaryUrls") || [];
+                          form.setValue("photoDiaryUrls", [...current, ""]);
+                        }}
+                      >
+                        URLを追加
+                      </Button>
                     </div>
                   </FormField>
 
@@ -649,7 +587,6 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                   </FormField>
                 </div>
               </div>
-
 
               {/* 本籍地入りの住民票の用意可否（必須） */}
               <div>
@@ -1013,8 +950,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                                   e.currentTarget.value = "";
                                 }
                               }
-                            }}
-                          />
+                            }}                          />
                         </div>
                       </div>
                     </div>
@@ -1225,12 +1161,19 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                 <FormField label="写メ日記URL">
                   <div className="space-y-4">
                     {form.watch("photoDiaryUrls").map((url, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input value={url} disabled />
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <Input 
+                          value={url} 
+                          onChange={(e) => {
+                            const current = form.watch("photoDiaryUrls");
+                            current[index] = e.target.value;
+                            form.setValue("photoDiaryUrls", [...current]);
+                          }}
+                        />
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="icon"
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             const current = form.watch("photoDiaryUrls");
                             form.setValue(
@@ -1239,29 +1182,20 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                             );
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          削除
                         </Button>
                       </div>
                     ))}
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="写メ日記のURLを入力"
-                        value={photoDiaryInput}
-                        onChange={(e) => setPhotoDiaryInput(e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          if (photoDiaryInput.trim()) {
-                            const current = form.watch("photoDiaryUrls") || [];
-                            form.setValue("photoDiaryUrls", [...current, photoDiaryInput.trim()]);
-                            setPhotoDiaryInput("");
-                          }
-                        }}
-                      >
-                        URLを追加
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("photoDiaryUrls") || [];
+                        form.setValue("photoDiaryUrls", [...current, ""]);
+                      }}
+                    >
+                      URLを追加
+                    </Button>
                   </div>
                 </FormField>
 
@@ -1360,7 +1294,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
       </main>
 
       {/* フッターナビゲーション */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <Button
@@ -1372,9 +1306,9 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             <Button
               type="submit"
               form="profileForm"
-              disabled={!form.formState.isDirty || isPending}
+              disabled={!form.formState.isDirty || form.formState.isSubmitting}
             >
-              {isPending ? (
+              {form.formState.isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   送信中...
@@ -1385,7 +1319,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             </Button>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };
