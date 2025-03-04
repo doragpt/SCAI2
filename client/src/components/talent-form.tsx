@@ -12,6 +12,7 @@ import { Link, useLocation } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Form } from "@/components/ui/form";
 import {
   allergyTypes,
   smokingTypes,
@@ -27,7 +28,6 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Form } from "@/components/ui/form";
 
 // FormField wrapper component
 const FormField: React.FC<{
@@ -95,8 +95,6 @@ export const TalentForm: React.FC = () => {
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [currentStoreInput, setCurrentStoreInput] = useState("");
-  const [photoDiaryInput, setPhotoDiaryInput] = useState("");
   const [, setLocation] = useLocation();
 
   const defaultValues: TalentProfileData = {
@@ -155,7 +153,7 @@ export const TalentForm: React.FC = () => {
     mode: "onChange",
   });
 
-  const { mutate: createProfile, isPending } = useMutation({
+  const { mutate: createProfile } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
         const processedData = {
@@ -203,7 +201,7 @@ export const TalentForm: React.FC = () => {
           throw new Error(responseData.message || "プロフィールの作成に失敗しました");
         }
 
-        return response.json();
+        return responseData;
       } catch (error) {
         console.error("API通信エラー:", error);
         throw error;
@@ -269,6 +267,246 @@ export const TalentForm: React.FC = () => {
       <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
           <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* 店舗情報のセクション */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">在籍店舗情報</h3>
+              <div className="space-y-4">
+                {/* 現在の在籍店舗 */}
+                <FormField label="現在在籍中の店舗">
+                  <div className="space-y-4">
+                    {form.watch("currentStores").map((store, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input
+                            placeholder="店舗名"
+                            value={store.storeName || ""}
+                            onChange={(e) => {
+                              const current = form.watch("currentStores");
+                              current[index] = {
+                                ...current[index],
+                                storeName: e.target.value
+                              };
+                              form.setValue("currentStores", [...current]);
+                            }}
+                          />
+                          <Input
+                            placeholder="源氏名"
+                            value={store.stageName || ""}
+                            onChange={(e) => {
+                              const current = form.watch("currentStores");
+                              current[index] = {
+                                ...current[index],
+                                stageName: e.target.value
+                              };
+                              form.setValue("currentStores", [...current]);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("currentStores");
+                            form.setValue(
+                              "currentStores",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("currentStores") || [];
+                        form.setValue("currentStores", [
+                          ...current,
+                          { storeName: "", stageName: "" }
+                        ]);
+                      }}
+                    >
+                      店舗を追加
+                    </Button>
+                  </div>
+                </FormField>
+
+                {/* 写メ日記URL - 現在在籍中の店舗の直後に配置 */}
+                <FormField label="写メ日記が確認できる店舗URL">
+                  <div className="space-y-4">
+                    {form.watch("photoDiaryUrls").map((url, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <Input 
+                          placeholder="店舗の写メ日記URLを入力"
+                          value={url} 
+                          onChange={(e) => {
+                            const current = form.watch("photoDiaryUrls");
+                            current[index] = e.target.value;
+                            form.setValue("photoDiaryUrls", [...current]);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("photoDiaryUrls");
+                            form.setValue(
+                              "photoDiaryUrls",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("photoDiaryUrls") || [];
+                        form.setValue("photoDiaryUrls", [...current, ""]);
+                      }}
+                    >
+                      URLを追加
+                    </Button>
+                  </div>
+                </FormField>
+
+                {/* 過去経験店舗 */}
+                <FormField label="過去経験店舗">
+                  <div className="space-y-4">
+                    {form.watch("previousStores").map((store, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input
+                            placeholder="店舗名"
+                            value={store.storeName || ""}
+                            onChange={(e) => {
+                              const current = form.watch("previousStores");
+                              current[index] = {
+                                ...current[index],
+                                storeName: e.target.value
+                              };
+                              form.setValue("previousStores", [...current]);
+                            }}
+                          />
+                          <Input
+                            placeholder="源氏名"
+                            value={store.stageName || ""}
+                            onChange={(e) => {
+                              const current = form.watch("previousStores");
+                              current[index] = {
+                                ...current[index],
+                                stageName: e.target.value
+                              };
+                              form.setValue("previousStores", [...current]);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("previousStores");
+                            form.setValue(
+                              "previousStores",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("previousStores") || [];
+                        form.setValue("previousStores", [
+                          ...current,
+                          { storeName: "", stageName: "" }
+                        ]);
+                      }}
+                    >
+                      店舗を追加
+                    </Button>
+                  </div>
+                </FormField>
+              </div>
+            </div>
+
+            {/* 身分証明書 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
+              <FormField label="持参可能な身分証明書" required>
+                <div className="grid grid-cols-2 gap-4">
+                  {idTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={form.watch("availableIds.types").includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = form.watch("availableIds.types");
+                          const updated = checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type);
+                          form.setValue("availableIds.types", updated);
+                        }}
+                      />
+                      <label className="text-sm">{type}</label>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <Label>その他の身分証明書</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {otherIds.map((id) => (
+                      <Badge key={id} variant="secondary">
+                        {id}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-1 h-4 w-4 p-0"
+                          onClick={() => {
+                            setOtherIds(otherIds.filter((i) => i !== id));
+                            form.setValue(
+                              "availableIds.others",
+                              otherIds.filter((i) => i !== id)
+                            );
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="その他の身分証明書を入力"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          const value = e.currentTarget.value.trim();
+                          if (value && !otherIds.includes(value)) {
+                            const newIds = [...otherIds, value];
+                            setOtherIds(newIds);
+                            form.setValue("availableIds.others", newIds);
+                            e.currentTarget.value = "";
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </FormField>
+            </div>
+
             {/* 基本情報セクション */}
             <div className="space-y-6">
               <div>
@@ -349,244 +587,6 @@ export const TalentForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* 身分証明書 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
-                <FormField label="持参可能な身分証明書" required>
-                  <div className="grid grid-cols-2 gap-4">
-                    {idTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={form.watch("availableIds.types").includes(type)}
-                          onCheckedChange={(checked) => {
-                            const current = form.watch("availableIds.types");
-                            const updated = checked
-                              ? [...current, type]
-                              : current.filter((t) => t !== type);
-                            form.setValue("availableIds.types", updated);
-                          }}
-                        />
-                        <label className="text-sm">{type}</label>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <Label>その他の身分証明書</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {otherIds.map((id) => (
-                        <Badge key={id} variant="secondary">
-                          {id}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
-                              setOtherIds(otherIds.filter((i) => i !== id));
-                              form.setValue(
-                                "availableIds.others",
-                                otherIds.filter((i) => i !== id)
-                              );
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="その他の身分証明書を入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const value = e.currentTarget.value.trim();
-                            if (value && !otherIds.includes(value)) {
-                              const newIds = [...otherIds, value];
-                              setOtherIds(newIds);
-                              form.setValue("availableIds.others", newIds);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                </FormField>
-              </div>
-
-              {/* 店舗情報 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">在籍店舗情報</h3>
-                <div className="space-y-4">
-                  {/* 現在の在籍店舗 */}
-                  <FormField label="現在在籍中の店舗">
-                    <div className="space-y-4">
-                      {form.watch("currentStores").map((store, index) => (
-                        <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                          <div className="grid grid-cols-2 gap-4">
-                            <Input
-                              placeholder="店舗名"
-                              value={store.storeName || ""}
-                              onChange={(e) => {
-                                const current = form.watch("currentStores");
-                                current[index] = {
-                                  ...current[index],
-                                  storeName: e.target.value
-                                };
-                                form.setValue("currentStores", [...current]);
-                              }}
-                            />
-                            <Input
-                              placeholder="源氏名"
-                              value={store.stageName || ""}
-                              onChange={(e) => {
-                                const current = form.watch("currentStores");
-                                current[index] = {
-                                  ...current[index],
-                                  stageName: e.target.value
-                                };
-                                form.setValue("currentStores", [...current]);
-                              }}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const current = form.watch("currentStores");
-                              form.setValue(
-                                "currentStores",
-                                current.filter((_, i) => i !== index)
-                              );
-                            }}
-                          >
-                            削除
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const current = form.watch("currentStores") || [];
-                          form.setValue("currentStores", [
-                            ...current,
-                            { storeName: "", stageName: "" }
-                          ]);
-                        }}
-                      >
-                        店舗を追加
-                      </Button>
-                    </div>
-                  </FormField>
-
-                  {/* 写メ日記URL */}
-                  <FormField label="写メ日記URL">
-                    <div className="space-y-4">
-                      {form.watch("photoDiaryUrls").map((url, index) => (
-                        <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                          <Input 
-                            value={url} 
-                            onChange={(e) => {
-                              const current = form.watch("photoDiaryUrls");
-                              current[index] = e.target.value;
-                              form.setValue("photoDiaryUrls", [...current]);
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const current = form.watch("photoDiaryUrls");
-                              form.setValue(
-                                "photoDiaryUrls",
-                                current.filter((_, i) => i !== index)
-                              );
-                            }}
-                          >
-                            削除
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const current = form.watch("photoDiaryUrls") || [];
-                          form.setValue("photoDiaryUrls", [...current, ""]);
-                        }}
-                      >
-                        URLを追加
-                      </Button>
-                    </div>
-                  </FormField>
-
-                  {/* 過去経験店舗 */}
-                  <FormField label="過去経験店舗">
-                    <div className="space-y-4">
-                      {form.watch("previousStores").map((store, index) => (
-                        <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                          <div className="grid grid-cols-2 gap-4">
-                            <Input
-                              placeholder="店舗名"
-                              value={store.storeName || ""}
-                              onChange={(e) => {
-                                const current = form.watch("previousStores");
-                                current[index] = {
-                                  ...current[index],
-                                  storeName: e.target.value
-                                };
-                                form.setValue("previousStores", [...current]);
-                              }}
-                            />
-                            <Input
-                              placeholder="源氏名"
-                              value={store.stageName || ""}
-                              onChange={(e) => {
-                                const current = form.watch("previousStores");
-                                current[index] = {
-                                  ...current[index],
-                                  stageName: e.target.value
-                                };
-                                form.setValue("previousStores", [...current]);
-                              }}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const current = form.watch("previousStores");
-                              form.setValue(
-                                "previousStores",
-                                current.filter((_, i) => i !== index)
-                              );
-                            }}
-                          >
-                            削除
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const current = form.watch("previousStores") || [];
-                          form.setValue("previousStores", [
-                            ...current,
-                            { storeName: "", stageName: "" }
-                          ]);
-                        }}
-                      >
-                        店舗を追加
-                      </Button>
-                    </div>
-                  </FormField>
-                </div>
-              </div>
 
               {/* 本籍地入りの住民票の用意可否（必須） */}
               <div>
@@ -943,18 +943,19 @@ export const TalentForm: React.FC = () => {
                             onKeyPress={(e) => {
                               if (e.key === "Enter") {
                                 const value = e.currentTarget.value.trim();
-                                if (value && !otherAllergies.includes(value)) {
-                                  const newAllergies = [...otherAllergies, value];
-                                  setOtherAllergies(newAllergies);
-                                  form.setValue("allergies.others", newAllergies);
-                                  e.currentTarget.value = "";
+                                if(value && !otherAllergies.includes(value)) {
+                                    const newAllergies = [...otherAllergies, value];
+                                    setOtherAllergies(newAllergies);
+                                    form.setValue("allergies.others", newAllergies);
+                                    e.currentTarget.value = "";
+                                  }
                                 }
-                              }
-                            }}                          />
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 {/* 喫煙サブセクション */}
@@ -1294,7 +1295,7 @@ export const TalentForm: React.FC = () => {
       </main>
 
       {/* フッターナビゲーション */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <Button
