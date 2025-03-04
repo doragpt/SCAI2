@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -86,7 +87,7 @@ export const AIMatchingChat = () => {
     interviewDates: [] as string[],
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showMatchingOptions, setShowMatchingOptions] = useState(true);
+  const [showMatchingOptions, setShowMatchingOptions] = useState(false); // 初期値をfalseに変更
   const [matchingState, setMatchingState] = useState<"searching" | "listing" | "done">("done");
   const [showStoreDetail, setShowStoreDetail] = useState(false);
   const [selectedStore, setSelectedStore] = useState<any>(null);
@@ -119,7 +120,7 @@ export const AIMatchingChat = () => {
 
   const handleConditionSubmit = () => {
     setShowForm(false);
-    setShowConfirmDialog(true);
+    setShowProfileCheck(true); // プロフィールチェックを先に表示
   };
 
   const handleStartMatching = () => {
@@ -267,6 +268,15 @@ export const AIMatchingChat = () => {
 
   const handleShowSummary = () => {
     setShowSummaryDialog(true);
+  };
+
+  const handleConfirmConditions = () => {
+    setShowConfirmDialog(false);
+    setShowMatchingOptions(true); // 条件確認後にマッチング方法の選択画面を表示
+    setMessages(prev => [...prev, {
+      type: 'ai',
+      content: `それでは、マッチング方法を選んでください！\n\n【自動でマッチング】\nAIが自動で店舗とのマッチングを行います。\n\n【ピックアップしてから確認】\n条件に合う店舗をリストアップして、ご自身で選んでいただけます。`
+    }]);
   };
 
 
@@ -982,8 +992,7 @@ export const AIMatchingChat = () => {
 
       {showMatchingOptions && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <Card className="border-t sticky bottom-0 bg-background">
-            <div className="p-6">
+          <Card className="border-t sticky bottom-0 bg-background"><div className="p-6">
               <div className="space-y-6">
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-medium">マッチング方法の選択</h3>
@@ -1124,224 +1133,29 @@ export const AIMatchingChat = () => {
       )}
 
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>入力内容の確認</DialogTitle>
+            <DialogTitle>希望条件の確認</DialogTitle>
             <DialogDescription>
-              入力された条件とウェブ履歴書の情報を確認してください。
-              問題がなければ「マッチングを開始する」を選択してください。
+              入力された条件を確認してください
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="h-[60vh]">
-            <div className="space-y-6 p-4">
-              {/* ウェブ履歴書セクション */}
-              <div className="space-y-4 border-b pb-4">
-                <h3 className="text-lg font-medium">ウェブ履歴書の情報</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* 基本情報 */}
-                  <div>
-                    <Label>お名前</Label>
-                    <p className="text-sm">{profileData?.lastName} {profileData?.firstName}</p>
-                  </div>
-                  <div>
-                    <Label>フリガナ</Label>
-                    <p className="text-sm">{profileData?.lastNameKana} {profileData?.firstNameKana}</p>
-                  </div>
-                  <div>
-                    <Label>居住地</Label>
-                    <p className="text-sm">{profileData?.location}</p>
-                  </div>
-                  <div>
-                    <Label>最寄り駅</Label>
-                    <p className="text-sm">{profileData?.nearestStation}</p>
-                  </div>
-
-                  {/* 身体的特徴 */}
-                  <div>
-                    <Label>身長</Label>
-                    <p className="text-sm">{profileData?.height}cm</p>
-                  </div>
-                  <div>
-                    <Label>体重</Label>
-                    <p className="text-sm">{profileData?.weight}kg</p>
-                  </div>
-                  <div>
-                    <Label>スリーサイズ</Label>
-                    <p className="text-sm">B{profileData?.bust} W{profileData?.waist} H{profileData?.hip}</p>
-                  </div>
-                  <div>
-                    <Label>カップサイズ</Label>
-                    <p className="text-sm">{profileData?.cupSize}カップ</p>
-                  </div>
-
-                  {/* 身分証明書 */}
-                  <div className="col-span-2">
-                    <Label>身分証明書</Label>
-                    <p className="text-sm">
-                      {profileData?.availableIds?.types?.join("、")}
-                      {profileData?.availableIds?.others?.length > 0 &&
-                        `、${profileData.availableIds.others.join("、")}`}
-                    </p>
-                    <p className="text-sm mt-1">
-                      本籍地記載の住民票: {profileData?.canProvideResidenceRecord ? "提供可能" : "提供不可"}
-                    </p>
-                  </div>
-
-                  {/* パネル設定 */}
-                  <div>
-                    <Label>顔出し設定</Label>
-                    <p className="text-sm">{profileData?.faceVisibility}</p>
-                  </div>
-                  <div>
-                    <Label>写メ日記</Label>
-                    <p className="text-sm">{profileData?.canPhotoDiary ? "投稿可能" : "投稿不可"}</p>
-                  </div>
-                  <div>
-                    <Label>自宅派遣</Label>
-                    <p className="text-sm">{profileData?.canHomeDelivery ? "対応可能" : "対応不可"}</p>
-                  </div>
-
-                  {/* NGオプション */}
-                  {profileData?.ngOptions && (profileData.ngOptions.common.length > 0 || profileData.ngOptions.others.length > 0) && (
-                    <div className="col-span-2">
-                      <Label>NGオプション</Label>
-                      <p className="text-sm">
-                        {profileData.ngOptions.common?.join("、")}
-                        {profileData.ngOptions.others?.length > 0 &&
-                          `、${profileData.ngOptions.others.join("、")}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* アレルギー */}
-                  {profileData?.allergies?.hasAllergy && (
-                    <div className="col-span-2">
-                      <Label>アレルギー</Label>
-                      <p className="text-sm">
-                        {profileData.allergies.types?.join("、")}
-                        {profileData.allergies.others?.length > 0 &&
-                          `、${profileData.allergies.others.join("、")}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 喫煙 */}
-                  {profileData?.smoking?.enabled && (
-                    <div className="col-span-2">
-                      <Label>喫煙</Label>
-                      <p className="text-sm">
-                        {profileData.smoking.types?.join("、")}
-                        {profileData.smoking.others?.length > 0 &&
-                          `、${profileData.smoking.others.join("、")}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* SNSアカウント */}
-                  {profileData?.hasSnsAccount && profileData?.snsUrls && profileData.snsUrls.length > 0 && (
-                    <div className="col-span-2">
-                      <Label>SNSアカウント</Label>
-                      <div className="text-sm space-y-1">
-                        {profileData.snsUrls.map((url, index) => (
-                          <p key={index}>{url}</p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* エステ経験 */}
-                  {profileData?.hasEstheExperience && (
-                    <>
-                      <div className="col-span-2">
-                        <Label>エステ経験</Label>
-                        <p className="text-sm">あり（{profileData.estheExperiencePeriod}）</p>
-                      </div>
-                      {profileData.estheOptions && (
-                        <div className="col-span-2">
-                          <Label>対応可能なオプション</Label>
-                          <p className="text-sm">
-                            {profileData.estheOptions.available?.join("、")}
-                            {profileData.estheOptions.ngOptions?.length > 0 && (
-                              <>
-                                <br />
-                                <span className="text-destructive">NG: {profileData.estheOptions.ngOptions.join("、")}</span>
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* 在籍店舗情報 */}
-                  {profileData?.currentStores && profileData.currentStores.length > 0 && (
-                    <div className="col-span-2">
-                      <Label>現在の在籍店舗</Label>
-                      <div className="text-sm space-y-1">
-                        {profileData.currentStores.map((store, index) => (
-                          <p key={index}>{store.storeName}（{store.stageName}）</p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {profileData?.previousStores && profileData.previousStores.length > 0 && (
-                    <div className="col-span-2">
-                      <Label>過去の在籍店舗</Label>
-                      <div className="text-sm space-y-1">
-                        {profileData.previousStores.map((store, index) => (
-                          <p key={index}>{store.storeName}</p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 自己PR */}
-                  {profileData?.selfIntroduction && (
-                    <div className="col-span-2">
-                      <Label>自己PR</Label>
-                      <p className="text-sm whitespace-pre-wrap">{profileData.selfIntroduction}</p>
-                    </div>
-                  )}
-
-                  {/* その他備考 */}
-                  {profileData?.notes && (
-                    <div className="col-span-2">
-                      <Label>その他備考</Label>
-                      <p className="text-sm whitespace-pre-wrap">{profileData.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 入力条件セクション */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">希望条件</h3>
-                <div className="whitespace-pre-line bg-muted/50 p-4 rounded-lg">
-                  {formatConditionsMessage(conditions, selectedType)}
-                </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">希望条件</h3>
+              <div className="whitespace-pre-line bg-muted/50 p-4 rounded-lg">
+                {formatConditionsMessage(conditions, selectedType)}
               </div>
             </div>
-          </ScrollArea>
-          <div className="flex justify-end gap-4 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowConfirmDialog(false);
-                setShowForm(true);
-              }}
-            >
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               修正する
             </Button>
-            <Button
-              onClick={() => {
-                setShowConfirmDialog(false);
-                handleStartMatching();
-              }}
-            >
-              マッチングを開始する
+            <Button onClick={handleConfirmConditions}>
+              この内容で進める
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       {selectedStore && (
