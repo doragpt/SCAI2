@@ -868,6 +868,18 @@ export const AIMatchingChat = () => {
                       })}
                     />
                   </div>
+
+                  <Button
+                    className="w-full mt-6"
+                    onClick={handleConditionSubmit}
+                    disabled={
+                      conditions.workTypes.length === 0 || 
+                      !conditions.workPeriodStart || 
+                      !conditions.workPeriodEnd
+                    }
+                  >
+                    入力内容を確認する
+                  </Button>
                 </>
               ) : (
                 <>
