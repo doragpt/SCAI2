@@ -14,18 +14,23 @@ export default function ProfileViewPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { data: profile, isLoading, error } = useQuery<TalentProfileData>({
+  const {
+    data: profile,
+    isLoading,
+    error,
+    refetch
+  } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     enabled: !!user,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 2,
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Profile fetch error:", error);
       toast({
         title: "エラーが発生しました",
-        description: "プロフィールの取得に失敗しました。",
+        description: error.message || "プロフィールの取得に失敗しました。",
         variant: "destructive",
       });
     },
@@ -50,7 +55,7 @@ export default function ProfileViewPage() {
             <p className="text-muted-foreground">
               プロフィールの取得中にエラーが発生しました。
             </p>
-            <Button onClick={() => window.location.reload()}>
+            <Button onClick={() => refetch()}>
               再読み込み
             </Button>
           </div>
@@ -78,7 +83,7 @@ export default function ProfileViewPage() {
     );
   }
 
-  // 残りのコンポーネントコードは変更なし
+  // 正常なレンダリング
   return (
     <div className="container max-w-2xl py-8">
       <div className="flex items-center justify-between mb-6">
@@ -138,8 +143,6 @@ export default function ProfileViewPage() {
                 <p>{profile.canProvideResidenceRecord ? "提供可能" : "提供不可"}</p>
               </div>
             </div>
-
-            <Separator />
 
             {/* 身体的特徴 */}
             <div className="space-y-4">

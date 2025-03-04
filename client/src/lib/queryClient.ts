@@ -29,7 +29,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Query Function の定義（先に移動）
+// Query Function の定義
 export const getQueryFn = <T>({
   on401,
 }: {
@@ -56,7 +56,8 @@ export const getQueryFn = <T>({
           const profileData = JSON.parse(cachedProfile) as T;
           console.log("Using cached profile data:", {
             timestamp: new Date().toISOString(),
-            userId: (profileData as TalentProfileData).userId
+            type: typeof profileData,
+            keys: Object.keys(profileData)
           });
           return profileData;
         }
@@ -75,11 +76,12 @@ export const getQueryFn = <T>({
       const data = await res.json() as T;
 
       // プロフィールデータの場合はローカルストレージに保存
-      if (url === QUERY_KEYS.TALENT_PROFILE) {
+      if (url === QUERY_KEYS.TALENT_PROFILE && data) {
         localStorage.setItem('talentProfile', JSON.stringify(data));
         console.log("Updated cached profile data:", {
           timestamp: new Date().toISOString(),
-          userId: (data as TalentProfileData).userId
+          type: typeof data,
+          keys: Object.keys(data)
         });
       }
 
@@ -101,7 +103,7 @@ export const getQueryFn = <T>({
 export async function apiRequest(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  data?: unknown,
 ): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -143,49 +145,53 @@ export async function apiRequest(
 // プロフィール更新用の関数
 export async function updateTalentProfile(data: Partial<TalentProfileData>) {
   try {
-    console.log("Updating profile with data:", {
+    console.log("Starting profile update:", {
       timestamp: new Date().toISOString(),
-      userId: data.userId
+      updateData: data
     });
 
     // 既存のデータを取得
     const existingProfile = queryClient.getQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE]);
+    if (!existingProfile) {
+      throw new Error("既存のプロフィールデータが見つかりません");
+    }
 
     // APIリクエストを実行
-    const response = await apiRequest("PUT", QUERY_KEYS.TALENT_PROFILE, data);
+    const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
     const updatedProfile = await response.json() as TalentProfileData;
 
-    console.log("Profile update successful:", {
-      timestamp: new Date().toISOString(),
-      userId: updatedProfile.userId
-    });
-
-    // 既存のデータと新しいデータをマージ
+    // 編集不可フィールドの保護
+    const protectedFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
     const mergedProfile = {
       ...existingProfile,
       ...updatedProfile,
-      // 編集不可フィールドは必ず既存の値を維持
-      birthDate: updatedProfile.birthDate || existingProfile?.birthDate,
-      createdAt: existingProfile?.createdAt,
-      id: existingProfile?.id,
-      userId: existingProfile?.userId,
+      ...protectedFields.reduce((acc, field) => ({
+        ...acc,
+        [field]: existingProfile[field]
+      }), {})
     };
 
-    // データの整合性チェック
-    if (!mergedProfile.birthDate && existingProfile?.birthDate) {
-      console.warn("birthDate field was lost during update, restoring from existing data");
-      mergedProfile.birthDate = existingProfile.birthDate;
-    }
+    console.log("Profile merge result:", {
+      timestamp: new Date().toISOString(),
+      existingFields: Object.keys(existingProfile),
+      updatedFields: Object.keys(updatedProfile),
+      mergedFields: Object.keys(mergedProfile)
+    });
 
-    // キャッシュの更新処理
+    // キャッシュの更新
     queryClient.setQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE], mergedProfile);
 
-    // ローカルストレージに保存
+    // ローカルストレージの更新
     localStorage.setItem('talentProfile', JSON.stringify(mergedProfile));
 
-    // キャッシュを無効化して再取得を強制
+    // キャッシュを無効化して強制的に再取得
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-    await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE], exact: true });
+
+    // 即時に再フェッチを実行
+    await queryClient.refetchQueries({ 
+      queryKey: [QUERY_KEYS.TALENT_PROFILE],
+      exact: true
+    });
 
     return mergedProfile;
   } catch (error) {
@@ -193,19 +199,22 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
       error,
       timestamp: new Date().toISOString()
     });
+
+    // エラー時にキャッシュを無効化
+    await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     throw error;
   }
 }
 
-// React Query クライアントの設定（後ろに移動）
+// React Query クライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // キャッシュを常に無効化
-      refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
-      refetchOnMount: true, // コンポーネントマウント時に再取得
-      refetchOnReconnect: true, // 再接続時に再取得
-      retry: 2, // エラー時のリトライ回数を2回に設定
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      retry: 2,
       queryFn: getQueryFn({ on401: "throw" }),
     },
     mutations: {
