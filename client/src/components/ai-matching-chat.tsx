@@ -15,16 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -38,9 +28,10 @@ import { Loader2, Bot, User, CheckIcon, MapPin, Star, Building2, ArrowLeft } fro
 import { cn } from "@/lib/utils";
 import { StoreDetailModal } from "@/components/store-detail-modal";
 import ProfileCheckDialog from "@/components/profile-check-dialog";
-import { useProfile } from "@/hooks/use-profile"; // 追加：useProfileフックのインポート
+import { useProfile } from "@/hooks/use-profile";
 import { useMatching } from "@/hooks/use-matching";
-import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types"; // 追加：定数のインポート
+import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
+import { formatConditionsMessage } from "@/utils/format-conditions-message"; // 追加：formatConditionsMessage関数のインポート
 
 // 型定義
 interface Message {
@@ -1005,7 +996,7 @@ export const AIMatchingChat = () => {
                           AIが自動で店舗とのマッチングを行います
                         </p>
                       </div>
-                      <div className="space-y-2">
+                      <div classNamediv className="space-y-2">
                         <h5 className="text-sm font-medium">おすすめのケース</h5>
                         <ul className="text-sm text-muted-foreground space-y-1">
                           <li>• できるだけ早く働きたい</li>
