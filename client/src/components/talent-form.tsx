@@ -97,12 +97,13 @@ export const TalentForm: React.FC = () => {
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [, setLocation] = useLocation();
 
+  // Fix default values and type issues
   const defaultValues: TalentProfileData = {
     lastName: "",
     firstName: "",
     lastNameKana: "",
     firstNameKana: "",
-    location: undefined,
+    location: "東京都", // Set a default prefecture
     nearestStation: "",
     availableIds: {
       types: [],
@@ -111,11 +112,11 @@ export const TalentForm: React.FC = () => {
     canProvideResidenceRecord: false,
     height: 150,
     weight: 45,
-    cupSize: undefined,
+    cupSize: "D", // Set a default cup size
     bust: null,
     waist: null,
     hip: null,
-    faceVisibility: undefined,
+    faceVisibility: "全隠し", // Set a default face visibility
     canPhotoDiary: false,
     canHomeDelivery: false,
     ngOptions: {
@@ -223,6 +224,24 @@ export const TalentForm: React.FC = () => {
     },
   });
 
+  // Fix currentStores and previousStores type handling
+  type StoreEntry = {
+    storeName: string;
+    stageName: string;
+  };
+
+  // Update the store-related state management
+  const [currentStores, setCurrentStores] = useState<StoreEntry[]>([]);
+  const [previousStores, setPreviousStores] = useState<StoreEntry[]>([]);
+
+  // Fix numeric field comparisons
+  const processNumericField = (value: string | undefined): number | null => {
+    if (value === undefined || value === "") return null;
+    const num = Number(value);
+    return isNaN(num) ? null : num;
+  };
+
+  // Update form submission logic
   const onSubmit = async (data: TalentProfileData) => {
     if (!form.formState.isValid) {
       toast({
@@ -233,8 +252,15 @@ export const TalentForm: React.FC = () => {
       return;
     }
 
+    const processedData = {
+      ...data,
+      bust: processNumericField(data.bust?.toString()),
+      waist: processNumericField(data.waist?.toString()),
+      hip: processNumericField(data.hip?.toString()),
+    };
+
     try {
-      await createProfile(data);
+      await createProfile(processedData);
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
@@ -243,6 +269,41 @@ export const TalentForm: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Update store management functions
+  const handleAddCurrentStore = () => {
+    const current = form.watch("currentStores") || [];
+    form.setValue("currentStores", [
+      ...current,
+      { storeName: "", stageName: "" } as StoreEntry
+    ]);
+  };
+
+  const handleUpdateCurrentStore = (index: number, field: keyof StoreEntry, value: string) => {
+    const current = form.watch("currentStores");
+    current[index] = {
+      ...current[index],
+      [field]: value
+    };
+    form.setValue("currentStores", [...current]);
+  };
+
+  const handleAddPreviousStore = () => {
+    const current = form.watch("previousStores") || [];
+    form.setValue("previousStores", [
+      ...current,
+      { storeName: "", stageName: "" } as StoreEntry
+    ]);
+  };
+
+  const handleUpdatePreviousStore = (index: number, field: keyof StoreEntry, value: string) => {
+    const current = form.watch("previousStores");
+    current[index] = {
+      ...current[index],
+      [field]: value
+    };
+    form.setValue("previousStores", [...current]);
   };
 
   return (
@@ -535,26 +596,12 @@ export const TalentForm: React.FC = () => {
                           <Input
                             placeholder="店舗名"
                             value={store.storeName || ""}
-                            onChange={(e) => {
-                              const current = form.watch("currentStores");
-                              current[index] = {
-                                ...current[index],
-                                storeName: e.target.value
-                              };
-                              form.setValue("currentStores", [...current]);
-                            }}
+                            onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
                           />
                           <Input
                             placeholder="源氏名"
                             value={store.stageName || ""}
-                            onChange={(e) => {
-                              const current = form.watch("currentStores");
-                              current[index] = {
-                                ...current[index],
-                                stageName: e.target.value
-                              };
-                              form.setValue("currentStores", [...current]);
-                            }}
+                            onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
                           />
                         </div>
                         <Button
@@ -576,13 +623,7 @@ export const TalentForm: React.FC = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        const current = form.watch("currentStores") || [];
-                        form.setValue("currentStores", [
-                          ...current,
-                          { storeName: "", stageName: "" }
-                        ]);
-                      }}
+                      onClick={handleAddCurrentStore}
                     >
                       店舗を追加
                     </Button>
@@ -641,26 +682,12 @@ export const TalentForm: React.FC = () => {
                           <Input
                             placeholder="店舗名"
                             value={store.storeName || ""}
-                            onChange={(e) => {
-                              const current = form.watch("previousStores");
-                              current[index] = {
-                                ...current[index],
-                                storeName: e.target.value
-                              };
-                              form.setValue("previousStores", [...current]);
-                            }}
+                            onChange={(e) => handleUpdatePreviousStore(index, "storeName", e.target.value)}
                           />
                           <Input
                             placeholder="源氏名"
                             value={store.stageName || ""}
-                            onChange={(e) => {
-                              const current = form.watch("previousStores");
-                              current[index] = {
-                                ...current[index],
-                                stageName: e.target.value
-                              };
-                              form.setValue("previousStores", [...current]);
-                            }}
+                            onChange={(e) => handleUpdatePreviousStore(index, "stageName", e.target.value)}
                           />
                         </div>
                         <Button
@@ -682,13 +709,7 @@ export const TalentForm: React.FC = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        const current = form.watch("previousStores") || [];
-                        form.setValue("previousStores", [
-                          ...current,
-                          { storeName: "", stageName: "" }
-                        ]);
-                      }}
+                      onClick={handleAddPreviousStore}
                     >
                       店舗を追加
                     </Button>
@@ -960,7 +981,7 @@ export const TalentForm: React.FC = () => {
                           {type}
                           <Button
                             type="button"
-                            variant                          variant="ghost"
+                            variant="ghost"
                             size="sm"
                             className="ml-1 h-4 w-4 p-0"
                             onClick={() => {
