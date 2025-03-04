@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Bot, User } from "lucide-react";
 import { workTypes, prefectures, type TalentProfile } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -458,334 +458,191 @@ export const AIMatchingChat = () => {
 
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)]">
-      <div className="flex-1 overflow-y-auto space-y-4 p-4">
-        {messages.map((message, index) => (
-          <Card
-            key={index}
-            className={`p-4 ${
-              message.type === 'ai'
-                ? 'bg-primary/10'
-                : 'bg-background ml-8'
-            }`}
-          >
-            <p className="whitespace-pre-line">{message.content}</p>
-          </Card>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+    <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
+        <div className="container flex h-14 max-w-screen-2xl items-center">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            <span className="font-semibold">SCAIマッチング</span>
+          </div>
+        </div>
+      </header>
 
-      {showForm && selectedType && (
-        <Card className="border-t sticky bottom-0 bg-background">
-          <div className="p-6 space-y-6">
-            <div className="flex justify-start">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="flex items-center gap-2"
+      <ScrollArea className="flex-1 p-4">
+        <div className="container max-w-screen-2xl mx-auto space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.type === 'ai' ? 'justify-start' : 'justify-end'
+              }`}
+            >
+              <div
+                className={`flex items-start gap-2 max-w-[80%] ${
+                  message.type === 'ai' ? 'flex-row' : 'flex-row-reverse'
+                }`}
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span>選択しなおす</span>
-              </Button>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    message.type === 'ai'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  {message.type === 'ai' ? (
+                    <Bot className="h-5 w-5" />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </div>
+                <div
+                  className={`rounded-lg p-4 ${
+                    message.type === 'ai'
+                      ? 'bg-card text-card-foreground'
+                      : 'bg-primary text-primary-foreground'
+                  }`}
+                >
+                  <p className="whitespace-pre-line">{message.content}</p>
+                </div>
+              </div>
             </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
 
-            <div className="space-y-2">
-              <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
-                希望業種（複数選択可）
-              </Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                あなたの希望や経験に合わせて、働きやすい業種を選択してください。複数選択することで、より多くの求人をご紹介できます。
+      {!selectedType && !isLoading && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+          <div className="container max-w-screen-2xl mx-auto">
+            <div className="flex flex-col gap-4">
+              <p className="text-center text-muted-foreground">
+                希望する働き方を選択してください
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {WORK_TYPES_WITH_DESCRIPTION.map((type) => (
-                  <div key={type.id} className="flex flex-col space-y-2 p-4 border rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={type.id}
-                        checked={conditions.workTypes.includes(type.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setConditions({
-                              ...conditions,
-                              workTypes: [...conditions.workTypes, type.id]
-                            });
-                          } else {
-                            setConditions({
-                              ...conditions,
-                              workTypes: conditions.workTypes.filter(t => t !== type.id)
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={type.id}>{type.label}</Label>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-6">{type.description}</p>
-                  </div>
+              <div className="flex gap-4 justify-center">
+                {workTypes.map((type) => (
+                  <Button
+                    key={type}
+                    onClick={() => handleWorkTypeSelect(type)}
+                    className="min-w-[120px]"
+                    variant={type === '出稼ぎ' ? 'default' : 'secondary'}
+                  >
+                    {type}
+                  </Button>
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            {selectedType === '出稼ぎ' ? (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>勤務開始日</Label>
-                    <Input
-                      type="date"
-                      onChange={(e) => setConditions({
-                        ...conditions,
-                        workPeriodStart: e.target.value
-                      })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>勤務終了日</Label>
-                    <Input
-                      type="date"
-                      onChange={(e) => setConditions({
-                        ...conditions,
-                        workPeriodEnd: e.target.value
-                      })}
-                    />
-                  </div>
-                </div>
+      {showForm && selectedType && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Card className="border-t sticky bottom-0 bg-background">
+            <div className="p-6 space-y-6">
+              <div className="flex justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>選択しなおす</span>
+                </Button>
+              </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="previous-day"
-                    onCheckedChange={(checked) => setConditions({
-                      ...conditions,
-                      canArrivePreviousDay: checked
-                    })}
-                  />
-                  <Label htmlFor="previous-day">前日入りの可否</Label>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>希望保証</Label>
-                  <Select
-                    onValueChange={(value) => setConditions({
-                      ...conditions,
-                      desiredGuarantee: value
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="希望保証を選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GUARANTEE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>希望単価</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        desiredTime: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="時間を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIME_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        desiredRate: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="金額を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {RATE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>待機時間（時間）</Label>
-                  <Input
-                    type="number"
-                    placeholder="12時間以上が保証条件となる場合が多いです"
-                    onChange={(e) => setConditions({
-                      ...conditions,
-                      waitingHours: e.target.value ? Number(e.target.value) : undefined
-                    })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>出発地</Label>
-                    <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        departureLocation: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="都道府県を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {prefectures.map((pref) => (
-                          <SelectItem key={pref} value={pref}>
-                            {pref}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>帰宅地</Label>
-                    <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        returnLocation: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="都道府県を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {prefectures.map((pref) => (
-                          <SelectItem key={pref} value={pref}>
-                            {pref}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>希望地域</Label>
-                  <Select
-                    onValueChange={(value) => setConditions({
-                      ...conditions,
-                      preferredLocations: [...conditions.preferredLocations, value]
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="都道府県を選択（複数選択可）" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {prefectures.map((pref) => (
-                        <SelectItem key={pref} value={pref}>
-                          {pref}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {conditions.preferredLocations.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {conditions.preferredLocations.map((loc) => (
-                        <Button
-                          key={loc}
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setConditions({
-                            ...conditions,
-                            preferredLocations: conditions.preferredLocations.filter(l => l !== loc)
-                          })}
-                        >
-                          {loc} ×
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>NG地域</Label>
-                  <Select
-                    onValueChange={(value) => setConditions({
-                      ...conditions,
-                      ngLocations: [...conditions.ngLocations, value]
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="都道府県を選択（複数選択可）" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {prefectures.map((pref) => (
-                        <SelectItem key={pref} value={pref}>
-                          {pref}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {conditions.ngLocations.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {conditions.ngLocations.map((loc) => (
-                        <Button
-                          key={loc}
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setConditions({
-                            ...conditions,
-                            ngLocations: conditions.ngLocations.filter(l => l !== loc)
-                          })}
-                        >
-                          {loc} ×
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>その他備考</Label>
-                  <Input
-                    placeholder="その他の希望条件があればご記入ください"
-                    onChange={(e) => setConditions({
-                      ...conditions,
-                      notes: e.target.value
-                    })}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-4">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="space-y-2">
-                      <Label>面接希望日時 {i + 1}</Label>
-                      <Input
-                        type="datetime-local"
-                        onChange={(e) => {
-                          const dates = [...(conditions.interviewDates || [])];
-                          dates[i] = e.target.value;
-                          setConditions({
-                            ...conditions,
-                            interviewDates: dates
-                          });
-                        }}
-                      />
+              <div className="space-y-2">
+                <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                  希望業種（複数選択可）
+                </Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  あなたの希望や経験に合わせて、働きやすい業種を選択してください。複数選択することで、より多くの求人をご紹介できます。
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {WORK_TYPES_WITH_DESCRIPTION.map((type) => (
+                    <div key={type.id} className="flex flex-col space-y-2 p-4 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={type.id}
+                          checked={conditions.workTypes.includes(type.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setConditions({
+                                ...conditions,
+                                workTypes: [...conditions.workTypes, type.id]
+                              });
+                            } else {
+                              setConditions({
+                                ...conditions,
+                                workTypes: conditions.workTypes.filter(t => t !== type.id)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={type.id}>{type.label}</Label>
+                      </div>
+                      <p className="text-sm text-muted-foreground pl-6">{type.description}</p>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {selectedType === '出稼ぎ' ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>勤務開始日</Label>
+                      <Input
+                        type="date"
+                        onChange={(e) => setConditions({
+                          ...conditions,
+                          workPeriodStart: e.target.value
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>勤務終了日</Label>
+                      <Input
+                        type="date"
+                        onChange={(e) => setConditions({
+                          ...conditions,
+                          workPeriodEnd: e.target.value
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="previous-day"
+                      onCheckedChange={(checked) => setConditions({
+                        ...conditions,
+                        canArrivePreviousDay: checked
+                      })}
+                    />
+                    <Label htmlFor="previous-day">前日入りの可否</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>希望保証</Label>
+                    <Select
+                      onValueChange={(value) => setConditions({
+                        ...conditions,
+                        desiredGuarantee: value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="希望保証を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GUARANTEE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="space-y-2">
                     <Label>希望単価</Label>
@@ -829,14 +686,63 @@ export const AIMatchingChat = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={selectedType === '在籍' ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
-                      希望地域
-                    </Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {selectedType === '在籍'
-                        ? '在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。'
-                        : '出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。'}
-                    </p>
+                    <Label>待機時間（時間）</Label>
+                    <Input
+                      type="number"
+                      placeholder="12時間以上が保証条件となる場合が多いです"
+                      onChange={(e) => setConditions({
+                        ...conditions,
+                        waitingHours: e.target.value ? Number(e.target.value) : undefined
+                      })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>出発地</Label>
+                      <Select
+                        onValueChange={(value) => setConditions({
+                          ...conditions,
+                          departureLocation: value
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="都道府県を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prefectures.map((pref) => (
+                            <SelectItem key={pref} value={pref}>
+                              {pref}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>帰宅地</Label>
+                      <Select
+                        onValueChange={(value) => setConditions({
+                          ...conditions,
+                          returnLocation: value
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="都道府県を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prefectures.map((pref) => (
+                            <SelectItem key={pref} value={pref}>
+                              {pref}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>希望地域</Label>
                     <Select
                       onValueChange={(value) => setConditions({
                         ...conditions,
@@ -873,69 +779,304 @@ export const AIMatchingChat = () => {
                     )}
                   </div>
 
-                  <Button
-                    className="w-full mt-6"
-                    onClick={handleConditionSubmit}
-                    disabled={conditions.workTypes.length === 0 || (selectedType === '在籍' && conditions.preferredLocations.length === 0)}
-                  >
-                    入力内容を確認する
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* 確認/修正ボタン */}
-      {/* showConfirmationButtons は使用しない */}
-
-      {/* マッチング方法選択 */}
-      {showMatchingOptions && (
-        <Card className="border-t sticky bottom-0 bg-background">
-          <div className="p-6">
-            <div className="flex flex-col gap-6">
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium">マッチング方法の選択</h3>
-                <p className="text-sm text-muted-foreground">
-                  希望に合わせて最適なマッチング方法をお選びください
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handleAutoMatching}>
-                  <div className="space-y-3">
-                    <h4 className="font-medium">自動でマッチング</h4>
-                    <ul className="text-sm text-muted-foreground space-y-2">
-                      <li>• AIが条件に合う店舗に直接連絡</li>
-                      <li>• できるだけ早く働きたい方におすすめ</li>
-                      <li>• 面接や採用までの時間を短縮</li>
-                      <li>• 希望条件に合う店舗から順次連絡</li>
-                    </ul>
+                  <div className="space-y-2">
+                    <Label>NG地域</Label>
+                    <Select
+                      onValueChange={(value) => setConditions({
+                        ...conditions,
+                        ngLocations: [...conditions.ngLocations, value]
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {prefectures.map((pref) => (
+                          <SelectItem key={pref} value={pref}>
+                            {pref}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {conditions.ngLocations.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {conditions.ngLocations.map((loc) => (
+                          <Button
+                            key={loc}
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setConditions({
+                              ...conditions,
+                              ngLocations: conditions.ngLocations.filter(l => l !== loc)
+                            })}
+                          >
+                            {loc} ×
+                          </Button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </Card>
-                <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handlePickupMatching}>
-                  <div className="space-y-3">
-                    <h4 className="font-medium">ピックアップしてから確認</h4>
-                    <ul className="text-sm text-muted-foreground space-y-2">
-                      <li>• AIが条件に合う店舗を一覧表示</li>
-                      <li>• じっくり店舗を選びたい方におすすめ</li>
-                      <li>• 店舗の詳細情報を確認可能</li>
-                      <li>• 気になる店舗を選んで連絡</li>
-                    </ul>
+
+                  <div className="space-y-2">
+                    <Label>その他備考</Label>
+                    <Input
+                      placeholder="その他の希望条件があればご記入ください"
+                      onChange={(e) => setConditions({
+                        ...conditions,
+                        notes: e.target.value
+                      })}
+                    />
                   </div>
-                </Card>
-              </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <Label>面接希望日時 {i + 1}</Label>
+                        <Input
+                          type="datetime-local"
+                          onChange={(e) => {
+                            const dates = [...(conditions.interviewDates || [])];
+                            dates[i] = e.target.value;
+                            setConditions({
+                              ...conditions,
+                              interviewDates: dates
+                            });
+                          }}
+                        />
+                      </div>
+                    ))}
+
+                    <div className="space-y-2">
+                      <Label>希望単価</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Select
+                          onValueChange={(value) => setConditions({
+                            ...conditions,
+                            desiredTime: value
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="時間を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIME_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select
+                          onValueChange={(value) => setConditions({
+                            ...conditions,
+                            desiredRate: value
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="金額を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {RATE_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className={selectedType === '在籍' ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
+                        希望地域
+                      </Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {selectedType === '在籍'
+                          ? '在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。'
+                          : '出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。'}
+                      </p>
+                      <Select
+                        onValueChange={(value) => setConditions({
+                          ...conditions,
+                          preferredLocations: [...conditions.preferredLocations, value]
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prefectures.map((pref) => (
+                            <SelectItem key={pref} value={pref}>
+                              {pref}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {conditions.preferredLocations.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {conditions.preferredLocations.map((loc) => (
+                            <Button
+                              key={loc}
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setConditions({
+                                ...conditions,
+                                preferredLocations: conditions.preferredLocations.filter(l => l !== loc)
+                              })}
+                            >
+                              {loc} ×
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      className="w-full mt-6"
+                      onClick={handleConditionSubmit}
+                      disabled={conditions.workTypes.length === 0 || (selectedType === '在籍' && conditions.preferredLocations.length === 0)}
+                    >
+                      入力内容を確認する
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        </Card>
-      )}
-
-      {/* ローディング表示 */}
-      {isLoading && (
-        <div className="flex justify-center p-4">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          </Card>
         </div>
       )}
+
+      {showMatchingOptions && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Card className="border-t sticky bottom-0 bg-background">
+            <div className="p-6">
+              <div className="flex flex-col gap-6">
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-medium">マッチング方法の選択</h3>
+                  <p className="text-sm text-muted-foreground">
+                    希望に合わせて最適なマッチング方法をお選びください
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handleAutoMatching}>
+                    <div className="space-y-3">
+                      <h4 className="font-medium">自動でマッチング</h4>
+                      <ul className="text-sm text-muted-foreground space-y-2">
+                        <li>• AIが条件に合う店舗に直接連絡</li>
+                        <li>• できるだけ早く働きたい方におすすめ</li>
+                        <li>• 面接や採用までの時間を短縮</li>
+                        <li>• 希望条件に合う店舗から順次連絡</li>
+                      </ul>
+                    </div>
+                  </Card>
+                  <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handlePickupMatching}>
+                    <div className="space-y-3">
+                      <h4 className="font-medium">ピックアップしてから確認</h4>
+                      <ul className="text-sm text-muted-foreground space-y-2">
+                        <li>• AIが条件に合う店舗を一覧表示</li>
+                        <li>• じっくり店舗を選びたい方におすすめ</li>
+                        <li>• 店舗の詳細情報を確認可能</li>
+                        <li>• 気になる店舗を選んで連絡</li>
+                      </ul>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">処理中...</p>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>入力内容の確認</DialogTitle>
+            <DialogDescription>
+              入力された条件とウェブ履歴書の情報を確認してください。
+              問題がなければ「マッチングを開始する」を選択してください。
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh]">
+            <div className="space-y-6 p-4">
+              <div className="space-y-4 border-b pb-4">
+                <h3 className="text-lg font-medium">ウェブ履歴書の情報</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>お名前</Label>
+                    <p className="text-sm">{profileData?.lastName} {profileData?.firstName}</p>
+                  </div>
+                  <div>
+                    <Label>フリガナ</Label>
+                    <p className="text-sm">{profileData?.lastNameKana} {profileData?.firstNameKana}</p>
+                  </div>
+                  <div>
+                    <Label>居住地</Label>
+                    <p className="text-sm">{profileData?.location}</p>
+                  </div>
+                  <div>
+                    <Label>最寄り駅</Label>
+                    <p className="text-sm">{profileData?.nearestStation}</p>
+                  </div>
+                  <div>
+                    <Label>身長</Label>
+                    <p className="text-sm">{profileData?.height}cm</p>
+                  </div>
+                  <div>
+                    <Label>体重</Label>
+                    <p className="text-sm">{profileData?.weight}kg</p>
+                  </div>
+                  <div>
+                    <Label>スリーサイズ</Label>
+                    <p className="text-sm">B{profileData?.bust} W{profileData?.waist} H{profileData?.hip}</p>
+                  </div>
+                  <div>
+                    <Label>カップサイズ</Label>
+                    <p className="text-sm">{profileData?.cupSize}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">希望条件</h3>
+                <div className="whitespace-pre-line bg-muted/50 p-4 rounded-lg">
+                  {formatConditionsMessage(conditions, selectedType)}
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end gap-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmDialog(false);
+                setShowForm(true);
+              }}
+            >
+              修正する
+            </Button>
+            <Button
+              onClick={() => {
+                setShowConfirmDialog(false);
+                handleStartMatching();
+              }}
+            >
+              マッチングを開始する
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
