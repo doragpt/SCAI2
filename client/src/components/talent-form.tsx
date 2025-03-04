@@ -328,7 +328,7 @@ export const TalentForm: React.FC = () => {
       <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
           <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* 基本情報 */}
+            {/* 1. 基本情報 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">基本情報</h3>
               <div className="grid md:grid-cols-2 gap-4">
@@ -371,7 +371,7 @@ export const TalentForm: React.FC = () => {
               </div>
             </div>
 
-            {/* 住所情報 */}
+            {/* 2. 住所情報 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">住所情報</h3>
               <div className="grid md:grid-cols-2 gap-4">
@@ -407,7 +407,7 @@ export const TalentForm: React.FC = () => {
               </div>
             </div>
 
-            {/* 身分証明書 */}
+            {/* 3. 身分証明書 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
               <FormField label="持参可能な身分証明書" required>
@@ -472,7 +472,7 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* 身体的特徴 */}
+            {/* 4. 身体的特徴 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">身体的特徴</h3>
               <div className="grid md:grid-cols-3 gap-4">
@@ -557,7 +557,7 @@ export const TalentForm: React.FC = () => {
               </div>
             </div>
 
-            {/* 顔出し */}
+            {/* 5. 顔出し */}
             <div>
               <h3 className="text-lg font-semibold mb-4">顔出し</h3>
               <FormField label="パネルの顔出し" required>
@@ -582,143 +582,29 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-
-            {/* 店舗情報 */}
+            {/* 6. 写メ日記の投稿可否 */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">店舗情報</h3>
-              <div className="space-y-6">
-                {/* 現在の在籍店舗 */}
-                <FormField label="現在在籍中の店舗">
-                  <div className="space-y-4">
-                    {form.watch("currentStores").map((store, index) => (
-                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                        <div className="grid grid-cols-2 gap-4">
-                          <Input
-                            placeholder="店舗名"
-                            value={store.storeName || ""}
-                            onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
-                          />
-                          <Input
-                            placeholder="源氏名"
-                            value={store.stageName || ""}
-                            onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const current = form.watch("currentStores");
-                            form.setValue(
-                              "currentStores",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
-                        >
-                          削除
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddCurrentStore}
-                    >
-                      店舗を追加
-                    </Button>
-                  </div>
-                </FormField>
-
-                {/* 写メ日記URL */}
-                <FormField label="写メ日記が確認できる店舗URL">
-                  <div className="space-y-4">
-                    {form.watch("photoDiaryUrls").map((url, index) => (
-                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                        <Input
-                          placeholder="店舗の写メ日記URLを入力"
-                          value={url}
-                          onChange={(e) => {
-                            const current = form.watch("photoDiaryUrls");
-                            current[index] = e.target.value;
-                            form.setValue("photoDiaryUrls", [...current]);
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const current = form.watch("photoDiaryUrls");
-                            form.setValue(
-                              "photoDiaryUrls",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
-                        >
-                          削除
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const current = form.watch("photoDiaryUrls") || [];
-                        form.setValue("photoDiaryUrls", [...current, ""]);
-                      }}
-                    >
-                      URLを追加
-                    </Button>
-                  </div>
-                </FormField>
-
-                {/* 過去経験店舗 */}
-                <FormField label="過去経験店舗">
-                  <div className="space-y-4">
-                    {form.watch("previousStores").map((store, index) => (
-                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                        <div className="grid grid-cols-2 gap-4">
-                          <Input
-                            placeholder="店舗名"
-                            value={store.storeName || ""}
-                            onChange={(e) => handleUpdatePreviousStore(index, "storeName", e.target.value)}
-                          />
-                          <Input
-                            placeholder="源氏名"
-                            value={store.stageName || ""}
-                            onChange={(e) => handleUpdatePreviousStore(index, "stageName", e.target.value)}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const current = form.watch("previousStores");
-                            form.setValue(
-                              "previousStores",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
-                        >
-                          削除
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddPreviousStore}
-                    >
-                      店舗を追加
-                    </Button>
-                  </div>
-                </FormField>
-              </div>
+              <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
+              <SwitchField
+                label="写メ日記の投稿"
+                checked={form.watch("canPhotoDiary")}
+                onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked)}
+                valueLabels={{ checked: "可能", unchecked: "不可" }}
+              />
             </div>
 
-            {/* NGオプション */}
+            {/* 7. 自宅派遣可否 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
+              <SwitchField
+                label="自宅派遣"
+                checked={form.watch("canHomeDelivery")}
+                onCheckedChange={(checked) => form.setValue("canHomeDelivery", checked)}
+                valueLabels={{ checked: "可能", unchecked: "不可" }}
+              />
+            </div>
+
+            {/* 8. NGオプション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
               <FormField label="NGオプション">
@@ -783,7 +669,7 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* エステオプション */}
+            {/* 9. エステオプション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
               <Collapsible
@@ -857,124 +743,107 @@ export const TalentForm: React.FC = () => {
               </Collapsible>
             </div>
 
-            {/* アレルギーと喫煙 */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold mb-4">アレルギー・喫煙</h3>
-
-              {/* アレルギーサブセクション */}
-              <div>
-                <SwitchField
-                  label="アレルギー"
-                  required
-                  checked={form.watch("allergies.hasAllergy")}
-                  onCheckedChange={(checked) => {
-                    form.setValue("allergies", {
-                      types: [],
-                      others: [],
-                      hasAllergy: checked,
-                    }, { shouldValidate: true });
-                  }}
-                />
-
-                {form.watch("allergies.hasAllergy") && (
-                  <div className="ml-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {allergyTypes.map((type) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={form.watch("allergies.types").includes(type)}
-                            onCheckedChange={(checked) => {
-                              const current = form.watch("allergies.types");
-                              const updated = checked
-                                ? [...current, type]
-                                : current.filter((t) => t !== type);
-                              form.setValue("allergies.types", updated);
-                            }}
-                          />
-                          <label className="text-sm">{type}</label>
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <Label>その他のアレルギー</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {otherAllergies.map((allergy) => (
-                          <Badge key={allergy} variant="secondary">
-                            {allergy}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="ml-1 h-4 w-4 p-0"
-                              onClick={() => {
-                                setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
-                                form.setValue(
-                                  "allergies.others",
-                                  otherAllergies.filter((a) => a !== allergy)
-                                );
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          placeholder="その他のアレルギーを入力"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              const value = e.currentTarget.value.trim();
-                              if (value && !otherAllergies.includes(value)) {
-                                const newAllergies = [...otherAllergies, value];
-                                setOtherAllergies(newAllergies);
-                                form.setValue("allergies.others", newAllergies);
-                                e.currentTarget.value = "";
-                              }
-                            }
+            {/* 10. アレルギー */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
+              <SwitchField
+                label="アレルギーの有無"
+                checked={form.watch("allergies.hasAllergy")}
+                onCheckedChange={(checked) => form.setValue("allergies.hasAllergy", checked)}
+              />
+              {form.watch("allergies.hasAllergy") && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {allergyTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch("allergies.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("allergies.types");
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("allergies.types", updated);
                           }}
                         />
+                        <label className="text-sm">{type}</label>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              {/* 喫煙サブセクション */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">喫煙</h3>
-                <SwitchField
-                  label="喫煙"
-                  required
-                  checked={form.watch("smoking.enabled")}
-                  onCheckedChange={(checked) => {
-                    form.setValue("smoking", {
-                      enabled: checked,
-                      types: [],
-                      others: [],
-                    }, { shouldValidate: true });
-                  }}
-                />
-
-                {form.watch("smoking.enabled") && (
-                  <div className="ml-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {smokingTypes.map((type) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={form.watch("smoking.types").includes(type)}
-                            onCheckedChange={(checked) => {
-                              const current = form.watch("smoking.types");
-                              const updated = checked
-                                ? [...current, type]
-                                : current.filter((t) => t !== type);
-                              form.setValue("smoking.types", updated);
+                  <div className="mt-4">
+                    <Label>その他のアレルギー</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {otherAllergies.map((allergy) => (
+                        <Badge key={allergy} variant="secondary">
+                          {allergy}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => {
+                              setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
+                              form.setValue(
+                                "allergies.others",
+                                otherAllergies.filter((a) => a !== allergy)
+                              );
                             }}
-                          />
-                          <label className="text-sm">{type}</label>
-                        </div>
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
                       ))}
                     </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        placeholder="その他のアレルギーを入力"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const value = e.currentTarget.value.trim();
+                            if (value && !otherAllergies.includes(value)) {
+                              const newAllergies = [...otherAllergies, value];
+                              setOtherAllergies(newAllergies);
+                              form.setValue("allergies.others", newAllergies);
+                              e.currentTarget.value = "";
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 11. 喫煙 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">喫煙</h3>
+              <SwitchField
+                label="喫煙の有無"
+                checked={form.watch("smoking.enabled")}
+                onCheckedChange={(checked) => form.setValue("smoking.enabled", checked)}
+              />
+              {form.watch("smoking.enabled") && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {smokingTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch("smoking.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("smoking.types");
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("smoking.types", updated);
+                          }}
+                        />
+                        <label className="text-sm">{type}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <Label>その他の喫煙に関する情報</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {otherSmokingTypes.map((type) => (
                         <Badge key={type} variant="secondary">
@@ -999,7 +868,7 @@ export const TalentForm: React.FC = () => {
                     </div>
                     <div className="flex gap-2 mt-2">
                       <Input
-                        placeholder="その他の喫煙種類を入力"
+                        placeholder="その他の喫煙情報を入力"
                         onKeyPress={(e) => {
                           if (e.key === "Enter") {
                             const value = e.currentTarget.value.trim();
@@ -1014,114 +883,237 @@ export const TalentForm: React.FC = () => {
                       />
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* SNSアカウント */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
-              <SwitchField
-                label="SNSアカウント"
-                required
-                checked={form.watch("hasSnsAccount")}
-                onCheckedChange={(checked) => {
-                  form.setValue("hasSnsAccount", checked, { shouldValidate: true });
-                  if (!checked) {
-                    form.setValue("snsUrls", []);
-                  }
-                }}
-              />
-
-              {form.watch("hasSnsAccount") && (
-                <div className="ml-4 space-y-4">
-                  <FormField label="SNSアカウントのURL">
-                    <div className="flex flex-wrap gap-2">
-                      {form.watch("snsUrls").map((url, index) => (
-                        <Badge key={index} variant="secondary">
-                          {url}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
-                              const current = form.watch("snsUrls");
-                              form.setValue("snsUrls", current.filter((_, i) => i !== index));
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="SNSのURLを入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const url = e.currentTarget.value.trim();
-                            if (url) {
-                              const current = form.watch("snsUrls");
-                              form.setValue("snsUrls", [...current, url]);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                  </FormField>
                 </div>
               )}
             </div>
 
-            {/* その他 */}
+            {/* 12. 店舗情報 */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">その他</h3>
-              <div className="space-y-4">
-                <SwitchField
-                  label="写メ日記の投稿可否"
-                  required
-                  checked={form.watch("canPhotoDiary")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("canPhotoDiary", checked, { shouldValidate: true })
-                  }
-                  valueLabels={{ checked: "可能", unchecked: "不可" }}
-                />
-
-                <SwitchField
-                  label="自宅への派遣"
-                  required
-                  checked={form.watch("canHomeDelivery")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("canHomeDelivery", checked, { shouldValidate: true })
-                  }
-                  valueLabels={{ checked: "可能", unchecked: "不可" }}
-                  description="自宅での接客が可能な場合は「可能」を選択してください"
-                />
-
-                <FormField label="自己PR(任意)">
-                  <textarea
-                    className="w-full h-32 p-2 border rounded-md"
-                    placeholder="自己PRを入力してください"
-                    {...form.register("selfIntroduction")}
-                  />
-                  {form.formState.errors.selfIntroduction && (
-                    <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />
-                  )}
+              <h3 className="text-lg font-semibold mb-4">店舗情報</h3>
+              <div className="space-y-6">
+                {/* 現在の在籍店舗 */}
+                <FormField label="現在在籍中の店舗">
+                  <div className="space-y-4">
+                    {form.watch("currentStores").map((store, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input
+                            placeholder="店舗名"
+                            value={store.storeName || ""}
+                            onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
+                          />
+                          <Input
+                            placeholder="源氏名"
+                            value={store.stageName || ""}
+                            onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("currentStores");
+                            form.setValue(
+                              "currentStores",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddCurrentStore}
+                    >
+                      店舗を追加
+                    </Button>
+                  </div>
                 </FormField>
 
-                <FormField label="その他備考(任意)">
-                  <textarea
-                    className="w-full h-32 p-2 border rounded-md"
-                    placeholder="その他の要望がありましたらご記入ください"
-                    {...form.register("notes")}
-                  />
-                  {form.formState.errors.notes && (
-                    <FormErrorMessage message={form.formState.errors.notes.message as string} />
-                  )}
+                {/* 過去経験店舗 */}
+                <FormField label="過去経験店舗">
+                  <div className="space-y-4">
+                    {form.watch("previousStores").map((store, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input
+                            placeholder="店舗名"
+                            value={store.storeName || ""}
+                            onChange={(e) => handleUpdatePreviousStore(index, "storeName", e.target.value)}
+                          />
+                          <Input
+                            placeholder="源氏名"
+                            value={store.stageName || ""}
+                            onChange={(e) => handleUpdatePreviousStore(index, "stageName", e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("previousStores");
+                            form.setValue(
+                              "previousStores",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddPreviousStore}
+                    >
+                      店舗を追加
+                    </Button>
+                  </div>
+                </FormField>
+
+                {/* 写メ日記URL */}
+                <FormField label="写メ日記が確認できる店舗URL">
+                  <div className="space-y-4">
+                    {form.watch("photoDiaryUrls").map((url, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <Input
+                          placeholder="店舗の写メ日記URLを入力"
+                          value={url}
+                          onChange={(e) => {
+                            const current = form.watch("photoDiaryUrls");
+                            current[index] = e.target.value;
+                            form.setValue("photoDiaryUrls", [...current]);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("photoDiaryUrls");
+                            form.setValue(
+                              "photoDiaryUrls",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("photoDiaryUrls") || [];
+                        form.setValue("photoDiaryUrls", [...current, ""]);
+                      }}
+                    >
+                      URLを追加
+                    </Button>
+                  </div>
                 </FormField>
               </div>
+            </div>
+
+            {/* 13. 営業用SNSアカウント */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">営業用SNSアカウント</h3>
+              <SwitchField
+                label="SNSアカウントの有無"
+                checked={form.watch("hasSnsAccount")}
+                onCheckedChange={(checked) => form.setValue("hasSnsAccount", checked)}
+              />
+              {form.watch("hasSnsAccount") && (
+                <FormField label="SNSアカウントURL">
+                  <div className="space-y-4">
+                    {form.watch("snsUrls").map((url, index) => (
+                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                        <Input
+                          placeholder="SNSアカウントのURLを入力"
+                          value={url}
+                          onChange={(e) => {
+                            const current = form.watch("snsUrls");
+                            current[index] = e.target.value;
+                            form.setValue("snsUrls", [...current]);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = form.watch("snsUrls");
+                            form.setValue(
+                              "snsUrls",
+                              current.filter((_, i) => i !== index)
+                            );
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const current = form.watch("snsUrls") || [];
+                        form.setValue("snsUrls", [...current, ""]);
+                      }}
+                    >
+                      URLを追加
+                    </Button>
+                  </div>
+                </FormField>
+              )}
+            </div>
+
+            {/* 14. 自己PR */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">自己PR</h3>
+              <FormField label="自己PR">
+                <textarea
+                  className="w-full h-32 px-3 py-2 border rounded-md resize-none"
+                  {...form.register("selfIntroduction")}
+                  placeholder="自己PRを入力してください"
+                />
+                {form.formState.errors.selfIntroduction && (
+                  <FormErrorMessage message={form.formState.errors.selfIntroduction.message as string} />
+                )}
+              </FormField>
+            </div>
+
+            {/* 15. その他備考 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">その他備考</h3>
+              <FormField label="その他備考">
+                <textarea
+                  className="w-full h-32 px-3 py-2 border rounded-md resize-none"
+                  {...form.register("notes")}
+                  placeholder="その他備考を入力してください"
+                />
+                {form.formState.errors.notes && (
+                  <FormErrorMessage message={form.formState.errors.notes.message as string} />
+                )}
+              </FormField>
+            </div>
+
+            {/* 送信ボタン */}
+            <div className="flex justify-end">
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "プロフィールを保存"
+                )}
+              </Button>
             </div>
           </form>
         </Form>
