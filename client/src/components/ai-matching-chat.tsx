@@ -65,7 +65,19 @@ interface Store {
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { type: "ai", content: "SCAIマッチングを開始します！" },
+    {
+      type: "ai",
+      content: `SCAIマッチングへようこそ！
+
+あなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。
+
+【SCAIマッチングの特徴】
+• AIが希望条件を分析し、最適な店舗をご紹介
+• 豊富な求人データベースから、あなたに合った職場を探索
+• 24時間以内に店舗からの返信をお約束
+
+まずは、希望する働き方を選択してください。`
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -275,7 +287,13 @@ export const AIMatchingChat = () => {
     setShowMatchingOptions(true); // 条件確認後にマッチング方法の選択画面を表示
     setMessages(prev => [...prev, {
       type: 'ai',
-      content: `それでは、マッチング方法を選んでください！\n\n【自動でマッチング】\nAIが自動で店舗とのマッチングを行います。\n\n【ピックアップしてから確認】\n条件に合う店舗をリストアップして、ご自身で選んでいただけます。`
+      content: `それでは、マッチング方法を選んでください！
+
+【自動でマッチング】
+AIが自動で店舗とのマッチングを行います。
+
+【ピックアップしてから確認】
+条件に合う店舗をリストアップして、ご自身で選んでいただけます。`
     }]);
   };
 
