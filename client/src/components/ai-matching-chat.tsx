@@ -26,33 +26,33 @@ import {
 
 // 希望業種の説明を追加
 const WORK_TYPES_WITH_DESCRIPTION = [
-  { 
-    id: "store-health", 
+  {
+    id: "store-health",
     label: "店舗型ヘルス",
     description: "お店に来店されたお客様へのサービスを提供。移動の必要がなく、安定した環境で働けます。"
   },
-  { 
-    id: "hotel-health", 
+  {
+    id: "hotel-health",
     label: "ホテルヘルス",
     description: "ホテルでのサービス提供。お店で受付後、近隣のホテルへ移動してのサービスとなります。"
   },
-  { 
-    id: "delivery-health", 
+  {
+    id: "delivery-health",
     label: "デリバリーヘルス",
     description: "お客様のいるホテルや自宅へ直接訪問してサービスを提供。幅広いエリアでの勤務が可能です。"
   },
-  { 
-    id: "esthe", 
+  {
+    id: "esthe",
     label: "風俗エステ",
     description: "マッサージや施術を中心としたサービス。ソフトなサービス内容で、未経験の方も始めやすいです。"
   },
-  { 
-    id: "mseikan", 
+  {
+    id: "mseikan",
     label: "M性感",
     description: "男性受け身型のサービス。特殊な技術が必要ですが、研修制度も充実しています。"
   },
-  { 
-    id: "onakura", 
+  {
+    id: "onakura",
     label: "オナクラ",
     description: "最もソフトなサービス内容。接客時間も短く、手だけのサービスで未経験の方に人気です。"
   }
@@ -461,34 +461,6 @@ export const AIMatchingChat = () => {
     );
   };
 
-  const renderProfileSection = () => {
-    if (!profileData) return null;
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">ウェブ履歴書の情報</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>お名前</Label>
-            <p className="text-sm">{profileData?.lastName} {profileData?.firstName}</p>
-          </div>
-          <div>
-            <Label>年齢</Label>
-            <p className="text-sm">{profileData?.age}歳</p>
-          </div>
-          <div>
-            <Label>居住地</Label>
-            <p className="text-sm">{profileData?.location}</p>
-          </div>
-          <div>
-            <Label>最寄り駅</Label>
-            <p className="text-sm">{profileData?.nearestStation}</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -637,7 +609,7 @@ export const AIMatchingChat = () => {
                         })}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="spacey-2">
                       <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
                         勤務終了日
                       </Label>
@@ -873,8 +845,8 @@ export const AIMatchingChat = () => {
                     className="w-full mt-6"
                     onClick={handleConditionSubmit}
                     disabled={
-                      conditions.workTypes.length === 0 || 
-                      !conditions.workPeriodStart || 
+                      conditions.workTypes.length === 0 ||
+                      !conditions.workPeriodStart ||
                       !conditions.workPeriodEnd
                     }
                   >
@@ -1085,7 +1057,7 @@ export const AIMatchingChat = () => {
                     <p className="text-sm">{profileData?.nearestStation}</p>
                   </div>
 
-                  {/* スリーサイズ情報 */}
+                  {/* 身体的特徴 */}
                   <div>
                     <Label>身長</Label>
                     <p className="text-sm">{profileData?.height}cm</p>
@@ -1100,7 +1072,7 @@ export const AIMatchingChat = () => {
                   </div>
                   <div>
                     <Label>カップサイズ</Label>
-                    <p className="text-sm">{profileData?.cupSize}</p>
+                    <p className="text-sm">{profileData?.cupSize}カップ</p>
                   </div>
 
                   {/* 身分証明書 */}
@@ -1108,8 +1080,11 @@ export const AIMatchingChat = () => {
                     <Label>身分証明書</Label>
                     <p className="text-sm">
                       {profileData?.availableIds?.types?.join('、')}
-                      {profileData?.availableIds?.others?.length > 0 && 
+                      {profileData?.availableIds?.others?.length > 0 &&
                         `、${profileData.availableIds.others.join('、')}`}
+                    </p>
+                    <p className="text-sm mt-1">
+                      本籍地記載の住民票: {profileData?.canProvideResidenceRecord ? '提供可能' : '提供不可'}
                     </p>
                   </div>
 
@@ -1120,16 +1095,20 @@ export const AIMatchingChat = () => {
                   </div>
                   <div>
                     <Label>写メ日記</Label>
-                    <p className="text-sm">{profileData?.canPhotoDiary ? '対応可能' : '対応不可'}</p>
+                    <p className="text-sm">{profileData?.canPhotoDiary ? '投稿可能' : '投稿不可'}</p>
+                  </div>
+                  <div>
+                    <Label>自宅派遣</Label>
+                    <p className="text-sm">{profileData?.canHomeDelivery ? '対応可能' : '対応不可'}</p>
                   </div>
 
                   {/* NGオプション */}
-                  {profileData?.ngOptions && (
+                  {profileData?.ngOptions && (profileData.ngOptions.common.length > 0 || profileData.ngOptions.others.length > 0) && (
                     <div className="col-span-2">
                       <Label>NGオプション</Label>
                       <p className="text-sm">
                         {profileData.ngOptions.common?.join('、')}
-                        {profileData.ngOptions.others?.length > 0 && 
+                        {profileData.ngOptions.others?.length > 0 &&
                           `、${profileData.ngOptions.others.join('、')}`}
                       </p>
                     </div>
@@ -1141,7 +1120,7 @@ export const AIMatchingChat = () => {
                       <Label>アレルギー</Label>
                       <p className="text-sm">
                         {profileData.allergies.types?.join('、')}
-                        {profileData.allergies.others?.length > 0 && 
+                        {profileData.allergies.others?.length > 0 &&
                           `、${profileData.allergies.others.join('、')}`}
                       </p>
                     </div>
@@ -1153,9 +1132,21 @@ export const AIMatchingChat = () => {
                       <Label>喫煙</Label>
                       <p className="text-sm">
                         {profileData.smoking.types?.join('、')}
-                        {profileData.smoking.others?.length > 0 && 
+                        {profileData.smoking.others?.length > 0 &&
                           `、${profileData.smoking.others.join('、')}`}
                       </p>
+                    </div>
+                  )}
+
+                  {/* SNSアカウント */}
+                  {profileData?.hasSnsAccount && profileData?.snsUrls && profileData.snsUrls.length > 0 && (
+                    <div className="col-span-2">
+                      <Label>SNSアカウント</Label>
+                      <div className="text-sm space-y-1">
+                        {profileData.snsUrls.map((url, index) => (
+                          <p key={index}>{url}</p>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -1181,6 +1172,29 @@ export const AIMatchingChat = () => {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {/* 在籍店舗情報 */}
+                  {profileData?.currentStores && profileData.currentStores.length > 0 && (
+                    <div className="col-span-2">
+                      <Label>現在の在籍店舗</Label>
+                      <div className="text-sm space-y-1">
+                        {profileData.currentStores.map((store, index) => (
+                          <p key={index}>{store.storeName}（{store.stageName}）</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profileData?.previousStores && profileData.previousStores.length > 0 && (
+                    <div className="col-span-2">
+                      <Label>過去の在籍店舗</Label>
+                      <div className="text-sm space-y-1">
+                        {profileData.previousStores.map((store, index) => (
+                          <p key={index}>{store.storeName}</p>
+                        ))}
+                      </div>
+                    </div>
                   )}
 
                   {/* 自己PR */}
