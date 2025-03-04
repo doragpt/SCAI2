@@ -240,12 +240,45 @@ export const AIMatchingChat = () => {
         return;
       }
 
+      if (selectedType === '出稼ぎ' && (!conditions.workPeriodStart || !conditions.workPeriodEnd)) {
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: '出稼ぎの場合は勤務期間（開始日・終了日）を入力してください。'
+        }]);
+        return;
+      }
+
       if (selectedType === '在籍' && conditions.preferredLocations.length === 0) {
         setMessages(prev => [...prev, {
           type: 'ai',
           content: '在籍の場合は希望地域を1つ以上選択してください。'
         }]);
         return;
+      }
+
+      // 日付のバリデーション
+      if (selectedType === '出稼ぎ') {
+        const startDate = new Date(conditions.workPeriodStart!);
+        const endDate = new Date(conditions.workPeriodEnd!);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        if (startDate < tomorrow) {
+          setMessages(prev => [...prev, {
+            type: 'ai',
+            content: '勤務開始日は明日以降の日付を選択してください。'
+          }]);
+          return;
+        }
+
+        if (endDate <= startDate) {
+          setMessages(prev => [...prev, {
+            type: 'ai',
+            content: '勤務終了日は開始日より後の日付を選択してください。'
+          }]);
+          return;
+        }
       }
 
       setMessages(prev => [...prev, {
@@ -591,9 +624,13 @@ export const AIMatchingChat = () => {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>勤務開始日</Label>
+                      <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                        勤務開始日
+                      </Label>
                       <Input
                         type="date"
+                        required
+                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                         onChange={(e) => setConditions({
                           ...conditions,
                           workPeriodStart: e.target.value
@@ -601,9 +638,13 @@ export const AIMatchingChat = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>勤務終了日</Label>
+                      <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                        勤務終了日
+                      </Label>
                       <Input
                         type="date"
+                        required
+                        min={conditions.workPeriodStart || new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                         onChange={(e) => setConditions({
                           ...conditions,
                           workPeriodEnd: e.target.value
