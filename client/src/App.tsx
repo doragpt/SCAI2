@@ -20,6 +20,7 @@ import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useState, useEffect } from "react";
 import ProfileViewPage from "@/pages/profile-view-page";
 import { ConnectionTest } from "@/components/connection-test";
+import AIMatchingPage from "@/pages/talent/ai-matching";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/talent/mypage/applications" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
+      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
       <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
       <Route component={NotFound} />
     </Switch>
