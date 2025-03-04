@@ -166,6 +166,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Profile creation request received:', req.body);
 
+      // まず既存のプロフィールをチェック
+      const [existingProfile] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, req.user.id));
+
+      if (existingProfile) {
+        return res.status(303).json({
+          message: "プロフィールは既に作成されています",
+          profile: existingProfile,
+          redirect: "/talent/profile/edit"
+        });
+      }
+
       // リクエストデータを整形
       const requestData = {
         ...req.body,
@@ -178,73 +192,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // バリデーション
       const profileData = talentProfileSchema.parse(requestData);
 
-      const profile = await db.transaction(async (tx) => {
-        // 既存のプロフィールチェック
-        const [existingProfile] = await tx
-          .select()
-          .from(talentProfiles)
-          .where(eq(talentProfiles.userId, req.user.id));
+      // プロフィールの作成（JSONB型のカラムを明示的にキャスト）
+      const [newProfile] = await db
+        .insert(talentProfiles)
+        .values({
+          userId: req.user.id,
+          ...profileData,
+          availableIds: sql`${JSON.stringify(profileData.availableIds)}::jsonb`,
+          ngOptions: sql`${JSON.stringify(profileData.ngOptions)}::jsonb`,
+          allergies: sql`${JSON.stringify(profileData.allergies)}::jsonb`,
+          smoking: sql`${JSON.stringify(profileData.smoking)}::jsonb`,
+          snsUrls: sql`${JSON.stringify(profileData.snsUrls)}::jsonb`,
+          currentStores: sql`${JSON.stringify(profileData.currentStores)}::jsonb`,
+          previousStores: sql`${JSON.stringify(profileData.previousStores)}::jsonb`,
+          photoDiaryUrls: sql`${JSON.stringify(profileData.photoDiaryUrls)}::jsonb`,
+          estheOptions: sql`${JSON.stringify(profileData.estheOptions)}::jsonb`,
+          updatedAt: new Date(),
+        })
+        .returning();
 
-        if (existingProfile) {
-          throw new Error("プロフィールは既に作成されています");
-        }
-
-        // プロフィールの作成（JSONB型のカラムを明示的にキャスト）
-        const [newProfile] = await tx
-          .insert(talentProfiles)
-          .values({
-            userId: req.user.id,
-            lastName: profileData.lastName,
-            firstName: profileData.firstName,
-            lastNameKana: profileData.lastNameKana,
-            firstNameKana: profileData.firstNameKana,
-            location: profileData.location,
-            nearestStation: profileData.nearestStation,
-            availableIds: toJsonb(profileData.availableIds),
-            canProvideResidenceRecord: profileData.canProvideResidenceRecord,
-            height: profileData.height,
-            weight: profileData.weight,
-            cupSize: profileData.cupSize,
-            bust: profileData.bust,
-            waist: profileData.waist,
-            hip: profileData.hip,
-            faceVisibility: profileData.faceVisibility,
-            canPhotoDiary: profileData.canPhotoDiary,
-            canHomeDelivery: profileData.canHomeDelivery,
-            ngOptions: toJsonb(profileData.ngOptions),
-            allergies: toJsonb(profileData.allergies),
-            smoking: toJsonb(profileData.smoking),
-            hasSnsAccount: profileData.hasSnsAccount,
-            snsUrls: toJsonb(profileData.snsUrls),
-            currentStores: toJsonb(profileData.currentStores),
-            previousStores: toJsonb(profileData.previousStores),
-            photoDiaryUrls: toJsonb(profileData.photoDiaryUrls),
-            selfIntroduction: profileData.selfIntroduction,
-            notes: profileData.notes,
-            estheOptions: toJsonb(profileData.estheOptions),
-            hasEstheExperience: profileData.hasEstheExperience,
-            estheExperiencePeriod: profileData.estheExperiencePeriod,
-            updatedAt: new Date(),
-          })
-          .returning();
-
-        if (!newProfile) {
-          throw new Error("プロフィールの作成に失敗しました");
-        }
-
-        return newProfile;
-      });
-
-      console.log('Profile created successfully:', { userId: req.user.id, profileId: profile.id });
-      res.status(201).json(profile);
+      console.log('Profile created successfully:', { userId: req.user.id, profileId: newProfile.id });
+      res.status(201).json(newProfile);
     } catch (error) {
       console.error('Profile creation error:', error);
       if (error instanceof Error) {
         res.status(400).json({
+          error: true,
           message: error.message
         });
       } else {
         res.status(500).json({
+          error: true,
           message: "プロフィールの作成に失敗しました"
         });
       }
