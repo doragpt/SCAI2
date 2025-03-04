@@ -141,6 +141,11 @@ interface MatchingResult {
     title: string;
     description: string;
   }[];
+  serviceType?: string;
+  rate?: {
+    time: number;
+    amount: number;
+  };
 }
 
 interface WorkingConditions {
@@ -375,8 +380,7 @@ export const AIMatchingChat = () => {
         content: 'ピックアップしてから確認する'
       }, {
         type: 'ai',
-        content: `ピックアップマッチングを開始します！
-
+        content: `ピックアップマッチングを開始します！\n
 あなたの希望条件に合う店舗を探して、以下の手順で進めていきます：
 
 1. AIがあなたの条件に合う店舗をリストアップ
@@ -395,18 +399,50 @@ export const AIMatchingChat = () => {
           name: `店舗${i + 1}`,
           location: '東京都',
           rating: 4.5,
-          matches: ['希望時給', '勤務時間帯', '業態']
+          matches: ['店舗設定の単価 60分15,000円', '営業時間 12:00～翌5:00', '業種/デリバリーヘルス'],
+          description: '当店は20代の若い女性が活躍中の人気店です。未経験の方も経験者の方も大歓迎！',
+          workingHours: '12:00～翌5:00（応相談）',
+          requirements: [
+            '18歳以上（高校生不可）',
+            '未経験者歓迎',
+            '経験者優遇'
+          ],
+          benefits: [
+            '日払い可能',
+            '寮完備',
+            '送迎あり',
+            '衣装貸与',
+            '託児所完備'
+          ],
+          workEnvironment: '20代の女性スタッフが多く、アットホームな雰囲気です。\nスタッフ同士の交流も活発で、楽しく働ける環境です。',
+          matchingPoints: [
+            {
+              title: '希望給与にマッチ',
+              description: 'あなたの希望する時給と近い設定です。'
+            },
+            {
+              title: '希望エリアで働ける',
+              description: '希望されているエリアでの勤務が可能です。'
+            },
+            {
+              title: '未経験でも安心',
+              description: '研修制度が充実しており、未経験の方でも安心してスタートできます。'
+            }
+          ],
+          serviceType: 'デリバリーヘルス',
+          rate: {
+            time: 60,
+            amount: 15000
+          }
         }));
 
         setMatchingResults(mockResults);
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: `条件に合う店舗が${mockResults.length}件見つかりました！
-
+          content: `条件に合う店舗が${mockResults.length}件見つかりました！\n
 まずは条件マッチ度の高い順に10件をご紹介します。
 各店舗の詳細を確認して、気になる店舗を選んでください。
-すべての店舗を確認したい場合は「次の10件を見る」ボタンで表示できます。
-
+すべての店舗を確認したい場合は「次の10件を見る」ボタンで表示できます。\n
 気になる店舗が見つかりましたら「詳細を見る」ボタンから店舗の詳細情報を確認できます。`
         }]);
       }, 2000);
@@ -795,8 +831,7 @@ export const AIMatchingChat = () => {
                     <div className="space-y-2">
                       <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
                         帰宅地
-                      </Label>
-                      <Select
+                      </Label>                      <Select
                         onValueChange={(value) => setConditions({
                           ...conditions,
                           returnLocation: value
@@ -815,7 +850,6 @@ export const AIMatchingChat = () => {
                       </Select>
                     </div>
                   </div>
-
 
                   <div className="space-y-2">
                     <Label>希望地域</Label>

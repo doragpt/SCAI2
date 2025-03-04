@@ -30,6 +30,11 @@ interface StoreDetailModalProps {
       title: string;
       description: string;
     }[];
+    serviceType?: string;
+    rate?: {
+      time: number;
+      amount: number;
+    };
   };
 }
 
@@ -38,6 +43,20 @@ export function StoreDetailModal({
   onClose,
   store,
 }: StoreDetailModalProps) {
+  // マッチング項目の表示を整形する関数
+  const formatMatchLabel = (match: string) => {
+    switch (match) {
+      case '希望時給':
+        return `店舗設定の単価 ${store.rate ? `${store.rate.time}分${store.rate.amount.toLocaleString()}円` : '要相談'}`;
+      case '勤務時間帯':
+        return `営業時間 ${store.workingHours || '要相談'}`;
+      case '業態':
+        return `業種/${store.serviceType || '要確認'}`;
+      default:
+        return match;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -75,7 +94,7 @@ export function StoreDetailModal({
                       key={index}
                       className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
                     >
-                      {match}
+                      {formatMatchLabel(match)}
                     </span>
                   ))}
                 </div>
@@ -90,12 +109,12 @@ export function StoreDetailModal({
               </div>
             )}
 
-            {/* 勤務時間 */}
+            {/* 営業時間 */}
             {store.workingHours && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
-                  <h3 className="font-medium">勤務時間</h3>
+                  <h3 className="font-medium">営業時間</h3>
                 </div>
                 <p className="text-sm">{store.workingHours}</p>
               </div>
