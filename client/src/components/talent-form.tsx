@@ -45,6 +45,8 @@ import { cleanEmptyArrays } from "@/utils/cleanData";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import { useState as useState2 } from "react";
 import { useLocation } from "wouter";
+import { Dialog } from "@/components/ui/dialog";
+
 
 // FormField wrapper component for consistent styling
 const FormField: React.FC<{
@@ -124,6 +126,8 @@ export const TalentForm: React.FC<TalentFormProps> = ({
   >(null);
   const [, setLocation] = useLocation();
   const [formProgress, setFormProgress] = useState(0);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [newPhotoUrl, setNewPhotoUrl] = useState("");
 
   const defaultValues: TalentProfileData = {
     lastName: "",
@@ -300,13 +304,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
         .map((f) => f.label),
     });
 
-    return {
-      progress,
-      completedFields: completedFields.map((f) => f.name),
-      remainingFields: requiredFields
-        .filter((field) => !completedFields.find((cf) => cf.name === field.name))
-        .map((f) => f.label),
-    };
+    return progress;
   };
 
   const saveFormToLocalStorage = useCallback((data: TalentProfileData) => {
@@ -328,13 +326,33 @@ export const TalentForm: React.FC<TalentFormProps> = ({
   }, []);
 
   useEffect(() => {
-    const { progress, remainingFields } = calculateProgress(form.getValues());
+    const progress = calculateProgress(form.getValues());
     setFormProgress(progress);
     if (onProgressChange) {
       onProgressChange(progress);
     }
 
     // 未入力の必須項目がある場合、トースト通知を表示
+    const requiredFields = [
+      "lastName",
+      "firstName",
+      "lastNameKana",
+      "firstNameKana",
+      "location",
+      "nearestStation",
+      "availableIds",
+      "canProvideResidenceRecord",
+      "height",
+      "weight",
+      "cupSize",
+      "faceVisibility",
+    ];
+    const remainingFields = requiredFields.filter((field) => {
+      const value = form.getValues()[field];
+      if(field === "availableIds") return form.getValues().availableIds.types.length === 0
+      return value === undefined || value === null || value === "";
+    });
+
     if (remainingFields.length > 0 && form.formState.isDirty) {
       toast({
         title: "必須項目が未入力です",
@@ -410,7 +428,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
       };
 
       setFormDataToConfirm(processedData);
-      setIsConfirmationOpen(true);
+      setShowConfirmation(true);
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
@@ -422,7 +440,7 @@ export const TalentForm: React.FC<TalentFormProps> = ({
   };
 
   const handleModalClose = () => {
-    setIsConfirmationOpen(false);
+    setShowConfirmation(false);
     // フォームデータをlocalStorageに保存
     localStorage.setItem("talentFormData", JSON.stringify(formDataToConfirm));
   };
@@ -443,16 +461,20 @@ export const TalentForm: React.FC<TalentFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* 進捗バー */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label>入力進捗</Label>
-            <span className="text-sm text-muted-foreground">{formProgress}%</span>
+        <div className="fixed top-20 left-0 right-0 bg-white z-40 border-b">
+          <div className="container mx-auto px-4 py-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>入力進捗</Label>
+                <span className="text-sm text-muted-foreground">{formProgress}%</span>
+              </div>
+              <Progress value={formProgress} className="h-2" />
+            </div>
           </div>
-          <Progress value={formProgress} className="h-2" />
         </div>
 
-        {/* フォームの各セクションをdivで包む */}
-        <div className="space-y-6">
+        {/* メインコンテンツ - 進捗バーの高さ分余白を追加 */}
+        <div className="pt-16 space-y-6">
           {/* 1. 基本情報セクション */}
           <div>
             <h3 className="text-lg font-semibold">基本情報</h3>
@@ -1108,50 +1130,105 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             <FormField label="現在在籍中の店舗">
               <div className="space-y-4">
                 {form.watch("currentStores").map((store, index) => (
-                  <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                    <Input
-                      placeholder="店舗名"
-                      value={store.storeName}
-                      onChange={(e) => {
-                        const current = form.watch("currentStores");
-                        current[index].storeName = e.target.value;
-                        form.setValue("currentStores", [...current]);
-                      }}
-                    />
-                    <Input
-                      placeholder="源氏名"
-                      value={store.stageName}
-                      onChange={(e) => {
-                        const current = form.watch("currentStores");
-                        current[index].stageName = e.target.value;
-                        form.setValue("currentStores", [...current]);
-                      }}
-                    />
+                  <div key={index} className="flex items-center gap-2">
+                    <Input value={store} disabled />
                     <Button
                       type="button"
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         const current = form.watch("currentStores");
                         form.setValue("currentStores", current.filter((_, i) => i !== index));
                       }}
                     >
-                      削除
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const current = form.watch("currentStores");
-                    form.setValue("currentStores", [...current, { storeName: "", stageName: "" }]);
-                  }}
-                >
-                  店舗を追加
-                </Button>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="店舗名を入力"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const value = e.currentTarget.value.trim();
+                        if (value) {
+                          const current = form.watch("currentStores") || [];
+                          form.setValue("currentStores", [...current, value]);
+                          e.currentTarget.value = "";
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const input = document.querySelector('input[placeholder="店舗名を入力"]') as HTMLInputElement;
+                      const value = input?.value.trim();
+                      if (value) {
+                        const current = form.watch("currentStores") || [];
+                        form.setValue("currentStores", [...current, value]);
+                        input.value = "";
+                      }
+                    }}
+                  >
+                    URLを追加
+                  </Button>
+                </div>
               </div>
             </FormField>
+
+            {/* 写メ日記URL - 現在在籍中の店舗の直後に移動 */}
+            <div>
+              <h3 className="text-lg font-semibold">写メ日記URL</h3>
+              <div className="space-y-4">
+                {form.watch("photoDiaryUrls").map((url, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input value={url} disabled />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const current = form.watch("photoDiaryUrls");
+                        form.setValue("photoDiaryUrls", current.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="写メ日記のURLを入力"
+                    value={newPhotoUrl}
+                    onChange={(e) => setNewPhotoUrl(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (newPhotoUrl.trim()) {
+                          const current = form.watch("photoDiaryUrls") || [];
+                          form.setValue("photoDiaryUrls", [...current, newPhotoUrl.trim()]);
+                          setNewPhotoUrl("");
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (newPhotoUrl.trim()) {
+                        const current = form.watch("photoDiaryUrls") || [];
+                        form.setValue("photoDiaryUrls", [...current, newPhotoUrl.trim()]);
+                        setNewPhotoUrl("");
+                      }
+                    }}
+                  >
+                    URLを追加
+                  </Button>
+                </div>
+              </div>
+            </div>
 
             <FormField label="過去経験店舗">
               <div className="space-y-4">
@@ -1228,93 +1305,46 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             </FormField>
           </div>
 
-          {/* Modified Photo Diary URL Field */}
-          <div>
-            <h3 className="text-lg font-semibold">写メ日記URL</h3>
-            <FormField label="写メ日記が確認できる店舗URL">
-              <div className="flex flex-wrap gap-2">
-                {form.watch("photoDiaryUrls").map((url, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center">
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">
-                      {url}
-                    </a>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0"
-                      onClick={() => {
-                        const current = form.watch("photoDiaryUrls");
-                        form.setValue(
-                          "photoDiaryUrls",
-                          current.filter((_, i) => i !== index),
-                          { shouldValidate: true }
-                        );
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  placeholder="写メ日記が確認できる店舗のURLを入力"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const url = e.currentTarget.value.trim();
-                      if (url) {
-                        const current = form.watch("photoDiaryUrls") || [];
-                        form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                        e.currentTarget.value = "";
-                      }
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const input = document.querySelector('input[placeholder="写メ日記が確認できる店舗のURLを入力"]') as HTMLInputElement;
-                    const url = input?.value.trim();
-                    if (url) {
-                      const current = form.watch("photoDiaryUrls") || [];
-                      form.setValue("photoDiaryUrls", [...current, url], { shouldValidate: true });
-                      if (input) input.value = "";
-                    }
-                  }}
-                >
-                  追加
-                </Button>
-              </div>
-            </FormField>
-          </div>
 
           {/* 送信ボタンセクション */}
           <div className="flex justify-end space-x-4 mt-8">
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  送信中...
-                </>
-              ) : (
-                "プロフィールを保存"
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!form.formState.isDirty || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting && (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
               )}
+              確認する
             </Button>
           </div>
         </div>
       </form>
 
       {/* 確認モーダル */}
-      <ProfileConfirmationModal
-        open={isConfirmationOpen}
-        onOpenChange={setIsConfirmationOpen}
-        onConfirm={handleConfirm}
-        onClose={handleModalClose}
-        formData={formDataToConfirm}
-      />
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <Dialog.Overlay />
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>確認</Dialog.Title>
+            <Button variant="ghost" onClick={() => setShowConfirmation(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </Dialog.Header>
+          <Dialog.Description>
+            入力内容を確認してください。よろしければ「確認」ボタンを押してください。
+          </Dialog.Description>
+          <Dialog.Footer>
+            <Button variant="default" onClick={handleModalClose}>
+              キャンセル
+            </Button>
+            <Button type="submit" onClick={handleConfirm}>
+              確認
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </Form>
   );
 };
