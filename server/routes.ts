@@ -241,27 +241,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
         // 編集不可フィールドのリスト
-        const immutableFields = ['birthDate', 'createdAt'];
+        const immutableFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
 
-        // 既存のデータと新しいデータをマージ
+        // マージされたデータを準備
         const processedData = {
-          ...currentProfile.toObject(), // 既存のデータをベースに
-          ...updateData, // 新しいデータで上書き
-          // 編集不可フィールドは既存の値を維持
+          ...currentProfile,
+          ...updateData,
+          // 編集不可フィールドは必ず既存の値を維持
           ...immutableFields.reduce((acc, field) => ({
             ...acc,
-            [field]: currentProfile[field]
-          }), {}),
-          userId, // userIdは必ず設定
-          updatedAt: new Date(), // 更新日時は現在時刻
+            [field]: currentProfile[field as keyof typeof currentProfile]
+          }), {} as Partial<typeof currentProfile>),
+          userId,
+          updatedAt: new Date(),
           // 数値フィールドの特別処理
-          bust: updateData.bust === "" || updateData.bust === undefined 
-            ? currentProfile.bust // 未設定の場合は既存の値を維持
+          bust: updateData.bust === "" || updateData.bust === undefined
+            ? currentProfile.bust
             : Number(updateData.bust),
-          waist: updateData.waist === "" || updateData.waist === undefined 
+          waist: updateData.waist === "" || updateData.waist === undefined
             ? currentProfile.waist
             : Number(updateData.waist),
-          hip: updateData.hip === "" || updateData.hip === undefined 
+          hip: updateData.hip === "" || updateData.hip === undefined
             ? currentProfile.hip
             : Number(updateData.hip),
         };
@@ -277,14 +277,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'previousStores',
           'photoDiaryUrls',
           'estheOptions'
-        ];
+        ] as const;
 
         // 更新データの準備（JSONBフィールドの処理）
         const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
+          // undefinedの場合はスキップ（既存の値を維持）
           if (value === undefined) return acc;
 
           // JSONBフィールドの場合は型キャストを行う
-          if (jsonbFields.includes(key)) {
+          if (jsonbFields.includes(key as typeof jsonbFields[number])) {
             acc[key] = value !== null ? sql`${JSON.stringify(value)}::jsonb` : null;
           } else {
             acc[key] = value;
@@ -318,13 +319,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Profile update successful:', {
           userId,
           profileId: freshProfile.id,
-          updatedData: freshProfile,
           timestamp: new Date().toISOString()
         });
 
         return freshProfile;
       });
 
+      // 完全なプロフィールデータを返す
       res.json(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', {
@@ -339,6 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(status).json({
           error: true,
           message: error.message,
+          details: error.stack,
           timestamp: new Date().toISOString()
         });
       } else {
