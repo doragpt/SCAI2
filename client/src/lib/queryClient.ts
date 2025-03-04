@@ -198,7 +198,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
       refetchOnMount: true, // コンポーネントマウント時に再取得
       refetchOnReconnect: true, // 再接続時に再取得
-      retry: 1,
+      retry: 2, // エラー時のリトライ回数を2回に設定
       queryFn: getQueryFn({ on401: "throw" }),
     },
     mutations: {

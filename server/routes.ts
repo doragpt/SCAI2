@@ -352,6 +352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {
       if (err) return next(err);
