@@ -142,11 +142,30 @@ export async function updateUserProfile(data: {
       updateData: data
     });
 
+    // 既存のデータを取得
+    const existingUser = queryClient.getQueryData([QUERY_KEYS.USER]);
+    if (!existingUser) {
+      console.warn("No existing user data in cache");
+    }
+
     const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
     const updatedUser = await response.json();
 
+    // キャッシュの更新（既存のデータとマージ）
+    const mergedUser = {
+      ...existingUser,
+      ...updatedUser,
+    };
+
+    console.log("User update cache merge:", {
+      timestamp: new Date().toISOString(),
+      existingFields: existingUser ? Object.keys(existingUser) : [],
+      updatedFields: Object.keys(updatedUser),
+      mergedFields: Object.keys(mergedUser)
+    });
+
     // キャッシュの更新
-    queryClient.setQueryData([QUERY_KEYS.USER], updatedUser);
+    queryClient.setQueryData([QUERY_KEYS.USER], mergedUser);
 
     // キャッシュを無効化して再取得
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
@@ -155,7 +174,7 @@ export async function updateUserProfile(data: {
       exact: true
     });
 
-    return updatedUser;
+    return mergedUser;
   } catch (error) {
     console.error("User profile update failed:", {
       error,
