@@ -102,6 +102,8 @@ type WorkingConditions = {
   workTypes: string[];
 };
 
+type MatchingState = 'idle' | 'searching' | 'listing' | 'picked';
+
 export const AIMatchingChat = () => {
   const [messages, setMessages] = useState<Array<{ type: 'ai' | 'user', content: string }>>([
     {
@@ -119,6 +121,9 @@ export const AIMatchingChat = () => {
   const [showForm, setShowForm] = useState(false);
   const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
   const [showMatchingOptions, setShowMatchingOptions] = useState(false);
+  const [matchingState, setMatchingState] = useState<MatchingState>('idle');
+  const [matchingResults, setMatchingResults] = useState<Array<any>>([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const handleBack = () => {
     if (showForm) {
@@ -166,7 +171,7 @@ export const AIMatchingChat = () => {
       type: 'ai',
       content: `【入力内容確認】\n
 ${selectedType === '出稼ぎ' ? `
-◆ 希望業種：${conditions.workTypes.map(type => 
+◆ 希望業種：${conditions.workTypes.map(type =>
   WORK_TYPES.find(t => t.id === type)?.label
 ).join('、')}
 ◆ 勤務期間：${conditions.workPeriodStart ? `${conditions.workPeriodStart}～${conditions.workPeriodEnd}` : '未設定'}
@@ -179,10 +184,10 @@ ${selectedType === '出稼ぎ' ? `
 ◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}
 ◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : '未設定'}
 ◆ その他備考：${conditions.notes || '未設定'}` : `
-◆ 希望業種：${conditions.workTypes.map(type => 
+◆ 希望業種：${conditions.workTypes.map(type =>
   WORK_TYPES.find(t => t.id === type)?.label
 ).join('、')}
-◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date => 
+◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date =>
   new Date(date).toLocaleString('ja-JP', {
     year: 'numeric',
     month: '2-digit',
@@ -193,7 +198,6 @@ ${selectedType === '出稼ぎ' ? `
 ).join('\n') || '未設定'}
 ◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
 ◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}`}
-`
     }, {
       type: 'ai',
       content: '記入したものの情報に間違いはないか確認してね！\n間違いが無ければマッチングをはじめるよ！'
@@ -203,17 +207,115 @@ ${selectedType === '出稼ぎ' ? `
     setShowConfirmationButtons(true);
   };
 
-  // マッチング開始の処理
   const handleStartMatching = () => {
     setMessages(prev => [...prev, {
       type: 'user',
       content: 'マッチングを開始する'
     }, {
       type: 'ai',
-      content: '確認してくれてありがとう！\nAIがあなたに合いそうな店舗に自動で確認する？\nそれともAIがあなたに合いそうな店舗をピックアップしてから確認する？'
+      content: '確認してくれてありがとう！\n\nマッチングの方法を2つご用意しています：\n\n1️⃣ 自動で確認\n● AIが条件に合う店舗に直接連絡\n● できるだけ早く働きたい方におすすめ\n● 面接や採用までの時間を短縮できます\n\n2️⃣ ピックアップしてから確認\n● AIが条件に合う店舗を一覧で表示\n● じっくり店舗を選びたい方におすすめ\n● 気になる店舗を選んでから連絡できます\n\nどちらの方法でマッチングを進めますか？'
     }]);
     setShowConfirmationButtons(false);
     setShowMatchingOptions(true);
+  };
+
+  const handleAutoMatching = () => {
+    setMessages(prev => [...prev, {
+      type: 'user',
+      content: '自動で確認する'
+    }, {
+      type: 'ai',
+      content: 'マッチングには時間がかかるから少しだけ時間をもらうね！\n\nAIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。返信があり次第お知らせしますので、少々お待ちください。'
+    }]);
+    setShowMatchingOptions(false);
+    setMatchingState('searching');
+
+    // 3秒後にマッチング中のメッセージを表示
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'マッチング中だよ...もう少し待っててね'
+      }]);
+    }, 3000);
+  };
+
+  const handlePickupMatching = () => {
+    setMessages(prev => [...prev, {
+      type: 'user',
+      content: 'ピックアップしてから確認する'
+    }, {
+      type: 'ai',
+      content: 'では合いそうな店舗をリストアップするね！'
+    }]);
+    setShowMatchingOptions(false);
+    setMatchingState('listing');
+
+    // 模擬的なマッチング処理（実際のAPIコールに置き換える）
+    setTimeout(() => {
+      // 仮のマッチング結果
+      const mockResults = Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
+        name: `店舗${i + 1}`,
+        location: '東京都',
+        rating: 4.5,
+        matches: ['希望時給', '勤務時間帯', '業態']
+      }));
+
+      setMatchingResults(mockResults);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: `お待たせ！あなたに合いそうな店舗は${mockResults.length}件程あったよ！\n\nまずは10件、リストアップするね！`
+      }]);
+    }, 2000);
+  };
+
+  const renderMatchingResults = () => {
+    if (matchingState !== 'listing' || matchingResults.length === 0) {
+      return null;
+    }
+
+    const currentResults = matchingResults.slice(currentPage * 10, (currentPage + 1) * 10);
+
+    return (
+      <div className="space-y-4">
+        {currentResults.map((result) => (
+          <Card key={result.id} className="p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-medium">{result.name}</h3>
+                <p className="text-sm text-muted-foreground">{result.location}</p>
+                <div className="flex gap-2 mt-2">
+                  {result.matches.map((match, i) => (
+                    <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      {match}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Button variant="outline" size="sm">
+                詳細を見る
+              </Button>
+            </div>
+          </Card>
+        ))}
+
+        {currentPage * 10 + 10 < matchingResults.length && (
+          <Button
+            className="w-full mt-4"
+            variant="outline"
+            onClick={() => {
+              setCurrentPage(prev => prev + 1);
+              setMessages(prev => [...prev, {
+                type: 'ai',
+                content: '次の10件を表示するね！'
+              }]);
+            }}
+          >
+            次の10件を見る
+          </Button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -664,36 +766,21 @@ ${selectedType === '出稼ぎ' ? `
         </div>
       )}
 
+      {/* マッチング結果表示 */}
+      {renderMatchingResults()}
+
       {/* マッチング方法選択 */}
       {showMatchingOptions && (
         <div className="flex gap-4 justify-center">
           <Button
-            onClick={() => {
-              setMessages(prev => [...prev, {
-                type: 'user',
-                content: '自動で確認する'
-              }, {
-                type: 'ai',
-                content: 'マッチングには時間がかかるから少しだけ時間をもらうね！'
-              }]);
-              setShowMatchingOptions(false);
-              // TODO: 自動マッチング処理の実装
-            }}
+            className="flex-1 max-w-[200px]"
+            onClick={handleAutoMatching}
           >
             自動で確認する
           </Button>
           <Button
-            onClick={() => {
-              setMessages(prev => [...prev, {
-                type: 'user',
-                content: 'ピックアップしてから確認する'
-              }, {
-                type: 'ai',
-                content: 'では合いそうな店舗をリストアップするね！'
-              }]);
-              setShowMatchingOptions(false);
-              // TODO: ピックアップマッチング処理の実装
-            }}
+            className="flex-1 max-w-[200px]"
+            onClick={handlePickupMatching}
           >
             ピックアップしてから確認する
           </Button>
