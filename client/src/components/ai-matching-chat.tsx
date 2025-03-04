@@ -1,342 +1,159 @@
-import { useState, useRef, useEffect } from "react";
+import { MatchingStatusDialog } from "@/components/matching-status-dialog";
+import { Bot, User } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Bot, User } from "lucide-react";
-import { workTypes, prefectures, type TalentProfile } from "@shared/schema";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Checkbox,
+  CheckboxGroup,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { StoreDetailModal } from "@/components/store-detail-modal";
+  Switch,
+  Label,
+  Input,
+} from "@/components/ui/forms";
+import { Loader2 } from "@/components/ui/loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { CheckIcon } from "@/components/icons/check";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { WORK_TYPES_WITH_DESCRIPTION } from "@/constants/work-types";
+import { GUARANTEE_OPTIONS } from "@/constants/guarantee-options";
+import { TIME_OPTIONS } from "@/constants/time-options";
+import { RATE_OPTIONS } from "@/constants/rate-options";
+import { prefectures } from "@/constants/prefectures";
+import { formatConditionsMessage } from "@/utils/format-conditions-message";
+import { useProfile } from "@/hooks/use-profile";
+import { useMatching } from "@/hooks/use-matching";
+import StoreDetailModal from "@/components/store-detail-modal";
+import ProfileCheckDialog from "@/components/profile-check-dialog";
+import { cn } from "@/utils/cn";
+import { MapPin, Star } from "@/components/icons";
 
-// 希望業種の説明を追加
-const WORK_TYPES_WITH_DESCRIPTION = [
-  {
-    id: "store-health",
-    label: "店舗型ヘルス",
-    description: "お店に来店されたお客様へのサービスを提供。移動の必要がなく、安定した環境で働けます。"
-  },
-  {
-    id: "hotel-health",
-    label: "ホテルヘルス",
-    description: "ホテルでのサービス提供。お店で受付後、近隣のホテルへ移動してのサービスとなります。"
-  },
-  {
-    id: "delivery-health",
-    label: "デリバリーヘルス",
-    description: "お客様のいるホテルや自宅へ直接訪問してサービスを提供。幅広いエリアでの勤務が可能です。"
-  },
-  {
-    id: "esthe",
-    label: "風俗エステ",
-    description: "マッサージや施術を中心としたサービス。ソフトなサービス内容で、未経験の方も始めやすいです。"
-  },
-  {
-    id: "mseikan",
-    label: "M性感",
-    description: "男性受け身型のサービス。特殊な技術が必要ですが、研修制度も充実しています。"
-  },
-  {
-    id: "onakura",
-    label: "オナクラ",
-    description: "最もソフトなサービス内容。接客時間も短く、手だけのサービスで未経験の方に人気です。"
-  }
-] as const;
 
-const GUARANTEE_OPTIONS = [
-  { value: "none", label: "希望無し" },
-  { value: "1", label: "保証1万" },
-  { value: "2", label: "保証2万" },
-  { value: "3", label: "保証3万" },
-  { value: "4", label: "保証4万" },
-  { value: "5", label: "保証5万" },
-  { value: "6", label: "保証6万" },
-  { value: "7", label: "保証7万" },
-  { value: "8", label: "保証8万" },
-  { value: "9", label: "保証9万" },
-  { value: "10", label: "保証10万以上" },
-] as const;
-
-const TIME_OPTIONS = [
-  { value: "none", label: "希望無し" },
-  { value: "30", label: "30分" },
-  { value: "40", label: "40分" },
-  { value: "50", label: "50分" },
-  { value: "60", label: "60分" },
-  { value: "70", label: "70分" },
-  { value: "80", label: "80分" },
-  { value: "90", label: "90分" },
-  { value: "100", label: "100分" },
-  { value: "110", label: "110分" },
-  { value: "120", label: "120分" },
-] as const;
-
-const RATE_OPTIONS = [
-  { value: "none", label: "希望無し" },
-  { value: "3000", label: "3,000円" },
-  { value: "4000", label: "4,000円" },
-  { value: "5000", label: "5,000円" },
-  { value: "6000", label: "6,000円" },
-  { value: "7000", label: "7,000円" },
-  { value: "8000", label: "8,000円" },
-  { value: "9000", label: "9,000円" },
-  { value: "10000", label: "10,000円" },
-  { value: "11000", label: "11,000円" },
-  { value: "12000", label: "12,000円" },
-  { value: "13000", label: "13,000円" },
-  { value: "14000", label: "14,000円" },
-  { value: "15000", label: "15,000円" },
-  { value: "16000", label: "16,000円" },
-  { value: "17000", label: "17,000円" },
-  { value: "18000", label: "18,000円" },
-  { value: "19000", label: "19,000円" },
-  { value: "20000", label: "20,000円" },
-  { value: "21000", label: "21,000円" },
-  { value: "22000", label: "22,000円" },
-  { value: "23000", label: "23,000円" },
-  { value: "24000", label: "24,000円" },
-  { value: "25000", label: "25,000円" },
-  { value: "26000", label: "26,000円" },
-  { value: "27000", label: "27,000円" },
-  { value: "28000", label: "28,000円" },
-  { value: "29000", label: "29,000円" },
-  { value: "30000", label: "30,000円以上" },
-] as const;
-
-type WorkTypeId = typeof WORK_TYPES_WITH_DESCRIPTION[number]['id'];
-
-interface Message {
-  type: 'ai' | 'user';
-  content: string;
-}
-
-interface MatchingResult {
+interface Store {
   id: number;
   name: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  responseTime?: string;
   location: string;
-  rating: number;
   matches: string[];
-  description?: string;
-  workingHours?: string;
-  requirements?: string[];
-  benefits?: string[];
-  workEnvironment?: string;
-  matchingPoints?: {
-    title: string;
-    description: string;
-  }[];
-  serviceType?: string;
-  rate?: {
-    time: number;
-    amount: number;
-  };
+  rating: number;
+  checked?: boolean;
 }
-
-interface WorkingConditions {
-  workPeriodStart?: string;
-  workPeriodEnd?: string;
-  canArrivePreviousDay?: boolean;
-  desiredGuarantee?: string;
-  desiredTime?: string;
-  desiredRate?: string;
-  waitingHours?: number;
-  departureLocation?: string;
-  returnLocation?: string;
-  preferredLocations: string[];
-  ngLocations: string[];
-  notes?: string;
-  interviewDates?: string[];
-  workTypes: WorkTypeId[];
-}
-
-type MatchingState = 'idle' | 'searching' | 'listing' | 'picked';
 
 export const AIMatchingChat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      type: 'ai',
-      content: 'SCAIマッチングへようこそ！\nここではあなたの希望にそって最適な提案をします。\nまずは出稼ぎをお探しか、在籍をお探しかをお聞かせください！'
-    }
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState([
+    { type: "ai", content: "SCAIマッチングを開始します！" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [conditions, setConditions] = useState<WorkingConditions>({
-    preferredLocations: [],
-    ngLocations: [],
-    workTypes: [],
-  });
   const [showForm, setShowForm] = useState(false);
-  const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
-  const [showMatchingOptions, setShowMatchingOptions] = useState(false);
-  const [matchingState, setMatchingState] = useState<MatchingState>('idle');
-  const [matchingResults, setMatchingResults] = useState<MatchingResult[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<MatchingResult | null>(null);
-  const [showStoreDetail, setShowStoreDetail] = useState(false);
-
-  // ウェブ履歴書データの取得
-  const { data: profileData } = useQuery<TalentProfile>({
-    queryKey: ["/api/talent/profile"],
+  const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
+  const [conditions, setConditions] = useState({
+    workTypes: [] as string[],
+    workPeriodStart: "",
+    workPeriodEnd: "",
+    canArrivePreviousDay: false,
+    desiredGuarantee: "",
+    desiredTime: "",
+    desiredRate: "",
+    waitingHours: undefined as number | undefined,
+    departureLocation: "",
+    returnLocation: "",
+    preferredLocations: [] as string[],
+    ngLocations: [] as string[],
+    notes: "",
+    interviewDates: [] as string[],
   });
-
-  const scrollToBottom = () => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showMatchingOptions, setShowMatchingOptions] = useState(true);
+  const [matchingState, setMatchingState] = useState<"searching" | "listing" | "done">("done");
+  const [showStoreDetail, setShowStoreDetail] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<any>(null);
+  const [workTypes, setWorkTypes] = useState(["出稼ぎ", "在籍"]);
+  const [showSummaryDialog, setShowSummaryDialog] = useState(false);
+  const [checkedStores, setCheckedStores] = useState<any[]>([]);
+  const [showProfileCheck, setShowProfileCheck] = useState(false);
+  const { profileData, updateProfile } = useProfile();
+  const { startMatching, matchingResults, setCurrentPage, currentPage } = useMatching();
+  const searchParams = useSearchParams();
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  const handleBack = () => {
-    if (showForm) {
-      setShowForm(false);
-      setSelectedType(null);
-      setConditions({
-        preferredLocations: [],
-        ngLocations: [],
-        workTypes: [],
-      });
-      setMessages([messages[0]]);
-    }
+  const handleWorkTypeSelect = (type: string) => {
+    setSelectedType(type);
+    setShowForm(true);
+    setShowMatchingOptions(false);
   };
 
-  const handleWorkTypeSelect = async (type: string) => {
-    try {
-      setIsLoading(true);
-      setSelectedType(type);
-
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: type === '出稼ぎ' ? '出稼ぎを希望します' : '在籍を希望します'
-      }]);
-
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: `${type}のお探しを希望ですね！\nそれではあなたの希望条件を教えてください！`
-        }]);
-        setIsLoading(false);
-        setShowForm(true);
-      }, 1000);
-    } catch (error) {
-      console.error('Error in handleWorkTypeSelect:', error);
-      setIsLoading(false);
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'すみません、エラーが発生しました。もう一度お試しください。'
-      }]);
-    }
+  const handleBack = () => {
+    setSelectedType(null);
+    setShowForm(false);
+    setShowMatchingOptions(true);
   };
 
   const handleConditionSubmit = () => {
-    try {
-      // バリデーションチェック
-      if (conditions.workTypes.length === 0) {
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: '希望業種を1つ以上選択してください。'
-        }]);
-        return;
-      }
-
-      if (selectedType === '出稼ぎ') {
-        if (!conditions.workPeriodStart || !conditions.workPeriodEnd) {
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            content: '出稼ぎの場合は勤務期間（開始日・終了日）を入力してください。'
-          }]);
-          return;
-        }
-
-        if (!conditions.departureLocation || !conditions.returnLocation) {
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            content: '出発地と帰宅地を入力してください。'
-          }]);
-          return;
-        }
-
-        // 日付のバリデーション
-        const startDate = new Date(conditions.workPeriodStart);
-        const endDate = new Date(conditions.workPeriodEnd);
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-
-        if (startDate < tomorrow) {
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            content: '勤務開始日は明日以降の日付を選択してください。'
-          }]);
-          return;
-        }
-
-        if (endDate <= startDate) {
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            content: '勤務終了日は開始日より後の日付を選択してください。'
-          }]);
-          return;
-        }
-      }
-
-      if (selectedType === '在籍' && conditions.preferredLocations.length === 0) {
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: '在籍の場合は希望地域を1つ以上選択してください。'
-        }]);
-        return;
-      }
-
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: '入力内容を確認する'
-      }]);
-
-      setShowConfirmDialog(true);
-    } catch (error) {
-      console.error('Error in handleConditionSubmit:', error);
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'すみません、エラーが発生しました。もう一度お試しください。'
-      }]);
-    }
+    setShowForm(false);
+    setShowConfirmDialog(true);
   };
 
   const handleStartMatching = () => {
-    try {
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: 'マッチングを開始する'
-      }]);
-      setShowConfirmationButtons(false);
-      setShowMatchingOptions(true);
-    } catch (error) {
-      console.error('Error in handleStartMatching:', error);
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'すみません、エラーが発生しました。もう一度お試しください。'
-      }]);
-    }
+    setIsLoading(true);
+    startMatching(conditions);
+    setIsLoading(false);
   };
+
+  const handleStoreCheck = (result: any) => {
+    setCheckedStores((prev) => {
+      const isChecked = prev.some((item) => item.id === result.id);
+      if (isChecked) {
+        return prev.filter((item) => item.id !== result.id);
+      } else {
+        return [...prev, result];
+      }
+    });
+  };
+
+  const handleShowStoreDetail = (store: any) => {
+    setSelectedStore(store);
+    setShowStoreDetail(true);
+  };
+
+  const handleRecheck = () => {
+    setShowSummaryDialog(false);
+  };
+
+  const handleConfirmSelection = () => {
+    setShowSummaryDialog(false);
+    // Handle store selection logic here
+  };
+
+  const [showMatchingStatus, setShowMatchingStatus] = useState(false);
+  const [matchingStores, setMatchingStores] = useState<Store[]>([]);
 
   const handleAutoMatching = () => {
     try {
@@ -358,12 +175,41 @@ export const AIMatchingChat = () => {
       setShowMatchingOptions(false);
       setMatchingState('searching');
 
+      // モックデータの生成
+      const mockStores: Store[] = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        name: `店舗${i + 1}`,
+        status: 'pending',
+        location: '東京都',
+        matches: ['条件1', '条件2'],
+        rating: Math.random()
+      }));
+      setMatchingStores(mockStores);
+
+      // 店舗の状態を徐々に更新するシミュレーション
       setTimeout(() => {
+        setMatchingStores(prev => prev.map(store =>
+          store.id === 1 ? {
+            ...store,
+            status: 'accepted',
+            responseTime: new Date().toLocaleString('ja-JP')
+          } : store
+        ));
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: 'ただいまマッチング処理を行っています...\n条件に合う店舗を見つけ次第、順次連絡を取らせていただきます。'
+          content: '店舗1から受け入れ可能との返信がありました！\n詳細は「マッチング状況を確認」から確認できます。'
         }]);
-      }, 3000);
+      }, 5000);
+
+      setTimeout(() => {
+        setMatchingStores(prev => prev.map(store =>
+          store.id === 2 ? {
+            ...store,
+            status: 'rejected',
+            responseTime: new Date().toLocaleString('ja-JP')
+          } : store
+        ));
+      }, 8000);
     } catch (error) {
       console.error('Error in handleAutoMatching:', error);
       setMessages(prev => [...prev, {
@@ -374,121 +220,19 @@ export const AIMatchingChat = () => {
   };
 
   const handlePickupMatching = () => {
-    try {
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: 'ピックアップしてから確認する'
-      }, {
-        type: 'ai',
-        content: `ピックアップマッチングを開始します！\n
-あなたの希望条件に合う店舗を探して、以下の手順で進めていきます：
-
-1. AIがあなたの条件に合う店舗をリストアップ
-2. おすすめ順に店舗を表示（条件マッチ度が高い順）
-3. 気になる店舗を選択
-4. 選択した店舗へ条件確認
-
-まずは条件に合う店舗を探していきますので、少々お待ちください。`
-      }]);
-      setShowMatchingOptions(false);
-      setMatchingState('listing');
-
-      setTimeout(() => {
-        const mockResults: MatchingResult[] = Array.from({ length: 25 }, (_, i) => ({
-          id: i + 1,
-          name: `店舗${i + 1}`,
-          location: '東京都',
-          rating: 4.5,
-          matches: ['店舗設定の単価 60分15,000円', '営業時間 12:00～翌5:00', '業種/デリバリーヘルス'],
-          description: '当店は20代の若い女性が活躍中の人気店です。未経験の方も経験者の方も大歓迎！',
-          workingHours: '12:00～翌5:00（応相談）',
-          requirements: [
-            '18歳以上（高校生不可）',
-            '未経験者歓迎',
-            '経験者優遇'
-          ],
-          benefits: [
-            '日払い可能',
-            '寮完備',
-            '送迎あり',
-            '衣装貸与',
-            '託児所完備'
-          ],
-          workEnvironment: '20代の女性スタッフが多く、アットホームな雰囲気です。\nスタッフ同士の交流も活発で、楽しく働ける環境です。',
-          matchingPoints: [
-            {
-              title: '希望給与にマッチ',
-              description: 'あなたの希望する時給と近い設定です。'
-            },
-            {
-              title: '希望エリアで働ける',
-              description: '希望されているエリアでの勤務が可能です。'
-            },
-            {
-              title: '未経験でも安心',
-              description: '研修制度が充実しており、未経験の方でも安心してスタートできます。'
-            }
-          ],
-          serviceType: 'デリバリーヘルス',
-          rate: {
-            time: 60,
-            amount: 15000
-          }
-        }));
-
-        setMatchingResults(mockResults);
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: `条件に合う店舗が${mockResults.length}件見つかりました！\n
-まずは条件マッチ度の高い順に10件をご紹介します。
-各店舗の詳細を確認して、気になる店舗を選んでください。
-すべての店舗を確認したい場合は「次の10件を見る」ボタンで表示できます。\n
-気になる店舗が見つかりましたら「詳細を見る」ボタンから店舗の詳細情報を確認できます。`
-        }]);
-      }, 2000);
-    } catch (error) {
-      console.error('Error in handlePickupMatching:', error);
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'すみません、エラーが発生しました。もう一度お試しください。'
-      }]);
-    }
+    setMatchingState('listing');
+    setShowMatchingOptions(false);
   };
 
-  const formatConditionsMessage = (conditions: WorkingConditions, selectedType: string | null): string => {
-    if (selectedType === '出稼ぎ') {
-      return `【入力内容確認】\n
-◆ 希望業種：${conditions.workTypes.map(type =>
-        WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label
-      ).join('、')}
-◆ 勤務期間：${conditions.workPeriodStart ? `${conditions.workPeriodStart}～${conditions.workPeriodEnd}` : '未設定'}
-◆ 前日入り：${conditions.canArrivePreviousDay ? '可能' : '不可'}
-◆ 希望保証：${conditions.desiredGuarantee === 'none' ? '希望無し' : GUARANTEE_OPTIONS.find(opt => opt.value === conditions.desiredGuarantee)?.label}
-◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
-◆ 待機時間：${conditions.waitingHours || '未設定'}時間
-◆ 出発地：${conditions.departureLocation || '未設定'}
-◆ 帰宅地：${conditions.returnLocation || '未設定'}
-◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '全国'}
-◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : 'NG無し'}
-◆ その他備考：${conditions.notes || '未設定'}`;
-    } else {
-      return `【入力内容確認】\n
-◆ 希望業種：${conditions.workTypes.map(type =>
-        WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label
-      ).join('、')}
-◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date =>
-        new Date(date).toLocaleString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      ).join('\n') || '未設定'}
-◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
-◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}`;
-    }
+  const handleProfileCheckConfirm = () => {
+    setShowProfileCheck(false);
+    setShowConfirmDialog(true);
   };
+
+  const handleShowSummary = () => {
+    setShowSummaryDialog(true);
+  };
+
 
   const renderMatchingResults = () => {
     if (matchingState !== 'listing' || matchingResults.length === 0) {
@@ -496,69 +240,131 @@ export const AIMatchingChat = () => {
     }
 
     const currentResults = matchingResults.slice(currentPage * 10, (currentPage + 1) * 10);
+    const checkedCount = matchingResults.filter(store => store.checked).length;
 
     return (
-      <div className="space-y-4">
-        {currentResults.map((result) => (
-          <Card key={result.id} className="p-4 hover:bg-accent/5 transition-colors">
-            <div className="flex justify-between items-start gap-4">
-              <div className="space-y-2 flex-1">
-                <div>
-                  <h4 className="font-medium">{result.name}</h4>
-                  <p className="text-sm text-muted-foreground">{result.location}</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium">おすすめの店舗一覧</h3>
+            <p className="text-sm text-muted-foreground">
+              条件マッチ度が高い順に表示しています
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium">選択中の店舗</p>
+            <p className="text-2xl font-bold text-primary">{checkedCount}件</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {currentResults.map((result) => (
+            <Card
+              key={result.id}
+              className={cn(
+                "p-4 transition-colors",
+                result.checked ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-accent/5"
+              )}
+            >
+              <div className="flex gap-4">
+                <div className="flex items-start pt-1">
+                  <Checkbox
+                    checked={result.checked || false}
+                    onCheckedChange={() => handleStoreCheck(result)}
+                    id={`store-${result.id}`}
+                    className="h-5 w-5"
+                  />
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {result.matches.map((match, i) => (
-                    <span
-                      key={i}
-                      className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <Label
+                      htmlFor={`store-${result.id}`}
+                      className="text-lg font-medium cursor-pointer hover:text-primary"
                     >
-                      {match}
-                    </span>
-                  ))}
+                      {result.name}
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">{result.location}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {result.matches.map((match, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full"
+                      >
+                        {match}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        マッチ度 {result.rating * 20}%
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => handleShowStoreDetail(result)}
+                    >
+                      詳細を見る
+                    </Button>
+                  </div>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                onClick={() => handleShowStoreDetail(result)}
-              >
-                詳細を見る
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
 
-        {currentPage * 10 + 10 < matchingResults.length && (
-          <Button
-            className="w-full mt-4"
-            variant="outline"
-            onClick={() => {
-              setCurrentPage(prev => prev + 1);
-              setMessages(prev => [...prev, {
-                type: 'ai',
-                content: '次の10件を表示するね！'
-              }]);
-            }}
-          >
-            次の10件を見る
-          </Button>
-        )}
+        <div className="flex flex-col gap-4">
+          {checkedCount > 0 && (
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">選択中の店舗: {checkedCount}件</h4>
+                  <p className="text-sm text-muted-foreground">
+                    条件確認を行う店舗を選択してください
+                  </p>
+                </div>
+                <Button
+                  className="shrink-0"
+                  onClick={handleShowSummary}
+                >
+                  選択した店舗で確認する
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {currentPage * 10 + 10 < matchingResults.length && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCurrentPage(prev => prev + 1);
+                setMessages(prev => [...prev, {
+                  type: 'ai',
+                  content: `次の10件の店舗を表示します！\n現在${checkedCount}件の店舗を選択中です。気になる店舗を見つけたら「詳細を見る」から詳しい情報を確認できます。`
+                }]);
+              }}
+            >
+              次の10件を見る（残り{matchingResults.length - ((currentPage + 1) * 10)}件）
+            </Button>
+          )}
+        </div>
       </div>
     );
   };
 
-  const handleShowStoreDetail = (store: MatchingResult) => {
-    setSelectedStore(store);
-    setShowStoreDetail(true);
-  };
-
-
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
-        <div className="container flex h-14 max-w-screen-2xl items-center">
+      <header className="bg-background p-4 border-b">
+        <div className="container max-w-screen-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
             <span className="font-semibold">SCAIマッチング</span>
@@ -572,22 +378,22 @@ export const AIMatchingChat = () => {
             <div
               key={index}
               className={`flex ${
-                message.type === 'ai' ? 'justify-start' : 'justify-end'
+                message.type === "ai" ? "justify-start" : "justify-end"
               }`}
             >
               <div
                 className={`flex items-start gap-2 max-w-[80%] ${
-                  message.type === 'ai' ? 'flex-row' : 'flex-row-reverse'
+                  message.type === "ai" ? "flex-row" : "flex-row-reverse"
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    message.type === 'ai'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                    message.type === "ai"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
                   }`}
                 >
-                  {message.type === 'ai' ? (
+                  {message.type === "ai" ? (
                     <Bot className="h-5 w-5" />
                   ) : (
                     <User className="h-5 w-5" />
@@ -595,9 +401,9 @@ export const AIMatchingChat = () => {
                 </div>
                 <div
                   className={`rounded-lg p-4 ${
-                    message.type === 'ai'
-                      ? 'bg-card text-card-foreground'
-                      : 'bg-primary text-primary-foreground'
+                    message.type === "ai"
+                      ? "bg-card text-card-foreground"
+                      : "bg-primary text-primary-foreground"
                   }`}
                 >
                   <p className="whitespace-pre-line">{message.content}</p>
@@ -622,7 +428,7 @@ export const AIMatchingChat = () => {
                     key={type}
                     onClick={() => handleWorkTypeSelect(type)}
                     className="min-w-[120px]"
-                    variant={type === '出稼ぎ' ? 'default' : 'secondary'}
+                    variant={type === "出稼ぎ" ? "default" : "secondary"}
                   >
                     {type}
                   </Button>
@@ -667,25 +473,29 @@ export const AIMatchingChat = () => {
                             if (checked) {
                               setConditions({
                                 ...conditions,
-                                workTypes: [...conditions.workTypes, type.id]
+                                workTypes: [...conditions.workTypes, type.id],
                               });
                             } else {
                               setConditions({
                                 ...conditions,
-                                workTypes: conditions.workTypes.filter(t => t !== type.id)
+                                workTypes: conditions.workTypes.filter(
+                                  (t) => t !== type.id
+                                ),
                               });
                             }
                           }}
                         />
                         <Label htmlFor={type.id}>{type.label}</Label>
                       </div>
-                      <p className="text-sm text-muted-foreground pl-6">{type.description}</p>
+                      <p className="text-sm text-muted-foreground pl-6">
+                        {type.description}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {selectedType === '出稼ぎ' ? (
+              {selectedType === "出稼ぎ" ? (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -695,11 +505,15 @@ export const AIMatchingChat = () => {
                       <Input
                         type="date"
                         required
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-                        onChange={(e) => setConditions({
-                          ...conditions,
-                          workPeriodStart: e.target.value
-                        })}
+                        min={new Date(Date.now() + 86400000)
+                          .toISOString()
+                          .split("T")[0]}
+                        onChange={(e) =>
+                          setConditions({
+                            ...conditions,
+                            workPeriodStart: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="spacey-2">
@@ -709,11 +523,18 @@ export const AIMatchingChat = () => {
                       <Input
                         type="date"
                         required
-                        min={conditions.workPeriodStart || new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-                        onChange={(e) => setConditions({
-                          ...conditions,
-                          workPeriodEnd: e.target.value
-                        })}
+                        min={
+                          conditions.workPeriodStart ||
+                          new Date(Date.now() + 86400000)
+                            .toISOString()
+                            .split("T")[0]
+                        }
+                        onChange={(e) =>
+                          setConditions({
+                            ...conditions,
+                            workPeriodEnd: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -721,10 +542,12 @@ export const AIMatchingChat = () => {
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="previous-day"
-                      onCheckedChange={(checked) => setConditions({
-                        ...conditions,
-                        canArrivePreviousDay: checked
-                      })}
+                      onCheckedChange={(checked) =>
+                        setConditions({
+                          ...conditions,
+                          canArrivePreviousDay: checked,
+                        })
+                      }
                     />
                     <Label htmlFor="previous-day">前日入りの可否</Label>
                   </div>
@@ -732,10 +555,12 @@ export const AIMatchingChat = () => {
                   <div className="space-y-2">
                     <Label>希望保証</Label>
                     <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        desiredGuarantee: value
-                      })}
+                      onValueChange={(value) =>
+                        setConditions({
+                          ...conditions,
+                          desiredGuarantee: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="希望保証を選択" />
@@ -754,10 +579,12 @@ export const AIMatchingChat = () => {
                     <Label>希望単価</Label>
                     <div className="grid grid-cols-2 gap-4">
                       <Select
-                        onValueChange={(value) => setConditions({
-                          ...conditions,
-                          desiredTime: value
-                        })}
+                        onValueChange={(value) =>
+                          setConditions({
+                            ...conditions,
+                            desiredTime: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="時間を選択" />
@@ -772,10 +599,12 @@ export const AIMatchingChat = () => {
                       </Select>
 
                       <Select
-                        onValueChange={(value) => setConditions({
-                          ...conditions,
-                          desiredRate: value
-                        })}
+                        onValueChange={(value) =>
+                          setConditions({
+                            ...conditions,
+                            desiredRate: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="金額を選択" />
@@ -796,10 +625,14 @@ export const AIMatchingChat = () => {
                     <Input
                       type="number"
                       placeholder="12時間以上が保証条件となる場合が多いです"
-                      onChange={(e) => setConditions({
-                        ...conditions,
-                        waitingHours: e.target.value ? Number(e.target.value) : undefined
-                      })}
+                      onChange={(e) =>
+                        setConditions({
+                          ...conditions,
+                          waitingHours: e.target.value
+                            ? Number(e.target.value)
+                            : undefined,
+                        })
+                      }
                     />
                   </div>
 
@@ -810,10 +643,12 @@ export const AIMatchingChat = () => {
                         出発地
                       </Label>
                       <Select
-                        onValueChange={(value) => setConditions({
-                          ...conditions,
-                          departureLocation: value
-                        })}
+                        onValueChange={(value) =>
+                          setConditions({
+                            ...conditions,
+                            departureLocation: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="都道府県を選択" />
@@ -831,11 +666,14 @@ export const AIMatchingChat = () => {
                     <div className="space-y-2">
                       <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
                         帰宅地
-                      </Label>                      <Select
-                        onValueChange={(value) => setConditions({
-                          ...conditions,
-                          returnLocation: value
-                        })}
+                      </Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setConditions({
+                            ...conditions,
+                            returnLocation: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="都道府県を選択" />
@@ -854,10 +692,15 @@ export const AIMatchingChat = () => {
                   <div className="space-y-2">
                     <Label>希望地域</Label>
                     <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        preferredLocations: [...conditions.preferredLocations, value]
-                      })}
+                      onValueChange={(value) =>
+                        setConditions({
+                          ...conditions,
+                          preferredLocations: [
+                            ...conditions.preferredLocations,
+                            value,
+                          ],
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="都道府県を選択（複数選択可）" />
@@ -877,10 +720,14 @@ export const AIMatchingChat = () => {
                             key={loc}
                             variant="secondary"
                             size="sm"
-                            onClick={() => setConditions({
-                              ...conditions,
-                              preferredLocations: conditions.preferredLocations.filter(l => l !== loc)
-                            })}
+                            onClick={() =>
+                              setConditions({
+                                ...conditions,
+                                preferredLocations: conditions.preferredLocations.filter(
+                                  (l) => l !== loc
+                                ),
+                              })
+                            }
                           >
                             {loc} ×
                           </Button>
@@ -892,10 +739,12 @@ export const AIMatchingChat = () => {
                   <div className="space-y-2">
                     <Label>NG地域</Label>
                     <Select
-                      onValueChange={(value) => setConditions({
-                        ...conditions,
-                        ngLocations: [...conditions.ngLocations, value]
-                      })}
+                      onValueChange={(value) =>
+                        setConditions({
+                          ...conditions,
+                          ngLocations: [...conditions.ngLocations, value],
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="都道府県を選択（複数選択可）" />
@@ -915,10 +764,14 @@ export const AIMatchingChat = () => {
                             key={loc}
                             variant="secondary"
                             size="sm"
-                            onClick={() => setConditions({
-                              ...conditions,
-                              ngLocations: conditions.ngLocations.filter(l => l !== loc)
-                            })}
+                            onClick={() =>
+                              setConditions({
+                                ...conditions,
+                                ngLocations: conditions.ngLocations.filter(
+                                  (l) => l !== loc
+                                ),
+                              })
+                            }
                           >
                             {loc} ×
                           </Button>
@@ -931,14 +784,17 @@ export const AIMatchingChat = () => {
                     <Label>その他備考</Label>
                     <Input
                       placeholder="その他の希望条件があればご記入ください"
-                      onChange={(e) => setConditions({
-                        ...conditions,
-                        notes: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setConditions({
+                          ...conditions,
+                          notes: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
-                  <Button                    className="w-full mt-6"
+                  <Button
+                    className="w-full mt-6"
                     onClick={handleConditionSubmit}
                     disabled={
                       conditions.workTypes.length === 0 ||
@@ -964,7 +820,7 @@ export const AIMatchingChat = () => {
                             dates[i] = e.target.value;
                             setConditions({
                               ...conditions,
-                              interviewDates: dates
+                              interviewDates: dates,
                             });
                           }}
                         />
@@ -975,10 +831,12 @@ export const AIMatchingChat = () => {
                       <Label>希望単価</Label>
                       <div className="grid grid-cols-2 gap-4">
                         <Select
-                          onValueChange={(value) => setConditions({
-                            ...conditions,
-                            desiredTime: value
-                          })}
+                          onValueChange={(value) =>
+                            setConditions({
+                              ...conditions,
+                              desiredTime: value,
+                            })
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="時間を選択" />
@@ -993,10 +851,12 @@ export const AIMatchingChat = () => {
                         </Select>
 
                         <Select
-                          onValueChange={(value) => setConditions({
-                            ...conditions,
-                            desiredRate: value
-                          })}
+                          onValueChange={(value) =>
+                            setConditions({
+                              ...conditions,
+                              desiredRate: value,
+                            })
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="金額を選択" />
@@ -1013,19 +873,24 @@ export const AIMatchingChat = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className={selectedType === '在籍' ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
+                      <Label className={selectedType === "在籍" ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
                         希望地域
                       </Label>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {selectedType === '在籍'
-                          ? '在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。'
-                          : '出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。'}
+                        {selectedType === "在籍"
+                          ? "在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。"
+                          : "出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。"}
                       </p>
                       <Select
-                        onValueChange={(value) => setConditions({
-                          ...conditions,
-                          preferredLocations: [...conditions.preferredLocations, value]
-                        })}
+                        onValueChange={(value) =>
+                          setConditions({
+                            ...conditions,
+                            preferredLocations: [
+                              ...conditions.preferredLocations,
+                              value,
+                            ],
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="都道府県を選択（複数選択可）" />
@@ -1045,10 +910,14 @@ export const AIMatchingChat = () => {
                               key={loc}
                               variant="secondary"
                               size="sm"
-                              onClick={() => setConditions({
-                                ...conditions,
-                                preferredLocations: conditions.preferredLocations.filter(l => l !== loc)
-                              })}
+                              onClick={() =>
+                                setConditions({
+                                  ...conditions,
+                                  preferredLocations: conditions.preferredLocations.filter(
+                                    (l) => l !== loc
+                                  ),
+                                })
+                              }
                             >
                               {loc} ×
                             </Button>
@@ -1060,7 +929,10 @@ export const AIMatchingChat = () => {
                     <Button
                       className="w-full mt-6"
                       onClick={handleConditionSubmit}
-                      disabled={conditions.workTypes.length === 0 || (selectedType === '在籍' && conditions.preferredLocations.length === 0)}
+                      disabled={
+                        conditions.workTypes.length === 0 ||
+                        (selectedType === "在籍" && conditions.preferredLocations.length === 0)
+                      }
                     >
                       入力内容を確認する
                     </Button>
@@ -1085,7 +957,7 @@ export const AIMatchingChat = () => {
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card 
+                  <Card
                     className="p-6 hover:bg-accent cursor-pointer transition-colors relative overflow-hidden group"
                     onClick={handleAutoMatching}
                   >
@@ -1120,7 +992,7 @@ export const AIMatchingChat = () => {
                     <div className="absolute bottom-0 left-0 h-1 w-full bg-primary/10 group-hover:bg-primary/20 transition-colors" />
                   </Card>
 
-                  <Card 
+                  <Card
                     className="p-6 hover:bg-accent cursor-pointer transition-colors relative overflow-hidden group"
                     onClick={handlePickupMatching}
                   >
@@ -1162,11 +1034,11 @@ export const AIMatchingChat = () => {
       )}
 
       {/* 自動マッチング中の表示画面を改善 */}
-      {matchingState === 'searching' && (
+      {matchingState === "searching" && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
             <div className="p-6">
-              <div className="flex flex-col items-center gap-6">
+              <div className="flex flex-col items-center gap-4">
                 <div className="relative">
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <div className="absolute inset-0 animate-pulse bg-primary/5 rounded-full" />
@@ -1185,6 +1057,12 @@ export const AIMatchingChat = () => {
                       <li>• 複数の店舗から返信がある場合もあり</li>
                     </ul>
                   </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowMatchingStatus(true)}
+                  >
+                    マッチング状況を確認
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1193,63 +1071,11 @@ export const AIMatchingChat = () => {
       )}
 
       {/* ピックアップマッチングの結果表示を改善 */}
-      {matchingState === 'listing' && matchingResults.length > 0 && (
+      {matchingState === "listing" && matchingResults.length > 0 && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
             <div className="p-6 space-y-6">
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium">おすすめの店舗一覧</h3>
-                <p className="text-sm text-muted-foreground">
-                  あなたの条件に合う店舗を条件マッチ度が高い順に表示しています。
-                  <br />
-                  気になる店舗は「詳細を見る」から詳しい情報を確認できます。
-                </p>
-              </div>
-              <div className="space-y-4">
-                {matchingResults
-                  .slice(currentPage * 10, (currentPage + 1) * 10)
-                  .map((result) => (
-                    <Card key={result.id} className="p-4 hover:bg-accent/5 transition-colors">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-2 flex-1">
-                          <div>
-                            <h4 className="font-medium">{result.name}</h4>
-                            <p className="text-sm text-muted-foreground">{result.location}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {result.matches.map((match, i) => (
-                              <span
-                                key={i}
-                                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
-                              >
-                                {match}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" className="shrink-0" onClick={() => handleShowStoreDetail(result)}>
-                          詳細を見る
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-
-                {currentPage * 10 + 10 < matchingResults.length && (
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => {
-                      setCurrentPage(prev => prev + 1);
-                      setMessages(prev => [...prev, {
-                        type: 'ai',
-                        content: '次の10件の店舗を表示します！\n気になる店舗を見つけたら「詳細を見る」から詳しい情報を確認できます。'
-                      }]);
-                    }}
-                  >
-                    次の10件を見る（残り{matchingResults.length - ((currentPage + 1) * 10)}件）
-                  </Button>
-                )}
-              </div>
+              {renderMatchingResults()}
             </div>
           </Card>
         </div>
@@ -1319,12 +1145,12 @@ export const AIMatchingChat = () => {
                   <div className="col-span-2">
                     <Label>身分証明書</Label>
                     <p className="text-sm">
-                      {profileData?.availableIds?.types?.join('、')}
+                      {profileData?.availableIds?.types?.join("、")}
                       {profileData?.availableIds?.others?.length > 0 &&
-                        `、${profileData.availableIds.others.join('、')}`}
+                        `、${profileData.availableIds.others.join("、")}`}
                     </p>
                     <p className="text-sm mt-1">
-                      本籍地記載の住民票: {profileData?.canProvideResidenceRecord ? '提供可能' : '提供不可'}
+                      本籍地記載の住民票: {profileData?.canProvideResidenceRecord ? "提供可能" : "提供不可"}
                     </p>
                   </div>
 
@@ -1335,11 +1161,11 @@ export const AIMatchingChat = () => {
                   </div>
                   <div>
                     <Label>写メ日記</Label>
-                    <p className="text-sm">{profileData?.canPhotoDiary ? '投稿可能' : '投稿不可'}</p>
+                    <p className="text-sm">{profileData?.canPhotoDiary ? "投稿可能" : "投稿不可"}</p>
                   </div>
                   <div>
                     <Label>自宅派遣</Label>
-                    <p className="text-sm">{profileData?.canHomeDelivery ? '対応可能' : '対応不可'}</p>
+                    <p className="text-sm">{profileData?.canHomeDelivery ? "対応可能" : "対応不可"}</p>
                   </div>
 
                   {/* NGオプション */}
@@ -1347,9 +1173,9 @@ export const AIMatchingChat = () => {
                     <div className="col-span-2">
                       <Label>NGオプション</Label>
                       <p className="text-sm">
-                        {profileData.ngOptions.common?.join('、')}
+                        {profileData.ngOptions.common?.join("、")}
                         {profileData.ngOptions.others?.length > 0 &&
-                          `、${profileData.ngOptions.others.join('、')}`}
+                          `、${profileData.ngOptions.others.join("、")}`}
                       </p>
                     </div>
                   )}
@@ -1359,9 +1185,9 @@ export const AIMatchingChat = () => {
                     <div className="col-span-2">
                       <Label>アレルギー</Label>
                       <p className="text-sm">
-                        {profileData.allergies.types?.join('、')}
+                        {profileData.allergies.types?.join("、")}
                         {profileData.allergies.others?.length > 0 &&
-                          `、${profileData.allergies.others.join('、')}`}
+                          `、${profileData.allergies.others.join("、")}`}
                       </p>
                     </div>
                   )}
@@ -1371,9 +1197,9 @@ export const AIMatchingChat = () => {
                     <div className="col-span-2">
                       <Label>喫煙</Label>
                       <p className="text-sm">
-                        {profileData.smoking.types?.join('、')}
+                        {profileData.smoking.types?.join("、")}
                         {profileData.smoking.others?.length > 0 &&
-                          `、${profileData.smoking.others.join('、')}`}
+                          `、${profileData.smoking.others.join("、")}`}
                       </p>
                     </div>
                   )}
@@ -1401,11 +1227,11 @@ export const AIMatchingChat = () => {
                         <div className="col-span-2">
                           <Label>対応可能なオプション</Label>
                           <p className="text-sm">
-                            {profileData.estheOptions.available?.join('、')}
+                            {profileData.estheOptions.available?.join("、")}
                             {profileData.estheOptions.ngOptions?.length > 0 && (
                               <>
                                 <br />
-                                <span className="text-destructive">NG: {profileData.estheOptions.ngOptions.join('、')}</span>
+                                <span className="text-destructive">NG: {profileData.estheOptions.ngOptions.join("、")}</span>
                               </>
                             )}
                           </p>
@@ -1492,6 +1318,73 @@ export const AIMatchingChat = () => {
           store={selectedStore}
         />
       )}
+      <AlertDialog open={showSummaryDialog} onOpenChange={setShowSummaryDialog}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckIcon className="h-5 w-5 text-primary" />
+              選択した店舗の確認
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-6">
+                <div>
+                  <p className="font-medium text-foreground">
+                    以下の店舗に条件確認を行います：
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    {checkedStores.map(store => (
+                      <div key={store.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <CheckIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-medium">{store.name}</p>
+                          <p className="text-sm text-muted-foreground">{store.location}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {store.matches.map((match, index) => (
+                              <span
+                                key={index}
+                                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
+                              >
+                                {match}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg space-y-2">
+                  <p className="font-medium">確認のプロセス：</p>
+                  <ol className="text-sm space-y-2 list-decimal list-inside">
+                    <li>選択した店舗に条件確認の連絡を送信</li>
+                    <li>店舗からの返信を待機（通常24時間以内）</li>
+                    <li>返信があり次第、マッチング状況に反映</li>
+                    <li>受け入れ可能な店舗から詳細な条件を確認可能</li>
+                  </ol>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={() => setShowSummaryDialog(false)} className="border-none">
+              キャンセル
+            </AlertDialogCancel>
+            <Button variant="outline" onClick={handleRecheck}>
+              店舗を選びなおす
+            </Button>
+            <AlertDialogAction onClick={handleConfirmSelection}>
+              この内容で確認する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <ProfileCheckDialog
+        isOpen={showProfileCheck}
+        onClose={() => setShowProfileCheck(false)}
+        onConfirm={handleProfileCheckConfirm}
+        profileData={profileData}
+      />
     </div>
   );
 };
