@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Search, Heart, History, Menu } from "lucide-react";
+import { Search, Heart, History, Menu, Bot } from "lucide-react";
 
 interface FooterNavigationProps {
   onMenuClick?: () => void;
@@ -18,15 +18,15 @@ export function FooterNavigation({ onMenuClick }: FooterNavigationProps) {
             </Link>
           </Button>
           <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
-            <Link href="/talent/mypage/keep-list">
-              <Heart className="h-5 w-5 mb-1" />
-              <span className="text-xs">キープ</span>
+            <Link href="/talent/ai-matching">
+              <Bot className="h-5 w-5 mb-1" />
+              <span className="text-xs">AIマッチング</span>
             </Link>
           </Button>
           <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
-            <Link href="/talent/mypage/view-history">
-              <History className="h-5 w-5 mb-1" />
-              <span className="text-xs">閲覧履歴</span>
+            <Link href="/talent/mypage/keep-list">
+              <Heart className="h-5 w-5 mb-1" />
+              <span className="text-xs">キープ</span>
             </Link>
           </Button>
           <Button

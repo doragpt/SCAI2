@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, LogOut, Heart, History, MessageCircle, UserIcon, Search, Menu } from "lucide-react";
+import { Loader2, LogOut, Heart, History, MessageCircle, UserIcon, Search, Menu, Bot } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { MobileMenu } from "@/components/mobile-menu";
@@ -89,6 +89,14 @@ export default function TalentDashboard() {
             </Button>
 
             <Button asChild variant="ghost" className="w-full justify-start gap-2">
+              <Link href="/talent/ai-matching">
+                <Bot className="h-5 w-5" />
+                <span>AIマッチング</span>
+                <span className="ml-auto text-muted-foreground">→</span>
+              </Link>
+            </Button>
+
+            <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/mypage/applications">
                 <MessageCircle className="h-5 w-5" />
                 <span>応募履歴</span>
@@ -115,7 +123,7 @@ export default function TalentDashboard() {
         </div>
       </main>
 
-      {/* 固定フッターナビゲーション */}
+      {/* フッターナビゲーション */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
         <div className="container mx-auto">
           <div className="grid grid-cols-4 gap-1">
@@ -126,15 +134,15 @@ export default function TalentDashboard() {
               </Link>
             </Button>
             <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
-              <Link href="/talent/mypage/keep-list">
-                <Heart className="h-5 w-5 mb-1" />
-                <span className="text-xs">キープ</span>
+              <Link href="/talent/ai-matching">
+                <Bot className="h-5 w-5 mb-1" />
+                <span className="text-xs">AIマッチング</span>
               </Link>
             </Button>
             <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
-              <Link href="/talent/mypage/view-history">
-                <History className="h-5 w-5 mb-1" />
-                <span className="text-xs">閲覧履歴</span>
+              <Link href="/talent/mypage/keep-list">
+                <Heart className="h-5 w-5 mb-1" />
+                <span className="text-xs">キープ</span>
               </Link>
             </Button>
             <Button
