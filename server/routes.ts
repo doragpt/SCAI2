@@ -388,7 +388,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -417,8 +416,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // マージされたデータを準備
         const processedData = {
-          ...currentProfile,
-          ...updateData,
+          ...currentProfile,  // 既存のデータをベースに
+          ...updateData,      // 更新データを上書き
           // 編集不可フィールドは必ず既存の値を維持
           ...immutableFields.reduce((acc, field) => ({
             ...acc,
@@ -472,13 +471,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        return updated;
-      });
+        // 更新されたプロフィールを再取得して返す（完全なデータを確実に返す）
+        const [freshProfile] = await tx
+          .select()
+          .from(talentProfiles)
+          .where(eq(talentProfiles.userId, userId));
 
-      console.log('Profile update successful:', {
-        userId,
-        profileId: updatedProfile.id,
-        timestamp: new Date().toISOString()
+        console.log('Profile update successful:', {
+          userId,
+          profileId: freshProfile.id,
+          timestamp: new Date().toISOString()
+        });
+
+        return freshProfile;
       });
 
       // 完全なプロフィールデータを返す
@@ -508,6 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
 
   // ユーザー基本情報の更新エンドポイント
   app.patch("/api/user", authenticate, async (req: any, res) => {

@@ -105,6 +105,7 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
       updateData: data
     });
 
+    // APIリクエストを実行
     const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
     const updatedProfile = await response.json() as TalentProfileData;
 
