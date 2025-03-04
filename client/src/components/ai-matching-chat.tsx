@@ -240,26 +240,26 @@ export const AIMatchingChat = () => {
         return;
       }
 
-      if (selectedType === '出稼ぎ' && (!conditions.workPeriodStart || !conditions.workPeriodEnd)) {
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: '出稼ぎの場合は勤務期間（開始日・終了日）を入力してください。'
-        }]);
-        return;
-      }
-
-      if (selectedType === '在籍' && conditions.preferredLocations.length === 0) {
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: '在籍の場合は希望地域を1つ以上選択してください。'
-        }]);
-        return;
-      }
-
-      // 日付のバリデーション
       if (selectedType === '出稼ぎ') {
-        const startDate = new Date(conditions.workPeriodStart!);
-        const endDate = new Date(conditions.workPeriodEnd!);
+        if (!conditions.workPeriodStart || !conditions.workPeriodEnd) {
+          setMessages(prev => [...prev, {
+            type: 'ai',
+            content: '出稼ぎの場合は勤務期間（開始日・終了日）を入力してください。'
+          }]);
+          return;
+        }
+
+        if (!conditions.departureLocation || !conditions.returnLocation) {
+          setMessages(prev => [...prev, {
+            type: 'ai',
+            content: '出発地と帰宅地を入力してください。'
+          }]);
+          return;
+        }
+
+        // 日付のバリデーション
+        const startDate = new Date(conditions.workPeriodStart);
+        const endDate = new Date(conditions.workPeriodEnd);
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
@@ -281,12 +281,19 @@ export const AIMatchingChat = () => {
         }
       }
 
+      if (selectedType === '在籍' && conditions.preferredLocations.length === 0) {
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: '在籍の場合は希望地域を1つ以上選択してください。'
+        }]);
+        return;
+      }
+
       setMessages(prev => [...prev, {
         type: 'user',
         content: '入力内容を確認する'
       }]);
 
-      // 確認ダイアログを表示
       setShowConfirmDialog(true);
     } catch (error) {
       console.error('Error in handleConditionSubmit:', error);
@@ -321,7 +328,15 @@ export const AIMatchingChat = () => {
         content: '自動で確認する'
       }, {
         type: 'ai',
-        content: 'マッチングには時間がかかるから少しだけ時間をもらうね！\n\nAIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。返信があり次第お知らせしますので、少々お待ちください。'
+        content: `自動マッチングを開始します！
+あなたの希望条件に合う店舗を探して、以下の手順で進めていきます：
+
+1. AIがあなたの条件に最適な店舗を検索
+2. 条件に合う店舗へ自動で連絡
+3. 店舗からの返信を待機
+4. 受け入れ可能な店舗が見つかり次第ご連絡
+
+返信があるまでしばらくお待ちください。店舗への連絡は24時間以内に完了し、店舗からの返信があり次第すぐにお知らせいたします。`
       }]);
       setShowMatchingOptions(false);
       setMatchingState('searching');
@@ -329,7 +344,7 @@ export const AIMatchingChat = () => {
       setTimeout(() => {
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: 'マッチング中だよ...もう少し待っててね'
+          content: 'ただいまマッチング処理を行っています...\n条件に合う店舗を見つけ次第、順次連絡を取らせていただきます。'
         }]);
       }, 3000);
     } catch (error) {
@@ -348,7 +363,16 @@ export const AIMatchingChat = () => {
         content: 'ピックアップしてから確認する'
       }, {
         type: 'ai',
-        content: 'では合いそうな店舗をリストアップするね！\n\nあなたの条件に合う店舗を探して、おすすめ順に表示します。気になる店舗を選んでいただけるので、じっくりと検討できますよ。'
+        content: `ピックアップマッチングを開始します！
+
+あなたの希望条件に合う店舗を探して、以下の手順で進めていきます：
+
+1. AIがあなたの条件に合う店舗をリストアップ
+2. おすすめ順に店舗を表示（条件マッチ度が高い順）
+3. 気になる店舗を選択
+4. 選択した店舗へ条件確認
+
+まずは条件に合う店舗を探していきますので、少々お待ちください。`
       }]);
       setShowMatchingOptions(false);
       setMatchingState('listing');
@@ -365,7 +389,13 @@ export const AIMatchingChat = () => {
         setMatchingResults(mockResults);
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: `お待たせ！あなたに合いそうな店舗は${mockResults.length}件程あったよ！\n\nまずは10件、リストアップするね！`
+          content: `条件に合う店舗が${mockResults.length}件見つかりました！
+
+まずは条件マッチ度の高い順に10件をご紹介します。
+各店舗の詳細を確認して、気になる店舗を選んでください。
+すべての店舗を確認したい場合は「次の10件を見る」ボタンで表示できます。
+
+気になる店舗が見つかりましたら「詳細を見る」ボタンから店舗の詳細情報を確認できます。`
         }]);
       }, 2000);
     } catch (error) {
@@ -390,8 +420,8 @@ export const AIMatchingChat = () => {
 ◆ 待機時間：${conditions.waitingHours || '未設定'}時間
 ◆ 出発地：${conditions.departureLocation || '未設定'}
 ◆ 帰宅地：${conditions.returnLocation || '未設定'}
-◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}
-◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : '未設定'}
+◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '全国'}
+◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : 'NG無し'}
 ◆ その他備考：${conditions.notes || '未設定'}`;
     } else {
       return `【入力内容確認】\n
@@ -710,9 +740,12 @@ export const AIMatchingChat = () => {
                     />
                   </div>
 
+                  {/* Added Departure and Return Location Selects */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>出発地</Label>
+                      <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                        出発地
+                      </Label>
                       <Select
                         onValueChange={(value) => setConditions({
                           ...conditions,
@@ -733,7 +766,9 @@ export const AIMatchingChat = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>帰宅地</Label>
+                      <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                        帰宅地
+                      </Label>
                       <Select
                         onValueChange={(value) => setConditions({
                           ...conditions,
@@ -753,6 +788,7 @@ export const AIMatchingChat = () => {
                       </Select>
                     </div>
                   </div>
+
 
                   <div className="space-y-2">
                     <Label>希望地域</Label>
@@ -841,13 +877,14 @@ export const AIMatchingChat = () => {
                     />
                   </div>
 
-                  <Button
-                    className="w-full mt-6"
+                  <Button                    className="w-full mt-6"
                     onClick={handleConditionSubmit}
                     disabled={
                       conditions.workTypes.length === 0 ||
                       !conditions.workPeriodStart ||
-                      !conditions.workPeriodEnd
+                      !conditions.workPeriodEnd ||
+                      !conditions.departureLocation ||
+                      !conditions.returnLocation
                     }
                   >
                     入力内容を確認する
@@ -979,37 +1016,82 @@ export const AIMatchingChat = () => {
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
             <div className="p-6">
-              <div className="flex flex-col gap-6">
+              <div className="space-y-6">
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-medium">マッチング方法の選択</h3>
                   <p className="text-sm text-muted-foreground">
-                    希望に合わせて最適なマッチング方法をお選びください
+                    あなたの希望に合った店舗を探す方法を選択してください
                   </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card 
-                    className="p-4 hover:bg-accent cursor-pointer transition-colors"
+                    className="p-6 hover:bg-accent cursor-pointer transition-colors relative overflow-hidden group"
                     onClick={handleAutoMatching}
                   >
-                    <div className="space-y-3">
-                      <h4 className="font-medium">自動でマッチング</h4>
-                      <p className="text-sm text-muted-foreground">
-                        AIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。
-                        返信があり次第お知らせしますので、お待ちいただく形となります。
-                      </p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-medium flex items-center gap-2">
+                          <Bot className="h-5 w-5 text-primary" />
+                          自動でマッチング
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          AIが自動で店舗とのマッチングを行います
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium">おすすめのケース</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• できるだけ早く働きたい</li>
+                          <li>• 希望条件が明確</li>
+                          <li>• 店舗選びを任せたい</li>
+                        </ul>
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium">処理の流れ</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>1. AIが条件に合う店舗を検索</li>
+                          <li>2. 店舗へ自動で連絡</li>
+                          <li>3. 返信を待機（最大24時間）</li>
+                          <li>4. 受け入れ可能な店舗から連絡</li>
+                        </ul>
+                      </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 h-1 w-full bg-primary/10 group-hover:bg-primary/20 transition-colors" />
                   </Card>
+
                   <Card 
-                    className="p-4 hover:bg-accent cursor-pointer transition-colors"
+                    className="p-6 hover:bg-accent cursor-pointer transition-colors relative overflow-hidden group"
                     onClick={handlePickupMatching}
                   >
-                    <div className="space-y-3">
-                      <h4 className="font-medium">ピックアップしてから確認する</h4>
-                      <p className="text-sm text-muted-foreground">
-                        AIがあなたの条件に合う店舗をリストアップします。
-                        気になる店舗を選んでいただき、その後で条件確認を行います。
-                      </p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-medium flex items-center gap-2">
+                          <User className="h-5 w-5 text-primary" />
+                          ピックアップしてから確認
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          条件に合う店舗から自分で選択できます
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium">おすすめのケース</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• じっくり店舗を選びたい</li>
+                          <li>• 複数の店舗を比較したい</li>
+                          <li>• 詳細な情報を確認したい</li>
+                        </ul>
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium">処理の流れ</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>1. AIが店舗をリストアップ</li>
+                          <li>2. マッチ度順に表示</li>
+                          <li>3. 気になる店舗を選択</li>
+                          <li>4. 店舗へ確認を実施</li>
+                        </ul>
+                      </div>
                     </div>
+                    <div className="absolute bottom-0 left-0 h-1 w-full bg-primary/10 group-hover:bg-primary/20 transition-colors" />
                   </Card>
                 </div>
               </div>
@@ -1018,20 +1100,30 @@ export const AIMatchingChat = () => {
         </div>
       )}
 
-      {/* 自動マッチング中の表示 */}
+      {/* 自動マッチング中の表示画面を改善 */}
       {matchingState === 'searching' && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
             <div className="p-6">
-              <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <div className="text-center">
-                  <h3 className="font-medium">マッチング中...</h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    あなたの条件に合う店舗を探しています。
-                    <br />
-                    店舗からの返信があり次第ご連絡いたします。
-                  </p>
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <div className="absolute inset-0 animate-pulse bg-primary/5 rounded-full" />
+                </div>
+                <div className="text-center space-y-4">
+                  <h3 className="text-lg font-medium">マッチング処理を実行中...</h3>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      AIがあなたの希望条件に合う店舗を探しています。
+                      <br />
+                      条件に合う店舗が見つかり次第、自動で連絡を取らせていただきます。
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• 店舗への連絡は24時間以内に完了</li>
+                      <li>• 返信があり次第すぐにお知らせ</li>
+                      <li>• 複数の店舗から返信がある場合もあり</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1039,39 +1131,42 @@ export const AIMatchingChat = () => {
         </div>
       )}
 
-      {/* ピックアップマッチングの結果表示 */}
+      {/* ピックアップマッチングの結果表示を改善 */}
       {matchingState === 'listing' && matchingResults.length > 0 && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-6">
               <div className="text-center space-y-2">
-                <h3 className="font-medium">おすすめの店舗</h3>
+                <h3 className="text-lg font-medium">おすすめの店舗一覧</h3>
                 <p className="text-sm text-muted-foreground">
-                  あなたの条件に合う店舗をピックアップしました。
-                  気になる店舗を選択してください。
+                  あなたの条件に合う店舗を条件マッチ度が高い順に表示しています。
+                  <br />
+                  気になる店舗は「詳細を見る」から詳しい情報を確認できます。
                 </p>
               </div>
               <div className="space-y-4">
                 {matchingResults
                   .slice(currentPage * 10, (currentPage + 1) * 10)
                   .map((result) => (
-                    <Card key={result.id} className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{result.name}</h3>
-                          <p className="text-sm text-muted-foreground">{result.location}</p>
-                          <div className="flex gap-2 mt-2">
+                    <Card key={result.id} className="p-4 hover:bg-accent/5 transition-colors">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div>
+                            <h4 className="font-medium">{result.name}</h4>
+                            <p className="text-sm text-muted-foreground">{result.location}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
                             {result.matches.map((match, i) => (
                               <span
                                 key={i}
-                                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+                                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
                               >
                                 {match}
                               </span>
                             ))}
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="shrink-0">
                           詳細を見る
                         </Button>
                       </div>
@@ -1080,17 +1175,17 @@ export const AIMatchingChat = () => {
 
                 {currentPage * 10 + 10 < matchingResults.length && (
                   <Button
-                    className="w-full mt-4"
+                    className="w-full"
                     variant="outline"
                     onClick={() => {
                       setCurrentPage(prev => prev + 1);
                       setMessages(prev => [...prev, {
                         type: 'ai',
-                        content: '次の10件を表示するね！'
+                        content: '次の10件の店舗を表示します！\n気になる店舗を見つけたら「詳細を見る」から詳しい情報を確認できます。'
                       }]);
                     }}
                   >
-                    次の10件を見る
+                    次の10件を見る（残り{matchingResults.length - ((currentPage + 1) * 10)}件）
                   </Button>
                 )}
               </div>
