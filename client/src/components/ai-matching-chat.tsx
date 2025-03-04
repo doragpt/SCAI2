@@ -28,7 +28,7 @@ const GUARANTEE_OPTIONS = [
   { value: "8", label: "保証8万" },
   { value: "9", label: "保証9万" },
   { value: "10", label: "保証10万以上" },
-];
+] as const;
 
 const TIME_OPTIONS = [
   { value: "none", label: "希望無し" },
@@ -42,7 +42,7 @@ const TIME_OPTIONS = [
   { value: "100", label: "100分" },
   { value: "110", label: "110分" },
   { value: "120", label: "120分" },
-];
+] as const;
 
 const RATE_OPTIONS = [
   { value: "none", label: "希望無し" },
@@ -74,7 +74,7 @@ const RATE_OPTIONS = [
   { value: "28000", label: "28,000円" },
   { value: "29000", label: "29,000円" },
   { value: "30000", label: "30,000円以上" },
-];
+] as const;
 
 const WORK_TYPES = [
   { id: "store-health", label: "店舗型ヘルス" },
@@ -85,7 +85,23 @@ const WORK_TYPES = [
   { id: "onakura", label: "オナクラ" },
 ] as const;
 
-type WorkingConditions = {
+type WorkTypeId = typeof WORK_TYPES[number]['id'];
+
+// 型定義
+interface Message {
+  type: 'ai' | 'user';
+  content: string;
+}
+
+interface MatchingResult {
+  id: number;
+  name: string;
+  location: string;
+  rating: number;
+  matches: string[];
+}
+
+interface WorkingConditions {
   workPeriodStart?: string;
   workPeriodEnd?: string;
   canArrivePreviousDay?: boolean;
@@ -99,13 +115,13 @@ type WorkingConditions = {
   ngLocations: string[];
   notes?: string;
   interviewDates?: string[];
-  workTypes: string[];
-};
+  workTypes: WorkTypeId[];
+}
 
 type MatchingState = 'idle' | 'searching' | 'listing' | 'picked';
 
 export const AIMatchingChat = () => {
-  const [messages, setMessages] = useState<Array<{ type: 'ai' | 'user', content: string }>>([
+  const [messages, setMessages] = useState<Message[]>([
     {
       type: 'ai',
       content: 'SCAIマッチングへようこそ！\nここではあなたの希望にそって最適な提案をします。\nまずは出稼ぎをお探しか、在籍をお探しかをお聞かせください！'
@@ -122,7 +138,7 @@ export const AIMatchingChat = () => {
   const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
   const [showMatchingOptions, setShowMatchingOptions] = useState(false);
   const [matchingState, setMatchingState] = useState<MatchingState>('idle');
-  const [matchingResults, setMatchingResults] = useState<Array<any>>([]);
+  const [matchingResults, setMatchingResults] = useState<MatchingResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
 
   const handleBack = () => {
@@ -139,41 +155,160 @@ export const AIMatchingChat = () => {
   };
 
   const handleWorkTypeSelect = async (type: string) => {
-    setIsLoading(true);
-    setSelectedType(type);
+    try {
+      setIsLoading(true);
+      setSelectedType(type);
 
-    // ユーザーの選択を表示
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: type === '出稼ぎ' ? '出稼ぎを希望します' : '在籍を希望します'
-    }]);
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: type === '出稼ぎ' ? '出稼ぎを希望します' : '在籍を希望します'
+      }]);
 
-    // AIの応答を追加
-    setTimeout(() => {
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: `${type}のお探しを希望ですね！\nそれではあなたの希望条件を教えてください！`
+        }]);
+        setIsLoading(false);
+        setShowForm(true);
+      }, 1000);
+    } catch (error) {
+      console.error('Error in handleWorkTypeSelect:', error);
+      setIsLoading(false);
       setMessages(prev => [...prev, {
         type: 'ai',
-        content: `${type}のお探しを希望ですね！\nそれではあなたの希望条件を教えてください！`
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
       }]);
-      setIsLoading(false);
-      setShowForm(true);
-    }, 1000);
+    }
   };
 
   const handleConditionSubmit = () => {
-    // 入力内容の確認メッセージを表示
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: '入力内容を確認する'
-    }, {
-      type: 'ai',
-      content: '入力してくれてありがとう！\n今現在のあなたのプロフィールを確認するね！'
-    }, {
-      type: 'ai',
-      content: `【入力内容確認】\n
-${selectedType === '出稼ぎ' ? `
+    try {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: '入力内容を確認する'
+      }, {
+        type: 'ai',
+        content: '入力してくれてありがとう！\n今現在のあなたのプロフィールを確認するね！'
+      }, {
+        type: 'ai',
+        content: formatConditionsMessage(conditions, selectedType)
+      }, {
+        type: 'ai',
+        content: '記入したものの情報に間違いはないか確認してね！\n間違いが無ければマッチングをはじめるよ！'
+      }]);
+
+      setShowConfirmationButtons(true);
+    } catch (error) {
+      console.error('Error in handleConditionSubmit:', error);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
+      }]);
+    }
+  };
+
+  const handleStartMatching = () => {
+    try {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: 'マッチングを開始する'
+      }, {
+        type: 'ai',
+        content: `確認してくれてありがとう！\n
+マッチングの方法を2つご用意しています：\n
+1️⃣ 自動で確認
+● AIが条件に合う店舗に直接連絡
+● できるだけ早く働きたい方におすすめ
+● 面接や採用までの時間を短縮できます\n
+2️⃣ ピックアップしてから確認
+● AIが条件に合う店舗を一覧で表示
+● じっくり店舗を選びたい方におすすめ
+● 気になる店舗を選んでから連絡できます\n
+どちらの方法でマッチングを進めますか？`
+      }]);
+      setShowConfirmationButtons(false);
+      setShowMatchingOptions(true);
+    } catch (error) {
+      console.error('Error in handleStartMatching:', error);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
+      }]);
+    }
+  };
+
+  const handleAutoMatching = () => {
+    try {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: '自動で確認する'
+      }, {
+        type: 'ai',
+        content: 'マッチングには時間がかかるから少しだけ時間をもらうね！\n\nAIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。返信があり次第お知らせしますので、少々お待ちください。'
+      }]);
+      setShowMatchingOptions(false);
+      setMatchingState('searching');
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: 'マッチング中だよ...もう少し待っててね'
+        }]);
+      }, 3000);
+    } catch (error) {
+      console.error('Error in handleAutoMatching:', error);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
+      }]);
+    }
+  };
+
+  const handlePickupMatching = () => {
+    try {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: 'ピックアップしてから確認する'
+      }, {
+        type: 'ai',
+        content: 'では合いそうな店舗をリストアップするね！\n\nあなたの条件に合う店舗を探して、おすすめ順に表示します。気になる店舗を選んでいただけるので、じっくりと検討できますよ。'
+      }]);
+      setShowMatchingOptions(false);
+      setMatchingState('listing');
+
+      // 模擬的なマッチング処理
+      setTimeout(() => {
+        const mockResults: MatchingResult[] = Array.from({ length: 25 }, (_, i) => ({
+          id: i + 1,
+          name: `店舗${i + 1}`,
+          location: '東京都',
+          rating: 4.5,
+          matches: ['希望時給', '勤務時間帯', '業態']
+        }));
+
+        setMatchingResults(mockResults);
+        setMessages(prev => [...prev, {
+          type: 'ai',
+          content: `お待たせ！あなたに合いそうな店舗は${mockResults.length}件程あったよ！\n\nまずは10件、リストアップするね！`
+        }]);
+      }, 2000);
+    } catch (error) {
+      console.error('Error in handlePickupMatching:', error);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。'
+      }]);
+    }
+  };
+
+  // ヘルパー関数
+  const formatConditionsMessage = (conditions: WorkingConditions, selectedType: string | null): string => {
+    if (selectedType === '出稼ぎ') {
+      return `【入力内容確認】\n
 ◆ 希望業種：${conditions.workTypes.map(type =>
-  WORK_TYPES.find(t => t.id === type)?.label
-).join('、')}
+        WORK_TYPES.find(t => t.id === type)?.label
+      ).join('、')}
 ◆ 勤務期間：${conditions.workPeriodStart ? `${conditions.workPeriodStart}～${conditions.workPeriodEnd}` : '未設定'}
 ◆ 前日入り：${conditions.canArrivePreviousDay ? '可能' : '不可'}
 ◆ 希望保証：${conditions.desiredGuarantee === 'none' ? '希望無し' : GUARANTEE_OPTIONS.find(opt => opt.value === conditions.desiredGuarantee)?.label}
@@ -183,90 +318,24 @@ ${selectedType === '出稼ぎ' ? `
 ◆ 帰宅地：${conditions.returnLocation || '未設定'}
 ◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}
 ◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : '未設定'}
-◆ その他備考：${conditions.notes || '未設定'}` : `
+◆ その他備考：${conditions.notes || '未設定'}`;
+    } else {
+      return `【入力内容確認】\n
 ◆ 希望業種：${conditions.workTypes.map(type =>
-  WORK_TYPES.find(t => t.id === type)?.label
-).join('、')}
+        WORK_TYPES.find(t => t.id === type)?.label
+      ).join('、')}
 ◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date =>
-  new Date(date).toLocaleString('ja-JP', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-).join('\n') || '未設定'}
+        new Date(date).toLocaleString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      ).join('\n') || '未設定'}
 ◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
-◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}`}
-    }, {
-      type: 'ai',
-      content: '記入したものの情報に間違いはないか確認してね！\n間違いが無ければマッチングをはじめるよ！'
-    }]);
-
-    // 確認ボタンと修正ボタンを表示するための状態を追加
-    setShowConfirmationButtons(true);
-  };
-
-  const handleStartMatching = () => {
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: 'マッチングを開始する'
-    }, {
-      type: 'ai',
-      content: '確認してくれてありがとう！\n\nマッチングの方法を2つご用意しています：\n\n1️⃣ 自動で確認\n● AIが条件に合う店舗に直接連絡\n● できるだけ早く働きたい方におすすめ\n● 面接や採用までの時間を短縮できます\n\n2️⃣ ピックアップしてから確認\n● AIが条件に合う店舗を一覧で表示\n● じっくり店舗を選びたい方におすすめ\n● 気になる店舗を選んでから連絡できます\n\nどちらの方法でマッチングを進めますか？'
-    }]);
-    setShowConfirmationButtons(false);
-    setShowMatchingOptions(true);
-  };
-
-  const handleAutoMatching = () => {
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: '自動で確認する'
-    }, {
-      type: 'ai',
-      content: 'マッチングには時間がかかるから少しだけ時間をもらうね！\n\nAIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。返信があり次第お知らせしますので、少々お待ちください。'
-    }]);
-    setShowMatchingOptions(false);
-    setMatchingState('searching');
-
-    // 3秒後にマッチング中のメッセージを表示
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'マッチング中だよ...もう少し待っててね'
-      }]);
-    }, 3000);
-  };
-
-  const handlePickupMatching = () => {
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: 'ピックアップしてから確認する'
-    }, {
-      type: 'ai',
-      content: 'では合いそうな店舗をリストアップするね！'
-    }]);
-    setShowMatchingOptions(false);
-    setMatchingState('listing');
-
-    // 模擬的なマッチング処理（実際のAPIコールに置き換える）
-    setTimeout(() => {
-      // 仮のマッチング結果
-      const mockResults = Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        name: `店舗${i + 1}`,
-        location: '東京都',
-        rating: 4.5,
-        matches: ['希望時給', '勤務時間帯', '業態']
-      }));
-
-      setMatchingResults(mockResults);
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: `お待たせ！あなたに合いそうな店舗は${mockResults.length}件程あったよ！\n\nまずは10件、リストアップするね！`
-      }]);
-    }, 2000);
+◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}`;
+    }
   };
 
   const renderMatchingResults = () => {
@@ -748,6 +817,53 @@ ${selectedType === '出稼ぎ' ? `
         </Card>
       )}
 
+      {/* マッチング結果表示 */}
+      {matchingState === 'listing' && matchingResults.length > 0 && (
+        <div className="space-y-4">
+          {matchingResults
+            .slice(currentPage * 10, (currentPage + 1) * 10)
+            .map((result) => (
+              <Card key={result.id} className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium">{result.name}</h3>
+                    <p className="text-sm text-muted-foreground">{result.location}</p>
+                    <div className="flex gap-2 mt-2">
+                      {result.matches.map((match, i) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+                        >
+                          {match}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    詳細を見る
+                  </Button>
+                </div>
+              </Card>
+            ))}
+
+          {currentPage * 10 + 10 < matchingResults.length && (
+            <Button
+              className="w-full mt-4"
+              variant="outline"
+              onClick={() => {
+                setCurrentPage(prev => prev + 1);
+                setMessages(prev => [...prev, {
+                  type: 'ai',
+                  content: '次の10件を表示するね！'
+                }]);
+              }}
+            >
+              次の10件を見る
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* 確認/修正ボタン */}
       {showConfirmationButtons && (
         <div className="flex gap-4 justify-center">
@@ -765,9 +881,6 @@ ${selectedType === '出稼ぎ' ? `
           </Button>
         </div>
       )}
-
-      {/* マッチング結果表示 */}
-      {renderMatchingResults()}
 
       {/* マッチング方法選択 */}
       {showMatchingOptions && (
