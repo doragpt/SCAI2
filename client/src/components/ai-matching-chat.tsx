@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// 定数定義
+// 定数定義は変更なし
 const GUARANTEE_OPTIONS = [
   { value: "none", label: "希望無し" },
   { value: "1", label: "保証1万" },
@@ -87,7 +87,6 @@ const WORK_TYPES = [
 
 type WorkTypeId = typeof WORK_TYPES[number]['id'];
 
-// 型定義
 interface Message {
   type: 'ai' | 'user';
   content: string;
@@ -140,6 +139,15 @@ export const AIMatchingChat = () => {
   const [matchingState, setMatchingState] = useState<MatchingState>('idle');
   const [matchingResults, setMatchingResults] = useState<MatchingResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleBack = () => {
     if (showForm) {
@@ -277,7 +285,6 @@ export const AIMatchingChat = () => {
       setShowMatchingOptions(false);
       setMatchingState('listing');
 
-      // 模擬的なマッチング処理
       setTimeout(() => {
         const mockResults: MatchingResult[] = Array.from({ length: 25 }, (_, i) => ({
           id: i + 1,
@@ -302,7 +309,6 @@ export const AIMatchingChat = () => {
     }
   };
 
-  // ヘルパー関数
   const formatConditionsMessage = (conditions: WorkingConditions, selectedType: string | null): string => {
     if (selectedType === '出稼ぎ') {
       return `【入力内容確認】\n
@@ -388,42 +394,9 @@ export const AIMatchingChat = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      {/* メッセージ表示エリア */}
-      <div className="space-y-4">
-        {messages.map((message, index) => (
-          <Card
-            key={index}
-            className={`p-4 ${
-              message.type === 'ai'
-                ? 'bg-primary/10'
-                : 'bg-background ml-8'
-            }`}
-          >
-            <p className="whitespace-pre-line">{message.content}</p>
-          </Card>
-        ))}
-      </div>
-
-      {/* 選択ボタン */}
-      {!selectedType && !isLoading && (
-        <div className="flex gap-4 justify-center">
-          {workTypes.map((type) => (
-            <Button
-              key={type}
-              onClick={() => handleWorkTypeSelect(type)}
-              className="min-w-[120px]"
-            >
-              {type}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* 条件入力フォーム */}
+    <div className="flex flex-col h-[calc(100vh-200px)]">
       {showForm && selectedType && (
-        <Card className="p-6 space-y-6">
-          {/* 戻るボタン */}
+        <Card className="p-6 space-y-6 mb-4">
           <div className="flex justify-start">
             <Button
               variant="ghost"
@@ -436,7 +409,6 @@ export const AIMatchingChat = () => {
             </Button>
           </div>
 
-          {/* 業種選択 */}
           <div className="space-y-2">
             <Label>希望業種（複数選択可）</Label>
             <div className="grid grid-cols-2 gap-4">
@@ -817,9 +789,80 @@ export const AIMatchingChat = () => {
         </Card>
       )}
 
-      {/* マッチング結果表示 */}
+      <div className="flex-1 overflow-y-auto space-y-4 p-4">
+        {messages.map((message, index) => (
+          <Card
+            key={index}
+            className={`p-4 ${
+              message.type === 'ai'
+                ? 'bg-primary/10'
+                : 'bg-background ml-8'
+            }`}
+          >
+            <p className="whitespace-pre-line">{message.content}</p>
+          </Card>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="p-4 border-t bg-background">
+        {!selectedType && !isLoading && (
+          <div className="flex gap-4 justify-center">
+            {workTypes.map((type) => (
+              <Button
+                key={type}
+                onClick={() => handleWorkTypeSelect(type)}
+                className="min-w-[120px]"
+              >
+                {type}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {showConfirmationButtons && (
+          <div className="flex gap-4 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmationButtons(false);
+                setShowForm(true);
+              }}
+            >
+              修正する
+            </Button>
+            <Button onClick={handleStartMatching}>
+              マッチングを開始する
+            </Button>
+          </div>
+        )}
+
+        {showMatchingOptions && (
+          <div className="flex gap-4 justify-center">
+            <Button
+              className="flex-1 max-w-[200px]"
+              onClick={handleAutoMatching}
+            >
+              自動で確認する
+            </Button>
+            <Button
+              className="flex-1 max-w-[200px]"
+              onClick={handlePickupMatching}
+            >
+              ピックアップしてから確認する
+            </Button>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex justify-center">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        )}
+      </div>
+
       {matchingState === 'listing' && matchingResults.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 p-4 border-t">
           {matchingResults
             .slice(currentPage * 10, (currentPage + 1) * 10)
             .map((result) => (
@@ -861,49 +904,6 @@ export const AIMatchingChat = () => {
               次の10件を見る
             </Button>
           )}
-        </div>
-      )}
-
-      {/* 確認/修正ボタン */}
-      {showConfirmationButtons && (
-        <div className="flex gap-4 justify-center">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setShowConfirmationButtons(false);
-              setShowForm(true);
-            }}
-          >
-            修正する
-          </Button>
-          <Button onClick={handleStartMatching}>
-            マッチングを開始する
-          </Button>
-        </div>
-      )}
-
-      {/* マッチング方法選択 */}
-      {showMatchingOptions && (
-        <div className="flex gap-4 justify-center">
-          <Button
-            className="flex-1 max-w-[200px]"
-            onClick={handleAutoMatching}
-          >
-            自動で確認する
-          </Button>
-          <Button
-            className="flex-1 max-w-[200px]"
-            onClick={handlePickupMatching}
-          >
-            ピックアップしてから確認する
-          </Button>
-        </div>
-      )}
-
-      {/* ローディング表示 */}
-      {isLoading && (
-        <div className="flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
     </div>
