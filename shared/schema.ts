@@ -78,6 +78,10 @@ export const serviceTypes = [
   "mseikan"
 ] as const;
 
+// 出稼ぎ/在籍の選択肢
+export const workTypes = ["出稼ぎ", "在籍"] as const;
+export type WorkType = typeof workTypes[number];
+
 // Type definitions
 export type Prefecture = typeof prefectures[number];
 export type BodyType = typeof bodyTypes[number];
@@ -162,6 +166,18 @@ export const talentProfiles = pgTable("talent_profiles", {
   }>().default({ available: [], ngOptions: [] }),
   hasEstheExperience: boolean("has_esthe_experience").default(false),
   estheExperiencePeriod: text("esthe_experience_period"),
+  // 希望勤務条件
+  workType: text("work_type", { enum: workTypes }),
+  workPeriodStart: date("work_period_start"),
+  workPeriodEnd: date("work_period_end"),
+  canArrivePreviousDay: boolean("can_arrive_previous_day").default(false),
+  desiredGuarantee: integer("desired_guarantee"), // 希望保証額（万円）
+  desiredRate: integer("desired_rate"), // 希望単価（万円）
+  waitingHours: integer("waiting_hours"), // 待機時間（時間）
+  departureLocation: text("departure_location", { enum: prefectures }),
+  returnLocation: text("return_location", { enum: prefectures }),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
+  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]),
 });
 
 // Login and registration schemas
@@ -299,6 +315,19 @@ export const talentProfileSchema = z.object({
     available: z.array(z.enum(estheOptions)).default([]),
     ngOptions: z.array(z.string()).default([]),
   }).default({ available: [], ngOptions: [] }),
+
+  // 希望勤務条件
+  workType: z.enum(workTypes).optional(),
+  workPeriodStart: z.string().optional(), // date string
+  workPeriodEnd: z.string().optional(), // date string
+  canArrivePreviousDay: z.boolean().default(false),
+  desiredGuarantee: z.number().optional(), // 希望保証額（万円）
+  desiredRate: z.number().optional(), // 希望単価（万円）
+  waitingHours: z.number().optional(), // 待機時間（時間）
+  departureLocation: z.enum(prefectures).optional(),
+  returnLocation: z.enum(prefectures).optional(),
+  preferredLocations: z.array(z.enum(prefectures)).default([]),
+  ngLocations: z.array(z.enum(prefectures)).default([]),
 });
 
 // スキーマ定義の最後に追加
