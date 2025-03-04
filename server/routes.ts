@@ -354,6 +354,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('Profile update request received:', {
+        userId,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      const updatedProfile = await db.transaction(async (tx) => {
+        // 現在のプロフィールを取得
+        const [currentProfile] = await tx
+          .select()
+          .from(talentProfiles)
+          .where(eq(talentProfiles.userId, userId));
+
+        if (!currentProfile) {
+          throw new Error("プロフィールが見つかりません");
+        }
+
+        // リクエストデータをバリデーション
+        const updateData = talentProfileUpdateSchema.parse(req.body);
+
+        // 編集不可フィールドのリスト
+        const immutableFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
+
+        // マージされたデータを準備
+        const processedData = {
+          ...currentProfile,
+          ...updateData,
+          // 編集不可フィールドは必ず既存の値を維持
+          ...immutableFields.reduce((acc, field) => ({
+            ...acc,
+            [field]: currentProfile[field as keyof typeof currentProfile]
+          }), {} as Partial<typeof currentProfile>),
+          userId,
+          updatedAt: new Date(),
+        };
+
+        // JSONBフィールドのリスト
+        const jsonbFields = [
+          'availableIds',
+          'ngOptions',
+          'allergies',
+          'smoking',
+          'snsUrls',
+          'currentStores',
+          'previousStores',
+          'photoDiaryUrls',
+          'estheOptions'
+        ] as const;
+
+        // 更新データの準備（JSONBフィールドの処理）
+        const updateValues = Object.entries(processedData).reduce((acc, [key, value]) => {
+          // undefinedの場合はスキップ（既存の値を維持）
+          if (value === undefined) return acc;
+
+          // JSONBフィールドの場合は型キャストを行う
+          if (jsonbFields.includes(key as typeof jsonbFields[number])) {
+            acc[key] = value !== null ? sql`${JSON.stringify(value)}::jsonb` : null;
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        }, {} as Record<string, any>);
+
+        console.log('Prepared update values:', {
+          userId,
+          updateValues,
+          timestamp: new Date().toISOString()
+        });
+
+        // プロフィールを更新
+        const [updated] = await tx
+          .update(talentProfiles)
+          .set(updateValues)
+          .where(eq(talentProfiles.userId, userId))
+          .returning();
+
+        if (!updated) {
+          throw new Error("プロフィールの更新に失敗しました");
+        }
+
+        return updated;
+      });
+
+      console.log('Profile update successful:', {
+        userId,
+        profileId: updatedProfile.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 完全なプロフィールデータを返す
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error('Profile update error:', {
+        error,
+        userId: req.user.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      if (error instanceof Error) {
+        const status = error.message === "プロフィールが見つかりません" ? 404 : 400;
+        res.status(status).json({
+          error: true,
+          message: error.message,
+          details: error.stack,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(500).json({
+          error: true,
+          message: "プロフィールの更新に失敗しました",
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  });
 
   app.post("/api/logout", (req: any, res, next) => {
     req.logout((err: any) => {

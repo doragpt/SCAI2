@@ -158,6 +158,11 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
 
     // APIリクエストを実行
     const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "プロフィールの更新に失敗しました");
+    }
+
     const updatedProfile = await response.json() as TalentProfileData;
 
     // 編集不可フィールドの保護

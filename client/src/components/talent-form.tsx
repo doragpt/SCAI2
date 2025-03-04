@@ -376,12 +376,48 @@ export const TalentForm: React.FC<TalentFormProps> = ({
         return;
       }
 
-      setFormDataToConfirm(data);
+      // データの整形（nullやundefinedの適切な処理）
+      const processedData = {
+        ...data,
+        // 数値フィールドの処理
+        bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+        waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+        hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+        // オブジェクトフィールドのデフォルト値設定
+        ngOptions: {
+          common: data.ngOptions?.common ?? [],
+          others: data.ngOptions?.others ?? [],
+        },
+        allergies: {
+          types: data.allergies?.types ?? [],
+          others: data.allergies?.others ?? [],
+          hasAllergy: data.allergies?.hasAllergy ?? false,
+        },
+        smoking: {
+          enabled: data.smoking?.enabled ?? false,
+          types: data.smoking?.types ?? [],
+          others: data.smoking?.others ?? [],
+        },
+        // 配列フィールドのデフォルト値設定
+        snsUrls: data.snsUrls ?? [],
+        currentStores: data.currentStores ?? [],
+        previousStores: data.previousStores ?? [],
+        photoDiaryUrls: data.photoDiaryUrls ?? [],
+        estheOptions: {
+          available: data.estheOptions?.available ?? [],
+          ngOptions: data.estheOptions?.ngOptions ?? [],
+        },
+      };
+
+      setFormDataToConfirm(processedData);
       setIsConfirmationOpen(true);
-      // 成功時にlocalStorageをクリア
-      localStorage.removeItem("talentFormData");
     } catch (error) {
       console.error("送信エラー:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "不明なエラーが発生しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -920,7 +956,8 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                               const newAllergies = [...otherAllergies, value];
                               setOtherAllergies(newAllergies);
                               form.setValue("allergies.others", newAllergies);
-                              e.currentTarget.value = "";                            }
+                              e.currentTarget.value = "";
+                            }
                           }
                         }}
                       />
