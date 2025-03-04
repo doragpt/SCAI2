@@ -1,0 +1,64 @@
+「最新のSCAI2コードを徹底解析した結果、プロフィール更新時に生年月日が未設定になり、ウェブ履歴書のデータも正しく保存されていない原因は、更新処理時に既存の編集不可フィールドと履歴書フィールドのマージが正しく行われていない点にあります。以下の手順に従って修正を実施してください。
+
+【バックエンド側】
+PATCH /api/profile エンドポイントの処理を修正してください。以下のように、既存のプロフィールデータを取得し、リクエストボディの更新データとマージする形にしてください。（編集不可フィールド、生年月日は更新リクエストに含まれていない場合は既存の値をそのまま維持する）
+js
+コピーする
+// 例: UserController.js
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const currentData = user.toObject();
+    const updatedData = {
+      ...currentData,
+      ...req.body,
+      birthdate: currentData.birthdate, // 編集不可フィールドは保持
+      // 必要なら他の編集不可フィールドもここで保持
+    };
+    user.set(updatedData);
+    await user.save();
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    return res.status(500).json({ message: 'プロフィール更新に失敗しました' });
+  }
+};
+この修正により、更新APIのレスポンスに birthdate や webResume を含む完全なプロフィールデータが返ることを確認してください。
+【フロントエンド側】
+プロフィール更新フォーム（例: TalentForm.tsx）の送信ハンドラを修正し、APIから返された最新のユーザーデータで state と localStorage を更新するようにしてください。
+jsx
+コピーする
+const handleSave = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await updateProfileAPI(formData);
+    setProfile(response.data);
+    localStorage.setItem('userProfile', JSON.stringify(response.data));
+    showSuccess('プロフィールを更新しました。');
+  } catch (error) {
+    showError('プロフィール更新に失敗しました。');
+  }
+};
+ページ読み込み時（/talent/profile/edit のコンポーネントマウント時）に localStorage もしくは API から最新のプロフィールデータを取得し、フォームの初期値として設定する処理を確実に実装してください。
+jsx
+コピーする
+useEffect(() => {
+  const storedProfile = localStorage.getItem('userProfile');
+  if (storedProfile) {
+    setProfile(JSON.parse(storedProfile));
+  } else {
+    fetchProfileAPI()
+      .then(response => {
+        setProfile(response.data);
+        localStorage.setItem('userProfile', JSON.stringify(response.data));
+      })
+      .catch(error => console.error('プロフィール取得エラー', error));
+  }
+}, []);
+ウェブ履歴書のフォームについても、入力フィールドが正しく state にバインドされ、送信時に正しいキー（例: webResume）でデータが送信されることを確認してください。
+【統合テストの実施】
+/talent/profile/edit で基本情報およびウェブ履歴書を修正して保存した後、ダッシュボードに戻り、再度 /talent/profile/edit にアクセスして、すべてのフィールド（ニックネーム、本名、生年月日、希望地域、ウェブ履歴書の内容など）が正しく維持されているかテストしてください。\n\n2. 修正が完了し、全フィールドが正しく保持されることを確認できたら、依頼者に最終テストを実施するように報告してください。\n\n以上の修正を徹底し、完璧に動作する状態になってからユーザーにテスト依頼するようお願いします。
