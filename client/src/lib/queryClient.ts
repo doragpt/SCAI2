@@ -96,10 +96,12 @@ export async function updateTalentProfile(data: any) {
       userId: updatedProfile.userId
     });
 
-    // 既存のデータと新しいデータをマージ
+    // 既存のデータと新しいデータをマージ（編集不可フィールドの保護）
     const mergedProfile = {
       ...existingProfile,
       ...updatedProfile,
+      // birthDateが未定義または null の場合は既存の値を維持
+      birthDate: updatedProfile.birthDate || existingProfile?.birthDate,
     };
 
     // キャッシュの更新処理

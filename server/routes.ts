@@ -241,11 +241,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updateData = talentProfileUpdateSchema.parse(req.body);
 
         // 編集不可フィールドのリスト
-        const immutableFields = ['birthDate'];
+        const immutableFields = ['birthDate', 'createdAt'];
 
         // 既存のデータと新しいデータをマージ
         const processedData = {
-          ...currentProfile, // 既存のデータをベースに
+          ...currentProfile.toObject(), // 既存のデータをベースに
           ...updateData, // 新しいデータで上書き
           // 編集不可フィールドは既存の値を維持
           ...immutableFields.reduce((acc, field) => ({
@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error("プロフィールの更新に失敗しました");
         }
 
-        // 更新されたプロフィールを再取得して返す
+        // 更新されたプロフィールを再取得して返す（完全なデータを確実に返す）
         const [freshProfile] = await tx
           .select()
           .from(talentProfiles)
@@ -350,7 +350,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-
 
 
   app.post("/api/logout", (req: any, res, next) => {
