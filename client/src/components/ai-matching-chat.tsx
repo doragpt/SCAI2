@@ -46,15 +46,16 @@ const TIME_OPTIONS = [
 
 const RATE_OPTIONS = [
   { value: "none", label: "希望無し" },
+  { value: "3000", label: "3,000円" },
+  { value: "5000", label: "5,000円" },
   { value: "8000", label: "8,000円" },
-  { value: "9000", label: "9,000円" },
   { value: "10000", label: "10,000円" },
   { value: "12000", label: "12,000円" },
   { value: "15000", label: "15,000円" },
   { value: "18000", label: "18,000円" },
   { value: "20000", label: "20,000円" },
   { value: "25000", label: "25,000円" },
-  { value: "30000", label: "30,000円" },
+  { value: "30000", label: "30,000円以上" },
 ];
 
 const WORK_TYPES = [
