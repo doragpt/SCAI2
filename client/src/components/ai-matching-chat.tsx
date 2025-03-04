@@ -68,7 +68,6 @@ export const AIMatchingChat = () => {
     {
       type: "ai",
       content: `SCAIマッチングへようこそ！
-
 あなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。
 
 【SCAIマッチングの特徴】
@@ -127,7 +126,7 @@ export const AIMatchingChat = () => {
   const handleBack = () => {
     setSelectedType(null);
     setShowForm(false);
-    setShowMatchingOptions(true);
+    setShowMatchingOptions(false); // マッチング方法の選択を非表示に
   };
 
   const handleConditionSubmit = () => {
@@ -686,18 +685,25 @@ AIが自動で店舗とのマッチングを行います。
 
                   <div className="space-y-2">
                     <Label>待機時間（時間）</Label>
-                    <Input
-                      type="number"
-                      placeholder="12時間以上が保証条件となる場合が多いです"
-                      onChange={(e) =>
+                    <Select
+                      onValueChange={(value) =>
                         setConditions({
                           ...conditions,
-                          waitingHours: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
+                          waitingHours: value ? Number(value) : undefined,
                         })
                       }
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="待機時間を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WAITING_HOURS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Added Departure and Return Location Selects */}
@@ -1005,8 +1011,7 @@ AIが自動で店舗とのマッチングを行います。
               )}
             </div>
           </Card>
-        </div>
-      )}
+        </div>)}
 
       {showMatchingOptions && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -1259,3 +1264,22 @@ AIが自動で店舗とのマッチングを行います。
     </div>
   );
 };
+
+const WAITING_HOURS = [
+  { value: undefined, label: '選択しない' },
+  { value: 10, label: '10時間' },
+  { value: 11, label: '11時間' },
+  { value: 12, label: '12時間' },
+  { value: 13, label: '13時間' },
+  { value: 14, label: '14時間' },
+  { value: 15, label: '15時間' },
+  { value: 16, label: '16時間' },
+  { value: 17, label: '17時間' },
+  { value: 18, label: '18時間' },
+  { value: 19, label: '19時間' },
+  { value: 20, label: '20時間' },
+  { value: 21, label: '21時間' },
+  { value: 22, label: '22時間' },
+  { value: 23, label: '23時間' },
+  { value: 24, label: '24時間' },
+];

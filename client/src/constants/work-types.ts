@@ -32,25 +32,49 @@ export const WORK_TYPES_WITH_DESCRIPTION = [
 ];
 
 export const TIME_OPTIONS = [
+  { value: '30', label: '30分' },
+  { value: '40', label: '40分' },
+  { value: '50', label: '50分' },
   { value: '60', label: '60分' },
-  { value: '75', label: '75分' },
+  { value: '70', label: '70分' },
+  { value: '80', label: '80分' },
   { value: '90', label: '90分' },
-  { value: '120', label: '120分' },
 ];
 
 export const RATE_OPTIONS = [
+  { value: '3000', label: '3,000円' },
+  { value: '4000', label: '4,000円' },
+  { value: '5000', label: '5,000円' },
+  { value: '6000', label: '6,000円' },
+  { value: '7000', label: '7,000円' },
+  { value: '8000', label: '8,000円' },
+  { value: '9000', label: '9,000円' },
+  { value: '10000', label: '10,000円' },
   { value: '15000', label: '15,000円' },
   { value: '20000', label: '20,000円' },
   { value: '25000', label: '25,000円' },
-  { value: '30000', label: '30,000円' },
+  { value: '30000', label: '30,000円以上' },
 ];
 
 export const GUARANTEE_OPTIONS = [
   { value: 'none', label: '希望なし' },
+  { value: '10000', label: '10,000円' },
   { value: '20000', label: '20,000円' },
-  { value: '25000', label: '25,000円' },
   { value: '30000', label: '30,000円' },
+  { value: '40000', label: '40,000円' },
+  { value: '50000', label: '50,000円' },
+  { value: '60000', label: '60,000円' },
+  { value: '70000', label: '70,000円' },
+  { value: '80000', label: '80,000円' },
+  { value: '90000', label: '90,000円' },
+  { value: '100000', label: '100,000円以上' },
 ];
+
+// 待機時間を10時間から24時間まで1時間ずつ
+export const WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
+  value: String(i + 10),
+  label: `${i + 10}時間`,
+}));
 
 export const prefectures = [
   '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
