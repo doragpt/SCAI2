@@ -20,7 +20,7 @@ export function FooterNavigation({ onMenuClick }: FooterNavigationProps) {
           <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
             <Link href="/talent/ai-matching">
               <Bot className="h-5 w-5 mb-1" />
-              <span className="text-xs">AIマッチング</span>
+              <span className="text-xs">SCAIマッチング</span>
             </Link>
           </Button>
           <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">

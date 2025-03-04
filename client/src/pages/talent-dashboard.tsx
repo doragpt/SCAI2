@@ -91,7 +91,7 @@ export default function TalentDashboard() {
             <Button asChild variant="ghost" className="w-full justify-start gap-2">
               <Link href="/talent/ai-matching">
                 <Bot className="h-5 w-5" />
-                <span>AIマッチング</span>
+                <span>SCAIマッチング</span>
                 <span className="ml-auto text-muted-foreground">→</span>
               </Link>
             </Button>
@@ -136,7 +136,7 @@ export default function TalentDashboard() {
             <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
               <Link href="/talent/ai-matching">
                 <Bot className="h-5 w-5 mb-1" />
-                <span className="text-xs">AIマッチング</span>
+                <span className="text-xs">SCAIマッチング</span>
               </Link>
             </Button>
             <Button variant="ghost" asChild className="flex flex-col items-center py-2 h-16">
