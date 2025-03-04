@@ -15,7 +15,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// 定数定義は変更なし
+// 希望業種の説明を追加
+const WORK_TYPES = [
+  { 
+    id: "store-health", 
+    label: "店舗型ヘルス",
+    description: "お店に来店されたお客様へのサービスを提供。移動の必要がなく、安定した環境で働けます。"
+  },
+  { 
+    id: "hotel-health", 
+    label: "ホテルヘルス",
+    description: "ホテルでのサービス提供。お店で受付後、近隣のホテルへ移動してのサービスとなります。"
+  },
+  { 
+    id: "delivery-health", 
+    label: "デリバリーヘルス",
+    description: "お客様のいるホテルや自宅へ直接訪問してサービスを提供。幅広いエリアでの勤務が可能です。"
+  },
+  { 
+    id: "esthe", 
+    label: "風俗エステ",
+    description: "マッサージや施術を中心としたサービス。ソフトなサービス内容で、未経験の方も始めやすいです。"
+  },
+  { 
+    id: "mseikan", 
+    label: "M性感",
+    description: "男性受け身型のサービス。特殊な技術が必要ですが、研修制度も充実しています。"
+  },
+  { 
+    id: "onakura", 
+    label: "オナクラ",
+    description: "最もソフトなサービス内容。接客時間も短く、手だけのサービスで未経験の方に人気です。"
+  }
+] as const;
+
 const GUARANTEE_OPTIONS = [
   { value: "none", label: "希望無し" },
   { value: "1", label: "保証1万" },
@@ -76,16 +109,40 @@ const RATE_OPTIONS = [
   { value: "30000", label: "30,000円以上" },
 ] as const;
 
-const WORK_TYPES = [
-  { id: "store-health", label: "店舗型ヘルス" },
-  { id: "hotel-health", label: "ホテルヘルス" },
-  { id: "delivery-health", label: "デリバリーヘルス" },
-  { id: "esthe", label: "風俗エステ" },
-  { id: "mseikan", label: "M性感" },
-  { id: "onakura", label: "オナクラ" },
+const WORK_TYPES_WITH_DESCRIPTION = [
+  { 
+    id: "store-health", 
+    label: "店舗型ヘルス",
+    description: "お店に来店されたお客様へのサービスを提供。移動の必要がなく、安定した環境で働けます。"
+  },
+  { 
+    id: "hotel-health", 
+    label: "ホテルヘルス",
+    description: "ホテルでのサービス提供。お店で受付後、近隣のホテルへ移動してのサービスとなります。"
+  },
+  { 
+    id: "delivery-health", 
+    label: "デリバリーヘルス",
+    description: "お客様のいるホテルや自宅へ直接訪問してサービスを提供。幅広いエリアでの勤務が可能です。"
+  },
+  { 
+    id: "esthe", 
+    label: "風俗エステ",
+    description: "マッサージや施術を中心としたサービス。ソフトなサービス内容で、未経験の方も始めやすいです。"
+  },
+  { 
+    id: "mseikan", 
+    label: "M性感",
+    description: "男性受け身型のサービス。特殊な技術が必要ですが、研修制度も充実しています。"
+  },
+  { 
+    id: "onakura", 
+    label: "オナクラ",
+    description: "最もソフトなサービス内容。接客時間も短く、手だけのサービスで未経験の方に人気です。"
+  }
 ] as const;
 
-type WorkTypeId = typeof WORK_TYPES[number]['id'];
+type WorkTypeId = typeof WORK_TYPES_WITH_DESCRIPTION[number]['id'];
 
 interface Message {
   type: 'ai' | 'user';
@@ -246,11 +303,13 @@ export const AIMatchingChat = () => {
 1️⃣ 自動で確認
 ● AIが条件に合う店舗に直接連絡
 ● できるだけ早く働きたい方におすすめ
-● 面接や採用までの時間を短縮できます\n
+● 面接や採用までの時間を短縮できます
+● 希望条件に合う店舗から順次ご連絡があります\n
 2️⃣ ピックアップしてから確認
 ● AIが条件に合う店舗を一覧で表示
 ● じっくり店舗を選びたい方におすすめ
-● 気になる店舗を選んでから連絡できます\n
+● 気になる店舗を選んでから連絡できます
+● 店舗の詳細情報も確認できます\n
 どちらの方法でマッチングを進めますか？`
       }]);
       setShowConfirmationButtons(false);
@@ -331,7 +390,7 @@ export const AIMatchingChat = () => {
     if (selectedType === '出稼ぎ') {
       return `【入力内容確認】\n
 ◆ 希望業種：${conditions.workTypes.map(type =>
-        WORK_TYPES.find(t => t.id === type)?.label
+        WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label
       ).join('、')}
 ◆ 勤務期間：${conditions.workPeriodStart ? `${conditions.workPeriodStart}～${conditions.workPeriodEnd}` : '未設定'}
 ◆ 前日入り：${conditions.canArrivePreviousDay ? '可能' : '不可'}
@@ -346,7 +405,7 @@ export const AIMatchingChat = () => {
     } else {
       return `【入力内容確認】\n
 ◆ 希望業種：${conditions.workTypes.map(type =>
-        WORK_TYPES.find(t => t.id === type)?.label
+        WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label
       ).join('、')}
 ◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date =>
         new Date(date).toLocaleString('ja-JP', {
@@ -448,27 +507,33 @@ export const AIMatchingChat = () => {
               <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
                 希望業種（複数選択可）
               </Label>
-              <div className="grid grid-cols-2 gap-4">
-                {WORK_TYPES.map((type) => (
-                  <div key={type.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={type.id}
-                      checked={conditions.workTypes.includes(type.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setConditions({
-                            ...conditions,
-                            workTypes: [...conditions.workTypes, type.id]
-                          });
-                        } else {
-                          setConditions({
-                            ...conditions,
-                            workTypes: conditions.workTypes.filter(t => t !== type.id)
-                          });
-                        }
-                      }}
-                    />
-                    <Label htmlFor={type.id}>{type.label}</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                あなたの希望や経験に合わせて、働きやすい業種を選択してください。複数選択することで、より多くの求人をご紹介できます。
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {WORK_TYPES_WITH_DESCRIPTION.map((type) => (
+                  <div key={type.id} className="flex flex-col space-y-2 p-4 border rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={type.id}
+                        checked={conditions.workTypes.includes(type.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setConditions({
+                              ...conditions,
+                              workTypes: [...conditions.workTypes, type.id]
+                            });
+                          } else {
+                            setConditions({
+                              ...conditions,
+                              workTypes: conditions.workTypes.filter(t => t !== type.id)
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={type.id}>{type.label}</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground pl-6">{type.description}</p>
                   </div>
                 ))}
               </div>
@@ -780,6 +845,11 @@ export const AIMatchingChat = () => {
                     <Label className={selectedType === '在籍' ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
                       希望地域
                     </Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {selectedType === '在籍' 
+                        ? '在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。'
+                        : '出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。'}
+                    </p>
                     <Select
                       onValueChange={(value) => setConditions({
                         ...conditions,
@@ -815,16 +885,16 @@ export const AIMatchingChat = () => {
                       </div>
                     )}
                   </div>
+
+                  <Button
+                    className="w-full mt-6"
+                    onClick={handleConditionSubmit}
+                  >
+                    入力内容を確認する
+                  </Button>
                 </div>
               </>
             )}
-
-            <Button
-              className="w-full"
-              onClick={handleConditionSubmit}
-            >
-              入力内容を確認する
-            </Button>
           </div>
         </Card>
       )}
