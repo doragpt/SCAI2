@@ -974,6 +974,7 @@ export const AIMatchingChat = () => {
         </div>
       )}
 
+      {/* マッチング方法選択画面 */}
       {showMatchingOptions && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
@@ -986,29 +987,112 @@ export const AIMatchingChat = () => {
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handleAutoMatching}>
+                  <Card 
+                    className="p-4 hover:bg-accent cursor-pointer transition-colors"
+                    onClick={handleAutoMatching}
+                  >
                     <div className="space-y-3">
                       <h4 className="font-medium">自動でマッチング</h4>
-                      <ul className="text-sm text-muted-foreground space-y-2">
-                        <li>• AIが条件に合う店舗に直接連絡</li>
-                        <li>• できるだけ早く働きたい方におすすめ</li>
-                        <li>• 面接や採用までの時間を短縮</li>
-                        <li>• 希望条件に合う店舗から順次連絡</li>
-                      </ul>
+                      <p className="text-sm text-muted-foreground">
+                        AIがあなたの条件に合う店舗を探して、直接連絡を取らせていただきます。
+                        返信があり次第お知らせしますので、お待ちいただく形となります。
+                      </p>
                     </div>
                   </Card>
-                  <Card className="p-4 hover:bg-accent cursor-pointer" onClick={handlePickupMatching}>
+                  <Card 
+                    className="p-4 hover:bg-accent cursor-pointer transition-colors"
+                    onClick={handlePickupMatching}
+                  >
                     <div className="space-y-3">
-                      <h4 className="font-medium">ピックアップしてから確認</h4>
-                      <ul className="text-sm text-muted-foreground space-y-2">
-                        <li>• AIが条件に合う店舗を一覧表示</li>
-                        <li>• じっくり店舗を選びたい方におすすめ</li>
-                        <li>• 店舗の詳細情報を確認可能</li>
-                        <li>• 気になる店舗を選んで連絡</li>
-                      </ul>
+                      <h4 className="font-medium">ピックアップしてから確認する</h4>
+                      <p className="text-sm text-muted-foreground">
+                        AIがあなたの条件に合う店舗をリストアップします。
+                        気になる店舗を選んでいただき、その後で条件確認を行います。
+                      </p>
                     </div>
                   </Card>
                 </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* 自動マッチング中の表示 */}
+      {matchingState === 'searching' && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Card className="border-t sticky bottom-0 bg-background">
+            <div className="p-6">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="text-center">
+                  <h3 className="font-medium">マッチング中...</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    あなたの条件に合う店舗を探しています。
+                    <br />
+                    店舗からの返信があり次第ご連絡いたします。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ピックアップマッチングの結果表示 */}
+      {matchingState === 'listing' && matchingResults.length > 0 && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Card className="border-t sticky bottom-0 bg-background">
+            <div className="p-6 space-y-4">
+              <div className="text-center space-y-2">
+                <h3 className="font-medium">おすすめの店舗</h3>
+                <p className="text-sm text-muted-foreground">
+                  あなたの条件に合う店舗をピックアップしました。
+                  気になる店舗を選択してください。
+                </p>
+              </div>
+              <div className="space-y-4">
+                {matchingResults
+                  .slice(currentPage * 10, (currentPage + 1) * 10)
+                  .map((result) => (
+                    <Card key={result.id} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{result.name}</h3>
+                          <p className="text-sm text-muted-foreground">{result.location}</p>
+                          <div className="flex gap-2 mt-2">
+                            {result.matches.map((match, i) => (
+                              <span
+                                key={i}
+                                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+                              >
+                                {match}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          詳細を見る
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+
+                {currentPage * 10 + 10 < matchingResults.length && (
+                  <Button
+                    className="w-full mt-4"
+                    variant="outline"
+                    onClick={() => {
+                      setCurrentPage(prev => prev + 1);
+                      setMessages(prev => [...prev, {
+                        type: 'ai',
+                        content: '次の10件を表示するね！'
+                      }]);
+                    }}
+                  >
+                    次の10件を見る
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
