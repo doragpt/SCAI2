@@ -1130,103 +1130,104 @@ export const TalentForm: React.FC<TalentFormProps> = ({
             <FormField label="現在在籍中の店舗">
               <div className="space-y-4">
                 {form.watch("currentStores").map((store, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input value={store} disabled />
+                  <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input
+                        placeholder="店舗名"
+                        value={store.storeName || ""}
+                        onChange={(e) => {
+                          const current = form.watch("currentStores");
+                          current[index] = {
+                            ...current[index],
+                            storeName: e.target.value
+                          };
+                          form.setValue("currentStores", [...current]);
+                        }}
+                      />
+                      <Input
+                        placeholder="源氏名"
+                        value={store.stageName || ""}
+                        onChange={(e) => {
+                          const current = form.watch("currentStores");
+                          current[index] = {
+                            ...current[index],
+                            stageName: e.target.value
+                          };
+                          form.setValue("currentStores", [...current]);
+                        }}
+                      />
+                    </div>
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         const current = form.watch("currentStores");
-                        form.setValue("currentStores", current.filter((_, i) => i !== index));
+                        form.setValue(
+                          "currentStores",
+                          current.filter((_, i) => i !== index)
+                        );
                       }}
                     >
-                      <X className="h-4 w-4" />
+                      削除
                     </Button>
                   </div>
                 ))}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="店舗名を入力"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        const value = e.currentTarget.value.trim();
-                        if (value) {
-                          const current = form.watch("currentStores") || [];
-                          form.setValue("currentStores", [...current, value]);
-                          e.currentTarget.value = "";
-                        }
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const input = document.querySelector('input[placeholder="店舗名を入力"]') as HTMLInputElement;
-                      const value = input?.value.trim();
-                      if (value) {
-                        const current = form.watch("currentStores") || [];
-                        form.setValue("currentStores", [...current, value]);
-                        input.value = "";
-                      }
-                    }}
-                  >
-                    URLを追加
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const current = form.watch("currentStores") || [];
+                    form.setValue("currentStores", [
+                      ...current,
+                      { storeName: "", stageName: "" }
+                    ]);
+                  }}
+                >
+                  店舗を追加
+                </Button>
               </div>
             </FormField>
-
 
             {/* 写メ日記URL - 現在在籍中の店舗の直後に配置 */}
             <FormField label="写メ日記が確認できる店舗URL">
               <div className="space-y-4">
                 {form.watch("photoDiaryUrls").map((url, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input value={url} disabled />
+                  <div key={index} className="grid gap-4 p-4 border rounded-lg">
+                    <Input 
+                      value={url} 
+                      onChange={(e) => {
+                        const current = form.watch("photoDiaryUrls");
+                        current[index] = e.target.value;
+                        form.setValue("photoDiaryUrls", [...current]);
+                      }}
+                    />
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         const current = form.watch("photoDiaryUrls");
-                        form.setValue("photoDiaryUrls", current.filter((_, i) => i !== index));
+                        form.setValue(
+                          "photoDiaryUrls",
+                          current.filter((_, i) => i !== index)
+                        );
                       }}
                     >
-                      <X className="h-4 w-4" />
+                      削除
                     </Button>
                   </div>
                 ))}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="写メ日記のURLを入力"
-                    value={newPhotoUrl}
-                    onChange={(e) => setNewPhotoUrl(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (newPhotoUrl.trim()) {
-                          const current = form.watch("photoDiaryUrls") || [];
-                          form.setValue("photoDiaryUrls", [...current, newPhotoUrl.trim()]);
-                          setNewPhotoUrl("");
-                        }
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if (newPhotoUrl.trim()) {
-                        const current = form.watch("photoDiaryUrls") || [];
-                        form.setValue("photoDiaryUrls", [...current, newPhotoUrl.trim()]);
-                        setNewPhotoUrl("");
-                      }
-                    }}
-                  >
-                    URLを追加
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const current = form.watch("photoDiaryUrls") || [];
+                    form.setValue("photoDiaryUrls", [...current, ""]);
+                  }}
+                >
+                  URLを追加
+                </Button>
               </div>
             </FormField>
 
@@ -1234,30 +1235,45 @@ export const TalentForm: React.FC<TalentFormProps> = ({
               <div className="space-y-4">
                 {form.watch("previousStores").map((store, index) => (
                   <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                    <Input
-                      placeholder="店舗名"
-                      value={store.storeName}
-                      onChange={(e) => {
-                        const current = [...form.watch("previousStores")];
-                        current[index] = { storeName: e.target.value };
-                        form.setValue("previousStores", current, { shouldValidate: true });
-                      }}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input
+                        placeholder="店舗名"
+                        value={store.storeName || ""}
+                        onChange={(e) => {
+                          const current = form.watch("previousStores");
+                          current[index] = {
+                            ...current[index],
+                            storeName: e.target.value
+                          };
+                          form.setValue("previousStores", [...current]);
+                        }}
+                      />
+                      <Input
+                        placeholder="源氏名"
+                        value={store.stageName || ""}
+                        onChange={(e) => {
+                          const current = form.watch("previousStores");
+                          current[index] = {
+                            ...current[index],
+                            stageName: e.target.value
+                          };
+                          form.setValue("previousStores", [...current]);
+                        }}
+                      />
+                    </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="ml-1 h-4 w-4 p-0"
                       onClick={() => {
                         const current = form.watch("previousStores");
                         form.setValue(
                           "previousStores",
-                          current.filter((_, i) => i !== index),
-                          { shouldValidate: true }
+                          current.filter((_, i) => i !== index)
                         );
                       }}
                     >
-                      <X className="h-3 w-3" />
+                      削除
                     </Button>
                   </div>
                 ))}
@@ -1266,11 +1282,10 @@ export const TalentForm: React.FC<TalentFormProps> = ({
                   variant="outline"
                   onClick={() => {
                     const current = form.watch("previousStores") || [];
-                    form.setValue(
-                      "previousStores",
-                      [...current, { storeName: "" }],
-                      { shouldValidate: true }
-                    );
+                    form.setValue("previousStores", [
+                      ...current,
+                      { storeName: "", stageName: "" }
+                    ]);
                   }}
                 >
                   店舗を追加
