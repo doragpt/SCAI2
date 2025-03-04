@@ -10,32 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
-
-interface ProfileData {
-  availableIds?: {
-    types?: string[];
-    others?: string[];
-  };
-  canProvideResidenceRecord?: boolean;
-  canPhotoDiary?: boolean;
-  canHomeDelivery?: boolean;
-  ngOptions: {
-    common?: string[];
-    others?: string[];
-  };
-  allergies: {
-    types?: string[];
-    others?: string[];
-  };
-  smoking: {
-    types?: string[];
-    others?: string[];
-  };
-  estheOptions?: {
-    available?: string[];
-    ngOptions?: string[];
-  };
-}
+import { type ProfileData } from "@shared/types/profile";
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;

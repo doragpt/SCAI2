@@ -1,30 +1,5 @@
 import { useState } from 'react';
-
-interface ProfileData {
-  availableIds?: {
-    types?: string[];
-    others?: string[];
-  };
-  canProvideResidenceRecord?: boolean;
-  canPhotoDiary?: boolean;
-  canHomeDelivery?: boolean;
-  ngOptions: {
-    common?: string[];
-    others?: string[];
-  };
-  allergies: {
-    types?: string[];
-    others?: string[];
-  };
-  smoking: {
-    types?: string[];
-    others?: string[];
-  };
-  estheOptions?: {
-    available?: string[];
-    ngOptions?: string[];
-  };
-}
+import { type ProfileData } from '@shared/types/profile';
 
 export function useProfile() {
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -63,5 +38,5 @@ export function useProfile() {
   return {
     profileData,
     updateProfile,
-  };
+  } as const;
 }
