@@ -267,6 +267,298 @@ export const TalentForm: React.FC = () => {
       <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
           <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* 基本情報セクション */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">基本情報</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField label="姓" required>
+                  <Input
+                    {...form.register("lastName")}
+                    placeholder="姓を入力してください"
+                  />
+                  {form.formState.errors.lastName && (
+                    <FormErrorMessage message={form.formState.errors.lastName.message as string} />
+                  )}
+                </FormField>
+                <FormField label="名" required>
+                  <Input
+                    {...form.register("firstName")}
+                    placeholder="名を入力してください"
+                  />
+                  {form.formState.errors.firstName && (
+                    <FormErrorMessage message={form.formState.errors.firstName.message as string} />
+                  )}
+                </FormField>
+                <FormField label="姓（カナ）" required>
+                  <Input
+                    {...form.register("lastNameKana")}
+                    placeholder="セイを入力してください"
+                  />
+                  {form.formState.errors.lastNameKana && (
+                    <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />
+                  )}
+                </FormField>
+                <FormField label="名（カナ）" required>
+                  <Input
+                    {...form.register("firstNameKana")}
+                    placeholder="メイを入力してください"
+                  />
+                  {form.formState.errors.firstNameKana && (
+                    <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />
+                  )}
+                </FormField>
+              </div>
+            </div>
+
+            {/* 住所情報 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">住所情報</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField label="在住地" required>
+                  <Select
+                    value={form.watch("location")}
+                    onValueChange={(value) => form.setValue("location", value, { shouldValidate: true })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="都道府県を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {prefectures.map((pref) => (
+                        <SelectItem key={pref} value={pref}>
+                          {pref}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.location && (
+                    <FormErrorMessage message={form.formState.errors.location.message as string} />
+                  )}
+                </FormField>
+                <FormField label="最寄り駅" required>
+                  <Input
+                    {...form.register("nearestStation")}
+                    placeholder="最寄り駅を入力してください"
+                  />
+                  {form.formState.errors.nearestStation && (
+                    <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />
+                  )}
+                </FormField>
+              </div>
+            </div>
+
+            {/* 身分証明書 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
+              <FormField label="持参可能な身分証明書" required>
+                <div className="grid grid-cols-2 gap-4">
+                  {idTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={form.watch("availableIds.types").includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = form.watch("availableIds.types");
+                          const updated = checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type);
+                          form.setValue("availableIds.types", updated);
+                        }}
+                      />
+                      <label className="text-sm">{type}</label>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <Label>その他の身分証明書</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {otherIds.map((id) => (
+                      <Badge key={id} variant="secondary">
+                        {id}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-1 h-4 w-4 p-0"
+                          onClick={() => {
+                            setOtherIds(otherIds.filter((i) => i !== id));
+                            form.setValue(
+                              "availableIds.others",
+                              otherIds.filter((i) => i !== id)
+                            );
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="その他の身分証明書を入力"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          const value = e.currentTarget.value.trim();
+                          if (value && !otherIds.includes(value)) {
+                            const newIds = [...otherIds, value];
+                            setOtherIds(newIds);
+                            form.setValue("availableIds.others", newIds);
+                            e.currentTarget.value = "";
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </FormField>
+            </div>
+
+            {/* 本籍地入りの住民票の用意可否（必須） */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">住民票</h3>
+              <SwitchField
+                label="本籍地入りの住民票の用意"
+                required
+                checked={form.watch("canProvideResidenceRecord")}
+                onCheckedChange={(checked) =>
+                  form.setValue("canProvideResidenceRecord", checked)
+                }
+              />
+            </div>
+
+            {/* 身体的特徴 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">身体的特徴</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <FormField label="身長 (cm)" required>
+                  <Input
+                    type="number"
+                    {...form.register("height", { valueAsNumber: true })}
+                    min={130}
+                    max={190}
+                  />
+                  {form.formState.errors.height && (
+                    <FormErrorMessage message={form.formState.errors.height.message as string} />
+                  )}
+                </FormField>
+                <FormField label="体重 (kg)" required>
+                  <Input
+                    type="number"
+                    {...form.register("weight", { valueAsNumber: true })}
+                    min={30}
+                    max={150}
+                  />
+                  {form.formState.errors.weight && (
+                    <FormErrorMessage message={form.formState.errors.weight.message as string} />
+                  )}
+                </FormField>
+                <FormField label="カップサイズ" required>
+                  <Select
+                    value={form.watch("cupSize")}
+                    onValueChange={(value) => form.setValue("cupSize", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cupSizes.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}カップ
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.cupSize && (
+                    <FormErrorMessage message={form.formState.errors.cupSize.message as string} />
+                  )}
+                </FormField>
+                <FormField label="バスト (cm) (任意)">
+                  <Input
+                    type="text"
+                    {...form.register("bust", {
+                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
+                    })}
+                    placeholder="未入力可"
+                  />
+                  {form.formState.errors.bust && (
+                    <FormErrorMessage message={form.formState.errors.bust.message as string} />
+                  )}
+                </FormField>
+                <FormField label="ウエスト (cm) (任意)">
+                  <Input
+                    type="text"
+                    {...form.register("waist", {
+                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
+                    })}
+                    placeholder="未入力可"
+                  />
+                  {form.formState.errors.waist && (
+                    <FormErrorMessage message={form.formState.errors.waist.message as string} />
+                  )}
+                </FormField>
+                <FormField label="ヒップ (cm) (任意)">
+                  <Input
+                    type="text"
+                    {...form.register("hip", {
+                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
+                    })}
+                    placeholder="未入力可"
+                  />
+                  {form.formState.errors.hip && (
+                    <FormErrorMessage message={form.formState.errors.hip.message as string} />
+                  )}
+                </FormField>
+              </div>
+            </div>
+
+            {/* 顔出し */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">顔出し</h3>
+              <FormField label="パネルの顔出し" required>
+                <Select
+                  value={form.watch("faceVisibility")}
+                  onValueChange={(value) => form.setValue("faceVisibility", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {faceVisibilityTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.faceVisibility && (
+                  <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />
+                )}
+              </FormField>
+            </div>
+
+            {/* 写メ日記と自宅への派遣 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">その他</h3>
+              <SwitchField
+                label="写メ日記の投稿可否"
+                required
+                checked={form.watch("canPhotoDiary")}
+                onCheckedChange={(checked) =>
+                  form.setValue("canPhotoDiary", checked, { shouldValidate: true })
+                }
+                valueLabels={{ checked: "可能", unchecked: "不可" }}
+              />
+
+              <SwitchField
+                label="自宅への派遣"
+                required
+                checked={form.watch("canHomeDelivery")}
+                onCheckedChange={(checked) =>
+                  form.setValue("canHomeDelivery", checked, { shouldValidate: true })
+                }
+                valueLabels={{ checked: "可能", unchecked: "不可" }}
+                description="自宅での接客が可能な場合は「可能」を選択してください"
+              />
+            </div>
+
             {/* 店舗情報のセクション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">在籍店舗情報</h3>
@@ -334,7 +626,7 @@ export const TalentForm: React.FC = () => {
                   </div>
                 </FormField>
 
-                {/* 写メ日記URL - 現在在籍中の店舗の直後に配置 */}
+                {/* 写メ日記URL */}
                 <FormField label="写メ日記が確認できる店舗URL">
                   <div className="space-y-4">
                     {form.watch("photoDiaryUrls").map((url, index) => (
@@ -442,43 +734,43 @@ export const TalentForm: React.FC = () => {
               </div>
             </div>
 
-            {/* 身分証明書 */}
+            {/* NGオプション */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
-              <FormField label="持参可能な身分証明書" required>
+              <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
+              <FormField label="NGオプション">
                 <div className="grid grid-cols-2 gap-4">
-                  {idTypes.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
+                  {commonNgOptions.map((option) => (
+                    <div key={option} className="flex items-center space-x-2">
                       <Checkbox
-                        checked={form.watch("availableIds.types").includes(type)}
+                        checked={form.watch("ngOptions.common").includes(option)}
                         onCheckedChange={(checked) => {
-                          const current = form.watch("availableIds.types");
+                          const current = form.watch("ngOptions.common");
                           const updated = checked
-                            ? [...current, type]
-                            : current.filter((t) => t !== type);
-                          form.setValue("availableIds.types", updated);
+                            ? [...current, option]
+                            : current.filter((o) => o !== option);
+                          form.setValue("ngOptions.common", updated);
                         }}
                       />
-                      <label className="text-sm">{type}</label>
+                      <label className="text-sm">{option}</label>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4">
-                  <Label>その他の身分証明書</Label>
+                  <Label>その他のNGオプション</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {otherIds.map((id) => (
-                      <Badge key={id} variant="secondary">
-                        {id}
+                    {otherNgOptions.map((option) => (
+                      <Badge key={option} variant="secondary">
+                        {option}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="ml-1 h-4 w-4 p-0"
                           onClick={() => {
-                            setOtherIds(otherIds.filter((i) => i !== id));
+                            setOtherNgOptions(otherNgOptions.filter((o) => o !== option));
                             form.setValue(
-                              "availableIds.others",
-                              otherIds.filter((i) => i !== id)
+                              "ngOptions.others",
+                              otherNgOptions.filter((o) => o !== option)
                             );
                           }}
                         >
@@ -489,14 +781,14 @@ export const TalentForm: React.FC = () => {
                   </div>
                   <div className="flex gap-2 mt-2">
                     <Input
-                      placeholder="その他の身分証明書を入力"
+                      placeholder="その他のNGオプションを入力"
                       onKeyPress={(e) => {
                         if (e.key === "Enter") {
                           const value = e.currentTarget.value.trim();
-                          if (value && !otherIds.includes(value)) {
-                            const newIds = [...otherIds, value];
-                            setOtherIds(newIds);
-                            form.setValue("availableIds.others", newIds);
+                          if (value && !otherNgOptions.includes(value)) {
+                            const newOptions = [...otherNgOptions, value];
+                            setOtherNgOptions(newOptions);
+                            form.setValue("ngOptions.others", newOptions);
                             e.currentTarget.value = "";
                           }
                         }
@@ -507,455 +799,161 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* 基本情報セクション */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">基本情報</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField label="姓" required>
-                    <Input
-                      {...form.register("lastName")}
-                      placeholder="姓を入力してください"
-                    />
-                    {form.formState.errors.lastName && (
-                      <FormErrorMessage message={form.formState.errors.lastName.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="名" required>
-                    <Input
-                      {...form.register("firstName")}
-                      placeholder="名を入力してください"
-                    />
-                    {form.formState.errors.firstName && (
-                      <FormErrorMessage message={form.formState.errors.firstName.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="姓（カナ）" required>
-                    <Input
-                      {...form.register("lastNameKana")}
-                      placeholder="セイを入力してください"
-                    />
-                    {form.formState.errors.lastNameKana && (
-                      <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="名（カナ）" required>
-                    <Input
-                      {...form.register("firstNameKana")}
-                      placeholder="メイを入力してください"
-                    />
-                    {form.formState.errors.firstNameKana && (
-                      <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />
-                    )}
-                  </FormField>
-                </div>
-              </div>
-
-              {/* 住所情報 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">住所情報</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField label="在住地" required>
-                    <Select
-                      value={form.watch("location")}
-                      onValueChange={(value) => form.setValue("location", value, { shouldValidate: true })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="都道府県を選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {prefectures.map((pref) => (
-                          <SelectItem key={pref} value={pref}>
-                            {pref}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.location && (
-                      <FormErrorMessage message={form.formState.errors.location.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="最寄り駅" required>
-                    <Input
-                      {...form.register("nearestStation")}
-                      placeholder="最寄り駅を入力してください"
-                    />
-                    {form.formState.errors.nearestStation && (
-                      <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />
-                    )}
-                  </FormField>
-                </div>
-              </div>
-
-
-              {/* 本籍地入りの住民票の用意可否（必須） */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">住民票</h3>
-                <SwitchField
-                  label="本籍地入りの住民票の用意"
-                  required
-                  checked={form.watch("canProvideResidenceRecord")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("canProvideResidenceRecord", checked)
-                  }
-                />
-              </div>
-
-              {/* 身体的特徴 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">身体的特徴</h3>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <FormField label="身長 (cm)" required>
-                    <Input
-                      type="number"
-                      {...form.register("height", { valueAsNumber: true })}
-                      min={130}
-                      max={190}
-                    />
-                    {form.formState.errors.height && (
-                      <FormErrorMessage message={form.formState.errors.height.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="体重 (kg)" required>
-                    <Input
-                      type="number"
-                      {...form.register("weight", { valueAsNumber: true })}
-                      min={30}
-                      max={150}
-                    />
-                    {form.formState.errors.weight && (
-                      <FormErrorMessage message={form.formState.errors.weight.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="カップサイズ" required>
-                    <Select
-                      value={form.watch("cupSize")}
-                      onValueChange={(value) => form.setValue("cupSize", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cupSizes.map((size) => (
-                          <SelectItem key={size} value={size}>
-                            {size}カップ
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.cupSize && (
-                      <FormErrorMessage message={form.formState.errors.cupSize.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="バスト (cm) (任意)">
-                    <Input
-                      type="text"
-                      {...form.register("bust", {
-                        setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                      })}
-                      placeholder="未入力可"
-                    />
-                    {form.formState.errors.bust && (
-                      <FormErrorMessage message={form.formState.errors.bust.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="ウエスト (cm) (任意)">
-                    <Input
-                      type="text"
-                      {...form.register("waist", {
-                        setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                      })}
-                      placeholder="未入力可"
-                    />
-                    {form.formState.errors.waist && (
-                      <FormErrorMessage message={form.formState.errors.waist.message as string} />
-                    )}
-                  </FormField>
-                  <FormField label="ヒップ (cm) (任意)">
-                    <Input
-                      type="text"
-                      {...form.register("hip", {
-                        setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                      })}
-                      placeholder="未入力可"
-                    />
-                    {form.formState.errors.hip && (
-                      <FormErrorMessage message={form.formState.errors.hip.message as string} />
-                    )}
-                  </FormField>
-                </div>
-              </div>
-
-              {/* 顔出し */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">顔出し</h3>
-                <FormField label="パネルの顔出し" required>
-                  <Select
-                    value={form.watch("faceVisibility")}
-                    onValueChange={(value) => form.setValue("faceVisibility", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {faceVisibilityTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.faceVisibility && (
-                    <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />
-                  )}
-                </FormField>
-              </div>
-
-              {/* 写メ日記と自宅への派遣 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">その他</h3>
-                <SwitchField
-                  label="写メ日記の投稿可否"
-                  required
-                  checked={form.watch("canPhotoDiary")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("canPhotoDiary", checked, { shouldValidate: true })
-                  }
-                  valueLabels={{ checked: "可能", unchecked: "不可" }}
-                />
-
-                <SwitchField
-                  label="自宅への派遣"
-                  required
-                  checked={form.watch("canHomeDelivery")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("canHomeDelivery", checked, { shouldValidate: true })
-                  }
-                  valueLabels={{ checked: "可能", unchecked: "不可" }}
-                  description="自宅での接客が可能な場合は「可能」を選択してください"
-                />
-              </div>
-
-              {/* NGオプション */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
-                <FormField label="NGオプション">
+            {/* エステオプション */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
+              <Collapsible
+                open={isEstheOpen}
+                onOpenChange={setIsEstheOpen}
+                className="border rounded-lg p-4"
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full">
+                  <span className="font-medium">風俗エステ用可能オプション</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isEstheOpen ? 'transform rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    {commonNgOptions.map((option) => (
+                    {estheOptions.map((option) => (
                       <div key={option} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={form.watch("ngOptions.common").includes(option)}
+                          checked={form.watch("estheOptions.available").includes(option)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("ngOptions.common");
+                            const current = form.watch("estheOptions.available");
                             const updated = checked
                               ? [...current, option]
                               : current.filter((o) => o !== option);
-                            form.setValue("ngOptions.common", updated);
+                            form.setValue("estheOptions.available", updated);
                           }}
                         />
                         <label className="text-sm">{option}</label>
                       </div>
                     ))}
                   </div>
+
                   <div className="mt-4">
-                    <Label>その他のNGオプション</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {otherNgOptions.map((option) => (
-                        <Badge key={option} variant="secondary">
-                          {option}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
-                              setOtherNgOptions(otherNgOptions.filter((o) => o !== option));
-                              form.setValue(
-                                "ngOptions.others",
-                                otherNgOptions.filter((o) => o !== option)
-                              );
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="その他のNGオプションを入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const value = e.currentTarget.value.trim();
-                            if (value && !otherNgOptions.includes(value)) {
-                              const newOptions = [...otherNgOptions, value];
-                              setOtherNgOptions(newOptions);
-                              form.setValue("ngOptions.others", newOptions);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                    </div>
+                    <Label>その他NGプレイ</Label>
+                    <Input
+                      placeholder="その他のNGプレイを入力"
+                      value={form.watch("estheOptions.ngOptions").join(", ")}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        form.setValue(
+                          "estheOptions.ngOptions",
+                          value ? value.split(",").map((v) => v.trim()) : []
+                        );
+                      }}
+                    />
                   </div>
-                </FormField>
-              </div>
 
-              {/* エステオプション */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
-                <Collapsible
-                  open={isEstheOpen}
-                  onOpenChange={setIsEstheOpen}
-                  className="border rounded-lg p-4"
-                >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full">
-                    <span className="font-medium">風俗エステ用可能オプション</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isEstheOpen ? 'transform rotate-180' : ''}`} />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {estheOptions.map((option) => (
-                        <div key={option} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={form.watch("estheOptions.available").includes(option)}
-                            onCheckedChange={(checked) => {
-                              const current = form.watch("estheOptions.available");
-                              const updated = checked
-                                ? [...current, option]
-                                : current.filter((o) => o !== option);
-                              form.setValue("estheOptions.available", updated);
-                            }}
-                          />
-                          <label className="text-sm">{option}</label>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mt-4">
+                    <SwitchField
+                      label="エステ経験"
+                      checked={form.watch("hasEstheExperience")}
+                      onCheckedChange={(checked) => {
+                        form.setValue("hasEstheExperience", checked, { shouldValidate: true });
+                        if (!checked) {
+                          form.setValue("estheExperiencePeriod", undefined);
+                        }
+                      }}
+                    />
 
-                    <div className="mt-4">
-                      <Label>その他NGプレイ</Label>
-                      <Input
-                        placeholder="その他のNGプレイを入力"
-                        value={form.watch("estheOptions.ngOptions").join(", ")}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          form.setValue(
-                            "estheOptions.ngOptions",
-                            value ? value.split(",").map((v) => v.trim()) : []
-                          );
-                        }}
-                      />
-                    </div>
-
-                    <div className="mt-4">
-                      <SwitchField
-                        label="エステ経験"
-                        checked={form.watch("hasEstheExperience")}
-                        onCheckedChange={(checked) => {
-                          form.setValue("hasEstheExperience", checked, { shouldValidate: true });
-                          if (!checked) {
-                            form.setValue("estheExperiencePeriod", undefined);
-                          }
-                        }}
-                      />
-
-                      {form.watch("hasEstheExperience") && (
-                        <div className="mt-2">
-                          <Input
-                            placeholder="経験期間を入力（例：2年）"
-                            {...form.register("estheExperiencePeriod")}
-                          />
-                          {form.formState.errors.estheExperiencePeriod && (
-                            <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-
-              {/* アレルギーと喫煙 */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4">アレルギー・喫煙</h3>
-
-                {/* アレルギーサブセクション */}
-                <div>
-                  <SwitchField
-                    label="アレルギー"
-                    required
-                    checked={form.watch("allergies.hasAllergy")}
-                    onCheckedChange={(checked) => {
-                      form.setValue("allergies", {
-                        types: [],
-                        others: [],
-                        hasAllergy: checked,
-                      }, { shouldValidate: true });
-                    }}
-                  />
-
-                  {form.watch("allergies.hasAllergy") && (
-                    <div className="ml-4 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        {allergyTypes.map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={form.watch("allergies.types").includes(type)}
-                              onCheckedChange={(checked) => {
-                                const current = form.watch("allergies.types");
-                                const updated = checked
-                                  ? [...current, type]
-                                  : current.filter((t) => t !== type);
-                                form.setValue("allergies.types", updated);
-                              }}
-                            />
-                            <label className="text-sm">{type}</label>
-                          </div>
-                        ))}
-                      </div>
-                      <div>
-                        <Label>その他のアレルギー</Label>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {otherAllergies.map((allergy) => (
-                            <Badge key={allergy} variant="secondary">
-                              {allergy}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="ml-1 h-4 w-4 p-0"
-                                onClick={() => {
-                                  setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
-                                  form.setValue(
-                                    "allergies.others",
-                                    otherAllergies.filter((a) => a !== allergy)
-                                  );
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            placeholder="その他のアレルギーを入力"
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                const value = e.currentTarget.value.trim();
-                                if(value && !otherAllergies.includes(value)) {
-                                    const newAllergies = [...otherAllergies, value];
-                                    setOtherAllergies(newAllergies);
-                                    form.setValue("allergies.others", newAllergies);
-                                    e.currentTarget.value = "";
-                                  }
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
+                    {form.watch("hasEstheExperience") && (
+                      <div className="mt-2">
+                        <Input
+                          placeholder="経験期間を入力（例：2年）"
+                          {...form.register("estheExperiencePeriod")}
+                        />
+                        {form.formState.errors.estheExperiencePeriod && (
+                          <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />
+                        )}
                       </div>
                     )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+
+            {/* アレルギーと喫煙 */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold mb-4">アレルギー・喫煙</h3>
+
+              {/* アレルギーサブセクション */}
+              <div>
+                <SwitchField
+                  label="アレルギー"
+                  required
+                  checked={form.watch("allergies.hasAllergy")}
+                  onCheckedChange={(checked) => {
+                    form.setValue("allergies", {
+                      types: [],
+                      others: [],
+                      hasAllergy: checked,
+                    }, { shouldValidate: true });
+                  }}
+                />
+
+                {form.watch("allergies.hasAllergy") && (
+                  <div className="ml-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {allergyTypes.map((type) => (
+                        <div key={type} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={form.watch("allergies.types").includes(type)}
+                            onCheckedChange={(checked) => {
+                              const current = form.watch("allergies.types");
+                              const updated = checked
+                                ? [...current, type]
+                                : current.filter((t) => t !== type);
+                              form.setValue("allergies.types", updated);
+                            }}
+                          />
+                          <label className="text-sm">{type}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <Label>その他のアレルギー</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {otherAllergies.map((allergy) => (
+                          <Badge key={allergy} variant="secondary">
+                            {allergy}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="ml-1 h-4 w-4 p-0"
+                              onClick={() => {
+                                setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
+                                form.setValue(
+                                  "allergies.others",
+                                  otherAllergies.filter((a) => a !== allergy)
+                                );
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          placeholder="その他のアレルギーを入力"
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              const value = e.currentTarget.value.trim();
+                              if(value && !otherAllergies.includes(value)) {
+                                  const newAllergies = [...otherAllergies, value];
+                                  setOtherAllergies(newAllergies);
+                                  form.setValue("allergies.others", newAllergies);
+                                  e.currentTarget.value = "";
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 喫煙サブセクション */}
