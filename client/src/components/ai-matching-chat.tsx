@@ -684,7 +684,10 @@ AIが自動で店舗とのマッチングを行います。
                   </div>
 
                   <div className="space-y-2">
-                    <Label>待機時間（時間）</Label>
+                    <Label>一日の総勤務時間</Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      12時間以上の勤務が基本的に保証条件となります。
+                    </p>
                     <Select
                       onValueChange={(value) =>
                         setConditions({
@@ -694,7 +697,7 @@ AIが自動で店舗とのマッチングを行います。
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="待機時間を選択" />
+                        <SelectValue placeholder="勤務時間を選択" />
                       </SelectTrigger>
                       <SelectContent>
                         {WAITING_HOURS.map((option) => (
