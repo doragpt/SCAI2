@@ -2,11 +2,20 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { workTypes, prefectures } from "@shared/schema";
+import { workTypes, prefectures, type TalentProfile } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -16,7 +25,7 @@ import {
 } from "@/components/ui/select";
 
 // 希望業種の説明を追加
-const WORK_TYPES = [
+const WORK_TYPES_WITH_DESCRIPTION = [
   { 
     id: "store-health", 
     label: "店舗型ヘルス",
@@ -109,39 +118,6 @@ const RATE_OPTIONS = [
   { value: "30000", label: "30,000円以上" },
 ] as const;
 
-const WORK_TYPES_WITH_DESCRIPTION = [
-  { 
-    id: "store-health", 
-    label: "店舗型ヘルス",
-    description: "お店に来店されたお客様へのサービスを提供。移動の必要がなく、安定した環境で働けます。"
-  },
-  { 
-    id: "hotel-health", 
-    label: "ホテルヘルス",
-    description: "ホテルでのサービス提供。お店で受付後、近隣のホテルへ移動してのサービスとなります。"
-  },
-  { 
-    id: "delivery-health", 
-    label: "デリバリーヘルス",
-    description: "お客様のいるホテルや自宅へ直接訪問してサービスを提供。幅広いエリアでの勤務が可能です。"
-  },
-  { 
-    id: "esthe", 
-    label: "風俗エステ",
-    description: "マッサージや施術を中心としたサービス。ソフトなサービス内容で、未経験の方も始めやすいです。"
-  },
-  { 
-    id: "mseikan", 
-    label: "M性感",
-    description: "男性受け身型のサービス。特殊な技術が必要ですが、研修制度も充実しています。"
-  },
-  { 
-    id: "onakura", 
-    label: "オナクラ",
-    description: "最もソフトなサービス内容。接客時間も短く、手だけのサービスで未経験の方に人気です。"
-  }
-] as const;
-
 type WorkTypeId = typeof WORK_TYPES_WITH_DESCRIPTION[number]['id'];
 
 interface Message {
@@ -197,6 +173,12 @@ export const AIMatchingChat = () => {
   const [matchingResults, setMatchingResults] = useState<MatchingResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // ウェブ履歴書データの取得
+  const { data: profileData } = useQuery<TalentProfile>({
+    queryKey: ["/api/talent/profile"],
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -266,32 +248,13 @@ export const AIMatchingChat = () => {
         return;
       }
 
-      // 入力内容の確認メッセージを表示
       setMessages(prev => [...prev, {
         type: 'user',
         content: '入力内容を確認する'
-      }, {
-        type: 'ai',
-        content: '入力してくれてありがとう！\n今現在のあなたのプロフィールを確認するね！'
-      }, {
-        type: 'ai',
-        content: formatConditionsMessage(conditions, selectedType)
-      }, {
-        type: 'ai',
-        content: `入力内容に間違いがないか確認してください。\n
-修正が必要な場合は「修正する」を、このまま進める場合は「マッチングを開始する」を選択してください。\n
-マッチングを開始すると、以下の2つの方法から選択できます：\n
-1️⃣ 自動マッチング
-・AIが条件に合う店舗に直接連絡
-・できるだけ早く働きたい方におすすめ
-・面接や採用までの時間を短縮\n
-2️⃣ 手動マッチング
-・AIが条件に合う店舗を一覧表示
-・じっくり店舗を選びたい方におすすめ
-・店舗の詳細情報を確認可能`
       }]);
 
-      setShowConfirmationButtons(true);
+      // 確認ダイアログを表示
+      setShowConfirmDialog(true);
     } catch (error) {
       console.error('Error in handleConditionSubmit:', error);
       setMessages(prev => [...prev, {
@@ -464,6 +427,35 @@ export const AIMatchingChat = () => {
       </div>
     );
   };
+
+  const renderProfileSection = () => {
+    if (!profileData) return null;
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">ウェブ履歴書の情報</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>お名前</Label>
+            <p className="text-sm">{profileData?.lastName} {profileData?.firstName}</p>
+          </div>
+          <div>
+            <Label>年齢</Label>
+            <p className="text-sm">{profileData?.age}歳</p>
+          </div>
+          <div>
+            <Label>居住地</Label>
+            <p className="text-sm">{profileData?.location}</p>
+          </div>
+          <div>
+            <Label>最寄り駅</Label>
+            <p className="text-sm">{profileData?.nearestStation}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)]">
@@ -841,7 +833,7 @@ export const AIMatchingChat = () => {
                       希望地域
                     </Label>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {selectedType === '在籍' 
+                      {selectedType === '在籍'
                         ? '在籍での勤務を希望する地域を選択してください。通勤のしやすさなども考慮してお選びください。'
                         : '出稼ぎでの勤務を希望する地域を選択してください。交通費や宿泊費のサポートがある地域もあります。'}
                     </p>
@@ -884,6 +876,7 @@ export const AIMatchingChat = () => {
                   <Button
                     className="w-full mt-6"
                     onClick={handleConditionSubmit}
+                    disabled={conditions.workTypes.length === 0 || (selectedType === '在籍' && conditions.preferredLocations.length === 0)}
                   >
                     入力内容を確認する
                   </Button>
@@ -895,41 +888,7 @@ export const AIMatchingChat = () => {
       )}
 
       {/* 確認/修正ボタン */}
-      {showConfirmationButtons && (
-        <Card className="border-t sticky bottom-0 bg-background">
-          <div className="p-6">
-            <div className="flex flex-col gap-4">
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium">入力内容の確認</h3>
-                <p className="text-sm text-muted-foreground">
-                  内容を確認し、マッチングを開始するか修正するかを選択してください
-                </p>
-              </div>
-              <div className="flex gap-4 justify-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="min-w-[140px]"
-                  onClick={() => {
-                    setShowConfirmationButtons(false);
-                    setShowForm(true);
-                  }}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  修正する
-                </Button>
-                <Button
-                  size="lg"
-                  className="min-w-[140px]"
-                  onClick={handleStartMatching}
-                >
-                  マッチングを開始する
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
+      {/* showConfirmationButtons は使用しない */}
 
       {/* マッチング方法選択 */}
       {showMatchingOptions && (
@@ -971,71 +930,10 @@ export const AIMatchingChat = () => {
         </Card>
       )}
 
-      <div className="p-4 border-t bg-background">
-        {!selectedType && !isLoading && (
-          <div className="flex gap-4 justify-center">
-            {workTypes.map((type) => (
-              <Button
-                key={type}
-                onClick={() => handleWorkTypeSelect(type)}
-                className="min-w-[120px]"
-              >
-                {type}
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        )}
-      </div>
-
-      {matchingState === 'listing' && matchingResults.length > 0 && (
-        <div className="space-y-4 p-4 border-t">
-          {matchingResults
-            .slice(currentPage * 10, (currentPage + 1) * 10)
-            .map((result) => (
-              <Card key={result.id} className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{result.name}</h3>
-                    <p className="text-sm text-muted-foreground">{result.location}</p>
-                    <div className="flex gap-2 mt-2">
-                      {result.matches.map((match, i) => (
-                        <span
-                          key={i}
-                          className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
-                        >
-                          {match}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    詳細を見る
-                  </Button>
-                </div>
-              </Card>
-            ))}
-
-          {currentPage * 10 + 10 < matchingResults.length && (
-            <Button
-              className="w-full mt-4"
-              variant="outline"
-              onClick={() => {
-                setCurrentPage(prev => prev + 1);
-                setMessages(prev => [...prev, {
-                  type: 'ai',
-                  content: '次の10件を表示するね！'
-                }]);
-              }}
-            >
-              次の10件を見る
-            </Button>
-          )}
+      {/* ローディング表示 */}
+      {isLoading && (
+        <div className="flex justify-center p-4">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
     </div>
