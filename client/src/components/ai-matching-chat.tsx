@@ -117,6 +117,8 @@ export const AIMatchingChat = () => {
     workTypes: [],
   });
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
+  const [showMatchingOptions, setShowMatchingOptions] = useState(false);
 
   const handleBack = () => {
     if (showForm) {
@@ -153,12 +155,65 @@ export const AIMatchingChat = () => {
   };
 
   const handleConditionSubmit = () => {
-    // バリデーションと送信処理
-    console.log('Submitted conditions:', conditions);
+    // 入力内容の確認メッセージを表示
     setMessages(prev => [...prev, {
+      type: 'user',
+      content: '入力内容を確認する'
+    }, {
       type: 'ai',
       content: '入力してくれてありがとう！\n今現在のあなたのプロフィールを確認するね！'
+    }, {
+      type: 'ai',
+      content: `【入力内容確認】\n
+${selectedType === '出稼ぎ' ? `
+◆ 希望業種：${conditions.workTypes.map(type => 
+  WORK_TYPES.find(t => t.id === type)?.label
+).join('、')}
+◆ 勤務期間：${conditions.workPeriodStart ? `${conditions.workPeriodStart}～${conditions.workPeriodEnd}` : '未設定'}
+◆ 前日入り：${conditions.canArrivePreviousDay ? '可能' : '不可'}
+◆ 希望保証：${conditions.desiredGuarantee === 'none' ? '希望無し' : GUARANTEE_OPTIONS.find(opt => opt.value === conditions.desiredGuarantee)?.label}
+◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
+◆ 待機時間：${conditions.waitingHours || '未設定'}時間
+◆ 出発地：${conditions.departureLocation || '未設定'}
+◆ 帰宅地：${conditions.returnLocation || '未設定'}
+◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}
+◆ NG地域：${conditions.ngLocations.length > 0 ? conditions.ngLocations.join('、') : '未設定'}
+◆ その他備考：${conditions.notes || '未設定'}` : `
+◆ 希望業種：${conditions.workTypes.map(type => 
+  WORK_TYPES.find(t => t.id === type)?.label
+).join('、')}
+◆ 面接希望日時：${conditions.interviewDates?.filter(Boolean).map(date => 
+  new Date(date).toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+).join('\n') || '未設定'}
+◆ 希望単価：${conditions.desiredTime === 'none' ? '希望無し' : `${TIME_OPTIONS.find(opt => opt.value === conditions.desiredTime)?.label} ${RATE_OPTIONS.find(opt => opt.value === conditions.desiredRate)?.label}`}
+◆ 希望地域：${conditions.preferredLocations.length > 0 ? conditions.preferredLocations.join('、') : '未設定'}`}
+`
+    }, {
+      type: 'ai',
+      content: '記入したものの情報に間違いはないか確認してね！\n間違いが無ければマッチングをはじめるよ！'
     }]);
+
+    // 確認ボタンと修正ボタンを表示するための状態を追加
+    setShowConfirmationButtons(true);
+  };
+
+  // マッチング開始の処理
+  const handleStartMatching = () => {
+    setMessages(prev => [...prev, {
+      type: 'user',
+      content: 'マッチングを開始する'
+    }, {
+      type: 'ai',
+      content: '確認してくれてありがとう！\nAIがあなたに合いそうな店舗に自動で確認する？\nそれともAIがあなたに合いそうな店舗をピックアップしてから確認する？'
+    }]);
+    setShowConfirmationButtons(false);
+    setShowMatchingOptions(true);
   };
 
   return (
@@ -589,6 +644,60 @@ export const AIMatchingChat = () => {
             入力内容を確認する
           </Button>
         </Card>
+      )}
+
+      {/* 確認/修正ボタン */}
+      {showConfirmationButtons && (
+        <div className="flex gap-4 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowConfirmationButtons(false);
+              setShowForm(true);
+            }}
+          >
+            修正する
+          </Button>
+          <Button onClick={handleStartMatching}>
+            マッチングを開始する
+          </Button>
+        </div>
+      )}
+
+      {/* マッチング方法選択 */}
+      {showMatchingOptions && (
+        <div className="flex gap-4 justify-center">
+          <Button
+            onClick={() => {
+              setMessages(prev => [...prev, {
+                type: 'user',
+                content: '自動で確認する'
+              }, {
+                type: 'ai',
+                content: 'マッチングには時間がかかるから少しだけ時間をもらうね！'
+              }]);
+              setShowMatchingOptions(false);
+              // TODO: 自動マッチング処理の実装
+            }}
+          >
+            自動で確認する
+          </Button>
+          <Button
+            onClick={() => {
+              setMessages(prev => [...prev, {
+                type: 'user',
+                content: 'ピックアップしてから確認する'
+              }, {
+                type: 'ai',
+                content: 'では合いそうな店舗をリストアップするね！'
+              }]);
+              setShowMatchingOptions(false);
+              // TODO: ピックアップマッチング処理の実装
+            }}
+          >
+            ピックアップしてから確認する
+          </Button>
+        </div>
       )}
 
       {/* ローディング表示 */}
