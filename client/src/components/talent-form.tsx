@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -25,9 +25,10 @@ import {
   type TalentProfileData,
   talentProfileSchema,
 } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { QUERY_KEYS } from "@/lib/queryClient";
 
 // FormField wrapper component
 const FormField: React.FC<{
@@ -97,121 +98,136 @@ export const TalentForm: React.FC = () => {
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [, setLocation] = useLocation();
 
-  // Fix default values and type issues
-  const defaultValues: TalentProfileData = {
-    lastName: "",
-    firstName: "",
-    lastNameKana: "",
-    firstNameKana: "",
-    location: "東京都",
-    nearestStation: "",
-    availableIds: {
-      types: [],
-      others: [],
+  // プロフィールデータの取得
+  const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    onError: (error: Error) => {
+      console.error("Profile fetch error:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: "プロフィールの取得に失敗しました。",
+        variant: "destructive",
+      });
     },
-    canProvideResidenceRecord: false,
-    height: 150,
-    weight: 45,
-    cupSize: "D",
-    bust: null,
-    waist: null,
-    hip: null,
-    faceVisibility: "全隠し",
-    canPhotoDiary: false,
-    canHomeDelivery: false,
-    ngOptions: {
-      common: [],
-      others: [],
-    },
-    allergies: {
-      types: [],
-      others: [],
-      hasAllergy: false,
-    },
-    smoking: {
-      enabled: false,
-      types: [],
-      others: [],
-    },
-    hasSnsAccount: false,
-    snsUrls: [],
-    currentStores: [],
-    previousStores: [],
-    photoDiaryUrls: [],
-    selfIntroduction: "",
-    notes: "",
-    estheOptions: {
-      available: [],
-      ngOptions: [],
-    },
-    hasEstheExperience: false,
-    estheExperiencePeriod: "",
-  };
+  });
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    defaultValues,
+    defaultValues: existingProfile || {
+      lastName: "",
+      firstName: "",
+      lastNameKana: "",
+      firstNameKana: "",
+      location: "東京都",
+      nearestStation: "",
+      availableIds: {
+        types: [],
+        others: [],
+      },
+      canProvideResidenceRecord: false,
+      height: 150,
+      weight: 45,
+      cupSize: "D",
+      bust: null,
+      waist: null,
+      hip: null,
+      faceVisibility: "全隠し",
+      canPhotoDiary: false,
+      canHomeDelivery: false,
+      ngOptions: {
+        common: [],
+        others: [],
+      },
+      allergies: {
+        types: [],
+        others: [],
+        hasAllergy: false,
+      },
+      smoking: {
+        enabled: false,
+        types: [],
+        others: [],
+      },
+      hasSnsAccount: false,
+      snsUrls: [],
+      currentStores: [],
+      previousStores: [],
+      photoDiaryUrls: [],
+      selfIntroduction: "",
+      notes: "",
+      estheOptions: {
+        available: [],
+        ngOptions: [],
+      },
+      hasEstheExperience: false,
+      estheExperiencePeriod: "",
+    },
     mode: "onChange",
   });
 
-  const { mutate: createProfile } = useMutation({
+  // 既存のプロフィールデータが取得された時にフォームを更新
+  useEffect(() => {
+    if (existingProfile) {
+      // その他のフィールドの状態を更新
+      setOtherIds(existingProfile.availableIds.others || []);
+      setOtherNgOptions(existingProfile.ngOptions.others || []);
+      setOtherAllergies(existingProfile.allergies.others || []);
+      setOtherSmokingTypes(existingProfile.smoking.others || []);
+
+      // フォームの値を更新
+      Object.entries(existingProfile).forEach(([key, value]) => {
+        form.setValue(key as keyof TalentProfileData, value);
+      });
+    }
+  }, [existingProfile, form]);
+
+  const { mutate: updateProfile } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
         const processedData = {
           ...data,
+          height: Number(data.height),
+          weight: Number(data.weight),
           bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
           waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
           hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
           ngOptions: {
-            common: data.ngOptions?.common ?? [],
-            others: data.ngOptions?.others ?? [],
+            common: data.ngOptions?.common || [],
+            others: data.ngOptions?.others || [],
           },
           allergies: {
-            types: data.allergies?.types ?? [],
-            others: data.allergies?.others ?? [],
-            hasAllergy: data.allergies?.hasAllergy ?? false,
+            types: data.allergies?.types || [],
+            others: data.allergies?.others || [],
+            hasAllergy: data.allergies?.hasAllergy || false,
           },
           smoking: {
-            enabled: data.smoking?.enabled ?? false,
-            types: data.smoking?.types ?? [],
-            others: data.smoking?.others ?? [],
-          },
-          snsUrls: data.snsUrls ?? [],
-          currentStores: data.currentStores ?? [],
-          previousStores: data.previousStores ?? [],
-          photoDiaryUrls: data.photoDiaryUrls ?? [],
-          estheOptions: {
-            available: data.estheOptions?.available ?? [],
-            ngOptions: data.estheOptions?.ngOptions ?? [],
-          },
+            enabled: data.smoking?.enabled || false,
+            types: data.smoking?.types || [],
+            others: data.smoking?.others || [],
+          }
         };
 
-        const response = await apiRequest("POST", "/api/talent/profile", processedData);
-        const responseData = await response.json();
-
-        if (response.status === 303) {
-          toast({
-            title: "プロフィール情報",
-            description: responseData.message,
-          });
-          setLocation(responseData.redirect);
-          return;
-        }
+        const response = await apiRequest(
+          existingProfile ? "PUT" : "POST",
+          "/api/talent/profile",
+          processedData
+        );
 
         if (!response.ok) {
-          throw new Error(responseData.message || "プロフィールの作成に失敗しました");
+          const errorData = await response.json();
+          throw new Error(errorData.message || "プロフィールの更新に失敗しました");
         }
 
-        return responseData;
+        return await response.json();
       } catch (error) {
-        console.error("API通信エラー:", error);
+        console.error("API error:", error);
         throw error;
       }
     },
     onSuccess: () => {
       toast({
-        title: "プロフィールが作成されました",
-        description: "プロフィールの作成が完了しました。",
+        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
+        description: "プロフィールの保存が完了しました。",
       });
       setLocation("/talent/dashboard");
     },
@@ -224,24 +240,15 @@ export const TalentForm: React.FC = () => {
     },
   });
 
-  // Fix currentStores and previousStores type handling
-  type StoreEntry = {
-    storeName: string;
-    stageName: string;
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  // Update the store-related state management
-  const [currentStores, setCurrentStores] = useState<StoreEntry[]>([]);
-  const [previousStores, setPreviousStores] = useState<StoreEntry[]>([]);
-
-  // Fix numeric field comparisons
-  const processNumericField = (value: string | undefined): number | null => {
-    if (value === undefined || value === "") return null;
-    const num = Number(value);
-    return isNaN(num) ? null : num;
-  };
-
-  // Update form submission logic with better debugging and validation
   const onSubmit = async (data: TalentProfileData) => {
     // デバッグ用のログ出力
     console.log('Form submission data:', data);
@@ -281,46 +288,7 @@ export const TalentForm: React.FC = () => {
     }
 
     try {
-      // データの型変換を明示的に行う
-      const processedData = {
-        ...data,
-        height: Number(data.height),
-        weight: Number(data.weight),
-        bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
-        waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
-        hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
-        // 必須フィールドの確認
-        availableIds: {
-          types: data.availableIds?.types || [],
-          others: data.availableIds?.others || [],
-        },
-        ngOptions: {
-          common: data.ngOptions?.common || [],
-          others: data.ngOptions?.others || [],
-        },
-        allergies: {
-          types: data.allergies?.types || [],
-          others: data.allergies?.others || [],
-          hasAllergy: data.allergies?.hasAllergy || false,
-        },
-        smoking: {
-          enabled: data.smoking?.enabled || false,
-          types: data.smoking?.types || [],
-          others: data.smoking?.others || [],
-        },
-        // 必須フィールドの値を確実に設定
-        location: data.location,
-        cupSize: data.cupSize,
-        faceVisibility: data.faceVisibility,
-        lastName: data.lastName,
-        firstName: data.firstName,
-        lastNameKana: data.lastNameKana,
-        firstNameKana: data.firstNameKana,
-        nearestStation: data.nearestStation,
-      };
-
-      console.log('Processed data being sent:', processedData);
-      await createProfile(processedData);
+      await updateProfile(data);
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
@@ -366,25 +334,35 @@ export const TalentForm: React.FC = () => {
     form.setValue("previousStores", [...current]);
   };
 
+  // Fix currentStores and previousStores type handling
+  type StoreEntry = {
+    storeName: string;
+    stageName: string;
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
-      {/* ヘッダー */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/talent/dashboard">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <span className="text-sm text-muted-foreground">ダッシュボードに戻る</span>
+      <header className="border-b bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {existingProfile ? "プロフィール編集" : "プロフィール作成"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {existingProfile
+                ? "プロフィール情報を編集できます"
+                : "安全に働くための詳細情報を登録してください"}
+            </p>
           </div>
-          <h1 className="text-xl font-bold">プロフィール編集</h1>
-          <div className="w-10" /> {/* スペーサー */}
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/talent/dashboard">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
         </div>
       </header>
 
-      {/* メインコンテンツ */}
       <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
           <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -924,7 +902,7 @@ export const TalentForm: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
+                            onClick={() =>{
                               setOtherSmokingTypes(otherSmokingTypes.filter((t) => t !== type));
                               form.setValue(
                                 "smoking.others",
