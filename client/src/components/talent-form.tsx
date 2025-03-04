@@ -470,6 +470,17 @@ export const TalentForm: React.FC = () => {
                   </div>
                 </div>
               </FormField>
+
+              {/* 本籍地記載の住民票の用意可否を追加 */}
+              <div className="mt-4">
+                <SwitchField
+                  label="本籍地記載の住民票"
+                  checked={form.watch("canProvideResidenceRecord")}
+                  onCheckedChange={(checked) => form.setValue("canProvideResidenceRecord", checked)}
+                  description="本籍地記載の住民票の用意が可能かどうか"
+                  valueLabels={{ checked: "用意可能", unchecked: "用意不可" }}
+                />
+              </div>
             </div>
 
             {/* 4. 身体的特徴 */}
