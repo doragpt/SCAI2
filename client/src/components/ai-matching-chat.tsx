@@ -34,10 +34,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Loader2, Bot, User, CheckIcon, MapPin, Star, Building2 } from "lucide-react";
+import { Loader2, Bot, User, CheckIcon, MapPin, Star, Building2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StoreDetailModal } from "@/components/store-detail-modal";
 import ProfileCheckDialog from "@/components/profile-check-dialog";
+import { useProfile } from "@/hooks/use-profile"; // 追加：useProfileフックのインポート
+import { useMatching } from "@/hooks/use-matching";
+import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types"; // 追加：定数のインポート
 
 // 型定義
 interface Message {
