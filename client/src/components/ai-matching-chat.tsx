@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StoreDetailModal } from "@/components/store-detail-modal";
 
 // 希望業種の説明を追加
 const WORK_TYPES_WITH_DESCRIPTION = [
@@ -131,6 +132,15 @@ interface MatchingResult {
   location: string;
   rating: number;
   matches: string[];
+  description?: string;
+  workingHours?: string;
+  requirements?: string[];
+  benefits?: string[];
+  workEnvironment?: string;
+  matchingPoints?: {
+    title: string;
+    description: string;
+  }[];
 }
 
 interface WorkingConditions {
@@ -174,6 +184,8 @@ export const AIMatchingChat = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<MatchingResult | null>(null);
+  const [showStoreDetail, setShowStoreDetail] = useState(false);
 
   // ウェブ履歴書データの取得
   const { data: profileData } = useQuery<TalentProfile>({
@@ -452,20 +464,30 @@ export const AIMatchingChat = () => {
     return (
       <div className="space-y-4">
         {currentResults.map((result) => (
-          <Card key={result.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium">{result.name}</h3>
-                <p className="text-sm text-muted-foreground">{result.location}</p>
-                <div className="flex gap-2 mt-2">
+          <Card key={result.id} className="p-4 hover:bg-accent/5 transition-colors">
+            <div className="flex justify-between items-start gap-4">
+              <div className="space-y-2 flex-1">
+                <div>
+                  <h4 className="font-medium">{result.name}</h4>
+                  <p className="text-sm text-muted-foreground">{result.location}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {result.matches.map((match, i) => (
-                    <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                    <span
+                      key={i}
+                      className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
+                    >
                       {match}
                     </span>
                   ))}
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => handleShowStoreDetail(result)}
+              >
                 詳細を見る
               </Button>
             </div>
@@ -489,6 +511,11 @@ export const AIMatchingChat = () => {
         )}
       </div>
     );
+  };
+
+  const handleShowStoreDetail = (store: MatchingResult) => {
+    setSelectedStore(store);
+    setShowStoreDetail(true);
   };
 
 
@@ -1166,7 +1193,7 @@ export const AIMatchingChat = () => {
                             ))}
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" className="shrink-0">
+                        <Button variant="outline" size="sm" className="shrink-0" onClick={() => handleShowStoreDetail(result)}>
                           詳細を見る
                         </Button>
                       </div>
@@ -1424,6 +1451,13 @@ export const AIMatchingChat = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {selectedStore && (
+        <StoreDetailModal
+          isOpen={showStoreDetail}
+          onClose={() => setShowStoreDetail(false)}
+          store={selectedStore}
+        />
+      )}
     </div>
   );
 };
