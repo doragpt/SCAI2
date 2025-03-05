@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
+import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import {
   allergyTypes,
   smokingTypes,
@@ -36,68 +37,6 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
-import { ProfileConfirmationModal } from "./profile-confirmation-modal";
-
-// FormFieldWrapperコンポーネント（既存のまま）
-const FormFieldWrapper = ({
-  label,
-  required = false,
-  children,
-  description,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-  description?: string;
-}) => {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-      <div className="mt-1.5">{children}</div>
-    </div>
-  );
-};
-
-// SwitchFieldコンポーネント
-const SwitchField = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" },
-}: {
-  label: string;
-  required?: boolean;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  description?: string;
-  valueLabels?: { checked: string; unchecked: string };
-}) => (
-  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-    <div className="space-y-0.5">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-      <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? valueLabels.checked : valueLabels.unchecked}
-      </span>
-    </div>
-  </div>
-);
 
 // PhotoUploadコンポーネント
 const PhotoUpload = ({
@@ -111,13 +50,16 @@ const PhotoUpload = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>(photoTags[0]);
 
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUpload = () => {
@@ -155,7 +97,7 @@ const PhotoUpload = ({
                 value={photo.tag}
                 onValueChange={(tag) => {
                   const updatedPhotos = [...photos];
-                  updatedPhotos[index] = { ...photo, tag };
+                  updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
                   onChange(updatedPhotos);
                 }}
               >
@@ -210,71 +152,72 @@ const PhotoUpload = ({
             </p>
           </div>
 
-          <Input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            id="photo-upload"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleFileSelect(file);
-              }
-            }}
-          />
-          <label htmlFor="photo-upload" className="block w-full cursor-pointer">
-            <div className="flex items-center justify-center">
-              <Button type="button" variant="outline">
-                写真を選択
-              </Button>
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              <label htmlFor="photo-upload" className="cursor-pointer">
+                <Button type="button" variant="outline" className="relative">
+                  写真を選択
+                  <input
+                    type="file"
+                    id="photo-upload"
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                  />
+                </Button>
+              </label>
             </div>
-          </label>
 
-          {previewUrl && (
-            <div className="mt-4 space-y-4">
-              <div className="aspect-[3/4] w-48 mx-auto bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={previewUrl}
-                  alt="プレビュー"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="space-y-2">
-                <Select value={selectedTag} onValueChange={setSelectedTag}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="タグを選択してください（必須）" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {photoTags.map((tag) => (
-                      <SelectItem
-                        key={tag}
-                        value={tag}
-                        disabled={tag === "現在の髪色" && hasHairColorPhoto}
-                      >
-                        {tag}
-                        {tag === "現在の髪色" && " (必須)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex justify-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setPreviewUrl(null);
-                    }}
-                  >
-                    キャンセル
-                  </Button>
-                  <Button type="button" onClick={handleUpload} disabled={!selectedTag}>
-                    アップロード
-                  </Button>
+            {previewUrl && (
+              <div className="mt-4 space-y-4">
+                <div className="aspect-[3/4] w-48 mx-auto bg-muted rounded-lg overflow-hidden">
+                  <img
+                    src={previewUrl}
+                    alt="プレビュー"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Select value={selectedTag} onValueChange={setSelectedTag}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="タグを選択してください（必須）" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {photoTags.map((tag) => (
+                        <SelectItem
+                          key={tag}
+                          value={tag}
+                          disabled={tag === "現在の髪色" && hasHairColorPhoto}
+                        >
+                          {tag}
+                          {tag === "現在の髪色" && " (必須)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setPreviewUrl(null);
+                      }}
+                    >
+                      キャンセル
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleUpload}
+                      disabled={!selectedTag}
+                    >
+                      アップロード
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -367,14 +310,8 @@ export function TalentForm() {
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      form.reset({
-        ...existingProfile,
-        photos: existingProfile.photos || [],
-        bodyMark: existingProfile.bodyMark || {
-          hasBodyMark: false,
-          details: "",
-        },
-      });
+      console.log("Existing profile loaded:", existingProfile);
+      form.reset(existingProfile);
 
       // その他のフィールドの初期化
       setOtherIds(existingProfile.availableIds?.others || []);
