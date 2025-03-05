@@ -106,7 +106,7 @@ export const AIMatchingChat = () => {
   const [showSummaryDialog, setShowSummaryDialog] = useState(false);
   const [checkedStores, setCheckedStores] = useState<Store[]>([]);
   const [showProfileCheck, setShowProfileCheck] = useState(false);
-  const { profileData, updateProfile } = useProfile();
+  const { profileData, isLoading: isProfileLoading } = useProfile();
   const { startMatching, matchingResults, setCurrentPage, currentPage, setMatchingResults } = useMatching();
   const [location] = useLocation();
   const { toast } = useToast();
@@ -488,6 +488,44 @@ AIが自動で店舗とのマッチングを行います。
     // 画面をスクロール
     scrollToBottom();
   };
+
+  // プロフィールデータのフォーマット用ヘルパー関数
+  const formatProfileValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return "未入力";
+    if (typeof value === 'number' && value === 0) return "未入力";
+    return String(value);
+  };
+
+  // プロフィール確認ダイアログの表示データを構築
+  const getProfileDisplayData = () => {
+    if (!profileData) {
+      return {
+        name: "未入力",
+        nameKana: "未入力",
+        birthDate: "未入力",
+        age: "未入力",
+        phoneNumber: "未入力",
+        email: "未入力",
+        location: "未入力",
+        nearestStation: "未入力",
+      };
+    }
+
+    return {
+      name: `${formatProfileValue(profileData.lastName)} ${formatProfileValue(profileData.firstName)}`,
+      nameKana: `${formatProfileValue(profileData.lastNameKana)} ${formatProfileValue(profileData.firstNameKana)}`,
+      birthDate: formatProfileValue(profileData.birthDate),
+      age: formatProfileValue(profileData.age),
+      phoneNumber: formatProfileValue(profileData.phoneNumber),
+      email: formatProfileValue(profileData.email),
+      location: formatProfileValue(profileData.location),
+      nearestStation: formatProfileValue(profileData.nearestStation),
+    };
+  };
+
+  // プロフィール表示データを取得
+  const displayData = getProfileDisplayData();
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -1359,14 +1397,14 @@ AIが自動で店舗とのマッチングを行います。
                     <h4 className="font-medium mb-4">基本情報</h4>
                     <div className="grid grid-cols-2 gap-4">
                       {[
-                        { label: "氏名", value: `${profileData.lastName} ${profileData.firstName}` },
-                        { label: "フリガナ", value: `${profileData.lastNameKana} ${profileData.firstNameKana}` },
-                        { label: "生年月日", value: profileData.birthDate },
-                        { label: "年齢", value: `${profileData.age}歳` },
-                        { label: "電話番号", value: profileData.phoneNumber },
-                        { label: "メールアドレス", value: profileData.email },
-                        { label: "居住地", value: profileData.location },
-                        { label: "最寄り駅", value: profileData.nearestStation }
+                        { label: "氏名", value: `${displayData.name}` },
+                        { label: "フリガナ", value: `${displayData.nameKana}` },
+                        { label: "生年月日", value: `${displayData.birthDate}` },
+                        { label: "年齢", value: `${displayData.age}` },
+                        { label: "電話番号", value: `${displayData.phoneNumber}` },
+                        { label: "メールアドレス", value: `${displayData.email}` },
+                        { label: "居住地", value: `${displayData.location}` },
+                        { label: "最寄り駅", value: `${displayData.nearestStation}` }
                       ].map((item) => (
                         <div key={item.label}>
                           <Label>{item.label}</Label>

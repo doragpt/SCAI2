@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { type TalentProfileData } from "@shared/schema";
-import { queryClient, QUERY_KEYS, apiRequest, updateTalentProfile } from "@/lib/queryClient";
+import { queryClient, QUERY_KEYS, apiRequest } from "@/lib/queryClient";
 
 export function useProfile() {
   // プロフィールデータを取得
@@ -12,7 +12,10 @@ export function useProfile() {
 
   // プロフィール更新用のミューテーション
   const updateProfileMutation = useMutation({
-    mutationFn: updateTalentProfile,
+    mutationFn: async (newData: Partial<TalentProfileData>) => {
+      const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
+      return response.json();
+    },
     onSuccess: (data) => {
       // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], data);

@@ -26,20 +26,7 @@ export default function ProfileCheckDialog({
 }: ProfileCheckDialogProps) {
   const { profileData, isLoading, isError } = useProfile();
 
-  const formatValue = (value: unknown, type: string = 'text'): string => {
-    if (value === null || value === undefined || value === '') return "未入力";
-    if (typeof value === 'number' && value === 0) return "未入力";
-
-    switch (type) {
-      case 'number':
-        return typeof value === 'number' && value > 0 ? value.toString() : "未入力";
-      case 'cupSize':
-        return value ? `${value}カップ` : "未入力";
-      default:
-        return String(value) || "未入力";
-    }
-  };
-
+  // ローディング中の表示
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -53,6 +40,7 @@ export default function ProfileCheckDialog({
     );
   }
 
+  // エラー時の表示
   if (isError || !profileData) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -64,6 +52,12 @@ export default function ProfileCheckDialog({
       </Dialog>
     );
   }
+
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return "未入力";
+    if (typeof value === 'number' && value === 0) return "未入力";
+    return String(value);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -81,25 +75,46 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">基本情報</h3>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "性", value: profileData.lastName },
-                  { label: "名", value: profileData.firstName },
-                  { label: "性 (カナ)", value: profileData.lastNameKana },
-                  { label: "名 (カナ)", value: profileData.firstNameKana },
-                  { label: "在住地", value: profileData.location },
-                  { label: "最寄り駅", value: profileData.nearestStation },
-                  { label: "生年月日", value: profileData.birthDate },
-                  { label: "年齢", value: profileData.age, type: 'number' },
-                  { label: "電話番号", value: profileData.phoneNumber },
-                  { label: "メールアドレス", value: profileData.email }
-                ].map((item) => (
-                  <div key={item.label}>
-                    <Label>{item.label}</Label>
-                    <p className="text-sm">
-                      {formatValue(item.value, item.type)}
-                    </p>
-                  </div>
-                ))}
+                <div>
+                  <Label>性</Label>
+                  <p className="text-sm">{formatValue(profileData.lastName)}</p>
+                </div>
+                <div>
+                  <Label>名</Label>
+                  <p className="text-sm">{formatValue(profileData.firstName)}</p>
+                </div>
+                <div>
+                  <Label>性 (カナ)</Label>
+                  <p className="text-sm">{formatValue(profileData.lastNameKana)}</p>
+                </div>
+                <div>
+                  <Label>名 (カナ)</Label>
+                  <p className="text-sm">{formatValue(profileData.firstNameKana)}</p>
+                </div>
+                <div>
+                  <Label>在住地</Label>
+                  <p className="text-sm">{formatValue(profileData.location)}</p>
+                </div>
+                <div>
+                  <Label>最寄り駅</Label>
+                  <p className="text-sm">{formatValue(profileData.nearestStation)}</p>
+                </div>
+                <div>
+                  <Label>生年月日</Label>
+                  <p className="text-sm">{formatValue(profileData.birthDate)}</p>
+                </div>
+                <div>
+                  <Label>年齢</Label>
+                  <p className="text-sm">{profileData.age > 0 ? `${profileData.age}歳` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>電話番号</Label>
+                  <p className="text-sm">{formatValue(profileData.phoneNumber)}</p>
+                </div>
+                <div>
+                  <Label>メールアドレス</Label>
+                  <p className="text-sm">{formatValue(profileData.email)}</p>
+                </div>
               </div>
             </div>
 
@@ -107,21 +122,30 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">身体的特徴</h3>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "身長 (cm)", value: profileData.height, type: 'number' },
-                  { label: "体重 (kg)", value: profileData.weight, type: 'number' },
-                  { label: "カップサイズ", value: profileData.cupSize, type: 'cupSize' },
-                  { label: "バスト (cm)", value: profileData.bust, type: 'number' },
-                  { label: "ウエスト (cm)", value: profileData.waist, type: 'number' },
-                  { label: "ヒップ (cm)", value: profileData.hip, type: 'number' }
-                ].map((item) => (
-                  <div key={item.label}>
-                    <Label>{item.label}</Label>
-                    <p className="text-sm">
-                      {formatValue(item.value, item.type)}
-                    </p>
-                  </div>
-                ))}
+                <div>
+                  <Label>身長 (cm)</Label>
+                  <p className="text-sm">{profileData.height > 0 ? `${profileData.height}cm` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>体重 (kg)</Label>
+                  <p className="text-sm">{profileData.weight > 0 ? `${profileData.weight}kg` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>カップサイズ</Label>
+                  <p className="text-sm">{profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>バスト (cm)</Label>
+                  <p className="text-sm">{profileData.bust > 0 ? `${profileData.bust}cm` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>ウエスト (cm)</Label>
+                  <p className="text-sm">{profileData.waist > 0 ? `${profileData.waist}cm` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>ヒップ (cm)</Label>
+                  <p className="text-sm">{profileData.hip > 0 ? `${profileData.hip}cm` : "未入力"}</p>
+                </div>
               </div>
             </div>
 
@@ -189,9 +213,9 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">NGオプション</h3>
               <div className="flex flex-wrap gap-2">
-                {[
-                  ...(profileData.ngOptions?.common || []),
-                  ...(profileData.ngOptions?.others || [])
+                {profileData.ngOptions && [
+                  ...(profileData.ngOptions.common || []),
+                  ...(profileData.ngOptions.others || [])
                 ].map((option) => (
                   <Badge key={option} variant="destructive">
                     <X className="mr-1 h-3 w-3" />
@@ -304,7 +328,7 @@ export default function ProfileCheckDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             プロフィールを修正する
           </Button>
