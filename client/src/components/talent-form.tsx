@@ -1403,22 +1403,22 @@ export function TalentForm() {
             {/* 18. 過去の勤務先 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
-              <div className="space-y-6">
-                {form.watch("previousStores")?.map((store, storeIndex) => (
-                  <div key={storeIndex} className="space-y-4 border p-4 rounded-lg">
-                    <div className="flex gap-2">
+              <div className="space-y-4">
+                {form.watch("previousStores")?.map((store, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
                       <Input
-                        placeholder="店名"
+                        placeholder="店舗名"
                         value={store.storeName}
                         onChange={(e) =>
-                          handleUpdatePreviousStore(storeIndex, "storeName", e.target.value)
+                          handleUpdatePreviousStore(index, "storeName", e.target.value)
                         }
                       />
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        onClick={() => handleRemovePreviousStore(storeIndex)}
+                        onClick={() => handleRemovePreviousStore(index)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1433,7 +1433,7 @@ export function TalentForm() {
                               onChange={(e) => {
                                 const updatedUrls = [...store.photoDiaryUrls];
                                 updatedUrls[urlIndex] = e.target.value;
-                                handleUpdatePreviousStore(storeIndex, "photoDiaryUrls", updatedUrls);
+                                handleUpdatePreviousStore(index, "photoDiaryUrls", updatedUrls);
                               }}
                               placeholder="写メ日記のURLを入力"
                             />
@@ -1441,7 +1441,7 @@ export function TalentForm() {
                               type="button"
                               variant="outline"
                               size="icon"
-                              onClick={() => handleRemovePhotoDiaryUrl(storeIndex, urlIndex)}
+                              onClick={() => handleRemovePhotoDiaryUrl(index, urlIndex)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -1451,7 +1451,7 @@ export function TalentForm() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => handleAddPhotoDiaryUrl(storeIndex)}
+                        onClick={() => handleAddPhotoDiaryUrl(index)}
                       >
                         写メ日記URLを追加
                       </Button>
@@ -1461,8 +1461,8 @@ export function TalentForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleAddPreviousStore}
                   className="w-full"
+                  onClick={handleAddPreviousStore}
                 >
                   過去の勤務先を追加
                 </Button>
@@ -1470,7 +1470,47 @@ export function TalentForm() {
             </div>
 
             {/* 19. 写メ日記URL */}
-            {/* This section is now handled within the "過去の勤務先" section above */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">写メ日記が確認できるURL</h3>
+              <div className="space-y-4">
+                {form.watch("photoDiaryUrls")?.map((url, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder="写メ日記のURL"
+                      value={url}
+                      onChange={(e) => {
+                        const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                        updatedUrls[index] = e.target.value;
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const updatedUrls = [...form.watch("photoDiaryUrls") || []].filter(
+                          (_, i) => i !== index
+                        );
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""]);
+                  }}
+                >
+                  写メ日記URLを追加
+                </Button>
+              </div>
+            </div>
 
             {/* 20. プロフィール写真 */}
             <div>
