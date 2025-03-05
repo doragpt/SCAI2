@@ -86,7 +86,7 @@ export const GUARANTEE_OPTIONS = [
   { value: '100000', label: '100,000円以上' },
 ];
 
-// 待機時間を10時間から24時間まで1時間ずつ
+// 総勤務時間を10時間から24時間まで1時間ずつ
 export const WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
   value: String(i + 10),
   label: `${i + 10}時間`,
