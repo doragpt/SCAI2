@@ -1118,11 +1118,11 @@ export const TalentForm: React.FC = () => {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isPending}
+                    disabled={isPending || !form.formState.isDirty}
                   >
-                    {isPending ? (
+                    {isPending && (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
+                    )}
                     {existingProfile ? "プロフィールを更新" : "プロフィールを作成"}
                   </Button>
                 </div>
