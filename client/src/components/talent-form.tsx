@@ -29,7 +29,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/lib/queryClient";
 
-// FormField wrapper component
+// FormField component
 const FormField: React.FC<{
   label: string;
   required?: boolean;
@@ -105,6 +105,7 @@ export const TalentForm: React.FC = () => {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
+    mode: "onSubmit",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -286,51 +287,6 @@ export const TalentForm: React.FC = () => {
       form.setValue("previousStores", updated);
     }
   };
-
-  const handleAddPhotoDiaryUrl = () => {
-    const current = form.watch("photoDiaryUrls") || [];
-    form.setValue("photoDiaryUrls", [...current, ""]);
-  };
-
-  const handleUpdatePhotoDiaryUrl = (index: number, value: string) => {
-    const current = form.watch("photoDiaryUrls");
-    if (current) {
-      const updated = [...current];
-      updated[index] = value;
-      form.setValue("photoDiaryUrls", updated);
-    }
-  };
-
-  const handleRemovePhotoDiaryUrl = (index: number) => {
-    const current = form.watch("photoDiaryUrls");
-    if (current) {
-      const updated = current.filter((_, i) => i !== index);
-      form.setValue("photoDiaryUrls", updated);
-    }
-  };
-
-  const handleAddSnsUrl = () => {
-    const current = form.watch("snsUrls") || [];
-    form.setValue("snsUrls", [...current, ""]);
-  };
-
-  const handleUpdateSnsUrl = (index: number, value: string) => {
-    const current = form.watch("snsUrls");
-    if (current) {
-      const updated = [...current];
-      updated[index] = value;
-      form.setValue("snsUrls", updated);
-    }
-  };
-
-  const handleRemoveSnsUrl = (index: number) => {
-    const current = form.watch("snsUrls");
-    if (current) {
-      const updated = current.filter((_, i) => i !== index);
-      form.setValue("snsUrls", updated);
-    }
-  };
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -936,8 +892,7 @@ export const TalentForm: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <Input
                             placeholder="店舗名"
-                            value={store.storeName || ""}
-                            onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
+                            value={store.storeName || ""}                            onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
                           />
                           <Input
                             placeholder="源氏名"
@@ -997,36 +952,6 @@ export const TalentForm: React.FC = () => {
                       onClick={handleAddPreviousStore}
                     >
                       店舗を追加
-                    </Button>
-                  </div>
-                </FormField>
-
-                {/* 写メ日記URL */}
-                <FormField label="写メ日記が確認できる店舗URL">
-                  <div className="space-y-4">
-                    {form.watch("photoDiaryUrls").map((url, index) => (
-                      <div key={index} className="grid gap-4 p-4 border rounded-lg">
-                        <Input
-                          placeholder="店舗の写メ日記URLを入力"
-                          value={url}
-                          onChange={(e) => handleUpdatePhotoDiaryUrl(index, e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemovePhotoDiaryUrl(index)}
-                        >
-                          削除
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddPhotoDiaryUrl}
-                    >
-                      URLを追加
                     </Button>
                   </div>
                 </FormField>
@@ -1118,7 +1043,6 @@ export const TalentForm: React.FC = () => {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isPending || !form.formState.isDirty}
                   >
                     {isPending && (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
