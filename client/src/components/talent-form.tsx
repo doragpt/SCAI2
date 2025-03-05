@@ -266,7 +266,7 @@ export function TalentForm() {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
-  const [newPhotoDiaryUrl, setNewPhotoDiaryUrl] = useState<string>("");
+  const [newPhotoDiaryUrl, setNewPhotoDiaryUrl] = useState<string>(""); // Added state
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -526,7 +526,7 @@ export function TalentForm() {
     form.setValue("snsUrls", [...snsUrls, ""]);
   };
 
-  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => { // Added function
     if (!newPhotoDiaryUrl) return;
     const previousStores = form.getValues("previousStores") || [];
     const updatedStores = [...previousStores];
@@ -538,7 +538,7 @@ export function TalentForm() {
     setNewPhotoDiaryUrl("");
   };
 
-  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => { // Added function
     const previousStores = form.getValues("previousStores");
     if (previousStores && previousStores[storeIndex]) {
       const updatedStores = [...previousStores];
@@ -1369,6 +1369,7 @@ export function TalentForm() {
                         <Button
                           type="button"
                           onClick={() => handleAddPhotoDiaryUrl(storeIndex)}
+                          disabled={!newPhotoDiaryUrl}
                         >
                           追加
                         </Button>

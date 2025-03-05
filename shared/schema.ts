@@ -162,6 +162,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   }[]>().default([]),
   previousStores: jsonb("previous_stores").$type<{
     storeName: string;
+    photoDiaryUrls: string[];
   }[]>().default([]),
   photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]),
   selfIntroduction: text("self_introduction"),
@@ -304,6 +305,7 @@ export const talentProfileSchema = z.object({
   })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
+    photoDiaryUrls: z.array(z.string()).default([]),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
