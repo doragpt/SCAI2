@@ -23,27 +23,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Bot, User, Loader2 } from "lucide-react";
+import { Bot, User, Loader2, ArrowLeft } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { useMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
 
-// Message type definition
+// メッセージの型定義
 interface Message {
   type: "ai" | "user";
   content: string;
-}
-
-interface Store {
-  id: number;
-  name: string;
-  location: string;
-  rating: number;
-  matches: string[];
-  checked?: boolean;
-  status?: 'pending' | 'accepted' | 'rejected';
-  responseTime?: string;
 }
 
 export const AIMatchingChat = () => {
@@ -64,8 +53,26 @@ export const AIMatchingChat = () => {
   ]);
 
   const { profileData, isLoading: isProfileLoading } = useProfile();
+  const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [workTypes] = useState(["出稼ぎ", "在籍"]);
   const { toast } = useToast();
+  const [conditions, setConditions] = useState({
+    workTypes: [] as string[],
+    workPeriodStart: "",
+    workPeriodEnd: "",
+    canArrivePreviousDay: false,
+    desiredGuarantee: "",
+    desiredTime: "",
+    desiredRate: "",
+    waitingHours: undefined as number | undefined,
+    departureLocation: "",
+    returnLocation: "",
+    preferredLocations: [] as string[],
+    ngLocations: [] as string[],
+    notes: "",
+    interviewDates: [] as string[],
+  });
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,6 +91,30 @@ export const AIMatchingChat = () => {
       </div>
     );
   }
+
+  // 働き方選択のハンドラー
+  const handleWorkTypeSelect = (type: "出稼ぎ" | "在籍") => {
+    setSelectedType(type);
+    setShowForm(true);
+    setMessages(prev => [...prev, {
+      type: "user",
+      content: `${type}を選択しました`
+    }, {
+      type: "ai",
+      content: `${type}での勤務を希望されるのですね。
+では、具体的な希望条件をお聞かせください。`
+    }]);
+  };
+
+  // 戻るボタンのハンドラー
+  const handleBack = () => {
+    setSelectedType(null);
+    setShowForm(false);
+    setMessages(prev => [...prev, {
+      type: "user",
+      content: "選択しなおします"
+    }]);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -139,32 +170,89 @@ export const AIMatchingChat = () => {
         </div>
       </ScrollArea>
 
-      <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
-        <div className="container max-w-screen-2xl mx-auto">
-          <div className="flex flex-col gap-4">
-            <p className="text-center text-muted-foreground">
-              希望する働き方を選択してください
-            </p>
-            <div className="flex gap-4 justify-center">
-              {workTypes.map((type) => (
-                <Button
-                  key={type}
-                  onClick={() => {
-                    setMessages(prev => [...prev, {
-                      type: "user",
-                      content: `${type}を選択`
-                    }]);
-                  }}
-                  className="min-w-[120px]"
-                  variant={type === "出稼ぎ" ? "default" : "secondary"}
-                >
-                  {type}
-                </Button>
-              ))}
+      {!selectedType && !showForm && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+          <div className="container max-w-screen-2xl mx-auto">
+            <div className="flex flex-col gap-4">
+              <p className="text-center text-muted-foreground">
+                希望する働き方を選択してください
+              </p>
+              <div className="flex gap-4 justify-center">
+                {workTypes.map((type) => (
+                  <Button
+                    key={type}
+                    onClick={() => handleWorkTypeSelect(type as "出稼ぎ" | "在籍")}
+                    className="min-w-[120px]"
+                    variant={type === "出稼ぎ" ? "default" : "secondary"}
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {showForm && selectedType && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Card className="border-t sticky bottom-0 bg-background">
+            <div className="p-6 space-y-6">
+              <div className="flex justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>選択しなおす</span>
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="after:content-['*'] after:text-red-500 after:ml-0.5">
+                  希望業種（複数選択可）
+                </Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  あなたの希望や経験に合わせて、働きやすい業種を選択してください。複数選択することで、より多くの求人をご紹介できます。
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {WORK_TYPES_WITH_DESCRIPTION.map((type) => (
+                    <div key={type.id} className="flex flex-col space-y-2 p-4 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={type.id}
+                          checked={conditions.workTypes.includes(type.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setConditions({
+                                ...conditions,
+                                workTypes: [...conditions.workTypes, type.id],
+                              });
+                            } else {
+                              setConditions({
+                                ...conditions,
+                                workTypes: conditions.workTypes.filter(
+                                  (t) => t !== type.id
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={type.id}>{type.label}</Label>
+                      </div>
+                      <p className="text-sm text-muted-foreground pl-6">
+                        {type.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
