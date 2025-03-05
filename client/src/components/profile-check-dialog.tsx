@@ -26,6 +26,23 @@ export default function ProfileCheckDialog({
 }: ProfileCheckDialogProps) {
   const { profileData, isLoading, isError } = useProfile();
 
+  // フォーマット関数
+  const formatProfileValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return "未入力";
+    if (typeof value === 'number' && value === 0) return "未入力";
+    return String(value);
+  };
+
+  const formatMeasurement = (value: number | undefined | null, unit: string): string => {
+    if (!value || value === 0) return "未入力";
+    return `${value}${unit}`;
+  };
+
+  const formatThreeSizes = (bust?: number | null, waist?: number | null, hip?: number | null): string => {
+    if (!bust || !waist || !hip || bust === 0 || waist === 0 || hip === 0) return "未入力";
+    return `B${bust} W${waist} H${hip}`;
+  };
+
   // ローディング中の表示
   if (isLoading) {
     return (
@@ -53,12 +70,6 @@ export default function ProfileCheckDialog({
     );
   }
 
-  const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined || value === '') return "未入力";
-    if (typeof value === 'number' && value === 0) return "未入力";
-    return String(value);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -77,31 +88,31 @@ export default function ProfileCheckDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>性</Label>
-                  <p className="text-sm">{formatValue(profileData.lastName)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.lastName)}</p>
                 </div>
                 <div>
                   <Label>名</Label>
-                  <p className="text-sm">{formatValue(profileData.firstName)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.firstName)}</p>
                 </div>
                 <div>
                   <Label>性 (カナ)</Label>
-                  <p className="text-sm">{formatValue(profileData.lastNameKana)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.lastNameKana)}</p>
                 </div>
                 <div>
                   <Label>名 (カナ)</Label>
-                  <p className="text-sm">{formatValue(profileData.firstNameKana)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.firstNameKana)}</p>
                 </div>
                 <div>
                   <Label>在住地</Label>
-                  <p className="text-sm">{formatValue(profileData.location)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.location)}</p>
                 </div>
                 <div>
                   <Label>最寄り駅</Label>
-                  <p className="text-sm">{formatValue(profileData.nearestStation)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.nearestStation)}</p>
                 </div>
                 <div>
                   <Label>生年月日</Label>
-                  <p className="text-sm">{formatValue(profileData.birthDate)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.birthDate)}</p>
                 </div>
                 <div>
                   <Label>年齢</Label>
@@ -109,11 +120,11 @@ export default function ProfileCheckDialog({
                 </div>
                 <div>
                   <Label>電話番号</Label>
-                  <p className="text-sm">{formatValue(profileData.phoneNumber)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.phoneNumber)}</p>
                 </div>
                 <div>
                   <Label>メールアドレス</Label>
-                  <p className="text-sm">{formatValue(profileData.email)}</p>
+                  <p className="text-sm">{formatProfileValue(profileData.email)}</p>
                 </div>
               </div>
             </div>
@@ -124,27 +135,19 @@ export default function ProfileCheckDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>身長 (cm)</Label>
-                  <p className="text-sm">{profileData.height > 0 ? `${profileData.height}cm` : "未入力"}</p>
+                  <p className="text-sm">{formatMeasurement(profileData.height, "cm")}</p>
                 </div>
                 <div>
                   <Label>体重 (kg)</Label>
-                  <p className="text-sm">{profileData.weight > 0 ? `${profileData.weight}kg` : "未入力"}</p>
+                  <p className="text-sm">{formatMeasurement(profileData.weight, "kg")}</p>
                 </div>
                 <div>
                   <Label>カップサイズ</Label>
                   <p className="text-sm">{profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}</p>
                 </div>
                 <div>
-                  <Label>バスト (cm)</Label>
-                  <p className="text-sm">{profileData.bust > 0 ? `${profileData.bust}cm` : "未入力"}</p>
-                </div>
-                <div>
-                  <Label>ウエスト (cm)</Label>
-                  <p className="text-sm">{profileData.waist > 0 ? `${profileData.waist}cm` : "未入力"}</p>
-                </div>
-                <div>
-                  <Label>ヒップ (cm)</Label>
-                  <p className="text-sm">{profileData.hip > 0 ? `${profileData.hip}cm` : "未入力"}</p>
+                  <Label>スリーサイズ</Label>
+                  <p className="text-sm">{formatThreeSizes(profileData.bust, profileData.waist, profileData.hip)}</p>
                 </div>
               </div>
             </div>
@@ -192,7 +195,7 @@ export default function ProfileCheckDialog({
               </div>
               <div>
                 <Label>顔出し設定</Label>
-                <p className="text-sm">{formatValue(profileData.faceVisibility)}</p>
+                <p className="text-sm">{formatProfileValue(profileData.faceVisibility)}</p>
               </div>
             </div>
 
@@ -314,7 +317,7 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">自己PR</h3>
               <p className="text-sm whitespace-pre-wrap">
-                {formatValue(profileData.selfIntroduction)}
+                {formatProfileValue(profileData.selfIntroduction)}
               </p>
             </div>
 
@@ -322,7 +325,7 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">その他備考</h3>
               <p className="text-sm whitespace-pre-wrap">
-                {formatValue(profileData.notes)}
+                {formatProfileValue(profileData.notes)}
               </p>
             </div>
           </div>
