@@ -367,9 +367,9 @@ export function TalentForm() {
       height: 150,
       weight: 45,
       cupSize: "D",
-      bust: null,
-      waist: null,
-      hip: null,
+      bust: "",
+      waist: "",
+      hip: "",
       faceVisibility: "全隠し",
       canPhotoDiary: false,
       canHomeDelivery: false,
@@ -416,6 +416,10 @@ export function TalentForm() {
       // フォームの値を更新
       form.reset({
         ...existingProfile,
+        // 数値フィールドを文字列に変換
+        bust: existingProfile.bust?.toString() ?? "",
+        waist: existingProfile.waist?.toString() ?? "",
+        hip: existingProfile.hip?.toString() ?? "",
         photos: existingProfile.photos || [],
         bodyMark: existingProfile.bodyMark || {
           hasBodyMark: false,
@@ -442,9 +446,10 @@ export function TalentForm() {
         ...data,
         height: Number(data.height),
         weight: Number(data.weight),
-        bust: data.bust === null || data.bust === undefined ? null : Number(data.bust),
-        waist: data.waist === null || data.waist === undefined ? null : Number(data.waist),
-        hip: data.hip === null || data.hip === undefined ? null : Number(data.hip),
+        // 文字列からnumber | nullに変換
+        bust: data.bust === "" ? null : Number(data.bust),
+        waist: data.waist === "" ? null : Number(data.waist),
+        hip: data.hip === "" ? null : Number(data.hip),
         availableIds: {
           types: data.availableIds.types,
           others: otherIds,
@@ -467,8 +472,7 @@ export function TalentForm() {
           hasBodyMark: data.bodyMark.hasBodyMark,
           details: bodyMarkDetails,
         },
-        // 不必要なデータを削除
-        ...(data.photos && { photos: data.photos }),
+        photos: data.photos || [],
       };
 
       setFormData(optimizedData);
@@ -982,7 +986,7 @@ export function TalentForm() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4">
+                <div className="mt4">
                   <Label>その他のNGオプション</Label>
                   <div className="flex flex-wrap gap-2 mt2">
                     {otherNgOptions.map((option, index) => (

@@ -1,0 +1,110 @@
+Warning: &#x60;value&#x60; prop on &#x60;input&#x60; should not be null. Consider using an empty string to clear the component or &#x60;undefined&#x60; for uncontrolled components.
+    at input
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/input.tsx:20:11)
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:129:9
+    at div
+    at div
+    at FormFieldWrapper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:55:3)
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:313:35)
+    at FormField (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:32:6)
+    at div
+    at form
+    at FormProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:102:11)
+    at main
+    at div
+    at TalentForm (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:482:21)
+    at div
+    at _c9 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at main
+    at div
+    at TalentRegistration (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/talent-registration.tsx:25:36)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:323:16)
+    at ProtectedRoute (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:379:17)
+    at Router
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=73fd2940:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=SRFT6e0uojvRxU5mEHg2A:132:57)
+at input
+at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/input.tsx:20:11)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:52:11
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:33:11
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:129:9
+at div
+at div
+at FormFieldWrapper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:55:3)
+at div
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:71:6
+at Controller (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:313:35)
+at FormField (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:32:6)
+at div
+at form
+at FormProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:102:11)
+at main
+at div
+at TalentForm (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:482:21)
+at div
+at _c9 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+at div
+at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+at div
+at main
+at div
+at TalentRegistration (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/talent-registration.tsx:25:36)
+at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:323:16)
+at ProtectedRoute (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:379:17)
+at Router
+at div
+at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=73fd2940:2805:3)
+at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=SRFT6e0uojvRxU5mEHg2A:132:57)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Loading existing profile: 
+Object {id: 1, userId: 12, lastName: "中山", firstName: "奈々子", lastNameKana: "ナカヤマ", …}
+Warning: A component is changing an uncontrolled input to be controlled. This is likely caused by the value changing from undefined to a defined value, which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://reactjs.org/link/controlled-components
+    at input
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/input.tsx:20:11)
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=73fd2940:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:129:9
+    at div
+    at div
+    at FormFieldWrapper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:55:3)
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:313:35)
+    at FormField (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:32:6)
+    at div
+    at form
+    at FormProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=73fd2940:102:11)
+    at main
+    at div
+    at TalentForm (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:482:21)
+    at div
+    at _c9 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at main
+    at div
+    at TalentRegistration (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/talent-registration.tsx:25:36)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:323:16)
+    at ProtectedRoute (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=73fd2940:379:17)
+    at Router
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=73fd2940:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=SRFT6e0uojvRxU5mEHg2A:132:57)
