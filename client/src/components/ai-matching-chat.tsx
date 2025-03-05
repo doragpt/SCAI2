@@ -54,13 +54,30 @@ const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
 
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth(); // Added useAuth hook
+  const { user } = useAuth();
   const { profileData, isLoading: isProfileLoading } = useProfile();
   const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [workTypes] = useState(["出稼ぎ", "在籍"]);
   const { toast } = useToast();
+
+  // メッセージの状態を復元
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      type: "ai",
+      content: `SCAIマッチングへようこそ！
+あなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。
+
+【SCAIマッチングの特徴】
+• AIが希望条件を分析し、最適な店舗をご紹介
+• 豊富な求人データベースから、あなたに合った職場を探索
+• 店舗からの返信状況をリアルタイムに確認可能
+
+まずは、希望する働き方を選択してください。`
+    },
+  ]);
+
   const [conditions, setConditions] = useState({
     workTypes: [] as string[],
     workPeriodStart: "",
@@ -117,6 +134,22 @@ export const AIMatchingChat = () => {
       type: "user",
       content: "選択しなおします"
     }]);
+  };
+
+  // 日付のフォーマット関数
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "未入力";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: 'Asia/Tokyo'
+      }).replace(/\//g, '年').replace(/\//g, '月') + '日';
+    } catch (e) {
+      return "未入力";
+    }
   };
 
   // 条件送信のハンドラー
@@ -188,22 +221,6 @@ export const AIMatchingChat = () => {
       type: "ai",
       content: "ご希望の条件を確認させていただきました。マッチング検索を開始しますか？"
     }]);
-  };
-
-  // 日付のフォーマット関数を追加
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "未入力";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: 'Asia/Tokyo'
-      }).replace(/\//g, '年').replace(/\//g, '月') + '日';
-    } catch (e) {
-      return "未入力";
-    }
   };
 
 
