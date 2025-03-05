@@ -266,7 +266,6 @@ export function TalentForm() {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
-  const [newPhotoDiaryUrl, setNewPhotoDiaryUrl] = useState<string>(""); // Added state
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -526,8 +525,7 @@ export function TalentForm() {
     form.setValue("snsUrls", [...snsUrls, ""]);
   };
 
-  const handleAddPhotoDiaryUrl = (storeIndex: number) => { // Added function
-    if (!newPhotoDiaryUrl) return;
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
     const previousStores = form.getValues("previousStores") || [];
     const updatedStores = [...previousStores];
     updatedStores[storeIndex] = {
@@ -538,7 +536,7 @@ export function TalentForm() {
     setNewPhotoDiaryUrl("");
   };
 
-  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => { // Added function
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
     const previousStores = form.getValues("previousStores");
     if (previousStores && previousStores[storeIndex]) {
       const updatedStores = [...previousStores];
@@ -969,7 +967,7 @@ export function TalentForm() {
                           }}
                         />
                         <label className="text-sm">{option}</label>
-                      </div>
+                                            </div>
                     ))}
                   </div>
 
@@ -1338,43 +1336,6 @@ export function TalentForm() {
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-
-                    {/* 写メ日記URL */}
-                    <div className="space-y-2">
-                      <Label>写メ日記URL</Label>
-                      {store.photoDiaryUrls?.map((url, urlIndex) => (
-                        <div key={urlIndex} className="flex gap-2">
-                          <Input value={url} disabled />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleRemovePhotoDiaryUrl(storeIndex, urlIndex)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="写メ日記のURLを入力"
-                          value={newPhotoDiaryUrl}
-                          onChange={(e) => setNewPhotoDiaryUrl(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              handleAddPhotoDiaryUrl(storeIndex);
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => handleAddPhotoDiaryUrl(storeIndex)}
-                          disabled={!newPhotoDiaryUrl}
-                        >
-                          追加
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 ))}
                 <Button
@@ -1388,7 +1349,49 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 19. プロフィール写真 */}
+            {/* 19. 写メ日記URL */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">写メ日記URL</h3>
+              <div className="space-y-4">
+                {form.watch("photoDiaryUrls")?.map((url, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={url}
+                      onChange={(e) => {
+                        const updatedUrls = [...form.getValues("photoDiaryUrls")];
+                        updatedUrls[index] = e.target.value;
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                      placeholder="写メ日記のURLを入力"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        const updatedUrls = form.getValues("photoDiaryUrls").filter((_, i) => i !== index);
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const currentUrls = form.getValues("photoDiaryUrls") || [];
+                    form.setValue("photoDiaryUrls", [...currentUrls, ""]);
+                  }}
+                  className="w-full"
+                >
+                  写メ日記URLを追加
+                </Button>
+              </div>
+            </div>
+
+            {/* 20. プロフィール写真 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
               <FormField
@@ -1408,7 +1411,7 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 20. 自己紹介 */}
+            {/* 21. 自己紹介 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
               <FormField
@@ -1431,7 +1434,7 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 21. 備考 */}
+            {/* 22. 備考 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">備考</h3>
               <FormField
