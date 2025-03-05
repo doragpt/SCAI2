@@ -10,6 +10,7 @@ import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
 import { Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Form,
   FormControl,
@@ -529,6 +530,64 @@ export function TalentForm() {
     );
   }
 
+  const handleUpdateSnsUrl = (index: number, value: string) => {
+    const updatedUrls = [...form.watch("snsUrls") || []];
+    updatedUrls[index] = value;
+    form.setValue("snsUrls", updatedUrls);
+  };
+
+  const handleRemoveSnsUrl = (index: number) => {
+    const updatedUrls = [...form.watch("snsUrls") || []].filter((_, i) => i !== index);
+    form.setValue("snsUrls", updatedUrls);
+  };
+
+  const handleAddSnsUrl = () => {
+    form.setValue("snsUrls", [...form.watch("snsUrls") || [], ""]);
+  };
+
+  const handleUpdateCurrentStore = (index: number, key: keyof CurrentStore, value: string) => {
+    const updatedStores = [...form.watch("currentStores") || []];
+    updatedStores[index][key] = value;
+    form.setValue("currentStores", updatedStores);
+  };
+
+  const handleRemoveCurrentStore = (index: number) => {
+    const updatedStores = [...form.watch("currentStores") || []].filter((_, i) => i !== index);
+    form.setValue("currentStores", updatedStores);
+  };
+
+  const handleAddCurrentStore = () => {
+    form.setValue("currentStores", [...form.watch("currentStores") || [], { storeName: "", stageName: "" }]);
+  };
+
+
+  const handleUpdatePreviousStore = (index: number, key: keyof PreviousStore, value: any) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[index][key] = value;
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleRemovePreviousStore = (index: number) => {
+    const updatedStores = [...form.watch("previousStores") || []].filter((_, i) => i !== index);
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleAddPreviousStore = () => {
+    form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "", photoDiaryUrls: [] }]);
+  };
+
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = [...updatedStores[storeIndex].photoDiaryUrls, ""];
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = updatedStores[storeIndex].photoDiaryUrls.filter((_, i) => i !== urlIndex);
+    form.setValue("previousStores", updatedStores);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white sticky top-0 z-50">
@@ -962,13 +1021,21 @@ export function TalentForm() {
               <Collapsible
                 open={isEstheOpen}
                 onOpenChange={setIsEstheOpen}
-                className="border rounded-lg p-4"
+                className="space-y-4"
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full">
-                  <span className="font-medium">風俗エステ用可能オプション</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isEstheOpen ? 'transform rotate-180' : ''}`} />
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent rounded-lg">
+                    <h4 className="text-sm font-medium">
+                      エステ経験の詳細
+                    </h4>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        isEstheOpen ? "transform rotate-180" : ""
+                      }`}
+                    />
+                  </div>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4">
+                <CollapsibleContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {estheOptions.map((option) => (
                       <div key={option} className="flex items-center space-x-2">
