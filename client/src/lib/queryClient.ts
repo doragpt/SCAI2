@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import type { TalentProfileData } from "@shared/schema";
+import type { SelectUser } from "./your-select-user-path"; // Assuming SelectUser is defined here
 
 // キャッシュのキー定数
 export const QUERY_KEYS = {
@@ -143,19 +144,19 @@ export async function updateUserProfile(data: {
     });
 
     // 既存のデータを取得
-    const existingUser = queryClient.getQueryData([QUERY_KEYS.USER]);
+    const existingUser = queryClient.getQueryData<SelectUser>([QUERY_KEYS.USER]);
     if (!existingUser) {
       console.warn("No existing user data in cache");
     }
 
     const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
-    const updatedUser = await response.json();
+    const updatedUser = await response.json() as SelectUser;
 
-    // キャッシュの更新（既存のデータとマージ）
-    const mergedUser = {
-      ...existingUser,
+    // 型安全なマージ処理
+    const mergedUser: SelectUser = {
+      ...(existingUser || {}),
       ...updatedUser,
-    };
+    } as SelectUser;
 
     console.log("User update cache merge:", {
       timestamp: new Date().toISOString(),
@@ -165,7 +166,7 @@ export async function updateUserProfile(data: {
     });
 
     // キャッシュの更新
-    queryClient.setQueryData([QUERY_KEYS.USER], mergedUser);
+    queryClient.setQueryData<SelectUser>([QUERY_KEYS.USER], mergedUser);
 
     // キャッシュを無効化して再取得
     await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });

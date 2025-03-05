@@ -7,10 +7,21 @@ import { Button } from "@/components/ui/button";
 import { ScoutApplicationView } from "@/components/scout-application-view";
 import { Loader2, LogOut } from "lucide-react";
 
+interface ExtendedTalentProfile extends TalentProfile {
+  guaranteeAmount: number;
+  age: number;
+  photos: string[];
+  serviceTypes: string[];
+  height?: number;
+  weight?: number;
+  bust?: number;
+  waist?: number;
+}
+
 export default function ScoutDashboard() {
   const { user, logoutMutation } = useAuth();
 
-  const { data: profiles, isLoading: profilesLoading } = useQuery<TalentProfile[]>({
+  const { data: profiles, isLoading: profilesLoading } = useQuery<ExtendedTalentProfile[]>({
     queryKey: ["/api/talent/profiles"],
   });
 
@@ -71,18 +82,20 @@ export default function ScoutDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                        <img
-                          src={`data:image/jpeg;base64,${profile.photos[0]}`}
-                          alt="プロフィール"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      {profile.photos[0] && (
+                        <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={`data:image/jpeg;base64,${profile.photos[0]}`}
+                            alt="プロフィール"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>身長: {profile.height}cm</div>
-                        <div>体重: {profile.weight}kg</div>
-                        <div>バスト: {profile.bust}cm</div>
-                        <div>ウエスト: {profile.waist}cm</div>
+                        {profile.height && <div>身長: {profile.height}cm</div>}
+                        {profile.weight && <div>体重: {profile.weight}kg</div>}
+                        {profile.bust && <div>バスト: {profile.bust}cm</div>}
+                        {profile.waist && <div>ウエスト: {profile.waist}cm</div>}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {profile.serviceTypes.map((type) => (
