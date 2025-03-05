@@ -10,10 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Check, X } from "lucide-react";
-import { type ProfileData } from "@shared/types/profile";
-import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/lib/queryClient";
+import { Check, X, Loader2 } from "lucide-react";
+import { useProfile } from "@/hooks/use-profile";
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;
@@ -26,14 +24,11 @@ export default function ProfileCheckDialog({
   onClose,
   onConfirm,
 }: ProfileCheckDialogProps) {
-  // プロフィールデータを取得
-  const { data: profileData, isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    refetchOnWindowFocus: false,
-  });
+  const { profileData, isLoading, isError } = useProfile();
 
   const formatValue = (value: unknown, type: string = 'text'): string => {
     if (value === null || value === undefined || value === '') return "未入力";
+    if (typeof value === 'number' && value === 0) return "未入力";
 
     switch (type) {
       case 'number':
@@ -45,10 +40,29 @@ export default function ProfileCheckDialog({
     }
   };
 
-  if (isLoading || !profileData) {
-    return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>Loading...</DialogContent>
-    </Dialog>; //Added loading state
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-center p-6">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2">読み込み中...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (isError || !profileData) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl">
+          <div className="text-center p-6 text-red-500">
+            プロフィールデータの取得に失敗しました。
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
@@ -57,7 +71,7 @@ export default function ProfileCheckDialog({
         <DialogHeader>
           <DialogTitle>プロフィール確認</DialogTitle>
           <DialogDescription>
-            マッチングを開始する前に、以下の内容を確認してください。
+            マッチングを開始する前に、以下の内容を確認してください
           </DialogDescription>
         </DialogHeader>
 

@@ -1,45 +1,32 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { type ProfileData } from "@shared/types/profile";
-import { queryClient, QUERY_KEYS } from "@/lib/queryClient";
+import { type TalentProfileData } from "@shared/schema";
+import { queryClient, QUERY_KEYS, apiRequest, updateTalentProfile } from "@/lib/queryClient";
 
 export function useProfile() {
   // プロフィールデータを取得
-  const { data: profileData, isLoading } = useQuery({
+  const profileQuery = useQuery({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // プロフィール更新用のミューテーション
   const updateProfileMutation = useMutation({
-    mutationFn: async (newData: Partial<ProfileData>) => {
-      const response = await fetch("/api/talent/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      return response.json();
-    },
+    mutationFn: updateTalentProfile,
     onSuccess: (data) => {
       // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], data);
+      // キャッシュを無効化して再取得
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     },
   });
 
-  const updateProfile = (newData: Partial<ProfileData>) => {
-    console.log('Updating profile with:', newData); // デバッグ用
-    updateProfileMutation.mutate(newData);
-  };
-
   return {
-    profileData,
-    isLoading,
-    updateProfile,
+    profileData: profileQuery.data as TalentProfileData | undefined,
+    isLoading: profileQuery.isLoading,
+    isError: profileQuery.isError,
+    error: profileQuery.error,
+    updateProfile: updateProfileMutation.mutate,
+    isUpdating: updateProfileMutation.isPending
   } as const;
 }
