@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch as SwitchField } from "@/components/ui/switch"; // Renamed for clarity
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
 import { Link } from "wouter";
@@ -49,6 +49,30 @@ type PreviousStore = {
   storeName: string;
   photoDiaryUrls: string[];
 };
+
+// FormFieldWrapperコンポーネント
+const FormFieldWrapper = ({
+  label,
+  required = false,
+  children,
+  description,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  description?: string;
+}) => (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2">
+      <Label>{label}</Label>
+      {required && <span className="text-destructive">*</span>}
+    </div>
+    {description && (
+      <p className="text-sm text-muted-foreground">{description}</p>
+    )}
+    <div className="mt-1.5">{children}</div>
+  </div>
+);
 
 // メインのTalentFormコンポーネント
 export function TalentForm() {
@@ -192,11 +216,22 @@ export function TalentForm() {
               control={form.control}
               name="canProvideResidenceRecord"
               render={({ field }) => (
-                <SwitchField
-                  label="本籍地記載の住民票の提出 可否"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label>本籍地記載の住民票の提出 可否</Label>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <span className={field.value ? "text-primary" : "text-muted-foreground"}>
+                      {field.value ? "可能" : "不可"}
+                    </span>
+                  </div>
+                </div>
               )}
             />
 
