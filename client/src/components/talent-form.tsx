@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ const FormFieldWrapper: React.FC<{
     {description && (
       <p className="text-sm text-muted-foreground">{description}</p>
     )}
-    {children}
+    <div>{children}</div>
   </div>
 );
 
@@ -91,7 +91,7 @@ const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
 export const TalentForm: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  //const [, setLocation] = useLocation(); // Removed useLocation
   const [otherIds, setOtherIds] = useState<string[]>([]);
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
@@ -221,7 +221,7 @@ export const TalentForm: React.FC = () => {
         title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
         description: "プロフィールの保存が完了しました。",
       });
-      setLocation("/talent/dashboard");
+      //setLocation("/talent/dashboard"); // Removed setLocation
     },
     onError: (error: Error) => {
       toast({
@@ -908,12 +908,12 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("smoking.types").includes(type)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("smoking.types")|| [];
-                            const updated = checked
-                              ? [...current, type]
-                              : current.filter((t) => t !== type);
-                            form.setValue("smoking.types", updated);
-                          }}
+                              const current = form.watch("smoking.types")|| [];
+                              const updated = checked
+                                ? [...current, type]
+                                : current.filter((t) => t !== type);
+                              form.setValue("smoking.types", updated);
+                            }}
                         />
                         <label className="text-sm">{type}</label>
                       </div>
@@ -1135,26 +1135,15 @@ export const TalentForm: React.FC = () => {
             </div>
 
             {/* 保存ボタン */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-50">
-              <div className="container mx-auto px-4 py-4">
-                <div className="flex justify-between items-center gap-4">
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="w-full"
-                    onClick={() => setLocation("/talent/dashboard")}
-                  >
-                    キャンセル
-                  </Button>
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+              <div className="container mx-auto">
+                <div className="flex justify-end gap-4">
                   <Button
                     type="submit"
-                    className="w-full"
-                    disabled={isPending}
+                    disabled={isPending || !form.formState.isDirty}
                   >
-                    <div className="flex items-center justify-center">
-                      {isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      )}
+                    <div className="flex items-center gap-2">
+                      {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                       <span>
                         {existingProfile ? "プロフィールを更新" : "プロフィールを作成"}
                       </span>
