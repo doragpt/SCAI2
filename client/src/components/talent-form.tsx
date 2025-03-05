@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
@@ -61,7 +62,7 @@ const SwitchField: React.FC<{
   checked,
   onCheckedChange,
   description,
-  valueLabels = { checked: "有り", unchecked: "無し" }
+  valueLabels = { checked: "有り", unchecked: "無し" },
 }) => (
   <div className="flex flex-row items-center justify-between rounded-lg border p-4">
     <div className="space-y-0.5">
@@ -74,10 +75,7 @@ const SwitchField: React.FC<{
       )}
     </div>
     <div className="flex items-center gap-2">
-      <Switch 
-        checked={checked} 
-        onCheckedChange={onCheckedChange}
-      />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
       <span className={checked ? "text-primary" : "text-muted-foreground"}>
         {checked ? valueLabels.checked : valueLabels.unchecked}
       </span>
@@ -98,6 +96,7 @@ export const TalentForm: React.FC = () => {
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -761,9 +760,9 @@ export const TalentForm: React.FC = () => {
                       label="エステ経験"
                       checked={form.watch("hasEstheExperience")}
                       onCheckedChange={(checked) => {
-                        form.setValue("hasEstheExperience", checked, { shouldValidate: true });
+                        form.setValue("hasEstheExperience", checked);
                         if (!checked) {
-                          form.setValue("estheExperiencePeriod", undefined);
+                          form.setValue("estheExperiencePeriod", "");
                         }
                       }}
                     />
@@ -774,9 +773,6 @@ export const TalentForm: React.FC = () => {
                           placeholder="経験期間を入力（例：2年）"
                           {...form.register("estheExperiencePeriod")}
                         />
-                        {form.formState.errors.estheExperiencePeriod && (
-                          <FormErrorMessage message={form.formState.errors.estheExperiencePeriod.message as string} />
-                        )}
                       </div>
                     )}
                   </div>
