@@ -342,6 +342,7 @@ export function TalentForm() {
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
   const [newIdType, setNewIdType] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -435,6 +436,7 @@ export function TalentForm() {
   // フォーム送信前の確認
   const handleSubmit = async (data: TalentProfileData) => {
     try {
+      setIsSubmitting(true);
       // データの最適化
       const optimizedData = {
         ...data,
@@ -478,6 +480,8 @@ export function TalentForm() {
         description: "データの準備中にエラーが発生しました。",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -486,6 +490,7 @@ export function TalentForm() {
     if (!formData) return;
 
     try {
+      setIsSubmitting(true);
       const response = await apiRequest(
         existingProfile ? "PUT" : "POST",
         "/api/talent/profile",
@@ -512,6 +517,8 @@ export function TalentForm() {
         description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -977,14 +984,14 @@ export function TalentForm() {
                 </div>
                 <div className="mt-4">
                   <Label>その他のNGオプション</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt2">
                     {otherNgOptions.map((option, index) => (
                       <Badge key={index} variant="secondary">
                         {option}
                         <Button
                           type="button"
                           variant="ghost"
-                                                    size="sm"
+                          size="sm"
                           className="ml-1 h-4 w-4 p-0"
                           onClick={() => {
                             setOtherNgOptions(otherNgOptions.filter((_, i) => i !== index));
@@ -1530,8 +1537,8 @@ export function TalentForm() {
             {/* 送信ボタン */}
             <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">
               <div className="container mx-auto flex justify-end">
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? (
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       保存中...
