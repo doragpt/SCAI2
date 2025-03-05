@@ -18,7 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
-import { PhotoUpload } from "./photo-upload";
 import {
   type TalentProfileData,
   talentProfileSchema,
@@ -67,7 +66,6 @@ export function TalentForm() {
     defaultValues: {
       previousStores: [],
       photoDiaryUrls: [],
-      photos: [],
     },
   });
 
@@ -78,7 +76,6 @@ export function TalentForm() {
         ...existingProfile,
         previousStores: existingProfile.previousStores || [],
         photoDiaryUrls: existingProfile.photoDiaryUrls || [],
-        photos: existingProfile.photos || [],
       });
     }
   }, [existingProfile, form]);
