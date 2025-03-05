@@ -160,7 +160,10 @@ export const talentProfiles = pgTable("talent_profiles", {
     storeName: string;
     stageName: string;
   }[]>().default([]).notNull(),
-  previousStores: jsonb("previous_stores").$type<{ storeName: string; }[]>().default([]).notNull(),
+  previousStores: jsonb("previous_stores").$type<{
+    storeName: string;
+    photoDiaryUrls: string[];
+  }[]>().default([]).notNull(),
   photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
@@ -228,10 +231,6 @@ export const talentRegisterFormSchema = z.object({
 // プロフィール写真のスキーマを追加
 
 // プロフィールスキーマを更新
-type PreviousStore = {
-  storeName: string;
-};
-
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -302,6 +301,7 @@ export const talentProfileSchema = z.object({
   })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
+    photoDiaryUrls: z.array(z.string()).default([]),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
