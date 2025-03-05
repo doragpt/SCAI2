@@ -105,7 +105,7 @@ export const TalentForm: React.FC = () => {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    mode: "onSubmit",
+    mode: "onChange",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -171,45 +171,49 @@ export const TalentForm: React.FC = () => {
 
   const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      const processedData = {
-        ...data,
-        height: Number(data.height),
-        weight: Number(data.weight),
-        bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
-        waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
-        hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
-        availableIds: {
-          types: data.availableIds.types,
-          others: otherIds,
-        },
-        ngOptions: {
-          common: data.ngOptions.common,
-          others: otherNgOptions,
-        },
-        allergies: {
-          types: data.allergies.types,
-          others: otherAllergies,
-          hasAllergy: data.allergies.hasAllergy,
-        },
-        smoking: {
-          enabled: data.smoking.enabled,
-          types: data.smoking.types,
-          others: otherSmokingTypes,
-        },
-      };
+      try {
+        const processedData = {
+          ...data,
+          height: Number(data.height),
+          weight: Number(data.weight),
+          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+          availableIds: {
+            types: data.availableIds.types,
+            others: otherIds,
+          },
+          ngOptions: {
+            common: data.ngOptions.common,
+            others: otherNgOptions,
+          },
+          allergies: {
+            types: data.allergies.types,
+            others: otherAllergies,
+            hasAllergy: data.allergies.hasAllergy,
+          },
+          smoking: {
+            enabled: data.smoking.enabled,
+            types: data.smoking.types,
+            others: otherSmokingTypes,
+          },
+        };
 
-      const response = await apiRequest(
-        existingProfile ? "PUT" : "POST",
-        "/api/talent/profile",
-        processedData
-      );
+        const response = await apiRequest(
+          existingProfile ? "PUT" : "POST",
+          "/api/talent/profile",
+          processedData
+        );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "プロフィールの更新に失敗しました");
+        if (!response.ok) {
+          throw new Error("プロフィールの更新に失敗しました");
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error("API error:", error);
+        throw error;
       }
-
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
@@ -228,6 +232,15 @@ export const TalentForm: React.FC = () => {
     },
   });
 
+  const onSubmit = async (data: TalentProfileData) => {
+    try {
+      console.log("Form submission data:", data);
+      await updateProfile(data);
+    } catch (error) {
+      console.error("送信エラー:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -235,15 +248,6 @@ export const TalentForm: React.FC = () => {
       </div>
     );
   }
-
-  const onSubmit = async (data: TalentProfileData) => {
-    try {
-      console.log("Form submission initiated:", data);
-      await updateProfile(data);
-    } catch (error) {
-      console.error("送信エラー:", error);
-    }
-  };
 
   // Store management functions
   const handleAddCurrentStore = () => {
@@ -904,7 +908,7 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("smoking.types").includes(type)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("smoking.types") || [];
+                            const current = form.watch("smoking.types")|| [];
                             const updated = checked
                               ? [...current, type]
                               : current.filter((t) => t !== type);
