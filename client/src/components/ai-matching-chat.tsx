@@ -162,7 +162,16 @@ export const AIMatchingChat = () => {
       if (!conditions.waitingHours) {
         toast({
           title: "エラー",
-          description: "一日の総勤務時間を選択してください",
+          description: "一日の総勤務時間は必須項目です。12時間以上の勤務時間を選択してください",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (parseInt(conditions.waitingHours.toString()) < 12) {
+        toast({
+          title: "エラー",
+          description: "一日の総勤務時間は12時間以上を選択してください",
           variant: "destructive",
         });
         return;
@@ -463,15 +472,20 @@ AIが自動で店舗とのマッチングを行います。
     );
   };
 
+  // handleConfirmEdit 関数を更新
   const handleConfirmEdit = () => {
+    // 確認ダイアログを閉じる
     setShowConfirmDialog(false);
+    // マッチングオプションをリセット
     setShowMatchingOptions(false);
+    // 入力フォームを表示
     setShowForm(true);
-    // メッセージを追加
+    // メッセージを追加して画面をスクロール
     setMessages(prev => [...prev, {
       type: 'user',
       content: '入力内容を修正します'
     }]);
+    // 画面をスクロール
     scrollToBottom();
   };
 
@@ -996,10 +1010,8 @@ AIが自動で店舗とのマッチングを行います。
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className={selectedType === "在籍" ? "after:content-['*'] after:text-red-500 after:ml-0.5" : ""}>
+                    </div>                    <div className="space-y-2">
+                      <Label className={selectedType === "在籍" ? "after:content-['*'] after:text-red500 after:ml-0.5" : ""}>
                         希望地域
                       </Label>
                       <p className="text-sm text-muted-foreground mb-2">
