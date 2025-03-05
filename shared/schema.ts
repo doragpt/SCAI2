@@ -11,13 +11,13 @@ export const photoTags = [
   "スタジオ写真"
 ] as const;
 
-// bodyMarkSchema定義
+// bodyMarkSchema定義を更新
 export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
 });
 
-// photoSchema定義
+// photoSchema定義を更新
 export const photoSchema = z.object({
   url: z.string(),
   tag: z.enum(photoTags),
@@ -129,7 +129,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   availableIds: jsonb("available_ids").$type<{
     types: IdType[];
     others: string[];
-  }>().default({ types: [], others: [] }),
+  }>().default({ types: [], others: [] }).notNull(),
   canProvideResidenceRecord: boolean("can_provide_residence_record").default(false),
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
@@ -143,54 +143,50 @@ export const talentProfiles = pgTable("talent_profiles", {
   ngOptions: jsonb("ng_options").$type<{
     common: CommonNgOption[];
     others: string[];
-  }>().default({ common: [], others: [] }),
+  }>().default({ common: [], others: [] }).notNull(),
   allergies: jsonb("allergies").$type<{
     types: AllergyType[];
     others: string[];
     hasAllergy: boolean;
-  }>().default({ types: [], others: [], hasAllergy: false }),
+  }>().default({ types: [], others: [], hasAllergy: false }).notNull(),
   smoking: jsonb("smoking").$type<{
     enabled: boolean;
     types: SmokingType[];
     others: string[];
-  }>().default({ enabled: false, types: [], others: [] }),
+  }>().default({ enabled: false, types: [], others: [] }).notNull(),
   hasSnsAccount: boolean("has_sns_account").default(false),
-  snsUrls: jsonb("sns_urls").$type<string[]>().default([]),
+  snsUrls: jsonb("sns_urls").$type<string[]>().default([]).notNull(),
   currentStores: jsonb("current_stores").$type<{
     storeName: string;
     stageName: string;
-  }[]>().default([]),
+  }[]>().default([]).notNull(),
   previousStores: jsonb("previous_stores").$type<{
     storeName: string;
     photoDiaryUrls: string[];
-  }[]>().default([]),
-  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]),
+  }[]>().default([]).notNull(),
+  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
   estheOptions: jsonb("esthe_options").$type<{
     available: EstheOption[];
     ngOptions: string[];
-  }>().default({ available: [], ngOptions: [] }),
+  }>().default({ available: [], ngOptions: [] }).notNull(),
   hasEstheExperience: boolean("has_esthe_experience").default(false),
   estheExperiencePeriod: text("esthe_experience_period"),
-  // 希望勤務条件
   workType: text("work_type", { enum: workTypes }),
   workPeriodStart: date("work_period_start"),
   workPeriodEnd: date("work_period_end"),
   canArrivePreviousDay: boolean("can_arrive_previous_day").default(false),
-  desiredGuarantee: integer("desired_guarantee"), // 希望保証額（万円）
-  desiredRate: integer("desired_rate"), // 希望単価（万円）
-  waitingHours: integer("waiting_hours"), // 待機時間（時間）
+  desiredGuarantee: integer("desired_guarantee"),
+  desiredRate: integer("desired_rate"),
+  waitingHours: integer("waiting_hours"),
   departureLocation: text("departure_location", { enum: prefectures }),
   returnLocation: text("return_location", { enum: prefectures }),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
-  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]),
-  // bodyMarkを追加
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }),
-  // photosを更新
-  photos: jsonb("photos").$type<Photo[]>().default([])
-
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
+  photos: jsonb("photos").$type<Photo[]>().default([]).notNull()
 });
 
 // Login and registration schemas
