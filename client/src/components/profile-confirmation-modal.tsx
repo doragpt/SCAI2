@@ -30,16 +30,16 @@ export function ProfileConfirmationModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
-        <div className="space-y-4">
-          <DialogHeader>
-            <DialogTitle>プロフィール内容の確認</DialogTitle>
-            <DialogDescription>
-              入力内容をご確認ください。この内容でよろしいですか？
-            </DialogDescription>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>プロフィール内容の確認</DialogTitle>
+          <DialogDescription>
+            入力内容をご確認ください。この内容でよろしいですか？
+          </DialogDescription>
+        </DialogHeader>
 
-          <ScrollArea className="h-[60vh] px-4">
-            <div className="space-y-6">
+        <div className="flex flex-col gap-6 py-4">
+          <ScrollArea className="h-[60vh]">
+            <div className="space-y-6 px-4">
               {/* 基本情報 */}
               <div className="space-y-2">
                 <h3 className="font-medium">基本情報</h3>
@@ -218,16 +218,16 @@ export function ProfileConfirmationModal({
                   <p className="whitespace-pre-wrap">{profileData.notes}</p>
                 </div>
               )}
-              <DialogFooter>
-                <Button variant="outline" onClick={onClose}>
-                  修正する
-                </Button>
-                <Button onClick={onConfirm}>
-                  この内容で確定する
-                </Button>
-              </DialogFooter>
             </div>
           </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              修正する
+            </Button>
+            <Button onClick={onConfirm}>
+              この内容で確定する
+            </Button>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>
