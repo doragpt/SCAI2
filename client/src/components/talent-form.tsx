@@ -29,7 +29,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/lib/queryClient";
 
-// FormField component
+// FormFieldWrapper component
 const FormFieldWrapper: React.FC<{
   label: string;
   required?: boolean;
@@ -41,10 +41,10 @@ const FormFieldWrapper: React.FC<{
       <Label>{label}</Label>
       {required && <span className="text-destructive">*</span>}
     </div>
-    {children}
     {description && (
       <p className="text-sm text-muted-foreground">{description}</p>
     )}
+    {children}
   </div>
 );
 
@@ -238,46 +238,56 @@ export const TalentForm: React.FC = () => {
 
   const onSubmit = async (data: TalentProfileData) => {
     try {
+      console.log("Form submission initiated:", data);
       await updateProfile(data);
     } catch (error) {
       console.error("送信エラー:", error);
     }
   };
 
-  const handleUpdateCurrentStore = (index: number, field: string, value: string) => {
-    const currentStores = form.getValues("currentStores") || [];
-    const updatedStores = [...currentStores];
-    updatedStores[index] = { ...updatedStores[index], [field]: value };
-    form.setValue("currentStores", updatedStores);
-  };
-
-  const handleRemoveCurrentStore = (index: number) => {
-    const currentStores = form.getValues("currentStores") || [];
-    const updatedStores = currentStores.filter((_, i) => i !== index);
-    form.setValue("currentStores", updatedStores);
-  };
-
+  // Store management functions
   const handleAddCurrentStore = () => {
     const currentStores = form.getValues("currentStores") || [];
     form.setValue("currentStores", [...currentStores, { storeName: "", stageName: "" }]);
   };
 
-  const handleUpdatePreviousStore = (index: number, field: string, value: string) => {
-    const previousStores = form.getValues("previousStores") || [];
-    const updatedStores = [...previousStores];
-    updatedStores[index] = { ...updatedStores[index], [field]: value };
-    form.setValue("previousStores", updatedStores);
+  const handleUpdateCurrentStore = (index: number, field: "storeName" | "stageName", value: string) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores && currentStores[index]) {
+      const updated = [...currentStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("currentStores", updated);
+    }
   };
 
-  const handleRemovePreviousStore = (index: number) => {
-    const previousStores = form.getValues("previousStores") || [];
-    const updatedStores = previousStores.filter((_, i) => i !== index);
-    form.setValue("previousStores", updatedStores);
+  const handleRemoveCurrentStore = (index: number) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores) {
+      const updated = currentStores.filter((_, i) => i !== index);
+      form.setValue("currentStores", updated);
+    }
   };
 
   const handleAddPreviousStore = () => {
     const previousStores = form.getValues("previousStores") || [];
     form.setValue("previousStores", [...previousStores, { storeName: "", stageName: "" }]);
+  };
+
+  const handleUpdatePreviousStore = (index: number, field: "storeName" | "stageName", value: string) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores && previousStores[index]) {
+      const updated = [...previousStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("previousStores", updated);
+    }
+  };
+
+  const handleRemovePreviousStore = (index: number) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores) {
+      const updated = previousStores.filter((_, i) => i !== index);
+      form.setValue("previousStores", updated);
+    }
   };
 
   const handleUpdateSnsUrl = (index: number, value: string) => {
@@ -1137,10 +1147,14 @@ export const TalentForm: React.FC = () => {
                     className="w-full"
                     disabled={isPending}
                   >
-                    {isPending && (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    )}
-                    {existingProfile ? "プロフィールを更新" : "プロフィールを作成"}
+                    <div className="flex items-center justify-center">
+                      {isPending && (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      )}
+                      <span>
+                        {existingProfile ? "プロフィールを更新" : "プロフィールを作成"}
+                      </span>
+                    </div>
                   </Button>
                 </div>
               </div>
