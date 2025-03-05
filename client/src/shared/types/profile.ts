@@ -63,7 +63,7 @@ export const profileSchema = z.object({
   estheOptions: z.object({
     available: z.array(z.string()).optional(), // 対応可能なエステメニュー
     ngOptions: z.array(z.string()).optional(), // NGのエステメニュー
-  }).optional(),
+  }),
 
   // SNS情報
   hasSnsAccount: z.boolean(), // SNSアカウントの有無

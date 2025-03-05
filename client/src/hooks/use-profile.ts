@@ -79,9 +79,31 @@ export function useProfile() {
   });
 
   const updateProfile = (newData: Partial<ProfileData>) => {
+    console.log('Updating profile with:', newData); // デバッグ用
     setProfileData(prev => ({
       ...prev,
       ...newData,
+      // ネストされたオブジェクトの更新を確実に行う
+      availableIds: {
+        ...prev.availableIds,
+        ...(newData.availableIds || {}),
+      },
+      ngOptions: {
+        ...prev.ngOptions,
+        ...(newData.ngOptions || {}),
+      },
+      allergies: {
+        ...prev.allergies,
+        ...(newData.allergies || {}),
+      },
+      smoking: {
+        ...prev.smoking,
+        ...(newData.smoking || {}),
+      },
+      estheOptions: {
+        ...prev.estheOptions,
+        ...(newData.estheOptions || {}),
+      },
     }));
   };
 

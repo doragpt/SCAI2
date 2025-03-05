@@ -38,7 +38,7 @@ export default function ProfileCheckDialog({
         <DialogHeader>
           <DialogTitle>プロフィール確認</DialogTitle>
           <DialogDescription>
-            マッチングを開始する前に、以下の内容を確認してください
+            マッチングを開始する前に、以下の内容を確認してください。
           </DialogDescription>
         </DialogHeader>
 
@@ -58,7 +58,7 @@ export default function ProfileCheckDialog({
                   { label: "生年月日", value: profileData.birthDate },
                   { label: "年齢", value: profileData.age },
                   { label: "電話番号", value: profileData.phoneNumber },
-                  { label: "メールアドレス", value: profileData.email },
+                  { label: "メールアドレス", value: profileData.email }
                 ].map((item) => (
                   <div key={item.label}>
                     <Label>{item.label}</Label>
@@ -71,14 +71,14 @@ export default function ProfileCheckDialog({
             {/* 身体的特徴 */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">身体的特徴</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   { label: "身長 (cm)", value: profileData.height },
                   { label: "体重 (kg)", value: profileData.weight },
-                  { label: "カップサイズ", value: profileData.cupSize || "未選択" },
+                  { label: "カップサイズ", value: profileData.cupSize },
                   { label: "バスト (cm)", value: profileData.bust },
                   { label: "ウエスト (cm)", value: profileData.waist },
-                  { label: "ヒップ (cm)", value: profileData.hip },
+                  { label: "ヒップ (cm)", value: profileData.hip }
                 ].map((item) => (
                   <div key={item.label}>
                     <Label>{item.label}</Label>
@@ -110,9 +110,7 @@ export default function ProfileCheckDialog({
                   ) : (
                     <X className="h-4 w-4 text-red-500" />
                   )}
-                  <span>
-                    {profileData.canProvideResidenceRecord ? "可能" : "不可"}
-                  </span>
+                  <span>{profileData.canProvideResidenceRecord ? "可能" : "不可"}</span>
                 </div>
               </div>
             </div>
@@ -185,11 +183,11 @@ export default function ProfileCheckDialog({
                     </span>
                   </div>
                 </div>
-                {profileData.estheOptions && (
+                {profileData.estheOptions?.available && profileData.estheOptions.available.length > 0 && (
                   <div>
                     <Label>対応可能なメニュー</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {profileData.estheOptions.available?.map((option) => (
+                      {profileData.estheOptions.available.map((option) => (
                         <Badge key={option} variant="outline">
                           <Check className="mr-1 h-3 w-3 text-green-500" />
                           {option}
@@ -212,6 +210,18 @@ export default function ProfileCheckDialog({
                 )}
                 <span>{profileData.hasAllergies ? "あり" : "無し"}</span>
               </div>
+              {profileData.hasAllergies && (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ...(profileData.allergies?.types || []),
+                    ...(profileData.allergies?.others || [])
+                  ].map((allergy) => (
+                    <Badge key={allergy} variant="outline">
+                      {allergy}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 喫煙 */}
@@ -225,48 +235,35 @@ export default function ProfileCheckDialog({
                 )}
                 <span>{profileData.isSmoker ? "あり" : "無し"}</span>
               </div>
-            </div>
-
-            {/* 各種対応可否 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">各種対応可否</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "住民票の提出", value: profileData.canProvideResidenceRecord },
-                  { label: "写メ日記の投稿", value: profileData.photoDiaryAllowed },
-                  { label: "自宅待機での出張", value: profileData.canHomeDelivery }
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    {item.value ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <X className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{item.label}</span>
-                  </div>
-                ))}
-              </div>
+              {profileData.isSmoker && profileData.smoking && profileData.smoking.types && (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ...(profileData.smoking.types || []),
+                    ...(profileData.smoking.others || [])
+                  ].map((type) => (
+                    <Badge key={type} variant="outline">
+                      {type}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 自己PR */}
-            {profileData.selfIntroduction && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">自己PR</h3>
-                <p className="text-sm whitespace-pre-wrap">
-                  {profileData.selfIntroduction}
-                </p>
-              </div>
-            )}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">自己PR</h3>
+              <p className="text-sm whitespace-pre-wrap">
+                {formatValue(profileData.selfIntroduction)}
+              </p>
+            </div>
 
             {/* その他備考 */}
-            {profileData.notes && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">その他備考</h3>
-                <p className="text-sm whitespace-pre-wrap">
-                  {profileData.notes}
-                </p>
-              </div>
-            )}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">その他備考</h3>
+              <p className="text-sm whitespace-pre-wrap">
+                {formatValue(profileData.notes)}
+              </p>
+            </div>
           </div>
         </ScrollArea>
 
