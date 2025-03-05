@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,17 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
+
+// Store type definitions
+type CurrentStore = {
+  storeName: string;
+  stageName: string;
+};
+
+type PreviousStore = {
+  storeName: string;
+  photoDiaryUrls: string[];
+};
 
 // FormFieldWrapperコンポーネント
 const FormFieldWrapper = ({
@@ -99,7 +110,7 @@ const SwitchField = ({
   </div>
 );
 
-// PhotoUploadコンポーネント
+// PhotoUploadコンポーネントの修正
 const PhotoUpload = ({
   photos,
   onChange,
@@ -107,34 +118,36 @@ const PhotoUpload = ({
   photos: Photo[];
   onChange: (photos: Photo[]) => void;
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>(photoTags[0]);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    setSelectedFiles(files);
+    const newPhotos: Photo[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleUpload = () => {
-    if (selectedFile && previewUrl) {
-      onChange([
-        ...photos,
-        {
-          url: previewUrl,
-          tag: selectedTag,
-        },
-      ]);
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      setSelectedTag(photoTags[0]);
+      // FileReaderをPromiseでラップ
+      const result = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      newPhotos.push({
+        url: result,
+        tag: photoTags[0], // デフォルトで「現在の髪色」を設定
+      });
+    }
+
+    onChange([...photos, ...newPhotos]);
+    setSelectedFiles(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -209,75 +222,25 @@ const PhotoUpload = ({
             <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-sm font-semibold">写真をアップロード</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              クリックまたはドラッグ＆ドロップでファイルを選択
+              クリックまたはドラッグ＆ドロップで複数の写真を選択できます
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <label htmlFor="photo-upload" className="cursor-pointer">
-                <Button type="button" variant="outline" className="relative">
-                  写真を選択
-                  <input
-                    type="file"
-                    id="photo-upload"
-                    accept="image/*"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={handleFileChange}
-                  />
-                </Button>
-              </label>
-            </div>
-
-            {previewUrl && (
-              <div className="mt-4 space-y-4">
-                <div className="aspect-[3/4] w-48 mx-auto bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={previewUrl}
-                    alt="プレビュー"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Select value={selectedTag} onValueChange={setSelectedTag}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="タグを選択してください（必須）" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {photoTags.map((tag) => (
-                        <SelectItem
-                          key={tag}
-                          value={tag}
-                          disabled={tag === "現在の髪色" && hasHairColorPhoto}
-                        >
-                          {tag}
-                          {tag === "現在の髪色" && " (必須)"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        setPreviewUrl(null);
-                      }}
-                    >
-                      キャンセル
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleUpload}
-                      disabled={!selectedTag}
-                    >
-                      アップロード
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="flex justify-center">
+            <label htmlFor="photo-upload" className="cursor-pointer">
+              <Button type="button" variant="outline" className="relative">
+                写真を選択
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="photo-upload"
+                  accept="image/*"
+                  multiple
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileChange}
+                />
+              </Button>
+            </label>
           </div>
         </div>
       )}
@@ -303,6 +266,7 @@ export function TalentForm() {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
+  const [newPhotoDiaryUrl, setNewPhotoDiaryUrl] = useState<string>("");
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -524,10 +488,10 @@ export function TalentForm() {
 
   const handleAddPreviousStore = () => {
     const previousStores = form.getValues("previousStores") || [];
-    form.setValue("previousStores", [...previousStores, { storeName: "", stageName: "" }]);
+    form.setValue("previousStores", [...previousStores, { storeName: "", photoDiaryUrls: [] }]);
   };
 
-  const handleUpdatePreviousStore = (index: number, field: "storeName" | "stageName", value: string) => {
+  const handleUpdatePreviousStore = (index: number, field: "storeName", value: string) => {
     const previousStores = form.getValues("previousStores");
     if (previousStores && previousStores[index]) {
       const updated = [...previousStores];
@@ -560,6 +524,30 @@ export function TalentForm() {
   const handleAddSnsUrl = () => {
     const snsUrls = form.getValues("snsUrls") || [];
     form.setValue("snsUrls", [...snsUrls, ""]);
+  };
+
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
+    if (!newPhotoDiaryUrl) return;
+    const previousStores = form.getValues("previousStores") || [];
+    const updatedStores = [...previousStores];
+    updatedStores[storeIndex] = {
+      ...updatedStores[storeIndex],
+      photoDiaryUrls: [...(updatedStores[storeIndex].photoDiaryUrls || []), newPhotoDiaryUrl],
+    };
+    form.setValue("previousStores", updatedStores);
+    setNewPhotoDiaryUrl("");
+  };
+
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores && previousStores[storeIndex]) {
+      const updatedStores = [...previousStores];
+      updatedStores[storeIndex] = {
+        ...updatedStores[storeIndex],
+        photoDiaryUrls: updatedStores[storeIndex].photoDiaryUrls.filter((_, i) => i !== urlIndex),
+      };
+      form.setValue("previousStores", updatedStores);
+    }
   };
 
   if (isLoading) {
@@ -684,39 +672,26 @@ export function TalentForm() {
             {/* 4.身分証明書 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
-              <FormField
-                control={form.control}
-                name="availableIds"
-                render={({ field }) => (
-                  <div>
-                    {idTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={field.value.types.includes(type)}
-                          onCheckedChange={(checked) => {
-                            const updatedTypes = checked
-                              ? [...field.value.types, type]
-                              : field.value.types.filter((t) => t !== type);
-                            form.setValue("availableIds.types", updatedTypes);
-                          }}
-                        />
-                        <label className="text-sm">{type}</label>
-                      </div>
-                    ))}
-                    <div className="mt-2">
-                      <Input
-                        type="text"
-                        placeholder="その他（例：運転免許証）"
-                        value={otherIds.join(", ")}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setOtherIds(value ? value.split(",").map((v) => v.trim()) : []);
+              <FormFieldWrapper label="持参可能な身分証明書" required>
+                <div className="grid grid-cols-2 gap-4">
+                  {idTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`id-${type}`}
+                        checked={form.watch("availableIds.types").includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = form.watch("availableIds.types") || [];
+                          const updated = checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type);
+                          form.setValue("availableIds.types", updated);
                         }}
                       />
+                      <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
                     </div>
-                  </div>
-                )}
-              />
+                  ))}
+                </div>
+              </FormFieldWrapper>
             </div>
             <FormField
               control={form.control}
@@ -1302,18 +1277,22 @@ export function TalentForm() {
             {/* 17. 現在の勤務先 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
-              {form.watch("currentStores").map((store, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex gap-2">
+              <div className="space-y-4">
+                {form.watch("currentStores")?.map((store, index) => (
+                  <div key={index} className="flex gap-2">
                     <Input
                       placeholder="店名"
                       value={store.storeName}
-                      onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateCurrentStore(index, "storeName", e.target.value)
+                      }
                     />
                     <Input
-                      placeholder="芸名"
+                      placeholder="源氏名"
                       value={store.stageName}
-                      onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateCurrentStore(index, "stageName", e.target.value)
+                      }
                     />
                     <Button
                       type="button"
@@ -1324,43 +1303,88 @@ export function TalentForm() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={handleAddCurrentStore}>
-                勤務先を追加
-              </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddCurrentStore}
+                  className="w-full"
+                >
+                  勤務先を追加
+                </Button>
+              </div>
             </div>
 
             {/* 18. 過去の勤務先 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
-              {form.watch("previousStores").map((store, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="店名"
-                      value={store.storeName}
-                      onChange={(e) => handleUpdatePreviousStore(index, "storeName", e.target.value)}
-                    />
-                    <Input
-                      placeholder="芸名"
-                      value={store.stageName}
-                      onChange={(e) => handleUpdatePreviousStore(index, "stageName", e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleRemovePreviousStore(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+              <div className="space-y-6">
+                {form.watch("previousStores")?.map((store, storeIndex) => (
+                  <div key={storeIndex} className="space-y-4 border p-4 rounded-lg">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="店名"
+                        value={store.storeName}
+                        onChange={(e) =>
+                          handleUpdatePreviousStore(storeIndex, "storeName", e.target.value)
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleRemovePreviousStore(storeIndex)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* 写メ日記URL */}
+                    <div className="space-y-2">
+                      <Label>写メ日記URL</Label>
+                      {store.photoDiaryUrls?.map((url, urlIndex) => (
+                        <div key={urlIndex} className="flex gap-2">
+                          <Input value={url} disabled />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleRemovePhotoDiaryUrl(storeIndex, urlIndex)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="写メ日記のURLを入力"
+                          value={newPhotoDiaryUrl}
+                          onChange={(e) => setNewPhotoDiaryUrl(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleAddPhotoDiaryUrl(storeIndex);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => handleAddPhotoDiaryUrl(storeIndex)}
+                        >
+                          追加
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={handleAddPreviousStore}>
-                勤務先を追加
-              </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddPreviousStore}
+                  className="w-full"
+                >
+                  過去の勤務先を追加
+                </Button>
+              </div>
             </div>
 
             {/* 19. プロフィール写真 */}
