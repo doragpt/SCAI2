@@ -47,6 +47,44 @@ const FormField: React.FC<{
   </div>
 );
 
+// SwitchField component
+const SwitchField: React.FC<{
+  label: string;
+  required?: boolean;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  description?: string;
+  valueLabels?: { checked: string; unchecked: string };
+}> = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" }
+}) => (
+  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+    <div className="flex items-center gap-2">
+      <Switch 
+        checked={checked} 
+        onCheckedChange={onCheckedChange}
+      />
+      <span className={checked ? "text-primary" : "text-muted-foreground"}>
+        {checked ? valueLabels.checked : valueLabels.unchecked}
+      </span>
+    </div>
+  </div>
+);
+
 // FormErrorMessage component
 const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
   <p className="text-sm text-destructive mt-1">{message}</p>
