@@ -45,8 +45,8 @@ interface Message {
   content: string;
 }
 
-// 勤務時間の定数を修正（10時間から18時間まで、1時間単位）
-const VALID_WAITING_HOURS = Array.from({ length: 8 }, (_, i) => ({ //Corrected length to 8 for 10-17 hours
+// 勤務時間の定数を修正（10時間から24時間まで、1時間単位）
+const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
   value: String(i + 10),
   label: `${i + 10}時間`,
 }));
@@ -86,7 +86,7 @@ export const AIMatchingChat = () => {
     departureLocation: "",
     returnLocation: "",
     preferredLocations: [] as string[],
-    ngLocations: [] as string[], // Added ngLocations
+    ngLocations: [] as string[],
     notes: "",
     interviewDates: [] as string[],
   });
@@ -162,10 +162,10 @@ export const AIMatchingChat = () => {
         return;
       }
 
-      if (!conditions.waitingHours || conditions.waitingHours < 10) { //Updated minimum hours to 10
+      if (!conditions.waitingHours || conditions.waitingHours < 10) {
         toast({
           title: "エラー",
-          description: "一日の総勤務時間は10時間以上を選択してください", //Updated description
+          description: "一日の総勤務時間は10時間以上を選択してください",
           variant: "destructive",
         });
         return;
@@ -468,7 +468,7 @@ export const AIMatchingChat = () => {
                       一日の総勤務時間
                     </Label>
                     <p className="text-sm text-muted-foreground mb-2">
-                      10時間以上の勤務が基本的に保証条件となります。 {/*Updated minimum hours*/}
+                      12時間以上の勤務が基本的に保証条件となります。
                     </p>
                     <Select
                       onValueChange={(value) =>
@@ -612,7 +612,52 @@ export const AIMatchingChat = () => {
                 </>
               )}
 
-              {/* NG地域の選択を追加 */}
+              {/* 希望地域の選択 */}
+              <div className="space-y-2">
+                <Label>希望地域</Label>
+                <Select
+                  onValueChange={(value) =>
+                    setConditions({
+                      ...conditions,
+                      preferredLocations: [...conditions.preferredLocations, value],
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prefectures.map((pref) => (
+                      <SelectItem key={pref} value={pref}>
+                        {pref}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {conditions.preferredLocations.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {conditions.preferredLocations.map((loc) => (
+                      <Button
+                        key={loc}
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          setConditions({
+                            ...conditions,
+                            preferredLocations: conditions.preferredLocations.filter(
+                              (l) => l !== loc
+                            ),
+                          })
+                        }
+                      >
+                        {loc} ×
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* NG地域の選択 */}
               <div className="space-y-2">
                 <Label>NG地域</Label>
                 <Select
@@ -736,21 +781,32 @@ export const AIMatchingChat = () => {
                         {conditions.departureLocation} → {conditions.returnLocation}
                       </p>
                     </div>
-                    {conditions.ngLocations.length > 0 && (
-                      <div>
-                        <Label>NG地域</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {conditions.ngLocations.map((loc) => (
-                            <span
-                              key={loc}
-                              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
-                            >
-                              {loc}
-                            </span>
-                          ))}
-                        </div>
+                    <div>
+                      <Label>希望地域</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {conditions.preferredLocations.map((loc) => (
+                          <span
+                            key={loc}
+                            className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
+                          >
+                            {loc}
+                          </span>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                    <div>
+                      <Label>NG地域</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {conditions.ngLocations.map((loc) => (
+                          <span
+                            key={loc}
+                            className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                          >
+                            {loc}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
