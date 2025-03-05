@@ -26,14 +26,6 @@ export default function ProfileCheckDialog({
   onConfirm,
   profileData,
 }: ProfileCheckDialogProps) {
-  const formatName = (lastName: string, firstName: string) => {
-    return [lastName, firstName].filter(Boolean).join(" ") || "未入力";
-  };
-
-  const formatMeasurements = (value: number) => {
-    return value > 0 ? value.toString() : "未入力";
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -50,117 +42,117 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">基本情報</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>氏名</Label>
-                  <p className="text-sm">
-                    {formatName(profileData.lastName, profileData.firstName)}
-                  </p>
-                </div>
-                <div>
-                  <Label>フリガナ</Label>
-                  <p className="text-sm">
-                    {formatName(profileData.lastNameKana, profileData.firstNameKana)}
-                  </p>
-                </div>
-                <div>
-                  <Label>生年月日</Label>
-                  <p className="text-sm">{profileData.birthDate || "未入力"}</p>
-                </div>
-                <div>
-                  <Label>年齢</Label>
-                  <p className="text-sm">
-                    {profileData.age > 0 ? `${profileData.age}歳` : "未入力"}
-                  </p>
-                </div>
-                <div>
-                  <Label>電話番号</Label>
-                  <p className="text-sm">{profileData.phoneNumber || "未入力"}</p>
-                </div>
-                <div>
-                  <Label>メールアドレス</Label>
-                  <p className="text-sm">{profileData.email || "未入力"}</p>
-                </div>
-                <div>
-                  <Label>居住地</Label>
-                  <p className="text-sm">{profileData.location || "未入力"}</p>
-                </div>
-                <div>
-                  <Label>最寄り駅</Label>
-                  <p className="text-sm">{profileData.nearestStation || "未入力"}</p>
-                </div>
+                {[
+                  { label: "性", value: profileData.lastName },
+                  { label: "名", value: profileData.firstName },
+                  { label: "性 (カナ)", value: profileData.lastNameKana },
+                  { label: "名 (カナ)", value: profileData.firstNameKana },
+                  { label: "在住地", value: profileData.location },
+                  { label: "最寄り駅", value: profileData.nearestStation },
+                  { label: "生年月日", value: profileData.birthDate },
+                  { label: "年齢", value: profileData.age },
+                  { label: "電話番号", value: profileData.phoneNumber },
+                  { label: "メールアドレス", value: profileData.email },
+
+                ].map((item) => (
+                  <div key={item.label}>
+                    <Label>{item.label}</Label>
+                    <p className="text-sm">{item.value || "未入力"}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* 身体的特徴 */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">身体的特徴</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>身長</Label>
-                  <p className="text-sm">
-                    {profileData.height > 0 ? `${profileData.height}cm` : "未入力"}
-                  </p>
+                  <Label>身長 (cm)</Label>
+                  <p className="text-sm">{profileData.height || 0}</p>
                 </div>
                 <div>
-                  <Label>体重</Label>
-                  <p className="text-sm">
-                    {profileData.weight > 0 ? `${profileData.weight}kg` : "未入力"}
-                  </p>
-                </div>
-                <div>
-                  <Label>スリーサイズ</Label>
-                  <p className="text-sm">
-                    B{formatMeasurements(profileData.bust)} 
-                    W{formatMeasurements(profileData.waist)} 
-                    H{formatMeasurements(profileData.hip)}
-                  </p>
+                  <Label>体重 (kg)</Label>
+                  <p className="text-sm">{profileData.weight || 0}</p>
                 </div>
                 <div>
                   <Label>カップサイズ</Label>
-                  <p className="text-sm">
-                    {profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}
-                  </p>
+                  <p className="text-sm">{profileData.cupSize || "未選択"}</p>
                 </div>
-              </div>
-            </div>
-
-            {/* 各種対応可否 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">各種対応可否</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "住民票の提出", value: profileData.canProvideResidenceRecord },
-                  { label: "写メ日記の投稿", value: profileData.canPhotoDiary },
-                  { label: "自宅待機での出張", value: profileData.canHomeDelivery }
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    {item.value ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <X className="h-4 w-4 text-red-500" />
-                    )}
-                    <span>{item.label}</span>
-                  </div>
-                ))}
+                <div>
+                  <Label>バスト (cm)</Label>
+                  <p className="text-sm">{profileData.bust || 0}</p>
+                </div>
+                <div>
+                  <Label>ウエスト (cm)</Label>
+                  <p className="text-sm">{profileData.waist || 0}</p>
+                </div>
+                <div>
+                  <Label>ヒップ (cm)</Label>
+                  <p className="text-sm">{profileData.hip || 0}</p>
+                </div>
               </div>
             </div>
 
             {/* 身分証明書 */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">身分証明書</h3>
-              <div className="flex flex-wrap gap-2">
-                {profileData.availableIds?.types?.map((id) => (
-                  <Badge key={id} variant="outline">
-                    <Check className="mr-1 h-3 w-3 text-green-500" />
-                    {id}
-                  </Badge>
-                ))}
-                {profileData.availableIds?.others?.map((id) => (
-                  <Badge key={id} variant="outline">
-                    <Check className="mr-1 h-3 w-3 text-green-500" />
-                    {id}
-                  </Badge>
-                ))}
+              <div>
+                <Label>持参可能な身分証明書</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {profileData.availableIds?.types?.map((id) => (
+                    <Badge key={id} variant="outline">
+                      <Check className="mr-1 h-3 w-3 text-green-500" />
+                      {id}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label>本籍地記載の住民票</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  {profileData.canProvideResidenceRecord ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <X className="h-4 w-4 text-red-500" />
+                  )}
+                  <span>
+                    {profileData.canProvideResidenceRecord ? "用意可能" : "不可"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 写真関連 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">写真関連</h3>
+              <div>
+                <Label>写メ日記の投稿</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  {profileData.canPhotoDiary ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <X className="h-4 w-4 text-red-500" />
+                  )}
+                  <span>{profileData.canPhotoDiary ? "可能" : "不可"}</span>
+                </div>
+              </div>
+              <div>
+                <Label>顔出し設定</Label>
+                <p className="text-sm">{profileData.faceVisibility || "未設定"}</p>
+              </div>
+            </div>
+
+            {/* 自宅派遣 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">自宅派遣</h3>
+              <div className="flex items-center gap-2">
+                {profileData.canHomeDelivery ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <X className="h-4 w-4 text-red-500" />
+                )}
+                <span>{profileData.canHomeDelivery ? "可能" : "不可"}</span>
               </div>
             </div>
 
@@ -180,10 +172,70 @@ export default function ProfileCheckDialog({
               </div>
             </div>
 
+            {/* エステ関連 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">エステ関連</h3>
+              <div className="space-y-2">
+                <div>
+                  <Label>エステ経験</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    {profileData.hasEstheExperience ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-500" />
+                    )}
+                    <span>
+                      {profileData.hasEstheExperience ? (
+                        <>経験あり（{profileData.estheExperiencePeriod}）</>
+                      ) : (
+                        "無し"
+                      )}
+                    </span>
+                  </div>
+                </div>
+                {profileData.estheOptions && (
+                  <>
+                    <div>
+                      <Label>対応可能なメニュー</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {profileData.estheOptions.available?.map((option) => (
+                          <Badge key={option} variant="outline">
+                            <Check className="mr-1 h-3 w-3 text-green-500" />
+                            {option}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {profileData.estheOptions.ngOptions?.length > 0 && (
+                      <div>
+                        <Label>NGのメニュー</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {profileData.estheOptions.ngOptions.map((option) => (
+                            <Badge key={option} variant="destructive">
+                              <X className="mr-1 h-3 w-3" />
+                              {option}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* アレルギー */}
-            {(profileData.allergies.types?.length > 0 || profileData.allergies.others?.length > 0) && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">アレルギー</h3>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">アレルギー</h3>
+              <div className="flex items-center gap-2">
+                {profileData.hasAllergies ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <X className="h-4 w-4 text-red-500" />
+                )}
+                <span>{profileData.hasAllergies ? "あり" : "無し"}</span>
+              </div>
+              {profileData.hasAllergies && profileData.allergies.types?.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {[
                     ...(profileData.allergies.types || []),
@@ -194,71 +246,40 @@ export default function ProfileCheckDialog({
                     </Badge>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* 喫煙 */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">喫煙</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ...(profileData.smoking.types || []),
-                  ...(profileData.smoking.others || [])
-                ].map((type) => (
-                  <Badge key={type} variant="outline">
-                    {type}
-                  </Badge>
-                ))}
+              <div className="flex items-center gap-2">
+                {profileData.isSmoker ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <X className="h-4 w-4 text-red-500" />
+                )}
+                <span>{profileData.isSmoker ? "有り" : "無し"}</span>
               </div>
             </div>
-
-            {/* エステオプション */}
-            {profileData.estheOptions && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">エステメニュー</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label>対応可能なメニュー</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {profileData.estheOptions.available?.map((option) => (
-                        <Badge key={option} variant="outline">
-                          <Check className="mr-1 h-3 w-3 text-green-500" />
-                          {option}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  {profileData.estheOptions.ngOptions?.length > 0 && (
-                    <div>
-                      <Label>NGのメニュー</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profileData.estheOptions.ngOptions.map((option) => (
-                          <Badge key={option} variant="destructive">
-                            <X className="mr-1 h-3 w-3" />
-                            {option}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* エステ経験 */}
-            {profileData.hasEstheExperience && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">エステ経験</h3>
-                <p className="text-sm">
-                  あり（{profileData.estheExperiencePeriod}）
-                </p>
-              </div>
-            )}
-
-            {/* 顔出し設定 */}
+            {/* 各種対応可否 */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">顔出し設定</h3>
-              <p className="text-sm">{profileData.faceVisibility || "未設定"}</p>
+              <h3 className="text-lg font-medium">各種対応可否</h3>
+              <div className="space-y-2">
+                {[
+                  { label: "住民票の提出", value: profileData.canProvideResidenceRecord },
+                  { label: "写メ日記の投稿", value: profileData.canPhotoDiary },
+                  { label: "自宅待機での出張", value: profileData.canHomeDelivery }
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    {item.value ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-500" />
+                    )}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* SNSアカウント */}

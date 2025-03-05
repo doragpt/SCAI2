@@ -3,6 +3,7 @@ import { type ProfileData } from '@shared/types/profile';
 
 export function useProfile() {
   const [profileData, setProfileData] = useState<ProfileData>({
+    // 基本情報
     lastName: '',
     firstName: '',
     lastNameKana: '',
@@ -13,42 +14,66 @@ export function useProfile() {
     email: '',
     location: '',
     nearestStation: '',
+
+    // 身体的特徴
     height: 0,
     weight: 0,
     bust: 0,
     waist: 0,
     hip: 0,
     cupSize: '',
+
+    // 身分証明書
     availableIds: {
-      types: ['運転免許証', '保険証'],
+      types: [],
       others: [],
     },
-    canProvideResidenceRecord: true,
-    canPhotoDiary: true,
+    canProvideResidenceRecord: false,
+
+    // 写真関連
+    faceVisibility: '口だけ隠し',
+    photoDiaryAllowed: false,
+
+    // 自宅派遣関連
     canHomeDelivery: false,
+
+    // NGオプション
     ngOptions: {
-      common: ['ソフトSM', 'ハードサービス'],
+      common: [],
       others: [],
     },
+
+    // アレルギー
+    hasAllergies: false,
     allergies: {
       types: [],
       others: [],
     },
+
+    // 喫煙
+    isSmoker: false,
     smoking: {
-      types: ['禁煙'],
+      types: [],
       others: [],
     },
-    estheOptions: {
-      available: ['オイルマッサージ', 'アロママッサージ'],
-      ngOptions: ['ディープリンパ'],
-    },
+
+    // エステ関連
     hasEstheExperience: false,
     estheExperiencePeriod: '',
-    faceVisibility: '顔出しNG',
+    estheOptions: {
+      available: [],
+      ngOptions: [],
+    },
+
+    // SNS情報
     hasSnsAccount: false,
     snsUrls: [],
+
+    // 店舗情報
     currentStores: [],
     previousStores: [],
+
+    // PR・備考
     selfIntroduction: '',
     notes: '',
   });
