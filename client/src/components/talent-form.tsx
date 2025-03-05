@@ -984,7 +984,7 @@ export function TalentForm() {
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
+                                                    size="sm"
                           className="ml-1 h-4 w-4 p-0"
                           onClick={() => {
                             setOtherNgOptions(otherNgOptions.filter((_, i) => i !== index));
@@ -1018,89 +1018,90 @@ export function TalentForm() {
             {/* 12. エステオプション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
-              <Collapsible
-                open={isEstheOpen}
-                onOpenChange={setIsEstheOpen}
-                className="space-y-4"
-              >
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent rounded-lg">
-                    <h4 className="text-sm font-medium">
-                      エステ経験の詳細
-                    </h4>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        isEstheOpen ? "transform rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {estheOptions.map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={form.watch("estheOptions.available").includes(option)}
-                          onCheckedChange={(checked) => {
-                            const current = form.watch("estheOptions.available") || [];
-                            const updated = checked
-                              ? [...current, option]
-                              : current.filter((o) => o !== option);
-                            form.setValue("estheOptions.available", updated);
-                          }}
-                        />
-                        <label className="text-sm">{option}</label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4">
-                    <Label>その他NGプレイ</Label>
-                    <Input
-                      placeholder="その他のNGプレイを入力"
-                      value={form.watch("estheOptions.ngOptions").join(", ")}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        form.setValue(
-                          "estheOptions.ngOptions",
-                          value ? value.split(",").map((v) => v.trim()) : []
-                        );
+              <FormField
+                control={form.control}
+                name="hasEstheExperience"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="エステ経験"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        setIsEstheOpen(checked);
                       }}
                     />
-                  </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="hasEstheExperience"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="mt-4">
-                          <SwitchField
-                            label="エステ経験"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                          {field.value && (
-                            <div className="mt-2">
-                              <FormField
-                                control={form.control}
-                                name="estheExperiencePeriod"
-                                render={({ field: innerField }) => (
-                                  <Input
-                                    placeholder="経験期間を入力（例：2年）"
-                                    {...innerField}
-                                  />
-                                )}
-                              />
-                            </div>
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
+              {form.watch("hasEstheExperience") && (
+                <Collapsible
+                  open={isEstheOpen}
+                  onOpenChange={setIsEstheOpen}
+                  className="mt-4 space-y-4 border rounded-lg p-4"
+                >
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="estheExperiencePeriod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormFieldWrapper label="経験期間">
+                            <FormControl>
+                              <Input {...field} placeholder="例：2年" />
+                            </FormControl>
+                          </FormFieldWrapper>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-2">
+                      <Label>可能オプション</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {estheOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={form.watch("estheOptions.available").includes(option)}
+                              onCheckedChange={(checked) => {
+                                const current = form.watch("estheOptions.available");
+                                const updated = checked
+                                  ? [...current, option]
+                                  : current.filter((o) => o !== option);
+                                form.setValue("estheOptions.available", updated);
+                              }}
+                            />
+                            <Label>{option}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>NGオプション</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {estheOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={form.watch("estheOptions.ngOptions").includes(option)}
+                              onCheckedChange={(checked) => {
+                                const current = form.watch("estheOptions.ngOptions");
+                                const updated = checked
+                                  ? [...current, option]
+                                  : current.filter((o) => o !== option);
+                                form.setValue("estheOptions.ngOptions", updated);
+                              }}
+                            />
+                            <Label>{option}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Collapsible>
+              )}
             </div>
 
             {/* 13. アレルギー */}
@@ -1456,7 +1457,6 @@ export function TalentForm() {
                 </Button>
               </div>
             </div>
-
 
             {/* 19. 写メ日記URL */}
             {/* This section is now handled within the "過去の勤務先" section above */}
