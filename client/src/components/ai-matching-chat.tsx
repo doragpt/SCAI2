@@ -45,6 +45,12 @@ interface Message {
   content: string;
 }
 
+// 勤務時間の定数を修正（10時間から18時間まで、1時間単位）
+const VALID_WAITING_HOURS = Array.from({ length: 8 }, (_, i) => ({ //Corrected length to 8 for 10-17 hours
+  value: String(i + 10),
+  label: `${i + 10}時間`,
+}));
+
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -80,7 +86,7 @@ export const AIMatchingChat = () => {
     departureLocation: "",
     returnLocation: "",
     preferredLocations: [] as string[],
-    ngLocations: [] as string[],
+    ngLocations: [] as string[], // Added ngLocations
     notes: "",
     interviewDates: [] as string[],
   });
@@ -156,10 +162,10 @@ export const AIMatchingChat = () => {
         return;
       }
 
-      if (!conditions.waitingHours || conditions.waitingHours < 12) {
+      if (!conditions.waitingHours || conditions.waitingHours < 10) { //Updated minimum hours to 10
         toast({
           title: "エラー",
-          description: "一日の総勤務時間は12時間以上を選択してください",
+          description: "一日の総勤務時間は10時間以上を選択してください", //Updated description
           variant: "destructive",
         });
         return;
@@ -462,7 +468,7 @@ export const AIMatchingChat = () => {
                       一日の総勤務時間
                     </Label>
                     <p className="text-sm text-muted-foreground mb-2">
-                      12時間以上の勤務が基本的に保証条件となります。
+                      10時間以上の勤務が基本的に保証条件となります。 {/*Updated minimum hours*/}
                     </p>
                     <Select
                       onValueChange={(value) =>
@@ -606,13 +612,14 @@ export const AIMatchingChat = () => {
                 </>
               )}
 
+              {/* NG地域の選択を追加 */}
               <div className="space-y-2">
-                <Label>希望地域</Label>
+                <Label>NG地域</Label>
                 <Select
                   onValueChange={(value) =>
                     setConditions({
                       ...conditions,
-                      preferredLocations: [...conditions.preferredLocations, value],
+                      ngLocations: [...conditions.ngLocations, value],
                     })
                   }
                 >
@@ -627,9 +634,9 @@ export const AIMatchingChat = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                {conditions.preferredLocations.length > 0 && (
+                {conditions.ngLocations.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {conditions.preferredLocations.map((loc) => (
+                    {conditions.ngLocations.map((loc) => (
                       <Button
                         key={loc}
                         variant="secondary"
@@ -637,7 +644,7 @@ export const AIMatchingChat = () => {
                         onClick={() =>
                           setConditions({
                             ...conditions,
-                            preferredLocations: conditions.preferredLocations.filter(
+                            ngLocations: conditions.ngLocations.filter(
                               (l) => l !== loc
                             ),
                           })
@@ -729,6 +736,21 @@ export const AIMatchingChat = () => {
                         {conditions.departureLocation} → {conditions.returnLocation}
                       </p>
                     </div>
+                    {conditions.ngLocations.length > 0 && (
+                      <div>
+                        <Label>NG地域</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {conditions.ngLocations.map((loc) => (
+                            <span
+                              key={loc}
+                              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                            >
+                              {loc}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -858,8 +880,3 @@ export const AIMatchingChat = () => {
 };
 
 export default AIMatchingChat;
-
-const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
-  value: String(i + 10),
-  label: `${i + 10}時間`,
-})).filter(option => parseInt(option.value) >= 12);
