@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch as SwitchComponent } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
 import { Link } from "wouter";
@@ -19,6 +19,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
 import {
   allergyTypes,
   smokingTypes,
@@ -33,8 +36,70 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
+import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 
-// PhotoUploadコンポーネントを改善
+// FormFieldWrapperコンポーネント（既存のまま）
+const FormFieldWrapper = ({
+  label,
+  required = false,
+  children,
+  description,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  description?: string;
+}) => {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+};
+
+// SwitchFieldコンポーネント
+const SwitchField = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" },
+}: {
+  label: string;
+  required?: boolean;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  description?: string;
+  valueLabels?: { checked: string; unchecked: string };
+}) => (
+  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+    <div className="flex items-center gap-2">
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <span className={checked ? "text-primary" : "text-muted-foreground"}>
+        {checked ? valueLabels.checked : valueLabels.unchecked}
+      </span>
+    </div>
+  </div>
+);
+
+// PhotoUploadコンポーネント
 const PhotoUpload = ({
   photos,
   onChange,
@@ -44,7 +109,7 @@ const PhotoUpload = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedTag, setSelectedTag] = useState<string>(photoTags[0]);
+  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>(photoTags[0]);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -61,7 +126,7 @@ const PhotoUpload = ({
         ...photos,
         {
           url: previewUrl,
-          tag: selectedTag as typeof photoTags[number],
+          tag: selectedTag,
         },
       ]);
       setSelectedFile(null);
@@ -69,6 +134,8 @@ const PhotoUpload = ({
       setSelectedTag(photoTags[0]);
     }
   };
+
+  const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
   return (
     <div className="space-y-6">
@@ -88,7 +155,7 @@ const PhotoUpload = ({
                 value={photo.tag}
                 onValueChange={(tag) => {
                   const updatedPhotos = [...photos];
-                  updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
+                  updatedPhotos[index] = { ...photo, tag };
                   onChange(updatedPhotos);
                 }}
               >
@@ -97,8 +164,13 @@ const PhotoUpload = ({
                 </SelectTrigger>
                 <SelectContent>
                   {photoTags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
+                    <SelectItem
+                      key={tag}
+                      value={tag}
+                      disabled={tag === "現在の髪色" && hasHairColorPhoto && photo.tag !== "現在の髪色"}
+                    >
                       {tag}
+                      {tag === "現在の髪色" && " (必須)"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -116,7 +188,11 @@ const PhotoUpload = ({
                 削除
               </Button>
             </div>
-            <Badge className="absolute top-2 right-2 bg-white/90 text-black">
+            <Badge
+              className={`absolute top-2 right-2 ${
+                photo.tag === "現在の髪色" ? "bg-primary text-primary-foreground" : "bg-white/90 text-black"
+              }`}
+            >
               {photo.tag}
             </Badge>
           </div>
@@ -146,10 +222,7 @@ const PhotoUpload = ({
               }
             }}
           />
-          <label
-            htmlFor="photo-upload"
-            className="block w-full cursor-pointer"
-          >
+          <label htmlFor="photo-upload" className="block w-full cursor-pointer">
             <div className="flex items-center justify-center">
               <Button type="button" variant="outline">
                 写真を選択
@@ -167,17 +240,19 @@ const PhotoUpload = ({
                 />
               </div>
               <div className="space-y-2">
-                <Select
-                  value={selectedTag}
-                  onValueChange={setSelectedTag}
-                >
+                <Select value={selectedTag} onValueChange={setSelectedTag}>
                   <SelectTrigger>
                     <SelectValue placeholder="タグを選択してください（必須）" />
                   </SelectTrigger>
                   <SelectContent>
                     {photoTags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
+                      <SelectItem
+                        key={tag}
+                        value={tag}
+                        disabled={tag === "現在の髪色" && hasHairColorPhoto}
+                      >
                         {tag}
+                        {tag === "現在の髪色" && " (必須)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -193,11 +268,7 @@ const PhotoUpload = ({
                   >
                     キャンセル
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={handleUpload}
-                    disabled={!selectedTag}
-                  >
+                  <Button type="button" onClick={handleUpload} disabled={!selectedTag}>
                     アップロード
                   </Button>
                 </div>
@@ -209,73 +280,12 @@ const PhotoUpload = ({
 
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>※最大20枚までアップロード可能です。</p>
-        <p>※現在の髪色の写真は必須です。</p>
+        <p className="font-medium text-primary">※現在の髪色の写真は必須です。</p>
         <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
       </div>
     </div>
   );
 };
-
-// FormFieldWrapperコンポーネント（既存のまま）
-const FormFieldWrapper = ({
-  label,
-  required = false,
-  children,
-  description,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-  description?: string;
-}) => {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-      <div className="mt-1.5">{children}</div>
-    </div>
-  );
-};
-
-// SwitchFieldコンポーネント（既存のまま）
-const SwitchField = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" },
-}: {
-  label: string;
-  required?: boolean;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  description?: string;
-  valueLabels?: { checked: string; unchecked: string };
-}) => (
-  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-    <div className="space-y-0.5">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      <SwitchComponent checked={checked} onCheckedChange={onCheckedChange} />
-      <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? valueLabels.checked : valueLabels.unchecked}
-      </span>
-    </div>
-  </div>
-);
 
 // メインのTalentFormコンポーネント
 export function TalentForm() {
@@ -288,6 +298,7 @@ export function TalentForm() {
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [bodyMarkDetails, setBodyMarkDetails] = useState("");
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -356,15 +367,26 @@ export function TalentForm() {
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      form.reset(existingProfile);
-      setOtherIds(existingProfile.availableIds.others || []);
-      setOtherNgOptions(existingProfile.ngOptions.others || []);
-      setOtherAllergies(existingProfile.allergies.others || []);
-      setOtherSmokingTypes(existingProfile.smoking.others || []);
+      form.reset({
+        ...existingProfile,
+        photos: existingProfile.photos || [],
+        bodyMark: existingProfile.bodyMark || {
+          hasBodyMark: false,
+          details: "",
+        },
+      });
+
+      // その他のフィールドの初期化
+      setOtherIds(existingProfile.availableIds?.others || []);
+      setOtherNgOptions(existingProfile.ngOptions?.others || []);
+      setOtherAllergies(existingProfile.allergies?.others || []);
+      setOtherSmokingTypes(existingProfile.smoking?.others || []);
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
     }
   }, [existingProfile, form]);
 
+  // プロフィール更新用のミューテーション
   const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
@@ -372,9 +394,9 @@ export function TalentForm() {
           ...data,
           height: Number(data.height),
           weight: Number(data.weight),
-          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
-          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
-          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+          bust: data.bust === null || data.bust === undefined ? null : Number(data.bust),
+          waist: data.waist === null || data.waist === undefined ? null : Number(data.waist),
+          hip: data.hip === null || data.hip === undefined ? null : Number(data.hip),
           availableIds: {
             types: data.availableIds.types,
             others: otherIds,
@@ -393,7 +415,11 @@ export function TalentForm() {
             types: data.smoking.types,
             others: otherSmokingTypes,
           },
-          photos: form.getValues("photos"),
+          bodyMark: {
+            hasBodyMark: data.bodyMark.hasBodyMark,
+            details: bodyMarkDetails,
+          },
+          photos: data.photos,
         };
 
         const response = await apiRequest(
@@ -446,21 +472,68 @@ export function TalentForm() {
     }
   };
 
+  // Store management functions
+  const handleAddCurrentStore = () => {
+    const currentStores = form.getValues("currentStores") || [];
+    form.setValue("currentStores", [...currentStores, { storeName: "", stageName: "" }]);
+  };
+
+  const handleUpdateCurrentStore = (index: number, field: "storeName" | "stageName", value: string) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores && currentStores[index]) {
+      const updated = [...currentStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("currentStores", updated);
+    }
+  };
+
+  const handleRemoveCurrentStore = (index: number) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores) {
+      const updated = currentStores.filter((_, i) => i !== index);
+      form.setValue("currentStores", updated);
+    }
+  };
+
+  const handleAddPreviousStore = () => {
+    const previousStores = form.getValues("previousStores") || [];
+    form.setValue("previousStores", [...previousStores, { storeName: "", stageName: "" }]);
+  };
+
+  const handleUpdatePreviousStore = (index: number, field: "storeName" | "stageName", value: string) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores && previousStores[index]) {
+      const updated = [...previousStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("previousStores", updated);
+    }
+  };
+
+  const handleRemovePreviousStore = (index: number) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores) {
+      const updated = previousStores.filter((_, i) => i !== index);
+      form.setValue("previousStores", updated);
+    }
+  };
+
   const handleUpdateSnsUrl = (index: number, value: string) => {
-    const updatedUrls = [...form.getValues("snsUrls")];
+    const snsUrls = form.getValues("snsUrls") || [];
+    const updatedUrls = [...snsUrls];
     updatedUrls[index] = value;
     form.setValue("snsUrls", updatedUrls);
   };
 
   const handleRemoveSnsUrl = (index: number) => {
-    const updatedUrls = [...form.getValues("snsUrls")].filter((_, i) => i !== index);
+    const snsUrls = form.getValues("snsUrls") || [];
+    const updatedUrls = snsUrls.filter((_, i) => i !== index);
     form.setValue("snsUrls", updatedUrls);
   };
 
   const handleAddSnsUrl = () => {
-    form.setValue("snsUrls", [...form.getValues("snsUrls"), ""]);
+    const snsUrls = form.getValues("snsUrls") || [];
+    form.setValue("snsUrls", [...snsUrls, ""]);
   };
-
 
   if (isLoading) {
     return (
@@ -1140,6 +1213,8 @@ export function TalentForm() {
                             {...field}
                             className="w-full h-32 p-2 border rounded-md"
                             placeholder="詳細を入力してください"
+                            value={bodyMarkDetails}
+                            onChange={(e) => setBodyMarkDetails(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1197,7 +1272,71 @@ export function TalentForm() {
               )}
             />
 
-            {/* 17. プロフィール写真 */}
+            {/* 17. 現在の勤務先 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
+              {form.watch("currentStores").map((store, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="店名"
+                      value={store.storeName}
+                      onChange={(e) => handleUpdateCurrentStore(index, "storeName", e.target.value)}
+                    />
+                    <Input
+                      placeholder="芸名"
+                      value={store.stageName}
+                      onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleRemoveCurrentStore(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={handleAddCurrentStore}>
+                勤務先を追加
+              </Button>
+            </div>
+
+            {/* 18. 過去の勤務先 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
+              {form.watch("previousStores").map((store, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="店名"
+                      value={store.storeName}
+                      onChange={(e) => handleUpdatePreviousStore(index, "storeName", e.target.value)}
+                    />
+                    <Input
+                      placeholder="芸名"
+                      value={store.stageName}
+                      onChange={(e) => handleUpdatePreviousStore(index, "stageName", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleRemovePreviousStore(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={handleAddPreviousStore}>
+                勤務先を追加
+              </Button>
+            </div>
+
+            {/* 19. プロフィール写真 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
               <FormField
@@ -1217,7 +1356,7 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 18. 自己紹介 */}
+            {/* 20. 自己紹介 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
               <FormField
@@ -1240,7 +1379,7 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 19. 備考 */}
+            {/* 21. 備考 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">備考</h3>
               <FormField
@@ -1266,7 +1405,7 @@ export function TalentForm() {
             {/* 送信ボタン */}
             <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">
               <div className="container mx-auto flex justify-end">
-                <Button type="submit" disabled={isPending || !form.formState.isValid}>
+                <Button type="submit" disabled={isPending}>
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
