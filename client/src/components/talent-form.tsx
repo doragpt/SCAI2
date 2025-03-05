@@ -181,7 +181,7 @@ export const TalentForm: React.FC = () => {
     }
   }, [existingProfile, form]);
 
-  const { mutate: updateProfile } = useMutation({
+  const { mutate: updateProfile, isPending: updateProfileMutationIsPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
       try {
         const processedData = {
@@ -191,20 +191,6 @@ export const TalentForm: React.FC = () => {
           bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
           waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
           hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
-          ngOptions: {
-            common: data.ngOptions?.common || [],
-            others: data.ngOptions?.others || [],
-          },
-          allergies: {
-            types: data.allergies?.types || [],
-            others: data.allergies?.others || [],
-            hasAllergy: data.allergies?.hasAllergy || false,
-          },
-          smoking: {
-            enabled: data.smoking?.enabled || false,
-            types: data.smoking?.types || [],
-            others: data.smoking?.others || [],
-          }
         };
 
         const response = await apiRequest(
@@ -249,45 +235,10 @@ export const TalentForm: React.FC = () => {
     );
   }
 
+  // onSubmit関数を修正
   const onSubmit = async (data: TalentProfileData) => {
-    // デバッグ用のログ出力
-    console.log('Form submission data:', data);
-    console.log('Form validation errors:', form.formState.errors);
-    console.log('Form dirty fields:', form.formState.dirtyFields);
-    console.log('Form touched fields:', form.formState.touchedFields);
-
-    // バリデーションエラーの確認
-    if (Object.keys(form.formState.errors).length > 0) {
-      const fieldNames: { [key: string]: string } = {
-        lastName: "姓",
-        firstName: "名",
-        lastNameKana: "姓（カナ）",
-        firstNameKana: "名（カナ）",
-        location: "在住地",
-        nearestStation: "最寄り駅",
-        availableIds: "身分証明書",
-        height: "身長",
-        weight: "体重",
-        cupSize: "カップサイズ",
-        faceVisibility: "顔出し設定",
-      };
-
-      const errorMessages = Object.entries(form.formState.errors)
-        .map(([key, error]) => {
-          const fieldName = fieldNames[key] || key;
-          return `${fieldName}：${error?.message}`;
-        })
-        .join('\n');
-
-      toast({
-        title: "入力エラー",
-        description: `以下の項目を確認してください：\n${errorMessages}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
+      console.log('Form submission data:', data);
       await updateProfile(data);
     } catch (error) {
       console.error("送信エラー:", error);
@@ -365,7 +316,7 @@ export const TalentForm: React.FC = () => {
 
       <main className="container mx-auto px-4 pt-24 pb-32">
         <Form {...form}>
-          <form id="profileForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* 1. 基本情報 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">基本情報</h3>
@@ -942,7 +893,7 @@ export const TalentForm: React.FC = () => {
               <div className="space-y-6">
                 {/* 現在の在籍店舗 */}
                 <FormField label="現在在籍中の店舗">
-                  <div className="space-y-4">
+                  <div className="spacey-4">
                     {form.watch("currentStores").map((store, index) => (
                       <div key={index} className="grid gap-4 p-4 border rounded-lg">
                         <div className="grid grid-cols-2 gap-4">
