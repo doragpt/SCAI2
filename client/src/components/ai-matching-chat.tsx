@@ -203,6 +203,23 @@ export const AIMatchingChat = () => {
     }]);
   };
 
+  // 日付のフォーマット関数を追加
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "未入力";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: 'Asia/Tokyo'
+      }).replace(/\//g, '年').replace(/\//g, '月') + '日';
+    } catch (e) {
+      return "未入力";
+    }
+  };
+
+
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
       <header className="bg-background p-4 border-b">
@@ -875,7 +892,9 @@ export const AIMatchingChat = () => {
                     </div>
                     <div>
                       <Label>生年月日</Label>
-                      <p className="text-sm font-medium">{formatProfileValue(profileData?.birthDate)}</p>
+                      <p className="text-sm font-medium">
+                        {formatDate(profileData?.birthDate)}
+                      </p>
                     </div>
                     <div>
                       <Label>年齢</Label>
@@ -915,8 +934,8 @@ export const AIMatchingChat = () => {
                     <div>
                       <Label>スリーサイズ</Label>
                       <p className="text-sm font-medium">
-                        B{formatProfileValue(profileData?.bust)} 
-                        W{formatProfileValue(profileData?.waist)} 
+                        B{formatProfileValue(profileData?.bust)}
+                        W{formatProfileValue(profileData?.waist)}
                         H{formatProfileValue(profileData?.hip)}
                       </p>
                     </div>
@@ -959,7 +978,6 @@ export const AIMatchingChat = () => {
                     </div>
                   </div>
                 </div>
-
                 {/* NGオプション */}
                 {profileData?.ngOptions?.common && profileData.ngOptions.common.length > 0 && (
                   <div>
@@ -995,10 +1013,10 @@ export const AIMatchingChat = () => {
                 )}
 
                 {/* エステ関連情報 */}
-                {(profileData?.hasEstheExperience || 
-                  (profileData?.estheOptions && 
-                   (profileData.estheOptions.available?.length > 0 || 
-                    profileData.estheOptions.ngOptions?.length > 0))) && (
+                {(profileData?.hasEstheExperience ||
+                  (profileData?.estheOptions &&
+                    (profileData.estheOptions.available?.length > 0 ||
+                      profileData.estheOptions.ngOptions?.length > 0))) && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-3">エステ関連</h4>
                     {profileData.hasEstheExperience && (
