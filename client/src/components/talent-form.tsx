@@ -6,10 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
@@ -25,7 +23,7 @@ import {
   type TalentProfileData,
   talentProfileSchema,
 } from "@shared/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/lib/queryClient";
@@ -49,41 +47,6 @@ const FormField: React.FC<{
   </div>
 );
 
-// SwitchField component
-const SwitchField: React.FC<{
-  label: string;
-  required?: boolean;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  description?: string;
-  valueLabels?: { checked: string; unchecked: string };
-}> = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" },
-}) => (
-  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-    <div className="space-y-0.5">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-      <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? valueLabels.checked : valueLabels.unchecked}
-      </span>
-    </div>
-  </div>
-);
-
 // FormErrorMessage component
 const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
   <p className="text-sm text-destructive mt-1">{message}</p>
@@ -91,29 +54,21 @@ const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
 
 export const TalentForm: React.FC = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [otherIds, setOtherIds] = useState<string[]>([]);
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
-  const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [, setLocation] = useLocation();
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    onError: (error: Error) => {
-      console.error("Profile fetch error:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: "プロフィールの取得に失敗しました。",
-        variant: "destructive",
-      });
-    },
   });
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    defaultValues: existingProfile || {
+    defaultValues: {
       lastName: "",
       firstName: "",
       lastNameKana: "",
@@ -162,55 +117,63 @@ export const TalentForm: React.FC = () => {
       hasEstheExperience: false,
       estheExperiencePeriod: "",
     },
-    mode: "onChange",
   });
 
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      // その他のフィールドの状態を更新
+      form.reset(existingProfile);
       setOtherIds(existingProfile.availableIds.others || []);
       setOtherNgOptions(existingProfile.ngOptions.others || []);
       setOtherAllergies(existingProfile.allergies.others || []);
       setOtherSmokingTypes(existingProfile.smoking.others || []);
-
-      // フォームの値を更新
-      Object.entries(existingProfile).forEach(([key, value]) => {
-        form.setValue(key as keyof TalentProfileData, value);
-      });
     }
   }, [existingProfile, form]);
 
-  const { mutate: updateProfile, isPending: updateProfileMutationIsPending } = useMutation({
+  const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: async (data: TalentProfileData) => {
-      try {
-        const processedData = {
-          ...data,
-          height: Number(data.height),
-          weight: Number(data.weight),
-          bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
-          waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
-          hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
-        };
+      const processedData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === "" || data.bust === undefined ? null : Number(data.bust),
+        waist: data.waist === "" || data.waist === undefined ? null : Number(data.waist),
+        hip: data.hip === "" || data.hip === undefined ? null : Number(data.hip),
+        availableIds: {
+          types: data.availableIds.types,
+          others: otherIds,
+        },
+        ngOptions: {
+          common: data.ngOptions.common,
+          others: otherNgOptions,
+        },
+        allergies: {
+          types: data.allergies.types,
+          others: otherAllergies,
+          hasAllergy: data.allergies.hasAllergy,
+        },
+        smoking: {
+          enabled: data.smoking.enabled,
+          types: data.smoking.types,
+          others: otherSmokingTypes,
+        },
+      };
 
-        const response = await apiRequest(
-          existingProfile ? "PUT" : "POST",
-          "/api/talent/profile",
-          processedData
-        );
+      const response = await apiRequest(
+        existingProfile ? "PUT" : "POST",
+        "/api/talent/profile",
+        processedData
+      );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "プロフィールの更新に失敗しました");
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error("API error:", error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "プロフィールの更新に失敗しました");
       }
+
+      return await response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
       toast({
         title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
         description: "プロフィールの保存が完了しました。",
@@ -226,7 +189,6 @@ export const TalentForm: React.FC = () => {
     },
   });
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -235,60 +197,101 @@ export const TalentForm: React.FC = () => {
     );
   }
 
-  // onSubmit関数を修正
   const onSubmit = async (data: TalentProfileData) => {
     try {
-      console.log('Form submission data:', data);
       await updateProfile(data);
     } catch (error) {
       console.error("送信エラー:", error);
-      toast({
-        title: "エラー",
-        description: error instanceof Error ? error.message : "不明なエラーが発生しました",
-        variant: "destructive",
-      });
     }
   };
 
-  // Update store management functions
+  // Store management functions
   const handleAddCurrentStore = () => {
     const current = form.watch("currentStores") || [];
-    form.setValue("currentStores", [
-      ...current,
-      { storeName: "", stageName: "" } as StoreEntry,
-    ]);
+    form.setValue("currentStores", [...current, { storeName: "", stageName: "" }]);
   };
 
-  const handleUpdateCurrentStore = (index: number, field: keyof StoreEntry, value: string) => {
+  const handleUpdateCurrentStore = (index: number, field: "storeName" | "stageName", value: string) => {
     const current = form.watch("currentStores");
-    current[index] = {
-      ...current[index],
-      [field]: value,
-    };
-    form.setValue("currentStores", [...current]);
+    if (current && current[index]) {
+      const updated = [...current];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("currentStores", updated);
+    }
+  };
+
+  const handleRemoveCurrentStore = (index: number) => {
+    const current = form.watch("currentStores");
+    if (current) {
+      const updated = current.filter((_, i) => i !== index);
+      form.setValue("currentStores", updated);
+    }
   };
 
   const handleAddPreviousStore = () => {
     const current = form.watch("previousStores") || [];
-    form.setValue("previousStores", [
-      ...current,
-      { storeName: "", stageName: "" } as StoreEntry,
-    ]);
+    form.setValue("previousStores", [...current, { storeName: "", stageName: "" }]);
   };
 
-  const handleUpdatePreviousStore = (index: number, field: keyof StoreEntry, value: string) => {
+  const handleUpdatePreviousStore = (index: number, field: "storeName" | "stageName", value: string) => {
     const current = form.watch("previousStores");
-    current[index] = {
-      ...current[index],
-      [field]: value,
-    };
-    form.setValue("previousStores", [...current]);
+    if (current && current[index]) {
+      const updated = [...current];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("previousStores", updated);
+    }
   };
 
-  // Fix currentStores and previousStores type handling
-  type StoreEntry = {
-    storeName: string;
-    stageName: string;
+  const handleRemovePreviousStore = (index: number) => {
+    const current = form.watch("previousStores");
+    if (current) {
+      const updated = current.filter((_, i) => i !== index);
+      form.setValue("previousStores", updated);
+    }
+  };
+
+  const handleAddPhotoDiaryUrl = () => {
+    const current = form.watch("photoDiaryUrls") || [];
+    form.setValue("photoDiaryUrls", [...current, ""]);
+  };
+
+  const handleUpdatePhotoDiaryUrl = (index: number, value: string) => {
+    const current = form.watch("photoDiaryUrls");
+    if (current) {
+      const updated = [...current];
+      updated[index] = value;
+      form.setValue("photoDiaryUrls", updated);
+    }
+  };
+
+  const handleRemovePhotoDiaryUrl = (index: number) => {
+    const current = form.watch("photoDiaryUrls");
+    if (current) {
+      const updated = current.filter((_, i) => i !== index);
+      form.setValue("photoDiaryUrls", updated);
+    }
+  };
+
+  const handleAddSnsUrl = () => {
+    const current = form.watch("snsUrls") || [];
+    form.setValue("snsUrls", [...current, ""]);
+  };
+
+  const handleUpdateSnsUrl = (index: number, value: string) => {
+    const current = form.watch("snsUrls");
+    if (current) {
+      const updated = [...current];
+      updated[index] = value;
+      form.setValue("snsUrls", updated);
+    }
+  };
+
+  const handleRemoveSnsUrl = (index: number) => {
+    const current = form.watch("snsUrls");
+    if (current) {
+      const updated = current.filter((_, i) => i !== index);
+      form.setValue("snsUrls", updated);
+    }
   };
 
 
@@ -314,7 +317,7 @@ export const TalentForm: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 pt-24 pb-32">
+      <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* 1. 基本情報 */}
@@ -406,7 +409,7 @@ export const TalentForm: React.FC = () => {
                       <Checkbox
                         checked={form.watch("availableIds.types").includes(type)}
                         onCheckedChange={(checked) => {
-                          const current = form.watch("availableIds.types");
+                          const current = form.watch("availableIds.types") || [];
                           const updated = checked
                             ? [...current, type]
                             : current.filter((t) => t !== type);
@@ -614,7 +617,7 @@ export const TalentForm: React.FC = () => {
                       <Checkbox
                         checked={form.watch("ngOptions.common").includes(option)}
                         onCheckedChange={(checked) => {
-                          const current = form.watch("ngOptions.common");
+                          const current = form.watch("ngOptions.common") || [];
                           const updated = checked
                             ? [...current, option]
                             : current.filter((o) => o !== option);
@@ -688,7 +691,7 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("estheOptions.available").includes(option)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("estheOptions.available");
+                            const current = form.watch("estheOptions.available") || [];
                             const updated = checked
                               ? [...current, option]
                               : current.filter((o) => o !== option);
@@ -759,7 +762,7 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("allergies.types").includes(type)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("allergies.types");
+                            const current = form.watch("allergies.types") || [];
                             const updated = checked
                               ? [...current, type]
                               : current.filter((t) => t !== type);
@@ -831,7 +834,7 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("smoking.types").includes(type)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("smoking.types");
+                            const current = form.watch("smoking.types") || [];
                             const updated = checked
                               ? [...current, type]
                               : current.filter((t) => t !== type);
@@ -853,7 +856,7 @@ export const TalentForm: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             className="ml-1 h-4 w-4 p-0"
-                            onClick={() =>{
+                            onClick={() => {
                               setOtherSmokingTypes(otherSmokingTypes.filter((t) => t !== type));
                               form.setValue(
                                 "smoking.others",
@@ -893,7 +896,7 @@ export const TalentForm: React.FC = () => {
               <div className="space-y-6">
                 {/* 現在の在籍店舗 */}
                 <FormField label="現在在籍中の店舗">
-                  <div className="spacey-4">
+                  <div className="space-y-4">
                     {form.watch("currentStores").map((store, index) => (
                       <div key={index} className="grid gap-4 p-4 border rounded-lg">
                         <div className="grid grid-cols-2 gap-4">
@@ -906,19 +909,12 @@ export const TalentForm: React.FC = () => {
                             placeholder="源氏名"
                             value={store.stageName || ""}
                             onChange={(e) => handleUpdateCurrentStore(index, "stageName", e.target.value)}
-                          />
-                        </div>
+                          />                        </div>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const current = form.watch("currentStores");
-                            form.setValue(
-                              "currentStores",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
+                          onClick={() => handleRemoveCurrentStore(index)}
                         >
                           削除
                         </Button>
@@ -955,13 +951,7 @@ export const TalentForm: React.FC = () => {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const current = form.watch("previousStores");
-                            form.setValue(
-                              "previousStores",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
+                          onClick={() => handleRemovePreviousStore(index)}
                         >
                           削除
                         </Button>
@@ -985,23 +975,13 @@ export const TalentForm: React.FC = () => {
                         <Input
                           placeholder="店舗の写メ日記URLを入力"
                           value={url}
-                          onChange={(e) => {
-                            const current = form.watch("photoDiaryUrls");
-                            current[index] = e.target.value;
-                            form.setValue("photoDiaryUrls", [...current]);
-                          }}
+                          onChange={(e) => handleUpdatePhotoDiaryUrl(index, e.target.value)}
                         />
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const current = form.watch("photoDiaryUrls");
-                            form.setValue(
-                              "photoDiaryUrls",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
+                          onClick={() => handleRemovePhotoDiaryUrl(index)}
                         >
                           削除
                         </Button>
@@ -1010,10 +990,7 @@ export const TalentForm: React.FC = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        const current = form.watch("photoDiaryUrls") || [];
-                        form.setValue("photoDiaryUrls", [...current, ""]);
-                      }}
+                      onClick={handleAddPhotoDiaryUrl}
                     >
                       URLを追加
                     </Button>
@@ -1038,23 +1015,13 @@ export const TalentForm: React.FC = () => {
                         <Input
                           placeholder="SNSアカウントのURLを入力"
                           value={url}
-                          onChange={(e) => {
-                            const current = form.watch("snsUrls");
-                            current[index] = e.target.value;
-                            form.setValue("snsUrls", [...current]);
-                          }}
+                          onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
                         />
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const current = form.watch("snsUrls");
-                            form.setValue(
-                              "snsUrls",
-                              current.filter((_, i) => i !== index)
-                            );
-                          }}
+                          onClick={() => handleRemoveSnsUrl(index)}
                         >
                           削除
                         </Button>
@@ -1063,10 +1030,7 @@ export const TalentForm: React.FC = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        const current = form.watch("snsUrls") || [];
-                        form.setValue("snsUrls", [...current, ""]);
-                      }}
+                      onClick={handleAddSnsUrl}
                     >
                       URLを追加
                     </Button>
@@ -1105,47 +1069,34 @@ export const TalentForm: React.FC = () => {
               </FormField>
             </div>
 
-            {/* 送信ボタン */}
-            <div className="flex justify-end">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "プロフィールを保存"
-                )}
-              </Button>
+            {/* 保存ボタン */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-50">
+              <div className="container mx-auto px-4 py-4">
+                <div className="flex justify-between items-center gap-4">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full"
+                    onClick={() => setLocation("/talent/dashboard")}
+                  >
+                    キャンセル
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isPending}
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    {existingProfile ? "プロフィールを更新" : "プロフィールを作成"}
+                  </Button>
+                </div>
+              </div>
             </div>
           </form>
         </Form>
       </main>
-
-      {/* フッターナビゲーション */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => setLocation("/talent/dashboard")}
-            >
-              キャンセル
-            </Button>
-            <Button
-              type="submit"
-              form="profileForm"
-              disabled={!form.formState.isDirty || form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  送信中...
-                </>
-              ) : (
-                "プロフィールを保存"
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
