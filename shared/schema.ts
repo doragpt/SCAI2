@@ -219,6 +219,13 @@ export const talentRegisterFormSchema = z.object({
 });
 
 // Talent profile schema
+// プロフィール写真のスキーマを追加
+export const photoSchema = z.object({
+  url: z.string(),
+  tag: z.enum(photoTags).optional(),
+});
+
+// プロフィールスキーマを更新
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -242,29 +249,16 @@ export const talentProfileSchema = z.object({
 
   // その他のフィールド
   canProvideResidenceRecord: z.boolean().default(false),
-  height: z.number()
-    .min(130, "身長は130cm以上で入力してください")
-    .max(190, "身長は190cm以下で入力してください"),
-  weight: z.number()
-    .min(30, "体重は30kg以上で入力してください")
-    .max(150, "体重は150kg以下で入力してください"),
+  height: z.number(),
+  weight: z.number(),
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
 
   // バスト・ウエスト・ヒップの型定義を修正
-  bust: z.preprocess(
-    (val) => val === "" || val === undefined ? null : Number(val),
-    z.number().nullable()
-  ),
-  waist: z.preprocess(
-    (val) => val === "" || val === undefined ? null : Number(val),
-    z.number().nullable()
-  ),
-  hip: z.preprocess(
-    (val) => val === "" || val === undefined ? null : Number(val),
-    z.number().nullable()
-  ),
+  bust: z.number().nullable(),
+  waist: z.number().nullable(),
+  hip: z.number().nullable(),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
@@ -304,6 +298,9 @@ export const talentProfileSchema = z.object({
     storeName: z.string(),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
+
+  // 写真関連のフィールドを追加
+  photos: z.array(photoSchema).default([]),
 
   // テキストフィールド
   selfIntroduction: z.string().optional().default(""),

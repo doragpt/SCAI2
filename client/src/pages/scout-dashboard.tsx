@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { TalentProfile } from "@shared/schema";
+import { TalentProfileData } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ScoutApplicationView } from "@/components/scout-application-view";
 import { Loader2, LogOut } from "lucide-react";
 
-interface ExtendedTalentProfile extends TalentProfile {
+// ExtendedTalentProfileをTalentProfileDataを継承するように修正
+interface ExtendedTalentProfile extends Omit<TalentProfileData, 'height' | 'weight' | 'bust' | 'waist'> {
   guaranteeAmount: number;
   age: number;
   photos: string[];
