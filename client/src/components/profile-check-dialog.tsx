@@ -26,10 +26,17 @@ export default function ProfileCheckDialog({
   onConfirm,
   profileData,
 }: ProfileCheckDialogProps) {
-  const formatValue = (value: string | number | null | undefined): string => {
+  const formatValue = (value: unknown, type: string = 'text'): string => {
     if (value === null || value === undefined || value === '') return "未入力";
-    if (typeof value === 'number' && value === 0) return "未入力";
-    return String(value);
+
+    switch (type) {
+      case 'number':
+        return typeof value === 'number' && value > 0 ? value.toString() : "未入力";
+      case 'cupSize':
+        return value ? `${value}カップ` : "未入力";
+      default:
+        return String(value) || "未入力";
+    }
   };
 
   return (
@@ -56,13 +63,15 @@ export default function ProfileCheckDialog({
                   { label: "在住地", value: profileData.location },
                   { label: "最寄り駅", value: profileData.nearestStation },
                   { label: "生年月日", value: profileData.birthDate },
-                  { label: "年齢", value: profileData.age },
+                  { label: "年齢", value: profileData.age, type: 'number' },
                   { label: "電話番号", value: profileData.phoneNumber },
                   { label: "メールアドレス", value: profileData.email }
                 ].map((item) => (
                   <div key={item.label}>
                     <Label>{item.label}</Label>
-                    <p className="text-sm">{formatValue(item.value)}</p>
+                    <p className="text-sm">
+                      {formatValue(item.value, item.type)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -73,16 +82,18 @@ export default function ProfileCheckDialog({
               <h3 className="text-lg font-medium">身体的特徴</h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: "身長 (cm)", value: profileData.height },
-                  { label: "体重 (kg)", value: profileData.weight },
-                  { label: "カップサイズ", value: profileData.cupSize },
-                  { label: "バスト (cm)", value: profileData.bust },
-                  { label: "ウエスト (cm)", value: profileData.waist },
-                  { label: "ヒップ (cm)", value: profileData.hip }
+                  { label: "身長 (cm)", value: profileData.height, type: 'number' },
+                  { label: "体重 (kg)", value: profileData.weight, type: 'number' },
+                  { label: "カップサイズ", value: profileData.cupSize, type: 'cupSize' },
+                  { label: "バスト (cm)", value: profileData.bust, type: 'number' },
+                  { label: "ウエスト (cm)", value: profileData.waist, type: 'number' },
+                  { label: "ヒップ (cm)", value: profileData.hip, type: 'number' }
                 ].map((item) => (
                   <div key={item.label}>
                     <Label>{item.label}</Label>
-                    <p className="text-sm">{formatValue(item.value)}</p>
+                    <p className="text-sm">
+                      {formatValue(item.value, item.type)}
+                    </p>
                   </div>
                 ))}
               </div>
