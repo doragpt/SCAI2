@@ -134,9 +134,9 @@ export const talentProfiles = pgTable("talent_profiles", {
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
   cupSize: text("cup_size", { enum: cupSizes }).notNull(),
-  bust: integer("bust"),
-  waist: integer("waist"),
-  hip: integer("hip"),
+  bust: integer("bust").nullable(),
+  waist: integer("waist").nullable(),
+  hip: integer("hip").nullable(),
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
   canPhotoDiary: boolean("can_photo_diary").default(false),
   canHomeDelivery: boolean("can_home_delivery").default(false),
@@ -261,9 +261,18 @@ export const talentProfileSchema = z.object({
   }),
 
   // バスト・ウエスト・ヒップの型定義を修正
-  bust: z.number().nullable(),
-  waist: z.number().nullable(),
-  hip: z.number().nullable(),
+  bust: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nullable().optional()
+  ),
+  waist: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nullable().optional()
+  ),
+  hip: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nullable().optional()
+  ),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
