@@ -6,6 +6,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,7 +33,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Bot, User, Loader2, ArrowLeft } from "lucide-react";
+import { Bot, User, Loader2, ArrowLeft, Check, X } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { useMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
@@ -55,6 +65,7 @@ export const AIMatchingChat = () => {
   const { profileData, isLoading: isProfileLoading } = useProfile();
   const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [workTypes] = useState(["出稼ぎ", "在籍"]);
   const { toast } = useToast();
   const [conditions, setConditions] = useState({
@@ -155,6 +166,28 @@ export const AIMatchingChat = () => {
       }
     }
 
+    setShowConfirmDialog(true);
+  };
+
+  // 確認ダイアログ用のフォーマット関数
+  const formatProfileValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return "未入力";
+    if (typeof value === 'number' && value === 0) return "未入力";
+    return String(value);
+  };
+
+  const formatMeasurement = (value: number | undefined, unit: string): string => {
+    if (!value || value === 0) return "未入力";
+    return `${value}${unit}`;
+  };
+
+  const handleConfirmDialogClose = () => {
+    setShowConfirmDialog(false);
+  };
+
+  const handleConfirmConditions = () => {
+    setShowConfirmDialog(false);
+    setShowForm(false);
     setMessages(prev => [...prev, {
       type: "user",
       content: formatConditionsMessage(conditions, selectedType)
@@ -162,7 +195,6 @@ export const AIMatchingChat = () => {
       type: "ai",
       content: "ご希望の条件を確認させていただきました。マッチング検索を開始しますか？"
     }]);
-    setShowForm(false);
   };
 
   return (
@@ -243,6 +275,7 @@ export const AIMatchingChat = () => {
         </div>
       )}
 
+      {/* 入力フォーム */}
       {showForm && selectedType && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Card className="border-t sticky bottom-0 bg-background">
@@ -649,6 +682,177 @@ export const AIMatchingChat = () => {
           </Card>
         </div>
       )}
+
+      {/* 確認ダイアログ */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="max-w-4xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>入力内容の確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              以下の内容でマッチングを開始します
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-6">
+            {/* 入力条件の表示 */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">希望条件</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>希望する働き方</Label>
+                  <p className="text-sm">{selectedType}</p>
+                </div>
+                <div>
+                  <Label>希望業種</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {conditions.workTypes.map((type) => (
+                      <span
+                        key={type}
+                        className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
+                      >
+                        {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {selectedType === "出稼ぎ" && (
+                  <>
+                    <div>
+                      <Label>勤務期間</Label>
+                      <p className="text-sm">
+                        {conditions.workPeriodStart} 〜 {conditions.workPeriodEnd}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>出発地・帰宅地</Label>
+                      <p className="text-sm">
+                        {conditions.departureLocation} → {conditions.returnLocation}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* プロフィール情報の表示 */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">プロフィール情報</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>氏名</Label>
+                  <p className="text-sm">
+                    {formatProfileValue(profileData?.lastName)} {formatProfileValue(profileData?.firstName)}
+                  </p>
+                </div>
+                <div>
+                  <Label>フリガナ</Label>
+                  <p className="text-sm">
+                    {formatProfileValue(profileData?.lastNameKana)} {formatProfileValue(profileData?.firstNameKana)}
+                  </p>
+                </div>
+                <div>
+                  <Label>生年月日</Label>
+                  <p className="text-sm">{formatProfileValue(profileData?.birthDate)}</p>
+                </div>
+                <div>
+                  <Label>年齢</Label>
+                  <p className="text-sm">{profileData?.age ? `${profileData.age}歳` : "未入力"}</p>
+                </div>
+                <div>
+                  <Label>電話番号</Label>
+                  <p className="text-sm">{formatProfileValue(profileData?.phoneNumber)}</p>
+                </div>
+                <div>
+                  <Label>メールアドレス</Label>
+                  <p className="text-sm">{formatProfileValue(profileData?.email)}</p>
+                </div>
+                <div>
+                  <Label>居住地</Label>
+                  <p className="text-sm">{formatProfileValue(profileData?.location)}</p>
+                </div>
+                <div>
+                  <Label>最寄り駅</Label>
+                  <p className="text-sm">{formatProfileValue(profileData?.nearestStation)}</p>
+                </div>
+              </div>
+
+              {/* 身体的特徴 */}
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">身体的特徴</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>身長</Label>
+                    <p className="text-sm">{formatMeasurement(profileData?.height, "cm")}</p>
+                  </div>
+                  <div>
+                    <Label>体重</Label>
+                    <p className="text-sm">{formatMeasurement(profileData?.weight, "kg")}</p>
+                  </div>
+                  <div>
+                    <Label>スリーサイズ</Label>
+                    <p className="text-sm">
+                      B{formatProfileValue(profileData?.bust)} 
+                      W{formatProfileValue(profileData?.waist)} 
+                      H{formatProfileValue(profileData?.hip)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>カップサイズ</Label>
+                    <p className="text-sm">{profileData?.cupSize ? `${profileData.cupSize}カップ` : "未入力"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 各種対応可否 */}
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">各種対応可否</h4>
+                <div className="space-y-2">
+                  {[
+                    { label: "住民票の提出", value: profileData?.canProvideResidenceRecord },
+                    { label: "写メ日記の投稿", value: profileData?.photoDiaryAllowed },
+                    { label: "自宅待機での出張", value: profileData?.canHomeDelivery }
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-2">
+                      {item.value ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* NGオプション */}
+              {profileData?.ngOptions?.common && profileData.ngOptions.common.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">NGオプション</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.ngOptions.common.map((option) => (
+                      <span
+                        key={option}
+                        className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                      >
+                        {option}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConfirmDialogClose}>
+              修正する
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmConditions}>
+              この内容で進める
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
