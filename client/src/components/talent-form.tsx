@@ -28,6 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/lib/queryClient";
+import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 
 // FormFieldWrapper component
 const FormFieldWrapper: React.FC<{
@@ -44,7 +45,9 @@ const FormFieldWrapper: React.FC<{
     {description && (
       <p className="text-sm text-muted-foreground">{description}</p>
     )}
-    <div>{children}</div>
+    <div className="mt-1.5">
+      {children}
+    </div>
   </div>
 );
 
@@ -91,7 +94,8 @@ const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
 export const TalentForm: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  //const [, setLocation] = useLocation(); // Removed useLocation
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<TalentProfileData | null>(null);
   const [otherIds, setOtherIds] = useState<string[]>([]);
   const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
@@ -221,7 +225,6 @@ export const TalentForm: React.FC = () => {
         title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
         description: "プロフィールの保存が完了しました。",
       });
-      //setLocation("/talent/dashboard"); // Removed setLocation
     },
     onError: (error: Error) => {
       toast({
@@ -232,22 +235,23 @@ export const TalentForm: React.FC = () => {
     },
   });
 
-  const onSubmit = async (data: TalentProfileData) => {
+  // フォーム送信前の確認
+  const handleSubmit = async (data: TalentProfileData) => {
+    setFormData(data);
+    setIsConfirmationOpen(true);
+  };
+
+  // 確認後の送信処理
+  const handleConfirm = async () => {
+    if (!formData) return;
+
     try {
-      console.log("Form submission data:", data);
-      await updateProfile(data);
+      await updateProfile(formData);
+      setIsConfirmationOpen(false);
     } catch (error) {
       console.error("送信エラー:", error);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   // Store management functions
   const handleAddCurrentStore = () => {
@@ -312,6 +316,14 @@ export const TalentForm: React.FC = () => {
     form.setValue("snsUrls", [...snsUrls, ""]);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white sticky top-0 z-50">
@@ -336,7 +348,7 @@ export const TalentForm: React.FC = () => {
 
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             {/* 1. 基本情報 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">基本情報</h3>
@@ -908,12 +920,12 @@ export const TalentForm: React.FC = () => {
                         <Checkbox
                           checked={form.watch("smoking.types").includes(type)}
                           onCheckedChange={(checked) => {
-                              const current = form.watch("smoking.types")|| [];
-                              const updated = checked
-                                ? [...current, type]
-                                : current.filter((t) => t !== type);
-                              form.setValue("smoking.types", updated);
-                            }}
+                            const current = form.watch("smoking.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("smoking.types", updated);
+                          }}
                         />
                         <label className="text-sm">{type}</label>
                       </div>
@@ -1155,6 +1167,13 @@ export const TalentForm: React.FC = () => {
           </form>
         </Form>
       </main>
+
+      <ProfileConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        onConfirm={handleConfirm}
+        profileData={formData}
+      />
     </div>
   );
 };
