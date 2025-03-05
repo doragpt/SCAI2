@@ -671,23 +671,72 @@ export function TalentForm() {
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
               <FormFieldWrapper label="持参可能な身分証明書" required>
-                <div className="grid grid-cols-2 gap-4">
-                  {idTypes.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`id-${type}`}
-                        checked={form.watch("availableIds.types").includes(type)}
-                        onCheckedChange={(checked) => {
-                          const current = form.watch("availableIds.types") || [];
-                          const updated = checked
-                            ? [...current, type]
-                            : current.filter((t) => t !== type);
-                          form.setValue("availableIds.types", updated);
+                <div className="space-y-4">
+                  {/* 既存の身分証明書チェックボックス */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {idTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`id-${type}`}
+                          checked={form.watch("availableIds.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("availableIds.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("availableIds.types", updated);
+                          }}
+                        />
+                        <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* その他の身分証明書 */}
+                  <div className="space-y-2">
+                    <Label>その他の身分証明書</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {otherIds.map((id) => (
+                        <Badge key={id} variant="secondary">
+                          {id}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => {
+                              setOtherIds(otherIds.filter((i) => i !== id));
+                              form.setValue(
+                                "availableIds.others",
+                                otherIds.filter((i) => i !== id)
+                              );
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        placeholder="その他の身分証明書を入力"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const value = e.currentTarget.value.trim();
+                            if (value && !otherIds.includes(value)) {
+                              const newIds = [...otherIds, value];
+                              setOtherIds(newIds);
+                              form.setValue("availableIds.others", newIds);
+                              e.currentTarget.value = "";
+                            }
+                          }
                         }}
                       />
-                      <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
                     </div>
-                  ))}
+                    <p className="text-sm text-muted-foreground">
+                      Enterキーで追加できます
+                    </p>
+                  </div>
                 </div>
               </FormFieldWrapper>
             </div>
@@ -967,7 +1016,7 @@ export function TalentForm() {
                           }}
                         />
                         <label className="text-sm">{option}</label>
-                                            </div>
+                      </div>
                     ))}
                   </div>
 
@@ -1336,6 +1385,39 @@ export function TalentForm() {
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
+                    <div className="space-y-2">
+                      <Label>写メ日記URL</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {store.photoDiaryUrls.map((url, urlIndex) => (
+                          <div key={urlIndex} className="flex items-center">
+                            <Input
+                              value={url}
+                              onChange={(e) => {
+                                const updatedUrls = [...store.photoDiaryUrls];
+                                updatedUrls[urlIndex] = e.target.value;
+                                handleUpdatePreviousStore(storeIndex, "photoDiaryUrls", updatedUrls);
+                              }}
+                              placeholder="写メ日記のURLを入力"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleRemovePhotoDiaryUrl(storeIndex, urlIndex)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleAddPhotoDiaryUrl(storeIndex)}
+                      >
+                        写メ日記URLを追加
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button
@@ -1349,47 +1431,9 @@ export function TalentForm() {
               </div>
             </div>
 
+
             {/* 19. 写メ日記URL */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">写メ日記URL</h3>
-              <div className="space-y-4">
-                {form.watch("photoDiaryUrls")?.map((url, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={url}
-                      onChange={(e) => {
-                        const updatedUrls = [...form.getValues("photoDiaryUrls")];
-                        updatedUrls[index] = e.target.value;
-                        form.setValue("photoDiaryUrls", updatedUrls);
-                      }}
-                      placeholder="写メ日記のURLを入力"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        const updatedUrls = form.getValues("photoDiaryUrls").filter((_, i) => i !== index);
-                        form.setValue("photoDiaryUrls", updatedUrls);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const currentUrls = form.getValues("photoDiaryUrls") || [];
-                    form.setValue("photoDiaryUrls", [...currentUrls, ""]);
-                  }}
-                  className="w-full"
-                >
-                  写メ日記URLを追加
-                </Button>
-              </div>
-            </div>
+            {/* This section is now handled within the "過去の勤務先" section above */}
 
             {/* 20. プロフィール写真 */}
             <div>
