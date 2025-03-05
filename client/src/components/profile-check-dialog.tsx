@@ -26,6 +26,14 @@ export default function ProfileCheckDialog({
   onConfirm,
   profileData,
 }: ProfileCheckDialogProps) {
+  const formatName = (lastName: string, firstName: string) => {
+    return [lastName, firstName].filter(Boolean).join(" ") || "未入力";
+  };
+
+  const formatMeasurements = (value: number) => {
+    return value > 0 ? value.toString() : "未入力";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -42,21 +50,44 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">基本情報</h3>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "氏名", value: `${profileData.lastName} ${profileData.firstName}` },
-                  { label: "フリガナ", value: `${profileData.lastNameKana} ${profileData.firstNameKana}` },
-                  { label: "生年月日", value: profileData.birthDate },
-                  { label: "年齢", value: `${profileData.age}歳` },
-                  { label: "電話番号", value: profileData.phoneNumber },
-                  { label: "メールアドレス", value: profileData.email },
-                  { label: "居住地", value: profileData.location },
-                  { label: "最寄り駅", value: profileData.nearestStation }
-                ].map((item) => (
-                  <div key={item.label}>
-                    <Label>{item.label}</Label>
-                    <p className="text-sm">{item.value}</p>
-                  </div>
-                ))}
+                <div>
+                  <Label>氏名</Label>
+                  <p className="text-sm">
+                    {formatName(profileData.lastName, profileData.firstName)}
+                  </p>
+                </div>
+                <div>
+                  <Label>フリガナ</Label>
+                  <p className="text-sm">
+                    {formatName(profileData.lastNameKana, profileData.firstNameKana)}
+                  </p>
+                </div>
+                <div>
+                  <Label>生年月日</Label>
+                  <p className="text-sm">{profileData.birthDate || "未入力"}</p>
+                </div>
+                <div>
+                  <Label>年齢</Label>
+                  <p className="text-sm">
+                    {profileData.age > 0 ? `${profileData.age}歳` : "未入力"}
+                  </p>
+                </div>
+                <div>
+                  <Label>電話番号</Label>
+                  <p className="text-sm">{profileData.phoneNumber || "未入力"}</p>
+                </div>
+                <div>
+                  <Label>メールアドレス</Label>
+                  <p className="text-sm">{profileData.email || "未入力"}</p>
+                </div>
+                <div>
+                  <Label>居住地</Label>
+                  <p className="text-sm">{profileData.location || "未入力"}</p>
+                </div>
+                <div>
+                  <Label>最寄り駅</Label>
+                  <p className="text-sm">{profileData.nearestStation || "未入力"}</p>
+                </div>
               </div>
             </div>
 
@@ -64,17 +95,32 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">身体的特徴</h3>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "身長", value: `${profileData.height}cm` },
-                  { label: "体重", value: `${profileData.weight}kg` },
-                  { label: "スリーサイズ", value: `B${profileData.bust} W${profileData.waist} H${profileData.hip}` },
-                  { label: "カップサイズ", value: `${profileData.cupSize}カップ` }
-                ].map((item) => (
-                  <div key={item.label}>
-                    <Label>{item.label}</Label>
-                    <p className="text-sm">{item.value}</p>
-                  </div>
-                ))}
+                <div>
+                  <Label>身長</Label>
+                  <p className="text-sm">
+                    {profileData.height > 0 ? `${profileData.height}cm` : "未入力"}
+                  </p>
+                </div>
+                <div>
+                  <Label>体重</Label>
+                  <p className="text-sm">
+                    {profileData.weight > 0 ? `${profileData.weight}kg` : "未入力"}
+                  </p>
+                </div>
+                <div>
+                  <Label>スリーサイズ</Label>
+                  <p className="text-sm">
+                    B{formatMeasurements(profileData.bust)} 
+                    W{formatMeasurements(profileData.waist)} 
+                    H{formatMeasurements(profileData.hip)}
+                  </p>
+                </div>
+                <div>
+                  <Label>カップサイズ</Label>
+                  <p className="text-sm">
+                    {profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -105,13 +151,13 @@ export default function ProfileCheckDialog({
               <div className="flex flex-wrap gap-2">
                 {profileData.availableIds?.types?.map((id) => (
                   <Badge key={id} variant="outline">
-                    <Check className="mr-1 h-3 w-3" />
+                    <Check className="mr-1 h-3 w-3 text-green-500" />
                     {id}
                   </Badge>
                 ))}
                 {profileData.availableIds?.others?.map((id) => (
                   <Badge key={id} variant="outline">
-                    <Check className="mr-1 h-3 w-3" />
+                    <Check className="mr-1 h-3 w-3 text-green-500" />
                     {id}
                   </Badge>
                 ))}
@@ -122,13 +168,10 @@ export default function ProfileCheckDialog({
             <div className="space-y-4">
               <h3 className="text-lg font-medium">NGオプション</h3>
               <div className="flex flex-wrap gap-2">
-                {profileData.ngOptions.common?.map((option) => (
-                  <Badge key={option} variant="destructive">
-                    <X className="mr-1 h-3 w-3" />
-                    {option}
-                  </Badge>
-                ))}
-                {profileData.ngOptions.others?.map((option) => (
+                {[
+                  ...(profileData.ngOptions?.common || []),
+                  ...(profileData.ngOptions?.others || [])
+                ].map((option) => (
                   <Badge key={option} variant="destructive">
                     <X className="mr-1 h-3 w-3" />
                     {option}
@@ -179,7 +222,7 @@ export default function ProfileCheckDialog({
                     <div className="flex flex-wrap gap-2 mt-2">
                       {profileData.estheOptions.available?.map((option) => (
                         <Badge key={option} variant="outline">
-                          <Check className="mr-1 h-3 w-3" />
+                          <Check className="mr-1 h-3 w-3 text-green-500" />
                           {option}
                         </Badge>
                       ))}
@@ -206,18 +249,20 @@ export default function ProfileCheckDialog({
             {profileData.hasEstheExperience && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">エステ経験</h3>
-                <p className="text-sm">あり（{profileData.estheExperiencePeriod}）</p>
+                <p className="text-sm">
+                  あり（{profileData.estheExperiencePeriod}）
+                </p>
               </div>
             )}
 
             {/* 顔出し設定 */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">顔出し設定</h3>
-              <p className="text-sm">{profileData.faceVisibility}</p>
+              <p className="text-sm">{profileData.faceVisibility || "未設定"}</p>
             </div>
 
             {/* SNSアカウント */}
-            {profileData.hasSnsAccount && profileData.snsUrls && profileData.snsUrls.length > 0 && (
+            {profileData.hasSnsAccount && profileData.snsUrls?.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">SNSアカウント</h3>
                 <div className="space-y-1">
@@ -263,7 +308,9 @@ export default function ProfileCheckDialog({
             {profileData.selfIntroduction && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">自己PR</h3>
-                <p className="text-sm whitespace-pre-wrap">{profileData.selfIntroduction}</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {profileData.selfIntroduction}
+                </p>
               </div>
             )}
 

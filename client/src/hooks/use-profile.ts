@@ -3,6 +3,22 @@ import { type ProfileData } from '@shared/types/profile';
 
 export function useProfile() {
   const [profileData, setProfileData] = useState<ProfileData>({
+    lastName: '',
+    firstName: '',
+    lastNameKana: '',
+    firstNameKana: '',
+    birthDate: '',
+    age: 0,
+    phoneNumber: '',
+    email: '',
+    location: '',
+    nearestStation: '',
+    height: 0,
+    weight: 0,
+    bust: 0,
+    waist: 0,
+    hip: 0,
+    cupSize: '',
     availableIds: {
       types: ['運転免許証', '保険証'],
       others: [],
@@ -26,6 +42,15 @@ export function useProfile() {
       available: ['オイルマッサージ', 'アロママッサージ'],
       ngOptions: ['ディープリンパ'],
     },
+    hasEstheExperience: false,
+    estheExperiencePeriod: '',
+    faceVisibility: '顔出しNG',
+    hasSnsAccount: false,
+    snsUrls: [],
+    currentStores: [],
+    previousStores: [],
+    selfIntroduction: '',
+    notes: '',
   });
 
   const updateProfile = (newData: Partial<ProfileData>) => {
