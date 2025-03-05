@@ -81,21 +81,68 @@ export function TalentForm() {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [otherIds, setOtherIds] = useState<string[]>([]);
+  const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
+  const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
+  const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [bodyMarkDetails, setBodyMarkDetails] = useState("");
   const [newPhotoDiaryUrl, setNewPhotoDiaryUrl] = useState("");
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     defaultValues: {
-      availableIds: { types: [], others: [] },
+      lastName: "",
+      firstName: "",
+      lastNameKana: "",
+      firstNameKana: "",
+      location: "東京都",
+      nearestStation: "",
+      availableIds: {
+        types: [],
+        others: [],
+      },
       canProvideResidenceRecord: false,
+      height: 150,
+      weight: 45,
+      cupSize: "D",
+      bust: null,
+      waist: null,
+      hip: null,
+      faceVisibility: "全隠し",
+      canPhotoDiary: false,
+      canHomeDelivery: false,
+      ngOptions: {
+        common: [],
+        others: [],
+      },
+      allergies: {
+        types: [],
+        others: [],
+        hasAllergy: false,
+      },
+      smoking: {
+        enabled: false,
+        types: [],
+        others: [],
+      },
+      hasSnsAccount: false,
+      snsUrls: [],
       currentStores: [],
       previousStores: [],
       photoDiaryUrls: [],
-      bodyMark: { hasBodyMark: false, details: "" },
-      snsUrls: [],
       photos: [],
       selfIntroduction: "",
       notes: "",
+      estheOptions: {
+        available: [],
+        ngOptions: [],
+      },
+      hasEstheExperience: false,
+      estheExperiencePeriod: "",
+      bodyMark: {
+        hasBodyMark: false,
+        details: "",
+      },
     },
   });
 
@@ -124,6 +171,70 @@ export function TalentForm() {
   const handleRemovePhotoDiaryUrl = (index: number) => {
     const currentUrls = form.getValues("photoDiaryUrls") || [];
     form.setValue("photoDiaryUrls", currentUrls.filter((_, i) => i !== index));
+  };
+
+  // 店舗情報関連のハンドラー
+  const handleAddCurrentStore = () => {
+    const currentStores = form.getValues("currentStores") || [];
+    form.setValue("currentStores", [...currentStores, { storeName: "", stageName: "" }]);
+  };
+
+  const handleUpdateCurrentStore = (index: number, field: "storeName" | "stageName", value: string) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores && currentStores[index]) {
+      const updated = [...currentStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("currentStores", updated);
+    }
+  };
+
+  const handleRemoveCurrentStore = (index: number) => {
+    const currentStores = form.getValues("currentStores");
+    if (currentStores) {
+      const updated = currentStores.filter((_, i) => i !== index);
+      form.setValue("currentStores", updated);
+    }
+  };
+
+  const handleAddPreviousStore = () => {
+    const previousStores = form.getValues("previousStores") || [];
+    form.setValue("previousStores", [...previousStores, { storeName: "", photoDiaryUrls: [] }]);
+  };
+
+  const handleUpdatePreviousStore = (index: number, field: "storeName", value: string) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores && previousStores[index]) {
+      const updated = [...previousStores];
+      updated[index] = { ...updated[index], [field]: value };
+      form.setValue("previousStores", updated);
+    }
+  };
+
+  const handleRemovePreviousStore = (index: number) => {
+    const previousStores = form.getValues("previousStores");
+    if (previousStores) {
+      const updated = previousStores.filter((_, i) => i !== index);
+      form.setValue("previousStores", updated);
+    }
+  };
+
+  // SNS関連のハンドラー
+  const handleAddSnsUrl = () => {
+    const snsUrls = form.getValues("snsUrls") || [];
+    form.setValue("snsUrls", [...snsUrls, ""]);
+  };
+
+  const handleUpdateSnsUrl = (index: number, value: string) => {
+    const snsUrls = form.getValues("snsUrls") || [];
+    const updatedUrls = [...snsUrls];
+    updatedUrls[index] = value;
+    form.setValue("snsUrls", updatedUrls);
+  };
+
+  const handleRemoveSnsUrl = (index: number) => {
+    const snsUrls = form.getValues("snsUrls") || [];
+    const updatedUrls = snsUrls.filter((_, i) => i !== index);
+    form.setValue("snsUrls", updatedUrls);
   };
 
   const handleSubmit = async (values: TalentProfileData) => {
@@ -235,6 +346,83 @@ export function TalentForm() {
               )}
             />
 
+            {/* 現在の勤務先 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
+              <div className="space-y-4">
+                {form.watch("currentStores")?.map((store, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder="店名"
+                      value={store.storeName}
+                      onChange={(e) =>
+                        handleUpdateCurrentStore(index, "storeName", e.target.value)
+                      }
+                    />
+                    <Input
+                      placeholder="源氏名"
+                      value={store.stageName}
+                      onChange={(e) =>
+                        handleUpdateCurrentStore(index, "stageName", e.target.value)
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleRemoveCurrentStore(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddCurrentStore}
+                  className="w-full"
+                >
+                  勤務先を追加
+                </Button>
+              </div>
+            </div>
+
+            {/* 過去の勤務先 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
+              <div className="space-y-6">
+                {form.watch("previousStores")?.map((store, index) => (
+                  <div key={index} className="space-y-4 border p-4 rounded-lg">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="店名"
+                        value={store.storeName}
+                        onChange={(e) =>
+                          handleUpdatePreviousStore(index, "storeName", e.target.value)
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleRemovePreviousStore(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddPreviousStore}
+                  className="w-full"
+                >
+                  過去の勤務先を追加
+                </Button>
+              </div>
+            </div>
+
             {/* 写メ日記URL */}
             <div>
               <h3 className="text-lg font-semibold mb-4">写メ日記URL</h3>
@@ -281,6 +469,48 @@ export function TalentForm() {
                 </div>
               </div>
             </div>
+
+            {/* SNSアカウント */}
+            <FormField
+              control={form.control}
+              name="snsUrls"
+              render={({ field }) => (
+                <FormItem>
+                  <>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
+                      <div className="space-y-4">
+                        {form.watch("snsUrls")?.map((url, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              placeholder="SNSアカウントのURLを入力"
+                              value={url}
+                              onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleRemoveSnsUrl(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddSnsUrl}
+                        >
+                          SNSアカウントを追加
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* 送信ボタン */}
             <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">
