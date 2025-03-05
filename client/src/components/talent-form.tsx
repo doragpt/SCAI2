@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch as SwitchComponent } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
 import { Link } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,13 +33,190 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { QUERY_KEYS } from "@/lib/queryClient";
-import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 
-// FormFieldWrapper component
+// PhotoUploadコンポーネントを改善
+const PhotoUpload = ({
+  photos,
+  onChange,
+}: {
+  photos: Photo[];
+  onChange: (photos: Photo[]) => void;
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string>(photoTags[0]);
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = () => {
+    if (selectedFile && previewUrl) {
+      onChange([
+        ...photos,
+        {
+          url: previewUrl,
+          tag: selectedTag as typeof photoTags[number],
+        },
+      ]);
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setSelectedTag(photoTags[0]);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 既存の写真一覧 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {photos.map((photo, index) => (
+          <div key={index} className="relative group">
+            <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+              <img
+                src={photo.url}
+                alt={`プロフィール写真 ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+              <Select
+                value={photo.tag}
+                onValueChange={(tag) => {
+                  const updatedPhotos = [...photos];
+                  updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
+                  onChange(updatedPhotos);
+                }}
+              >
+                <SelectTrigger className="bg-white/90">
+                  <SelectValue placeholder="タグを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {photoTags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  const updatedPhotos = photos.filter((_, i) => i !== index);
+                  onChange(updatedPhotos);
+                }}
+              >
+                削除
+              </Button>
+            </div>
+            <Badge className="absolute top-2 right-2 bg-white/90 text-black">
+              {photo.tag}
+            </Badge>
+          </div>
+        ))}
+      </div>
+
+      {/* 新規アップロード */}
+      {photos.length < 20 && (
+        <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
+          <div className="text-center">
+            <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-semibold">写真をアップロード</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              クリックまたはドラッグ＆ドロップでファイルを選択
+            </p>
+          </div>
+
+          <Input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            id="photo-upload"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleFileSelect(file);
+              }
+            }}
+          />
+          <label
+            htmlFor="photo-upload"
+            className="block w-full cursor-pointer"
+          >
+            <div className="flex items-center justify-center">
+              <Button type="button" variant="outline">
+                写真を選択
+              </Button>
+            </div>
+          </label>
+
+          {previewUrl && (
+            <div className="mt-4 space-y-4">
+              <div className="aspect-[3/4] w-48 mx-auto bg-muted rounded-lg overflow-hidden">
+                <img
+                  src={previewUrl}
+                  alt="プレビュー"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="space-y-2">
+                <Select
+                  value={selectedTag}
+                  onValueChange={setSelectedTag}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="タグを選択してください（必須）" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {photoTags.map((tag) => (
+                      <SelectItem key={tag} value={tag}>
+                        {tag}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex justify-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewUrl(null);
+                    }}
+                  >
+                    キャンセル
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={!selectedTag}
+                  >
+                    アップロード
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>※最大20枚までアップロード可能です。</p>
+        <p>※現在の髪色の写真は必須です。</p>
+        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
+      </div>
+    </div>
+  );
+};
+
+// FormFieldWrapperコンポーネント（既存のまま）
 const FormFieldWrapper = ({
   label,
   required = false,
@@ -50,20 +227,22 @@ const FormFieldWrapper = ({
   required?: boolean;
   children: React.ReactNode;
   description?: string;
-}) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <Label>{label}</Label>
-      {required && <span className="text-destructive">*</span>}
+}) => {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      <div className="mt-1.5">{children}</div>
     </div>
-    {description && (
-      <p className="text-sm text-muted-foreground">{description}</p>
-    )}
-    <div className="mt-1.5">{children}</div>
-  </div>
-);
+  );
+};
 
-// SwitchField component
+// SwitchFieldコンポーネント（既存のまま）
 const SwitchField = ({
   label,
   required = false,
@@ -98,90 +277,7 @@ const SwitchField = ({
   </div>
 );
 
-// PhotoUpload component
-const PhotoUpload = ({
-  photos,
-  onChange,
-}: {
-  photos: Photo[];
-  onChange: (photos: Photo[]) => void;
-}) => {
-  return (
-    <div className="space-y-4">
-      {photos.map((photo, index) => (
-        <div key={index} className="flex items-center gap-4">
-          <div className="aspect-[3/4] w-32 bg-muted rounded-lg overflow-hidden">
-            <img
-              src={photo.url}
-              alt={`プロフィール写真 ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <Select
-              value={photo.tag}
-              onValueChange={(tag) => {
-                const updatedPhotos = [...photos];
-                updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
-                onChange(updatedPhotos);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="タグを選択してください（必須）" />
-              </SelectTrigger>
-              <SelectContent>
-                {photoTags.map((tag) => (
-                  <SelectItem key={tag} value={tag}>
-                    {tag}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              const updatedPhotos = photos.filter((_, i) => i !== index);
-              onChange(updatedPhotos);
-            }}
-          >
-            削除
-          </Button>
-        </div>
-      ))}
-      {photos.length < 20 && (
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                onChange([
-                  ...photos,
-                  {
-                    url: reader.result as string,
-                    tag: "現在の髪色" as const,
-                  },
-                ]);
-              };
-              reader.readAsDataURL(file);
-            }
-          }}
-        />
-      )}
-      <div className="space-y-2 text-sm text-muted-foreground">
-        <p>※最大20枚までアップロード可能です。</p>
-        <p>※現在の髪色の写真は必須です。</p>
-        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
-      </div>
-    </div>
-  );
-};
-
+// メインのTalentFormコンポーネント
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -241,7 +337,7 @@ export function TalentForm() {
       currentStores: [],
       previousStores: [],
       photoDiaryUrls: [],
-      photos: [], // デフォルト値を空配列に設定
+      photos: [],
       selfIntroduction: "",
       notes: "",
       estheOptions: {
@@ -260,10 +356,7 @@ export function TalentForm() {
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      form.reset({
-        ...existingProfile,
-        photos: existingProfile.photos || [],
-      });
+      form.reset(existingProfile);
       setOtherIds(existingProfile.availableIds.others || []);
       setOtherNgOptions(existingProfile.ngOptions.others || []);
       setOtherAllergies(existingProfile.allergies.others || []);
@@ -995,7 +1088,8 @@ export function TalentForm() {
                             </Button>
                           </Badge>
                         ))}
-                      </div>                      <div className="flex gap-2 mt-2">
+                      </div>
+                      <div className="flex gap-2 mt-2">
                         <Input
                           placeholder="その他の喫煙情報を入力"
                           onKeyPress={(e) => {
