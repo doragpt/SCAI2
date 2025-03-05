@@ -30,15 +30,15 @@ export function ProfileConfirmationModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>プロフィール内容の確認</DialogTitle>
-          <DialogDescription>
-            入力内容をご確認ください。この内容でよろしいですか？
-          </DialogDescription>
-        </DialogHeader>
+        <div className="flex flex-col h-full">
+          <DialogHeader className="pb-4">
+            <DialogTitle>プロフィール内容の確認</DialogTitle>
+            <DialogDescription>
+              入力内容をご確認ください。この内容でよろしいですか？
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex flex-col gap-6 py-4">
-          <ScrollArea className="h-[60vh]">
+          <ScrollArea className="flex-1 max-h-[60vh]">
             <div className="space-y-6 px-4">
               {/* 基本情報 */}
               <div className="space-y-2">
@@ -220,7 +220,8 @@ export function ProfileConfirmationModal({
               )}
             </div>
           </ScrollArea>
-          <DialogFooter>
+
+          <DialogFooter className="pt-4">
             <Button variant="outline" onClick={onClose}>
               修正する
             </Button>
