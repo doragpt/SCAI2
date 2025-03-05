@@ -346,6 +346,7 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).partial();
 
 // 型定義エクスポートを追加
+export type Photo = z.infer<typeof photoSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 // Export types

@@ -108,7 +108,6 @@ export function TalentForm() {
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -158,6 +157,7 @@ export function TalentForm() {
       currentStores: [],
       previousStores: [],
       photoDiaryUrls: [],
+      photos: [], // デフォルト値を空配列に設定
       selfIntroduction: "",
       notes: "",
       estheOptions: {
@@ -166,20 +166,21 @@ export function TalentForm() {
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
-      photos: [],
     },
   });
 
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      form.reset(existingProfile);
+      form.reset({
+        ...existingProfile,
+        photos: existingProfile.photos || [], // 既存のphotosがない場合は空配列を設定
+      });
       setOtherIds(existingProfile.availableIds.others || []);
       setOtherNgOptions(existingProfile.ngOptions.others || []);
       setOtherAllergies(existingProfile.allergies.others || []);
       setOtherSmokingTypes(existingProfile.smoking.others || []);
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
-      setPhotos(existingProfile.photos || []);
     }
   }, [existingProfile, form]);
 
@@ -211,7 +212,7 @@ export function TalentForm() {
             types: data.smoking.types,
             others: otherSmokingTypes,
           },
-          photos: photos,
+          photos: form.getValues("photos"),
         };
 
         const response = await apiRequest(
@@ -1088,11 +1089,11 @@ export function TalentForm() {
             <div>
               <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
               <div className="space-y-4">
-                {form.watch("photos").map((photo, index) => (
+                {(form.watch("photos") || []).map((photo, index) => (
                   <div key={index} className="flex items-center gap-4">
                     <div className="aspect-[3/4] w-32 bg-muted rounded-lg overflow-hidden">
                       <img
-                        src={photo}
+                        src={photo.url}
                         alt={`プロフィール写真 ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -1102,7 +1103,8 @@ export function TalentForm() {
                       variant="destructive"
                       size="sm"
                       onClick={() => {
-                        const updatedPhotos = form.watch("photos").filter((_, i) => i !== index);
+                        const photos = form.getValues("photos");
+                        const updatedPhotos = photos.filter((_, i) => i !== index);
                         form.setValue("photos", updatedPhotos);
                       }}
                     >
@@ -1118,8 +1120,14 @@ export function TalentForm() {
                     if (file) {
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        const photos = form.watch("photos") || [];
-                        form.setValue("photos", [...photos, reader.result as string]);
+                        const photos = form.getValues("photos") || [];
+                        form.setValue("photos", [
+                          ...photos,
+                          {
+                            url: reader.result as string,
+                            tag: undefined,
+                          },
+                        ]);
                       };
                       reader.readAsDataURL(file);
                     }
