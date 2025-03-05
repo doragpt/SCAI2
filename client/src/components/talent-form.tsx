@@ -11,7 +11,14 @@ import { Link } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   allergyTypes,
   smokingTypes,
@@ -31,50 +38,53 @@ import { QUERY_KEYS } from "@/lib/queryClient";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 
 // FormFieldWrapper component
-const FormFieldWrapper: React.FC<{
+const FormFieldWrapper = ({
+  label,
+  required = false,
+  children,
+  description,
+}: {
   label: string;
   required?: boolean;
   children: React.ReactNode;
   description?: string;
-}> = ({ label, required = false, children, description }) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <Label>{label}</Label>
-      {required && <span className="text-destructive">*</span>}
+}) => {
+  return (
+    <div className="space-y-2">
+      <FormLabel className="flex items-center gap-2">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+      </FormLabel>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      {children}
     </div>
-    {description && (
-      <p className="text-sm text-muted-foreground">{description}</p>
-    )}
-    <FormItem>
-      <FormControl>
-        {children}
-      </FormControl>
-    </FormItem>
-  </div>
-);
+  );
+};
 
 // SwitchField component
-const SwitchField: React.FC<{
+const SwitchField = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" },
+}: {
   label: string;
   required?: boolean;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   description?: string;
   valueLabels?: { checked: string; unchecked: string };
-}> = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" }
 }) => (
   <div className="flex flex-row items-center justify-between rounded-lg border p-4">
     <div className="space-y-0.5">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
+      <FormLabel className="flex items-center gap-2">
+        {label}
         {required && <span className="text-destructive">*</span>}
-      </div>
+      </FormLabel>
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
@@ -88,12 +98,7 @@ const SwitchField: React.FC<{
   </div>
 );
 
-// FormErrorMessage component
-const FormErrorMessage: React.FC<{ message: string }> = ({ message }) => (
-  <p className="text-sm text-destructive mt-1">{message}</p>
-);
-
-export const TalentForm: React.FC = () => {
+export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -359,42 +364,65 @@ export const TalentForm: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">基本情報</h3>
               <div className="grid md:grid-cols-2 gap-4">
-                <FormFieldWrapper label="姓" required>
-                  <Input
-                    {...form.register("lastName")}
-                    placeholder="姓を入力してください"
-                  />
-                  {form.formState.errors.lastName && (
-                    <FormErrorMessage message={form.formState.errors.lastName.message as string} />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="姓" required>
+                        <FormControl>
+                          <Input {...field} placeholder="姓を入力してください" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="名" required>
-                  <Input
-                    {...form.register("firstName")}
-                    placeholder="名を入力してください"
-                  />
-                  {form.formState.errors.firstName && (
-                    <FormErrorMessage message={form.formState.errors.firstName.message as string} />
+                />
+
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="名" required>
+                        <FormControl>
+                          <Input {...field} placeholder="名を入力してください" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="姓（カナ）" required>
-                  <Input
-                    {...form.register("lastNameKana")}
-                    placeholder="セイを入力してください"
-                  />
-                  {form.formState.errors.lastNameKana && (
-                    <FormErrorMessage message={form.formState.errors.lastNameKana.message as string} />
+                />
+
+                <FormField
+                  control={form.control}
+                  name="lastNameKana"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="姓（カナ）" required>
+                        <FormControl>
+                          <Input {...field} placeholder="セイを入力してください" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="名（カナ）" required>
-                  <Input
-                    {...form.register("firstNameKana")}
-                    placeholder="メイを入力してください"
-                  />
-                  {form.formState.errors.firstNameKana && (
-                    <FormErrorMessage message={form.formState.errors.firstNameKana.message as string} />
+                />
+
+                <FormField
+                  control={form.control}
+                  name="firstNameKana"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="名（カナ）" required>
+                        <FormControl>
+                          <Input {...field} placeholder="メイを入力してください" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
+                />
               </div>
             </div>
 
@@ -402,35 +430,49 @@ export const TalentForm: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">住所情報</h3>
               <div className="grid md:grid-cols-2 gap-4">
-                <FormFieldWrapper label="在住地" required>
-                  <Select
-                    value={form.watch("location")}
-                    onValueChange={(value) => form.setValue("location", value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="都道府県を選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {prefectures.map((pref) => (
-                        <SelectItem key={pref} value={pref}>
-                          {pref}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.location && (
-                    <FormErrorMessage message={form.formState.errors.location.message as string} />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="在住地" required>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="都道府県を選択してください" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {prefectures.map((pref) => (
+                                <SelectItem key={pref} value={pref}>
+                                  {pref}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="最寄り駅" required>
-                  <Input
-                    {...form.register("nearestStation")}
-                    placeholder="最寄り駅を入力してください"
-                  />
-                  {form.formState.errors.nearestStation && (
-                    <FormErrorMessage message={form.formState.errors.nearestStation.message as string} />
+                />
+
+                <FormField
+                  control={form.control}
+                  name="nearestStation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="最寄り駅" required>
+                        <FormControl>
+                          <Input {...field} placeholder="最寄り駅を入力してください" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
+                />
               </div>
             </div>
 
@@ -500,12 +542,21 @@ export const TalentForm: React.FC = () => {
 
               {/* 本籍地記載の住民票の用意可否を追加 */}
               <div className="mt-4">
-                <SwitchField
-                  label="本籍地記載の住民票"
-                  checked={form.watch("canProvideResidenceRecord")}
-                  onCheckedChange={(checked) => form.setValue("canProvideResidenceRecord", checked)}
-                  description="本籍地記載の住民票の用意が可能かどうか"
-                  valueLabels={{ checked: "用意可能", unchecked: "用意不可" }}
+                <FormField
+                  control={form.control}
+                  name="canProvideResidenceRecord"
+                  render={({ field }) => (
+                    <FormItem>
+                      <SwitchField
+                        label="本籍地記載の住民票"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        description="本籍地記載の住民票の用意が可能かどうか"
+                        valueLabels={{ checked: "用意可能", unchecked: "用意不可" }}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
             </div>
@@ -514,131 +565,171 @@ export const TalentForm: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">身体的特徴</h3>
               <div className="grid md:grid-cols-3 gap-4">
-                <FormFieldWrapper label="身長 (cm)" required>
-                  <Input
-                    type="number"
-                    {...form.register("height", { valueAsNumber: true })}
-                    min={130}
-                    max={190}
-                  />
-                  {form.formState.errors.height && (
-                    <FormErrorMessage message={form.formState.errors.height.message as string} />
+                <FormField
+                  control={form.control}
+                  name="height"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="身長 (cm)" required>
+                        <FormControl>
+                          <Input type="number" {...field} min={130} max={190} />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="体重 (kg)" required>
-                  <Input
-                    type="number"
-                    {...form.register("weight", { valueAsNumber: true })}
-                    min={30}
-                    max={150}
-                  />
-                  {form.formState.errors.weight && (
-                    <FormErrorMessage message={form.formState.errors.weight.message as string} />
+                />
+                <FormField
+                  control={form.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="体重 (kg)" required>
+                        <FormControl>
+                          <Input type="number" {...field} min={30} max={150} />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="カップサイズ" required>
-                  <Select
-                    value={form.watch("cupSize")}
-                    onValueChange={(value) => form.setValue("cupSize", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cupSizes.map((size) => (
-                        <SelectItem key={size} value={size}>
-                          {size}カップ
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.cupSize && (
-                    <FormErrorMessage message={form.formState.errors.cupSize.message as string} />
+                />
+                <FormField
+                  control={form.control}
+                  name="cupSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="カップサイズ" required>
+                        <FormControl>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選択してください" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cupSizes.map((size) => (
+                                <SelectItem key={size} value={size}>
+                                  {size}カップ
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="バスト (cm) (任意)">
-                  <Input
-                    type="text"
-                    {...form.register("bust", {
-                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                    })}
-                    placeholder="未入力可"
-                  />
-                  {form.formState.errors.bust && (
-                    <FormErrorMessage message={form.formState.errors.bust.message as string} />
+                />
+                <FormField
+                  control={form.control}
+                  name="bust"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="バスト (cm) (任意)">
+                        <FormControl>
+                          <Input type="text" {...field} placeholder="未入力可" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="ウエスト (cm) (任意)">
-                  <Input
-                    type="text"
-                    {...form.register("waist", {
-                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                    })}
-                    placeholder="未入力可"
-                  />
-                  {form.formState.errors.waist && (
-                    <FormErrorMessage message={form.formState.errors.waist.message as string} />
+                />
+                <FormField
+                  control={form.control}
+                  name="waist"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="ウエスト (cm) (任意)">
+                        <FormControl>
+                          <Input type="text" {...field} placeholder="未入力可" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
-                <FormFieldWrapper label="ヒップ (cm) (任意)">
-                  <Input
-                    type="text"
-                    {...form.register("hip", {
-                      setValueAs: (value: string) => (value === "" ? null : Number(value)),
-                    })}
-                    placeholder="未入力可"
-                  />
-                  {form.formState.errors.hip && (
-                    <FormErrorMessage message={form.formState.errors.hip.message as string} />
+                />
+                <FormField
+                  control={form.control}
+                  name="hip"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormFieldWrapper label="ヒップ (cm) (任意)">
+                        <FormControl>
+                          <Input type="text" {...field} placeholder="未入力可" />
+                        </FormControl>
+                      </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormFieldWrapper>
+                />
               </div>
             </div>
 
             {/* 5. 顔出し */}
             <div>
               <h3 className="text-lg font-semibold mb-4">顔出し</h3>
-              <FormFieldWrapper label="パネルの顔出し" required>
-                <Select
-                  value={form.watch("faceVisibility")}
-                  onValueChange={(value) => form.setValue("faceVisibility", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {faceVisibilityTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.faceVisibility && (
-                  <FormErrorMessage message={form.formState.errors.faceVisibility.message as string} />
+              <FormField
+                control={form.control}
+                name="faceVisibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="パネルの顔出し" required>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選択してください" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {faceVisibilityTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </FormFieldWrapper>
+              />
             </div>
 
             {/* 6. 写メ日記の投稿可否 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
-              <SwitchField
-                label="写メ日記の投稿"
-                checked={form.watch("canPhotoDiary")}
-                onCheckedChange={(checked) => form.setValue("canPhotoDiary", checked)}
-                valueLabels={{ checked: "可能", unchecked: "不可" }}
+              <FormField
+                control={form.control}
+                name="canPhotoDiary"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="写メ日記の投稿"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      valueLabels={{ checked: "可能", unchecked: "不可" }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
             {/* 7. 自宅派遣可否 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
-              <SwitchField
-                label="自宅派遣"
-                checked={form.watch("canHomeDelivery")}
-                onCheckedChange={(checked) => form.setValue("canHomeDelivery", checked)}
-                valueLabels={{ checked: "可能", unchecked: "不可" }}
+              <FormField
+                control={form.control}
+                name="canHomeDelivery"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="自宅派遣"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      valueLabels={{ checked: "可能", unchecked: "不可" }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
@@ -753,27 +844,36 @@ export const TalentForm: React.FC = () => {
                     />
                   </div>
 
-                  <div className="mt-4">
-                    <SwitchField
-                      label="エステ経験"
-                      checked={form.watch("hasEstheExperience")}
-                      onCheckedChange={(checked) => {
-                        form.setValue("hasEstheExperience", checked);
-                        if (!checked) {
-                          form.setValue("estheExperiencePeriod", "");
-                        }
-                      }}
-                    />
-
-                    {form.watch("hasEstheExperience") && (
-                      <div className="mt-2">
-                        <Input
-                          placeholder="経験期間を入力（例：2年）"
-                          {...form.register("estheExperiencePeriod")}
-                        />
-                      </div>
+                  <FormField
+                    control={form.control}
+                    name="hasEstheExperience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="mt-4">
+                          <SwitchField
+                            label="エステ経験"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          {field.value && (
+                            <div className="mt-2">
+                              <FormField
+                                control={form.control}
+                                name="estheExperiencePeriod"
+                                render={({ field: innerField }) => (
+                                  <Input
+                                    placeholder="経験期間を入力（例：2年）"
+                                    {...innerField}
+                                  />
+                                )}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </CollapsibleContent>
               </Collapsible>
             </div>
@@ -781,10 +881,19 @@ export const TalentForm: React.FC = () => {
             {/* 10. アレルギー */}
             <div>
               <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
-              <SwitchField
-                label="アレルギーの有無"
-                checked={form.watch("allergies.hasAllergy")}
-                onCheckedChange={(checked) => form.setValue("allergies.hasAllergy", checked)}
+              <FormField
+                control={form.control}
+                name="allergies.hasAllergy"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="アレルギーの有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               {form.watch("allergies.hasAllergy") && (
                 <div className="mt-4">
@@ -853,10 +962,19 @@ export const TalentForm: React.FC = () => {
             {/* 11. 喫煙 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">喫煙</h3>
-              <SwitchField
-                label="喫煙の有無"
-                checked={form.watch("smoking.enabled")}
-                onCheckedChange={(checked) => form.setValue("smoking.enabled", checked)}
+              <FormField
+                control={form.control}
+                name="smoking.enabled"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="喫煙の有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               {form.watch("smoking.enabled") && (
                 <div className="mt-4">
@@ -904,54 +1022,67 @@ export const TalentForm: React.FC = () => {
                     <div className="flex gap-2 mt-2">
                       <Input
                         placeholder="その他の喫煙情報を入力"
-                        onKeyPress={(e) => {                        if (e.key === "Enter") {
-                          const value = e.currentTarget.value.trim();
-                          if (value && !otherSmokingTypes.includes(value)) {
-                            const newTypes = [...otherSmokingTypes, value];
-                            setOtherSmokingTypes(newTypes);
-                            form.setValue("smoking.others", newTypes);
-                            e.currentTarget.value = "";
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const value = e.currentTarget.value.trim();
+                            if (value && !otherSmokingTypes.includes(value)) {
+                              const newTypes = [...otherSmokingTypes, value];
+                              setOtherSmokingTypes(newTypes);
+                              form.setValue("smoking.others", newTypes);
+                              e.currentTarget.value = "";
+                            }
                           }
-                        }
-                      }}
-                    />
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* 12. SNSアカウント */}
-            {form.watch("hasSnsAccount") && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
-                <div className="space-y-4">
-                  {form.watch("snsUrls").map((url, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        placeholder="SNSアカウントのURLを入力"
-                        value={url}
-                        onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleRemoveSnsUrl(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddSnsUrl}
-                  >
-                    SNSアカウントを追加
-                  </Button>
-                </div>
-              </div>
-            )}
+            <FormField
+              control={form.control}
+              name="hasSnsAccount"
+              render={({ field }) => (
+                <FormItem>
+                  <>
+                    {field.value && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
+                        <div className="space-y-4">
+                          {form.watch("snsUrls").map((url, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                placeholder="SNSアカウントのURLを入力"
+                                value={url}
+                                onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleRemoveSnsUrl(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAddSnsUrl}
+                          >
+                            SNSアカウントを追加
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* 13. プロフィール写真 */}
             <div>
@@ -1000,25 +1131,47 @@ export const TalentForm: React.FC = () => {
             {/* 14. 自己紹介 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
-              <FormFieldWrapper label="自己紹介文">
-                <textarea
-                  {...form.register("selfIntroduction")}
-                  className="w-full h-32 p-2 border rounded-md"
-                  placeholder="自己紹介文を入力してください"
-                />
-              </FormFieldWrapper>
+              <FormField
+                control={form.control}
+                name="selfIntroduction"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="自己紹介文">
+                      <FormControl>
+                        <textarea
+                          {...field}
+                          className="w-full h-32 p-2 border rounded-md"
+                          placeholder="自己紹介文を入力してください"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* 15. 備考 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">備考</h3>
-              <FormFieldWrapper label="その他の備考">
-                <textarea
-                  {...form.register("notes")}
-                  className="w-full h-32 p-2 border rounded-md"
-                  placeholder="その他の備考を入力してください"
-                />
-              </FormFieldWrapper>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="その他の備考">
+                      <FormControl>
+                        <textarea
+                          {...field}
+                          className="w-full h-32 p-2 border rounded-md"
+                          placeholder="その他の備考を入力してください"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* 送信ボタン */}
@@ -1049,4 +1202,4 @@ export const TalentForm: React.FC = () => {
       />
     </div>
   );
-};
+}
