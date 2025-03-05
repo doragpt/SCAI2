@@ -35,6 +35,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Bot, User, Loader2, ArrowLeft, Check, X } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
+import { useAuth } from "@/hooks/use-auth";
 import { useMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
@@ -53,21 +54,7 @@ const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
 
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      type: "ai",
-      content: `SCAIマッチングへようこそ！
-あなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。
-
-【SCAIマッチングの特徴】
-• AIが希望条件を分析し、最適な店舗をご紹介
-• 豊富な求人データベースから、あなたに合った職場を探索
-• 店舗からの返信状況をリアルタイムに確認可能
-
-まずは、希望する働き方を選択してください。`
-    },
-  ]);
-
+  const { user } = useAuth(); // Added useAuth hook
   const { profileData, isLoading: isProfileLoading } = useProfile();
   const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -892,21 +879,11 @@ export const AIMatchingChat = () => {
                     </div>
                     <div>
                       <Label>生年月日</Label>
-                      <p className="text-sm font-medium">
-                        {formatDate(profileData?.birthDate)}
-                      </p>
+                      <p className="text-sm font-medium">{formatDate(user?.birthDate || '')}</p>
                     </div>
                     <div>
                       <Label>年齢</Label>
                       <p className="text-sm font-medium">{profileData?.age ? `${profileData.age}歳` : "未入力"}</p>
-                    </div>
-                    <div>
-                      <Label>電話番号</Label>
-                      <p className="text-sm font-medium">{formatProfileValue(profileData?.phoneNumber)}</p>
-                    </div>
-                    <div>
-                      <Label>メールアドレス</Label>
-                      <p className="text-sm font-medium">{formatProfileValue(profileData?.email)}</p>
                     </div>
                     <div>
                       <Label>居住地</Label>
