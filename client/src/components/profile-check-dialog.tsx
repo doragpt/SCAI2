@@ -12,20 +12,26 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Check, X } from "lucide-react";
 import { type ProfileData } from "@shared/types/profile";
+import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/lib/queryClient";
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  profileData: ProfileData;
 }
 
 export default function ProfileCheckDialog({
   isOpen,
   onClose,
   onConfirm,
-  profileData,
 }: ProfileCheckDialogProps) {
+  // プロフィールデータを取得
+  const { data: profileData, isLoading } = useQuery({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    refetchOnWindowFocus: false,
+  });
+
   const formatValue = (value: unknown, type: string = 'text'): string => {
     if (value === null || value === undefined || value === '') return "未入力";
 
@@ -38,6 +44,12 @@ export default function ProfileCheckDialog({
         return String(value) || "未入力";
     }
   };
+
+  if (isLoading || !profileData) {
+    return <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>Loading...</DialogContent>
+    </Dialog>; //Added loading state
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -188,8 +200,8 @@ export default function ProfileCheckDialog({
                       <X className="h-4 w-4 text-red-500" />
                     )}
                     <span>
-                      {profileData.hasEstheExperience ? 
-                        `あり（${profileData.estheExperiencePeriod}）` : 
+                      {profileData.hasEstheExperience ?
+                        `あり（${profileData.estheExperiencePeriod}）` :
                         "無し"}
                     </span>
                   </div>
