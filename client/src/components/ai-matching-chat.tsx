@@ -224,6 +224,23 @@ export const AIMatchingChat = () => {
   };
 
 
+  // 年齢計算関数を追加
+  const calculateAge = (birthDate: string | undefined): number | null => {
+    if (!birthDate) return null;
+    try {
+      const birth = new Date(birthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
       <header className="bg-background p-4 border-b">
@@ -900,7 +917,9 @@ export const AIMatchingChat = () => {
                     </div>
                     <div>
                       <Label>年齢</Label>
-                      <p className="text-sm font-medium">{profileData?.age ? `${profileData.age}歳` : "未入力"}</p>
+                      <p className="text-sm font-medium">
+                        {calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
+                      </p>
                     </div>
                     <div>
                       <Label>居住地</Label>
