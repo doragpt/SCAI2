@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
 import { Link } from "wouter";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -110,7 +109,7 @@ const SwitchField = ({
   </div>
 );
 
-// PhotoUploadコンポーネントの修正
+// PhotoUploadコンポーネント
 const PhotoUpload = ({
   photos,
   onChange,
@@ -120,6 +119,83 @@ const PhotoUpload = ({
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const compressImage = async (file: File): Promise<string | null> => {
+    try {
+      // ファイルサイズチェック（2MB以下）
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "エラー",
+          description: "ファイルサイズは2MB以下にしてください。",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const reader = new FileReader();
+      const imageData = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // 画像の圧縮処理
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageData;
+      });
+
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 600;
+      const MAX_HEIGHT = 800;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      // 圧縮品質を0.5に設定
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+
+      // Base64データのサイズをチェック
+      const base64Size = compressedDataUrl.length * 0.75;
+      if (base64Size > 512 * 1024) { // 512KB以上の場合はスキップ
+        toast({
+          title: "エラー",
+          description: "画像サイズを小さくできませんでした。別の画像を試してください。",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      return compressedDataUrl;
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        title: "エラー",
+        description: "画像の処理中にエラーが発生しました。",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -130,21 +206,19 @@ const PhotoUpload = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const reader = new FileReader();
+      const compressedDataUrl = await compressImage(file);
 
-      // FileReaderをPromiseでラップ
-      const result = await new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-
-      newPhotos.push({
-        url: result,
-        tag: photoTags[0], // デフォルトで「現在の髪色」を設定
-      });
+      if (compressedDataUrl) {
+        newPhotos.push({
+          url: compressedDataUrl,
+          tag: photoTags[0],
+        });
+      }
     }
 
-    onChange([...photos, ...newPhotos]);
+    if (newPhotos.length > 0) {
+      onChange([...photos, ...newPhotos]);
+    }
     setSelectedFiles(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -246,7 +320,7 @@ const PhotoUpload = ({
       )}
 
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>※最大20枚までアップロード可能です。</p>
+        <p>※最大20枚までアップロード可能です（1枚あたり2MBまで）</p>
         <p className="font-medium text-primary">※現在の髪色の写真は必須です。</p>
         <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
       </div>
@@ -266,6 +340,7 @@ export function TalentForm() {
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
+  const [newIdType, setNewIdType] = useState("");
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -339,30 +414,10 @@ export function TalentForm() {
       // フォームの値を更新
       form.reset({
         ...existingProfile,
-        // 必須フィールドのデフォルト値を設定
-        lastName: existingProfile.lastName || "",
-        firstName: existingProfile.firstName || "",
-        lastNameKana: existingProfile.lastNameKana || "",
-        firstNameKana: existingProfile.firstNameKana || "",
-        location: existingProfile.location || "東京都",
-        nearestStation: existingProfile.nearestStation || "",
-        height: existingProfile.height || 150,
-        weight: existingProfile.weight || 45,
-        cupSize: existingProfile.cupSize || "D",
-        faceVisibility: existingProfile.faceVisibility || "全隠し",
-        // 配列やオブジェクトのデフォルト値を設定
         photos: existingProfile.photos || [],
         bodyMark: existingProfile.bodyMark || {
           hasBodyMark: false,
           details: "",
-        },
-        availableIds: existingProfile.availableIds || {
-          types: [],
-          others: [],
-        },
-        ngOptions: existingProfile.ngOptions || {
-          common: [],
-          others: [],
         },
       });
 
@@ -376,78 +431,53 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
-  // プロフィール更新用のミューテーション
-  const { mutate: updateProfile, isPending } = useMutation({
-    mutationFn: async (data: TalentProfileData) => {
-      try {
-        const processedData = {
-          ...data,
-          height: Number(data.height),
-          weight: Number(data.weight),
-          bust: data.bust === null || data.bust === undefined ? null : Number(data.bust),
-          waist: data.waist === null || data.waist === undefined ? null : Number(data.waist),
-          hip: data.hip === null || data.hip === undefined ? null : Number(data.hip),
-          availableIds: {
-            types: data.availableIds.types,
-            others: otherIds,
-          },
-          ngOptions: {
-            common: data.ngOptions.common,
-            others: otherNgOptions,
-          },
-          allergies: {
-            types: data.allergies.types,
-            others: otherAllergies,
-            hasAllergy: data.allergies.hasAllergy,
-          },
-          smoking: {
-            enabled: data.smoking.enabled,
-            types: data.smoking.types,
-            others: otherSmokingTypes,
-          },
-          bodyMark: {
-            hasBodyMark: data.bodyMark.hasBodyMark,
-            details: bodyMarkDetails,
-          },
-          photos: data.photos,
-        };
-
-        const response = await apiRequest(
-          existingProfile ? "PUT" : "POST",
-          "/api/talent/profile",
-          processedData
-        );
-
-        if (!response.ok) {
-          throw new Error("プロフィールの更新に失敗しました");
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error("API error:", error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-      toast({
-        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
-        description: "プロフィールの保存が完了しました。",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "エラーが発生しました",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   // フォーム送信前の確認
   const handleSubmit = async (data: TalentProfileData) => {
-    setFormData(data);
-    setIsConfirmationOpen(true);
+    try {
+      // データの最適化
+      const optimizedData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === null || data.bust === undefined ? null : Number(data.bust),
+        waist: data.waist === null || data.waist === undefined ? null : Number(data.waist),
+        hip: data.hip === null || data.hip === undefined ? null : Number(data.hip),
+        availableIds: {
+          types: data.availableIds.types,
+          others: otherIds,
+        },
+        ngOptions: {
+          common: data.ngOptions.common,
+          others: otherNgOptions,
+        },
+        allergies: {
+          types: data.allergies.types,
+          others: otherAllergies,
+          hasAllergy: data.allergies.hasAllergy,
+        },
+        smoking: {
+          enabled: data.smoking.enabled,
+          types: data.smoking.types,
+          others: otherSmokingTypes,
+        },
+        bodyMark: {
+          hasBodyMark: data.bodyMark.hasBodyMark,
+          details: bodyMarkDetails,
+        },
+        // 不必要なデータを削除
+        ...(data.photos && { photos: data.photos }),
+      };
+
+      setFormData(optimizedData);
+      setIsConfirmationOpen(true);
+    } catch (error) {
+      console.error("データの準備中にエラーが発生しました:", error);
+      toast({
+        title: "エラー",
+        description: "データの準備中にエラーが発生しました。",
+        variant: "destructive",
+      });
+    }
   };
 
   // 確認後の送信処理
@@ -455,97 +485,40 @@ export function TalentForm() {
     if (!formData) return;
 
     try {
-      await updateProfile(formData);
+      const response = await apiRequest(
+        existingProfile ? "PUT" : "POST",
+        "/api/talent/profile",
+        formData
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "プロフィールの更新に失敗しました");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+
+      toast({
+        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
+        description: "プロフィールの保存が完了しました。",
+      });
+
       setIsConfirmationOpen(false);
     } catch (error) {
       console.error("送信エラー:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
+        variant: "destructive",
+      });
     }
   };
 
-  // Store management functions
-  const handleAddCurrentStore = () => {
-    const currentStores = form.getValues("currentStores") || [];
-    form.setValue("currentStores", [...currentStores, { storeName: "", stageName: "" }]);
-  };
+  const handleAddIdType = () => {
+    if (!newIdType.trim()) return;
 
-  const handleUpdateCurrentStore = (index: number, field: "storeName" | "stageName", value: string) => {
-    const currentStores = form.getValues("currentStores");
-    if (currentStores && currentStores[index]) {
-      const updated = [...currentStores];
-      updated[index] = { ...updated[index], [field]: value };
-      form.setValue("currentStores", updated);
-    }
-  };
-
-  const handleRemoveCurrentStore = (index: number) => {
-    const currentStores = form.getValues("currentStores");
-    if (currentStores) {
-      const updated = currentStores.filter((_, i) => i !== index);
-      form.setValue("currentStores", updated);
-    }
-  };
-
-  const handleAddPreviousStore = () => {
-    const previousStores = form.getValues("previousStores") || [];
-    form.setValue("previousStores", [...previousStores, { storeName: "", photoDiaryUrls: [] }]);
-  };
-
-  const handleUpdatePreviousStore = (index: number, field: "storeName", value: string) => {
-    const previousStores = form.getValues("previousStores");
-    if (previousStores && previousStores[index]) {
-      const updated = [...previousStores];
-      updated[index] = { ...updated[index], [field]: value };
-      form.setValue("previousStores", updated);
-    }
-  };
-
-  const handleRemovePreviousStore = (index: number) => {
-    const previousStores = form.getValues("previousStores");
-    if (previousStores) {
-      const updated = previousStores.filter((_, i) => i !== index);
-      form.setValue("previousStores", updated);
-    }
-  };
-
-  const handleUpdateSnsUrl = (index: number, value: string) => {
-    const snsUrls = form.getValues("snsUrls") || [];
-    const updatedUrls = [...snsUrls];
-    updatedUrls[index] = value;
-    form.setValue("snsUrls", updatedUrls);
-  };
-
-  const handleRemoveSnsUrl = (index: number) => {
-    const snsUrls = form.getValues("snsUrls") || [];
-    const updatedUrls = snsUrls.filter((_, i) => i !== index);
-    form.setValue("snsUrls", updatedUrls);
-  };
-
-  const handleAddSnsUrl = () => {
-    const snsUrls = form.getValues("snsUrls") || [];
-    form.setValue("snsUrls", [...snsUrls, ""]);
-  };
-
-  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
-    const previousStores = form.getValues("previousStores") || [];
-    const updatedStores = [...previousStores];
-    updatedStores[storeIndex] = {
-      ...updatedStores[storeIndex],
-      photoDiaryUrls: [...(updatedStores[storeIndex].photoDiaryUrls || []), newPhotoDiaryUrl],
-    };
-    form.setValue("previousStores", updatedStores);
-    setNewPhotoDiaryUrl("");
-  };
-
-  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
-    const previousStores = form.getValues("previousStores");
-    if (previousStores && previousStores[storeIndex]) {
-      const updatedStores = [...previousStores];
-      updatedStores[storeIndex] = {
-        ...updatedStores[storeIndex],
-        photoDiaryUrls: updatedStores[storeIndex].photoDiaryUrls.filter((_, i) => i !== urlIndex),
-      };
-      form.setValue("previousStores", updatedStores);
-    }
+    setOtherIds([...otherIds, newIdType.trim()]);
+    setNewIdType("");
   };
 
   if (isLoading) {
@@ -606,6 +579,7 @@ export function TalentForm() {
                 )}
               />
             </div>
+
             {/* 2.氏名（かな） */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -631,6 +605,7 @@ export function TalentForm() {
                 )}
               />
             </div>
+
             {/* 3.所在地 */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -667,6 +642,7 @@ export function TalentForm() {
                 )}
               />
             </div>
+
             {/* 4.身分証明書 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
@@ -696,8 +672,8 @@ export function TalentForm() {
                   <div className="space-y-2">
                     <Label>その他の身分証明書</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {otherIds.map((id) => (
-                        <Badge key={id} variant="secondary">
+                      {otherIds.map((id, index) => (
+                        <Badge key={index} variant="secondary">
                           {id}
                           <Button
                             type="button"
@@ -705,11 +681,7 @@ export function TalentForm() {
                             size="sm"
                             className="ml-1 h-4 w-4 p-0"
                             onClick={() => {
-                              setOtherIds(otherIds.filter((i) => i !== id));
-                              form.setValue(
-                                "availableIds.others",
-                                otherIds.filter((i) => i !== id)
-                              );
+                              setOtherIds(otherIds.filter((_, i) => i !== index));
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -717,38 +689,37 @@ export function TalentForm() {
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2">
                       <Input
+                        value={newIdType}
+                        onChange={(e) => setNewIdType(e.target.value)}
                         placeholder="その他の身分証明書を入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const value = e.currentTarget.value.trim();
-                            if (value && !otherIds.includes(value)) {
-                              const newIds = [...otherIds, value];
-                              setOtherIds(newIds);
-                              form.setValue("availableIds.others", newIds);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
                       />
+                      <Button
+                        type="button"
+                        onClick={handleAddIdType}
+                        disabled={!newIdType.trim()}
+                      >
+                        追加
+                      </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Enterキーで追加できます
-                    </p>
                   </div>
                 </div>
               </FormFieldWrapper>
             </div>
+
             <FormField
               control={form.control}
               name="canProvideResidenceRecord"
               render={({ field }) => (
-                <SwitchField
-                  label="住民票の提出"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <FormItem>
+                  <SwitchField
+                    label="本籍地記載の住民票の提出"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
               )}
             />
 
@@ -948,8 +919,8 @@ export function TalentForm() {
                 <div className="mt-4">
                   <Label>その他のNGオプション</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {otherNgOptions.map((option) => (
-                      <Badge key={option} variant="secondary">
+                    {otherNgOptions.map((option, index) => (
+                      <Badge key={index} variant="secondary">
                         {option}
                         <Button
                           type="button"
@@ -957,11 +928,7 @@ export function TalentForm() {
                           size="sm"
                           className="ml-1 h-4 w-4 p-0"
                           onClick={() => {
-                            setOtherNgOptions(otherNgOptions.filter((o) => o !== option));
-                            form.setValue(
-                              "ngOptions.others",
-                              otherNgOptions.filter((o) => o !== option)
-                            );
+                            setOtherNgOptions(otherNgOptions.filter((_, i) => i !== index));
                           }}
                         >
                           <X className="h-3 w-3" />
@@ -1108,8 +1075,8 @@ export function TalentForm() {
                   <div className="mt-4">
                     <Label>その他のアレルギー</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {otherAllergies.map((allergy) => (
-                        <Badge key={allergy} variant="secondary">
+                      {otherAllergies.map((allergy, index) => (
+                        <Badge key={index} variant="secondary">
                           {allergy}
                           <Button
                             type="button"
@@ -1117,11 +1084,7 @@ export function TalentForm() {
                             size="sm"
                             className="ml-1 h-4 w-4 p-0"
                             onClick={() => {
-                              setOtherAllergies(otherAllergies.filter((a) => a !== allergy));
-                              form.setValue(
-                                "allergies.others",
-                                otherAllergies.filter((a) => a !== allergy)
-                              );
+                              setOtherAllergies(otherAllergies.filter((_, i) => i !== index));
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1190,8 +1153,8 @@ export function TalentForm() {
                     <div>
                       <Label>その他の喫煙情報</Label>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {otherSmokingTypes.map((type) => (
-                          <Badge key={type} variant="secondary">
+                        {otherSmokingTypes.map((type, index) => (
+                          <Badge key={index} variant="secondary">
                             {type}
                             <Button
                               type="button"
@@ -1199,11 +1162,7 @@ export function TalentForm() {
                               size="sm"
                               className="ml-1 h-4 w-4 p-0"
                               onClick={() => {
-                                setOtherSmokingTypes(otherSmokingTypes.filter((t) => t !== type));
-                                form.setValue(
-                                  "smoking.others",
-                                  otherSmokingTypes.filter((t) => t !== type)
-                                );
+                                setOtherSmokingTypes(otherSmokingTypes.filter((_, i) => i !== index));
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1508,7 +1467,7 @@ export function TalentForm() {
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      送信中...
+                      保存中...
                     </>
                   ) : (
                     "保存する"
@@ -1525,7 +1484,6 @@ export function TalentForm() {
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={handleConfirm}
         formData={formData}
-        isPending={isPending}
       />
     </div>
   );
