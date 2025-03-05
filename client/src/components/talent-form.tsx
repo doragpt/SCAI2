@@ -19,6 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
+// 必要なインポートを追加
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
@@ -37,6 +39,65 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
+
+// FormFieldWrapperコンポーネント
+const FormFieldWrapper = ({
+  label,
+  required = false,
+  children,
+  description,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  description?: string;
+}) => (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2">
+      <Label>{label}</Label>
+      {required && <span className="text-destructive">*</span>}
+    </div>
+    {description && (
+      <p className="text-sm text-muted-foreground">{description}</p>
+    )}
+    <div className="mt-1.5">{children}</div>
+  </div>
+);
+
+// SwitchFieldコンポーネント
+const SwitchField = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" },
+}: {
+  label: string;
+  required?: boolean;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  description?: string;
+  valueLabels?: { checked: string; unchecked: string };
+}) => (
+  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+    <div className="flex items-center gap-2">
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <span className={checked ? "text-primary" : "text-muted-foreground"}>
+        {checked ? valueLabels.checked : valueLabels.unchecked}
+      </span>
+    </div>
+  </div>
+);
 
 // PhotoUploadコンポーネント
 const PhotoUpload = ({
@@ -310,8 +371,37 @@ export function TalentForm() {
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      console.log("Existing profile loaded:", existingProfile);
-      form.reset(existingProfile);
+      console.log("Loading existing profile:", existingProfile);
+
+      // フォームの値を更新
+      form.reset({
+        ...existingProfile,
+        // 必須フィールドのデフォルト値を設定
+        lastName: existingProfile.lastName || "",
+        firstName: existingProfile.firstName || "",
+        lastNameKana: existingProfile.lastNameKana || "",
+        firstNameKana: existingProfile.firstNameKana || "",
+        location: existingProfile.location || "東京都",
+        nearestStation: existingProfile.nearestStation || "",
+        height: existingProfile.height || 150,
+        weight: existingProfile.weight || 45,
+        cupSize: existingProfile.cupSize || "D",
+        faceVisibility: existingProfile.faceVisibility || "全隠し",
+        // 配列やオブジェクトのデフォルト値を設定
+        photos: existingProfile.photos || [],
+        bodyMark: existingProfile.bodyMark || {
+          hasBodyMark: false,
+          details: "",
+        },
+        availableIds: existingProfile.availableIds || {
+          types: [],
+          others: [],
+        },
+        ngOptions: existingProfile.ngOptions || {
+          common: [],
+          others: [],
+        },
+      });
 
       // その他のフィールドの初期化
       setOtherIds(existingProfile.availableIds?.others || []);
