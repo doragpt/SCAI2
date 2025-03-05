@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,7 +28,9 @@ import {
   idTypes,
   prefectures,
   estheOptions,
+  photoTags,
   type TalentProfileData,
+  type Photo,
   talentProfileSchema,
 } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,66 +39,89 @@ import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/lib/queryClient";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 
-// FormFieldWrapper component
-const FormFieldWrapper = ({
-  label,
-  required = false,
-  children,
-  description,
+// PhotoUpload component
+const PhotoUpload = ({
+  photos,
+  onChange,
 }: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-  description?: string;
+  photos: Photo[];
+  onChange: (photos: Photo[]) => void;
 }) => {
   return (
-    <div className="space-y-2">
-      <FormLabel className="flex items-center gap-2">
-        {label}
-        {required && <span className="text-destructive">*</span>}
-      </FormLabel>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
+    <div className="space-y-4">
+      {photos.map((photo, index) => (
+        <div key={index} className="flex items-center gap-4">
+          <div className="aspect-[3/4] w-32 bg-muted rounded-lg overflow-hidden">
+            <img
+              src={photo.url}
+              alt={`プロフィール写真 ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <Select
+              value={photo.tag}
+              onValueChange={(tag) => {
+                const updatedPhotos = [...photos];
+                updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
+                onChange(updatedPhotos);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="タグを選択してください（必須）" />
+              </SelectTrigger>
+              <SelectContent>
+                {photoTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const updatedPhotos = photos.filter((_, i) => i !== index);
+              onChange(updatedPhotos);
+            }}
+          >
+            削除
+          </Button>
+        </div>
+      ))}
+      {photos.length < 20 && (
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                onChange([
+                  ...photos,
+                  {
+                    url: reader.result as string,
+                    tag: "現在の髪色", // デフォルトで「現在の髪色」を選択
+                  },
+                ]);
+              };
+              reader.readAsDataURL(file);
+            }
+          }}
+        />
       )}
-      {children}
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>※最大20枚までアップロード可能です。</p>
+        <p>※現在の髪色の写真は必須です。</p>
+        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
+      </div>
     </div>
   );
 };
-
-// SwitchField component
-const SwitchField = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" },
-}: {
-  label: string;
-  required?: boolean;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  description?: string;
-  valueLabels?: { checked: string; unchecked: string };
-}) => (
-  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-    <div className="space-y-0.5">
-      <FormLabel className="flex items-center gap-2">
-        {label}
-        {required && <span className="text-destructive">*</span>}
-      </FormLabel>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-      <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? valueLabels.checked : valueLabels.unchecked}
-      </span>
-    </div>
-  </div>
-);
 
 export function TalentForm() {
   const { toast } = useToast();
@@ -108,6 +133,8 @@ export function TalentForm() {
   const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
   const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
   const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [bodyMarkDetails, setBodyMarkDetails] = useState("");
+
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
@@ -166,6 +193,10 @@ export function TalentForm() {
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
+      bodyMark: {
+        hasBodyMark: false,
+        details: "",
+      },
     },
   });
 
@@ -181,6 +212,8 @@ export function TalentForm() {
       setOtherAllergies(existingProfile.allergies.others || []);
       setOtherSmokingTypes(existingProfile.smoking.others || []);
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
+
     }
   }, [existingProfile, form]);
 
@@ -213,6 +246,10 @@ export function TalentForm() {
             others: otherSmokingTypes,
           },
           photos: form.getValues("photos"),
+          bodyMark: {
+            hasBodyMark: data.bodyMark.hasBodyMark,
+            details: bodyMarkDetails
+          }
         };
 
         const response = await apiRequest(
@@ -1088,52 +1125,21 @@ export function TalentForm() {
             {/* 13. プロフィール写真 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
-              <div className="space-y-4">
-                {(form.watch("photos") || []).map((photo, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="aspect-[3/4] w-32 bg-muted rounded-lg overflow-hidden">
-                      <img
-                        src={photo.url}
-                        alt={`プロフィール写真 ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        const photos = form.getValues("photos");
-                        const updatedPhotos = photos.filter((_, i) => i !== index);
-                        form.setValue("photos", updatedPhotos);
+              <FormField
+                control={form.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <PhotoUpload
+                      photos={field.value || []}
+                      onChange={(photos) => {
+                        field.onChange(photos);
                       }}
-                    >
-                      削除
-                    </Button>
-                  </div>
-                ))}
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const photos = form.getValues("photos") || [];
-                        form.setValue("photos", [
-                          ...photos,
-                          {
-                            url: reader.result as string,
-                            tag: undefined,
-                          },
-                        ]);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* 14. 自己紹介 */}
@@ -1181,6 +1187,49 @@ export function TalentForm() {
                 )}
               />
             </div>
+
+            {/* 新しいセクション: 傷・タトゥー・アトピー */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
+              <FormField
+                control={form.control}
+                name="bodyMark.hasBodyMark"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="傷・タトゥー・アトピーの有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("bodyMark.hasBodyMark") && (
+                <div className="mt-4 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="bodyMark.details"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <textarea
+                            {...field}
+                            className="w-full h-32 p-2 border rounded-md"
+                            placeholder="詳細を入力してください"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-sm text-muted-foreground mt-2">
+                          ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+
 
             {/* 送信ボタン */}
             <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">

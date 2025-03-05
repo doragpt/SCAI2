@@ -3,6 +3,26 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
+export const photoTags = [
+  "現在の髪色",
+  "タトゥー",
+  "傷",
+  "アトピー",
+  "スタジオ写真"
+] as const;
+
+// bodyMarkSchema定義
+export const bodyMarkSchema = z.object({
+  hasBodyMark: z.boolean().default(false),
+  details: z.string().optional(),
+});
+
+// photoSchema定義
+export const photoSchema = z.object({
+  url: z.string(),
+  tag: z.enum(photoTags),
+});
+
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -15,19 +35,6 @@ export const prefectures = [
 
 export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
-export const photoTags = [
-  "現在の髪色",
-  "宣材写真",
-  "タトゥー",
-  "傷",
-  "矯正",
-  "やけど",
-  "ピアス",
-  "妊娠線",
-  "手術痕",
-  "その他"
-] as const;
-
 export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
 export const idTypes = [
   "運転免許証",
@@ -178,6 +185,11 @@ export const talentProfiles = pgTable("talent_profiles", {
   returnLocation: text("return_location", { enum: prefectures }),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]),
+  // bodyMarkを追加
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }),
+  // photosを更新
+  photos: jsonb("photos").$type<Photo[]>().default([])
+
 });
 
 // Login and registration schemas
@@ -220,10 +232,6 @@ export const talentRegisterFormSchema = z.object({
 
 // Talent profile schema
 // プロフィール写真のスキーマを追加
-export const photoSchema = z.object({
-  url: z.string(),
-  tag: z.enum(photoTags).optional(),
-});
 
 // プロフィールスキーマを更新
 export const talentProfileSchema = z.object({
@@ -299,8 +307,20 @@ export const talentProfileSchema = z.object({
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
-  // 写真関連のフィールドを追加
-  photos: z.array(photoSchema).default([]),
+  // 写真関連のフィールドを更新
+  photos: z.array(photoSchema)
+    .min(1, "少なくとも1枚の写真が必要です")
+    .max(20, "写真は最大20枚までです")
+    .refine(
+      (photos) => photos.some((photo) => photo.tag === "現在の髪色"),
+      "現在の髪色の写真は必須です"
+    ),
+
+  // bodyMark関連のフィールドを追加
+  bodyMark: bodyMarkSchema.default({
+    hasBodyMark: false,
+    details: "",
+  }),
 
   // テキストフィールド
   selfIntroduction: z.string().optional().default(""),
@@ -345,8 +365,10 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
   userId: true
 }).partial();
 
+
 // 型定義エクスポートを追加
 export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 // Export types
