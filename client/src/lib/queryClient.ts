@@ -10,15 +10,6 @@ export const QUERY_KEYS = {
   SIGNED_URL: "/api/get-signed-url"
 } as const;
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-
-// APIのベースURL設定
-const API_BASE_URL = (() => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  return `${protocol}//${hostname}`;
-})();
-
 // APIリクエスト用の基本関数を修正
 export async function apiRequest(
   method: string,
@@ -381,3 +372,10 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+type UnauthorizedBehavior = "returnNull" | "throw";
+const API_BASE_URL = (() => {
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}`;
+})();
