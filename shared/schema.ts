@@ -165,7 +165,9 @@ export const talentProfiles = pgTable("talent_profiles", {
   }[]>().default([]).notNull(),
   previousStores: jsonb("previous_stores").$type<{
     storeName: string;
+    photoDiaryUrls: string[];
   }[]>().default([]).notNull(),
+  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
   selfIntroduction: text("self_introduction"),
   notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -278,7 +280,10 @@ export const talentProfileSchema = z.object({
   })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
+    photoDiaryUrls: z.array(z.string()).default([]),
   })).default([]),
+  photoDiaryUrls: z.array(z.string()).default([]),
+
   photos: z.array(photoSchema)
     .min(1, "少なくとも1枚の写真が必要です")
     .max(20, "写真は最大20枚までです")

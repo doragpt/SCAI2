@@ -49,6 +49,7 @@ type CurrentStore = {
 
 type PreviousStore = {
   storeName: string;
+  photoDiaryUrls: string[];
 };
 
 const PhotoUploadGuidelines = () => (
@@ -730,7 +731,19 @@ export function TalentForm() {
   };
 
   const handleAddPreviousStore = () => {
-    form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "" }]);
+    form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "", photoDiaryUrls: [] }]);
+  };
+
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = [...updatedStores[storeIndex].photoDiaryUrls, ""];
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = updatedStores[storeIndex].photoDiaryUrls.filter((_, i) => i !== urlIndex);
+    form.setValue("previousStores", updatedStores);
   };
 
   const handleIdTypeChange = (type: string, checked: boolean) => {
@@ -1665,23 +1678,56 @@ export function TalentForm() {
             <div>
               <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
               <div className="space-y-4">
-                {form.watch("previousStores")?.map((store, storeIndex) => (
-                  <div key={storeIndex} className="space-y-4 p-4 border rounded-lg bg-muted/10">
-                    <div className="flex items-center gap-4">
+                {form.watch("previousStores")?.map((store, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
                       <Input
                         placeholder="店舗名"
                         value={store.storeName}
                         onChange={(e) =>
-                          handleUpdatePreviousStore(storeIndex, "storeName", e.target.value)
+                          handleUpdatePreviousStore(index, "storeName", e.target.value)
                         }
                       />
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="ghost"
                         size="icon"
-                        onClick={() => handleRemovePreviousStore(storeIndex)}
+                        onClick={() => handleRemovePreviousStore(index)}
                       >
                         <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>写メ日記URL</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {store.photoDiaryUrls.map((url, urlIndex) => (
+                          <div key={urlIndex} className="flex items-center">
+                            <Input
+                              value={url}
+                              onChange={(e) => {
+                                const updatedUrls = [...store.photoDiaryUrls];
+                                updatedUrls[urlIndex] = e.target.value;
+                                handleUpdatePreviousStore(index, "photoDiaryUrls", updatedUrls);
+                              }}
+                              placeholder="写メ日記のURLを入力"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleRemovePhotoDiaryUrl(index, urlIndex)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleAddPhotoDiaryUrl(index)}
+                      >
+                        写メ日記URLを追加
                       </Button>
                     </div>
                   </div>
@@ -1693,6 +1739,48 @@ export function TalentForm() {
                   onClick={handleAddPreviousStore}
                 >
                   過去の勤務先を追加
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">写メ日記が確認できるURL</h3>
+              <div className="space-y-4">
+                {form.watch("photoDiaryUrls")?.map((url, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder="写メ日記のURL"
+                      value={url}
+                      onChange={(e) => {
+                        const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                        updatedUrls[index] = e.target.value;
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const updatedUrls = [...form.watch("photoDiaryUrls") || []].filter(
+                          (_, i) => i !== index
+                        );
+                        form.setValue("photoDiaryUrls", updatedUrls);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""]);
+                  }}
+                >
+                  写メ日記URLを追加
                 </Button>
               </div>
             </div>
