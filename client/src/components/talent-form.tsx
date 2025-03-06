@@ -485,9 +485,8 @@ export function TalentForm() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   // デバッグ用のログを追加
-  console.log('TalentForm auth user:', user);
+  console.log('TalentForm render:', { user });
 
-  // formの定義を先に移動
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     mode: "onChange",
@@ -499,16 +498,16 @@ export function TalentForm() {
       location: "",
       nearestStation: "",
       availableIds: {
-        types: [],
+        types: [], // 空の配列として初期化
         others: [],
       },
       canProvideResidenceRecord: false,
       height: 150,
       weight: 45,
       cupSize: "D",
-      bust: "",
-      waist: "",
-      hip: "",
+      bust: null,
+      waist: null,
+      hip: null,
       faceVisibility: "全隠し",
       canPhotoDiary: false,
       canHomeDelivery: false,
@@ -628,21 +627,21 @@ export function TalentForm() {
         waist: data.waist === "" ? null : Number(data.waist),
         hip: data.hip === "" ? null : Number(data.hip),
         availableIds: {
-          types: data.availableIds.types,
+          types: data.availableIds.types || [],
           others: otherIds,
         },
         ngOptions: {
-          common: data.ngOptions.common,
+          common: data.ngOptions.common || [],
           others: otherNgOptions,
         },
         allergies: {
-          types: data.allergies.types,
+          types: data.allergies.types || [],
           others: otherAllergies,
           hasAllergy: data.allergies.hasAllergy,
         },
         smoking: {
           enabled: data.smoking.enabled,
-          types: data.smoking.types,
+          types: data.smoking.types || [],
           others: otherSmokingTypes,
         },
         bodyMark: {
@@ -652,15 +651,13 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      // デバッグログを追加
-      console.log('Form data before optimization:', data);
-      console.log('Optimized form data:', optimizedData);
-      console.log('Opening confirmation modal...');
+      console.log('Form data:', optimizedData);
 
-      // 状態を同期的に更新
-      await Promise.resolve();  // マイクロタスクを作成して状態更新を確実にする
+      // 状態を更新して確認モーダルを表示
       setFormData(optimizedData);
-      setIsConfirmationOpen(true);
+      setTimeout(() => {
+        setIsConfirmationOpen(true);
+      }, 0);
 
     } catch (error) {
       console.error("データの準備中にエラーが発生しました:", error);
@@ -936,25 +933,23 @@ export function TalentForm() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
-              <FormFieldWrapper label="持参可能な身分証明書" required>
-                <div className="space-y4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {idTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`id-${type}`}
-                          checked={form.watch("availableIds.types").includes(type)}
-                          onCheckedChange={(checked) => {
-                            const current = form.watch("availableIds.types") || [];
-                            const updated = checked
-                              ? [...current, type]
-                              : current.filter((t) => t !== type);
-                            form.setValue("availableIds.types", updated);
-                          }}
-                        />
-                        <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
-                      </div>
-                    ))}
+              <FormFieldWrapper label="持参可能な身分証明書" required><div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">{idTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`id-${type}`}
+                        checked={form.watch("availableIds.types").includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = form.watch("availableIds.types") || [];
+                          const updated = checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type);
+                          form.setValue("availableIds.types", updated);
+                        }}
+                      />
+                      <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
+                    </div>
+                  ))}
                   </div>
 
                   <div className="space-y-2">
@@ -1821,19 +1816,17 @@ export function TalentForm() {
       </main>
 
       {/* 確認モーダル */}
-      {formData && (
-        <ProfileConfirmationModal
-          isOpen={isConfirmationOpen}
-          onClose={() => {
-            console.log('Closing confirmation modal');
-            setFormData(null);
-            setIsConfirmationOpen(false);
-          }}
-          onConfirm={handleConfirm}
-          formData={formData}
-          isPending={isSubmitting}
-        />
-      )}
+      <ProfileConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={() => {
+          console.log('Closing confirmation modal');
+          setIsConfirmationOpen(false);
+          setFormData(null);
+        }}
+        onConfirm={handleConfirm}
+        formData={formData}
+        isPending={isSubmitting}
+      />
     </div>
   );
 }

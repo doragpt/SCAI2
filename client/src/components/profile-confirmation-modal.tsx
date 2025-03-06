@@ -25,13 +25,13 @@ export function ProfileConfirmationModal({
   formData,
   isPending,
 }: ProfileConfirmationModalProps) {
-  // formDataが存在しない場合は何も表示しない
+  // デバッグ用のログを追加
+  console.log('ProfileConfirmationModal render:', { isOpen, formData });
+
   if (!formData) {
     console.log('No form data provided to modal');
     return null;
   }
-
-  console.log('Modal rendering with data:', { isOpen, formData });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,22 +65,6 @@ export function ProfileConfirmationModal({
                   <p className="text-sm text-muted-foreground">最寄り駅</p>
                   <p>{formData.nearestStation}</p>
                 </div>
-              </div>
-            </section>
-
-            {/* 身分証明書 */}
-            <section className="space-y-2">
-              <h3 className="font-medium">身分証明書</h3>
-              <div>
-                <p className="text-sm text-muted-foreground">持参可能な身分証明書</p>
-                <ul className="list-disc list-inside">
-                  {formData.availableIds.types.map((type) => (
-                    <li key={type}>{type}</li>
-                  ))}
-                  {formData.availableIds.others.map((other) => (
-                    <li key={other}>{other}</li>
-                  ))}
-                </ul>
               </div>
             </section>
 
@@ -142,36 +126,6 @@ export function ProfileConfirmationModal({
                 </div>
               )}
             </section>
-
-            {/* NGオプション */}
-            {formData.ngOptions && (formData.ngOptions.common.length > 0 || formData.ngOptions.others.length > 0) && (
-              <section className="space-y-2">
-                <h3 className="font-medium">NGオプション</h3>
-                <ul className="list-disc list-inside">
-                  {formData.ngOptions.common.map((option) => (
-                    <li key={option}>{option}</li>
-                  ))}
-                  {formData.ngOptions.others.map((other) => (
-                    <li key={other}>{other}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* アレルギー */}
-            {formData.allergies?.hasAllergy && (
-              <section className="space-y-2">
-                <h3 className="font-medium">アレルギー</h3>
-                <ul className="list-disc list-inside">
-                  {formData.allergies.types.map((type) => (
-                    <li key={type}>{type}</li>
-                  ))}
-                  {formData.allergies.others.map((other) => (
-                    <li key={other}>{other}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
 
             {/* その他の情報 */}
             {formData.selfIntroduction && (
