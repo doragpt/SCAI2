@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -934,10 +934,11 @@ export function TalentForm() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Location field */}              <FormField
+              {/* Location field */}
+              <FormField
                 control={form.control}
                 name="location"
-                render={({ field }) => (
+                render={({field }) => (
                   <FormFieldWrapper label="都道府県" required>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
@@ -945,9 +946,9 @@ export function TalentForm() {
                           <SelectValue placeholder="選択してください" />
                         </SelectTrigger>
                         <SelectContent>
-                          {prefectures.map((prefecture)=> (
+                          {prefectures.map((prefecture) => (
                             <SelectItem key={prefecture} value={prefecture}>
-                              {prefecture}                              {prefecture}
+                              {prefecture}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1662,78 +1663,90 @@ export function TalentForm() {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">過去の勤務先</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddPreviousStore}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  追加
+                </Button>
+              </div>
               <div className="space-y-4">
                 {form.watch("previousStores")?.map((store, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <Input
-                      placeholder="店舗名"
-                      value={store.storeName}
-                      onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemovePreviousStore(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div key={index} className="group relative bg-muted/5 rounded-lg p-4 border hover:border-primary/50 transition-colors">
+                    <div className="flex-1">
+                      <Label className="mb-2">店舗名</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="店舗名を入力してください"
+                          value={store.storeName}
+                          onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemovePreviousStore(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                <div className="flex items-center justify-between">
-                  <Label>過去の勤務先</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddPreviousStore}
-                  >
-                    追加
-                  </Button>
-                </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">写メ日記が確認できるURL</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">写メ日記が確認できるURL</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  追加
+                </Button>
+              </div>
               <div className="space-y-4">
                 {form.watch("photoDiaryUrls")?.map((url, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <Input
-                      placeholder="写メ日記URL"
-                      value={url}
-                      onChange={(e) => {
-                        const updatedUrls = [...form.watch("photoDiaryUrls") || []];
-                        updatedUrls[index] = e.target.value;
-                        form.setValue("photoDiaryUrls", updatedUrls);
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const updatedUrls = [...form.watch("photoDiaryUrls") || []].filter((_, i) => i !== index);
-                        form.setValue("photoDiaryUrls", updatedUrls);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div key={index} className="group relative bg-muted/5 rounded-lg p-4 border hover:border-primary/50 transition-colors">
+                    <div className="flex-1">
+                      <Label className="mb-2">URL {index + 1}</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="写メ日記のURLを入力してください"
+                          value={url}
+                          onChange={(e) => {
+                            const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                            updatedUrls[index] = e.target.value;
+                            form.setValue("photoDiaryUrls", updatedUrls);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
+                            form.setValue("photoDiaryUrls", updatedUrls);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                <div className="flex items-center justify-between">
-                  <Label>写メ日記が確認できるURL</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
-                  >
-                    URLを追加
-                  </Button>
-                </div>
               </div>
             </div>
 
