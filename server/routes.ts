@@ -17,6 +17,9 @@ import { uploadToS3 } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
+// チャンク一時保存用のメモリストア
+const photoChunksStore = new Map<string, string[]>();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
@@ -525,16 +528,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Base64データの処理
         const base64Data = photo.split(',')[1];
 
-        // セッションの初期化確認
-        if (!req.session.photoChunks) {
-          req.session.photoChunks = {};
-        }
-
         // チャンクデータを一時保存
-        const chunkKey = `${req.user.id}-${photoId}-chunk-${chunkIndex}`;
-        req.session.photoChunks[chunkKey] = base64Data;
+        const chunkKey = `${req.user.id}-${photoId}`;
+        let chunks = photoChunksStore.get(chunkKey) || [];
+        chunks[chunkIndex] = base64Data;
+        photoChunksStore.set(chunkKey, chunks);
 
-        console.log('Chunk stored in session:', {
+        console.log('Chunk stored in memory:', {
           userId: req.user.id,
           photoId,
           chunkIndex,
@@ -542,28 +542,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString()
         });
 
-        // セッションの保存を確実に
-        await new Promise<void>((resolve, reject) => {
-          req.session.save((err) => {
-            if (err) {
-              console.error('Session save error:', err);
-              reject(err);
-            }
-            resolve();
-          });
-        });
-
         // 最後のチャンクの場合、すべてのチャンクを結合してS3にアップロード
         if (chunkIndex === totalChunks - 1) {
-          // すべてのチャンクを結合
-          const completeBase64 = Array.from({ length: totalChunks }, (_, i) => {
-            const key = `${req.user.id}-${photoId}-chunk-${i}`;
-            const chunk = req.session.photoChunks[key];
-            if (!chunk) {
-              throw new Error(`Missing chunk data for index ${i}`);
-            }
-            return chunk;
-          }).join('');
+          const completeBase64 = chunks.join('');
+          if (chunks.length !== totalChunks || chunks.some(chunk => !chunk)) {
+            throw new Error(`Missing chunk data. Expected ${totalChunks} chunks, got ${chunks.length}`);
+          }
 
           // 結合したデータをS3にアップロード
           const s3Url = await uploadToS3(
@@ -572,21 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
           // チャンクデータをクリア
-          for (let i = 0; i < totalChunks; i++) {
-            const key = `${req.user.id}-${photoId}-chunk-${i}`;
-            delete req.session.photoChunks[key];
-          }
-
-          // セッションの保存を確実に
-          await new Promise<void>((resolve, reject) => {
-            req.session.save((err) => {
-              if (err) {
-                console.error('Session save error:', err);
-                reject(err);
-              }
-              resolve();
-            });
-          });
+          photoChunksStore.delete(chunkKey);
 
           console.log('Complete photo upload successful:', {
             userId: req.user.id,
