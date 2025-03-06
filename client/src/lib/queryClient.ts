@@ -116,7 +116,7 @@ export async function apiRequest(
                     break;
                   } catch (chunkError) {
                     console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
-                      error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
+                      error: chunkError instanceof Error ? chunkError.message : "Unknown error",
                       attempt: chunkRetries + 1,
                       timestamp: new Date().toISOString()
                     });
@@ -140,7 +140,7 @@ export async function apiRequest(
             } catch (error) {
               console.error('Photo upload attempt failed:', {
                 attempt: retryCount + 1,
-                error: error instanceof Error ? error.message : 'Unknown error',
+                error: error instanceof Error ? error.message : "Unknown error",
                 timestamp: new Date().toISOString()
               });
 

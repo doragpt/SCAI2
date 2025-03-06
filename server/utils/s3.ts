@@ -39,7 +39,7 @@ export const uploadToS3 = async (
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
-      ACL: 'public-read',
+      // ACL設定を削除
     });
 
     console.log('Executing S3 upload command:', {

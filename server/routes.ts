@@ -508,12 +508,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // チャンクアップロード用のエンドポイント
   app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
     try {
+      const { photo, totalChunks, chunkIndex, photoId } = req.body;
+
       console.log('Photo chunk upload request received:', {
         userId: req.user.id,
         timestamp: new Date().toISOString()
       });
-
-      const { photo, totalChunks, chunkIndex, photoId } = req.body;
 
       if (!photo || !photo.startsWith('data:')) {
         console.warn('Invalid photo chunk data received:', {
