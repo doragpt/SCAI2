@@ -117,7 +117,6 @@ export const users = pgTable("users", {
 });
 
 // Talent profiles table
-// バスト・ウエスト・ヒップのカラム定義を修正
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -135,9 +134,9 @@ export const talentProfiles = pgTable("talent_profiles", {
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
   cupSize: text("cup_size", { enum: cupSizes }).notNull(),
-  bust: integer("bust").default(null),
-  waist: integer("waist").default(null),
-  hip: integer("hip").default(null),
+  bust: integer("bust"),
+  waist: integer("waist"),
+  hip: integer("hip"),
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
   canPhotoDiary: boolean("can_photo_diary").default(false),
   canHomeDelivery: boolean("can_home_delivery").default(false),
@@ -232,16 +231,6 @@ export const talentRegisterFormSchema = z.object({
 // プロフィール写真のスキーマを追加
 
 // プロフィールスキーマを更新
-const numberOrNullish = (fieldName: string) =>
-  z.preprocess(
-    (val) => {
-      if (val === "" || val === null || val === undefined) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    },
-    z.number().nullable().optional()
-  );
-
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -272,9 +261,9 @@ export const talentProfileSchema = z.object({
   }),
 
   // バスト・ウエスト・ヒップの型定義を修正
-  bust: numberOrNullish("bust"),
-  waist: numberOrNullish("waist"),
-  hip: numberOrNullish("hip"),
+  bust: z.number().nullable(),
+  waist: z.number().nullable(),
+  hip: z.number().nullable(),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
