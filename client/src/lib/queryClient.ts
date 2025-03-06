@@ -52,7 +52,7 @@ export async function apiRequest(
         console.log('Photos detected in request, handling separately');
 
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const uploadedPhotos = [];
+        const uploadedPhotos = new Map(); // タグをキーとして使用
 
         // 同期的に写真をアップロード
         for (const photo of photosToUpload) {
@@ -116,7 +116,7 @@ export async function apiRequest(
                     console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
                     if (result.url) {
-                      uploadedPhotos.push({ ...photo, url: result.url });
+                      uploadedPhotos.set(photo.tag, { ...photo, url: result.url });
                     }
                     break;
                   } catch (chunkError) {
@@ -132,7 +132,6 @@ export async function apiRequest(
                       throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
                     }
 
-                    // リトライ前の待機時間を調整（exponential backoff）
                     await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
                   }
                 }
@@ -165,14 +164,15 @@ export async function apiRequest(
         // 写真の順序を維持しながら更新
         profileData.photos = profileData.photos.map(photo => {
           if (photo.url.startsWith('data:')) {
-            // 同じタグの写真を探して置き換え
-            const uploaded = uploadedPhotos.find(up => up.tag === photo.tag);
+            // タグに基づいて更新された写真を取得
+            const uploaded = uploadedPhotos.get(photo.tag);
+            if (!uploaded) {
+              console.warn(`No uploaded photo found for tag: ${photo.tag}`);
+            }
             return uploaded || photo;
           }
           return photo;
         });
-
-        data = profileData;
       }
     }
 
