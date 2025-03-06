@@ -486,7 +486,7 @@ export function TalentForm() {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    mode: "all",
+    mode: "onChange",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -546,15 +546,15 @@ export function TalentForm() {
   // フォームの状態を監視
   useEffect(() => {
     const formState = form.formState;
-    console.log('Form state updated:', {
+    const photos = form.getValues().photos || [];
+    console.log('Form validation state:', {
       isValid: formState.isValid,
       isDirty: formState.isDirty,
       errors: formState.errors,
-      values: form.getValues(),
-      photos: form.getValues().photos,
+      photos: photos,
+      hasCurrentHairPhoto: photos.some(photo => photo.tag === "現在の髪色"),
     });
   }, [form.formState]);
-
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
@@ -751,6 +751,7 @@ export function TalentForm() {
     console.log('Updating photos:', {
       currentPhotos: form.getValues().photos,
       newPhotos,
+      hasCurrentHairPhoto: newPhotos.some(photo => photo.tag === "現在の髪色"),
     });
 
     form.setValue('photos', newPhotos, {
@@ -760,7 +761,7 @@ export function TalentForm() {
     });
 
     // 写真のバリデーションをトリガー
-    form.trigger('photos');
+    form.trigger();
   };
 
   // フォームのsubmit処理を再実装
@@ -809,7 +810,7 @@ export function TalentForm() {
     setIsConfirmationOpen(true);
   };
 
-  // フォームの保存ボタンの状態を単純化
+  // 保存ボタンの状態管理を単純化
   const photos = form.getValues().photos || [];
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
@@ -1826,7 +1827,7 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={!form.formState.isValid}
+                  disabled={isButtonDisabled}
                   className="min-w-[200px]"
                 >
                   {form.formState.isSubmitting ? (
@@ -1835,7 +1836,7 @@ export function TalentForm() {
                       送信中...
                     </>
                   ) : (
-                    "プロフィールを保存"
+                    "確認する"
                   )}
                 </Button>
               </div>
