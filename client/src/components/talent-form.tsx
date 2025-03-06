@@ -133,8 +133,8 @@ const PhotoUpload = ({
       });
 
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 600;
-      const MAX_HEIGHT = 800;
+      const MAX_WIDTH = 500; // 最大幅を縮小
+      const MAX_HEIGHT = 700; // 最大高さを縮小
       let width = img.width;
       let height = img.height;
 
@@ -155,13 +155,15 @@ const PhotoUpload = ({
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
 
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+      // 圧縮品質を0.3に下げる
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
 
+      // Base64サイズチェックを厳密化
       const base64Size = compressedDataUrl.length * 0.75;
-      if (base64Size > 512 * 1024) {
+      if (base64Size > 256 * 1024) { // 制限を256KBに下げる
         toast({
           title: "エラー",
-          description: "画像サイズを小さくできませんでした。別の画像を試してください。",
+          description: "画像サイズを小さくできませんでした。より小さい画像を使用してください。",
           variant: "destructive",
         });
         return null;
