@@ -540,6 +540,17 @@ export function TalentForm() {
         hasBodyMark: false,
         details: "",
       },
+      workType: undefined,
+      workPeriodStart: undefined,
+      workPeriodEnd: undefined,
+      canArrivePreviousDay: false,
+      desiredGuarantee: undefined,
+      desiredRate: undefined,
+      waitingHours: undefined,
+      departureLocation: undefined,
+      returnLocation: undefined,
+      preferredLocations: [],
+      ngLocations: [],
     },
   });
 
@@ -803,6 +814,18 @@ export function TalentForm() {
         details: bodyMarkDetails,
       },
       photos: data.photos || [],
+      // 求人関連フィールドのデフォルト値を設定
+      workType: undefined,
+      workPeriodStart: undefined,
+      workPeriodEnd: undefined,
+      canArrivePreviousDay: false,
+      desiredGuarantee: undefined,
+      desiredRate: undefined,
+      waitingHours: undefined,
+      departureLocation: undefined,
+      returnLocation: undefined,
+      preferredLocations: [],
+      ngLocations: [],
     };
 
     console.log('Opening confirmation modal');

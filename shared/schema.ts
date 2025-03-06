@@ -203,9 +203,6 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
-// プロフィール写真のスキーマを追加
-
-// プロフィールスキーマを更新
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -221,13 +218,12 @@ export const talentProfileSchema = z.object({
   }),
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
 
-  // オブジェクトフィールド
+  // オプショナルフィールド
   availableIds: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
     others: z.array(z.string()).default([]),
   }).default({ types: [], others: [] }),
 
-  // その他のフィールド
   canProvideResidenceRecord: z.boolean().default(false),
   height: z.number(),
   weight: z.number(),
@@ -235,7 +231,6 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // 任意フィールドの定義を修正
   bust: z.union([z.string(), z.number()]).optional().transform(val => {
     if (val === "" || val === undefined) return null;
     const num = Number(val);
@@ -256,13 +251,11 @@ export const talentProfileSchema = z.object({
     required_error: "パネルの顔出し設定を選択してください",
   }),
 
-  // Booleanフィールド
   canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
   hasSnsAccount: z.boolean().default(false),
   hasEstheExperience: z.boolean().default(false),
 
-  // オブジェクトフィールド（入れ子構造）
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -280,7 +273,6 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
 
-  // 配列フィールド
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
@@ -292,7 +284,6 @@ export const talentProfileSchema = z.object({
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
-  // 写真関連のフィールドを更新
   photos: z.array(photoSchema)
     .min(1, "少なくとも1枚の写真が必要です")
     .max(20, "写真は最大20枚までです")
@@ -301,31 +292,28 @@ export const talentProfileSchema = z.object({
       "現在の髪色の写真は必須です"
     ),
 
-  // bodyMark関連のフィールドを追加
   bodyMark: bodyMarkSchema.default({
     hasBodyMark: false,
     details: "",
   }),
 
-  // テキストフィールド
   selfIntroduction: z.string().optional().default(""),
   notes: z.string().optional().default(""),
   estheExperiencePeriod: z.string().optional().default(""),
 
-  // エステオプション
   estheOptions: z.object({
     available: z.array(z.enum(estheOptions)).default([]),
     ngOptions: z.array(z.string()).default([]),
   }).default({ available: [], ngOptions: [] }),
 
-  // 希望勤務条件
+  // 求人関連フィールドをオプショナルに変更
   workType: z.enum(workTypes).optional(),
-  workPeriodStart: z.string().optional(), // date string
-  workPeriodEnd: z.string().optional(), // date string
+  workPeriodStart: z.string().optional(),
+  workPeriodEnd: z.string().optional(),
   canArrivePreviousDay: z.boolean().default(false),
-  desiredGuarantee: z.number().optional(), // 希望保証額（万円）
-  desiredRate: z.number().optional(), // 希望単価（万円）
-  waitingHours: z.number().optional(), // 待機時間（時間）
+  desiredGuarantee: z.number().optional(),
+  desiredRate: z.number().optional(),
+  waitingHours: z.number().optional(),
   departureLocation: z.enum(prefectures).optional(),
   returnLocation: z.enum(prefectures).optional(),
   preferredLocations: z.array(z.enum(prefectures)).default([]),
