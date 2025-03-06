@@ -601,68 +601,6 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
-  // フォーム送信処理を修正
-  const onSubmit = async (data: TalentProfileData) => {
-    console.log('Form submitted:', data);
-
-    // フォームの状態をチェック
-    if (Object.keys(form.formState.errors).length > 0) {
-      console.log('Form validation errors:', form.formState.errors);
-      toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください。",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const optimizedData = {
-        ...data,
-        height: Number(data.height),
-        weight: Number(data.weight),
-        bust: data.bust === "" ? null : Number(data.bust),
-        waist: data.waist === "" ? null : Number(data.waist),
-        hip: data.hip === "" ? null : Number(data.hip),
-        availableIds: {
-          types: data.availableIds.types || [],
-          others: otherIds,
-        },
-        ngOptions: {
-          common: data.ngOptions.common || [],
-          others: otherNgOptions,
-        },
-        allergies: {
-          types: data.allergies.types || [],
-          others: otherAllergies,
-          hasAllergy: data.allergies.hasAllergy,
-        },
-        smoking: {
-          enabled: data.smoking.enabled,
-          types: data.smoking.types || [],
-          others: otherSmokingTypes,
-        },
-        bodyMark: {
-          hasBodyMark: data.bodyMark.hasBodyMark,
-          details: bodyMarkDetails,
-        },
-        photos: data.photos || [],
-      };
-
-      console.log('Opening modal with data:', optimizedData);
-      setFormData(optimizedData);
-      setIsConfirmationOpen(true);
-
-    } catch (error) {
-      console.error("データの準備中にエラーが発生しました:", error);
-      toast({
-        title: "エラー",
-        description: "データの準備中にエラーが発生しました。",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleConfirm = async () => {
     if (!formData) return;
 
@@ -810,7 +748,43 @@ export function TalentForm() {
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit((data) => {
+              console.log('Form submitted with data:', data);
+              const optimizedData = {
+                ...data,
+                height: Number(data.height),
+                weight: Number(data.weight),
+                bust: data.bust === "" ? null : Number(data.bust),
+                waist: data.waist === "" ? null : Number(data.waist),
+                hip: data.hip === "" ? null : Number(data.hip),
+                availableIds: {
+                  types: data.availableIds.types || [],
+                  others: otherIds,
+                },
+                ngOptions: {
+                  common: data.ngOptions.common || [],
+                  others: otherNgOptions,
+                },
+                allergies: {
+                  types: data.allergies.types || [],
+                  others: otherAllergies,
+                  hasAllergy: data.allergies.hasAllergy,
+                },
+                smoking: {
+                  enabled: data.smoking.enabled,
+                  types: data.smoking.types || [],
+                  others: otherSmokingTypes,
+                },
+                bodyMark: {
+                  hasBodyMark: data.bodyMark.hasBodyMark,
+                  details: bodyMarkDetails,
+                },
+                photos: data.photos || [],
+              };
+
+              setFormData(optimizedData);
+              setIsConfirmationOpen(true);
+            })}
             className="space-y-8"
           >
             <div>
@@ -1801,13 +1775,16 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log('Save button clicked - attempting form submission');
-                    form.handleSubmit(onSubmit)(e);
-                  }}
+                  disabled={form.formState.isSubmitting}
                 >
-                  プロフィールを保存
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      送信中...
+                    </>
+                  ) : (
+                    "プロフィールを保存"
+                  )}
                 </Button>
               </div>
             </div>
