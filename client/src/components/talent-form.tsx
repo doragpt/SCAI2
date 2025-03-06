@@ -485,7 +485,7 @@ export function TalentForm() {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    mode: "onChange",
+    mode: "onTouched",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -721,8 +721,26 @@ export function TalentForm() {
     form.setValue("previousStores", updatedStores);
   };
 
+  const handleIdTypeChange = (type: string, checked: boolean) => {
+    const current = form.watch("availableIds.types") || [];
+    const updated = checked
+      ? [...current, type]
+      : current.filter((t) => t !== type);
+    form.setValue("availableIds.types", updated);
+  };
+
   const onSubmit = form.handleSubmit(async (data) => {
     try {
+      if (!form.formState.isValid) {
+        console.error('Validation errors:', form.formState.errors);
+        toast({
+          title: "入力エラー",
+          description: "必須項目を入力してください。",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -755,7 +773,7 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      console.log('Opening confirmation modal with data:', optimizedData);
+      console.log('Form validation passed, opening modal with data:', optimizedData);
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
     } catch (error) {
@@ -918,15 +936,13 @@ export function TalentForm() {
                         <Checkbox
                           id={`id-${type}`}
                           checked={form.watch("availableIds.types").includes(type)}
-                          onCheckedChange={(checked) => {
-                            const current = form.watch("availableIds.types") || [];
-                            const updated = checked
-                              ? [...current, type]
-                              : current.filter((t) => t !== type);
-                            form.setValue("availableIds.types", updated);
-                          }}
+                          onCheckedChange={(checked) =>
+                            handleIdTypeChange(type, checked as boolean)
+                          }
                         />
-                        <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
+                        <Label htmlFor={`id-${type}`} className="text-sm">
+                          {type}
+                        </Label>
                       </div>
                     ))}
                   </div>
@@ -1781,16 +1797,14 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={!form.formState.isDirty || !form.formState.isValid || form.formState.isSubmitting}
                   className="min-w-[200px]"
+                  disabled={!form.formState.isValid}
                 >
                   {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       送信中...
                     </>
-                  ) : form.formState.isDirty ? (
-                    "変更を保存"
                   ) : (
                     "プロフィールを保存"
                   )}
