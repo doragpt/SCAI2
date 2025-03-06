@@ -488,8 +488,7 @@ export function TalentForm() {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    mode: "onChange",
-    criteriaMode: "all",
+    mode: "all",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -756,11 +755,12 @@ export function TalentForm() {
 
   // 写真の更新処理を修正
   const handlePhotoUpload = (newPhotos: Photo[]) => {
-    console.log('Updating photos:', newPhotos);
+    console.log('Updating photos:', { newPhotos });
+
     form.setValue('photos', newPhotos, {
       shouldValidate: true,
       shouldDirty: true,
-      shouldTouch: true
+      shouldTouch: true,
     });
   };
 
@@ -826,20 +826,10 @@ export function TalentForm() {
   });
 
 
-  // 保存ボタンの状態管理
-  const formState = form.formState;
+  // フォームの保存ボタンの状態を単純化
   const photos = form.getValues().photos || [];
-  const hasPhotos = photos.length > 0;
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
-  const isFormDisabled = !formState.isValid || !hasPhotos || !hasCurrentHairPhoto || formState.isSubmitting;
-
-  console.log('Form validation state:', {
-    isValid: formState.isValid,
-    hasPhotos,
-    hasCurrentHairPhoto,
-    isSubmitting: formState.isSubmitting,
-    isDisabled: isFormDisabled
-  });
+  const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
   return (
     <div className="min-h-screen bg-background">
@@ -1850,10 +1840,10 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={isFormDisabled}
+                  disabled={isButtonDisabled}
                   className="min-w-[200px]"
                 >
-                  {formState.isSubmitting ? (
+                  {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       送信中...
