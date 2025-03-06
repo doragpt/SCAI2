@@ -765,12 +765,12 @@ export function TalentForm() {
   };
 
   // フォームのsubmit処理を再実装
-  const handleSubmit = (data: TalentProfileData) => {
-    console.log('Form submission attempt:', {
-      data,
-      isValid: form.formState.isValid,
-      errors: form.formState.errors
-    });
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log('Form submission started');
+
+    const data = form.getValues();
+    console.log('Form data:', data);
 
     // フォームデータの準備
     const formData = {
@@ -805,9 +805,10 @@ export function TalentForm() {
       photos: data.photos || [],
     };
 
-    console.log('Opening confirmation modal with data:', formData);
+    console.log('Opening confirmation modal');
     setFormData(formData);
     setIsConfirmationOpen(true);
+    console.log('Modal state updated:', { formData: !!formData, isOpen: isConfirmationOpen });
   };
 
   // 保存ボタンの状態管理を単純化
@@ -840,7 +841,7 @@ export function TalentForm() {
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={handleSubmit}
             className="space-y-8"
           >
             <div>
@@ -1848,6 +1849,7 @@ export function TalentForm() {
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
+          console.log('Modal closing');
           setIsConfirmationOpen(false);
           setFormData(null);
         }}
