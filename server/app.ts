@@ -1,9 +1,19 @@
 import express from 'express';
 import session from 'express-session';
 import MemoryStore from 'memorystore';
+import cors from 'cors';
 
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
+
+// CORSの設定
+app.use(cors({
+  origin: true,
+  credentials: true,
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // セッションの設定
 app.use(session({

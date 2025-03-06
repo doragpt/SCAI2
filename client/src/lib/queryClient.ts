@@ -62,7 +62,7 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 32 * 1024; // 32KB chunks
+              const chunkSize = 16 * 1024; // 16KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -86,6 +86,7 @@ export async function apiRequest(
 
                 let chunkRetries = 0;
                 const maxChunkRetries = 3;
+                let lastError = null;
 
                 while (chunkRetries < maxChunkRetries) {
                   try {
@@ -104,7 +105,8 @@ export async function apiRequest(
                     });
 
                     if (!chunkRes.ok) {
-                      throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
+                      const errorData = await chunkRes.json().catch(() => ({ message: chunkRes.statusText }));
+                      throw new Error(errorData.message || `Failed to upload photo chunk: ${chunkRes.statusText}`);
                     }
 
                     const result = await chunkRes.json();
@@ -115,6 +117,7 @@ export async function apiRequest(
                     }
                     break;
                   } catch (chunkError) {
+                    lastError = chunkError;
                     console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
                       error: chunkError instanceof Error ? chunkError.message : "Unknown error",
                       attempt: chunkRetries + 1,
@@ -123,7 +126,7 @@ export async function apiRequest(
 
                     chunkRetries++;
                     if (chunkRetries === maxChunkRetries) {
-                      throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts`);
+                      throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
                     }
 
                     await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
@@ -131,7 +134,7 @@ export async function apiRequest(
                 }
 
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 300));
+                  await new Promise(resolve => setTimeout(resolve, 400));
                 }
               }
 

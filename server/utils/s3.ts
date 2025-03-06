@@ -39,7 +39,11 @@ export const uploadToS3 = async (
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
-      // ACL設定を削除
+      // CORSに関連するメタデータを追加
+      Metadata: {
+        'x-amz-meta-uploaded-by': 'scai-app',
+        'x-amz-meta-timestamp': new Date().toISOString()
+      }
     });
 
     console.log('Executing S3 upload command:', {
