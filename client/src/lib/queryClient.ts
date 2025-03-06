@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import type { TalentProfileData, SelectUser } from "@shared/schema";
+import type { TalentProfileData, SelectUser, Photo } from "@shared/schema";
 
 // キャッシュのキー定数
 export const QUERY_KEYS = {
@@ -19,7 +19,110 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-// APIリクエスト用の基本関数を修正
+// 写真アップロード処理を修正
+async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promise<Photo | null> {
+  let retryCount = 0;
+  const maxRetries = 3;
+
+  while (retryCount < maxRetries) {
+    try {
+      // Base64データを分割してアップロード（チャンクサイズを16KBに縮小）
+      const chunkSize = 16 * 1024;
+      const [header, base64Data] = photo.url.split(',');
+      const totalChunks = Math.ceil(base64Data.length / chunkSize);
+      const photoId = photo.id || `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+      console.log('Starting chunked upload:', {
+        photoId,
+        tag: photo.tag,
+        totalChunks,
+        totalSize: base64Data.length,
+        chunkSize,
+        timestamp: new Date().toISOString()
+      });
+
+      // 写真のチャンクを順番にアップロード
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, base64Data.length);
+        const chunk = base64Data.slice(start, end);
+
+        console.log(`Uploading chunk ${i + 1}/${totalChunks}`, {
+          chunkSize: chunk.length,
+          timestamp: new Date().toISOString()
+        });
+
+        let chunkRetries = 0;
+        const maxChunkRetries = 3;
+        let lastError = null;
+
+        while (chunkRetries < maxChunkRetries) {
+          try {
+            const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
+              method: 'POST',
+              headers: {
+                ...headers,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                photo: `${header},${chunk}`,
+                totalChunks,
+                chunkIndex: i,
+                photoId,
+                tag: photo.tag,
+                order: photo.order
+              }),
+            });
+
+            if (!chunkRes.ok) {
+              const errorData = await chunkRes.json().catch(() => ({ message: chunkRes.statusText }));
+              throw new Error(errorData.message || `Failed to upload photo chunk: ${chunkRes.statusText}`);
+            }
+
+            const result = await chunkRes.json();
+            console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
+
+            if (result.url) {
+              return {
+                id: photoId,
+                url: result.url,
+                tag: photo.tag,
+                order: photo.order
+              };
+            }
+            break;
+          } catch (chunkError) {
+            lastError = chunkError;
+            chunkRetries++;
+            if (chunkRetries === maxChunkRetries) {
+              throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
+          }
+        }
+
+        // チャンク間の待機時間を最適化（600ms）
+        if (i < totalChunks - 1) {
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      }
+    } catch (error) {
+      console.error('Photo upload attempt failed:', {
+        attempt: retryCount + 1,
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
+      });
+
+      retryCount++;
+      if (retryCount === maxRetries) {
+        throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retryCount)));
+    }
+  }
+  return null;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -43,141 +146,48 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    // 写真のチャンクアップロード処理を最適化
+    // PUT /api/talent/profile の特別処理
     if (method === "PUT" && url === "/api/talent/profile" && data) {
       const profileData = data as TalentProfileData;
+
       if (profileData.photos?.some(photo => photo.url.startsWith('data:'))) {
         console.log('Photos detected in request, handling separately');
 
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const uploadedPhotos = new Map<string, { tag: string; url: string }>(); // タグをキーとして使用
+        const existingPhotos = profileData.photos.filter(photo => !photo.url.startsWith('data:'));
 
-        // 同期的に写真をアップロード
-        for (const photo of photosToUpload) {
-          let retryCount = 0;
-          const maxRetries = 3;
+        // 写真に一意のIDと順序を付与
+        const markedPhotos = photosToUpload.map((photo, index) => ({
+          ...photo,
+          id: photo.id || `${Date.now()}-${index}`,
+          order: typeof photo.order === 'number' ? photo.order : existingPhotos.length + index
+        }));
 
-          while (retryCount < maxRetries) {
-            try {
-              console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
+        const uploadedPhotos: Photo[] = [];
 
-              // チャンクサイズを16KBに縮小
-              const chunkSize = 16 * 1024;
-              const [header, base64Data] = photo.url.split(',');
-              const totalChunks = Math.ceil(base64Data.length / chunkSize);
-              const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-              console.log('Starting chunked upload:', {
-                totalChunks,
-                totalSize: base64Data.length,
-                chunkSize,
-                timestamp: new Date().toISOString()
-              });
-
-              // 写真のチャンクを順番にアップロード
-              for (let i = 0; i < totalChunks; i++) {
-                const start = i * chunkSize;
-                const end = Math.min(start + chunkSize, base64Data.length);
-                const chunk = base64Data.slice(start, end);
-
-                console.log(`Uploading chunk ${i + 1}/${totalChunks}`, {
-                  chunkSize: chunk.length,
-                  timestamp: new Date().toISOString()
-                });
-
-                let chunkRetries = 0;
-                const maxChunkRetries = 3;
-                let lastError = null;
-
-                while (chunkRetries < maxChunkRetries) {
-                  try {
-                    const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
-                      method: 'POST',
-                      headers: {
-                        ...headers,
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        photo: `${header},${chunk}`,
-                        totalChunks,
-                        chunkIndex: i,
-                        photoId,
-                        tag: photo.tag, // タグ情報を追加
-                      }),
-                    });
-
-                    if (!chunkRes.ok) {
-                      const errorData = await chunkRes.json().catch(() => ({ message: chunkRes.statusText }));
-                      throw new Error(errorData.message || `Failed to upload photo chunk: ${chunkRes.statusText}`);
-                    }
-
-                    const result = await chunkRes.json();
-                    console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
-
-                    if (result.url && result.tag) {
-                      uploadedPhotos.set(result.tag, { tag: result.tag, url: result.url });
-                    }
-                    break;
-                  } catch (chunkError) {
-                    lastError = chunkError;
-                    console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
-                      error: chunkError instanceof Error ? chunkError.message : "Unknown error",
-                      attempt: chunkRetries + 1,
-                      timestamp: new Date().toISOString()
-                    });
-
-                    chunkRetries++;
-                    if (chunkRetries === maxChunkRetries) {
-                      throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
-                  }
-                }
-
-                // チャンク間の待機時間を最適化（600ms）
-                if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 600));
-                }
-              }
-
-              console.log('Photo upload successful');
-              break;
-            } catch (error) {
-              console.error('Photo upload attempt failed:', {
-                attempt: retryCount + 1,
-                error: error instanceof Error ? error.message : "Unknown error",
-                timestamp: new Date().toISOString()
-              });
-
-              retryCount++;
-              if (retryCount === maxRetries) {
-                throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
-              }
-
-              await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retryCount)));
-            }
+        // 順番に写真をアップロード
+        for (const photo of markedPhotos) {
+          const uploadedPhoto = await uploadPhoto(photo, headers);
+          if (uploadedPhoto) {
+            uploadedPhotos.push(uploadedPhoto);
           }
         }
 
-        // 写真の順序を維持しながら更新
-        profileData.photos = profileData.photos.map(photo => {
-          if (photo.url.startsWith('data:')) {
-            // タグに基づいて更新された写真を取得
-            const uploaded = uploadedPhotos.get(photo.tag);
-            if (!uploaded) {
-              console.warn(`No uploaded photo found for tag: ${photo.tag}`);
-              return photo; // アップロードに失敗した場合は元の写真を保持
-            }
-            return uploaded;
-          }
-          return photo;
+        // 既存の写真と新しくアップロードされた写真を結合し、順序で並び替え
+        profileData.photos = [...existingPhotos, ...uploadedPhotos]
+          .sort((a, b) => (typeof a.order === 'number' ? a.order : 0) - (typeof b.order === 'number' ? b.order : 0));
+
+        console.log('Final photos array:', {
+          totalPhotos: profileData.photos.length,
+          existingPhotos: existingPhotos.length,
+          uploadedPhotos: uploadedPhotos.length,
+          photoIds: profileData.photos.map(p => p.id),
+          timestamp: new Date().toISOString()
         });
       }
     }
 
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
     const res = await fetch(fullUrl, {
       method,
       headers,
@@ -195,11 +205,7 @@ export async function apiRequest(
     console.error("API Request Failed:", {
       method,
       url,
-      error: error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : error,
+      error: error instanceof Error ? error.message : "Unknown error",
       timestamp: new Date().toISOString()
     });
     throw error;

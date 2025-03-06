@@ -21,8 +21,10 @@ export const bodyMarkSchema = z.object({
 
 // photoSchema定義を更新
 export const photoSchema = z.object({
+  id: z.string().optional(), // 一意の識別子を追加
   url: z.string(),
   tag: z.enum(photoTags),
+  order: z.number().optional(), // 順序を保持するフィールドを追加
 });
 
 export const prefectures = [

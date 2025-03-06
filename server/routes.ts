@@ -545,13 +545,15 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   // チャンクアップロード用のエンドポイント
   app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
     try {
-      const { photo, totalChunks, chunkIndex, photoId, tag } = req.body;
+      const { photo, totalChunks, chunkIndex, photoId, tag, order } = req.body;
 
       console.log('Photo chunk upload request received:', {
         userId: req.user.id,
+        photoId,
         chunkIndex,
         totalChunks,
         tag,
+        order,
         timestamp: new Date().toISOString()
       });
 
@@ -581,6 +583,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
           chunkIndex,
           totalChunks,
           tag,
+          order,
           timestamp: new Date().toISOString()
         });
 
@@ -605,15 +608,22 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
             console.log('Complete photo upload successful:', {
               userId: req.user.id,
+              photoId,
               url: s3Url,
               tag,
+              order,
               timestamp: new Date().toISOString()
             });
 
             res.set({
               'ETag': `"${photoId}"`,
               'Content-Type': 'application/json'
-            }).json({ url: s3Url, tag });
+            }).json({
+              url: s3Url,
+              id: photoId,
+              tag,
+              order
+            });
           } catch (s3Error) {
             console.error('S3 upload error:', {
               error: s3Error,
