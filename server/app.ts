@@ -10,8 +10,8 @@ const MemoryStoreSession = MemoryStore(session);
 app.use(cors({
   origin: true,
   credentials: true,
-  exposedHeaders: ['Content-Length', 'Content-Type'],
-  methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+  exposedHeaders: ['ETag', 'Content-Length', 'Content-Type'],
+  methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 

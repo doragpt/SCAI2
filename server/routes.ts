@@ -568,7 +568,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               timestamp: new Date().toISOString()
             });
 
-            res.json({ url: s3Url });
+            res.set({
+              'ETag': `"${photoId}"`,
+              'Content-Type': 'application/json'
+            }).json({ url: s3Url });
           } catch (s3Error) {
             console.error('S3 upload error:', {
               error: s3Error,
@@ -580,7 +583,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } else {
           // 中間チャンクの場合は成功を返す
-          res.json({ status: 'chunk_uploaded' });
+          res.set({
+            'ETag': `"${photoId}-${chunkIndex}"`,
+            'Content-Type': 'application/json'
+          }).json({ status: 'chunk_uploaded' });
         }
       } catch (uploadError) {
         console.error('Upload processing error:', {
