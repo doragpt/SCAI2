@@ -937,12 +937,14 @@ export function TalentForm() {
               {/* Location field */}
               <FormField
                 control={form.control}
-                name="location"                render={({field }) => (
+                name="location"
+                render={({ field }) => (
                   <FormFieldWrapper label="都道府県" required>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger>
-                          <SelectValue placeholder="選択してください" />                        </SelectTrigger>
+                          <SelectValue placeholder="選択してください" />
+                        </SelectTrigger>
                         <SelectContent>
                           {prefectures.map((prefecture) => (
                             <SelectItem key={prefecture} value={prefecture}>
@@ -1623,127 +1625,143 @@ export function TalentForm() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
-              <div className="space-y-4">
-                {form.watch("currentStores")?.map((store, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder="店名"
-                      value={store.storeName}
-                      onChange={(e) =>
-                        handleUpdateCurrentStore(index, "storeName", e.target.value)
-                      }
-                    />
-                    <Input
-                      placeholder="源氏名"
-                      value={store.stageName}
-                      onChange={(e) =>
-                        handleUpdateCurrentStore(index, "stageName", e.target.value)
-                      }
-                    />
+              <div className="space-y-6">
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">現在の勤務先</h3>
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon"
-                      onClick={() => handleRemoveCurrentStore(index)}
+                      size="sm"
+                      onClick={handleAddCurrentStore}
                     >
-                      <X className="h-4 w-4" />
+                      <Plus className="h-4 w-4 mr-2" />
+                      店舗を追加
                     </Button>
                   </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddCurrentStore}
-                  className="w-full"
-                >
-                  勤務先を追加
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="border rounded-lg p-6 bg-muted/5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">過去の勤務先</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddPreviousStore}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    店舗を追加
-                  </Button>
-                </div>
-                <div className="space-y-4">
-                  {form.watch("previousStores")?.map((store, index) => (
-                    <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
-                      <div className="flex-1">
-                        <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
-                        <Input
-                          placeholder="店舗名を入力してください"
-                          value={store.storeName}
-                          onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
-                        />
+                  <div className="space-y-4">
+                    {form.watch("currentStores")?.map((store, index) => (
+                      <div key={index} className="relative border rounded-lg p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
+                            <Input
+                              placeholder="店舗名を入力してください"
+                              value={store.storeName}
+                              onChange={(e) =>
+                                handleUpdateCurrentStore(index, "storeName", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm text-muted-foreground mb-2">ステージネーム</Label>
+                            <Input
+                              placeholder="ステージネームを入力してください"
+                              value={store.stageName}
+                              onChange={(e) =>
+                                handleUpdateCurrentStore(index, "stageName", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => handleRemoveCurrentStore(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={() => handleRemovePreviousStore(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="border rounded-lg p-6 bg-muted/5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">写メ日記が確認できるURL</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    URLを追加
-                  </Button>
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">過去の勤務先</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddPreviousStore}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      店舗を追加
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {form.watch("previousStores")?.map((store, index) => (
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
+                          <Input
+                            placeholder="店舗名を入力してください"
+                            value={store.storeName}
+                            onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => handleRemovePreviousStore(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-4">
-                  {form.watch("photoDiaryUrls")?.map((url, index) => (
-                    <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
-                      <div className="flex-1">
-                        <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
-                        <Input
-                          placeholder="写メ日記のURLを入力してください"
-                          value={url}
-                          onChange={(e) => {
-                            const updatedUrls = [...form.watch("photoDiaryUrls") || []];
-                            updatedUrls[index] = e.target.value;
+
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">写メ日記が確認できるURL</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      URLを追加
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {form.watch("photoDiaryUrls")?.map((url, index) => (
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
+                          <Input
+                            placeholder="写メ日記のURLを入力してください"
+                            value={url}
+                            onChange={(e) => {
+                              const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                              updatedUrls[index] = e.target.value;
+                              form.setValue("photoDiaryUrls", updatedUrls);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
                             form.setValue("photoDiaryUrls", updatedUrls);
                           }}
-                        />
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={() => {
-                          const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
-                          form.setValue("photoDiaryUrls", updatedUrls);
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
+
             </div>
 
             <div>
