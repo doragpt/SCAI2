@@ -183,11 +183,14 @@ export async function apiRequest(
         }))
       };
 
+      // 不要なフィールドを除外
+      const { id, userId, updatedAt, age, ...dataToSend } = cleanedData;
+
       // 更新されたデータでリクエストを送信
       const res = await fetch(fullUrl, {
         method,
         headers,
-        body: JSON.stringify(cleanedData),
+        body: JSON.stringify(dataToSend),
         credentials: "include",
       });
 

@@ -341,8 +341,11 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
       }
     ),
 }).omit({
-  userId: true
-}).partial();
+  id: true,
+  userId: true,
+  updatedAt: true,
+  age: true
+});
 
 
 // 型定義エクスポートを追加
