@@ -640,7 +640,11 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
+      // デバッグログを追加
       console.log('Form submission data:', optimizedData);
+      console.log('Setting formData and opening confirmation modal');
+
+      // 状態を更新
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
     } catch (error) {
@@ -929,7 +933,7 @@ export function TalentForm() {
                             const current = form.watch("availableIds.types") || [];
                             const updated = checked
                               ? [...current, type]
-                              : current.filter((t) => t!== type);
+                              : current.filter((t) => t !== type);
                             form.setValue("availableIds.types", updated);
                           }}
                         />
@@ -1818,7 +1822,10 @@ export function TalentForm() {
       {/* 確認モーダル */}
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
-        onClose={() => setIsConfirmationOpen(false)}
+        onClose={() => {
+          console.log('Closing confirmation modal');
+          setIsConfirmationOpen(false);
+        }}
         onConfirm={handleConfirm}
         formData={formData}
         isPending={isSubmitting}
