@@ -502,6 +502,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 写真のチャンクアップロード用のエンドポイント
+  app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
+    try {
+      console.log('Photo chunk upload request received:', {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      const { photo, totalChunks, chunkIndex, photoId } = req.body;
+
+      if (!photo || !photo.startsWith('data:')) {
+        console.warn('Invalid photo chunk data received:', {
+          userId: req.user.id,
+          hasPhoto: !!photo,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(400).json({ message: "Invalid photo data" });
+      }
+
+      // 最後のチャンクの場合のみS3にアップロード
+      if (chunkIndex === totalChunks - 1) {
+        const s3Url = await uploadToS3(
+          photo,
+          `${req.user.id}-${photoId}.jpg`
+        );
+
+        console.log('Photo chunk upload successful:', {
+          userId: req.user.id,
+          url: s3Url,
+          timestamp: new Date().toISOString()
+        });
+
+        res.json({ url: s3Url });
+      } else {
+        // 中間チャンクの場合は成功を返す
+        res.json({ status: 'chunk_uploaded' });
+      }
+    } catch (error) {
+      console.error('Photo chunk upload error:', {
+        error,
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "写真のアップロードに失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
