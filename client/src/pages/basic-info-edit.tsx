@@ -19,12 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { calculateAge } from "@/utils/date";
+import { ProfileConfirmationDialog } from "@/components/profile-confirmation-dialog";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
@@ -53,6 +53,14 @@ const basicInfoSchema = z.object({
 });
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
+type TalentProfileData = {
+  username: string;
+  displayName: string;
+  location: string;
+  preferredLocations: string[];
+  newPassword?: string;
+};
+
 
 export default function BasicInfoEdit() {
   const { user } = useAuth();
@@ -331,53 +339,13 @@ export default function BasicInfoEdit() {
           </form>
         </Form>
 
-        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>入力内容の確認</DialogTitle>
-              <DialogDescription>
-                以下の内容で更新します。よろしいですか？
-              </DialogDescription>
-            </DialogHeader>
-            {formData && (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium">ニックネーム</p>
-                  <p>{formData.username}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">本名</p>
-                  <p>{formData.displayName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">居住地</p>
-                  <p>{formData.location}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">希望地域</p>
-                  <p>{formData.preferredLocations.join(', ')}</p>
-                </div>
-                {formData.newPassword && (
-                  <div>
-                    <p className="text-sm font-medium">パスワード</p>
-                    <p>変更あり</p>
-                  </div>
-                )}
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowConfirmation(false)}>
-                戻る
-              </Button>
-              <Button onClick={handleConfirm} disabled={updateProfileMutation.isPending}>
-                {updateProfileMutation.isPending && (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                )}
-                更新する
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ProfileConfirmationDialog
+          isOpen={showConfirmation}
+          onClose={() => setShowConfirmation(false)}
+          onConfirm={handleConfirm}
+          isLoading={updateProfileMutation.isPending}
+          profileData={formData as TalentProfileData}
+        />
       </main>
     </div>
   );
