@@ -182,6 +182,7 @@ export async function apiRequest(
       }
     }
 
+    // 写真のアップロード後、更新されたデータでリクエストを送信
     const res = await fetch(fullUrl, {
       method,
       headers,
