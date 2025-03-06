@@ -521,23 +521,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid photo data" });
       }
 
-      // 最後のチャンクの場合のみS3にアップロード
-      if (chunkIndex === totalChunks - 1) {
-        const s3Url = await uploadToS3(
-          photo,
-          `${req.user.id}-${photoId}.jpg`
-        );
+      try {
+        // 最後のチャンクの場合のみS3にアップロード
+        if (chunkIndex === totalChunks - 1) {
+          const s3Url = await uploadToS3(
+            photo,
+            `${req.user.id}-${photoId}.jpg`
+          );
 
-        console.log('Photo chunk upload successful:', {
+          console.log('Photo chunk upload successful:', {
+            userId: req.user.id,
+            url: s3Url,
+            timestamp: new Date().toISOString()
+          });
+
+          res.json({ url: s3Url });
+        } else {
+          // 中間チャンクの場合は成功を返す
+          res.json({ status: 'chunk_uploaded' });
+        }
+      } catch (uploadError) {
+        console.error('S3 upload error:', {
+          error: uploadError,
           userId: req.user.id,
-          url: s3Url,
           timestamp: new Date().toISOString()
         });
-
-        res.json({ url: s3Url });
-      } else {
-        // 中間チャンクの場合は成功を返す
-        res.json({ status: 'chunk_uploaded' });
+        throw uploadError;
       }
     } catch (error) {
       console.error('Photo chunk upload error:', {

@@ -63,59 +63,38 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 500 * 1024; // 500KB chunks
+              const chunkSize = 256 * 1024; // 256KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
+              const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-              if (totalChunks > 1) {
-                // 大きな画像は分割アップロード
-                const uploadPromises = Array.from({ length: totalChunks }, async (_, index) => {
-                  const start = index * chunkSize;
-                  const end = start + chunkSize;
-                  const chunk = base64Data.slice(start, end);
+              for (let i = 0; i < totalChunks; i++) {
+                const start = i * chunkSize;
+                const end = start + chunkSize;
+                const chunk = base64Data.slice(start, end);
 
-                  const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
-                    method: 'POST',
-                    headers: {
-                      ...headers,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      photo: `data:image/jpeg;base64,${chunk}`,
-                      totalChunks,
-                      chunkIndex: index,
-                      photoId: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
-                    }),
-                  });
-
-                  if (!chunkRes.ok) {
-                    throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
-                  }
-
-                  return chunkRes.json();
-                });
-
-                // チャンクのアップロードを待機
-                const chunkResults = await Promise.all(uploadPromises);
-                const url = chunkResults[chunkResults.length - 1].url;
-                uploadedPhotos.push({ ...photo, url });
-              } else {
-                // 小さな画像は直接アップロード
-                const uploadRes = await fetch(`${API_BASE_URL}/api/upload-photo`, {
+                const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
                   method: 'POST',
                   headers: {
                     ...headers,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({ photo: photo.url }),
+                  body: JSON.stringify({
+                    photo: `data:image/jpeg;base64,${chunk}`,
+                    totalChunks,
+                    chunkIndex: i,
+                    photoId,
+                  }),
                 });
 
-                if (!uploadRes.ok) {
-                  throw new Error(`Failed to upload photo: ${uploadRes.statusText}`);
+                if (!chunkRes.ok) {
+                  throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
                 }
 
-                const { url } = await uploadRes.json();
-                uploadedPhotos.push({ ...photo, url });
+                const result = await chunkRes.json();
+                if (i === totalChunks - 1) {
+                  uploadedPhotos.push({ ...photo, url: result.url });
+                }
               }
 
               console.log('Photo upload successful');

@@ -133,8 +133,8 @@ const PhotoUpload = ({
       });
 
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 1200; // 高画質のために最大幅を増やす
-      const MAX_HEIGHT = 1600; // 高画質のために最大高さを増やす
+      const MAX_WIDTH = 800; // 最大幅を調整
+      const MAX_HEIGHT = 1000; // 最大高さを調整
       let width = img.width;
       let height = img.height;
 
@@ -155,8 +155,15 @@ const PhotoUpload = ({
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
 
-      // 画質を高めに設定
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      // 画質を調整（0.7は比較的高品質だが、ファイルサイズは抑える）
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+      // Base64サイズチェック
+      const base64Size = compressedDataUrl.length * 0.75;
+      if (base64Size > 1024 * 1024) { // 1MB以上の場合はさらに圧縮
+        return canvas.toDataURL('image/jpeg', 0.5);
+      }
+
       return compressedDataUrl;
     } catch (error) {
       console.error('Error processing image:', error);
