@@ -12,24 +12,50 @@ export const uploadToS3 = async (
   base64Data: string,
   fileName: string
 ): Promise<string> => {
-  // Base64データからバッファを作成
-  const buffer = Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), "base64");
+  try {
+    console.log('Starting S3 upload:', {
+      fileName,
+      timestamp: new Date().toISOString()
+    });
 
-  // ファイル名に現在のタイムスタンプを追加して一意にする
-  const timestamp = new Date().getTime();
-  const uniqueFileName = `${timestamp}-${fileName}`;
+    // Base64データからバッファを作成
+    const buffer = Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), "base64");
 
-  // S3にアップロード
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME!,
-    Key: uniqueFileName,
-    Body: buffer,
-    ContentType: "image/jpeg",
-    ACL: "public-read", // URLで直接アクセス可能にする
-  });
+    // ファイル名に現在のタイムスタンプを追加して一意にする
+    const timestamp = new Date().getTime();
+    const uniqueFileName = `${timestamp}-${fileName}`;
 
-  await s3Client.send(command);
+    // S3にアップロード
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: uniqueFileName,
+      Body: buffer,
+      ContentType: "image/jpeg",
+      ACL: "public-read", // URLで直接アクセス可能にする
+    });
 
-  // アップロードされた画像のURLを返す
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
+    console.log('Executing S3 upload command:', {
+      bucket: process.env.AWS_BUCKET_NAME,
+      key: uniqueFileName,
+      timestamp: new Date().toISOString()
+    });
+
+    await s3Client.send(command);
+
+    console.log('S3 upload successful:', {
+      fileName: uniqueFileName,
+      timestamp: new Date().toISOString()
+    });
+
+    // アップロードされた画像のURLを返す
+    const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
+    return imageUrl;
+  } catch (error) {
+    console.error('S3 upload error:', {
+      error,
+      fileName,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 };

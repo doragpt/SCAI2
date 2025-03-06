@@ -461,9 +461,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 写真アップロード用の新しいエンドポイント
   app.post("/api/upload-photo", authenticate, async (req: any, res) => {
     try {
+      console.log('Photo upload request received:', {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
       const { photo } = req.body;
 
       if (!photo || !photo.startsWith('data:')) {
+        console.warn('Invalid photo data received:', {
+          userId: req.user.id,
+          hasPhoto: !!photo,
+          timestamp: new Date().toISOString()
+        });
         return res.status(400).json({ message: "Invalid photo data" });
       }
 
@@ -472,9 +482,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `${req.user.id}-${Date.now()}.jpg`
       );
 
+      console.log('Photo upload successful:', {
+        userId: req.user.id,
+        url: s3Url,
+        timestamp: new Date().toISOString()
+      });
+
       res.json({ url: s3Url });
     } catch (error) {
-      console.error('Photo upload error:', error);
+      console.error('Photo upload error:', {
+        error,
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
       res.status(500).json({
         message: "写真のアップロードに失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
