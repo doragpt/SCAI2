@@ -602,11 +602,11 @@ export function TalentForm() {
   }, [existingProfile, form]);
 
   // フォーム送信処理を修正
-  const onSubmit = (data: TalentProfileData) => {
+  const onSubmit = async (data: TalentProfileData) => {
     console.log('Form submitted:', data);
 
-    // バリデーション状態の確認
-    if (!form.formState.isValid) {
+    // フォームの状態をチェック
+    if (Object.keys(form.formState.errors).length > 0) {
       console.log('Form validation errors:', form.formState.errors);
       toast({
         title: "入力エラー",
@@ -1799,13 +1799,13 @@ export function TalentForm() {
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
               <div className="container mx-auto max-w-4xl flex justify-end gap-4">
                 <Button
+                  type="submit"
+                  size="lg"
                   onClick={(e) => {
                     e.preventDefault();
                     console.log('Save button clicked - attempting form submission');
-                    const data = form.getValues();
-                    onSubmit(data);
+                    form.handleSubmit(onSubmit)(e);
                   }}
-                  size="lg"
                 >
                   プロフィールを保存
                 </Button>
