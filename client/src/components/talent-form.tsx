@@ -608,6 +608,7 @@ export function TalentForm() {
   // handleSubmit関数の修正
   const handleSubmit = async (data: TalentProfileData) => {
     try {
+      // データの最適化
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -641,12 +642,14 @@ export function TalentForm() {
       };
 
       // デバッグログを追加
-      console.log('Form submission data:', optimizedData);
-      console.log('Setting formData and opening confirmation modal');
+      console.log('Form data before optimization:', data);
+      console.log('Optimized form data:', optimizedData);
+      console.log('Opening confirmation modal...');
 
       // 状態を更新
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
+
     } catch (error) {
       console.error("データの準備中にエラーが発生しました:", error);
       toast({

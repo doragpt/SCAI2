@@ -117,6 +117,28 @@ export function ProfileConfirmationModal({
               </div>
             </section>
 
+            {/* 写真 */}
+            <section className="space-y-2">
+              <h3 className="font-medium">登録写真</h3>
+              <p className="text-sm text-muted-foreground">アップロード済み写真: {formData.photos.length}枚</p>
+              {formData.photos.length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {formData.photos.map((photo, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                        <img
+                          src={photo.url}
+                          alt={`写真 ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">{photo.tag}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
             {/* NGオプション */}
             {formData.ngOptions && (formData.ngOptions.common.length > 0 || formData.ngOptions.others.length > 0) && (
               <section className="space-y-2">
