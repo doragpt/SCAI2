@@ -63,7 +63,7 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 128 * 1024; // 128KB chunks
+              const chunkSize = 50 * 1024; // 50KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -85,29 +85,37 @@ export async function apiRequest(
                   timestamp: new Date().toISOString()
                 });
 
-                const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
-                  method: 'POST',
-                  headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    photo: `data:image/jpeg;base64,${chunk}`,
-                    totalChunks,
-                    chunkIndex: i,
-                    photoId,
-                  }),
-                });
+                try {
+                  const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
+                    method: 'POST',
+                    headers: {
+                      ...headers,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      photo: `data:image/jpeg;base64,${chunk}`,
+                      totalChunks,
+                      chunkIndex: i,
+                      photoId,
+                    }),
+                  });
 
-                if (!chunkRes.ok) {
-                  throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
-                }
+                  if (!chunkRes.ok) {
+                    throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
+                  }
 
-                const result = await chunkRes.json();
-                console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
+                  const result = await chunkRes.json();
+                  console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
-                if (i === totalChunks - 1) {
-                  uploadedPhotos.push({ ...photo, url: result.url });
+                  if (i === totalChunks - 1) {
+                    uploadedPhotos.push({ ...photo, url: result.url });
+                  }
+                } catch (chunkError) {
+                  console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
+                    error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
+                    timestamp: new Date().toISOString()
+                  });
+                  throw chunkError;
                 }
               }
 
