@@ -414,9 +414,6 @@ const PhotoUpload = ({
           </div>
         </div>
       )}
-
-
-
     </div>
   );
 };
@@ -605,21 +602,21 @@ export function TalentForm() {
   }, [existingProfile, form]);
 
   // フォーム送信処理を修正
-  const onSubmit = async (data: TalentProfileData) => {
+  const onSubmit = (data: TalentProfileData) => {
+    console.log('Form submitted:', data);
+
+    // バリデーション状態の確認
+    if (!form.formState.isValid) {
+      console.log('Form validation errors:', form.formState.errors);
+      toast({
+        title: "入力エラー",
+        description: "必須項目を入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log('onSubmit called with data:', data);
-
-      // バリデーション状態の確認
-      if (!form.formState.isValid) {
-        console.log('Form validation errors:', form.formState.errors);
-        toast({
-          title: "入力エラー",
-          description: "必須項目を入力してください。",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -652,13 +649,9 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      console.log('Setting optimized form data:', optimizedData);
-
-      // 状態を更新して確認モーダルを表示
+      console.log('Opening modal with data:', optimizedData);
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
-
-      console.log('Modal state updated:', { isConfirmationOpen: true, formData: optimizedData });
 
     } catch (error) {
       console.error("データの準備中にエラーが発生しました:", error);
@@ -937,23 +930,25 @@ export function TalentForm() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
-              <FormFieldWrapper label="持参可能な身分証明書" required><div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">{idTypes.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`id-${type}`}
-                        checked={form.watch("availableIds.types").includes(type)}
-                        onCheckedChange={(checked) => {
-                          const current = form.watch("availableIds.types") || [];
-                          const updated = checked
-                            ? [...current, type]
-                            : current.filter((t) => t !== type);
-                          form.setValue("availableIds.types", updated);
-                        }}
-                      />
-                      <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
-                    </div>
-                  ))}
+              <FormFieldWrapper label="持参可能な身分証明書" required>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {idTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`id-${type}`}
+                          checked={form.watch("availableIds.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("availableIds.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("availableIds.types", updated);
+                          }}
+                        />
+                        <Label htmlFor={`id-${type}`} className="text-sm">{type}</Label>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="space-y-2">
@@ -1801,17 +1796,18 @@ export function TalentForm() {
               />
             </div>
 
-            <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">
-              <div className="container mx-auto flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      送信中...
-                    </>
-                  ) : (
-                    "プロフィールを保存"
-                  )}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+              <div className="container mx-auto max-w-4xl flex justify-end gap-4">
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Save button clicked - attempting form submission');
+                    const data = form.getValues();
+                    onSubmit(data);
+                  }}
+                  size="lg"
+                >
+                  プロフィールを保存
                 </Button>
               </div>
             </div>
@@ -1819,11 +1815,10 @@ export function TalentForm() {
         </Form>
       </main>
 
-      {/* 確認モーダル */}
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
-          console.log('Closing confirmation modal');
+          console.log('Modal closing triggered');
           setIsConfirmationOpen(false);
           setFormData(null);
         }}
