@@ -481,7 +481,6 @@ export function TalentForm() {
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  // デバッグ用のログを追加
   console.log('TalentForm render:', { user });
 
   const form = useForm<TalentProfileData>({
@@ -555,7 +554,6 @@ export function TalentForm() {
     enabled: !!user,
   });
 
-  // デバッグ用のログを追加
   console.log('TalentForm user profile:', userProfile);
 
   // 生年月日から年齢を計算
@@ -723,6 +721,53 @@ export function TalentForm() {
     form.setValue("previousStores", updatedStores);
   };
 
+  const onSubmit = form.handleSubmit(async (data) => {
+    try {
+      const optimizedData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === "" ? null : Number(data.bust),
+        waist: data.waist === "" ? null : Number(data.waist),
+        hip: data.hip === "" ? null : Number(data.hip),
+        availableIds: {
+          types: data.availableIds.types || [],
+          others: otherIds,
+        },
+        ngOptions: {
+          common: data.ngOptions.common || [],
+          others: otherNgOptions,
+        },
+        allergies: {
+          types: data.allergies.types || [],
+          others: otherAllergies,
+          hasAllergy: data.allergies.hasAllergy,
+        },
+        smoking: {
+          enabled: data.smoking.enabled,
+          types: data.smoking.types || [],
+          others: otherSmokingTypes,
+        },
+        bodyMark: {
+          hasBodyMark: data.bodyMark.hasBodyMark,
+          details: bodyMarkDetails,
+        },
+        photos: data.photos || [],
+      };
+
+      console.log('Opening confirmation modal with data:', optimizedData);
+      setFormData(optimizedData);
+      setIsConfirmationOpen(true);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "エラー",
+        description: "フォームの送信中にエラーが発生しました。",
+        variant: "destructive",
+      });
+    }
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white sticky top-0 z-50">
@@ -747,46 +792,7 @@ export function TalentForm() {
 
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => {
-              console.log('Form submitted with data:', data);
-              const optimizedData = {
-                ...data,
-                height: Number(data.height),
-                weight: Number(data.weight),
-                bust: data.bust === "" ? null : Number(data.bust),
-                waist: data.waist === "" ? null : Number(data.waist),
-                hip: data.hip === "" ? null : Number(data.hip),
-                availableIds: {
-                  types: data.availableIds.types || [],
-                  others: otherIds,
-                },
-                ngOptions: {
-                  common: data.ngOptions.common || [],
-                  others: otherNgOptions,
-                },
-                allergies: {
-                  types: data.allergies.types || [],
-                  others: otherAllergies,
-                  hasAllergy: data.allergies.hasAllergy,
-                },
-                smoking: {
-                  enabled: data.smoking.enabled,
-                  types: data.smoking.types || [],
-                  others: otherSmokingTypes,
-                },
-                bodyMark: {
-                  hasBodyMark: data.bodyMark.hasBodyMark,
-                  details: bodyMarkDetails,
-                },
-                photos: data.photos || [],
-              };
-
-              setFormData(optimizedData);
-              setIsConfirmationOpen(true);
-            })}
-            className="space-y-8"
-          >
+          <form onSubmit={onSubmit} className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -1775,13 +1781,16 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={form.formState.isSubmitting}
+                  disabled={!form.formState.isDirty || !form.formState.isValid || form.formState.isSubmitting}
+                  className="min-w-[200px]"
                 >
                   {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       送信中...
                     </>
+                  ) : form.formState.isDirty ? (
+                    "変更を保存"
                   ) : (
                     "プロフィールを保存"
                   )}
@@ -1795,7 +1804,6 @@ export function TalentForm() {
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
-          console.log('Modal closing triggered');
           setIsConfirmationOpen(false);
           setFormData(null);
         }}
