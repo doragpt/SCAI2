@@ -39,11 +39,14 @@ export const uploadToS3 = async (
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
+      ACL: 'public-read', // パブリックアクセスを許可
+      ContentDisposition: 'inline', // ブラウザで直接表示
       // CORSに関連するメタデータを追加
       Metadata: {
         'x-amz-meta-uploaded-by': 'scai-app',
         'x-amz-meta-timestamp': new Date().toISOString()
-      }
+      },
+      CacheControl: 'max-age=31536000' // 1年間のキャッシュを設定
     });
 
     console.log('Executing S3 upload command:', {
