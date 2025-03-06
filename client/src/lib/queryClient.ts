@@ -50,27 +50,51 @@ export async function apiRequest(
       if (profileData.photos?.some(photo => photo.url.startsWith('data:'))) {
         console.log('Photos detected in request, handling separately');
 
-        // S3アップロード用のエンドポイントを呼び出し
+        // S3アップロード用のエンドポイントを順次呼び出し
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const uploadedPhotos = await Promise.all(
-          photosToUpload.map(async (photo) => {
-            const uploadRes = await fetch(`${API_BASE_URL}/api/upload-photo`, {
-              method: 'POST',
-              headers: {
-                ...headers,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ photo: photo.url }),
-            });
+        const uploadedPhotos = [];
 
-            if (!uploadRes.ok) {
-              throw new Error('Failed to upload photo');
+        for (const photo of photosToUpload) {
+          let retryCount = 0;
+          const maxRetries = 3;
+
+          while (retryCount < maxRetries) {
+            try {
+              console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
+
+              const uploadRes = await fetch(`${API_BASE_URL}/api/upload-photo`, {
+                method: 'POST',
+                headers: {
+                  ...headers,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ photo: photo.url }),
+              });
+
+              if (!uploadRes.ok) {
+                throw new Error(`Failed to upload photo: ${uploadRes.statusText}`);
+              }
+
+              const { url } = await uploadRes.json();
+              uploadedPhotos.push({ ...photo, url });
+              console.log('Photo upload successful');
+              break;
+            } catch (error) {
+              console.error('Photo upload attempt failed:', {
+                attempt: retryCount + 1,
+                error: error instanceof Error ? error.message : 'Unknown error'
+              });
+
+              retryCount++;
+              if (retryCount === maxRetries) {
+                throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
+              }
+
+              // 失敗した場合は少し待ってからリトライ
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
             }
-
-            const { url } = await uploadRes.json();
-            return { ...photo, url };
-          })
-        );
+          }
+        }
 
         // 既存のURLと新しいURLを組み合わせる
         profileData.photos = profileData.photos.map(photo => {
