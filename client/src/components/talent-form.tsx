@@ -485,7 +485,8 @@ export function TalentForm() {
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
-    mode: "onTouched",
+    mode: "onChange",
+    criteriaMode: "all",
     defaultValues: {
       lastName: "",
       firstName: "",
@@ -726,21 +727,29 @@ export function TalentForm() {
     const updated = checked
       ? [...current, type]
       : current.filter((t) => t !== type);
-    form.setValue("availableIds.types", updated);
+    form.setValue("availableIds.types", updated, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
-    try {
-      if (!form.formState.isValid) {
-        console.error('Validation errors:', form.formState.errors);
-        toast({
-          title: "入力エラー",
-          description: "必須項目を入力してください。",
-          variant: "destructive",
-        });
-        return;
-      }
+    console.log('Form submission:', {
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+      errors: form.formState.errors
+    });
 
+    if (!form.formState.isValid) {
+      toast({
+        title: "入力エラー",
+        description: "必須項目を入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -773,7 +782,6 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      console.log('Form validation passed, opening modal with data:', optimizedData);
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
     } catch (error) {
@@ -1797,8 +1805,8 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
+                  disabled={!form.formState.isValid || form.formState.isSubmitting}
                   className="min-w-[200px]"
-                  disabled={!form.formState.isValid}
                 >
                   {form.formState.isSubmitting ? (
                     <>
