@@ -100,7 +100,7 @@ const PhotoUpload = ({
   onChange: (photos: Photo[]) => void;
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("スタジオ写真");
+  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("スタジオ写真（無加工）");
   const [showBulkTagging, setShowBulkTagging] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -527,7 +527,7 @@ export function TalentForm() {
       currentStores: [],
       previousStores: [],
       photoDiaryUrls: [],
-      photos: [],
+      photos: [], // 写真は空配列で初期化
       selfIntroduction: "",
       notes: "",
       estheOptions: {
@@ -543,17 +543,15 @@ export function TalentForm() {
     },
   });
 
-  // フォームの状態を監視
+  // フォームの状態を監視（より詳細なログを追加）
   useEffect(() => {
-    console.log('Form state updated:', {
+    console.log('Form validation state:', {
       isValid: form.formState.isValid,
-      isDirty: form.formState.isDirty,
       errors: form.formState.errors,
-      dirtyFields: form.formState.dirtyFields,
-      touchedFields: form.formState.touchedFields,
-      defaultValues: form.formState.defaultValues,
+      values: form.getValues(),
+      photos: form.getValues().photos,
     });
-  }, [form.formState]);
+  }, [form.formState.isValid, form.formState.errors]);
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
@@ -744,6 +742,15 @@ export function TalentForm() {
       shouldDirty: true
     });
   };
+
+  // 写真の更新処理を修正
+  const handlePhotoUpload = (newPhotos: Photo[]) => {
+    form.setValue('photos', newPhotos, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
 
   const onSubmit = form.handleSubmit(async (data) => {
     console.log('Form submission:', {
@@ -1762,9 +1769,7 @@ export function TalentForm() {
                   <FormItem>
                     <PhotoUpload
                       photos={field.value || []}
-                      onChange={(photos) => {
-                        field.onChange(photos);
-                      }}
+                      onChange={handlePhotoUpload}
                     />
                     <FormMessage />
                   </FormItem>
