@@ -165,7 +165,6 @@ export const talentProfiles = pgTable("talent_profiles", {
   }[]>().default([]).notNull(),
   previousStores: jsonb("previous_stores").$type<{
     storeName: string;
-    photoDiaryUrls: string[];
   }[]>().default([]).notNull(),
   photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
   selfIntroduction: text("self_introduction"),
@@ -280,7 +279,6 @@ export const talentProfileSchema = z.object({
   })).default([]),
   previousStores: z.array(z.object({
     storeName: z.string(),
-    photoDiaryUrls: z.array(z.string()).default([]),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
@@ -394,3 +392,7 @@ export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
+export type PreviousStore = {
+  storeName: string;
+};
