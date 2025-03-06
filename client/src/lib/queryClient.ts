@@ -10,6 +10,15 @@ export const QUERY_KEYS = {
   SIGNED_URL: "/api/get-signed-url"
 } as const;
 
+type UnauthorizedBehavior = "returnNull" | "throw";
+
+// APIのベースURL設定
+const API_BASE_URL = (() => {
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}`;
+})();
+
 // APIリクエスト用の基本関数を修正
 export async function apiRequest(
   method: string,
@@ -43,7 +52,7 @@ export async function apiRequest(
         console.log('Photos detected in request, handling separately');
 
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const uploadedPhotos = new Map<string, { id: string; tag: string; url: string }>();
+        const uploadedPhotos = new Map<string, { tag: string; url: string }>(); // タグをキーとして使用
 
         // 同期的に写真をアップロード
         for (const photo of photosToUpload) {
@@ -54,8 +63,8 @@ export async function apiRequest(
             try {
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
-              // チャンクサイズを8KBに縮小
-              const chunkSize = 8 * 1024;
+              // チャンクサイズを16KBに縮小
+              const chunkSize = 16 * 1024;
               const [header, base64Data] = photo.url.split(',');
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -95,8 +104,7 @@ export async function apiRequest(
                         totalChunks,
                         chunkIndex: i,
                         photoId,
-                        tag: photo.tag,
-                        photoUniqueId: photo.id
+                        tag: photo.tag, // タグ情報を追加
                       }),
                     });
 
@@ -108,12 +116,8 @@ export async function apiRequest(
                     const result = await chunkRes.json();
                     console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
-                    if (result.url && result.tag && result.id) {
-                      uploadedPhotos.set(result.id, {
-                        id: result.id,
-                        tag: result.tag,
-                        url: result.url
-                      });
+                    if (result.url && result.tag) {
+                      uploadedPhotos.set(result.tag, { tag: result.tag, url: result.url });
                     }
                     break;
                   } catch (chunkError) {
@@ -133,9 +137,9 @@ export async function apiRequest(
                   }
                 }
 
-                // チャンク間の待機時間を最適化（800ms）
+                // チャンク間の待機時間を最適化（600ms）
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 800));
+                  await new Promise(resolve => setTimeout(resolve, 600));
                 }
               }
 
@@ -161,48 +165,19 @@ export async function apiRequest(
         // 写真の順序を維持しながら更新
         profileData.photos = profileData.photos.map(photo => {
           if (photo.url.startsWith('data:')) {
-            // IDを使って更新された写真を取得
-            const uploaded = uploadedPhotos.get(photo.id);
+            // タグに基づいて更新された写真を取得
+            const uploaded = uploadedPhotos.get(photo.tag);
             if (!uploaded) {
-              console.warn(`No uploaded photo found for ID: ${photo.id}`);
-              return photo;
+              console.warn(`No uploaded photo found for tag: ${photo.tag}`);
+              return photo; // アップロードに失敗した場合は元の写真を保持
             }
             return uploaded;
           }
           return photo;
         });
       }
-
-      // リクエストサイズを削減するため、Base64データを除外
-      const cleanedData = {
-        ...profileData,
-        photos: profileData.photos.map(photo => ({
-          id: photo.id,
-          tag: photo.tag,
-          url: photo.url.startsWith('data:') ? '' : photo.url
-        }))
-      };
-
-      // 不要なフィールドを除外
-      const { id, userId, updatedAt, age, ...dataToSend } = cleanedData;
-
-      // 更新されたデータでリクエストを送信
-      const res = await fetch(fullUrl, {
-        method,
-        headers,
-        body: JSON.stringify(dataToSend),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(errorData.message || res.statusText);
-      }
-
-      return res;
     }
 
-    // 通常のリクエスト処理
     const res = await fetch(fullUrl, {
       method,
       headers,
@@ -393,10 +368,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-type UnauthorizedBehavior = "returnNull" | "throw";
-const API_BASE_URL = (() => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  return `${protocol}//${hostname}`;
-})();

@@ -545,14 +545,13 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   // チャンクアップロード用のエンドポイント
   app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
     try {
-      const { photo, totalChunks, chunkIndex, photoId, tag, photoUniqueId } = req.body;
+      const { photo, totalChunks, chunkIndex, photoId, tag } = req.body;
 
       console.log('Photo chunk upload request received:', {
         userId: req.user.id,
         chunkIndex,
         totalChunks,
         tag,
-        photoUniqueId,
         timestamp: new Date().toISOString()
       });
 
@@ -582,7 +581,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
           chunkIndex,
           totalChunks,
           tag,
-          photoUniqueId,
           timestamp: new Date().toISOString()
         });
 
@@ -609,18 +607,13 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
               userId: req.user.id,
               url: s3Url,
               tag,
-              photoUniqueId,
               timestamp: new Date().toISOString()
             });
 
             res.set({
               'ETag': `"${photoId}"`,
               'Content-Type': 'application/json'
-            }).json({ 
-              url: s3Url,
-              tag,
-              id: photoUniqueId
-            });
+            }).json({ url: s3Url, tag });
           } catch (s3Error) {
             console.error('S3 upload error:', {
               error: s3Error,
@@ -635,10 +628,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
           res.set({
             'ETag': `"${photoId}-${chunkIndex}"`,
             'Content-Type': 'application/json'
-          }).json({ 
-            status: 'chunk_uploaded',
-            id: photoUniqueId
-          });
+          }).json({ status: 'chunk_uploaded' });
         }
       } catch (uploadError) {
         console.error('Upload processing error:', {

@@ -101,13 +101,12 @@ const PhotoUpload = ({
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("現在の髪色");
   const [showBulkTagging, setShowBulkTagging] = useState(false);
-  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
-  // 写真圧縮処理は変更なし
   const compressImage = async (file: File): Promise<string | null> => {
     try {
       if (file.size > 10 * 1024 * 1024) { // 10MBまで許可
@@ -177,10 +176,6 @@ const PhotoUpload = ({
     }
   };
 
-  const generatePhotoId = () => {
-    return `photo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  };
-
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -193,9 +188,7 @@ const PhotoUpload = ({
       const compressedDataUrl = await compressImage(file);
 
       if (compressedDataUrl) {
-        const photoId = generatePhotoId();
         newPhotos.push({
-          id: photoId,
           url: compressedDataUrl,
           tag: selectedTag,
         });
@@ -203,15 +196,11 @@ const PhotoUpload = ({
     }
 
     if (newPhotos.length > 0) {
-      const existingIds = new Set(photos.map((p) => p.id));
-      const uniqueNewPhotos = newPhotos.filter((p) => !existingIds.has(p.id));
-
-      const updatedPhotos = [...photos, ...uniqueNewPhotos];
+      const updatedPhotos = [...photos, ...newPhotos];
       onChange(updatedPhotos);
-
       toast({
         title: "アップロード完了",
-        description: `${uniqueNewPhotos.length}枚の写真をアップロードしました。`,
+        description: `${newPhotos.length}枚の写真をアップロードしました。`,
       });
     }
 
@@ -222,8 +211,8 @@ const PhotoUpload = ({
   };
 
   const handleBulkTagging = (tag: typeof photoTags[number]) => {
-    const updatedPhotos = photos.map(photo => {
-      if (selectedPhotos.includes(photo.id)) {
+    const updatedPhotos = photos.map((photo, index) => {
+      if (selectedPhotos.includes(index)) {
         return { ...photo, tag };
       }
       return photo;
@@ -237,16 +226,6 @@ const PhotoUpload = ({
     });
   };
 
-  const handleRemovePhoto = (photoId: string) => {
-    console.log('Removing photo:', photoId);
-    const updatedPhotos = photos.filter((photo) => photo.id !== photoId);
-    console.log('Updated photos:', updatedPhotos);
-    onChange(updatedPhotos);
-    toast({
-      title: "削除完了",
-      description: "写真を削除しました。",
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -326,18 +305,18 @@ const PhotoUpload = ({
 
       {/* 写真一覧 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <div
-            key={photo.id}
+            key={index}
             className={`relative group ${
-              selectedPhotos.includes(photo.id) ? "ring-2 ring-primary" : ""
+              selectedPhotos.includes(index) ? "ring-2 ring-primary" : ""
             }`}
             onClick={() => {
               if (showBulkTagging) {
                 setSelectedPhotos((prev) =>
-                  prev.includes(photo.id)
-                    ? prev.filter((id) => id !== photo.id)
-                    : [...prev, photo.id]
+                  prev.includes(index)
+                    ? prev.filter((i) => i !== index)
+                    : [...prev, index]
                 );
               }
             }}
@@ -345,7 +324,7 @@ const PhotoUpload = ({
             <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
               <img
                 src={photo.url}
-                alt={`プロフィール写真 (${photo.tag})`}
+                alt={`プロフィール写真 ${index + 1}`}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -354,9 +333,8 @@ const PhotoUpload = ({
                 <Select
                   value={photo.tag}
                   onValueChange={(value) => {
-                    const updatedPhotos = photos.map(p =>
-                      p.id === photo.id ? { ...p, tag: value as typeof photoTags[number] } : p
-                    );
+                    const updatedPhotos = [...photos];
+                    updatedPhotos[index] = { ...photo, tag: value as typeof photoTags[number] };
                     onChange(updatedPhotos);
                   }}
                 >
@@ -385,7 +363,8 @@ const PhotoUpload = ({
                   className="mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemovePhoto(photo.id);
+                    const updatedPhotos = photos.filter((_, i) => i !== index);
+                    onChange(updatedPhotos);
                   }}
                 >
                   削除
@@ -819,6 +798,18 @@ export function TalentForm() {
         details: bodyMarkDetails,
       },
       photos: data.photos || [],
+      // 求人関連フィールドのデフォルト値を設定
+      workType: undefined,
+      workPeriodStart: undefined,
+      workPeriodEnd: undefined,
+      canArrivePreviousDay: false,
+      desiredGuarantee: undefined,
+      desiredRate: undefined,
+      waitingHours: undefined,
+      departureLocation: undefined,
+      returnLocation: undefined,
+      preferredLocations: [],
+      ngLocations: [],
     };
 
     console.log('Opening confirmation modal');
@@ -1597,7 +1588,7 @@ export function TalentForm() {
                         <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
                         <div className="space-y-4">
                           {form.watch("snsUrls").map((url, index) => (
-                            <div key={`sns-url-${index}`} className="flex gap-2">
+                            <div key={index} className="flex gap-2">
                               <Input
                                 placeholder="SNSアカウントのURLを入力"
                                 value={url}
@@ -1647,7 +1638,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("currentStores")?.map((store, index) => (
-                      <div key={`current-store-${index}`} className="relative border rounded-lg p-4">
+                      <div key={index} className="relative border rounded-lg p-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
@@ -1699,7 +1690,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("previousStores")?.map((store, index) => (
-                      <div key={`previous-store-${index}`} className="relative flex items-center gap-4 border rounded-lg p-4">
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
                           <Input
@@ -1737,7 +1728,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("photoDiaryUrls")?.map((url, index) => (
-                      <div key={`photo-diary-url-${index}`} className="relative flex items-center gap-4 border rounded-lg p-4">
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
                           <Input
