@@ -458,6 +458,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // 写真アップロード用の新しいエンドポイント
+  app.post("/api/upload-photo", authenticate, async (req: any, res) => {
+    try {
+      const { photo } = req.body;
+
+      if (!photo || !photo.startsWith('data:')) {
+        return res.status(400).json({ message: "Invalid photo data" });
+      }
+
+      const s3Url = await uploadToS3(
+        photo,
+        `${req.user.id}-${Date.now()}.jpg`
+      );
+
+      res.json({ url: s3Url });
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      res.status(500).json({
+        message: "写真のアップロードに失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

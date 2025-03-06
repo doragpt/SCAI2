@@ -18,7 +18,7 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-// APIリクエスト用の基本関数
+// APIリクエスト用の基本関数を修正
 export async function apiRequest(
   method: string,
   url: string,
@@ -35,7 +35,57 @@ export async function apiRequest(
   }
 
   try {
+    console.log('API Request starting:', {
+      method,
+      url,
+      dataSize: data ? JSON.stringify(data).length : 0,
+      timestamp: new Date().toISOString()
+    });
+
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    // 写真データを含むプロフィール更新の場合は、先に写真をS3にアップロード
+    if (method === "PUT" && url === "/api/talent/profile" && data) {
+      const profileData = data as TalentProfileData;
+      if (profileData.photos?.some(photo => photo.url.startsWith('data:'))) {
+        console.log('Photos detected in request, handling separately');
+
+        // S3アップロード用のエンドポイントを呼び出し
+        const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
+        const uploadedPhotos = await Promise.all(
+          photosToUpload.map(async (photo) => {
+            const uploadRes = await fetch(`${API_BASE_URL}/api/upload-photo`, {
+              method: 'POST',
+              headers: {
+                ...headers,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ photo: photo.url }),
+            });
+
+            if (!uploadRes.ok) {
+              throw new Error('Failed to upload photo');
+            }
+
+            const { url } = await uploadRes.json();
+            return { ...photo, url };
+          })
+        );
+
+        // 既存のURLと新しいURLを組み合わせる
+        profileData.photos = profileData.photos.map(photo => {
+          if (photo.url.startsWith('data:')) {
+            const uploaded = uploadedPhotos.find(up => up.tag === photo.tag);
+            return uploaded || photo;
+          }
+          return photo;
+        });
+
+        // 更新されたデータで本来のリクエストを実行
+        data = profileData;
+      }
+    }
+
     const res = await fetch(fullUrl, {
       method,
       headers,
@@ -136,7 +186,7 @@ export async function updateUserProfile(data: {
   location?: string;
   preferredLocations?: string[];
   username?: string;
-}) {
+}): Promise<SelectUser> {
   try {
     console.log("Starting user profile update:", {
       timestamp: new Date().toISOString(),
