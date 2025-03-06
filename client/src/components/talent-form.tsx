@@ -109,10 +109,10 @@ const PhotoUpload = ({
 
   const compressImage = async (file: File): Promise<string | null> => {
     try {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 10 * 1024 * 1024) { // 10MBまで許可
         toast({
           title: "エラー",
-          description: "ファイルサイズは2MB以下にしてください。",
+          description: "ファイルサイズは10MB以下にしてください。",
           variant: "destructive",
         });
         return null;
@@ -133,8 +133,8 @@ const PhotoUpload = ({
       });
 
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 500; // 最大幅を縮小
-      const MAX_HEIGHT = 700; // 最大高さを縮小
+      const MAX_WIDTH = 1200; // 高画質のために最大幅を増やす
+      const MAX_HEIGHT = 1600; // 高画質のために最大高さを増やす
       let width = img.width;
       let height = img.height;
 
@@ -155,20 +155,8 @@ const PhotoUpload = ({
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
 
-      // 圧縮品質を0.3に下げる
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
-
-      // Base64サイズチェックを厳密化
-      const base64Size = compressedDataUrl.length * 0.75;
-      if (base64Size > 256 * 1024) { // 制限を256KBに下げる
-        toast({
-          title: "エラー",
-          description: "画像サイズを小さくできませんでした。より小さい画像を使用してください。",
-          variant: "destructive",
-        });
-        return null;
-      }
-
+      // 画質を高めに設定
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
       return compressedDataUrl;
     } catch (error) {
       console.error('Error processing image:', error);

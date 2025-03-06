@@ -13,6 +13,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
+import { uploadToS3 } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
@@ -237,6 +238,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // バリデーション
       const updateData = talentProfileUpdateSchema.parse(req.body);
 
+      // 画像をS3にアップロード
+      if (updateData.photos && updateData.photos.length > 0) {
+        const uploadedPhotos = await Promise.all(
+          updateData.photos.map(async (photo) => {
+            if (photo.url.startsWith('data:')) {
+              const s3Url = await uploadToS3(
+                photo.url,
+                `${userId}-${Date.now()}.jpg`
+              );
+              return { ...photo, url: s3Url };
+            }
+            return photo;
+          })
+        );
+        updateData.photos = uploadedPhotos;
+      }
+
       // プロフィールの更新
       const [updatedProfile] = await db
         .update(talentProfiles)
@@ -262,6 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
