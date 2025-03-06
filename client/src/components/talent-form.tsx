@@ -484,8 +484,6 @@ export function TalentForm() {
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  console.log('TalentForm render:', { user });
-
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     mode: "all",
@@ -545,23 +543,18 @@ export function TalentForm() {
     },
   });
 
-  // フォームの状態を監視（一箇所にまとめる）
+  // フォームの状態を監視
   useEffect(() => {
     const formState = form.formState;
-    const photos = form.getValues().photos || [];
-    const hasPhotos = photos.length > 0;
-    const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
-
     console.log('Form state updated:', {
       isValid: formState.isValid,
       isDirty: formState.isDirty,
       errors: formState.errors,
-      photos: photos,
-      hasPhotos,
-      hasCurrentHairPhoto,
-      touchedFields: formState.touchedFields,
+      values: form.getValues(),
+      photos: form.getValues().photos,
     });
   }, [form.formState]);
+
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
@@ -755,62 +748,66 @@ export function TalentForm() {
 
   // 写真の更新処理を修正
   const handlePhotoUpload = (newPhotos: Photo[]) => {
-    console.log('Updating photos:', { newPhotos });
+    console.log('Updating photos:', {
+      currentPhotos: form.getValues().photos,
+      newPhotos,
+    });
 
     form.setValue('photos', newPhotos, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true,
     });
+
+    // 写真のバリデーションをトリガー
+    form.trigger('photos');
   };
 
-  const onSubmit = form.handleSubmit((data) => {
-    console.log('Form submitted with data:', data);
-    try {
-      const optimizedData = {
-        ...data,
-        height: Number(data.height),
-        weight: Number(data.weight),
-        bust: data.bust === "" ? null : Number(data.bust),
-        waist: data.waist === "" ? null : Number(data.waist),
-        hip: data.hip === "" ? null : Number(data.hip),
-        availableIds: {
-          types: data.availableIds.types || [],
-          others: otherIds,
-        },
-        ngOptions: {
-          common: data.ngOptions.common || [],
-          others: otherNgOptions,
-        },
-        allergies: {
-          types: data.allergies.types || [],
-          others: otherAllergies,
-          hasAllergy: data.allergies.hasAllergy,
-        },
-        smoking: {
-          enabled: data.smoking.enabled,
-          types: data.smoking.types || [],
-          others: otherSmokingTypes,
-        },
-        bodyMark: {
-          hasBodyMark: data.bodyMark.hasBodyMark,
-          details: bodyMarkDetails,
-        },
-        photos: data.photos || [],
-      };
+  // フォームのsubmit処理を再実装
+  const handleSubmit = (data: TalentProfileData) => {
+    console.log('Form submission attempt:', {
+      data,
+      isValid: form.formState.isValid,
+      errors: form.formState.errors
+    });
 
-      console.log('Opening confirmation modal with data:', optimizedData);
-      setFormData(optimizedData);
-      setIsConfirmationOpen(true);
-    } catch (error) {
-      console.error('Form submission error:', error);
-      toast({
-        title: "エラー",
-        description: "フォームの送信中にエラーが発生しました。",
-        variant: "destructive",
-      });
-    }
-  });
+    // フォームデータの準備
+    const formData = {
+      ...data,
+      height: Number(data.height),
+      weight: Number(data.weight),
+      bust: data.bust === "" ? null : Number(data.bust),
+      waist: data.waist === "" ? null : Number(data.waist),
+      hip: data.hip === "" ? null : Number(data.hip),
+      availableIds: {
+        types: data.availableIds.types || [],
+        others: otherIds,
+      },
+      ngOptions: {
+        common: data.ngOptions.common || [],
+        others: otherNgOptions,
+      },
+      allergies: {
+        types: data.allergies.types || [],
+        others: otherAllergies,
+        hasAllergy: data.allergies.hasAllergy,
+      },
+      smoking: {
+        enabled: data.smoking.enabled,
+        types: data.smoking.types || [],
+        others: otherSmokingTypes,
+      },
+      bodyMark: {
+        hasBodyMark: data.bodyMark.hasBodyMark,
+        details: bodyMarkDetails,
+      },
+      photos: data.photos || [],
+    };
+
+    console.log('Opening confirmation modal with data:', formData);
+    setFormData(formData);
+    setIsConfirmationOpen(true);
+  };
 
   // フォームの保存ボタンの状態を単純化
   const photos = form.getValues().photos || [];
@@ -841,7 +838,10 @@ export function TalentForm() {
 
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form onSubmit={onSubmit} className="space-y-8">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-8"
+          >
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -922,7 +922,7 @@ export function TalentForm() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+              {/* Location field */}              <FormField
                 control={form.control}
                 name="location"
                 render={({ field }) => (
@@ -933,9 +933,9 @@ export function TalentForm() {
                           <SelectValue placeholder="選択してください" />
                         </SelectTrigger>
                         <SelectContent>
-                          {prefectures.map((prefecture) => (
+                          {prefectures.map((prefecture)=> (
                             <SelectItem key={prefecture} value={prefecture}>
-                              {prefecture}
+                              {prefecture}                              {prefecture}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1821,18 +1821,13 @@ export function TalentForm() {
               />
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+            <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4">
               <div className="container mx-auto max-w-4xl flex justify-end gap-4">
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={isButtonDisabled}
+                  disabled={!form.formState.isValid}
                   className="min-w-[200px]"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log('Submit button clicked');
-                    onSubmit(e);
-                  }}
                 >
                   {form.formState.isSubmitting ? (
                     <>
@@ -1857,7 +1852,7 @@ export function TalentForm() {
         }}
         onConfirm={handleConfirm}
         formData={formData}
-        isPending={isSubmitting}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
