@@ -25,9 +25,13 @@ export function ProfileConfirmationModal({
   formData,
   isPending,
 }: ProfileConfirmationModalProps) {
+  // formDataが存在しない場合は何も表示しない
   if (!formData) {
+    console.log('No form data provided to modal');
     return null;
   }
+
+  console.log('Modal rendering with data:', { isOpen, formData });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -147,8 +151,8 @@ export function ProfileConfirmationModal({
                   {formData.ngOptions.common.map((option) => (
                     <li key={option}>{option}</li>
                   ))}
-                  {formData.ngOptions.others.map((option) => (
-                    <li key={option}>{option}</li>
+                  {formData.ngOptions.others.map((other) => (
+                    <li key={other}>{other}</li>
                   ))}
                 </ul>
               </section>

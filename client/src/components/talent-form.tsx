@@ -605,9 +605,20 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
-  // handleSubmit関数の修正
+  // handleSubmit関数の修正部分
   const handleSubmit = async (data: TalentProfileData) => {
     try {
+      // バリデーション状態の確認
+      if (!form.formState.isValid) {
+        console.log('Form validation errors:', form.formState.errors);
+        toast({
+          title: "入力エラー",
+          description: "必須項目を入力してください。",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // データの最適化
       const optimizedData = {
         ...data,
@@ -646,7 +657,8 @@ export function TalentForm() {
       console.log('Optimized form data:', optimizedData);
       console.log('Opening confirmation modal...');
 
-      // 状態を更新
+      // 状態を同期的に更新
+      await Promise.resolve();  // マイクロタスクを作成して状態更新を確実にする
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
 
@@ -925,7 +937,7 @@ export function TalentForm() {
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
               <FormFieldWrapper label="持参可能な身分証明書" required>
-                <div className="space-y-4">
+                <div className="space-y4">
                   <div className="grid grid-cols-2 gap-4">
                     {idTypes.map((type) => (
                       <div key={type} className="flex items-center space-x-2">
@@ -946,33 +958,19 @@ export function TalentForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>その他の身分証明書</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {otherIds.map((id, index) => (
-                        <Badge key={index} variant="secondary">
-                          {id}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => {
-                              setOtherIds(otherIds.filter((_, i) => i !== index));
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
+                    <Label className="text-sm">その他の身分証明書</Label>
+                    <div className="flex items-center gap-2">
                       <Input
+                        type="text"
                         value={newIdType}
                         onChange={(e) => setNewIdType(e.target.value)}
                         placeholder="その他の身分証明書を入力"
+                        className="flex-1"
                       />
                       <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={handleAddIdType}
                         disabled={!newIdType.trim()}
                       >
@@ -1137,7 +1135,7 @@ export function TalentForm() {
               />
             </div>
             <div>
-              <h3 className="textlg font-semibold mb-4">顔出し</h3>
+              <h3 className="text-lg font-semibold mb-4">顔出し</h3>
               <FormField
                 control={form.control}
                 name="faceVisibility"
@@ -1823,16 +1821,18 @@ export function TalentForm() {
       </main>
 
       {/* 確認モーダル */}
-      <ProfileConfirmationModal
-        isOpen={isConfirmationOpen}
-        onClose={() => {
-          console.log('Closing confirmation modal');
-          setIsConfirmationOpen(false);
-        }}
-        onConfirm={handleConfirm}
-        formData={formData}
-        isPending={isSubmitting}
-      />
+      {formData && isConfirmationOpen && (
+        <ProfileConfirmationModal
+          isOpen={isConfirmationOpen}
+          onClose={() => {
+            console.log('Closing confirmation modal');
+            setIsConfirmationOpen(false);
+          }}
+          onConfirm={handleConfirm}
+          formData={formData}
+          isPending={isSubmitting}
+        />
+      )}
     </div>
   );
 }
