@@ -502,7 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 写真のチャンクアップロード用のエンドポイント
+  // チャンクアップロード用のエンドポイント
   app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
     try {
       console.log('Photo chunk upload request received:', {
@@ -525,18 +525,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Base64データの処理
         const base64Data = photo.split(',')[1];
 
+        // セッションの初期化確認
+        if (!req.session.photoChunks) {
+          req.session.photoChunks = {};
+        }
+
         // チャンクデータを一時保存
         const chunkKey = `${req.user.id}-${photoId}-chunk-${chunkIndex}`;
-        const chunks = req.session.photoChunks || {};
-        chunks[chunkKey] = base64Data;
-        req.session.photoChunks = chunks;
+        req.session.photoChunks[chunkKey] = base64Data;
+
+        console.log('Chunk stored in session:', {
+          userId: req.user.id,
+          photoId,
+          chunkIndex,
+          totalChunks,
+          timestamp: new Date().toISOString()
+        });
+
+        // セッションの保存を確実に
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              console.error('Session save error:', err);
+              reject(err);
+            }
+            resolve();
+          });
+        });
 
         // 最後のチャンクの場合、すべてのチャンクを結合してS3にアップロード
         if (chunkIndex === totalChunks - 1) {
           // すべてのチャンクを結合
           const completeBase64 = Array.from({ length: totalChunks }, (_, i) => {
             const key = `${req.user.id}-${photoId}-chunk-${i}`;
-            return chunks[key];
+            const chunk = req.session.photoChunks[key];
+            if (!chunk) {
+              throw new Error(`Missing chunk data for index ${i}`);
+            }
+            return chunk;
           }).join('');
 
           // 結合したデータをS3にアップロード
@@ -547,11 +573,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // チャンクデータをクリア
           for (let i = 0; i < totalChunks; i++) {
-            delete chunks[`${req.user.id}-${photoId}-chunk-${i}`];
+            const key = `${req.user.id}-${photoId}-chunk-${i}`;
+            delete req.session.photoChunks[key];
           }
-          req.session.photoChunks = chunks;
 
-          console.log('Photo upload successful:', {
+          // セッションの保存を確実に
+          await new Promise<void>((resolve, reject) => {
+            req.session.save((err) => {
+              if (err) {
+                console.error('Session save error:', err);
+                reject(err);
+              }
+              resolve();
+            });
+          });
+
+          console.log('Complete photo upload successful:', {
             userId: req.user.id,
             url: s3Url,
             timestamp: new Date().toISOString()
@@ -560,13 +597,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json({ url: s3Url });
         } else {
           // 中間チャンクの場合は成功を返す
-          console.log('Intermediate chunk processed:', {
-            userId: req.user.id,
-            chunkIndex,
-            totalChunks,
-            photoId,
-            timestamp: new Date().toISOString()
-          });
           res.json({ status: 'chunk_uploaded' });
         }
       } catch (uploadError) {

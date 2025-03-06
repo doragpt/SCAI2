@@ -63,7 +63,7 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 30 * 1024; // 30KB chunks
+              const chunkSize = 20 * 1024; // 20KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -85,42 +85,56 @@ export async function apiRequest(
                   timestamp: new Date().toISOString()
                 });
 
-                try {
-                  const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
-                    method: 'POST',
-                    headers: {
-                      ...headers,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      photo: `data:image/jpeg;base64,${chunk}`,
-                      totalChunks,
-                      chunkIndex: i,
-                      photoId,
-                    }),
-                  });
+                let chunkRetries = 0;
+                const maxChunkRetries = 3;
 
-                  if (!chunkRes.ok) {
-                    throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
+                while (chunkRetries < maxChunkRetries) {
+                  try {
+                    const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
+                      method: 'POST',
+                      headers: {
+                        ...headers,
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        photo: `data:image/jpeg;base64,${chunk}`,
+                        totalChunks,
+                        chunkIndex: i,
+                        photoId,
+                      }),
+                    });
+
+                    if (!chunkRes.ok) {
+                      throw new Error(`Failed to upload photo chunk: ${chunkRes.statusText}`);
+                    }
+
+                    const result = await chunkRes.json();
+                    console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
+
+                    if (i === totalChunks - 1 && result.url) {
+                      uploadedPhotos.push({ ...photo, url: result.url });
+                    }
+                    break;
+                  } catch (chunkError) {
+                    console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
+                      error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
+                      attempt: chunkRetries + 1,
+                      timestamp: new Date().toISOString()
+                    });
+
+                    chunkRetries++;
+                    if (chunkRetries === maxChunkRetries) {
+                      throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts`);
+                    }
+
+                    // 失敗した場合は少し待ってからリトライ
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
                   }
-
-                  const result = await chunkRes.json();
-                  console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
-
-                  if (i === totalChunks - 1 && result.url) {
-                    uploadedPhotos.push({ ...photo, url: result.url });
-                  }
-                } catch (chunkError) {
-                  console.error(`Chunk upload error (${i + 1}/${totalChunks}):`, {
-                    error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
-                    timestamp: new Date().toISOString()
-                  });
-                  throw chunkError;
                 }
 
                 // チャンク間で少し待機して負荷を分散
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 100));
+                  await new Promise(resolve => setTimeout(resolve, 200));
                 }
               }
 
