@@ -100,11 +100,13 @@ const PhotoUpload = ({
   onChange: (photos: Photo[]) => void;
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("スタジオ写真（無加工）");
+  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("現在の髪色");
   const [showBulkTagging, setShowBulkTagging] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
   const compressImage = async (file: File): Promise<string | null> => {
     try {
@@ -198,12 +200,14 @@ const PhotoUpload = ({
     }
 
     if (newPhotos.length > 0) {
-      onChange([...photos, ...newPhotos]);
+      const updatedPhotos = [...photos, ...newPhotos];
+      onChange(updatedPhotos);
       toast({
         title: "アップロード完了",
         description: `${newPhotos.length}枚の写真をアップロードしました。`,
       });
     }
+
     setSelectedFiles(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -226,7 +230,6 @@ const PhotoUpload = ({
     });
   };
 
-  const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
   return (
     <div className="space-y-6">
@@ -251,7 +254,7 @@ const PhotoUpload = ({
                 disabled={tag === "現在の髪色" && hasHairColorPhoto}
               >
                 {tag}
-                {tag === "現在の髪色" && " (必須)"}
+                {tag === "現在の髪色" && (!hasHairColorPhoto ? " (必須)" : " (登録済み)")}
               </SelectItem>
             ))}
           </SelectContent>
@@ -527,7 +530,7 @@ export function TalentForm() {
       currentStores: [],
       previousStores: [],
       photoDiaryUrls: [],
-      photos: [], // 写真は空配列で初期化
+      photos: [],
       selfIntroduction: "",
       notes: "",
       estheOptions: {
@@ -543,15 +546,18 @@ export function TalentForm() {
     },
   });
 
-  // フォームの状態を監視（より詳細なログを追加）
+  // より詳細なデバッグログを追加
   useEffect(() => {
-    console.log('Form validation state:', {
-      isValid: form.formState.isValid,
-      errors: form.formState.errors,
-      values: form.getValues(),
+    const formState = form.formState;
+    console.log('Detailed form state:', {
+      isValid: formState.isValid,
+      isDirty: formState.isDirty,
+      errors: formState.errors,
       photos: form.getValues().photos,
+      touchedFields: formState.touchedFields,
+      validFields: Object.keys(formState.errors).length === 0
     });
-  }, [form.formState.isValid, form.formState.errors]);
+  }, [form.formState]);
 
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
@@ -745,12 +751,17 @@ export function TalentForm() {
 
   // 写真の更新処理を修正
   const handlePhotoUpload = (newPhotos: Photo[]) => {
+    console.log('Updating photos:', newPhotos);
+    // バリデーション状態をリセット
+    form.clearErrors('photos');
+
+    // 写真の更新
     form.setValue('photos', newPhotos, {
       shouldValidate: true,
       shouldDirty: true,
+      shouldTouch: true
     });
   };
-
 
   const onSubmit = form.handleSubmit(async (data) => {
     console.log('Form submission:', {
@@ -813,9 +824,39 @@ export function TalentForm() {
     }
   });
 
-  // 保存ボタンのdisabled条件を修正
-  const isFormDisabled = !form.formState.isValid || form.formState.isSubmitting;
-  console.log('Save button state:', { isFormDisabled });
+  // フォームの状態監視を強化
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log('Form value changed:', {
+        field: name,
+        type,
+        photos: value.photos,
+        errors: form.formState.errors,
+        isValid: form.formState.isValid
+      });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // 保存ボタンの状態管理を修正
+  const formState = form.formState;
+  const hasPhotos = form.watch('photos')?.length > 0;
+  const hasCurrentHairPhoto = form.watch('photos')?.some(photo => photo.tag === "現在の髪色");
+
+  const isFormDisabled =
+    !formState.isValid ||
+    !hasPhotos ||
+    !hasCurrentHairPhoto ||
+    formState.isSubmitting;
+
+  console.log('Form validation state:', {
+    isValid: formState.isValid,
+    hasPhotos,
+    hasCurrentHairPhoto,
+    isSubmitting: formState.isSubmitting,
+    isDisabled: isFormDisabled
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -1829,7 +1870,7 @@ export function TalentForm() {
                   disabled={isFormDisabled}
                   className="min-w-[200px]"
                 >
-                  {form.formState.isSubmitting ? (
+                  {formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       送信中...
