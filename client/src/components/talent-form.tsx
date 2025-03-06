@@ -101,12 +101,13 @@ const PhotoUpload = ({
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("現在の髪色");
   const [showBulkTagging, setShowBulkTagging] = useState(false);
-  const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
+  // 写真圧縮処理は変更なし
   const compressImage = async (file: File): Promise<string | null> => {
     try {
       if (file.size > 10 * 1024 * 1024) { // 10MBまで許可
@@ -202,7 +203,6 @@ const PhotoUpload = ({
     }
 
     if (newPhotos.length > 0) {
-      // 既存の写真とIDの重複をチェック
       const existingIds = new Set(photos.map((p) => p.id));
       const uniqueNewPhotos = newPhotos.filter((p) => !existingIds.has(p.id));
 
@@ -222,8 +222,8 @@ const PhotoUpload = ({
   };
 
   const handleBulkTagging = (tag: typeof photoTags[number]) => {
-    const updatedPhotos = photos.map((photo) => {
-      if (selectedPhotos.includes(photos.indexOf(photo))) {
+    const updatedPhotos = photos.map(photo => {
+      if (selectedPhotos.includes(photo.id)) {
         return { ...photo, tag };
       }
       return photo;
@@ -238,7 +238,9 @@ const PhotoUpload = ({
   };
 
   const handleRemovePhoto = (photoId: string) => {
+    console.log('Removing photo:', photoId);
     const updatedPhotos = photos.filter((photo) => photo.id !== photoId);
+    console.log('Updated photos:', updatedPhotos);
     onChange(updatedPhotos);
     toast({
       title: "削除完了",
@@ -324,18 +326,18 @@ const PhotoUpload = ({
 
       {/* 写真一覧 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {photos.map((photo, index) => (
+        {photos.map((photo) => (
           <div
-            key={photo.id} // 写真のIDをkeyとして使用
+            key={photo.id}
             className={`relative group ${
-              selectedPhotos.includes(index) ? "ring-2 ring-primary" : ""
+              selectedPhotos.includes(photo.id) ? "ring-2 ring-primary" : ""
             }`}
             onClick={() => {
               if (showBulkTagging) {
                 setSelectedPhotos((prev) =>
-                  prev.includes(index)
-                    ? prev.filter((i) => i !== index)
-                    : [...prev, index]
+                  prev.includes(photo.id)
+                    ? prev.filter((id) => id !== photo.id)
+                    : [...prev, photo.id]
                 );
               }
             }}
@@ -343,7 +345,7 @@ const PhotoUpload = ({
             <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
               <img
                 src={photo.url}
-                alt={`プロフィール写真 ${index + 1}`}
+                alt={`プロフィール写真 (${photo.tag})`}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -352,8 +354,9 @@ const PhotoUpload = ({
                 <Select
                   value={photo.tag}
                   onValueChange={(value) => {
-                    const updatedPhotos = [...photos];
-                    updatedPhotos[index] = { ...photo, tag: value as typeof photoTags[number] };
+                    const updatedPhotos = photos.map(p =>
+                      p.id === photo.id ? { ...p, tag: value as typeof photoTags[number] } : p
+                    );
                     onChange(updatedPhotos);
                   }}
                 >
