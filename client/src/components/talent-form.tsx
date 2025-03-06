@@ -1654,9 +1654,9 @@ export function TalentForm() {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm text-muted-foreground mb-2">ステージネーム</Label>
+                            <Label className="text-sm text-muted-foreground mb-2">源氏名</Label>
                             <Input
-                              placeholder="ステージネームを入力してください"
+                              placeholder="源氏名を入力してください"
                               value={store.stageName}
                               onChange={(e) =>
                                 handleUpdateCurrentStore(index, "stageName", e.target.value)
