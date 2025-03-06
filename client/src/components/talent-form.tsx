@@ -1821,11 +1821,12 @@ export function TalentForm() {
       </main>
 
       {/* 確認モーダル */}
-      {formData && isConfirmationOpen && (
+      {formData && (
         <ProfileConfirmationModal
           isOpen={isConfirmationOpen}
           onClose={() => {
             console.log('Closing confirmation modal');
+            setFormData(null);
             setIsConfirmationOpen(false);
           }}
           onConfirm={handleConfirm}

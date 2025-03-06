@@ -35,7 +35,7 @@ export function ProfileConfirmationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>プロフィール内容の確認</DialogTitle>
           <DialogDescription>
@@ -43,8 +43,8 @@ export function ProfileConfirmationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh]">
-          <div className="space-y-6 px-4">
+        <ScrollArea className="flex-1 px-1">
+          <div className="space-y-6">
             {/* 基本情報 */}
             <section className="space-y-2">
               <h3 className="font-medium">基本情報</h3>
