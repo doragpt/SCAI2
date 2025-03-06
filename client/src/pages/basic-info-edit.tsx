@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { calculateAge } from "@/utils/date";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
@@ -65,6 +66,10 @@ export default function BasicInfoEdit() {
     enabled: !!user,
   });
 
+  // デバッグ用のログを追加
+  console.log('Basic info user data:', user);
+  console.log('Basic info profile data:', profile);
+
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -78,6 +83,7 @@ export default function BasicInfoEdit() {
   // プロフィールデータが取得できたら、フォームの値を更新
   useEffect(() => {
     if (profile && user) {
+      console.log('Loading user profile data:', { profile, user });
       form.reset({
         username: user.username,
         displayName: user.displayName,

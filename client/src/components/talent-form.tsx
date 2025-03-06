@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// 必要なインポートを追加
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
@@ -40,6 +39,7 @@ import {
   talentProfileSchema,
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
+import { useAuth } from "@/hooks/auth";
 
 // Store type definitions
 type CurrentStore = {
@@ -334,6 +334,52 @@ const PhotoUpload = ({
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // デバッグ用のログを追加
+  console.log('TalentForm auth user:', user);
+
+  // プロフィールデータの取得
+  const { data: existingProfile, isLoading: isLoadingProfile, error: profileError } = useQuery<TalentProfileData>({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    enabled: !!user,
+    onError: (error) => {
+      console.error('Profile fetch error:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "プロフィールデータの取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // ユーザー基本情報の取得を修正
+  const { data: userProfile, isLoading: isUserProfileLoading, error: userProfileError } = useQuery({
+    queryKey: ["/api/user"],
+    enabled: !!user,
+    onError: (error) => {
+      console.error('User profile fetch error:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "ユーザー情報の取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // デバッグ用のログを追加
+  console.log('TalentForm user profile:', userProfile);
+  if (userProfileError) {
+    console.error('User profile error:', userProfileError);
+  }
+
+  // 生年月日から年齢を計算
+  const age = userProfile?.birthDate
+    ? calculateAge(new Date(userProfile.birthDate))
+    : null;
+
+  console.log('Calculated age:', age);
+
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<TalentProfileData | null>(null);
   const [otherIds, setOtherIds] = useState<string[]>([]);
@@ -345,19 +391,34 @@ export function TalentForm() {
   const [newIdType, setNewIdType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // プロフィールデータの取得
-  const { data: existingProfile, isLoading } = useQuery<TalentProfileData>({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-  });
+  // 既存のプロフィールデータが取得された時にフォームを更新
+  useEffect(() => {
+    if (existingProfile) {
+      console.log("Loading existing profile:", existingProfile);
 
-  // ユーザー基本情報の取得
-  const { data: userData } = useQuery({
-    queryKey: [QUERY_KEYS.USER_PROFILE],
-  });
+      // フォームの値を更新
+      form.reset({
+        ...existingProfile,
+        // 数値フィールドを文字列に変換
+        bust: existingProfile.bust?.toString() ?? "",
+        waist: existingProfile.waist?.toString() ?? "",
+        hip: existingProfile.hip?.toString() ?? "",
+        photos: existingProfile.photos || [],
+        bodyMark: existingProfile.bodyMark || {
+          hasBodyMark: false,
+          details: "",
+        },
+      });
 
-  // 生年月日から年齢を計算
-  const age = userData?.birthDate ? calculateAge(new Date(userData.birthDate)) : null;
-
+      // その他のフィールドの初期化
+      setOtherIds(existingProfile.availableIds?.others || []);
+      setOtherNgOptions(existingProfile.ngOptions?.others || []);
+      setOtherAllergies(existingProfile.allergies?.others || []);
+      setOtherSmokingTypes(existingProfile.smoking?.others || []);
+      setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
+    }
+  }, [existingProfile, form]);
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -417,35 +478,6 @@ export function TalentForm() {
       },
     },
   });
-
-  // 既存のプロフィールデータが取得された時にフォームを更新
-  useEffect(() => {
-    if (existingProfile) {
-      console.log("Loading existing profile:", existingProfile);
-
-      // フォームの値を更新
-      form.reset({
-        ...existingProfile,
-        // 数値フィールドを文字列に変換
-        bust: existingProfile.bust?.toString() ?? "",
-        waist: existingProfile.waist?.toString() ?? "",
-        hip: existingProfile.hip?.toString() ?? "",
-        photos: existingProfile.photos || [],
-        bodyMark: existingProfile.bodyMark || {
-          hasBodyMark: false,
-          details: "",
-        },
-      });
-
-      // その他のフィールドの初期化
-      setOtherIds(existingProfile.availableIds?.others || []);
-      setOtherNgOptions(existingProfile.ngOptions?.others || []);
-      setOtherAllergies(existingProfile.allergies?.others || []);
-      setOtherSmokingTypes(existingProfile.smoking?.others || []);
-      setIsEstheOpen(existingProfile.hasEstheExperience || false);
-      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-    }
-  }, [existingProfile, form]);
 
   // フォーム送信前の確認
   const handleSubmit = async (data: TalentProfileData) => {
@@ -543,7 +575,20 @@ export function TalentForm() {
     setNewIdType("");
   };
 
-  if (isLoading) {
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-muted-foreground">認証が必要です</p>
+          <Button asChild>
+            <Link href="/auth">ログイン</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isUserProfileLoading || isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -693,26 +738,26 @@ export function TalentForm() {
             </div>
 
             {/* 生年月日と年齢の表示 */}
-            <div className="border rounded-lg p-4 bg-muted/10">
+            <div className="mt-4 space-y-2 border rounded-lg p-4 bg-muted/10">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label>生年月日</Label>
                   <p className="text-lg font-medium">
-                    {userData?.birthDate
-                      ? new Date(userData.birthDate).toLocaleDateString('ja-JP')
-                      : '未設定'}
+                    {userProfile?.birthDate
+                      ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
+                      : '基本情報から設定してください'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <Label>年齢</Label>
                   <p className="text-lg font-medium">
-                    {age ? `${age}歳` : '未設定'}
+                    {age ? `${age}歳` : '基本情報から設定してください'}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                ※生年月日の修正は基本情報編集ページから行ってください
-                {userData?.birthDateModified && '（修正は1回のみ可能です）'}
+                ※生年月日の設定・修正は基本情報編集ページから行ってください
+                {userProfile?.birthDateModified && '（修正は1回のみ可能です）'}
               </p>
             </div>
 
@@ -905,8 +950,7 @@ export function TalentForm() {
                           value={field.value === null ? "" : field.value}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === "") {
-                              field.onChange(null);
+                            if (value === "") {                              field.onChange(null);
                             } else if (!isNaN(Number(value))) {
                               field.onChange(Number(value));
                             }

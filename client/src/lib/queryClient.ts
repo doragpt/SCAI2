@@ -1,6 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import type { TalentProfileData } from "@shared/schema";
-import type { SelectUser } from "@shared/schema";
+import type { TalentProfileData, SelectUser } from "@shared/schema";
 
 // キャッシュのキー定数
 export const QUERY_KEYS = {
