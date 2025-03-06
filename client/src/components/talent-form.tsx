@@ -764,22 +764,8 @@ export function TalentForm() {
     });
   };
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    console.log('Form submission:', {
-      isValid: form.formState.isValid,
-      isDirty: form.formState.isDirty,
-      errors: form.formState.errors
-    });
-
-    if (!form.formState.isValid) {
-      toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください。",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onSubmit = form.handleSubmit((data) => {
+    console.log('Form submitted with data:', data);
     try {
       const optimizedData = {
         ...data,
@@ -813,6 +799,7 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
+      console.log('Opening confirmation modal with data:', optimizedData);
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
     } catch (error) {
@@ -824,7 +811,6 @@ export function TalentForm() {
       });
     }
   });
-
 
   // フォームの保存ボタンの状態を単純化
   const photos = form.getValues().photos || [];
@@ -1842,6 +1828,11 @@ export function TalentForm() {
                   size="lg"
                   disabled={isButtonDisabled}
                   className="min-w-[200px]"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Submit button clicked');
+                    onSubmit(e);
+                  }}
                 >
                   {form.formState.isSubmitting ? (
                     <>
