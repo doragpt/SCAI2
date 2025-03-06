@@ -1,11 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import type { TalentProfileData } from "@shared/schema";
-import type { SelectUser } from "./your-select-user-path"; // Assuming SelectUser is defined here
+import type { SelectUser } from "@shared/schema";
 
 // キャッシュのキー定数
 export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
   USER: "/api/user",
+  USER_PROFILE: "/api/user/profile",
   JOBS: "/api/jobs/public"
 } as const;
 
