@@ -63,8 +63,8 @@ export async function apiRequest(
             try {
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
-              // チャンクサイズを128KBに増加
-              const chunkSize = 128 * 1024;
+              // チャンクサイズを16KBに縮小
+              const chunkSize = 16 * 1024;
               const [header, base64Data] = photo.url.split(',');
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -132,14 +132,14 @@ export async function apiRequest(
                       throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
                     }
 
-                    // リトライ前の待機時間を短縮（500ms * リトライ回数）
-                    await new Promise(resolve => setTimeout(resolve, 500 * chunkRetries));
+                    // リトライ前の待機時間を調整（exponential backoff）
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
                   }
                 }
 
-                // チャンク間の待機時間を短縮（300ms）
+                // チャンク間の待機時間を最適化（600ms）
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 300));
+                  await new Promise(resolve => setTimeout(resolve, 600));
                 }
               }
 
