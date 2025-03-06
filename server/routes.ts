@@ -50,6 +50,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/user/profile", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      const [user] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          role: users.role,
+          displayName: users.displayName,
+          location: users.location,
+          birthDate: users.birthDate,
+          birthDateModified: users.birthDateModified,
+          preferredLocations: users.preferredLocations,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, req.user.id));
+
+      if (!user) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      // 日付を文字列に変換して返す
+      const userProfile = {
+        ...user,
+        birthDate: user.birthDate.toISOString().split('T')[0],
+        createdAt: user.createdAt.toISOString(),
+      };
+
+      res.json(userProfile);
+    } catch (error) {
+      console.error("User profile fetch error:", error);
+      res.status(500).json({
+        message: "ユーザー情報の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {

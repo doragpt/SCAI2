@@ -200,35 +200,6 @@ export const loginSchema = z.object({
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
-export const talentRegisterFormSchema = z.object({
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    ),
-  passwordConfirm: z.string(),
-  displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
-  role: z.literal("talent"),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-});
-
 // Talent profile schema
 // プロフィール写真のスキーマを追加
 
@@ -387,6 +358,48 @@ export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type User = typeof users.$inferSelect;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+// Updated SelectUser type definition
+export type SelectUser = {
+  id: number;
+  username: string;
+  role: "talent" | "store";
+  displayName: string;
+  location: string;
+  birthDate: string;
+  birthDateModified: boolean;
+  preferredLocations: string[];
+  createdAt: Date;
+};
+
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
