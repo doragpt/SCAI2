@@ -1,8 +1,580 @@
-<FormMessage />
+import { useForm, UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormItem,
+  FormField,
+  FormFieldWrapper,
+  FormControl,
+  FormMessage,
+  SwitchField,
+  Input,
+  Label,
+  Button,
+  Badge,
+  Checkbox,
+  Loader2,
+  X,
+  Collapsible,
+} from "@/components/ui";
+import { talentProfileSchema, TalentProfileData } from "@/schemas/talent-profile";
+import { useState, useEffect, ChangeEvent } from "react";
+import { toast } from "@/components/ui/use-toast";
+import PhotoUpload from "./photo-upload";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { getProfile } from "@/services/talent";
+import { z } from "zod";
+
+export function TalentForm({
+  existingProfile,
+}: {
+  existingProfile?: TalentProfileData;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<TalentProfileData | undefined>(undefined);
+  const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
+  const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
+  const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+  const [bodyMarkDetails, setBodyMarkDetails] = useState<string>("");
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const commonNgOptions = ["ヘナタトゥー", "刺青"];
+  const estheOptions = [
+    "フェイシャル",
+    "ボディ",
+    "痩身",
+    "脱毛",
+    "ブライダル",
+    "その他",
+  ];
+  const allergyTypes = [
+    "ハウスダスト",
+    "花粉",
+    "ダニ",
+    "ペット",
+    "食べ物",
+    "金属",
+    "薬品",
+    "その他",
+  ];
+  const smokingTypes = ["タバコ", "電子タバコ", "葉巻", "パイプ", "その他"];
+
+
+  const form = useForm<TalentProfileData>({
+    resolver: zodResolver(talentProfileSchema),
+    mode: "onChange",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      firstNameKana: "",
+      lastNameKana: "",
+      birthday: null,
+      gender: "female",
+      phoneNumber: "",
+      email: "",
+      address: "",
+      height: 150,
+      weight: 45,
+      cupSize: "D",
+      bust: null,
+      waist: null,
+      hip: null,
+      ngOptions: {
+        common: [],
+        others: [],
+      },
+      hasEstheExperience: false,
+      estheExperiencePeriod: "",
+      estheOptions: {
+        available: [],
+        ngOptions: [],
+      },
+      allergies: {
+        hasAllergy: false,
+        types: [],
+        others: [],
+      },
+      smoking: {
+        enabled: false,
+        types: [],
+        others: [],
+      },
+      bodyMark: {
+        hasBodyMark: false,
+        details: "",
+      },
+      hasSnsAccount: false,
+      snsUrls: [""],
+      currentStores: [{ storeName: "", stageName: "" }],
+      previousStores: [{ storeName: "", photoDiaryUrls: [""] }],
+      photoDiaryUrls: [""],
+      photos: [],
+      selfIntroduction: "",
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    if (existingProfile) {
+      console.log("Loading existing profile:", existingProfile);
+      form.reset({
+        ...existingProfile,
+        bust: existingProfile.bust?.toString() ?? "",
+        waist: existingProfile.waist?.toString() ?? "",
+        hip: existingProfile.hip?.toString() ?? "",
+      });
+    }
+  }, [existingProfile, form]);
+
+  const handleUpdateSnsUrl = (index: number, value: string) => {
+    const updatedUrls = [...form.watch("snsUrls") || []];
+    updatedUrls[index] = value;
+    form.setValue("snsUrls", updatedUrls);
+  };
+
+  const handleRemoveSnsUrl = (index: number) => {
+    const updatedUrls = [...form.watch("snsUrls") || []].filter((_, i) => i !== index);
+    form.setValue("snsUrls", updatedUrls);
+  };
+
+  const handleAddSnsUrl = () => {
+    form.setValue("snsUrls", [...form.watch("snsUrls") || [], ""]);
+  };
+
+  const handleUpdateCurrentStore = (index: number, key: string, value: string) => {
+    const updatedStores = [...form.watch("currentStores") || []];
+    updatedStores[index] = { ...updatedStores[index], [key]: value };
+    form.setValue("currentStores", updatedStores);
+  };
+
+  const handleRemoveCurrentStore = (index: number) => {
+    const updatedStores = [...form.watch("currentStores") || []].filter((_, i) => i !== index);
+    form.setValue("currentStores", updatedStores);
+  };
+
+  const handleAddCurrentStore = () => {
+    form.setValue("currentStores", [...form.watch("currentStores") || [], { storeName: "", stageName: "" }]);
+  };
+
+  const handleUpdatePreviousStore = (index: number, key: string, value: any) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[index] = { ...updatedStores[index], [key]: value };
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleRemovePreviousStore = (index: number) => {
+    const updatedStores = [...form.watch("previousStores") || []].filter((_, i) => i !== index);
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleAddPreviousStore = () => {
+    form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "", photoDiaryUrls: [""] }]);
+  };
+
+  const handleRemovePhotoDiaryUrl = (storeIndex: number, urlIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = updatedStores[storeIndex].photoDiaryUrls.filter((_, i) => i !== urlIndex);
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleAddPhotoDiaryUrl = (storeIndex: number) => {
+    const updatedStores = [...form.watch("previousStores") || []];
+    updatedStores[storeIndex].photoDiaryUrls = [...updatedStores[storeIndex].photoDiaryUrls, ""];
+    form.setValue("previousStores", updatedStores);
+  };
+
+  const handleConfirm = async () => {
+    try {
+      setIsSubmitting(true);
+      // ... (Your existing confirmation logic here)
+    } catch (error) {
+      console.error("データの保存中にエラーが発生しました:", error);
+      toast({
+        title: "エラー",
+        description: "データの保存中にエラーが発生しました。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsConfirmationOpen(false);
+    }
+  };
+
+  const handleSubmit = async (data: TalentProfileData) => {
+    try {
+      setIsSubmitting(true);
+      const optimizedData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === "" ? null : data.bust,
+        waist: data.waist === "" ? null : data.waist,
+        hip: data.hip === "" ? null : data.hip,
+        ngOptions: {
+          common: data.ngOptions.common,
+          others: otherNgOptions,
+        },
+        estheOptions: {
+          available: data.estheOptions.available,
+          ngOptions: data.estheOptions.ngOptions,
+        },
+        allergies: {
+          hasAllergy: data.allergies.hasAllergy,
+          types: data.allergies.types,
+          others: otherAllergies,
+        },
+        smoking: {
+          enabled: data.smoking.enabled,
+          types: data.smoking.types,
+          others: otherSmokingTypes,
+        },
+        bodyMark: {
+          hasBodyMark: data.bodyMark.hasBodyMark,
+          details: bodyMarkDetails,
+        },
+        snsUrls: data.snsUrls.filter((url) => url !== ""),
+        currentStores: data.currentStores.filter((store) => store.storeName !== "" || store.stageName !== ""),
+        previousStores: data.previousStores.map((store) => ({
+          storeName: store.storeName,
+          photoDiaryUrls: store.photoDiaryUrls.filter((url) => url !== ""),
+        })),
+        photoDiaryUrls: data.photoDiaryUrls.filter((url) => url !== ""),
+        photos: data.photos,
+      };
+
+      setFormData(optimizedData);
+      setIsConfirmationOpen(true);
+    } catch (error) {
+      console.error("データの準備中にエラーが発生しました:", error);
+      toast({
+        title: "エラー",
+        description: "データの準備中にエラーが発生しました。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col space-y-8">
+      <main className="flex-grow">
+        <Form onSubmit={form.handleSubmit(handleSubmit)}>
+          <form>
+            {/* 1. 名前 */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="名前（漢字）">
+                      <FormControl>
+                        <Input {...field} placeholder="例：山田" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="名前（漢字）">
+                      <FormControl>
+                        <Input {...field} placeholder="例：太郎" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            {/* 2. ふりがな */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstNameKana"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="名前（ふりがな）">
+                      <FormControl>
+                        <Input {...field} placeholder="例：やまだ" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastNameKana"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="名前（ふりがな）">
+                      <FormControl>
+                        <Input {...field} placeholder="例：たろう" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* 3. 生年月日 */}
+            <FormField
+              control={form.control}
+              name="birthday"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="生年月日">
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 4. 性別 */}
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="性別">
+                    <FormControl>
+                      <select {...field} className="w-full">
+                        <option value="female">女性</option>
+                        <option value="male">男性</option>
+                        <option value="other">その他</option>
+                      </select>
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 5. 電話番号 */}
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="電話番号">
+                    <FormControl>
+                      <Input {...field} placeholder="例：090-1234-5678" />
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 6. メールアドレス */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="メールアドレス">
+                    <FormControl>
+                      <Input type="email" {...field} placeholder="例：test@example.com" />
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 7. 住所 */}
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="住所">
+                    <FormControl>
+                      <Input {...field} placeholder="例：東京都渋谷区…" />
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 8. 身長・体重 */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="height"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="身長" description="（cm）">
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          placeholder="例：160"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="体重" description="（kg）">
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          placeholder="例：50"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* 9. バスト・ウエスト・ヒップ */}
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="bust"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="バスト" description="任意入力（cm）">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="未入力可"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="waist"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="ウエスト" description="任意入力（cm）">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="未入力可"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="ヒップ" description="任意入力（cm）">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="未入力可"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* 10. カップサイズ */}
+            <FormField
+              control={form.control}
+              name="cupSize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="カップサイズ">
+                    <FormControl>
+                      <select {...field} className="w-full">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                        <option value="H">H</option>
+                        <option value="I">I</option>
+                        <option value="J">J</option>
+                        <option value="K">K</option>
+                        <option value="L">L</option>
+                        <option value="M">M</option>
+                        <option value="その他">その他</option>
+                      </select>
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* 11. NGオプション */}
             <div>
