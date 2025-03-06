@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -39,8 +40,6 @@ export const uploadToS3 = async (
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
-      ACL: 'public-read', // パブリックアクセスを許可
-      ContentDisposition: 'inline', // ブラウザで直接表示
       // CORSに関連するメタデータを追加
       Metadata: {
         'x-amz-meta-uploaded-by': 'scai-app',
@@ -63,9 +62,16 @@ export const uploadToS3 = async (
       timestamp: new Date().toISOString()
     });
 
-    // アップロードされた画像のURLを返す
-    const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
-    return imageUrl;
+    // プリサインドURLを生成
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: uniqueFileName
+    });
+
+    // 1時間有効なプリサインドURLを生成
+    const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 });
+
+    return signedUrl;
   } catch (error) {
     console.error('S3 upload error:', {
       error,
@@ -73,5 +79,25 @@ export const uploadToS3 = async (
       timestamp: new Date().toISOString()
     });
     throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// プリサインドURL生成用の関数を追加
+export const getSignedS3Url = async (key: string): Promise<string> => {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key
+    });
+
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    return signedUrl;
+  } catch (error) {
+    console.error('Failed to generate signed URL:', {
+      error,
+      key,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error(`Failed to generate signed URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };

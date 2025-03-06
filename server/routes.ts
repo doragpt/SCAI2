@@ -13,7 +13,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
-import { uploadToS3 } from "./utils/s3";
+import { uploadToS3, getSignedS3Url } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
@@ -450,6 +450,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({
         error: true,
         message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"
+      });
+    }
+  });
+
+  // プリサインドURL取得エンドポイント
+  app.get("/api/get-signed-url", authenticate, async (req: any, res) => {
+    try {
+      const { key } = req.query;
+
+      if (!key) {
+        return res.status(400).json({ message: "画像キーが必要です。" });
+      }
+
+      console.log('Signed URL request received:', {
+        userId: req.user.id,
+        key,
+        timestamp: new Date().toISOString()
+      });
+
+      const signedUrl = await getSignedS3Url(key as string);
+
+      console.log('Signed URL generated successfully:', {
+        userId: req.user.id,
+        key,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ url: signedUrl });
+    } catch (error) {
+      console.error('Signed URL generation error:', {
+        error,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "プリサインドURLの取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });

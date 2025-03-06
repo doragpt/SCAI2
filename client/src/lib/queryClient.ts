@@ -6,7 +6,8 @@ export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
   USER: "/api/user",
   USER_PROFILE: "/api/user/profile",
-  JOBS: "/api/jobs/public"
+  JOBS: "/api/jobs/public",
+  SIGNED_URL: "/api/get-signed-url"
 } as const;
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -314,6 +315,31 @@ export async function updateUserProfile(data: {
   } catch (error) {
     console.error("User profile update failed:", {
       error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
+// プリサインドURL取得関数を追加
+export async function getSignedImageUrl(key: string): Promise<string> {
+  try {
+    console.log('Requesting signed URL:', {
+      key,
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest(
+      "GET",
+      `${QUERY_KEYS.SIGNED_URL}?key=${encodeURIComponent(key)}`
+    );
+    const data = await response.json();
+
+    return data.url;
+  } catch (error) {
+    console.error('Failed to get signed URL:', {
+      error,
+      key,
       timestamp: new Date().toISOString()
     });
     throw error;

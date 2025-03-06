@@ -1,0 +1,97 @@
+現在、S3バケット scoutai1 にアップロードされた画像のアクセス制限が適切ではなく、個人情報を含む画像を直接公開しないようにする必要があります。
+そのため、S3のバケットポリシーを修正し、画像を非公開にしたうえで、プリサインドURLを発行する方式に変更してください。
+
+修正内容
+1. バケットポリシーの修正
+S3のオブジェクトをパブリックアクセス不可に変更し、代わりにアプリケーションのサーバーからのみ画像にアクセスできるように設定してください。
+
+変更前（現在のポリシー）
+
+json
+コピーする
+編集する
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::scoutai1/*"
+        }
+    ]
+}
+変更後（非公開にする）
+
+json
+コピーする
+編集する
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowAppAccess",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::559050242367:role/AppServerRole"
+            },
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::scoutai1/*"
+        }
+    ]
+}
+変更点
+
+誰でもアクセスできる Principal: "*" を削除
+アプリケーションサーバー（IAMロール AppServerRole）にのみ s3:GetObject を許可
+2. プリサインドURL方式の導入
+画像を表示する際に、直接S3のURLを使用するのではなく、サーバー側でプリサインドURLを発行し、一定時間のみ有効なURLをフロントエンドに提供する方式 に変更してください。
+
+サーバー側（Node.js/Expressの実装例）
+
+javascript
+コピーする
+編集する
+const AWS = require("aws-sdk");
+const s3 = new AWS.S3();
+
+const getPresignedUrl = async (req, res) => {
+    const { key } = req.query;
+    if (!key) return res.status(400).json({ error: "画像キーが必要です。" });
+
+    try {
+        const url = await s3.getSignedUrlPromise("getObject", {
+            Bucket: "scoutai1",
+            Key: key,
+            Expires: 3600 // 1時間有効
+        });
+
+        res.json({ url });
+    } catch (error) {
+        res.status(500).json({ error: "プリサインドURLの取得に失敗しました。" });
+    }
+};
+3. フロントエンドの変更
+フロントエンドでは、直接S3のURLを使わず、サーバー経由で取得したプリサインドURLを <img> タグにセットしてください。
+
+javascript
+コピーする
+編集する
+const [imageUrl, setImageUrl] = useState("");
+
+useEffect(() => {
+    fetch(`/api/getPresignedUrl?key=1741283488566-12-1741283486744-g3a2lr.jpg`)
+        .then(response => response.json())
+        .then(data => setImageUrl(data.url))
+        .catch(error => console.error("画像の取得に失敗しました", error));
+}, []);
+
+return <img src={imageUrl} alt="プロフィール画像" />;
+期待する動作
+✅ S3の画像URLは直接公開されず、誰でもアクセスできない。
+✅ サーバー経由で取得したプリサインドURLを使って画像を表示する。
+✅ URLの有効期限があるため、一定時間後にURLが無効化され、セキュリティが向上する。
+
+この方法で、個人情報を含む画像を 安全に管理しながら、必要なユーザーだけが画像を取得できる仕組み を作成できます。
+適用後、動作確認をお願いします。よろしくお願いいたします。
