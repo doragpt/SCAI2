@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/user/profile", authenticate, async (req: any, res) => {
+app.get("/api/user/profile", authenticate, async (req: any, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "認証が必要です" });
@@ -545,12 +545,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // チャンクアップロード用のエンドポイント
   app.post("/api/upload-photo-chunk", authenticate, async (req: any, res) => {
     try {
-      const { photo, totalChunks, chunkIndex, photoId } = req.body;
+      const { photo, totalChunks, chunkIndex, photoId, tag } = req.body;
 
       console.log('Photo chunk upload request received:', {
         userId: req.user.id,
         chunkIndex,
         totalChunks,
+        tag,
         timestamp: new Date().toISOString()
       });
 
@@ -579,6 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           photoId,
           chunkIndex,
           totalChunks,
+          tag,
           timestamp: new Date().toISOString()
         });
 
@@ -604,13 +606,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Complete photo upload successful:', {
               userId: req.user.id,
               url: s3Url,
+              tag,
               timestamp: new Date().toISOString()
             });
 
             res.set({
               'ETag': `"${photoId}"`,
               'Content-Type': 'application/json'
-            }).json({ url: s3Url });
+            }).json({ url: s3Url, tag });
           } catch (s3Error) {
             console.error('S3 upload error:', {
               error: s3Error,
