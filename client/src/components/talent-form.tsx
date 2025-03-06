@@ -498,7 +498,7 @@ export function TalentForm() {
       location: "",
       nearestStation: "",
       availableIds: {
-        types: [], // 空の配列として初期化
+        types: [],
         others: [],
       },
       canProvideResidenceRecord: false,
@@ -604,10 +604,10 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
-  // handleSubmit関数の修正部分
-  const handleSubmit = async (data: TalentProfileData) => {
+  // フォーム送信処理を修正
+  const onSubmit = async (data: TalentProfileData) => {
     try {
-      console.log('handleSubmit called with data:', data);
+      console.log('onSubmit called with data:', data);
 
       // バリデーション状態の確認
       if (!form.formState.isValid) {
@@ -654,7 +654,7 @@ export function TalentForm() {
 
       console.log('Setting optimized form data:', optimizedData);
 
-      // 状態を更新して確認モーダルを表示（同期的に実行）
+      // 状態を更新して確認モーダルを表示
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
 
@@ -817,11 +817,7 @@ export function TalentForm() {
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              console.log('Form submission started');
-              form.handleSubmit(handleSubmit)(e);
-            }}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-8"
           >
             <div>
