@@ -11,8 +11,27 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ProfileData } from "@shared/types/profile";
-import { Loader2, User, MapPin, Ruler, Heart, Camera, AlertTriangle, FileText, ExternalLink, Star } from "lucide-react";
+import {
+  Loader2,
+  User,
+  MapPin,
+  Ruler,
+  Heart,
+  Camera,
+  AlertTriangle,
+  FileText,
+  Building2,
+  History,
+  Instagram,
+  Calendar,
+  FileCheck,
+  Cigarette,
+  Clock,
+  Star
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 interface ProfileConfirmationModalProps {
   isOpen: boolean;
@@ -57,6 +76,14 @@ export function ProfileConfirmationModal({
     </div>
   );
 
+  // 店舗情報コンポーネント
+  const StoreInfo = ({ stageName, storeName }: { stageName?: string; storeName: string }) => (
+    <div className="flex items-center gap-2">
+      <Building2 className="h-4 w-4 text-primary" />
+      <span>{storeName}{stageName && ` (${stageName})`}</span>
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -91,6 +118,14 @@ export function ProfileConfirmationModal({
                       icon={MapPin}
                       text={`${formData.location} (${formData.nearestStation})`}
                     />
+                  }
+                />
+                <InfoItem
+                  label="住民票"
+                  value={
+                    <Badge variant={formData.canProvideResidenceRecord ? "default" : "secondary"}>
+                      {formData.canProvideResidenceRecord ? "提出可能" : "提出不可"}
+                    </Badge>
                   }
                 />
               </div>
@@ -151,10 +186,110 @@ export function ProfileConfirmationModal({
                     </Badge>
                   }
                 />
+                <InfoItem
+                  label="写メ日記"
+                  value={
+                    <div className="space-y-2">
+                      <Badge variant={formData.canPhotoDiary ? "default" : "secondary"}>
+                        {formData.canPhotoDiary ? "投稿可能" : "投稿不可"}
+                      </Badge>
+                      {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
+                        <div className="space-y-1">
+                          {formData.photoDiaryUrls.map((url, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <FileText className="h-4 w-4" />
+                              <span>写メ日記 {index + 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  }
+                />
               </div>
             </section>
 
             <Separator />
+
+            {/* 勤務情報 */}
+            <section>
+              <SectionHeader icon={Building2} title="勤務情報" />
+              <div className="space-y-4 bg-card p-4 rounded-lg">
+                {formData.currentStores && formData.currentStores.length > 0 && (
+                  <InfoItem
+                    label="現在の在籍店舗"
+                    value={
+                      <div className="space-y-2">
+                        {formData.currentStores.map((store, index) => (
+                          <StoreInfo key={index} {...store} />
+                        ))}
+                      </div>
+                    }
+                  />
+                )}
+                {formData.previousStores && formData.previousStores.length > 0 && (
+                  <InfoItem
+                    label="過去の在籍店舗"
+                    value={
+                      <div className="space-y-2">
+                        {formData.previousStores.map((store, index) => (
+                          <StoreInfo key={index} {...store} />
+                        ))}
+                      </div>
+                    }
+                  />
+                )}
+                {formData.workType && (
+                  <InfoItem
+                    label="希望勤務形態"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span>{formData.workType}</span>
+                      </div>
+                    }
+                  />
+                )}
+                {(formData.workPeriodStart || formData.workPeriodEnd) && (
+                  <InfoItem
+                    label="希望勤務期間"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span>
+                          {formData.workPeriodStart && format(new Date(formData.workPeriodStart), 'yyyy年MM月dd日', { locale: ja })}
+                          {formData.workPeriodEnd && ` 〜 ${format(new Date(formData.workPeriodEnd), 'yyyy年MM月dd日', { locale: ja })}`}
+                        </span>
+                      </div>
+                    }
+                  />
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* SNS情報 */}
+            {formData.hasSnsAccount && (
+              <>
+                <section>
+                  <SectionHeader icon={Instagram} title="SNS情報" />
+                  <div className="space-y-4 bg-card p-4 rounded-lg">
+                    {formData.snsUrls && formData.snsUrls.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.snsUrls.map((url, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Instagram className="h-4 w-4 text-primary" />
+                            <span className="text-sm">SNSアカウント {index + 1}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </section>
+                <Separator />
+              </>
+            )}
 
             {/* 制限事項 */}
             <section>
@@ -195,6 +330,28 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
+
+                {formData.smoking && (
+                  <InfoItem
+                    label="喫煙"
+                    value={
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={formData.smoking.enabled ? "default" : "secondary"}>
+                          <Cigarette className="h-4 w-4 mr-1" />
+                          {formData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
+                        </Badge>
+                        {formData.smoking.enabled && [
+                          ...(formData.smoking.types || []),
+                          ...(formData.smoking.others || [])
+                        ].map((type, index) => (
+                          <Badge key={index} variant="outline">
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    }
+                  />
+                )}
               </div>
             </section>
 
@@ -212,14 +369,6 @@ export function ProfileConfirmationModal({
             <section>
               <SectionHeader icon={FileText} title="その他情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
-                <InfoItem
-                  label="写メ日記"
-                  value={
-                    <Badge variant={formData.photoDiaryAllowed ? "default" : "secondary"}>
-                      {formData.photoDiaryAllowed ? "投稿可能" : "投稿不可"}
-                    </Badge>
-                  }
-                />
                 <InfoItem
                   label="エステ経験"
                   value={
