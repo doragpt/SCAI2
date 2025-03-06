@@ -27,7 +27,10 @@ import {
   FileCheck,
   Cigarette,
   Clock,
-  Star
+  Star,
+  Link as LinkIcon,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -84,6 +87,19 @@ export function ProfileConfirmationModal({
     </div>
   );
 
+  // 写メ日記リンクコンポーネント
+  const PhotoDiaryLink = ({ url, index }: { url: string; index: number }) => (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 text-sm text-primary hover:underline"
+    >
+      <LinkIcon className="h-4 w-4" />
+      <span>写メ日記 {index + 1}</span>
+    </a>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -121,11 +137,31 @@ export function ProfileConfirmationModal({
                   }
                 />
                 <InfoItem
-                  label="住民票"
+                  label="身分証明書"
                   value={
-                    <Badge variant={formData.canProvideResidenceRecord ? "default" : "secondary"}>
-                      {formData.canProvideResidenceRecord ? "提出可能" : "提出不可"}
-                    </Badge>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.availableIds?.types?.map((id) => (
+                          <Badge key={id} variant="outline" className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                            {id}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Badge variant={formData.canProvideResidenceRecord ? "default" : "secondary"}>
+                        {formData.canProvideResidenceRecord ? (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>本籍地記載の住民票提出可能</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <XCircle className="h-3 w-3" />
+                            <span>本籍地記載の住民票提出不可</span>
+                          </div>
+                        )}
+                      </Badge>
+                    </div>
                   }
                 />
               </div>
@@ -194,12 +230,9 @@ export function ProfileConfirmationModal({
                         {formData.canPhotoDiary ? "投稿可能" : "投稿不可"}
                       </Badge>
                       {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {formData.photoDiaryUrls.map((url, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <FileText className="h-4 w-4" />
-                              <span>写メ日記 {index + 1}</span>
-                            </div>
+                            <PhotoDiaryLink key={index} url={url} index={index + 1} />
                           ))}
                         </div>
                       )}
@@ -278,10 +311,16 @@ export function ProfileConfirmationModal({
                     {formData.snsUrls && formData.snsUrls.length > 0 && (
                       <div className="space-y-2">
                         {formData.snsUrls.map((url, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Instagram className="h-4 w-4 text-primary" />
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-primary hover:underline"
+                          >
+                            <Instagram className="h-4 w-4" />
                             <span className="text-sm">SNSアカウント {index + 1}</span>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     )}
