@@ -25,13 +25,12 @@ export const uploadToS3 = async (
     const timestamp = new Date().getTime();
     const uniqueFileName = `${timestamp}-${fileName}`;
 
-    // S3にアップロード
+    // S3にアップロード（ACL設定を削除）
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uniqueFileName,
       Body: buffer,
       ContentType: "image/jpeg",
-      ACL: "public-read", // URLで直接アクセス可能にする
     });
 
     console.log('Executing S3 upload command:', {
