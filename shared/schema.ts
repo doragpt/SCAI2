@@ -111,7 +111,8 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
-  birthDate: date("birth_date"),
+  birthDate: date("birth_date").notNull(),
+  birthDateModified: boolean("birth_date_modified").default(false),
   preferredLocations: jsonb("preferred_locations").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -186,7 +187,8 @@ export const talentProfiles = pgTable("talent_profiles", {
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
   bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
-  photos: jsonb("photos").$type<Photo[]>().default([]).notNull()
+  photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
+  age: integer("age"),
 });
 
 // Login and registration schemas

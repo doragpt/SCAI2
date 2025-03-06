@@ -39,6 +39,7 @@ import {
   type Photo,
   talentProfileSchema,
 } from "@shared/schema";
+import { calculateAge } from "@/utils/date";
 
 // Store type definitions
 type CurrentStore = {
@@ -349,6 +350,15 @@ export function TalentForm() {
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
   });
 
+  // ユーザー基本情報の取得
+  const { data: userData } = useQuery({
+    queryKey: [QUERY_KEYS.USER_PROFILE],
+  });
+
+  // 生年月日から年齢を計算
+  const age = userData?.birthDate ? calculateAge(new Date(userData.birthDate)) : null;
+
+
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     mode: "onChange",
@@ -625,29 +635,55 @@ export function TalentForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             {/* 1.氏名 */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormFieldWrapper label="姓" required>
-                    <FormControl>
-                      <Input {...field} placeholder="例：山田" />
-                    </FormControl>
-                  </FormFieldWrapper>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormFieldWrapper label="名" required>
-                    <FormControl>
-                      <Input {...field} placeholder="例：太郎" />
-                    </FormControl>
-                  </FormFieldWrapper>
-                )}
-              />
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="姓" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：山田" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="名" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：太郎" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+              </div>
+
+              {/* 生年月日と年齢の表示 */}
+              <div className="mt-4 space-y-2 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>生年月日</Label>
+                    <p className="text-lg font-medium">
+                      {userData?.birthDate
+                        ? new Date(userData.birthDate).toLocaleDateString('ja-JP')
+                        : '未設定'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>年齢</Label>
+                    <p className="text-lg font-medium">
+                      {age ? `${age}歳` : '未設定'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  ※生年月日の修正は基本情報編集ページから行ってください
+                  {userData?.birthDateModified && '（修正は1回のみ可能です）'}
+                </p>
+              </div>
             </div>
 
             {/* 2.氏名（かな） */}
@@ -936,7 +972,7 @@ export function TalentForm() {
             </div>
             {/* 8. 顔出し */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">顔出し</h3>
+              <h3 className="textlg font-semibold mb-4">顔出し</h3>
               <FormField
                 control={form.control}
                 name="faceVisibility"
