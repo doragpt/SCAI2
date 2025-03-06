@@ -14,7 +14,7 @@ interface ProfileConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  formData?: TalentProfileData;  // formDataに統一
+  formData: TalentProfileData | null;
   isPending?: boolean;
 }
 
@@ -81,7 +81,7 @@ export function ProfileConfirmationModal({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 mt-4">
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             修正する
           </Button>

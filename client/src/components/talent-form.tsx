@@ -608,7 +608,6 @@ export function TalentForm() {
   // handleSubmit関数の修正
   const handleSubmit = async (data: TalentProfileData) => {
     try {
-      setIsSubmitting(true);
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -641,9 +640,7 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      // デバッグログを追加
       console.log('Form submission data:', optimizedData);
-
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
     } catch (error) {
@@ -653,8 +650,6 @@ export function TalentForm() {
         description: "データの準備中にエラーが発生しました。",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -934,7 +929,7 @@ export function TalentForm() {
                             const current = form.watch("availableIds.types") || [];
                             const updated = checked
                               ? [...current, type]
-                              : current.filter((t) => t !== type);
+                              : current.filter((t) => t!== type);
                             form.setValue("availableIds.types", updated);
                           }}
                         />
