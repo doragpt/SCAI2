@@ -52,6 +52,46 @@ type PreviousStore = {
   photoDiaryUrls: string[];
 };
 
+const PhotoUploadGuidelines = () => (
+  <div className="space-y-4 text-sm">
+    <div className="border rounded-lg p-4 bg-muted/5">
+      <h4 className="font-semibold mb-2">【写真アップロードに関するご案内】</h4>
+
+      <div className="space-y-4">
+        <div>
+          <p className="font-medium mb-1">お顔の写真:</p>
+          <p>無加工の状態で、正面から撮影したお顔の写真を3枚ご用意ください。</p>
+          <p className="text-muted-foreground">※無加工である理由：ご本人の自然な外見を正確に確認するためです。加工やフィルターによって実際の見た目と異なる場合、現地での保証トラブルや受け入れ拒否につながる可能性がございます。</p>
+        </div>
+
+        <div>
+          <p className="font-medium mb-1">下着／水着姿の写真:</p>
+          <p>スタイルが分かるよう、無加工の写真を正面から1枚、横から1枚、計2枚ご用意ください。</p>
+          <p className="text-muted-foreground">※無加工である理由：実際の体型やスタイルを正確に判断するため、加工により誤解が生じるリスクを避けるためです。</p>
+        </div>
+
+        <div>
+          <p className="font-medium mb-1">宣材写真:</p>
+          <p>お持ちの場合は、宣材写真も併せてアップロードしてください。</p>
+        </div>
+
+        <div>
+          <p className="font-medium mb-1">その他の注意点:</p>
+          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+            <li>最大20枚までアップロード可能です（1枚あたり2MBまで）</li>
+            <li className="text-primary">現在の髪色の写真は必須です</li>
+            <li>傷、タトゥー、アトピーがある場合は、該当部分が分かる写真も必ず添付してください</li>
+          </ul>
+        </div>
+
+        <p className="text-destructive">
+          ご注意：写真と実際の外見との大きな差異は、保証トラブルや現地での受け入れ拒否の原因となりますので、正確な状態の写真をご提供いただけますようご協力をお願いいたします。
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
 const PhotoUpload = ({
   photos,
   onChange,
@@ -190,11 +230,14 @@ const PhotoUpload = ({
 
   return (
     <div className="space-y-6">
+      {/* 写真アップロードのガイドライン */}
+      <PhotoUploadGuidelines />
+
       {/* 写真アップロード前のタグ選択 */}
       <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/10">
         <Label>アップロード時のタグ:</Label>
-        <Select 
-          value={selectedTag} 
+        <Select
+          value={selectedTag}
           onValueChange={(value) => setSelectedTag(value as typeof photoTags[number])}
         >
           <SelectTrigger className="w-[200px]">
@@ -372,11 +415,12 @@ const PhotoUpload = ({
         </div>
       )}
 
-      <div className="space-y-2 text-sm text-muted-foreground">
+      {/*  The following lines are removed as they are now in PhotoUploadGuidelines */}
+      {/* <div className="space-y-2 text-sm text-muted-foreground">
         <p>※最大20枚までアップロード可能です（1枚あたり2MBまで）</p>
         <p className="font-medium text-primary">※現在の髪色の写真は必須です</p>
         <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください</p>
-      </div>
+      </div> */}
     </div>
   );
 };

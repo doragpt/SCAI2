@@ -8,7 +8,9 @@ export const photoTags = [
   "タトゥー",
   "傷",
   "アトピー",
-  "スタジオ写真"
+  "自撮り写真",
+  "スタジオ写真（無加工）",
+  "スタジオ写真（加工済み）"
 ] as const;
 
 // bodyMarkSchema定義を更新
