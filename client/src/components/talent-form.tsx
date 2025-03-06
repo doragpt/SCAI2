@@ -543,6 +543,18 @@ export function TalentForm() {
     },
   });
 
+  // フォームの状態を監視
+  useEffect(() => {
+    console.log('Form state updated:', {
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+      errors: form.formState.errors,
+      dirtyFields: form.formState.dirtyFields,
+      touchedFields: form.formState.touchedFields,
+      defaultValues: form.formState.defaultValues,
+    });
+  }, [form.formState]);
+
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
@@ -793,6 +805,10 @@ export function TalentForm() {
       });
     }
   });
+
+  // 保存ボタンのdisabled条件を修正
+  const isFormDisabled = !form.formState.isValid || form.formState.isSubmitting;
+  console.log('Save button state:', { isFormDisabled });
 
   return (
     <div className="min-h-screen bg-background">
@@ -1805,7 +1821,7 @@ export function TalentForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={!form.formState.isValid || form.formState.isSubmitting}
+                  disabled={isFormDisabled}
                   className="min-w-[200px]"
                 >
                   {form.formState.isSubmitting ? (
