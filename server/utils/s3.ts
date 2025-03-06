@@ -29,13 +29,12 @@ export const uploadToS3 = async (
     // Content-Typeの決定
     const contentType = base64Data.match(/^data:([^;]+);base64,/)?.[1] || 'image/jpeg';
 
-    // S3にアップロード
+    // S3にアップロード（ACLを削除）
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
-      ACL: 'public-read', // 画像を公開アクセス可能に設定
     });
 
     console.log('Executing S3 upload command:', {

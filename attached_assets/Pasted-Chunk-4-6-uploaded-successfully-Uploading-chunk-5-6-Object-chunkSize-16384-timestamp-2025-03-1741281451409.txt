@@ -1,0 +1,180 @@
+Chunk 4/6 uploaded successfully
+Uploading chunk 5/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:15:42.843Z"}
+Chunk 5/6 uploaded successfully
+Uploading chunk 6/6 
+Object {chunkSize: 6756, timestamp: "2025-03-06T17:15:43.329Z"}
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 1, timestamp: "2025-03-06T17:15:43.973Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 2, timestamp: "2025-03-06T17:15:46.616Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 3, timestamp: "2025-03-06T17:15:51.298Z"}
+
+Photo upload attempt failed: 
+Object {attempt: 3, error: "Failed to upload chunk after 3 attempts", timestamp: "2025-03-06T17:15:51.298Z"}
+
+API Request Failed: 
+Object {method: "PUT", url: "/api/talent/profile", error: {…}, timestamp: "2025-03-06T17:15:51.299Z"}
+
+送信エラー: 
+Error {}
+message: "Failed to upload photo after 3 attempts"
+stack: "Error: Failed to upload photo after 3 attempts↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:113:23)↵ at async handleConfirm (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:921:24)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+TalentForm user profile: 
+Object {id: 12, username: "テスト", role: "talent", displayName: "テスト", location: "東京都", …}
+Calculated age: 23
+Modal render: 
+Object {isOpen: true, formData: true}
+Form validation state: 
+Object {isValid: false, isDirty: true, errors: {…}, photos: Array(8), hasCurrentHairPhoto: true}
+Modal closing
+TalentForm user profile: 
+Object {id: 12, username: "テスト", role: "talent", displayName: "テスト", location: "東京都", …}
+Calculated age: 23
+Modal render: 
+Object {isOpen: false, formData: false}
+Form validation state: 
+Object {isValid: false, isDirty: true, errors: {…}, photos: Array(8), hasCurrentHairPhoto: true}
+TalentForm user profile: 
+Object {id: 12, username: "テスト", role: "talent", displayName: "テスト", location: "東京都", …}
+Calculated age: 23
+Modal render: 
+Object {isOpen: false, formData: false}
+Form validation state: 
+Object {isValid: false, isDirty: true, errors: {…}, photos: Array(8), hasCurrentHairPhoto: true}
+Form submission started
+Form data: 
+Object {id: 1, userId: 12, lastName: "中山", firstName: "奈々子", lastNameKana: "ナカヤマ", …}
+Opening confirmation modal
+Modal state updated: 
+Object {formData: true, isOpen: false}
+TalentForm user profile: 
+Object {id: 12, username: "テスト", role: "talent", displayName: "テスト", location: "東京都", …}
+Calculated age: 23
+Modal render: 
+Object {isOpen: true, formData: true}
+Form validation state: 
+Object {isValid: false, isDirty: true, errors: {…}, photos: Array(8), hasCurrentHairPhoto: true}
+API Request starting: 
+Object {method: "PUT", url: "/api/talent/profile", dataSize: 626341, timestamp: "2025-03-06T17:16:10.478Z"}
+Photos detected in request, handling separately
+Uploading photo (attempt 1/3)
+Starting chunked upload: 
+Object {totalChunks: 6, totalSize: 88676, chunkSize: 16384, timestamp: "2025-03-06T17:16:10.479Z"}
+Uploading chunk 1/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:10.479Z"}
+TalentForm user profile: 
+Object {id: 12, username: "テスト", role: "talent", displayName: "テスト", location: "東京都", …}
+Calculated age: 23
+Modal render: 
+Object {isOpen: true, formData: true}
+Form validation state: 
+Object {isValid: false, isDirty: true, errors: {…}, photos: Array(8), hasCurrentHairPhoto: true}
+Chunk 1/6 uploaded successfully
+Uploading chunk 2/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:13.275Z"}
+Chunk 2/6 uploaded successfully
+Uploading chunk 3/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:13.775Z"}
+Chunk 3/6 uploaded successfully
+Uploading chunk 4/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:14.262Z"}
+Chunk 4/6 uploaded successfully
+Uploading chunk 5/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:14.759Z"}
+Chunk 5/6 uploaded successfully
+Uploading chunk 6/6 
+Object {chunkSize: 6756, timestamp: "2025-03-06T17:16:15.260Z"}
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 1, timestamp: "2025-03-06T17:16:15.931Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 2, timestamp: "2025-03-06T17:16:18.570Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 3, timestamp: "2025-03-06T17:16:23.248Z"}
+
+Photo upload attempt failed: 
+Object {attempt: 1, error: "Failed to upload chunk after 3 attempts", timestamp: "2025-03-06T17:16:23.248Z"}
+
+Uploading photo (attempt 2/3)
+Starting chunked upload: 
+Object {totalChunks: 6, totalSize: 88676, chunkSize: 16384, timestamp: "2025-03-06T17:16:25.253Z"}
+Uploading chunk 1/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:25.253Z"}
+Chunk 1/6 uploaded successfully
+Uploading chunk 2/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:25.740Z"}
+Chunk 2/6 uploaded successfully
+Uploading chunk 3/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:26.224Z"}
+Chunk 3/6 uploaded successfully
+Uploading chunk 4/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:26.712Z"}
+Chunk 4/6 uploaded successfully
+Uploading chunk 5/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:27.195Z"}
+Chunk 5/6 uploaded successfully
+Uploading chunk 6/6 
+Object {chunkSize: 6756, timestamp: "2025-03-06T17:16:27.677Z"}
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 1, timestamp: "2025-03-06T17:16:28.428Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 2, timestamp: "2025-03-06T17:16:31.078Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 3, timestamp: "2025-03-06T17:16:35.757Z"}
+
+Photo upload attempt failed: 
+Object {attempt: 2, error: "Failed to upload chunk after 3 attempts", timestamp: "2025-03-06T17:16:35.758Z"}
+
+Uploading photo (attempt 3/3)
+Starting chunked upload: 
+Object {totalChunks: 6, totalSize: 88676, chunkSize: 16384, timestamp: "2025-03-06T17:16:39.761Z"}
+Uploading chunk 1/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:39.761Z"}
+Chunk 1/6 uploaded successfully
+Uploading chunk 2/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:40.256Z"}
+Chunk 2/6 uploaded successfully
+Uploading chunk 3/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:40.738Z"}
+Chunk 3/6 uploaded successfully
+Uploading chunk 4/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:41.221Z"}
+Chunk 4/6 uploaded successfully
+Uploading chunk 5/6 
+Object {chunkSize: 16384, timestamp: "2025-03-06T17:16:41.722Z"}
+Chunk 5/6 uploaded successfully
+Uploading chunk 6/6 
+Object {chunkSize: 6756, timestamp: "2025-03-06T17:16:42.219Z"}
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 1, timestamp: "2025-03-06T17:16:42.863Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 2, timestamp: "2025-03-06T17:16:45.614Z"}
+
+Chunk upload error (6/6): 
+Object {error: "Failed to upload photo chunk: Internal Server Error", attempt: 3, timestamp: "2025-03-06T17:16:50.277Z"}
+
+Photo upload attempt failed: 
+Object {attempt: 3, error: "Failed to upload chunk after 3 attempts", timestamp: "2025-03-06T17:16:50.277Z"}
+
+API Request Failed: 
+Object {method: "PUT", url: "/api/talent/profile", error: {…}, timestamp: "2025-03-06T17:16:50.277Z"}
+
+送信エラー: 
+Error {}
+message: "Failed to upload photo after 3 attempts"
+stack: "Error: Failed to upload photo after 3 attempts↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:113:23)↵ at async handleConfirm (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/talent-form.tsx:921:24)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object

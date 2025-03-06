@@ -549,22 +549,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error(`Missing chunk data. Expected ${totalChunks} chunks, got ${chunks.length}`);
           }
 
-          // 結合したデータをS3にアップロード
-          const s3Url = await uploadToS3(
-            `data:image/jpeg;base64,${completeBase64}`,
-            `${req.user.id}-${photoId}.jpg`
-          );
+          try {
+            // 結合したデータをS3にアップロード
+            const s3Url = await uploadToS3(
+              `data:image/jpeg;base64,${completeBase64}`,
+              `${req.user.id}-${photoId}.jpg`
+            );
 
-          // チャンクデータをクリア
-          photoChunksStore.delete(chunkKey);
+            // チャンクデータをクリア
+            photoChunksStore.delete(chunkKey);
 
-          console.log('Complete photo upload successful:', {
-            userId: req.user.id,
-            url: s3Url,
-            timestamp: new Date().toISOString()
-          });
+            console.log('Complete photo upload successful:', {
+              userId: req.user.id,
+              url: s3Url,
+              timestamp: new Date().toISOString()
+            });
 
-          res.json({ url: s3Url });
+            res.json({ url: s3Url });
+          } catch (s3Error) {
+            console.error('S3 upload error:', {
+              error: s3Error,
+              userId: req.user.id,
+              photoId,
+              timestamp: new Date().toISOString()
+            });
+            throw s3Error;
+          }
         } else {
           // 中間チャンクの場合は成功を返す
           res.json({ status: 'chunk_uploaded' });
