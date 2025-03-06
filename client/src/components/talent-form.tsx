@@ -326,7 +326,7 @@ const PhotoUpload = ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {photos.map((photo, index) => (
           <div
-            key={photo.id} // Changed key to use photo ID
+            key={photo.id} // 写真のIDをkeyとして使用
             className={`relative group ${
               selectedPhotos.includes(index) ? "ring-2 ring-primary" : ""
             }`}
@@ -920,7 +920,8 @@ export function TalentForm() {
                   <p className="text-lg font-medium">
                     {userProfile?.birthDate
                       ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
-                      : '基本情報から設定してください'}                  </p>
+                      : '基本情報から設定してください'}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <Label>年齢</Label>
@@ -1593,7 +1594,7 @@ export function TalentForm() {
                         <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
                         <div className="space-y-4">
                           {form.watch("snsUrls").map((url, index) => (
-                            <div key={index} className="flex gap-2">
+                            <div key={`sns-url-${index}`} className="flex gap-2">
                               <Input
                                 placeholder="SNSアカウントのURLを入力"
                                 value={url}
@@ -1643,7 +1644,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("currentStores")?.map((store, index) => (
-                      <div key={index} className="relative border rounded-lg p-4">
+                      <div key={`current-store-${index}`} className="relative border rounded-lg p-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
@@ -1695,7 +1696,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("previousStores")?.map((store, index) => (
-                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                      <div key={`previous-store-${index}`} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
                           <Input
@@ -1733,7 +1734,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-4">
                     {form.watch("photoDiaryUrls")?.map((url, index) => (
-                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                      <div key={`photo-diary-url-${index}`} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
                           <Input
