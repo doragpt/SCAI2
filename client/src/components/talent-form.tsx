@@ -937,8 +937,7 @@ export function TalentForm() {
               {/* Location field */}
               <FormField
                 control={form.control}
-                name="location"
-                render={({field }) => (
+                name="location"                render={({field }) => (
                   <FormFieldWrapper label="都道府県" required>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
