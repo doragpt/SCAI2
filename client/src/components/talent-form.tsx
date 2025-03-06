@@ -3,11 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
-import { Link } from "wouter";
+import { Link, Redirect } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -39,7 +38,7 @@ import {
   talentProfileSchema,
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/hooks/use-auth";
 
 // Store type definitions
 type CurrentStore = {
@@ -52,7 +51,6 @@ type PreviousStore = {
   photoDiaryUrls: string[];
 };
 
-// FormFieldWrapperコンポーネント
 const FormFieldWrapper = ({
   label,
   required = false,
@@ -76,7 +74,6 @@ const FormFieldWrapper = ({
   </div>
 );
 
-// SwitchFieldコンポーネント
 const SwitchField = ({
   label,
   required = false,
@@ -111,7 +108,6 @@ const SwitchField = ({
   </div>
 );
 
-// PhotoUploadコンポーネント
 const PhotoUpload = ({
   photos,
   onChange,
@@ -125,7 +121,6 @@ const PhotoUpload = ({
 
   const compressImage = async (file: File): Promise<string | null> => {
     try {
-      // ファイルサイズチェック（2MB以下）
       if (file.size > 2 * 1024 * 1024) {
         toast({
           title: "エラー",
@@ -142,7 +137,6 @@ const PhotoUpload = ({
         reader.readAsDataURL(file);
       });
 
-      // 画像の圧縮処理
       const img = new Image();
       await new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -173,12 +167,10 @@ const PhotoUpload = ({
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
 
-      // 圧縮品質を0.5に設定
       const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
 
-      // Base64データのサイズをチェック
       const base64Size = compressedDataUrl.length * 0.75;
-      if (base64Size > 512 * 1024) { // 512KB以上の場合はスキップ
+      if (base64Size > 512 * 1024) {
         toast({
           title: "エラー",
           description: "画像サイズを小さくできませんでした。別の画像を試してください。",
@@ -231,7 +223,6 @@ const PhotoUpload = ({
 
   return (
     <div className="space-y-6">
-      {/* 既存の写真一覧 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {photos.map((photo, index) => (
           <div key={index} className="relative group">
@@ -291,7 +282,6 @@ const PhotoUpload = ({
         ))}
       </div>
 
-      {/* 新規アップロード */}
       {photos.length < 20 && (
         <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
           <div className="text-center">
@@ -330,11 +320,13 @@ const PhotoUpload = ({
   );
 };
 
-// メインのTalentFormコンポーネント
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+
+  // デバッグ用のログを追加
+  console.log('TalentForm auth user:', user);
 
   // formの定義を先に移動
   const form = useForm<TalentProfileData>({
@@ -345,7 +337,7 @@ export function TalentForm() {
       firstName: "",
       lastNameKana: "",
       firstNameKana: "",
-      location: "東京都",
+      location: "",
       nearestStation: "",
       availableIds: {
         types: [],
@@ -396,7 +388,28 @@ export function TalentForm() {
     },
   });
 
-  // 状態変数の定義
+  // プロフィールデータの取得
+  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    enabled: !!user,
+  });
+
+  // ユーザー基本情報の取得を修正
+  const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
+    queryKey: ["/api/user"],
+    enabled: !!user,
+  });
+
+  // デバッグ用のログを追加
+  console.log('TalentForm user profile:', userProfile);
+
+  // 生年月日から年齢を計算
+  const age = userProfile?.birthDate
+    ? calculateAge(new Date(userProfile.birthDate))
+    : null;
+
+  console.log('Calculated age:', age);
+
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<TalentProfileData | null>(null);
   const [otherIds, setOtherIds] = useState<string[]>([]);
@@ -408,59 +421,12 @@ export function TalentForm() {
   const [newIdType, setNewIdType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // デバッグ用のログを追加
-  console.log('TalentForm auth user:', user);
-
-  // プロフィールデータの取得
-  const { data: existingProfile, isLoading: isLoadingProfile, error: profileError } = useQuery<TalentProfileData>({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    enabled: !!user,
-    onError: (error) => {
-      console.error('Profile fetch error:', error);
-      toast({
-        title: "エラーが発生しました",
-        description: "プロフィールデータの取得に失敗しました",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // ユーザー基本情報の取得を修正
-  const { data: userProfile, isLoading: isUserProfileLoading, error: userProfileError } = useQuery({
-    queryKey: ["/api/user"],
-    enabled: !!user,
-    onError: (error) => {
-      console.error('User profile fetch error:', error);
-      toast({
-        title: "エラーが発生しました",
-        description: "ユーザー情報の取得に失敗しました",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // デバッグ用のログを追加
-  console.log('TalentForm user profile:', userProfile);
-  if (userProfileError) {
-    console.error('User profile error:', userProfileError);
-  }
-
-  // 生年月日から年齢を計算
-  const age = userProfile?.birthDate
-    ? calculateAge(new Date(userProfile.birthDate))
-    : null;
-
-  console.log('Calculated age:', age);
-
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
       console.log("Loading existing profile:", existingProfile);
-
-      // フォームの値を更新
       form.reset({
         ...existingProfile,
-        // 数値フィールドを文字列に変換
         bust: existingProfile.bust?.toString() ?? "",
         waist: existingProfile.waist?.toString() ?? "",
         hip: existingProfile.hip?.toString() ?? "",
@@ -471,7 +437,6 @@ export function TalentForm() {
         },
       });
 
-      // その他のフィールドの初期化
       setOtherIds(existingProfile.availableIds?.others || []);
       setOtherNgOptions(existingProfile.ngOptions?.others || []);
       setOtherAllergies(existingProfile.allergies?.others || []);
@@ -481,17 +446,13 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
-
-  // フォーム送信前の確認
   const handleSubmit = async (data: TalentProfileData) => {
     try {
       setIsSubmitting(true);
-      // データの最適化
       const optimizedData = {
         ...data,
         height: Number(data.height),
         weight: Number(data.weight),
-        // 文字列からnumber | nullに変換
         bust: data.bust === "" ? null : Number(data.bust),
         waist: data.waist === "" ? null : Number(data.waist),
         hip: data.hip === "" ? null : Number(data.hip),
@@ -534,7 +495,6 @@ export function TalentForm() {
     }
   };
 
-  // 確認後の送信処理
   const handleConfirm = async () => {
     if (!formData) return;
 
@@ -548,7 +508,6 @@ export function TalentForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        //より具体的なエラーメッセージの表示
         throw new Error(errorData.message || "プロフィールの更新に失敗しました");
       }
 
@@ -574,11 +533,20 @@ export function TalentForm() {
 
   const handleAddIdType = () => {
     if (!newIdType.trim()) return;
-
     setOtherIds([...otherIds, newIdType.trim()]);
     setNewIdType("");
   };
 
+  // ローディング中の表示
+  if (isAuthLoading || isUserProfileLoading || isLoadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // 未認証時の表示
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -588,14 +556,6 @@ export function TalentForm() {
             <Link href="/auth">ログイン</Link>
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  if (isUserProfileLoading || isLoadingProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -683,7 +643,6 @@ export function TalentForm() {
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-            {/* 1.氏名 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -712,7 +671,6 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 2.氏名（かな） */}
             <div>
               <h3 className="text-lg font-semibold mb-4">フリガナ</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -741,7 +699,6 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 生年月日と年齢の表示 */}
             <div className="mt-4 space-y-2 border rounded-lg p-4 bg-muted/10">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -765,7 +722,6 @@ export function TalentForm() {
               </p>
             </div>
 
-            {/* 3.所在地 */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -802,12 +758,10 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 4.身分証明書 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
               <FormFieldWrapper label="持参可能な身分証明書" required>
                 <div className="space-y-4">
-                  {/* 既存の身分証明書チェックボックス */}
                   <div className="grid grid-cols-2 gap-4">
                     {idTypes.map((type) => (
                       <div key={type} className="flex items-center space-x-2">
@@ -827,7 +781,6 @@ export function TalentForm() {
                     ))}
                   </div>
 
-                  {/* その他の身分証明書 */}
                   <div className="space-y-2">
                     <Label>その他の身分証明書</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -882,7 +835,6 @@ export function TalentForm() {
               )}
             />
 
-            {/* 5. 身長・体重 */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -913,7 +865,6 @@ export function TalentForm() {
                 )}
               />
             </div>
-            {/* 6. カップサイズ */}
             <FormField
               control={form.control}
               name="cupSize"
@@ -939,7 +890,6 @@ export function TalentForm() {
                 </FormItem>
               )}
             />
-            {/* 7. バスト・ウエスト・ヒップ */}
             <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -960,7 +910,7 @@ export function TalentForm() {
                               field.onChange(Number(value));
                             }
                           }}
-                                                    placeholder="未入力可"
+                          placeholder="未入力可"
                         />
                       </FormControl>
                     </FormFieldWrapper>
@@ -1023,7 +973,6 @@ export function TalentForm() {
                 )}
               />
             </div>
-            {/* 8. 顔出し */}
             <div>
               <h3 className="textlg font-semibold mb-4">顔出し</h3>
               <FormField
@@ -1053,7 +1002,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 9. 写メ日記の投稿可否 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
               <FormField
@@ -1073,7 +1021,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 10. 自宅派遣可否 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
               <FormField
@@ -1093,7 +1040,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 11. NGオプション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
               <FormFieldWrapper label="NGオプション">
@@ -1154,7 +1100,6 @@ export function TalentForm() {
               </FormFieldWrapper>
             </div>
 
-            {/* 12. エステオプション */}
             <div>
               <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
               <FormField
@@ -1243,7 +1188,6 @@ export function TalentForm() {
               )}
             </div>
 
-            {/* 13. アレルギー */}
             <div>
               <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
               <FormField
@@ -1320,7 +1264,6 @@ export function TalentForm() {
               )}
             </div>
 
-            {/* 14. 喫煙 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">喫煙</h3>
               <FormField
@@ -1399,7 +1342,6 @@ export function TalentForm() {
               )}
             </div>
 
-            {/* 15. 傷・タトゥー・アトピー */}
             <div>
               <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
               <FormField
@@ -1443,7 +1385,6 @@ export function TalentForm() {
               )}
             </div>
 
-            {/* 16. SNSアカウント */}
             <FormField
               control={form.control}
               name="hasSnsAccount"
@@ -1487,7 +1428,6 @@ export function TalentForm() {
               )}
             />
 
-            {/* 17. 現在の勤務先 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
               <div className="space-y-4">
@@ -1528,7 +1468,6 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 18. 過去の勤務先 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">過去の勤務先</h3>
               <div className="space-y-4">
@@ -1597,7 +1536,6 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 19. 写メ日記URL */}
             <div>
               <h3 className="text-lg font-semibold mb-4">写メ日記が確認できるURL</h3>
               <div className="space-y-4">
@@ -1640,7 +1578,6 @@ export function TalentForm() {
               </div>
             </div>
 
-            {/* 20. プロフィール写真 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
               <FormField
@@ -1660,7 +1597,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 21. 自己紹介 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
               <FormField
@@ -1683,7 +1619,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 22. 備考 */}
             <div>
               <h3 className="text-lg font-semibold mb-4">備考</h3>
               <FormField
@@ -1706,7 +1641,6 @@ export function TalentForm() {
               />
             </div>
 
-            {/* 送信ボタン */}
             <div className="sticky bottom-0 bg-background border-t p-4 -mx-4">
               <div className="container mx-auto flex justify-end">
                 <Button type="submit" disabled={isSubmitting}>
