@@ -30,12 +30,31 @@ app.use(session({
   }
 }));
 
-// ボディパーサーの制限を調整
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// 通常のリクエスト用のボディパーサー設定
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// アップロード用の制限を別途設定
-app.use('/api/upload-photo-chunk', express.json({ limit: '1mb' }));
-app.use('/api/upload-photo', express.json({ limit: '1mb' }));
+// 写真アップロード用の特別な制限設定
+app.use('/api/upload-photo-chunk', express.json({ 
+  limit: '1mb',
+  type: 'application/json'
+}));
+
+app.use('/api/upload-photo', express.json({ 
+  limit: '1mb',
+  type: 'application/json'
+}));
+
+// エラーハンドリングミドルウェア
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({
+      error: true,
+      message: 'リクエストサイズが大きすぎます',
+      details: err.message
+    });
+  }
+  next(err);
+});
 
 export default app;

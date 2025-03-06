@@ -19,11 +19,24 @@ export const bodyMarkSchema = z.object({
   details: z.string().optional(),
 });
 
-// photoSchema定義を更新
+// 既存のphotoSchemaを更新
 export const photoSchema = z.object({
+  id: z.string(),  // 固有のIDを追加
   url: z.string(),
   tag: z.enum(photoTags),
 });
+
+// type定義も更新
+export type Photo = z.infer<typeof photoSchema>;
+
+// photos配列のスキーマ定義も更新
+export const photosArraySchema = z.array(photoSchema)
+  .min(1, "少なくとも1枚の写真が必要です")
+  .max(20, "写真は最大20枚までです")
+  .refine(
+    (photos) => photos.some((photo) => photo.tag === "現在の髪色"),
+    "現在の髪色の写真は必須です"
+  );
 
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
@@ -282,13 +295,8 @@ export const talentProfileSchema = z.object({
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
 
-  photos: z.array(photoSchema)
-    .min(1, "少なくとも1枚の写真が必要です")
-    .max(20, "写真は最大20枚までです")
-    .refine(
-      (photos) => photos.some((photo) => photo.tag === "現在の髪色"),
-      "現在の髪色の写真は必須です"
-    ),
+  // photosフィールドを更新
+  photos: photosArraySchema,
 
   bodyMark: bodyMarkSchema.default({
     hasBodyMark: false,
@@ -316,7 +324,7 @@ export const talentProfileSchema = z.object({
   returnLocation: z.enum(prefectures).optional(),
   preferredLocations: z.array(z.enum(prefectures)).default([]),
   ngLocations: z.array(z.enum(prefectures)).default([]),
-});
+}).strict();
 
 // スキーマ定義の最後に追加
 export const talentProfileUpdateSchema = talentProfileSchema.extend({
@@ -338,7 +346,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 
 
 // 型定義エクスポートを追加
-export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 

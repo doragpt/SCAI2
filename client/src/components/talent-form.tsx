@@ -176,6 +176,10 @@ const PhotoUpload = ({
     }
   };
 
+  const generatePhotoId = () => {
+    return `photo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -188,7 +192,9 @@ const PhotoUpload = ({
       const compressedDataUrl = await compressImage(file);
 
       if (compressedDataUrl) {
+        const photoId = generatePhotoId();
         newPhotos.push({
+          id: photoId,
           url: compressedDataUrl,
           tag: selectedTag,
         });
@@ -196,11 +202,16 @@ const PhotoUpload = ({
     }
 
     if (newPhotos.length > 0) {
-      const updatedPhotos = [...photos, ...newPhotos];
+      // 既存の写真とIDの重複をチェック
+      const existingIds = new Set(photos.map((p) => p.id));
+      const uniqueNewPhotos = newPhotos.filter((p) => !existingIds.has(p.id));
+
+      const updatedPhotos = [...photos, ...uniqueNewPhotos];
       onChange(updatedPhotos);
+
       toast({
         title: "アップロード完了",
-        description: `${newPhotos.length}枚の写真をアップロードしました。`,
+        description: `${uniqueNewPhotos.length}枚の写真をアップロードしました。`,
       });
     }
 
@@ -211,8 +222,8 @@ const PhotoUpload = ({
   };
 
   const handleBulkTagging = (tag: typeof photoTags[number]) => {
-    const updatedPhotos = photos.map((photo, index) => {
-      if (selectedPhotos.includes(index)) {
+    const updatedPhotos = photos.map((photo) => {
+      if (selectedPhotos.includes(photos.indexOf(photo))) {
         return { ...photo, tag };
       }
       return photo;
@@ -226,6 +237,14 @@ const PhotoUpload = ({
     });
   };
 
+  const handleRemovePhoto = (photoId: string) => {
+    const updatedPhotos = photos.filter((photo) => photo.id !== photoId);
+    onChange(updatedPhotos);
+    toast({
+      title: "削除完了",
+      description: "写真を削除しました。",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -307,7 +326,7 @@ const PhotoUpload = ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {photos.map((photo, index) => (
           <div
-            key={index}
+            key={photo.id} // Changed key to use photo ID
             className={`relative group ${
               selectedPhotos.includes(index) ? "ring-2 ring-primary" : ""
             }`}
@@ -363,8 +382,7 @@ const PhotoUpload = ({
                   className="mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const updatedPhotos = photos.filter((_, i) => i !== index);
-                    onChange(updatedPhotos);
+                    handleRemovePhoto(photo.id);
                   }}
                 >
                   削除
@@ -914,8 +932,7 @@ export function TalentForm() {
                   <p className="text-lg font-medium">
                     {userProfile?.birthDate
                       ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
-                      : '基本情報から設定してください'}
-                  </p>
+                      : '基本情報から設定してください'}                  </p>
                 </div>
                 <div className="space-y-1">
                   <Label>年齢</Label>

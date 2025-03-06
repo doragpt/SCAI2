@@ -54,8 +54,8 @@ export async function apiRequest(
             try {
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
-              // チャンクサイズを16KBに縮小
-              const chunkSize = 16 * 1024;
+              // チャンクサイズを8KBに縮小
+              const chunkSize = 8 * 1024;
               const [header, base64Data] = photo.url.split(',');
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -96,7 +96,7 @@ export async function apiRequest(
                         chunkIndex: i,
                         photoId,
                         tag: photo.tag,
-                        photoUniqueId: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`
+                        photoUniqueId: photo.id
                       }),
                     });
 
@@ -133,9 +133,9 @@ export async function apiRequest(
                   }
                 }
 
-                // チャンク間の待機時間を最適化（600ms）
+                // チャンク間の待機時間を最適化（800ms）
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 600));
+                  await new Promise(resolve => setTimeout(resolve, 800));
                 }
               }
 
@@ -165,24 +165,41 @@ export async function apiRequest(
             const uploaded = uploadedPhotos.get(photo.id);
             if (!uploaded) {
               console.warn(`No uploaded photo found for ID: ${photo.id}`);
-              return {
-                id: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-                tag: photo.tag,
-                url: photo.url
-              };
+              return photo;
             }
             return uploaded;
           }
-          return {
-            id: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-            tag: photo.tag,
-            url: photo.url
-          };
+          return photo;
         });
       }
+
+      // リクエストサイズを削減するため、Base64データを除外
+      const cleanedData = {
+        ...profileData,
+        photos: profileData.photos.map(photo => ({
+          id: photo.id,
+          tag: photo.tag,
+          url: photo.url.startsWith('data:') ? '' : photo.url
+        }))
+      };
+
+      // 更新されたデータでリクエストを送信
+      const res = await fetch(fullUrl, {
+        method,
+        headers,
+        body: JSON.stringify(cleanedData),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: res.statusText }));
+        throw new Error(errorData.message || res.statusText);
+      }
+
+      return res;
     }
 
-    // 写真のアップロード後、更新されたデータでリクエストを送信
+    // 通常のリクエスト処理
     const res = await fetch(fullUrl, {
       method,
       headers,
