@@ -546,16 +546,21 @@ export function TalentForm() {
     },
   });
 
-  // より詳細なデバッグログを追加
+  // フォームの状態を監視（一箇所にまとめる）
   useEffect(() => {
     const formState = form.formState;
-    console.log('Detailed form state:', {
+    const photos = form.getValues().photos || [];
+    const hasPhotos = photos.length > 0;
+    const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
+
+    console.log('Form state updated:', {
       isValid: formState.isValid,
       isDirty: formState.isDirty,
       errors: formState.errors,
-      photos: form.getValues().photos,
+      photos: photos,
+      hasPhotos,
+      hasCurrentHairPhoto,
       touchedFields: formState.touchedFields,
-      validFields: Object.keys(formState.errors).length === 0
     });
   }, [form.formState]);
 
@@ -752,10 +757,6 @@ export function TalentForm() {
   // 写真の更新処理を修正
   const handlePhotoUpload = (newPhotos: Photo[]) => {
     console.log('Updating photos:', newPhotos);
-    // バリデーション状態をリセット
-    form.clearErrors('photos');
-
-    // 写真の更新
     form.setValue('photos', newPhotos, {
       shouldValidate: true,
       shouldDirty: true,
@@ -824,31 +825,13 @@ export function TalentForm() {
     }
   });
 
-  // フォームの状態監視を強化
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      console.log('Form value changed:', {
-        field: name,
-        type,
-        photos: value.photos,
-        errors: form.formState.errors,
-        isValid: form.formState.isValid
-      });
-    });
 
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  // 保存ボタンの状態管理を修正
+  // 保存ボタンの状態管理
   const formState = form.formState;
-  const hasPhotos = form.watch('photos')?.length > 0;
-  const hasCurrentHairPhoto = form.watch('photos')?.some(photo => photo.tag === "現在の髪色");
-
-  const isFormDisabled =
-    !formState.isValid ||
-    !hasPhotos ||
-    !hasCurrentHairPhoto ||
-    formState.isSubmitting;
+  const photos = form.getValues().photos || [];
+  const hasPhotos = photos.length > 0;
+  const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
+  const isFormDisabled = !formState.isValid || !hasPhotos || !hasCurrentHairPhoto || formState.isSubmitting;
 
   console.log('Form validation state:', {
     isValid: formState.isValid,
