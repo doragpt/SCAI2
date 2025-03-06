@@ -25,16 +25,22 @@ export function ProfileConfirmationModal({
   formData,
   isPending,
 }: ProfileConfirmationModalProps) {
-  // デバッグ用のログを追加
-  console.log('ProfileConfirmationModal render:', { isOpen, formData });
+  console.log('Modal render with props:', { isOpen, formData });
 
+  // formDataが存在しない場合は何も表示しない
   if (!formData) {
     console.log('No form data provided to modal');
     return null;
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        console.log('Dialog onOpenChange:', open);
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>プロフィール内容の確認</DialogTitle>
@@ -145,10 +151,23 @@ export function ProfileConfirmationModal({
         </ScrollArea>
 
         <DialogFooter className="gap-2 mt-4">
-          <Button variant="outline" onClick={onClose} disabled={isPending}>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log('Cancel button clicked');
+              onClose();
+            }} 
+            disabled={isPending}
+          >
             修正する
           </Button>
-          <Button onClick={onConfirm} disabled={isPending}>
+          <Button 
+            onClick={() => {
+              console.log('Confirm button clicked');
+              onConfirm();
+            }} 
+            disabled={isPending}
+          >
             {isPending ? "送信中..." : "この内容で確定する"}
           </Button>
         </DialogFooter>

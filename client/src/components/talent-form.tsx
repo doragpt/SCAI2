@@ -607,6 +607,8 @@ export function TalentForm() {
   // handleSubmit関数の修正部分
   const handleSubmit = async (data: TalentProfileData) => {
     try {
+      console.log('handleSubmit called with data:', data);
+
       // バリデーション状態の確認
       if (!form.formState.isValid) {
         console.log('Form validation errors:', form.formState.errors);
@@ -618,7 +620,6 @@ export function TalentForm() {
         return;
       }
 
-      // データの最適化
       const optimizedData = {
         ...data,
         height: Number(data.height),
@@ -651,13 +652,13 @@ export function TalentForm() {
         photos: data.photos || [],
       };
 
-      console.log('Form data:', optimizedData);
+      console.log('Setting optimized form data:', optimizedData);
 
-      // 状態を更新して確認モーダルを表示
+      // 状態を更新して確認モーダルを表示（同期的に実行）
       setFormData(optimizedData);
-      setTimeout(() => {
-        setIsConfirmationOpen(true);
-      }, 0);
+      setIsConfirmationOpen(true);
+
+      console.log('Modal state updated:', { isConfirmationOpen: true, formData: optimizedData });
 
     } catch (error) {
       console.error("データの準備中にエラーが発生しました:", error);
@@ -815,7 +816,14 @@ export function TalentForm() {
 
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              console.log('Form submission started');
+              form.handleSubmit(handleSubmit)(e);
+            }}
+            className="space-y-8"
+          >
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
