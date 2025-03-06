@@ -260,10 +260,22 @@ export const talentProfileSchema = z.object({
     required_error: "カップサイズを選択してください",
   }),
 
-  // バスト・ウエスト・ヒップの型定義を修正
-  bust: z.number().nullable(),
-  waist: z.number().nullable(),
-  hip: z.number().nullable(),
+  // 任意フィールドの定義を修正
+  bust: z.union([z.string(), z.number()]).optional().transform(val => {
+    if (val === "" || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }),
+  waist: z.union([z.string(), z.number()]).optional().transform(val => {
+    if (val === "" || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }),
+  hip: z.union([z.string(), z.number()]).optional().transform(val => {
+    if (val === "" || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }),
 
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",

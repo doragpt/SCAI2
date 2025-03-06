@@ -859,7 +859,20 @@ export function TalentForm() {
                   <FormItem>
                     <FormFieldWrapper label="バスト (cm) (任意)">
                       <FormControl>
-                        <Input type="text" {...field} placeholder="未入力可" />
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
                       </FormControl>
                     </FormFieldWrapper>
                     <FormMessage />
@@ -873,7 +886,20 @@ export function TalentForm() {
                   <FormItem>
                     <FormFieldWrapper label="ウエスト (cm) (任意)">
                       <FormControl>
-                        <Input type="text" {...field} placeholder="未入力可" />
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
                       </FormControl>
                     </FormFieldWrapper>
                     <FormMessage />
@@ -887,7 +913,20 @@ export function TalentForm() {
                   <FormItem>
                     <FormFieldWrapper label="ヒップ (cm) (任意)">
                       <FormControl>
-                        <Input type="text" {...field} placeholder="未入力可" />
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
                       </FormControl>
                     </FormFieldWrapper>
                     <FormMessage />
