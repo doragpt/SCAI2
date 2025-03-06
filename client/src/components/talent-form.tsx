@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";  // Labelをインポート
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera } from "lucide-react";
@@ -52,63 +52,6 @@ type PreviousStore = {
   photoDiaryUrls: string[];
 };
 
-const FormFieldWrapper = ({
-  label,
-  required = false,
-  children,
-  description,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-  description?: string;
-}) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <Label>{label}</Label>
-      {required && <span className="text-destructive">*</span>}
-    </div>
-    {description && (
-      <p className="text-sm text-muted-foreground">{description}</p>
-    )}
-    <div className="mt-1.5">{children}</div>
-  </div>
-);
-
-const SwitchField = ({
-  label,
-  required = false,
-  checked,
-  onCheckedChange,
-  description,
-  valueLabels = { checked: "有り", unchecked: "無し" },
-}: {
-  label: string;
-  required?: boolean;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  description?: string;
-  valueLabels?: { checked: string; unchecked: string };
-}) => (
-  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-    <div className="space-y-0.5">
-      <div className="flex items-center gap-2">
-        <Label>{label}</Label>
-        {required && <span className="text-destructive">*</span>}
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-      <span className={checked ? "text-primary" : "text-muted-foreground"}>
-        {checked ? valueLabels.checked : valueLabels.unchecked}
-      </span>
-    </div>
-  </div>
-);
-
 const PhotoUpload = ({
   photos,
   onChange,
@@ -117,6 +60,9 @@ const PhotoUpload = ({
   onChange: (photos: Photo[]) => void;
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("スタジオ写真");
+  const [showBulkTagging, setShowBulkTagging] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -206,13 +152,17 @@ const PhotoUpload = ({
       if (compressedDataUrl) {
         newPhotos.push({
           url: compressedDataUrl,
-          tag: photoTags[0],
+          tag: selectedTag,
         });
       }
     }
 
     if (newPhotos.length > 0) {
       onChange([...photos, ...newPhotos]);
+      toast({
+        title: "アップロード完了",
+        description: `${newPhotos.length}枚の写真をアップロードしました。`,
+      });
     }
     setSelectedFiles(null);
     if (fileInputRef.current) {
@@ -220,13 +170,115 @@ const PhotoUpload = ({
     }
   };
 
+  const handleBulkTagging = (tag: typeof photoTags[number]) => {
+    const updatedPhotos = photos.map((photo, index) => {
+      if (selectedPhotos.includes(index)) {
+        return { ...photo, tag };
+      }
+      return photo;
+    });
+    onChange(updatedPhotos);
+    setSelectedPhotos([]);
+    setShowBulkTagging(false);
+    toast({
+      title: "タグ付け完了",
+      description: `${selectedPhotos.length}枚の写真のタグを更新しました。`,
+    });
+  };
+
   const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
 
   return (
     <div className="space-y-6">
+      {/* 写真アップロード前のタグ選択 */}
+      <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/10">
+        <Label>アップロード時のタグ:</Label>
+        <Select 
+          value={selectedTag} 
+          onValueChange={(value) => setSelectedTag(value as typeof photoTags[number])}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {photoTags.map((tag) => (
+              <SelectItem
+                key={tag}
+                value={tag}
+                disabled={tag === "現在の髪色" && hasHairColorPhoto}
+              >
+                {tag}
+                {tag === "現在の髪色" && " (必須)"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 一括タグ付けUI */}
+      {photos.length > 0 && (
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/10">
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowBulkTagging(!showBulkTagging);
+                setSelectedPhotos([]);
+              }}
+            >
+              {showBulkTagging ? "一括タグ付けをキャンセル" : "一括タグ付け"}
+            </Button>
+            {showBulkTagging && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {selectedPhotos.length}枚選択中
+                </p>
+                <Select
+                  value={selectedTag}
+                  onValueChange={(value) => handleBulkTagging(value as typeof photoTags[number])}
+                  disabled={selectedPhotos.length === 0}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="タグを選択して一括適用" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {photoTags.map((tag) => (
+                      <SelectItem
+                        key={tag}
+                        value={tag}
+                        disabled={tag === "現在の髪色" && hasHairColorPhoto}
+                      >
+                        {tag}
+                        {tag === "現在の髪色" && " (必須)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 写真一覧 */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {photos.map((photo, index) => (
-          <div key={index} className="relative group">
+          <div
+            key={index}
+            className={`relative group ${
+              selectedPhotos.includes(index) ? "ring-2 ring-primary" : ""
+            }`}
+            onClick={() => {
+              if (showBulkTagging) {
+                setSelectedPhotos((prev) =>
+                  prev.includes(index)
+                    ? prev.filter((i) => i !== index)
+                    : [...prev, index]
+                );
+              }
+            }}
+          >
             <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
               <img
                 src={photo.url}
@@ -235,46 +287,53 @@ const PhotoUpload = ({
               />
             </div>
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
-              <Select
-                value={photo.tag}
-                onValueChange={(tag) => {
-                  const updatedPhotos = [...photos];
-                  updatedPhotos[index] = { ...photo, tag: tag as typeof photoTags[number] };
-                  onChange(updatedPhotos);
-                }}
-              >
-                <SelectTrigger className="bg-white/90">
-                  <SelectValue placeholder="タグを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  {photoTags.map((tag) => (
-                    <SelectItem
-                      key={tag}
-                      value={tag}
-                      disabled={tag === "現在の髪色" && hasHairColorPhoto && photo.tag !== "現在の髪色"}
-                    >
-                      {tag}
-                      {tag === "現在の髪色" && " (必須)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="mt-2"
-                onClick={() => {
-                  const updatedPhotos = photos.filter((_, i) => i !== index);
-                  onChange(updatedPhotos);
-                }}
-              >
-                削除
-              </Button>
+              {!showBulkTagging && (
+                <Select
+                  value={photo.tag}
+                  onValueChange={(value) => {
+                    const updatedPhotos = [...photos];
+                    updatedPhotos[index] = { ...photo, tag: value as typeof photoTags[number] };
+                    onChange(updatedPhotos);
+                  }}
+                >
+                  <SelectTrigger className="bg-white/90">
+                    <SelectValue placeholder="タグを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {photoTags.map((tag) => (
+                      <SelectItem
+                        key={tag}
+                        value={tag}
+                        disabled={tag === "現在の髪色" && hasHairColorPhoto && photo.tag !== "現在の髪色"}
+                      >
+                        {tag}
+                        {tag === "現在の髪色" && " (必須)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {!showBulkTagging && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const updatedPhotos = photos.filter((_, i) => i !== index);
+                    onChange(updatedPhotos);
+                  }}
+                >
+                  削除
+                </Button>
+              )}
             </div>
             <Badge
               className={`absolute top-2 right-2 ${
-                photo.tag === "現在の髪色" ? "bg-primary text-primary-foreground" : "bg-white/90 text-black"
+                photo.tag === "現在の髪色"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white/90 text-black"
               }`}
             >
               {photo.tag}
@@ -283,6 +342,7 @@ const PhotoUpload = ({
         ))}
       </div>
 
+      {/* 写真アップロード */}
       {photos.length < 20 && (
         <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
           <div className="text-center">
@@ -314,12 +374,70 @@ const PhotoUpload = ({
 
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>※最大20枚までアップロード可能です（1枚あたり2MBまで）</p>
-        <p className="font-medium text-primary">※現在の髪色の写真は必須です。</p>
-        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください。</p>
+        <p className="font-medium text-primary">※現在の髪色の写真は必須です</p>
+        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください</p>
       </div>
     </div>
   );
 };
+
+const FormFieldWrapper = ({
+  label,
+  required = false,
+  children,
+  description,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  description?: string;
+}) => (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2">
+      <Label>{label}</Label>
+      {required && <span className="text-destructive">*</span>}
+    </div>
+    {description && (
+      <p className="text-sm text-muted-foreground">{description}</p>
+    )}
+    <div className="mt-1.5">{children}</div>
+  </div>
+);
+
+const SwitchField = ({
+  label,
+  required = false,
+  checked,
+  onCheckedChange,
+  description,
+  valueLabels = { checked: "有り", unchecked: "無し" },
+}: {
+  label: string;
+  required?: boolean;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  description?: string;
+  valueLabels?: { checked: string; unchecked: string };
+}) => (
+  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        <Label>{label}</Label>
+        {required && <span className="text-destructive">*</span>}
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+    <div className="flex items-center gap-2">
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <span className={checked ? "text-primary" : "text-muted-foreground"}>
+        {checked ? valueLabels.checked : valueLabels.unchecked}
+      </span>
+    </div>
+  </div>
+);
+
 
 export function TalentForm() {
   const { toast } = useToast();
