@@ -54,6 +54,7 @@ export async function apiRequest(
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
         const uploadedPhotos = [];
 
+        // 同期的に写真をアップロード
         for (const photo of photosToUpload) {
           let retryCount = 0;
           const maxRetries = 3;
@@ -75,6 +76,7 @@ export async function apiRequest(
                 timestamp: new Date().toISOString()
               });
 
+              // 写真のチャンクを順番にアップロード
               for (let i = 0; i < totalChunks; i++) {
                 const start = i * chunkSize;
                 const end = Math.min(start + chunkSize, base64Data.length);
@@ -160,8 +162,10 @@ export async function apiRequest(
           }
         }
 
+        // 写真の順序を維持しながら更新
         profileData.photos = profileData.photos.map(photo => {
           if (photo.url.startsWith('data:')) {
+            // 同じタグの写真を探して置き換え
             const uploaded = uploadedPhotos.find(up => up.tag === photo.tag);
             return uploaded || photo;
           }
