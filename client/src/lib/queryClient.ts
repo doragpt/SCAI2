@@ -52,7 +52,7 @@ export async function apiRequest(
         console.log('Photos detected in request, handling separately');
 
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const uploadedPhotos = new Map<string, { tag: string; url: string }>(); // タグをキーとして使用
+        const uploadedPhotos = new Map<string, { id: string; tag: string; url: string }>();
 
         // 同期的に写真をアップロード
         for (const photo of photosToUpload) {
@@ -104,7 +104,8 @@ export async function apiRequest(
                         totalChunks,
                         chunkIndex: i,
                         photoId,
-                        tag: photo.tag, // タグ情報を追加
+                        tag: photo.tag,
+                        photoUniqueId: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`
                       }),
                     });
 
@@ -116,8 +117,12 @@ export async function apiRequest(
                     const result = await chunkRes.json();
                     console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
-                    if (result.url && result.tag) {
-                      uploadedPhotos.set(result.tag, { tag: result.tag, url: result.url });
+                    if (result.url && result.tag && result.id) {
+                      uploadedPhotos.set(result.id, {
+                        id: result.id,
+                        tag: result.tag,
+                        url: result.url
+                      });
                     }
                     break;
                   } catch (chunkError) {
@@ -165,15 +170,23 @@ export async function apiRequest(
         // 写真の順序を維持しながら更新
         profileData.photos = profileData.photos.map(photo => {
           if (photo.url.startsWith('data:')) {
-            // タグに基づいて更新された写真を取得
-            const uploaded = uploadedPhotos.get(photo.tag);
+            // IDを使って更新された写真を取得
+            const uploaded = uploadedPhotos.get(photo.id);
             if (!uploaded) {
-              console.warn(`No uploaded photo found for tag: ${photo.tag}`);
-              return photo; // アップロードに失敗した場合は元の写真を保持
+              console.warn(`No uploaded photo found for ID: ${photo.id}`);
+              return {
+                id: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                tag: photo.tag,
+                url: photo.url
+              };
             }
             return uploaded;
           }
-          return photo;
+          return {
+            id: photo.id || `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+            tag: photo.tag,
+            url: photo.url
+          };
         });
       }
     }
