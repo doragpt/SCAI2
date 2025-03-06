@@ -635,87 +635,85 @@ export function TalentForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             {/* 1.氏名 */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">氏名</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="姓" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：中山" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="名" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：奈々子" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">氏名</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="姓" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：中山" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="名" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：奈々子" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+              </div>
+            </div>
 
-                {/* 生年月日と年齢の表示を名前の直下に配置 */}
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>生年月日</Label>
-                      <p className="text-lg font-medium">
-                        {userData?.birthDate
-                          ? new Date(userData.birthDate).toLocaleDateString('ja-JP')
-                          : '未設定'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>年齢</Label>
-                      <p className="text-lg font-medium">
-                        {age ? `${age}歳` : '未設定'}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    ※生年月日の修正は基本情報編集ページから行ってください
-                    {userData?.birthDateModified && '（修正は1回のみ可能です）'}
+            {/* 2.氏名（かな） */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">フリガナ</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="lastNameKana"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="セイ" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：ナカヤマ" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstNameKana"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="メイ" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：ナナコ" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* 生年月日と年齢の表示 */}
+            <div className="border rounded-lg p-4 bg-muted/10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>生年月日</Label>
+                  <p className="text-lg font-medium">
+                    {userData?.birthDate
+                      ? new Date(userData.birthDate).toLocaleDateString('ja-JP')
+                      : '未設定'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label>年齢</Label>
+                  <p className="text-lg font-medium">
+                    {age ? `${age}歳` : '未設定'}
                   </p>
                 </div>
               </div>
-
-              {/* 2.氏名（かな） */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">フリガナ</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="lastNameKana"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="セイ" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：ナカヤマ" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="firstNameKana"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="メイ" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：ナナコ" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                ※生年月日の修正は基本情報編集ページから行ってください
+                {userData?.birthDateModified && '（修正は1回のみ可能です）'}
+              </p>
             </div>
 
             {/* 3.所在地 */}
