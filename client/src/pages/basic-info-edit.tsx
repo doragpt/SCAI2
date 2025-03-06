@@ -23,8 +23,6 @@ import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { calculateAge } from "@/utils/date";
-import { ProfileConfirmationDialog } from "@/components/profile-confirmation-dialog";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
@@ -53,30 +51,16 @@ const basicInfoSchema = z.object({
 });
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
-type TalentProfileData = {
-  username: string;
-  displayName: string;
-  location: string;
-  preferredLocations: string[];
-  newPassword?: string;
-};
-
 
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [formData, setFormData] = useState<BasicInfoFormData | null>(null);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["/api/talent/profile"],
     enabled: !!user,
   });
-
-  // デバッグ用のログを追加
-  console.log('Basic info user data:', user);
-  console.log('Basic info profile data:', profile);
 
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
@@ -88,10 +72,8 @@ export default function BasicInfoEdit() {
     },
   });
 
-  // プロフィールデータが取得できたら、フォームの値を更新
   useEffect(() => {
     if (profile && user) {
-      console.log('Loading user profile data:', { profile, user });
       form.reset({
         username: user.username,
         displayName: user.displayName,
@@ -104,13 +86,6 @@ export default function BasicInfoEdit() {
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
       try {
-        console.log('プロフィール更新リクエスト:', {
-          data: updateData,
-          headers: {
-            Authorization: localStorage.getItem("auth_token") ? "Bearer " + localStorage.getItem("auth_token") : "未設定"
-          }
-        });
-
         const response = await apiRequest("PATCH", "/api/user", {
           username: updateData.username,
           displayName: updateData.displayName,
@@ -127,16 +102,13 @@ export default function BasicInfoEdit() {
           throw new Error(errorData.message || "プロフィールの更新に失敗しました");
         }
 
-        const updatedUser = await response.json();
-        console.log('プロフィール更新成功:', updatedUser);
-        return updatedUser;
+        return await response.json();
       } catch (error) {
         console.error('プロフィール更新エラー:', error);
         throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
     },
     onSuccess: (data) => {
-      // ユーザーデータとプロフィールデータの両方を更新
       queryClient.setQueryData(["/api/user"], data);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -144,8 +116,6 @@ export default function BasicInfoEdit() {
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
       });
-
-      setShowConfirmation(false);
     },
     onError: (error: Error) => {
       toast({
@@ -157,13 +127,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    setFormData(data);
-    setShowConfirmation(true);
-  };
-
-  const handleConfirm = async () => {
-    if (!formData) return;
-    await updateProfileMutation.mutateAsync(formData);
+    await updateProfileMutation.mutateAsync(data);
   };
 
   if (!user) {
@@ -188,7 +152,7 @@ export default function BasicInfoEdit() {
             </Link>
           </Button>
           <h1 className="text-xl font-bold">基本情報編集</h1>
-          <div className="w-10" /> {/* スペーサー */}
+          <div className="w-10" />
         </div>
       </header>
 
@@ -334,18 +298,10 @@ export default function BasicInfoEdit() {
               {updateProfileMutation.isPending && (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               )}
-              確認する
+              更新する
             </Button>
           </form>
         </Form>
-
-        <ProfileConfirmationDialog
-          isOpen={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-          onConfirm={handleConfirm}
-          isLoading={updateProfileMutation.isPending}
-          profileData={formData as TalentProfileData}
-        />
       </main>
     </div>
   );
