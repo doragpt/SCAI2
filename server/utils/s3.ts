@@ -18,23 +18,28 @@ export const uploadToS3 = async (
       timestamp: new Date().toISOString()
     });
 
+    // Content-Typeの抽出
+    const contentTypeMatch = base64Data.match(/^data:([^;]+);base64,/);
+    if (!contentTypeMatch) {
+      throw new Error('Invalid base64 data format');
+    }
+    const contentType = contentTypeMatch[1];
+
     // Base64データの処理
-    const base64Content = base64Data.split(',')[1];
+    const base64Content = base64Data.replace(/^data:([^;]+);base64,/, '');
     const buffer = Buffer.from(base64Content, 'base64');
 
     // ファイル名に現在のタイムスタンプを追加して一意にする
     const timestamp = new Date().getTime();
     const uniqueFileName = `${timestamp}-${fileName}`;
 
-    // Content-Typeの決定
-    const contentType = base64Data.match(/^data:([^;]+);base64,/)?.[1] || 'image/jpeg';
-
-    // S3にアップロード（ACLを削除）
+    // S3にアップロード
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uniqueFileName,
       Body: buffer,
       ContentType: contentType,
+      ACL: 'public-read',
     });
 
     console.log('Executing S3 upload command:', {

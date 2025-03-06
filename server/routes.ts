@@ -526,12 +526,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         // Base64データの処理
-        const base64Data = photo.split(',')[1];
+        const [header, content] = photo.split(',');
+        const base64Content = content;
 
         // チャンクデータを一時保存
         const chunkKey = `${req.user.id}-${photoId}`;
-        let chunks = photoChunksStore.get(chunkKey) || [];
-        chunks[chunkIndex] = base64Data;
+        let chunks = photoChunksStore.get(chunkKey) || new Array(totalChunks);
+        chunks[chunkIndex] = base64Content;
         photoChunksStore.set(chunkKey, chunks);
 
         console.log('Chunk stored in memory:', {
@@ -544,15 +545,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // 最後のチャンクの場合、すべてのチャンクを結合してS3にアップロード
         if (chunkIndex === totalChunks - 1) {
-          const completeBase64 = chunks.join('');
-          if (chunks.length !== totalChunks || chunks.some(chunk => !chunk)) {
-            throw new Error(`Missing chunk data. Expected ${totalChunks} chunks, got ${chunks.length}`);
-          }
-
           try {
-            // 結合したデータをS3にアップロード
+            // チャンクの検証
+            if (chunks.some(chunk => !chunk)) {
+              throw new Error(`Missing chunk data. Expected ${totalChunks} chunks, got ${chunks.filter(Boolean).length}`);
+            }
+
+            const completeBase64 = chunks.join('');
+
+            // S3にアップロード
             const s3Url = await uploadToS3(
-              `data:image/jpeg;base64,${completeBase64}`,
+              `${header},${completeBase64}`,
               `${req.user.id}-${photoId}.jpg`
             );
 

@@ -44,13 +44,12 @@ export async function apiRequest(
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-    // 写真データを含むプロフィール更新の場合は、先に写真をS3にアップロード
+    // 写真のチャンクアップロード処理を最適化
     if (method === "PUT" && url === "/api/talent/profile" && data) {
       const profileData = data as TalentProfileData;
       if (profileData.photos?.some(photo => photo.url.startsWith('data:'))) {
         console.log('Photos detected in request, handling separately');
 
-        // S3アップロード用のエンドポイントを順次呼び出し
         const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
         const uploadedPhotos = [];
 
@@ -63,7 +62,7 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 8 * 1024; // 8KB chunks
+              const chunkSize = 32 * 1024; // 32KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -77,7 +76,7 @@ export async function apiRequest(
 
               for (let i = 0; i < totalChunks; i++) {
                 const start = i * chunkSize;
-                const end = start + chunkSize;
+                const end = Math.min(start + chunkSize, base64Data.length);
                 const chunk = base64Data.slice(start, end);
 
                 console.log(`Uploading chunk ${i + 1}/${totalChunks}`, {
@@ -97,7 +96,7 @@ export async function apiRequest(
                         'Content-Type': 'application/json',
                       },
                       body: JSON.stringify({
-                        photo: `data:image/jpeg;base64,${chunk}`,
+                        photo: photo.url.split(',')[0] + ',' + chunk,
                         totalChunks,
                         chunkIndex: i,
                         photoId,
@@ -127,14 +126,12 @@ export async function apiRequest(
                       throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts`);
                     }
 
-                    // 失敗した場合は少し待ってからリトライ（指数関数的バックオフ）
                     await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
                   }
                 }
 
-                // チャンク間で少し待機して負荷を分散
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 500));
+                  await new Promise(resolve => setTimeout(resolve, 300));
                 }
               }
 
@@ -152,13 +149,11 @@ export async function apiRequest(
                 throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
               }
 
-              // 失敗した場合は少し待ってからリトライ（指数関数的バックオフ）
               await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
             }
           }
         }
 
-        // 既存のURLと新しいURLを組み合わせる
         profileData.photos = profileData.photos.map(photo => {
           if (photo.url.startsWith('data:')) {
             const uploaded = uploadedPhotos.find(up => up.tag === photo.tag);
@@ -167,7 +162,6 @@ export async function apiRequest(
           return photo;
         });
 
-        // 更新されたデータで本来のリクエストを実行
         data = profileData;
       }
     }
