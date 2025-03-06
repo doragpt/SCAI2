@@ -90,8 +90,8 @@ export async function apiRequest(
                 throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
               }
 
-              // 失敗した場合は少し待ってからリトライ
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              // 失敗した場合は少し待ってからリトライ（指数関数的バックオフ）
+              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
             }
           }
         }
