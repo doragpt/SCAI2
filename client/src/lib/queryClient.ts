@@ -61,9 +61,9 @@ export async function apiRequest(
             try {
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
-              // Base64データを分割してアップロード
-              const chunkSize = 16 * 1024; // 16KB chunks
-              const base64Data = photo.url.split(',')[1];
+              // チャンクサイズを16KBに縮小
+              const chunkSize = 16 * 1024;
+              const [header, base64Data] = photo.url.split(',');
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
@@ -97,7 +97,7 @@ export async function apiRequest(
                         'Content-Type': 'application/json',
                       },
                       body: JSON.stringify({
-                        photo: photo.url.split(',')[0] + ',' + chunk,
+                        photo: `${header},${chunk}`,
                         totalChunks,
                         chunkIndex: i,
                         photoId,
@@ -112,7 +112,7 @@ export async function apiRequest(
                     const result = await chunkRes.json();
                     console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
-                    if (i === totalChunks - 1 && result.url) {
+                    if (result.url) {
                       uploadedPhotos.push({ ...photo, url: result.url });
                     }
                     break;
@@ -129,12 +129,14 @@ export async function apiRequest(
                       throw new Error(`Failed to upload chunk after ${maxChunkRetries} attempts: ${lastError?.message || 'Unknown error'}`);
                     }
 
+                    // リトライ前の待機時間を調整（exponential backoff）
                     await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, chunkRetries)));
                   }
                 }
 
+                // チャンク間の待機時間を最適化（600ms）
                 if (i < totalChunks - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 400));
+                  await new Promise(resolve => setTimeout(resolve, 600));
                 }
               }
 
@@ -152,7 +154,7 @@ export async function apiRequest(
                 throw new Error(`Failed to upload photo after ${maxRetries} attempts`);
               }
 
-              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+              await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retryCount)));
             }
           }
         }

@@ -512,6 +512,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Photo chunk upload request received:', {
         userId: req.user.id,
+        chunkIndex,
+        totalChunks,
         timestamp: new Date().toISOString()
       });
 
@@ -604,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
       res.status(500).json({
-        message: "写真のアップロードに失敗しました",
+        message: error instanceof Error ? error.message : "写真のアップロードに失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
