@@ -524,20 +524,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // 最後のチャンクの場合のみS3にアップロード
         if (chunkIndex === totalChunks - 1) {
-          const s3Url = await uploadToS3(
-            photo,
-            `${req.user.id}-${photoId}.jpg`
-          );
+          try {
+            const s3Url = await uploadToS3(
+              photo,
+              `${req.user.id}-${photoId}.jpg`
+            );
 
-          console.log('Photo chunk upload successful:', {
-            userId: req.user.id,
-            url: s3Url,
-            timestamp: new Date().toISOString()
-          });
+            console.log('Photo chunk upload successful:', {
+              userId: req.user.id,
+              url: s3Url,
+              timestamp: new Date().toISOString()
+            });
 
-          res.json({ url: s3Url });
+            res.json({ url: s3Url });
+          } catch (s3Error) {
+            console.error('S3 upload error:', {
+              error: s3Error,
+              userId: req.user.id,
+              photoId,
+              timestamp: new Date().toISOString()
+            });
+            throw s3Error;
+          }
         } else {
           // 中間チャンクの場合は成功を返す
+          console.log('Intermediate chunk processed:', {
+            userId: req.user.id,
+            chunkIndex,
+            totalChunks,
+            photoId,
+            timestamp: new Date().toISOString()
+          });
           res.json({ status: 'chunk_uploaded' });
         }
       } catch (uploadError) {

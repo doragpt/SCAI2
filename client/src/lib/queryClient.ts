@@ -63,15 +63,27 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 256 * 1024; // 256KB chunks
+              const chunkSize = 128 * 1024; // 128KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+              console.log('Starting chunked upload:', {
+                totalChunks,
+                totalSize: base64Data.length,
+                chunkSize,
+                timestamp: new Date().toISOString()
+              });
 
               for (let i = 0; i < totalChunks; i++) {
                 const start = i * chunkSize;
                 const end = start + chunkSize;
                 const chunk = base64Data.slice(start, end);
+
+                console.log(`Uploading chunk ${i + 1}/${totalChunks}`, {
+                  chunkSize: chunk.length,
+                  timestamp: new Date().toISOString()
+                });
 
                 const chunkRes = await fetch(`${API_BASE_URL}/api/upload-photo-chunk`, {
                   method: 'POST',
@@ -92,6 +104,8 @@ export async function apiRequest(
                 }
 
                 const result = await chunkRes.json();
+                console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
+
                 if (i === totalChunks - 1) {
                   uploadedPhotos.push({ ...photo, url: result.url });
                 }
@@ -102,7 +116,8 @@ export async function apiRequest(
             } catch (error) {
               console.error('Photo upload attempt failed:', {
                 attempt: retryCount + 1,
-                error: error instanceof Error ? error.message : 'Unknown error'
+                error: error instanceof Error ? error.message : 'Unknown error',
+                timestamp: new Date().toISOString()
               });
 
               retryCount++;
