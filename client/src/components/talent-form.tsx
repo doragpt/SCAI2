@@ -415,12 +415,8 @@ const PhotoUpload = ({
         </div>
       )}
 
-      {/*  The following lines are removed as they are now in PhotoUploadGuidelines */}
-      {/* <div className="space-y-2 text-sm text-muted-foreground">
-        <p>※最大20枚までアップロード可能です（1枚あたり2MBまで）</p>
-        <p className="font-medium text-primary">※現在の髪色の写真は必須です</p>
-        <p>※傷、タトゥー、アトピーがある場合は、該当部位の写真を必ずアップロードしタグ付けしてください</p>
-      </div> */}
+
+
     </div>
   );
 };
@@ -609,6 +605,7 @@ export function TalentForm() {
     }
   }, [existingProfile, form]);
 
+  // handleSubmit関数の修正
   const handleSubmit = async (data: TalentProfileData) => {
     try {
       setIsSubmitting(true);
@@ -643,6 +640,9 @@ export function TalentForm() {
         },
         photos: data.photos || [],
       };
+
+      // デバッグログを追加
+      console.log('Form submission data:', optimizedData);
 
       setFormData(optimizedData);
       setIsConfirmationOpen(true);
@@ -752,7 +752,6 @@ export function TalentForm() {
   const handleAddCurrentStore = () => {
     form.setValue("currentStores", [...form.watch("currentStores") || [], { storeName: "", stageName: "" }]);
   };
-
 
   const handleUpdatePreviousStore = (index: number, key: keyof PreviousStore, value: any) => {
     const updatedStores = [...form.watch("previousStores") || []];
@@ -997,7 +996,6 @@ export function TalentForm() {
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -1810,10 +1808,10 @@ export function TalentForm() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      保存中...
+                      送信中...
                     </>
                   ) : (
-                    "保存する"
+                    "プロフィールを保存"
                   )}
                 </Button>
               </div>
@@ -1822,11 +1820,13 @@ export function TalentForm() {
         </Form>
       </main>
 
+      {/* 確認モーダル */}
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         onConfirm={handleConfirm}
         formData={formData}
+        isPending={isSubmitting}
       />
     </div>
   );
