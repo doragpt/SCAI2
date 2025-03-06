@@ -522,30 +522,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        // 最後のチャンクの場合のみS3にアップロード
+        // Base64データの処理
+        const base64Data = photo.split(',')[1];
+
+        // チャンクデータを一時保存
+        const chunkKey = `${req.user.id}-${photoId}-chunk-${chunkIndex}`;
+        const chunks = req.session.photoChunks || {};
+        chunks[chunkKey] = base64Data;
+        req.session.photoChunks = chunks;
+
+        // 最後のチャンクの場合、すべてのチャンクを結合してS3にアップロード
         if (chunkIndex === totalChunks - 1) {
-          try {
-            const s3Url = await uploadToS3(
-              photo,
-              `${req.user.id}-${photoId}.jpg`
-            );
+          // すべてのチャンクを結合
+          const completeBase64 = Array.from({ length: totalChunks }, (_, i) => {
+            const key = `${req.user.id}-${photoId}-chunk-${i}`;
+            return chunks[key];
+          }).join('');
 
-            console.log('Photo chunk upload successful:', {
-              userId: req.user.id,
-              url: s3Url,
-              timestamp: new Date().toISOString()
-            });
+          // 結合したデータをS3にアップロード
+          const s3Url = await uploadToS3(
+            `data:image/jpeg;base64,${completeBase64}`,
+            `${req.user.id}-${photoId}.jpg`
+          );
 
-            res.json({ url: s3Url });
-          } catch (s3Error) {
-            console.error('S3 upload error:', {
-              error: s3Error,
-              userId: req.user.id,
-              photoId,
-              timestamp: new Date().toISOString()
-            });
-            throw s3Error;
+          // チャンクデータをクリア
+          for (let i = 0; i < totalChunks; i++) {
+            delete chunks[`${req.user.id}-${photoId}-chunk-${i}`];
           }
+          req.session.photoChunks = chunks;
+
+          console.log('Photo upload successful:', {
+            userId: req.user.id,
+            url: s3Url,
+            timestamp: new Date().toISOString()
+          });
+
+          res.json({ url: s3Url });
         } else {
           // 中間チャンクの場合は成功を返す
           console.log('Intermediate chunk processed:', {
@@ -558,9 +570,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json({ status: 'chunk_uploaded' });
         }
       } catch (uploadError) {
-        console.error('S3 upload error:', {
+        console.error('Upload processing error:', {
           error: uploadError,
           userId: req.user.id,
+          photoId,
           timestamp: new Date().toISOString()
         });
         throw uploadError;

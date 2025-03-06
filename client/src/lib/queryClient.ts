@@ -63,7 +63,7 @@ export async function apiRequest(
               console.log(`Uploading photo (attempt ${retryCount + 1}/${maxRetries})`);
 
               // Base64データを分割してアップロード
-              const chunkSize = 50 * 1024; // 50KB chunks
+              const chunkSize = 30 * 1024; // 30KB chunks
               const base64Data = photo.url.split(',')[1];
               const totalChunks = Math.ceil(base64Data.length / chunkSize);
               const photoId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -107,7 +107,7 @@ export async function apiRequest(
                   const result = await chunkRes.json();
                   console.log(`Chunk ${i + 1}/${totalChunks} uploaded successfully`);
 
-                  if (i === totalChunks - 1) {
+                  if (i === totalChunks - 1 && result.url) {
                     uploadedPhotos.push({ ...photo, url: result.url });
                   }
                 } catch (chunkError) {
@@ -116,6 +116,11 @@ export async function apiRequest(
                     timestamp: new Date().toISOString()
                   });
                   throw chunkError;
+                }
+
+                // チャンク間で少し待機して負荷を分散
+                if (i < totalChunks - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 100));
                 }
               }
 
