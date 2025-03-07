@@ -12,7 +12,6 @@ import { ja } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { getTalentProfileQuery } from "@/lib/api/talent";
 
 interface UserProfile {
   id: number;
@@ -44,17 +43,28 @@ export default function ProfileViewPage() {
     error: talentError
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfileQuery,
+    queryFn: async () => {
+      try {
+        const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+        console.log('Talent profile response:', {
+          hasData: !!response,
+          profileData: response,
+          timestamp: new Date().toISOString()
+        });
+        return response;
+      } catch (error) {
+        console.error('Talent profile fetch error:', {
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+    },
     enabled: !!user,
-    retry: 1,
+    retry: false,
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-  });
-
-  console.log('Talent profile data:', {
-    hasData: !!talentProfile,
-    profileData: talentProfile,
-    timestamp: new Date().toISOString()
   });
 
   if (!user) {
@@ -70,7 +80,11 @@ export default function ProfileViewPage() {
   }
 
   if (userError || talentError) {
-    console.error("Profile fetch error:", userError || talentError);
+    console.error("Profile fetch error:", {
+      userError,
+      talentError,
+      timestamp: new Date().toISOString()
+    });
     return (
       <div className="container max-w-2xl py-8">
         <Card className="p-6">
@@ -176,11 +190,15 @@ export default function ProfileViewPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">氏名</p>
-                            <p className="mt-1">{talentProfile.lastName} {talentProfile.firstName}</p>
+                            <p className="mt-1">
+                              {talentProfile.lastName} {talentProfile.firstName}
+                            </p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">フリガナ</p>
-                            <p className="mt-1">{talentProfile.lastNameKana} {talentProfile.firstNameKana}</p>
+                            <p className="mt-1">
+                              {talentProfile.lastNameKana} {talentProfile.firstNameKana}
+                            </p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">在住地</p>
@@ -240,7 +258,9 @@ export default function ProfileViewPage() {
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">写メ日記</p>
-                            <p className="mt-1">{talentProfile.canPhotoDiary ? "可能" : "不可"}</p>
+                            <p className="mt-1">
+                              {talentProfile.canPhotoDiary ? "可能" : "不可"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -249,7 +269,9 @@ export default function ProfileViewPage() {
                       {talentProfile.selfIntroduction && (
                         <div className="space-y-4">
                           <h3 className="font-medium">自己PR</h3>
-                          <p className="whitespace-pre-wrap">{talentProfile.selfIntroduction}</p>
+                          <p className="whitespace-pre-wrap">
+                            {talentProfile.selfIntroduction}
+                          </p>
                         </div>
                       )}
                     </div>

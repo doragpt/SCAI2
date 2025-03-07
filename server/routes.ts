@@ -488,6 +488,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         userId,
         hasProfile: !!profile,
         profileId: profile?.id,
+        profileData: profile, // 完全なプロフィールデータをログに出力
         timestamp: new Date().toISOString()
       });
 
