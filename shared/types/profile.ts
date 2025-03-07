@@ -19,10 +19,11 @@ export const profileSchema = z.object({
   smoking: z.object({
     types: z.array(z.string()).optional(),
     others: z.array(z.string()).optional(),
+    enabled: z.boolean().optional(),
   }),
   estheOptions: z.object({
     available: z.array(z.string()).optional(),
-    ngOptions: z.array(z.string()).optional(),
+    notes: z.string().optional(), // その他できないプレイやオプション用のフィールドを追加
   }).optional(),
 });
 
