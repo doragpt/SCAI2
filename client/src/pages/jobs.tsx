@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { prefectures, serviceTypes, type Job } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 
@@ -33,14 +33,6 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-// 給与表示のフォーマット関数
-const formatSalary = (min?: number | null, max?: number | null) => {
-  if (!min && !max) return "応相談";
-  if (!max) return `${min?.toLocaleString()}円〜`;
-  if (!min) return `〜${max?.toLocaleString()}円`;
-  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
-};
-
 // APIレスポンスの型定義
 interface JobsResponse {
   jobs: Job[];
@@ -51,49 +43,59 @@ interface JobsResponse {
   };
 }
 
+// 給与表示のフォーマット関数
+const formatSalary = (min?: number | null, max?: number | null) => {
+  if (!min && !max) return "応相談";
+  if (!max) return `${min?.toLocaleString()}円〜`;
+  if (!min) return `〜${max?.toLocaleString()}円`;
+  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
+};
+
 // 求人カードコンポーネント
 const JobCard = ({ job }: { job: Job }) => {
   return (
     <motion.div variants={item}>
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader>
-          <CardTitle className="text-lg">{job.businessName}</CardTitle>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Search className="h-4 w-4" />
-            <span>{job.location}</span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div>
-              <p className="text-sm font-medium">業種</p>
-              <p className="text-sm text-muted-foreground">
-                {job.serviceType === "deriheru" ? "デリバリーヘルス" :
-                 job.serviceType === "hoteheru" ? "ホテヘル" :
-                 job.serviceType === "esthe" ? "エステ" : job.serviceType}
-              </p>
+      <Link href={`/jobs/${job.id}`}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="text-lg">{job.businessName}</CardTitle>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Search className="h-4 w-4" />
+              <span>{job.location}</span>
             </div>
-            <div>
-              <p className="text-sm font-medium">給与</p>
-              <p className="text-sm text-muted-foreground">
-                {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
-              </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <p className="text-sm font-medium">業種</p>
+                <p className="text-sm text-muted-foreground">
+                  {job.serviceType === "deriheru" ? "デリバリーヘルス" :
+                   job.serviceType === "hoteheru" ? "ホテヘル" :
+                   job.serviceType === "esthe" ? "エステ" : job.serviceType}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">給与</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
+                </p>
+              </div>
+              <div className="flex gap-2 pt-2">
+                {job.transportationSupport && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
+                    交通費支給
+                  </span>
+                )}
+                {job.housingSupport && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
+                    寮完備
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              {job.transportationSupport && (
-                <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
-                  交通費支給
-                </span>
-              )}
-              {job.housingSupport && (
-                <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
-                  寮完備
-                </span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Link>
     </motion.div>
   );
 };
@@ -105,6 +107,29 @@ export default function Jobs() {
   const [page, setPage] = useState(1);
   const limit = 12; // 1ページあたりの表示件数
 
+  // URLパラメータからフィルター状態を復元
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const locationParam = params.get("location");
+    const serviceTypeParam = params.get("serviceType");
+    const pageParam = params.get("page");
+
+    if (locationParam) setLocation(locationParam);
+    if (serviceTypeParam) setServiceType(serviceTypeParam);
+    if (pageParam) setPage(parseInt(pageParam));
+  }, []);
+
+  // フィルター変更時にURLを更新
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (location) params.set("location", location);
+    if (serviceType) params.set("serviceType", serviceType);
+    if (page > 1) params.set("page", page.toString());
+
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [location, serviceType, page]);
+
   const {
     data: response,
     isLoading,
@@ -114,13 +139,20 @@ export default function Jobs() {
   });
 
   // エラー発生時にトースト表示
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "エラーが発生しました",
-      description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+      });
+    }
+  }, [error]);
+
+  // フィルター変更時にページをリセット
+  useEffect(() => {
+    setPage(1);
+  }, [location, serviceType]);
 
   if (!user) {
     return <Redirect to="/auth" />;
@@ -145,7 +177,7 @@ export default function Jobs() {
       <main className="container mx-auto px-4 py-20">
         {/* フィルター */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <Select value={location || null} onValueChange={setLocation}>
+          <Select value={location || "all"} onValueChange={setLocation}>
             <SelectTrigger>
               <SelectValue placeholder="エリアを選択" />
             </SelectTrigger>
@@ -159,7 +191,7 @@ export default function Jobs() {
             </SelectContent>
           </Select>
 
-          <Select value={serviceType || null} onValueChange={setServiceType}>
+          <Select value={serviceType || "all"} onValueChange={setServiceType}>
             <SelectTrigger>
               <SelectValue placeholder="業種を選択" />
             </SelectTrigger>
@@ -189,6 +221,10 @@ export default function Jobs() {
           </div>
         ) : (
           <>
+            <div className="mb-4 text-sm text-muted-foreground">
+              {response.pagination.totalItems}件の求人が見つかりました
+            </div>
+
             <motion.div
               variants={container}
               initial="hidden"

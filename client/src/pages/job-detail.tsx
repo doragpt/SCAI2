@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { SEO } from "@/lib/seo";
+import { SEO, type SEOProps } from "@/lib/seo";
+import { toast } from "@/hooks/use-toast";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -19,9 +20,17 @@ export default function JobDetail() {
   const [workingHours, setWorkingHours] = useState<number>(8);
   const [workingDays, setWorkingDays] = useState<number>(20);
 
-  const { data: job, isLoading } = useQuery<Job>({
+  const { data: job, isLoading, error } = useQuery<Job>({
     queryKey: ["/api/jobs", id],
   });
+
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "エラーが発生しました",
+      description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+    });
+  }
 
   if (isLoading) {
     return (
@@ -62,13 +71,13 @@ export default function JobDetail() {
     { label: job.businessName },
   ];
 
-  const seoData = {
+  const seoData: SEOProps = {
     title: `${job.businessName}の求人情報`,
     description: `${job.location}エリアの${job.serviceType}求人。日給${job.minimumGuarantee?.toLocaleString()}円～${job.maximumGuarantee?.toLocaleString()}円。交通費支給、寮完備など充実した待遇をご用意。`,
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
       description: `${job.location}エリアの${job.serviceType}求人。未経験者歓迎、充実した待遇をご用意しています。`,
-      datePosted: job.createdAt,
+      datePosted: job.createdAt.toISOString(),
       employmentType: "アルバイト",
       hiringOrganization: {
         name: job.businessName,

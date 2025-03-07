@@ -131,51 +131,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     }
   });
 
-  // 求人詳細取得エンドポイント
-  app.get("/api/jobs/:id", async (req, res) => {
-    try {
-      const jobId = parseInt(req.params.id);
-      if (isNaN(jobId)) {
-        return res.status(400).json({ message: "Invalid job ID" });
-      }
-
-      const [job] = await db
-        .select()
-        .from(jobs)
-        .where(eq(jobs.id, jobId));
-
-      if (!job) {
-        return res.status(404).json({ message: "求人が見つかりません" });
-      }
-
-      // ユーザーが認証済みの場合、応募状況も返す
-      if (req.user?.id) {
-        const [application] = await db
-          .select()
-          .from(applications)
-          .where(eq(applications.storeId, jobId))
-          .where(eq(applications.userId, req.user.id));
-
-        return res.json({
-          ...job,
-          application: application || null
-        });
-      }
-
-      res.json(job);
-    } catch (error) {
-      console.error("Job detail fetch error:", {
-        error,
-        jobId: req.params.id,
-        timestamp: new Date().toISOString()
-      });
-      res.status(500).json({
-        message: "求人詳細の取得に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
   // 求人検索エンドポイント
   app.get("/api/jobs/search", async (req, res) => {
     try {
@@ -191,11 +146,11 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
       let baseQuery = db.select().from(jobs);
 
-      if (location) {
+      if (location && location !== "all") {
         baseQuery = baseQuery.where(eq(jobs.location, location as string));
       }
 
-      if (serviceType) {
+      if (serviceType && serviceType !== "all") {
         baseQuery = baseQuery.where(eq(jobs.serviceType, serviceType as string));
       }
 
@@ -218,7 +173,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         jobs: jobListings,
         pagination: {
           currentPage: pageNum,
-          totalPages: Math.ceil(totalCount / limitNum), // Corrected totalPages calculation
+          totalPages: Math.ceil(totalCount / limitNum),
           totalItems: totalCount
         }
       });
@@ -230,6 +185,60 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       });
       res.status(500).json({
         message: "求人検索に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人詳細取得エンドポイント
+  app.get("/api/jobs/:id", async (req, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+      }
+
+      const [job] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!job) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // ユーザーが認証済みの場合、応募状況も返す
+      if (req.user?.id) {
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(and(
+            eq(applications.storeId, jobId),
+            eq(applications.userId, req.user.id)
+          ));
+
+        // 閲覧履歴を記録
+        await db.insert(viewHistory).values({
+          userId: req.user.id,
+          storeId: jobId,
+          viewedAt: new Date()
+        });
+
+        return res.json({
+          ...job,
+          application: application || null
+        });
+      }
+
+      res.json(job);
+    } catch (error) {
+      console.error("Job detail fetch error:", {
+        error,
+        jobId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "求人詳細の取得に失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
