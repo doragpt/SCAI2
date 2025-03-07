@@ -3,8 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Redirect, Link } from "wouter";
+import { Loader2 } from "lucide-react";
+import { Redirect } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -57,13 +57,6 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // プロフィールデータの取得
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["/api/talent/profile"],
-    enabled: !!user,
-  });
-
-  // ユーザー基本情報の取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery({
     queryKey: ["/api/user/profile"],
     enabled: !!user,
@@ -90,10 +83,8 @@ export default function BasicInfoEdit() {
     }
   }, [userProfile, form.reset]);
 
-  // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
-      // ユーザー基本情報の更新
       const userResponse = await apiRequest("PATCH", "/api/user", {
         username: updateData.username,
         displayName: updateData.displayName,
@@ -110,25 +101,10 @@ export default function BasicInfoEdit() {
         throw new Error(errorData.message || "ユーザー情報の更新に失敗しました");
       }
 
-      // プロフィール情報も更新
-      if (profile) {
-        const profileResponse = await apiRequest("PATCH", "/api/talent/profile", {
-          ...profile,
-          location: updateData.location,
-        });
-
-        if (!profileResponse.ok) {
-          const errorData = await profileResponse.json();
-          throw new Error(errorData.message || "プロフィールの更新に失敗しました");
-        }
-      }
-
       return await userResponse.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
-
       toast({
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",
@@ -151,7 +127,7 @@ export default function BasicInfoEdit() {
     return <Redirect to="/auth" />;
   }
 
-  if (isProfileLoading || isUserLoading) {
+  if (isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -160,166 +136,154 @@ export default function BasicInfoEdit() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild className="mr-2">
-            <Link href="/talent/dashboard">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <h1 className="text-xl font-bold">基本情報編集</h1>
-          <div className="w-10" />
-        </div>
-      </header>
+    <div className="container max-w-2xl py-8">
+      <h1 className="text-2xl font-semibold mb-6">基本情報編集</h1>
 
-      <main className="container mx-auto px-4 py-20">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ニックネーム</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ニックネーム</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>本名</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="displayName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>本名</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <div className="space-y-2">
-              <FormLabel>生年月日</FormLabel>
-              <div className="p-3 bg-muted rounded-md">
-                <p>{userProfile?.birthDate ? format(new Date(userProfile.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                ※生年月日の修正が必要な場合は、運営にお問い合わせください。
-              </p>
+          <div className="space-y-2">
+            <FormLabel>生年月日</FormLabel>
+            <div className="p-3 bg-muted rounded-md">
+              <p>{userProfile?.birthDate ? format(new Date(userProfile.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
             </div>
+            <p className="text-sm text-muted-foreground">
+              ※生年月日の修正が必要な場合は、運営にお問い合わせください。
+            </p>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>居住地</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="都道府県を選択" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {prefectures.map((pref) => (
-                        <SelectItem key={pref} value={pref}>{pref}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="preferredLocations"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>希望地域（複数選択可）</FormLabel>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>居住地</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="都道府県を選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
                     {prefectures.map((pref) => (
-                      <div key={pref} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={field.value?.includes(pref)}
-                          onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...(field.value || []), pref]
-                              : (field.value || []).filter((value) => value !== pref);
-                            field.onChange(newValue);
-                          }}
-                        />
-                        <label className="text-sm">{pref}</label>
-                      </div>
+                      <SelectItem key={pref} value={pref}>{pref}</SelectItem>
                     ))}
-                  </div>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="preferredLocations"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>希望地域（複数選択可）</FormLabel>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {prefectures.map((pref) => (
+                    <div key={pref} className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={field.value?.includes(pref)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...(field.value || []), pref]
+                            : (field.value || []).filter((value) => value !== pref);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <label className="text-sm">{pref}</label>
+                    </div>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="space-y-4 border rounded-lg p-4">
+            <h2 className="text-lg font-semibold">パスワード変更</h2>
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>現在のパスワード</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="space-y-4 border rounded-lg p-4">
-              <h2 className="text-lg font-semibold">パスワード変更</h2>
-              <FormField
-                control={form.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>現在のパスワード</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>新しいパスワード</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>新しいパスワード（確認）</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={updateProfileMutation.isPending}
-            >
-              {updateProfileMutation.isPending && (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>新しいパスワード</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-              更新する
-            </Button>
-          </form>
-        </Form>
-      </main>
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>新しいパスワード（確認）</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={updateProfileMutation.isPending}
+          >
+            {updateProfileMutation.isPending && (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            )}
+            更新する
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }
