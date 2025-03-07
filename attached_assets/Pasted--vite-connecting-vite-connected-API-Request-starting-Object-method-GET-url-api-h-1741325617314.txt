@@ -1,0 +1,54 @@
+[vite] connecting...
+[vite] connected.
+API Request starting: 
+Object {method: "GET", url: "/api/health", dataSize: 0, timestamp: "2025-03-07T05:33:14.801Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/public", dataSize: 0, timestamp: "2025-03-07T05:33:14.804Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/user", dataSize: 0, timestamp: "2025-03-07T05:33:14.806Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-07T05:33:14.950Z"}
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Query Failed: 
+Object {queryKey: Array(1), error: {…}, timestamp: "2025-03-07T05:33:14.950Z"}
+error: Object
+queryKey: Array(1)
+timestamp: "2025-03-07T05:33:14.950Z"
+[[Prototype]]: Object
+
+API Request starting: 
+Object {method: "GET", url: "/api/user", dataSize: 0, timestamp: "2025-03-07T05:33:15.957Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-07T05:33:16.071Z"}
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Query Failed: 
+Object {queryKey: Array(1), error: {…}, timestamp: "2025-03-07T05:33:16.071Z"}
+error: Object
+queryKey: Array(1)
+timestamp: "2025-03-07T05:33:16.071Z"
+[[Prototype]]: Object
+
+API Request starting: 
+Object {method: "GET", url: "/api/user", dataSize: 0, timestamp: "2025-03-07T05:33:18.073Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-07T05:33:18.200Z"}
+error: "トークンが無効です"
+method: "GET"
+timestamp: "2025-03-07T05:33:18.200Z"
+url: "/api/user"
+[[Prototype]]: Object
+
+Query Failed: 
+Object {queryKey: Array(1), error: {…}, timestamp: "2025-03-07T05:33:18.200Z"}
+error: Object
+queryKey: Array(1)
+timestamp: "2025-03-07T05:33:18.200Z"
+[[Prototype]]: Object

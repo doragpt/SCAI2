@@ -940,7 +940,7 @@ export function TalentForm() {
         <Form {...form}>
           <form
             onSubmit={handleSubmit}
-            className="spacey-8"
+            className="spacey-8">
           >
             <div>
               <h3 className="textlg font-semibold mb-4">氏名</h3>              <div className="grid grid-cols-2 gap-4">
@@ -1077,27 +1077,30 @@ export function TalentForm() {
                       </div>
                     ))}
                   </div>
-
                   <div className="space-y-2">
-                    <Label className="text-sm">その他の身分証明書</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        value={newIdType}
-                        onChange={(e) => setNewIdType(e.target.value)}
-                        placeholder="その他の身分証明書を入力"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddIdType}
-                        disabled={!newIdType.trim()}
-                      >
-                        追加
-                      </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {otherIds.map((id, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {id}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => {
+                              const updated = otherIds.filter((_, i) => i !== index);
+                              setOtherIds(updated);
+                              form.setValue("availableIds.others", updated);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
                     </div>
+                    <OtherItemInput
+                      onAdd={handleAddIdType}
+                      placeholder="その他の身分証明書を入力"
+                    />
                   </div>
                 </div>
               </FormFieldWrapper>
@@ -1880,15 +1883,14 @@ export function TalentForm() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="その他の備考">
-                      <FormControl>
-                        <textarea
-                          {...field}
-                          className="w-full h-32 p-2 border rounded-md"
-                          placeholder="その他の備考を入力してください"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>その他備考</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="その他の備考事項があれば入力してください"
+                        className="min-h-[100px]"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

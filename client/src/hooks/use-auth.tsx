@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -8,6 +8,7 @@ import { baseUserSchema, User as SelectUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -31,6 +32,8 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
   const {
     data: user,
     error,
@@ -38,6 +41,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    onError: (error: any) => {
+      if (error.message === "トークンが無効です") {
+        // トークンが無効な場合の処理
+        localStorage.removeItem("auth_token");
+        queryClient.setQueryData(["/api/user"], null);
+        toast({
+          title: "セッションの有効期限が切れました",
+          description: "再度ログインしてください。",
+          variant: "destructive",
+        });
+        setLocation("/auth");
+      }
+    },
   });
 
   const loginMutation = useMutation({
@@ -48,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(error.message || "ログインに失敗しました");
       }
       const { user, token } = await res.json();
-      // Store the token in localStorage
       localStorage.setItem("auth_token", token);
       return user;
     },
@@ -76,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(error.message || "登録に失敗しました");
       }
       const { user, token } = await res.json();
-      // Store the token in localStorage
       localStorage.setItem("auth_token", token);
       return user;
     },
@@ -102,7 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         throw new Error("ログアウトに失敗しました");
       }
-      // Remove the token from localStorage
       localStorage.removeItem("auth_token");
     },
     onSuccess: () => {
@@ -111,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
+      setLocation("/auth");
     },
     onError: (error: Error) => {
       toast({
@@ -120,6 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
   });
+
+  // トークンの有効性チェック
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token && !isLoading && !user) {
+      setLocation("/auth");
+    }
+  }, [user, isLoading, setLocation]);
 
   return (
     <AuthContext.Provider
