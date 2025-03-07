@@ -415,6 +415,10 @@ export const jobs = pgTable("jobs", {
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
+  workingHours: text("working_hours"),
+  description: text("description"),
+  requirements: text("requirements"),
+  benefits: text("benefits"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
@@ -530,3 +534,28 @@ export const jobSchema = createInsertSchema(jobs).omit({ id: true });
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
+
+// APIレスポンスの型定義を追加
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}
+
+export interface JobsSearchResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+// service types の定義を更新
+export const serviceTypeLabels: Record<ServiceType, string> = {
+  deriheru: "デリバリーヘルス",
+  hoteheru: "ホテヘル",
+  hakoheru: "箱ヘル",
+  esthe: "エステ",
+  onakura: "オナクラ",
+  mseikan: "メンズエステ"
+} as const;

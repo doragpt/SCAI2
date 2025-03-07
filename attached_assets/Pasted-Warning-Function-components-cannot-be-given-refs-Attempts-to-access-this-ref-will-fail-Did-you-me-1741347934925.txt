@@ -1,0 +1,69 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`.
+    at Select (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=8a6f5c63:86:5)
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=8a6f5c63:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=8a6f5c63:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RLTE5R7I.js?v=8a6f5c63:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=8a6f5c63:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UACHJROW.js?v=8a6f5c63:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RLTE5R7I.js?v=8a6f5c63:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DB2KZIVF.js?v=8a6f5c63:1980:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8a6f5c63:189:13
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=8a6f5c63:38:15)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DB2KZIVF.js?v=8a6f5c63:1915:15)
+    at Popper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DB2KZIVF.js?v=8a6f5c63:1972:11)
+    at Tooltip (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8a6f5c63:107:5)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=8a6f5c63:38:15)
+    at TooltipProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8a6f5c63:63:5)
+    at div
+    at div
+    at section
+    at main
+    at div
+    at HomePage (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/home-page.tsx:327:44)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8a6f5c63:323:16)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8a6f5c63:379:17)
+    at Router
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=8a6f5c63:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=-Q9t0i4W73XnkszmLD5Uc:132:57)
+API Request starting: 
+Object {method: "GET", url: "/api/user", dataSize: 0, timestamp: "2025-03-07T11:45:07.918Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/health", dataSize: 0, timestamp: "2025-03-07T11:45:07.924Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/public", dataSize: 0, timestamp: "2025-03-07T11:45:07.926Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/search", dataSize: 0, timestamp: "2025-03-07T11:45:14.680Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/jobs/search", error: "求人検索に失敗しました", timestamp: "2025-03-07T11:45:14.809Z"}
+
+Query Failed: 
+Object {queryKey: Array(2), error: {…}, timestamp: "2025-03-07T11:45:14.810Z"}
+
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/search", dataSize: 0, timestamp: "2025-03-07T11:45:15.819Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/jobs/search", error: "求人検索に失敗しました", timestamp: "2025-03-07T11:45:15.934Z"}
+
+Query Failed: 
+Object {queryKey: Array(2), error: {…}, timestamp: "2025-03-07T11:45:15.934Z"}
+
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/search", dataSize: 0, timestamp: "2025-03-07T11:45:17.935Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/jobs/search", error: "求人検索に失敗しました", timestamp: "2025-03-07T11:45:18.054Z"}
+error: "求人検索に失敗しました"
+method: "GET"
+timestamp: "2025-03-07T11:45:18.054Z"
+url: "/api/jobs/search"
+[[Prototype]]: Object
+
+Query Failed: 
+Object {queryKey: Array(2), error: {…}, timestamp: "2025-03-07T11:45:18.054Z"}
+error: Object
+queryKey: Array(2)
+timestamp: "2025-03-07T11:45:18.054Z"
+[[Prototype]]: Object

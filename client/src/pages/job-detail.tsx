@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { type Job } from "@shared/schema";
+import { type JobResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
+import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -19,17 +20,21 @@ export default function JobDetail() {
   const [workingHours, setWorkingHours] = useState<number>(8);
   const [workingDays, setWorkingDays] = useState<number>(20);
 
-  const { data: job, isLoading, error } = useQuery<Job>({
+  const {
+    data: job,
+    isLoading,
+    error
+  } = useQuery<JobResponse>({
     queryKey: ["/api/jobs", id],
+    onError: (error) => {
+      console.error("求人詳細取得エラー:", error);
+      toast({
+        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+      });
+    }
   });
-
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "エラーが発生しました",
-      description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
-    });
-  }
 
   if (isLoading) {
     return (
@@ -72,10 +77,10 @@ export default function JobDetail() {
 
   const seoData: SEOProps = {
     title: `${job.businessName}の求人情報`,
-    description: `${job.location}エリアの${job.serviceType}求人。日給${job.minimumGuarantee?.toLocaleString()}円～${job.maximumGuarantee?.toLocaleString()}円。交通費支給、寮完備など充実した待遇をご用意。`,
+    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType)}求人。日給${job.minimumGuarantee?.toLocaleString()}円～${job.maximumGuarantee?.toLocaleString()}円。交通費支給、寮完備など充実した待遇をご用意。`,
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
-      description: `${job.location}エリアの${job.serviceType}求人。未経験者歓迎、充実した待遇をご用意しています。`,
+      description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
       datePosted: job.createdAt.toISOString(),
       employmentType: "アルバイト",
       hiringOrganization: {
@@ -141,25 +146,18 @@ export default function JobDetail() {
                         <Building className="h-4 w-4 mr-2" />
                         <span className="font-medium">業種:</span>
                         <span className="ml-2">
-                          {job.serviceType === "deriheru" ? "デリバリーヘルス" :
-                           job.serviceType === "hoteheru" ? "ホテヘル" :
-                           job.serviceType === "esthe" ? "エステ" : job.serviceType}
+                          {getServiceTypeLabel(job.serviceType)}
                         </span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
                         <span className="font-medium">営業時間:</span>
-                        <span className="ml-2">10:00 - 翌5:00</span>
+                        <span className="ml-2">{job.workingHours || "10:00 - 翌5:00"}</span>
                       </div>
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span className="font-medium">休日:</span>
-                        <span className="ml-2">自由出勤制</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <span className="font-medium">応募連絡先:</span>
-                        <span className="ml-2">090-XXXX-XXXX</span>
+                        <span className="font-medium">更新日:</span>
+                        <span className="ml-2">{formatDate(job.updatedAt)}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -169,11 +167,9 @@ export default function JobDetail() {
               <TabsContent value="requirements">
                 <Card>
                   <CardContent className="p-6">
-                    <ul className="list-disc list-inside space-y-2">
-                      <li>18歳以上（高校生不可）</li>
-                      <li>経験不問</li>
-                      <li>未経験者歓迎</li>
-                    </ul>
+                    <div className="whitespace-pre-wrap">
+                      {job.requirements || "18歳以上（高校生不可）\n経験不問\n未経験者歓迎"}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -181,23 +177,22 @@ export default function JobDetail() {
               <TabsContent value="benefits">
                 <Card>
                   <CardContent className="p-6">
-                    <div className="grid gap-4">
-                      {job.transportationSupport && (
-                        <div className="flex items-center">
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs mr-2">
+                    <div className="space-y-4">
+                      <div className="whitespace-pre-wrap">
+                        {job.benefits}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {job.transportationSupport && (
+                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                             交通費支給
                           </span>
-                          <span>全額支給</span>
-                        </div>
-                      )}
-                      {job.housingSupport && (
-                        <div className="flex items-center">
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs mr-2">
+                        )}
+                        {job.housingSupport && (
+                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                             寮完備
                           </span>
-                          <span>即日入居可能</span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

@@ -12,10 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { prefectures, serviceTypes, type Job } from "@shared/schema";
+import { 
+  prefectures, 
+  serviceTypes, 
+  type JobsSearchResponse, 
+  type ServiceType 
+} from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
 
 // Animation variants
 const container = {
@@ -33,26 +39,8 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-// APIレスポンスの型定義
-interface JobsResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
-
-// 給与表示のフォーマット関数
-const formatSalary = (min?: number | null, max?: number | null) => {
-  if (!min && !max) return "応相談";
-  if (!max) return `${min?.toLocaleString()}円〜`;
-  if (!min) return `〜${max?.toLocaleString()}円`;
-  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
-};
-
 // 求人カードコンポーネント
-const JobCard = ({ job }: { job: Job }) => {
+const JobCard = ({ job }: { job: JobsSearchResponse['jobs'][0] }) => {
   return (
     <motion.div variants={item}>
       <Link href={`/jobs/${job.id}`}>
@@ -69,9 +57,7 @@ const JobCard = ({ job }: { job: Job }) => {
               <div>
                 <p className="text-sm font-medium">業種</p>
                 <p className="text-sm text-muted-foreground">
-                  {job.serviceType === "deriheru" ? "デリバリーヘルス" :
-                   job.serviceType === "hoteheru" ? "ホテヘル" :
-                   job.serviceType === "esthe" ? "エステ" : job.serviceType}
+                  {getServiceTypeLabel(job.serviceType as ServiceType)}
                 </p>
               </div>
               <div>
@@ -91,6 +77,9 @@ const JobCard = ({ job }: { job: Job }) => {
                     寮完備
                   </span>
                 )}
+              </div>
+              <div className="text-xs text-muted-foreground mt-2">
+                {formatDate(job.createdAt)}
               </div>
             </div>
           </CardContent>
@@ -134,20 +123,17 @@ export default function Jobs() {
     data: response,
     isLoading,
     error
-  } = useQuery<JobsResponse>({
+  } = useQuery<JobsSearchResponse>({
     queryKey: ["/api/jobs/search", { location, serviceType, page, limit }],
-  });
-
-  // エラー発生時にトースト表示
-  useEffect(() => {
-    if (error) {
+    onError: (error) => {
+      console.error("求人情報取得エラー:", error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
         description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
       });
     }
-  }, [error]);
+  });
 
   // フィルター変更時にページをリセット
   useEffect(() => {
@@ -163,7 +149,7 @@ export default function Jobs() {
       {/* ヘッダー */}
       <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild className="mr-2">
+          <Button variant="ghost" size="icon" asChild>
             <Link href="/talent/dashboard">
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -199,9 +185,7 @@ export default function Jobs() {
               <SelectItem value="all">全ての業種</SelectItem>
               {serviceTypes.map((type) => (
                 <SelectItem key={type} value={type}>
-                  {type === "deriheru" ? "デリバリーヘルス" :
-                   type === "hoteheru" ? "ホテヘル" :
-                   type === "esthe" ? "エステ" : type}
+                  {getServiceTypeLabel(type as ServiceType)}
                 </SelectItem>
               ))}
             </SelectContent>
