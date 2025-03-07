@@ -30,7 +30,10 @@ import {
   Star,
   Link as LinkIcon,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Clock4,
+  Banknote,
+  Navigation,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -147,6 +150,12 @@ export function ProfileConfirmationModal({
                             {id}
                           </Badge>
                         ))}
+                        {formData.availableIds?.others?.map((id) => (
+                          <Badge key={id} variant="outline" className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                            {id}
+                          </Badge>
+                        ))}
                       </div>
                       <Badge variant={formData.canProvideResidenceRecord ? "default" : "secondary"}>
                         {formData.canProvideResidenceRecord ? (
@@ -248,6 +257,7 @@ export function ProfileConfirmationModal({
             <section>
               <SectionHeader icon={Building2} title="勤務情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
+                {/* 勤務店舗情報 */}
                 {formData.currentStores && formData.currentStores.length > 0 && (
                   <InfoItem
                     label="現在の在籍店舗"
@@ -272,6 +282,8 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
+
+                {/* 勤務形態と期間 */}
                 {formData.workType && (
                   <InfoItem
                     label="希望勤務形態"
@@ -293,6 +305,110 @@ export function ProfileConfirmationModal({
                           {formData.workPeriodStart && format(new Date(formData.workPeriodStart), 'yyyy年MM月dd日', { locale: ja })}
                           {formData.workPeriodEnd && ` 〜 ${format(new Date(formData.workPeriodEnd), 'yyyy年MM月dd日', { locale: ja })}`}
                         </span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {/* 勤務条件 */}
+                <InfoItem
+                  label="前日到着可否"
+                  value={
+                    <Badge variant={formData.canArrivePreviousDay ? "default" : "secondary"}>
+                      {formData.canArrivePreviousDay ? "可能" : "不可"}
+                    </Badge>
+                  }
+                />
+
+                {formData.desiredGuarantee && (
+                  <InfoItem
+                    label="希望給与・保証額"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Banknote className="h-4 w-4 text-primary" />
+                        <span>{formData.desiredGuarantee}円</span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {formData.desiredRate && (
+                  <InfoItem
+                    label="希望バック率"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Banknote className="h-4 w-4 text-primary" />
+                        <span>{formData.desiredRate}%</span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {formData.waitingHours && (
+                  <InfoItem
+                    label="待機時間"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Clock4 className="h-4 w-4 text-primary" />
+                        <span>{formData.waitingHours}時間</span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {/* 出発・戻り地点 */}
+                {formData.departureLocation && (
+                  <InfoItem
+                    label="出発地点"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-4 w-4 text-primary" />
+                        <span>{formData.departureLocation}</span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {formData.returnLocation && (
+                  <InfoItem
+                    label="戻り地点"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-4 w-4 text-primary" />
+                        <span>{formData.returnLocation}</span>
+                      </div>
+                    }
+                  />
+                )}
+
+                {/* 希望エリアとNGエリア */}
+                {formData.preferredLocations && formData.preferredLocations.length > 0 && (
+                  <InfoItem
+                    label="希望エリア"
+                    value={
+                      <div className="flex flex-wrap gap-2">
+                        {formData.preferredLocations.map((location, index) => (
+                          <Badge key={index} variant="outline">
+                            <MapPin className="h-3 w-3 text-green-500 mr-1" />
+                            {location}
+                          </Badge>
+                        ))}
+                      </div>
+                    }
+                  />
+                )}
+
+                {formData.ngLocations && formData.ngLocations.length > 0 && (
+                  <InfoItem
+                    label="NGエリア"
+                    value={
+                      <div className="flex flex-wrap gap-2">
+                        {formData.ngLocations.map((location, index) => (
+                          <Badge key={index} variant="destructive">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            {location}
+                          </Badge>
+                        ))}
                       </div>
                     }
                   />
@@ -411,7 +527,7 @@ export function ProfileConfirmationModal({
               </div>
             </section>
 
-            {/* 制限事項 */}
+            {/* 制限事項・その他 */}
             <section>
               <SectionHeader icon={AlertTriangle} title="制限事項・その他" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
@@ -433,7 +549,7 @@ export function ProfileConfirmationModal({
                   />
                 )}
 
-                {formData.allergies && (
+                {formData.allergies && formData.allergies.hasAllergy && (
                   <InfoItem
                     label="アレルギー"
                     value={
@@ -472,7 +588,6 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
-                {/*This section is now redundant and should be removed */}
               </div>
             </section>
 
@@ -486,7 +601,7 @@ export function ProfileConfirmationModal({
               </div>
             </section>
 
-            {/* その他 */}
+            {/* その他情報 */}
             <section>
               <SectionHeader icon={FileText} title="その他情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
