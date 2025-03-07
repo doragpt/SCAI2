@@ -522,6 +522,63 @@ const OtherItemInput = React.memo(({
   );
 });
 
+const defaultValues: TalentProfileData = {
+  lastName: "",
+  firstName: "",
+  lastNameKana: "",
+  firstNameKana: "",
+  location: "東京都",
+  nearestStation: "",
+  availableIds: {
+    types: [],
+    others: [],
+  },
+  canProvideResidenceRecord: false,
+  height: 150,
+  weight: 45,
+  cupSize: "D",
+  bust: 80,
+  waist: 60,
+  hip: 85,
+  faceVisibility: "全隠し",
+  canPhotoDiary: false,
+  canHomeDelivery: false,
+  ngOptions: {
+    common: [],
+    others: [],
+  },
+  allergies: {
+    types: [],
+    others: [],
+    hasAllergy: false,
+  },
+  smoking: {
+    enabled: false,
+    types: [],
+    others: [],
+  },
+  hasSnsAccount: false,
+  snsUrls: [],
+  currentStores: [],
+  previousStores: [],
+  photoDiaryUrls: [],
+  photos: [],
+  selfIntroduction: "",
+  notes: "",
+  estheOptions: {
+    available: [],
+    ngOptions: [],
+  },
+  hasEstheExperience: false,
+  estheExperiencePeriod: "",
+  bodyMark: {
+    hasBodyMark: false,
+    details: "",
+    others: [],
+  },
+};
+
+
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -530,72 +587,7 @@ export function TalentForm() {
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     mode: "onChange",
-    defaultValues: {
-      lastName: "",
-      firstName: "",
-      lastNameKana: "",
-      firstNameKana: "",
-      location: "",
-      nearestStation: "",
-      availableIds: {
-        types: [],
-        others: [],
-      },
-      canProvideResidenceRecord: false,
-      height: 150,
-      weight: 45,
-      cupSize: "D",
-      bust: null,
-      waist: null,
-      hip: null,
-      faceVisibility: "全隠し",
-      canPhotoDiary: false,
-      canHomeDelivery: false,
-      ngOptions: {
-        common: [],
-        others: [],
-      },
-      allergies: {
-        types: [],
-        others: [],
-        hasAllergy: false,
-      },
-      smoking: {
-        enabled: false,
-        types: [],
-        others: [],
-      },
-      hasSnsAccount: false,
-      snsUrls: [],
-      currentStores: [],
-      previousStores: [],
-      photoDiaryUrls: [],
-      photos: [],
-      selfIntroduction: "",
-      notes: "",
-      estheOptions: {
-        available: [],
-        otherNgOptions: "", // string型として初期化
-      },
-      hasEstheExperience: false,
-      estheExperiencePeriod: "",
-      bodyMark: {
-        hasBodyMark: false,
-        details: "",
-        others: [], // 初期値として空配列を設定
-      },
-      workType: undefined,
-      workPeriodStart: undefined,
-      workPeriodEnd: undefined,
-      canArrivePreviousDay: false,
-      desiredGuarantee: undefined,
-      desiredRate: undefined,
-      waitingHours: undefined,
-      departureLocation: undefined,
-      returnLocation: undefined,
-      preferredLocations: [],
-      ngLocations: [],
-    },
+    defaultValues,
   });
 
   // フォームの状態を監視
@@ -826,68 +818,65 @@ export function TalentForm() {
   };
 
   // フォームのsubmit処理を再実装
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     console.log('Form submission started');
 
-    const data = form.getValues();
-    console.log('Form data:', data);
+    try {
+      const data = form.getValues();
+      console.log('Raw form data:', data);
 
-    // フォームデータの準備
-    const formData = {
-      ...data,
-      height: Number(data.height),
-      weight: Number(data.weight),
-      bust: data.bust === "" ? null : Number(data.bust),
-      waist: data.waist === "" ? null : Number(data.waist),
-      hip: data.hip === "" ? null : Number(data.hip),
-      availableIds: {
-        types: data.availableIds.types || [],
-        others: otherIds,
-      },
-      ngOptions: {
-        common: data.ngOptions.common || [],
-        others: otherNgOptions,
-      },
-      allergies: {
-        types: data.allergies.types || [],
-        others: otherAllergies,
-        hasAllergy: data.allergies.hasAllergy,
-      },
-      smoking: {
-        enabled: data.smoking.enabled,
-        types: data.smoking.types || [],
-        others: otherSmokingTypes,
-      },
-      bodyMark: {
-        hasBodyMark: bodyMarks.length > 0,
-        details: bodyMarkDetails,
-        others: bodyMarks
-      },
-      photos: data.photos || [],
-      // 求人関連フィールドのデフォルト値を設定
-      workType: data.workType || undefined,
-      workPeriodStart: data.workPeriodStart || undefined,
-      workPeriodEnd: data.workPeriodEnd || undefined,
-      canArrivePreviousDay: data.canArrivePreviousDay || false,
-      desiredGuarantee: data.desiredGuarantee || undefined,
-      desiredRate: data.desiredRate || undefined,
-      waitingHours: data.waitingHours || undefined,
-      departureLocation: data.departureLocation || undefined,
-      returnLocation: data.returnLocation || undefined,
-      preferredLocations: data.preferredLocations || [],
-      ngLocations: data.ngLocations || [],
-      estheOptions: {
-        available: data.estheOptions?.available || [],
-        otherNgOptions: data.estheOptions?.otherNgOptions || "",
-      }
-    };
+      // 数値型フィールドの変換
+      const formData = {
+        ...data,
+        height: Number(data.height),
+        weight: Number(data.weight),
+        bust: data.bust === "" ? null : Number(data.bust),
+        waist: data.waist === "" ? null : Number(data.waist),
+        hip: data.hip === "" ? null : Number(data.hip),
+        // その他のフィールドは型定義通りに設定
+        availableIds: {
+          types: data.availableIds.types || [],
+          others: otherIds,
+        },
+        ngOptions: {
+          common: data.ngOptions.common || [],
+          others: otherNgOptions,
+        },
+        allergies: {
+          types: data.allergies.types || [],
+          others: otherAllergies,
+          hasAllergy: data.allergies.hasAllergy,
+        },
+        smoking: {
+          enabled: data.smoking.enabled,
+          types: data.smoking.types || [],
+          others: otherSmokingTypes,
+        },
+        bodyMark: {
+          hasBodyMark: bodyMarks.length > 0,
+          details: bodyMarkDetails,
+          others: bodyMarks
+        },
+        photos: data.photos || [],
+        estheOptions: {
+          available: data.estheOptions?.available || [],
+          otherNgOptions: otherEstheNgOptions.join('\n'), // 修正: otherEstheNgOptionsを文字列に変換
+        }
+      };
 
-    console.log('Submitting form data bodyMark:', formData.bodyMark);
-    console.log('Opening confirmation modal');
-    setFormData(formData);
-    setIsConfirmationOpen(true);
-    console.log('Modal state updated:', { formData: !!formData, isOpen: isConfirmationOpen });
+      console.log('Processed form data:', formData);
+      setFormData(formData);
+      setIsConfirmationOpen(true);
+
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "フォームの送信に失敗しました",
+      });
+    }
   };
 
   // 保存ボタンの状態管理を単純化
@@ -960,7 +949,7 @@ export function TalentForm() {
   };
 
   // エステNGオプション追加ハンドラー
-  const handleAddEstheNgOption = (value: string) => {
+  const handleAddEstheNgOption = (value: string) =>{
     if (!otherEstheNgOptions.includes(value)) {
       const updated = [...otherEstheNgOptions, value];
       setOtherEstheNgOptions(updated);
