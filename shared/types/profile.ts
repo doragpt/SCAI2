@@ -20,8 +20,9 @@ export const profileSchema = z.object({
     types: z.array(z.string()).optional(),
     others: z.array(z.string()).optional(),
   }),
-  bodyMarks: z.object({
-    types: z.array(z.string()).optional(),
+  bodyMark: z.object({
+    hasBodyMark: z.boolean().optional(),
+    details: z.string().optional(),
     others: z.array(z.string()).optional(),
   }).optional(),
   estheOptions: z.object({

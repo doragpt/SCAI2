@@ -582,7 +582,7 @@ export function TalentForm() {
       bodyMark: {
         hasBodyMark: false,
         details: "",
-        others: [],
+        others: [], // 初期値として空配列を設定
       },
       workType: undefined,
       workPeriodStart: undefined,
@@ -660,10 +660,10 @@ export function TalentForm() {
         waist: existingProfile.waist?.toString() ?? "",
         hip: existingProfile.hip?.toString() ?? "",
         photos: existingProfile.photos || [],
-        bodyMark: existingProfile.bodyMark || {
-          hasBodyMark: false,
-          details: "",
-          others: [],
+        bodyMark: {
+          hasBodyMark: existingProfile.bodyMark?.hasBodyMark || false,
+          details: existingProfile.bodyMark?.details || "",
+          others: existingProfile.bodyMark?.others || [],
         },
         estheOptions: {
           available: existingProfile.estheOptions?.available || [],
@@ -861,7 +861,7 @@ export function TalentForm() {
       bodyMark: {
         hasBodyMark: data.bodyMark.hasBodyMark,
         details: bodyMarkDetails,
-        others: bodyMarks,
+        others: bodyMarks, // 追加項目を含める
       },
       photos: data.photos || [],
       // 求人関連フィールドのデフォルト値を設定
@@ -916,7 +916,12 @@ export function TalentForm() {
     if (!bodyMarks.includes(value)) {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
-      form.setValue("bodyMark.others", updated);
+      // フォームの値も更新
+      form.setValue("bodyMark.others", updated, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
     }
   };
 
@@ -1955,8 +1960,7 @@ export function TalentForm() {
         </Form>
       </main>
 
-      <ProfileConfirmationModal
-        isOpen={isConfirmationOpen}
+      <ProfileConfirmationModal        isOpen={isConfirmationOpen}
         onClose={() => {
           console.log('Modal closing');
           setIsConfirmationOpen(false);
