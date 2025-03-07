@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type User } from "@shared/schema";
+import { type Job } from "@shared/schema";
 import {
   Loader2,
   MapPin,
@@ -152,20 +152,9 @@ const formatSalary = (min?: number, max?: number) => {
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 };
 
-// インターフェース定義
-interface StoreProfile {
-  id: number;
-  businessName: string;
-  location: string;
-  serviceType: string;
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
-  transportationSupport: boolean;
-  housingSupport: boolean;
-}
 
 // 求人カードコンポーネント
-const JobCard = ({ job }: { job: StoreProfile }) => {
+const JobCard = ({ job }: { job: Job }) => {
   return (
     <motion.div
       variants={item}
@@ -241,7 +230,7 @@ export default function HomePage() {
   const [selectedArea, setSelectedArea] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("all");
 
-  const { data: jobListings, isLoading: jobsLoading } = useQuery<StoreProfile[]>({
+  const { data: jobListings, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs/public"],
   });
 

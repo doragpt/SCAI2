@@ -403,3 +403,24 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 export type PreviousStore = {
   storeName: string;
 };
+
+// 求人情報テーブル
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  minimumGuarantee: integer("minimum_guarantee"),
+  maximumGuarantee: integer("maximum_guarantee"),
+  transportationSupport: boolean("transportation_support").default(false),
+  housingSupport: boolean("housing_support").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// 求人情報のZodスキーマ
+export const jobSchema = createInsertSchema(jobs).omit({ id: true });
+
+// 型定義のエクスポート
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;

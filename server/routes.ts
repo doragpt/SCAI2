@@ -99,10 +99,23 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {
-      // 仮実装：空の配列を返す
-      res.json([]);
+      const jobListings = await db
+        .select()
+        .from(jobs)
+        .orderBy(jobs.createdAt.desc())
+        .limit(12); // 最新12件を取得
+
+      console.log('Public jobs fetch successful:', {
+        count: jobListings.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(jobListings);
     } catch (error) {
-      console.error("Public jobs fetch error:", error);
+      console.error("Public jobs fetch error:", {
+        error,
+        timestamp: new Date().toISOString()
+      });
       res.status(500).json({
         message: "求人情報の取得に失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
