@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { TalentProfileData } from "@shared/schema";
+import { type TalentProfileData } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { QUERY_KEYS } from "@/lib/queryClient";
+import { QUERY_KEYS, apiRequest } from "@/lib/queryClient";
 import { Loader2, PenSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
@@ -22,6 +22,7 @@ export default function ProfileViewPage() {
     refetch
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryFn: () => apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE),
     enabled: !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -36,6 +37,11 @@ export default function ProfileViewPage() {
 
       // 新規ユーザーの場合は登録ページにリダイレクト
       if (error.message.includes("新規登録が必要")) {
+        toast({
+          title: "プロフィールが未登録です",
+          description: "プロフィール登録ページに移動します",
+          variant: "default",
+        });
         window.location.href = "/talent/register";
         return;
       }
@@ -141,7 +147,6 @@ export default function ProfileViewPage() {
             </div>
 
             <Separator />
-
             {/* 身分証明書 */}
             <div className="space-y-4">
               <h2 className="text-lg font-medium">身分証明書</h2>
@@ -162,6 +167,7 @@ export default function ProfileViewPage() {
               </div>
             </div>
 
+            <Separator />
             {/* 身体的特徴 */}
             <div className="space-y-4">
               <h2 className="text-lg font-medium">身体的特徴</h2>
@@ -200,7 +206,6 @@ export default function ProfileViewPage() {
             </div>
 
             <Separator />
-
             {/* パネル設定 */}
             <div className="space-y-4">
               <h2 className="text-lg font-medium">パネル設定</h2>
