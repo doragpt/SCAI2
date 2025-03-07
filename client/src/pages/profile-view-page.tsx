@@ -7,6 +7,7 @@ import { Loader2, PenSquare } from "lucide-react";
 import { Redirect } from "wouter";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function ProfileViewPage() {
     error
   } = useQuery({
     queryKey: ["/api/user/profile"],
+    queryFn: () => apiRequest("GET", "/api/user/profile"),
     enabled: !!user,
   });
 
