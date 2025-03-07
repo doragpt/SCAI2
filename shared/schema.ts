@@ -395,26 +395,7 @@ export type PreviousStore = {
   storeName: string;
 };
 
-// Store recruitment criteria schema (internal)
-export const recruitmentCriteria = pgTable('recruitmentCriteria', {
-  id: serial('id').primaryKey(),
-  storeId: integer('store_id').notNull().references(() => jobs.id),
-  minAge: integer('min_age').notNull(),
-  maxAge: integer('max_age').notNull(),
-  minSpec: integer('min_spec').notNull(), // height-weight calculation minimum
-  maxSpec: integer('max_spec'), // optional maximum spec
-  // Special conditions as JSON
-  specialConditions: jsonb('special_conditions').$type<{
-    cupSize?: {
-      size: typeof cupSizes[number];
-      adjustedMinSpec?: number;
-    };
-    other?: string;
-  }>(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Enhance jobs table with more detailed information
+// 求人情報テーブル
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -428,49 +409,6 @@ export const jobs = pgTable("jobs", {
   description: text("description"),
   requirements: text("requirements"),
   benefits: text("benefits"),
-  // Additional fields for enhanced job listings
-  workSchedule: jsonb('work_schedule').$type<{
-    shifts: string[];
-    flexibility: boolean;
-    holidays: string;
-  }>(),
-  supportSystem: jsonb('support_system').$type<{
-    training: boolean;
-    insurance: boolean;
-    housing: {
-      available: boolean;
-      details?: string;
-    };
-    transportation: {
-      available: boolean;
-      details?: string;
-    };
-    other?: string[];
-  }>(),
-  facilities: jsonb('facilities').$type<{
-    hasPrivateRoom: boolean;
-    hasShower: boolean;
-    hasLocker: boolean;
-    hasRestArea: boolean;
-    other?: string[];
-  }>(),
-  income: jsonb('income').$type<{
-    baseGuarantee: {
-      amount: number;
-      unit: "daily" | "monthly";
-    };
-    commission?: {
-      percentage: number;
-      conditions?: string;
-    };
-    bonus?: {
-      available: boolean;
-      details?: string;
-    };
-  }>(),
-  status: text('status', { 
-    enum: ['active', 'paused', 'closed']
-  }).default('active'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
@@ -478,41 +416,10 @@ export const jobs = pgTable("jobs", {
     locationIdx: index("jobs_location_idx").on(table.location),
     serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
     createdAtIdx: index("jobs_created_at_idx").on(table.createdAt),
-    statusIdx: index("jobs_status_idx").on(table.status),
   };
 });
 
-// Add relations
-export const recruitmentCriteriaRelations = relations(recruitmentCriteria, ({ one }) => ({
-  job: one(jobs, {
-    fields: [recruitmentCriteria.storeId],
-    references: [jobs.id],
-  }),
-}));
-
-// Extend jobsRelations
-export const jobsRelations = relations(jobs, ({ many, one }) => ({
-  applications: many(applications),
-  keepList: many(keepList),
-  viewHistory: many(viewHistory),
-  recruitmentCriteria: one(recruitmentCriteria, {
-    fields: [jobs.id],
-    references: [recruitmentCriteria.storeId],
-  }),
-}));
-
-// Create Zod schemas for the new types
-export const recruitmentCriteriaSchema = createInsertSchema(recruitmentCriteria);
-
-// Export new types
-export type RecruitmentCriteria = typeof recruitmentCriteria.$inferSelect;
-export type InsertRecruitmentCriteria = typeof recruitmentCriteria.$inferInsert;
-
-// Update Job related types
-export interface JobWithCriteria extends Job {
-  recruitmentCriteria?: RecruitmentCriteria;
-}
-
+// データベーステーブル定義の更新
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
@@ -571,14 +478,10 @@ export const keepListSchema = createInsertSchema(keepList);
 export const viewHistorySchema = createInsertSchema(viewHistory);
 
 // リレーションの定義
-export const jobsRelations = relations(jobs, ({ many, one }) => ({
+export const jobsRelations = relations(jobs, ({ many }) => ({
   applications: many(applications),
   keepList: many(keepList),
   viewHistory: many(viewHistory),
-  recruitmentCriteria: one(recruitmentCriteria, {
-    fields: [jobs.id],
-    references: [recruitmentCriteria.storeId],
-  }),
 }));
 
 export const applicationsRelations = relations(applications, ({ one }) => ({
