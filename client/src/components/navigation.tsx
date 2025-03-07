@@ -70,13 +70,18 @@ export function Navigation() {
     return labels[crumb] || crumb;
   };
 
-  // 現在のパスからパンくずリストを生成
-  const breadcrumbs = location.split("/").filter(Boolean);
-
-  const handleDropdownClick = (href: string) => {
-    setIsDropdownOpen(false);
-    window.location.href = href;
+  // パスセグメントから表示用のパンくずを生成
+  const getDisplayBreadcrumbs = (path: string) => {
+    return path.split("/")
+      .filter(Boolean)
+      .filter(segment => segment !== "talent") // talentセグメントを除外
+      .map(segment => ({
+        label: getBreadcrumbLabel(segment),
+        path: `/${path.split("/").slice(0, path.split("/").indexOf(segment) + 1).join("/")}`
+      }));
   };
+
+  const breadcrumbs = getDisplayBreadcrumbs(location);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -161,9 +166,9 @@ export function Navigation() {
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center">
               <span className="mx-2 text-muted-foreground">/</span>
-              <Link href={`/${breadcrumbs.slice(0, index + 1).join("/")}`}>
+              <Link href={crumb.path}>
                 <Button variant="link" size="sm" className="cursor-pointer">
-                  {getBreadcrumbLabel(crumb)}
+                  {crumb.label}
                 </Button>
               </Link>
             </div>
@@ -193,7 +198,7 @@ export function Navigation() {
                 <Link href={user.role === 'store' ? "/store/settings" : "/talent/mypage"}>
                   <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
                     <Settings className="h-4 w-4 mr-2" />
-                    {user.role === 'store' ? '店舗設定' : 'アカウント設定'}
+                    アカウント設定
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
