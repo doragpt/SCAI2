@@ -59,6 +59,7 @@ export default function BasicInfoEdit() {
 
   const { data: userProfile, isLoading: isUserLoading } = useQuery({
     queryKey: ["/api/user/profile"],
+    queryFn: () => apiRequest("GET", "/api/user/profile"),
     enabled: !!user,
   });
 
@@ -85,23 +86,13 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
-      const userResponse = await apiRequest("PATCH", "/api/user", {
-        username: updateData.username,
-        displayName: updateData.displayName,
-        location: updateData.location,
-        preferredLocations: updateData.preferredLocations,
-        ...(updateData.newPassword && updateData.currentPassword ? {
-          currentPassword: updateData.currentPassword,
-          newPassword: updateData.newPassword,
-        } : {})
-      });
+      const response = await apiRequest("PATCH", "/api/user", updateData);
 
-      if (!userResponse.ok) {
-        const errorData = await userResponse.json();
-        throw new Error(errorData.message || "ユーザー情報の更新に失敗しました");
+      if (!response.success) {
+        throw new Error(response.message || "ユーザー情報の更新に失敗しました");
       }
 
-      return await userResponse.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
