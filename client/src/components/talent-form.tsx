@@ -849,29 +849,40 @@ export function TalentForm() {
     onChange: (value: string) => void;
     onAdd: () => void;
     placeholder: string;
-  }) => (
-    <div className="flex items-center gap-2">
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            onAdd();
-          }
-        }}
-      />
-      <Button
-        type="button"
-        size="sm"
-        onClick={onAdd}
-        disabled={!value.trim()}
-      >
-        追加
-      </Button>
-    </div>
-  );
+  }) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.preventDefault();
+      onChange(e.target.value);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (value.trim()) {
+          onAdd();
+        }
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={onAdd}
+          disabled={!value.trim()}
+        >
+          追加
+        </Button>
+      </div>
+    );
+  };
 
   const handleAddAllergy = () => {
     const trimmedValue = newAllergy.trim();
@@ -929,7 +940,7 @@ export function TalentForm() {
         <Form {...form}>
           <form
             onSubmit={handleSubmit}
-            className="space-y-8"
+            className="spacey-8"
           >
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
