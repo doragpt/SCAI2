@@ -425,25 +425,63 @@ export const jobs = pgTable("jobs", {
   };
 });
 
-// Placeholder table definitions -  Replace these with your actual table definitions
+// データベーステーブル定義の更新
 export const applications = pgTable('applications', {
-    id: serial('id').primaryKey(),
-    userId: integer('user_id'),
-    storeId: integer('store_id')
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  storeId: integer('store_id').notNull().references(() => jobs.id),
+  status: text('status', { enum: ['pending', 'accepted', 'rejected', 'withdrawn'] }).notNull(),
+  appliedAt: timestamp('applied_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  message: text('message'),
+  desiredStartDate: date('desired_start_date'),
+  desiredDuration: text('desired_duration')
+}, (table) => {
+  return {
+    userIdIdx: index('applications_user_id_idx').on(table.userId),
+    storeIdIdx: index('applications_store_id_idx').on(table.storeId),
+    statusIdx: index('applications_status_idx').on(table.status),
+  };
 });
 
 export const keepList = pgTable('keepList', {
-    id: serial('id').primaryKey(),
-    userId: integer('user_id'),
-    storeId: integer('store_id')
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  storeId: integer('store_id').notNull().references(() => jobs.id),
+  addedAt: timestamp('added_at').defaultNow(),
+  note: text('note')
+}, (table) => {
+  return {
+    userIdIdx: index('keep_list_user_id_idx').on(table.userId),
+    storeIdIdx: index('keep_list_store_id_idx').on(table.storeId),
+  };
 });
 
 export const viewHistory = pgTable('viewHistory', {
-    id: serial('id').primaryKey(),
-    userId: integer('user_id'),
-    storeId: integer('store_id')
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  storeId: integer('store_id').notNull().references(() => jobs.id),
+  viewedAt: timestamp('viewed_at').defaultNow()
+}, (table) => {
+  return {
+    userIdIdx: index('view_history_user_id_idx').on(table.userId),
+    storeIdIdx: index('view_history_store_id_idx').on(table.storeId),
+    viewedAtIdx: index('view_history_viewed_at_idx').on(table.viewedAt),
+  };
 });
 
+// Application type definitions
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type KeepList = typeof keepList.$inferSelect;
+export type InsertKeepList = typeof keepList.$inferInsert;
+export type ViewHistory = typeof viewHistory.$inferSelect;
+export type InsertViewHistory = typeof viewHistory.$inferInsert;
+
+// Zod schemas for validation
+export const applicationSchema = createInsertSchema(applications);
+export const keepListSchema = createInsertSchema(keepList);
+export const viewHistorySchema = createInsertSchema(viewHistory);
 
 // リレーションの定義
 export const jobsRelations = relations(jobs, ({ many }) => ({
@@ -491,3 +529,4 @@ export const jobSchema = createInsertSchema(jobs).omit({ id: true });
 // 型定義のエクスポート
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };

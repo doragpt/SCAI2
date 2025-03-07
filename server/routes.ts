@@ -7,10 +7,15 @@ import {
   type TalentProfileData,
   jobs,
   applications,
-  type Application
+  type Application,
+  type ViewHistory,
+  type KeepList,
+  applicationSchema,
+  keepListSchema,
+  viewHistorySchema
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -105,8 +110,8 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       const jobListings = await db
         .select()
         .from(jobs)
-        .orderBy(jobs.createdAt.desc())
-        .limit(12); // 最新12件を取得
+        .orderBy(desc(jobs.createdAt))
+        .limit(12);
 
       console.log('Public jobs fetch successful:', {
         count: jobListings.length,
@@ -174,31 +179,49 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   // 求人検索エンドポイント
   app.get("/api/jobs/search", async (req, res) => {
     try {
-      const { location, serviceType, page = 1, limit = 20 } = req.query;
-      const offset = (Number(page) - 1) * Number(limit);
+      const { location, serviceType, page = "1", limit = "20" } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
 
-      let query = db.select().from(jobs);
+      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+        return res.status(400).json({ message: "Invalid pagination parameters" });
+      }
+
+      const offset = (pageNum - 1) * limitNum;
+
+      let baseQuery = db.select().from(jobs);
 
       if (location) {
-        query = query.where(eq(jobs.location, location as string));
+        baseQuery = baseQuery.where(eq(jobs.location, location as string));
       }
 
       if (serviceType) {
-        query = query.where(eq(jobs.serviceType, serviceType as string));
+        baseQuery = baseQuery.where(eq(jobs.serviceType, serviceType as string));
       }
 
-      const jobListings = await query
-        .orderBy(jobs.createdAt.desc())
-        .limit(Number(limit))
+      // Get total count for pagination
+      const totalCount = await baseQuery.count();
+
+      // Get paginated results
+      const jobListings = await baseQuery
+        .orderBy(desc(jobs.createdAt))
+        .limit(limitNum)
         .offset(offset);
 
       console.log('Jobs search successful:', {
         filters: { location, serviceType },
-        count: jobListings.length,
+        pagination: { page: pageNum, limit: limitNum, total: totalCount },
         timestamp: new Date().toISOString()
       });
 
-      res.json(jobListings);
+      res.json({
+        jobs: jobListings,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalCount / limitNum), // Corrected totalPages calculation
+          totalItems: totalCount
+        }
+      });
     } catch (error) {
       console.error("Jobs search error:", {
         error,
@@ -220,6 +243,14 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         return res.status(400).json({ message: "Invalid job ID" });
       }
 
+      // バリデーション
+      const validatedData = applicationSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        storeId: jobId
+      });
+
+      // 既存の求人確認
       const [existingJob] = await db
         .select()
         .from(jobs)
@@ -229,12 +260,14 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         return res.status(404).json({ message: "求人が見つかりません" });
       }
 
-      // 既に応募済みかチェック
+      // 重複応募チェック
       const [existingApplication] = await db
         .select()
         .from(applications)
-        .where(eq(applications.storeId, jobId))
-        .where(eq(applications.userId, req.user.id));
+        .where(and(
+          eq(applications.storeId, jobId),
+          eq(applications.userId, req.user.id)
+        ));
 
       if (existingApplication) {
         return res.status(400).json({ message: "既に応募済みです" });
@@ -243,15 +276,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       // 応募データを作成
       const [application] = await db
         .insert(applications)
-        .values({
-          userId: req.user.id,
-          storeId: jobId,
-          status: "pending",
-          appliedAt: new Date(),
-          message: req.body.message,
-          desiredStartDate: req.body.desiredStartDate,
-          desiredDuration: req.body.desiredDuration
-        })
+        .values(validatedData)
         .returning();
 
       console.log('Job application successful:', {

@@ -4,6 +4,7 @@ import { Loader2, ArrowLeft, Search } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,9 @@ import {
 import { prefectures, serviceTypes, type Job } from "@shared/schema";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
+// Animation variants
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -31,12 +34,22 @@ const item = {
 };
 
 // 給与表示のフォーマット関数
-const formatSalary = (min?: number, max?: number) => {
+const formatSalary = (min?: number | null, max?: number | null) => {
   if (!min && !max) return "応相談";
   if (!max) return `${min?.toLocaleString()}円〜`;
   if (!min) return `〜${max?.toLocaleString()}円`;
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 };
+
+// APIレスポンスの型定義
+interface JobsResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
 
 // 求人カードコンポーネント
 const JobCard = ({ job }: { job: Job }) => {
@@ -89,10 +102,25 @@ export default function Jobs() {
   const { user } = useAuth();
   const [location, setLocation] = useState<string>("");
   const [serviceType, setServiceType] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const limit = 12; // 1ページあたりの表示件数
 
-  const { data: jobs, isLoading } = useQuery<Job[]>({
-    queryKey: ["/api/jobs/search", { location, serviceType }],
+  const {
+    data: response,
+    isLoading,
+    error
+  } = useQuery<JobsResponse>({
+    queryKey: ["/api/jobs/search", { location, serviceType, page, limit }],
   });
+
+  // エラー発生時にトースト表示
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "エラーが発生しました",
+      description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+    });
+  }
 
   if (!user) {
     return <Redirect to="/auth" />;
@@ -153,23 +181,36 @@ export default function Jobs() {
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        ) : jobs?.length === 0 ? (
+        ) : !response?.jobs.length ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               条件に合う求人が見つかりませんでした
             </p>
           </div>
         ) : (
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-          >
-            {jobs?.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+            >
+              {response.jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </motion.div>
+
+            {/* ページネーション */}
+            {response.pagination.totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  currentPage={response.pagination.currentPage}
+                  totalPages={response.pagination.totalPages}
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
