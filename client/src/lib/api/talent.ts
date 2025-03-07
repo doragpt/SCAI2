@@ -26,3 +26,9 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
     throw error;
   }
 };
+
+// キャッシュの更新や再取得のためのユーティリティ関数を追加
+export const invalidateTalentProfileCache = () => {
+  const queryClient = useQueryClient();
+  return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+};

@@ -9,9 +9,9 @@ import { Loader2, PenSquare } from "lucide-react";
 import { Redirect } from "wouter";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { getTalentProfileQuery } from "@/lib/api/talent";
 
 interface UserProfile {
   id: number;
@@ -25,13 +25,6 @@ interface UserProfile {
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
-  // Debug: ログイン状態を確認
-  console.log('ProfileViewPage - Auth state:', {
-    user,
-    userId: user?.id,
-    timestamp: new Date().toISOString()
-  });
-
   // ユーザー基本情報を取得
   const {
     data: userProfile,
@@ -39,31 +32,6 @@ export default function ProfileViewPage() {
     error: userError
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    queryFn: async () => {
-      try {
-        console.log('Fetching user profile:', {
-          userId: user?.id,
-          endpoint: QUERY_KEYS.USER_PROFILE,
-          timestamp: new Date().toISOString()
-        });
-
-        const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
-
-        console.log('User profile fetched:', {
-          hasData: !!response,
-          profileData: JSON.stringify(response),
-          timestamp: new Date().toISOString()
-        });
-
-        return response;
-      } catch (error) {
-        console.error('User profile fetch error:', {
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString()
-        });
-        throw error;
-      }
-    },
     enabled: !!user?.id,
   });
 
@@ -75,36 +43,7 @@ export default function ProfileViewPage() {
     refetch: refetchTalentProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: async () => {
-      try {
-        console.log('Starting talent profile fetch:', {
-          userId: user?.id,
-          endpoint: QUERY_KEYS.TALENT_PROFILE,
-          authToken: !!localStorage.getItem("auth_token"),
-          timestamp: new Date().toISOString()
-        });
-
-        const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
-
-        console.log('Talent profile fetch response:', {
-          hasData: !!response,
-          responseData: JSON.stringify(response),
-          userAuthState: !!user,
-          userId: user?.id,
-          timestamp: new Date().toISOString()
-        });
-
-        return response;
-      } catch (error) {
-        console.error('Talent profile fetch error:', {
-          error: error instanceof Error ? error.message : "Unknown error",
-          userAuthState: !!user,
-          userId: user?.id,
-          timestamp: new Date().toISOString()
-        });
-        throw error;
-      }
-    },
+    queryFn: getTalentProfileQuery,
     enabled: !!user?.id,
     retry: 1,
     staleTime: 0,
@@ -160,14 +99,6 @@ export default function ProfileViewPage() {
       </div>
     );
   }
-
-  // Debug: データの存在確認
-  console.log('Talent profile data check:', {
-    hasData: !!talentProfile,
-    firstName: talentProfile?.firstName,
-    lastName: talentProfile?.lastName,
-    timestamp: new Date().toISOString()
-  });
 
   return (
     <div className="container max-w-2xl py-8">
