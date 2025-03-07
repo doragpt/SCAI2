@@ -104,11 +104,11 @@ export default function ProfileViewPage() {
         throw error;
       }
     },
-    enabled: !!user,
+    enabled: !!user?.id, // ユーザーIDが存在する場合のみクエリを有効化
     retry: 1,
-    staleTime: 0,
+    staleTime: 0, // キャッシュを無効化
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
   });
 
   // Debug: データの存在確認
