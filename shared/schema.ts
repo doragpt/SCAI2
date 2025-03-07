@@ -143,7 +143,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   waist: integer("waist"),
   hip: integer("hip"),
   faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
-  photoDiaryAllowed: boolean("photo_diary_allowed").default(false),
+  canPhotoDiary: boolean("can_photo_diary").default(false),
   canHomeDelivery: boolean("can_home_delivery").default(false),
   ngOptions: jsonb("ng_options").$type<{
     common: CommonNgOption[];
@@ -252,7 +252,7 @@ export const talentProfileSchema = z.object({
     required_error: "パネルの顔出し設定を選択してください",
   }),
 
-  photoDiaryAllowed: z.boolean().default(false),
+  canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
   hasSnsAccount: z.boolean().default(false),
   hasEstheExperience: z.boolean().default(false),

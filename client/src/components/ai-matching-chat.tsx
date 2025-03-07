@@ -888,7 +888,7 @@ export const AIMatchingChat = () => {
                 <div>
                   <Label>写メ日記の投稿</Label>
                   <Badge variant={profileData?.photoDiaryAllowed ? "default" : "secondary"}>
-                    {profileData?.photoDiaryAllowed ? "投稿可" : "投稿不可"}
+                    {profileData?.photoDiaryAllowed ? "可能" : "不可"}
                   </Badge>
                 </div>
                 <div>
