@@ -391,6 +391,29 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
+                <InfoItem
+                  label="可能オプション"
+                  value={
+                    <div className="space-y-2">
+                      {formData.estheOptions?.available && formData.estheOptions.available.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {formData.estheOptions.available.map((option) => (
+                            <Badge key={option} variant="outline">
+                              <CheckCircle2 className="h-3 w-3 text-green-500 mr-1" />
+                              {option}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {formData.estheOptions?.otherNgOptions && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-muted-foreground">その他できないプレイやオプション：</p>
+                          <p className="text-sm mt-1">{formData.estheOptions.otherNgOptions}</p>
+                        </div>
+                      )}
+                    </div>
+                  }
+                />
               </div>
             </section>
 

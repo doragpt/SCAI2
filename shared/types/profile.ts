@@ -22,7 +22,7 @@ export const profileSchema = z.object({
   }),
   estheOptions: z.object({
     available: z.array(z.string()).optional(),
-    ngOptions: z.array(z.string()).optional(),
+    otherNgOptions: z.string().optional(), 
   }).optional(),
 });
 

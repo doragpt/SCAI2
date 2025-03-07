@@ -40,6 +40,7 @@ import {
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
+import {Textarea} from "@/components/ui/textarea"
 
 // Store type definitions
 type CurrentStore = {
@@ -528,7 +529,7 @@ export function TalentForm() {
       notes: "",
       estheOptions: {
         available: [],
-        ngOptions: [],
+        ngOptions: "", // Changed to string to accommodate otherNgOptions
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
@@ -594,6 +595,10 @@ export function TalentForm() {
   const [bodyMarkDetails, setBodyMarkDetails] = useState("");
   const [newIdType, setNewIdType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newNgOption, setNewNgOption] = useState("");
+  const [newAllergy, setNewAllergy] = useState("");
+  const [newSmokingType, setNewSmokingType] = useState("");
+
 
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
@@ -609,6 +614,10 @@ export function TalentForm() {
           hasBodyMark: false,
           details: "",
         },
+        estheOptions: {
+          available: existingProfile.estheOptions.available || [],
+          ngOptions: existingProfile.estheOptions.ngOptions || ""
+        }
       });
 
       setOtherIds(existingProfile.availableIds?.others || []);
@@ -823,6 +832,40 @@ export function TalentForm() {
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
+  // 「その他」の項目追加コンポーネント
+  const OtherItemInput = ({
+    value,
+    onChange,
+    onAdd,
+    placeholder,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    onAdd: () => void;
+    placeholder: string;
+  }) => (
+    <div className="flex items-center gap-2">
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1"
+      />
+      <Button
+        type="button"
+        size="sm"
+        onClick={() => {
+          if (value.trim()) {
+            onAdd();
+            onChange("");
+          }
+        }}
+      >
+        追加
+      </Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white sticky top-0 z-50">
@@ -901,8 +944,7 @@ export function TalentForm() {
                       <FormControl>
                         <Input {...field} placeholder="例：ナナコ" />
                       </FormControl>
-                    </FormFieldWrapper>
-                  )}
+                    </FormFieldWrapper>                  )}
                 />
               </div>
             </div>
@@ -1252,19 +1294,22 @@ export function TalentForm() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4">
-                  <Label>その他のNGオプション</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {otherNgOptions.map((option, index) => (
-                      <Badge key={index} variant="secondary">
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
                         {option}
                         <Button
-                          type="button"
                           variant="ghost"
                           size="sm"
-                          className="ml-1 h-4 w-4 p-0"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
                           onClick={() => {
-                            setOtherNgOptions(otherNgOptions.filter((_, i) => i !== index));
+                            const updated = otherNgOptions.filter((_, i) => i !== index);
+                            setOtherNgOptions(updated);
                           }}
                         >
                           <X className="h-3 w-3" />
@@ -1272,22 +1317,12 @@ export function TalentForm() {
                       </Badge>
                     ))}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="その他のNGオプションを入力"
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          const value = e.currentTarget.value.trim();
-                          if (value && !otherNgOptions.includes(value)) {
-                            const newOptions = [...otherNgOptions, value];
-                            setOtherNgOptions(newOptions);
-                            form.setValue("ngOptions.others", newOptions);
-                            e.currentTarget.value = "";
-                          }
-                        }
-                      }}
-                    />
-                  </div>
+                  <OtherItemInput
+                    value={newNgOption}
+                    onChange={setNewNgOption}
+                    onAdd={() => setOtherNgOptions([...otherNgOptions, newNgOption.trim()])}
+                    placeholder="その他のNGオプションを入力"
+                  />
                 </div>
               </FormFieldWrapper>
             </div>
@@ -1334,47 +1369,46 @@ export function TalentForm() {
                       )}
                     />
 
-                    <div className="space-y-2">
-                      <Label>可能オプション</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {estheOptions.map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={form.watch("estheOptions.available").includes(option)}
-                              onCheckedChange={(checked) => {
-                                const current = form.watch("estheOptions.available");
-                                const updated = checked
-                                  ? [...current, option]
-                                  : current.filter((o) => o !== option);
-                                form.setValue("estheOptions.available", updated);
-                              }}
-                            />
-                            <Label>{option}</Label>
+                    <FormField
+                      control={form.control}
+                      name="estheOptions.available"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>可能オプション（出来るものだけチェックをつけてください）</FormLabel>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {estheOptions.map((option) => (
+                              <div key={option} className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={field.value?.includes(option)}
+                                  onCheckedChange={(checked) => {
+                                    const newValue = checked
+                                      ? [...(field.value || []), option]
+                                      : (field.value || []).filter((value) => value !== option);
+                                    field.onChange(newValue);
+                                  }}
+                                />
+                                <label className="text-sm">{option}</label>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="space-y-2">
-                      <Label>NGオプション</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {estheOptions.map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={form.watch("estheOptions.ngOptions").includes(option)}
-                              onCheckedChange={(checked) => {
-                                const current = form.watch("estheOptions.ngOptions");
-                                const updated = checked
-                                  ? [...current, option]
-                                  : current.filter((o) => o !== option);
-                                form.setValue("estheOptions.ngOptions", updated);
-                              }}
-                            />
-                            <Label>{option}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="estheOptions.ngOptions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>その他できないプレイやオプション</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="できないプレイやオプションを入力してください" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </Collapsible>
               )}
@@ -1415,19 +1449,22 @@ export function TalentForm() {
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4">
-                    <Label>その他のアレルギー</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
                       {otherAllergies.map((allergy, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           {allergy}
                           <Button
-                            type="button"
                             variant="ghost"
                             size="sm"
-                            className="ml-1 h-4 w-4 p-0"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
                             onClick={() => {
-                              setOtherAllergies(otherAllergies.filter((_, i) => i !== index));
+                              const updated = otherAllergies.filter((_, i) => i !== index);
+                              setOtherAllergies(updated);
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1435,22 +1472,12 @@ export function TalentForm() {
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="その他のアレルギーを入力"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            const value = e.currentTarget.value.trim();
-                            if (value && !otherAllergies.includes(value)) {
-                              const newAllergies = [...otherAllergies, value];
-                              setOtherAllergies(newAllergies);
-                              form.setValue("allergies.others", newAllergies);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                    </div>
+                    <OtherItemInput
+                      value={newAllergy}
+                      onChange={setNewAllergy}
+                      onAdd={() => setOtherAllergies([...otherAllergies, newAllergy.trim()])}
+                      placeholder="その他のアレルギーを入力"
+                    />
                   </div>
                 </div>
               )}
@@ -1492,19 +1519,22 @@ export function TalentForm() {
                         </div>
                       ))}
                     </div>
-                    <div>
-                      <Label>その他の喫煙情報</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
                         {otherSmokingTypes.map((type, index) => (
-                          <Badge key={index} variant="secondary">
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
                             {type}
                             <Button
-                              type="button"
                               variant="ghost"
                               size="sm"
-                              className="ml-1 h-4 w-4 p-0"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
                               onClick={() => {
-                                setOtherSmokingTypes(otherSmokingTypes.filter((_, i) => i !== index));
+                                const updated = otherSmokingTypes.filter((_, i) => i !== index);
+                                setOtherSmokingTypes(updated);
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1512,22 +1542,12 @@ export function TalentForm() {
                           </Badge>
                         ))}
                       </div>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          placeholder="その他の喫煙情報を入力"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              const value = e.currentTarget.value.trim();
-                              if (value && !otherSmokingTypes.includes(value)) {
-                                const newTypes = [...otherSmokingTypes, value];
-                                setOtherSmokingTypes(newTypes);
-                                form.setValue("smoking.others", newTypes);
-                                e.currentTarget.value = "";
-                              }
-                            }
-                          }}
-                        />
-                      </div>
+                      <OtherItemInput
+                        value={newSmokingType}
+                        onChange={setNewSmokingType}
+                        onAdd={() => setOtherSmokingTypes([...otherSmokingTypes, newSmokingType.trim()])}
+                        placeholder="その他の喫煙情報を入力"
+                      />
                     </div>
                   </div>
                 </div>
