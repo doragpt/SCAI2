@@ -21,13 +21,13 @@ export const profileSchema = z.object({
     others: z.array(z.string()).optional(),
   }),
   bodyMark: z.object({
-    hasBodyMark: z.boolean().optional(),
+    hasBodyMark: z.boolean(),
     details: z.string().optional(),
     others: z.array(z.string()).optional(),
   }).optional(),
   estheOptions: z.object({
     available: z.array(z.string()).optional(),
-    otherNgOptions: z.string().optional(), // テキストフィールドなのでstring型
+    otherNgOptions: z.string().optional(),
   }).optional(),
 });
 

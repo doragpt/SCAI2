@@ -917,7 +917,10 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
       // フォームの値も更新
-      form.setValue("bodyMark.others", updated, { 
+      form.setValue("bodyMark", {
+        ...form.getValues().bodyMark,
+        others: updated
+      }, { 
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
