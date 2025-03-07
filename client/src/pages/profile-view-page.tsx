@@ -20,19 +20,23 @@ export default function ProfileViewPage() {
     error,
     refetch
   } = useQuery<TalentProfileData>({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryKey: ["/api/talent/profile"],
     enabled: !!user,
-    staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    retry: 2,
+    refetchOnWindowFocus: false,
+    retry: 1,
     onError: (error: Error) => {
       console.error("Profile fetch error:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: error.message || "プロフィールの取得に失敗しました。",
-        variant: "destructive",
-      });
+      if (error.message.includes("新規登録が必要")) {
+        // 新規ユーザーの場合は登録ページにリダイレクト
+        window.location.href = "/talent/register";
+      } else {
+        toast({
+          title: "エラーが発生しました",
+          description: error.message || "プロフィールの取得に失敗しました。",
+          variant: "destructive",
+        });
+      }
     },
   });
 

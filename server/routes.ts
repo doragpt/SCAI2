@@ -436,36 +436,38 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   });
 
   // 認証が必要なエンドポイント
-  app.get("/api/talent/profile", authenticate, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      console.log('Profile fetch request for user:', userId);
+  // profilesテーブルのデータ取得のエラーハンドリングを改善
+app.get("/api/talent/profile", authenticate, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    console.log('Profile fetch request for user:', userId);
 
-      // プロフィール情報を取得
-      const [profile] = await db
-        .select()
-        .from(talentProfiles)
-        .where(eq(talentProfiles.userId, userId));
+    // プロフィール情報を取得
+    const [profile] = await db
+      .select()
+      .from(talentProfiles)
+      .where(eq(talentProfiles.userId, userId));
 
-      // プロフィールが存在しない場合は404を返す
-      if (!profile) {
-        console.log('Profile not found for user:', userId);
-        return res.status(404).json({
-          message: "プロフィールが見つかりません",
-          isNewUser: true
-        });
-      }
-
-      console.log('Profile fetch successful:', { userId });
-      res.json(profile);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      res.status(500).json({
-        message: "プロフィールの取得に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
+    // プロフィールが存在しない場合は404を返す
+    if (!profile) {
+      console.log('Profile not found for user:', userId);
+      return res.status(404).json({
+        message: "プロフィールが見つかりません。新規登録が必要です。",
+        isNewUser: true
       });
     }
-  });
+
+    console.log('Profile fetch successful:', { userId, profileId: profile.id });
+    res.json(profile);
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({
+      message: "プロフィールの取得に失敗しました",
+      error: error instanceof Error ? error.message : "Unknown error",
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
 
   app.post("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
