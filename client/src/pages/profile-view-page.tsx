@@ -65,10 +65,10 @@ export default function ProfileViewPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">プロフィール</h1>
         <div>
-          <Link href="/talent/register">
+          <Link href="/basic-info/edit">
             <Button variant="outline" className="flex items-center gap-2">
               <PenSquare className="h-4 w-4" />
-              編集する
+              基本情報を編集
             </Button>
           </Link>
         </div>
