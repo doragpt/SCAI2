@@ -1057,47 +1057,52 @@ export function TalentForm() {
               />
             </div>
 
+            {/* 身分証セクション */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">身分証明書</h3>
               <FormFieldWrapper label="持参可能な身分証明書" required>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {idTypes.map((type) => (
                       <div key={type} className="flex items-center space-x-2">
                         <Checkbox
-                          id={`id-${type}`}
-                          checked={form.watch("availableIds.types").includes(type)}
-                          onCheckedChange={(checked) =>
-                            handleIdTypeChange(type, checked as boolean)
-                          }
+                          checked={form.watch("availableIds.types")?.includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("availableIds.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("availableIds.types", updated);
+                          }}
                         />
-                        <Label htmlFor={`id-${type}`} className="text-sm">
-                          {type}
-                        </Label>
+                        <label className="text-sm">{type}</label>
                       </div>
                     ))}
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">その他の身分証明書</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        value={newIdType}
-                        onChange={(e) => setNewIdType(e.target.value)}
-                        placeholder="その他の身分証明書を入力"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddIdType}
-                        disabled={!newIdType.trim()}
-                      >
-                        追加
-                      </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {otherIds.map((id, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {id}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => {
+                              const updated = otherIds.filter((_, i) => i !== index);
+                              setOtherIds(updated);
+                              form.setValue("availableIds.others", updated);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
                     </div>
+                    <OtherItemInput
+                      onAdd={handleAddIdType}
+                      placeholder="その他の身分証明書を入力"
+                    />
                   </div>
                 </div>
               </FormFieldWrapper>
