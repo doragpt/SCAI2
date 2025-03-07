@@ -1,17 +1,17 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import {
-  Home,
-  Menu,
-  User,
-  X,
-  Briefcase,
-  UserCircle,
+import { 
+  Home, 
+  Menu, 
+  User, 
+  X, 
+  Briefcase, 
+  UserCircle, 
   History,
   Heart,
   Settings,
   LogOut,
-  Bot // Assuming Bot is a valid icon import. Add if necessary.
+  Bot
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -41,7 +41,7 @@ const talentRoutes = [
   { path: "/talent/mypage", label: "マイページ", icon: UserCircle },
   { path: "/talent/mypage/keep-list", label: "キープリスト", icon: Heart },
   { path: "/talent/mypage/view-history", label: "閲覧履歴", icon: History },
-  { path: "/talent/ai-matching", label: "AIマッチング", icon: Bot }, // Updated icon here
+  { path: "/talent/ai-matching", label: "AIマッチング", icon: Bot },
 ];
 
 const storeRoutes = [
@@ -62,14 +62,12 @@ export function Navigation() {
   // パンくずリストのラベルを日本語化
   const getBreadcrumbLabel = (crumb: string) => {
     const labels: Record<string, string> = {
-      'talent': 'タレント',
-      'store': '店舗',
-      'jobs': '求人',
+      'jobs': '求人情報',
       'mypage': 'マイページ',
-      'dashboard': 'ダッシュボード',
-      'ai-matching': 'AIマッチング',
       'keep-list': 'キープリスト',
       'view-history': '閲覧履歴',
+      'ai-matching': 'AIマッチング',
+      'store': '店舗',
     };
     return labels[crumb] || crumb;
   };
@@ -183,20 +181,20 @@ export function Navigation() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>
-                  {user.role === 'store' ? '店舗アカウント' : 'タレントアカウント'}
+                  {user.role === 'store' ? '店舗アカウント' : 'アカウント'}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => window.location.href = user.role === 'store' ? "/store/dashboard" : "/talent/mypage"} // Changed dashboard to mypage
+                  onClick={() => window.location.href = user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}
                 >
                   <UserCircle className="h-4 w-4 mr-2" />
-                  マイページ {/* Changed label */}
+                  マイページ
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => window.location.href = user.role === 'store' ? "/store/settings" : "/talent/mypage"}
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  {user.role === 'store' ? '店舗設定' : 'マイページ'}
+                  {user.role === 'store' ? '店舗設定' : 'アカウント設定'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
