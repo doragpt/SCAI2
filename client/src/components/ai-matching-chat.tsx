@@ -33,12 +33,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { 
-  Bot, 
-  User, 
-  Loader2, 
-  ArrowLeft, 
-  Check, 
+import {
+  Bot,
+  User,
+  Loader2,
+  ArrowLeft,
+  Check,
   X,
   FileCheck,
   FileText,
@@ -67,7 +67,7 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
-import { useMatching } from "@/hooks/use-matching";
+import { useMatching, startMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
 import { format } from 'date-fns'
@@ -261,18 +261,78 @@ export const AIMatchingChat = () => {
     setShowConfirmDialog(false);
   };
 
-  const handleConfirmConditions = () => {
-    setIsLoading(true);
-    setShowConfirmDialog(false);
-    setShowForm(false);
-    setMessages(prev => [...prev, {
-      type: "user",
-      content: formatConditionsMessage(conditions, selectedType)
-    }, {
-      type: "ai",
-      content: "ご希望の条件を確認させていただきました。マッチング検索を開始しますか？"
-    }]);
-    setTimeout(() => setIsLoading(false), 2000); // Simulate API call delay
+  const handleConfirmConditions = async () => {
+    try {
+      setIsLoading(true);
+      setShowConfirmDialog(false);
+      setShowForm(false);
+
+      // 条件の確認メッセージを追加
+      setMessages(prev => [...prev, {
+        type: "user",
+        content: formatConditionsMessage(conditions, selectedType)
+      }, {
+        type: "ai",
+        content: "ご希望の条件を確認させていただきました。マッチング検索を開始しますか？"
+      }]);
+
+      // ユーザーからの応答を待つ
+      const startSearch = await new Promise((resolve) => {
+        setMessages(prev => [...prev, {
+          type: "ai",
+          content: "マッチング検索を開始するには「はい」、条件を変更する場合は「いいえ」とお答えください。"
+        }]);
+        //  In a real application, you would listen for user input here (e.g., using a message input field and submit button)
+        // For this example, we'll simulate a user response after a delay.
+        setTimeout(() => resolve(true), 2000); // Simulate user saying "yes"
+      });
+
+      if (startSearch) {
+        // マッチング検索を開始
+        const results = await startMatching(conditions);
+
+        if (results.length > 0) {
+          setMessages(prev => [...prev, {
+            type: "ai",
+            content: `
+お待たせいたしました。
+あなたの希望条件に合う店舗が${results.length}件見つかりました。
+
+【マッチング結果】
+${results.map((result, index) => `
+${index + 1}. ${result.businessName}
+  • マッチ度: ${result.matchScore}%
+  • 勤務地: ${result.location}
+  • マッチポイント: ${result.matches.join('、')}
+`).join('\n')}
+
+気になる店舗がございましたら、詳細をご確認いただけます。
+ご希望の店舗番号をお知らせください。
+`
+          }]);
+        } else {
+          setMessages(prev => [...prev, {
+            type: "ai",
+            content: `
+申し訳ございません。
+現在、ご希望の条件に完全に合致する店舗が見つかりませんでした。
+
+条件を変更して再度検索することをお勧めいたします。
+条件を変更しますか？
+`
+          }]);
+        }
+      }
+    } catch (error) {
+      console.error("送信エラー:", error);
+      toast({
+        title: "エラー",
+        description: "マッチング処理中にエラーが発生しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 

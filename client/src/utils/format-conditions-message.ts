@@ -1,4 +1,4 @@
-import { prefectures } from "@/constants/work-types";
+import { prefectures, WORK_TYPES_WITH_DESCRIPTION } from "@/constants/work-types";
 
 interface MatchingConditions {
   workTypes: string[];
@@ -27,7 +27,11 @@ export function formatConditionsMessage(
 
   // 共通の条件
   if (conditions.workTypes.length > 0) {
-    messages.push(`【希望業種】\n${conditions.workTypes.join("、")}`);
+    const japaneseWorkTypes = conditions.workTypes.map(typeId => {
+      const workType = WORK_TYPES_WITH_DESCRIPTION.find(wt => wt.id === typeId);
+      return workType ? workType.label : typeId;
+    });
+    messages.push(`【希望業種】\n${japaneseWorkTypes.join("、")}`);
   }
 
   if (type === "出稼ぎ") {

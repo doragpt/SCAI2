@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 
-interface MatchingConditions {
+export interface MatchingConditions {
   workTypes: string[];
   workPeriodStart: string;
   workPeriodEnd: string;
@@ -18,7 +18,7 @@ interface MatchingConditions {
   interviewDates: string[];
 }
 
-interface MatchedJob {
+export interface MatchedJob {
   id: number;
   businessName: string;
   location: string;
@@ -35,27 +35,35 @@ interface MatchedJob {
   matches: string[];
 }
 
+// startMatching関数を個別にエクスポート
+export async function startMatching(conditions: MatchingConditions): Promise<MatchedJob[]> {
+  try {
+    const response = await apiRequest<MatchedJob[]>(
+      "POST",
+      "/api/talent/matching",
+      conditions
+    );
+    return response;
+  } catch (error) {
+    console.error('Error in startMatching:', error);
+    throw error;
+  }
+}
+
 export function useMatching() {
   const [matchingResults, setMatchingResults] = useState<MatchedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const startMatching = async (conditions: MatchingConditions) => {
+  const handleStartMatching = async (conditions: MatchingConditions) => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await apiRequest(
-        "POST",
-        "/api/talent/matching",
-        conditions
-      );
-
+      const response = await startMatching(conditions);
       setMatchingResults(response);
       return response;
     } catch (error) {
-      console.error('Error in startMatching:', error);
       setError(error instanceof Error ? error.message : "マッチング処理に失敗しました");
       throw error;
     } finally {
@@ -68,7 +76,7 @@ export function useMatching() {
     setMatchingResults,
     currentPage,
     setCurrentPage,
-    startMatching,
+    startMatching: handleStartMatching,
     isLoading,
     error,
   };
