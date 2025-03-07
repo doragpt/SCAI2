@@ -21,7 +21,7 @@ export default function ProfileViewPage() {
     error,
     refetch
   } = useQuery<TalentProfileData>({
-    queryKey: ["/api/talent/profile"],
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
     enabled: !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -93,7 +93,7 @@ export default function ProfileViewPage() {
               プロフィールを作成して、あなたの情報を登録しましょう。
             </p>
             <Button asChild>
-              <Link href="/talent/resume/create">プロフィールを作成する</Link>
+              <Link href="/talent/register">プロフィールを作成する</Link>
             </Button>
           </div>
         </Card>
@@ -107,7 +107,7 @@ export default function ProfileViewPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">プロフィール</h1>
         <Button variant="outline" asChild>
-          <Link href="/talent/resume/edit">
+          <Link href="/talent/register">
             <PenSquare className="h-4 w-4 mr-2" />
             編集する
           </Link>

@@ -396,8 +396,13 @@ export type SelectUser = {
   createdAt: Date;
 };
 
+// ProfileData型の定義を統一
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-export type TalentProfileData = z.infer<typeof talentProfileSchema>;
+
+// 他のエクスポートは変更なし
+export type ProfileData = TalentProfileData;
+
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 

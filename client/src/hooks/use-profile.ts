@@ -4,7 +4,7 @@ import { queryClient, QUERY_KEYS, apiRequest } from "@/lib/queryClient";
 
 export function useProfile() {
   // プロフィールデータを取得
-  const profileQuery = useQuery({
+  const profileQuery = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: () => apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE),
     refetchOnWindowFocus: false,
