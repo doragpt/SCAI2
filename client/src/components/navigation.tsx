@@ -1,16 +1,17 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { 
-  Home, 
-  Menu, 
-  User, 
-  X, 
-  Briefcase, 
-  UserCircle, 
+import {
+  Home,
+  Menu,
+  User,
+  X,
+  Briefcase,
+  UserCircle,
   History,
   Heart,
   Settings,
-  LogOut
+  LogOut,
+  Bot // Assuming Bot is a valid icon import. Add if necessary.
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,11 +38,10 @@ const commonRoutes = [
 ];
 
 const talentRoutes = [
-  { path: "/talent/dashboard", label: "ダッシュボード", icon: UserCircle },
-  { path: "/talent/mypage", label: "マイページ", icon: Settings },
+  { path: "/talent/mypage", label: "マイページ", icon: UserCircle },
   { path: "/talent/mypage/keep-list", label: "キープリスト", icon: Heart },
   { path: "/talent/mypage/view-history", label: "閲覧履歴", icon: History },
-  { path: "/talent/ai-matching", label: "AIマッチング", icon: UserCircle },
+  { path: "/talent/ai-matching", label: "AIマッチング", icon: Bot }, // Updated icon here
 ];
 
 const storeRoutes = [
@@ -187,10 +187,10 @@ export function Navigation() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => window.location.href = user.role === 'store' ? "/store/dashboard" : "/talent/dashboard"}
+                  onClick={() => window.location.href = user.role === 'store' ? "/store/dashboard" : "/talent/mypage"} // Changed dashboard to mypage
                 >
                   <UserCircle className="h-4 w-4 mr-2" />
-                  ダッシュボード
+                  マイページ {/* Changed label */}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => window.location.href = user.role === 'store' ? "/store/settings" : "/talent/mypage"}

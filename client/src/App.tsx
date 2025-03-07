@@ -6,20 +6,16 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import TalentRegistration from "@/pages/talent-registration";
-import TalentDashboard from "@/pages/talent-dashboard";
 import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import JobDetail from "@/pages/job-detail";
 import StoreDashboard from "@/pages/store-dashboard";
 import MyPage from "@/pages/my-page";
-import BasicInfoEdit from "@/pages/basic-info-edit";
 import Jobs from "@/pages/jobs";
 import KeepListPage from "@/pages/keep-list";
 import ViewHistoryPage from "@/pages/view-history";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useState, useEffect } from "react";
-import ProfileViewPage from "@/pages/profile-view-page";
-import { ConnectionTest } from "@/components/connection-test";
 import AIMatchingPage from "@/pages/talent/ai-matching";
 import { Navigation } from "@/components/navigation";
 
@@ -30,11 +26,9 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/jobs" component={Jobs} />
       <Route path="/jobs/:id" component={JobDetail} />
-      <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
       <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
-      <ProtectedRoute path="/talent/mypage/applications" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
       <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />

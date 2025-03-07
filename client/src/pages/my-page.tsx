@@ -1,7 +1,18 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, UserIcon, Settings, MessageCircle } from "lucide-react";
-import { Redirect, Link } from "wouter";
+import {
+  Bot,
+  Bell,
+  ChevronRight,
+  Calendar,
+  Briefcase,
+  Loader2,
+  Heart,
+  Clock,
+  Settings,
+  UserCircle
+} from "lucide-react";
+import { Link } from "wouter";
 import {
   type TalentProfile,
   type Application
@@ -10,7 +21,25 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { motion } from "framer-motion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 
 export default function MyPage() {
   const { user } = useAuth();
@@ -35,120 +64,223 @@ export default function MyPage() {
     );
   }
 
+  const notices = [
+    {
+      id: 1,
+      title: "【重要】システムメンテナンスのお知らせ",
+      date: "2024/03/15",
+      type: "important",
+      content: "定期メンテナンスを実施いたします。",
+    },
+    {
+      id: 2,
+      title: "【お知らせ】新機能追加のお知らせ",
+      date: "2024/03/10",
+      type: "info",
+      content: "AIマッチング機能が追加されました。",
+    }
+  ];
+
+  const quickAccessItems = [
+    {
+      title: "プロフィール編集",
+      icon: UserCircle,
+      href: "/talent/register",
+      description: "基本情報の更新",
+      color: "bg-blue-500"
+    },
+    {
+      title: "SCAIマッチング",
+      icon: Bot,
+      href: "/talent/ai-matching",
+      description: "AIによるマッチング",
+      color: "bg-green-500"
+    },
+    {
+      title: "お仕事検索",
+      icon: Briefcase,
+      href: "/jobs",
+      description: "新着求人をチェック",
+      color: "bg-orange-500"
+    },
+    {
+      title: "キープリスト",
+      icon: Heart,
+      href: "/talent/mypage/keep-list",
+      description: "保存した求人",
+      color: "bg-red-500"
+    }
+  ];
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      {/* ヘッダー */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-bold">マイページ</h1>
-          <p className="text-muted-foreground">
-            アカウント設定と申請履歴の確認
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            マイページ
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            ようこそ、{user.username}さん
           </p>
         </div>
-      </div>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Settings className="h-4 w-4" />
+          設定
+        </Button>
+      </motion.div>
 
-      <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profile">プロフィール</TabsTrigger>
-          <TabsTrigger value="applications">申請履歴</TabsTrigger>
-          <TabsTrigger value="settings">アカウント設定</TabsTrigger>
-        </TabsList>
+      {/* クイックアクセス */}
+      <motion.section
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        {quickAccessItems.map((item) => (
+          <motion.div
+            key={item.href}
+            variants={item}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              asChild
+              variant="outline"
+              className="w-full h-32 flex flex-col items-center justify-center gap-2 relative overflow-hidden group"
+            >
+              <Link href={item.href}>
+                <div className={`absolute inset-0 opacity-10 ${item.color}`} />
+                <item.icon className={`h-6 w-6 ${item.color} text-white rounded-full p-1`} />
+                <span className="font-medium">{item.title}</span>
+                <span className="text-xs text-muted-foreground">{item.description}</span>
+              </Link>
+            </Button>
+          </motion.div>
+        ))}
+      </motion.section>
 
-        <TabsContent value="profile" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>基本情報</CardTitle>
-              <CardDescription>プロフィール情報の確認と編集</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
-                  <Link href="/talent/register">
-                    <UserIcon className="h-6 w-6 mb-2" />
-                    <span>基本情報編集</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center">
-                  <Link href="/talent/register">
-                    <MessageCircle className="h-6 w-6 mb-2" />
-                    <span>WEB履歴書編集</span>
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* お知らせと申請履歴 */}
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* お知らせ */}
+        <motion.section
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              お知らせ
+            </h2>
+            <Button variant="ghost" size="sm" className="text-primary">
+              すべて見る
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4">
+              {notices.map((notice) => (
+                <motion.div key={notice.id} variants={item}>
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Card className="cursor-pointer transition-all hover:shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <p className={`font-medium ${notice.type === 'important' ? 'text-red-600' : 'text-primary'}`}>
+                                {notice.title}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(notice.date), 'yyyy年MM月dd日', { locale: ja })}
+                              </p>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">{notice.title}</h4>
+                        <p className="text-sm text-muted-foreground">{notice.content}</p>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                </motion.div>
+              ))}
+            </div>
+          </ScrollArea>
+        </motion.section>
 
-        <TabsContent value="applications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>申請履歴</CardTitle>
-              <CardDescription>これまでの申請状況を確認できます</CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* 申請履歴 */}
+        <motion.section
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              申請履歴
+            </h2>
+            <Button variant="ghost" size="sm" className="text-primary">
+              すべて見る
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4">
               {applications?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  申請履歴はありません
-                </div>
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    申請履歴はありません
+                  </CardContent>
+                </Card>
               ) : (
-                <div className="space-y-4">
-                  {applications?.map((application) => (
-                    <Card key={application.id}>
+                applications?.map((application) => (
+                  <motion.div key={application.id} variants={item}>
+                    <Card>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium">Store ID: {application.storeId}</p>
+                            <p className="font-medium">申請 #{application.id}</p>
                             <p className="text-sm text-muted-foreground">
-                              申請日: {format(new Date(application.appliedAt), 'yyyy年MM月dd日', { locale: ja })}
+                              {format(new Date(application.appliedAt), 'yyyy年MM月dd日', { locale: ja })}
                             </p>
                           </div>
-                          <div className="text-sm">
-                            ステータス:{" "}
-                            <span className={
-                              application.status === "accepted" ? "text-green-600" :
-                              application.status === "rejected" ? "text-red-600" :
-                              application.status === "withdrawn" ? "text-gray-600" :
-                              "text-yellow-600"
-                            }>
+                          <Badge
+                            variant={
+                              application.status === "accepted" ? "default" :
+                              application.status === "rejected" ? "destructive" :
+                              "secondary"
+                            }
+                          >
+                            {
                               {
-                                {
-                                  pending: "審査中",
-                                  accepted: "承認済み",
-                                  rejected: "不採用",
-                                  withdrawn: "取り下げ"
-                                }[application.status]
-                              }
-                            </span>
-                          </div>
+                                pending: "審査中",
+                                accepted: "承認済み",
+                                rejected: "不採用",
+                                withdrawn: "取り下げ"
+                              }[application.status]
+                            }
+                          </Badge>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
+                  </motion.div>
+                ))
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>アカウント設定</CardTitle>
-              <CardDescription>アカウントの基本設定と通知設定</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <Button variant="outline" className="w-full justify-start">
-                  <Settings className="h-4 w-4 mr-2" />
-                  通知設定
-                </Button>
-                <Button variant="outline" className="w-full justify-start text-destructive">
-                  退会手続き
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </ScrollArea>
+        </motion.section>
+      </div>
     </div>
   );
 }
