@@ -32,14 +32,11 @@ function Router() {
       <Route path="/jobs/:id" component={JobDetail} />
       <ProtectedRoute path="/talent/dashboard" component={TalentDashboard} />
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
-      <ProtectedRoute path="/talent/profile" component={ProfileViewPage} />
-      <ProtectedRoute path="/talent/profile/edit" component={BasicInfoEdit} />
-      <ProtectedRoute path="/talent/resume/edit" component={TalentRegistration} />
+      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/applications" component={MyPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
-      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
       <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
       <Route component={NotFound} />
     </Switch>
@@ -84,7 +81,6 @@ export default function App() {
         <div className="min-h-screen bg-background">
           <Navigation />
           <main className="container mx-auto px-4 py-6">
-            <ConnectionTest />
             <Router />
           </main>
           <Toaster />
