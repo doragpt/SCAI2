@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { QUERY_KEYS } from "@/lib/queryClient";
 import { Loader2, PenSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Redirect } from "wouter";
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
@@ -26,25 +27,38 @@ export default function ProfileViewPage() {
     refetchOnWindowFocus: false,
     retry: 1,
     onError: (error: Error) => {
-      console.error("Profile fetch error:", error);
+      console.error("Profile fetch error:", {
+        error,
+        message: error.message,
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 新規ユーザーの場合は登録ページにリダイレクト
       if (error.message.includes("新規登録が必要")) {
-        // 新規ユーザーの場合は登録ページにリダイレクト
         window.location.href = "/talent/register";
-      } else {
-        toast({
-          title: "エラーが発生しました",
-          description: error.message || "プロフィールの取得に失敗しました。",
-          variant: "destructive",
-        });
+        return;
       }
+
+      // その他のエラーの場合
+      toast({
+        title: "プロフィールの取得に失敗しました",
+        description: "ページを再読み込みするか、しばらく経ってから再度お試しください。",
+        variant: "destructive",
+      });
     },
   });
+
+  // ユーザーが認証されていない場合
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
 
   // ローディング状態の処理
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }

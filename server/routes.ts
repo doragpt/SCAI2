@@ -437,37 +437,60 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
   // 認証が必要なエンドポイント
   // profilesテーブルのデータ取得のエラーハンドリングを改善
-app.get("/api/talent/profile", authenticate, async (req: any, res) => {
-  try {
-    const userId = req.user.id;
-    console.log('Profile fetch request for user:', userId);
+  app.get("/api/talent/profile", authenticate, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('Profile fetch request received:', {
+        userId,
+        headers: req.headers,
+        timestamp: new Date().toISOString()
+      });
 
-    // プロフィール情報を取得
-    const [profile] = await db
-      .select()
-      .from(talentProfiles)
-      .where(eq(talentProfiles.userId, userId));
+      // データベースクエリの実行を詳細にログ
+      console.log('Executing database query for user:', userId);
+      const [profile] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, userId));
 
-    // プロフィールが存在しない場合は404を返す
-    if (!profile) {
-      console.log('Profile not found for user:', userId);
-      return res.status(404).json({
-        message: "プロフィールが見つかりません。新規登録が必要です。",
-        isNewUser: true
+      console.log('Database query result:', {
+        userId,
+        hasProfile: !!profile,
+        profileId: profile?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // プロフィールが存在しない場合は404を返す
+      if (!profile) {
+        console.log('Profile not found for user:', userId);
+        return res.status(404).json({
+          message: "プロフィールが見つかりません。新規登録が必要です。",
+          isNewUser: true
+        });
+      }
+
+      console.log('Profile fetch successful:', {
+        userId,
+        profileId: profile.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(profile);
+    } catch (error) {
+      console.error('Profile fetch error:', {
+        error,
+        userId: req.user?.id,
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "プロフィールの取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
-
-    console.log('Profile fetch successful:', { userId, profileId: profile.id });
-    res.json(profile);
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({
-      message: "プロフィールの取得に失敗しました",
-      error: error instanceof Error ? error.message : "Unknown error",
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    });
-  }
-});
+  });
 
   app.post("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
