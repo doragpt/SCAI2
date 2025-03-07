@@ -367,9 +367,13 @@ export const AIMatchingChat = () => {
     }
 
     const initialDisplay = results.slice(0, Math.min(10, results.length));
+    const messageContent = results.length > 10
+      ? `お待たせ！あなたに合いそうな店舗は${results.length}件見つかったよ！\nまずは10件、リストアップするね！`
+      : `お待たせ！あなたに合いそうな店舗は${results.length}件見つかったよ！\n全ての店舗をリストアップするね！`;
+
     setMessages(prev => [...prev, {
       type: "ai",
-      content: `お待たせ！あなたに合いそうな店舗は${results.length}件見つかったよ！
+      content: `${messageContent}
 
 【候補店舗】
 ${initialDisplay.map((result, index) => `
