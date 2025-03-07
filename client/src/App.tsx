@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import ProfileViewPage from "@/pages/profile-view-page";
 import { ConnectionTest } from "@/components/connection-test";
 import AIMatchingPage from "@/pages/talent/ai-matching";
+import { Navigation } from "@/components/navigation";
 
 function Router() {
   return (
@@ -80,9 +81,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen">
-          <ConnectionTest />
-          <Router />
+        <div className="min-h-screen bg-background">
+          <Navigation />
+          <main className="container mx-auto px-4 py-6">
+            <ConnectionTest />
+            <Router />
+          </main>
           <Toaster />
         </div>
       </AuthProvider>
