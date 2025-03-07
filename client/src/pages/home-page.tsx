@@ -19,13 +19,8 @@ import {
   HelpCircle,
   MessageSquare,
   User as UserIcon,
-  Building2,
-  Calendar,
-  Briefcase,
-  Store,
-  Globe,
-  XCircle,
   Check,
+  Building2,
 } from "lucide-react";
 import {
   Select,

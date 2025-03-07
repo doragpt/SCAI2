@@ -1,8 +1,8 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-export interface BlockQuoteProps extends React.HTMLAttributes<HTMLQuoteElement> {}
+export interface BlockQuoteProps
+  extends React.BlockquoteHTMLAttributes<HTMLQuoteElement> {}
 
 const BlockQuote = React.forwardRef<HTMLQuoteElement, BlockQuoteProps>(
   ({ className, ...props }, ref) => {
