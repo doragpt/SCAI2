@@ -32,7 +32,7 @@ export function useProfile() {
         others: [],
       },
       canProvideResidenceRecord: false,
-      photoDiaryAllowed: false,
+      canPhotoDiary: false,  // photoDiaryAllowed から canPhotoDiary に修正
       faceVisibility: '',
       canHomeDelivery: false,
       ngOptions: {

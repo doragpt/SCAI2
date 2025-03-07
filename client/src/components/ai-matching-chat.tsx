@@ -887,8 +887,8 @@ export const AIMatchingChat = () => {
               <div className="space-y-2">
                 <div>
                   <Label>写メ日記の投稿</Label>
-                  <Badge variant={profileData?.photoDiaryAllowed ? "default" : "secondary"}>
-                    {profileData?.photoDiaryAllowed ? "可能" : "不可"}
+                  <Badge variant={profileData?.canPhotoDiary ? "default" : "secondary"}>
+                    {profileData?.canPhotoDiary ? "可能" : "不可"}
                   </Badge>
                 </div>
                 <div>
