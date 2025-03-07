@@ -183,7 +183,27 @@ export async function apiRequest<T>(
 // 求人一覧取得用のクエリ関数
 export const getJobsQuery = async (): Promise<Job[]> => {
   try {
-    return await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    console.log('Fetching public jobs:', {
+      endpoint: QUERY_KEYS.JOBS_PUBLIC,
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+
+    if (!Array.isArray(response)) {
+      console.error('Invalid jobs response format:', {
+        response,
+        timestamp: new Date().toISOString()
+      });
+      return [];
+    }
+
+    console.log('Jobs fetched successfully:', {
+      count: response.length,
+      timestamp: new Date().toISOString()
+    });
+
+    return response;
   } catch (error) {
     console.error("Jobs fetch error:", {
       error: getErrorMessage(error),
@@ -315,7 +335,7 @@ export async function getSignedImageUrl(key: string): Promise<string> {
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest< {url:string}> (
+    const response = await apiRequest<{ url: string }>(
       "GET",
       `${QUERY_KEYS.SIGNED_URL}?key=${encodeURIComponent(key)}`
     );

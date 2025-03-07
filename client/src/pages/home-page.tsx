@@ -49,6 +49,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import React from 'react';
+import { QUERY_KEYS, getJobsQuery } from "@/lib/queryClient";
 
 // アニメーション設定
 const container = {
@@ -232,8 +234,9 @@ export default function HomePage() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
 
-  const { data: jobListings, isLoading: jobsLoading } = useQuery<Job[]>({
-    queryKey: ["/api/jobs/public"],
+  const { data: jobListings, isLoading: jobsLoading, error } = useQuery({
+    queryKey: [QUERY_KEYS.JOBS_PUBLIC],
+    queryFn: getJobsQuery,
     retry: 1,
     onError: (error) => {
       console.error("求人情報取得エラー:", error);
@@ -245,12 +248,18 @@ export default function HomePage() {
     }
   });
 
-  const filteredListings = jobListings?.filter(job => {
-    if (!job) return false;
-    const areaMatch = !selectedArea || job.location?.includes(selectedArea);
-    const typeMatch = selectedType === "all" || job.serviceType === selectedType;
-    return areaMatch && typeMatch;
-  }).slice(0, 6) || [];
+  const filteredListings = React.useMemo(() => {
+    if (!jobListings || !Array.isArray(jobListings)) return [];
+
+    return jobListings
+      .filter(job => {
+        if (!job) return false;
+        const areaMatch = !selectedArea || job.location?.includes(selectedArea);
+        const typeMatch = selectedType === "all" || job.serviceType === selectedType;
+        return areaMatch && typeMatch;
+      })
+      .slice(0, 6);
+  }, [jobListings, selectedArea, selectedType]);
 
   const currentAreaGroup = areaGroups.find(group => group.areas.includes(selectedArea));
 
@@ -475,6 +484,12 @@ export default function HomePage() {
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
+            ) : !filteredListings.length ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  条件に合う求人が見つかりませんでした
+                </p>
+              </div>
             ) : (
               <motion.div
                 variants={container}
@@ -482,7 +497,7 @@ export default function HomePage() {
                 animate="show"
                 className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                {filteredListings?.map((job) => (
+                {filteredListings.map((job) => (
                   <JobCard key={job.id} job={job} />
                 ))}
               </motion.div>
