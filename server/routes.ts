@@ -236,27 +236,14 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   app.put("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log('Profile update request received:', { userId, requestData: req.body });
+      console.log('Profile update request received:', {
+        userId,
+        bodyMark: req.body.bodyMark,
+        timestamp: new Date().toISOString()
+      });
 
       // バリデーション
       const updateData = talentProfileUpdateSchema.parse(req.body);
-
-      // 画像をS3にアップロード
-      if (updateData.photos && updateData.photos.length > 0) {
-        const uploadedPhotos = await Promise.all(
-          updateData.photos.map(async (photo) => {
-            if (photo.url.startsWith('data:')) {
-              const s3Url = await uploadToS3(
-                photo.url,
-                `${userId}-${Date.now()}.jpg`
-              );
-              return { ...photo, url: s3Url };
-            }
-            return photo;
-          })
-        );
-        updateData.photos = uploadedPhotos;
-      }
 
       // プロフィールの更新
       const [updatedProfile] = await db
@@ -272,12 +259,21 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         throw new Error("プロフィールの更新に失敗しました");
       }
 
-      console.log('Profile update successful:', { userId, profileId: updatedProfile.id });
+      console.log('Profile update successful:', {
+        userId,
+        bodyMark: updatedProfile.bodyMark,
+        timestamp: new Date().toISOString()
+      });
+
       res.json(updatedProfile);
     } catch (error) {
-      console.error('Profile update error:', error);
-      const status = error instanceof Error && error.message === "プロフィールが見つかりません" ? 404 : 400;
-      res.status(status).json({
+      console.error('Profile update error:', {
+        error,
+        userId: req.user?.id,
+        bodyMark: req.body.bodyMark,
+        timestamp: new Date().toISOString()
+      });
+      res.status(400).json({
         error: true,
         message: error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
       });

@@ -653,7 +653,8 @@ export function TalentForm() {
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      console.log("Loading existing profile:", existingProfile);
+      console.log('Loading existing profile bodyMark:', existingProfile.bodyMark);
+
       form.reset({
         ...existingProfile,
         bust: existingProfile.bust?.toString() ?? "",
@@ -678,6 +679,7 @@ export function TalentForm() {
       setOtherSmokingTypes(existingProfile.smoking?.others || []);
       setBodyMarks(existingProfile.bodyMark?.others || []);
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
+      console.log('Form reset complete, current bodyMark:', form.getValues().bodyMark);
     }
   }, [existingProfile, form]);
 
@@ -881,6 +883,7 @@ export function TalentForm() {
       }
     };
 
+    console.log('Submitting form data bodyMark:', formData.bodyMark);
     console.log('Opening confirmation modal');
     setFormData(formData);
     setIsConfirmationOpen(true);
@@ -917,34 +920,42 @@ export function TalentForm() {
       setBodyMarks(updated);
 
       // フォームの値を更新（他の項目と同じパターンで）
-      const formData = form.getValues();
       form.setValue("bodyMark", {
         hasBodyMark: true,
-        details: formData.bodyMark?.details || "",
+        details: form.getValues().bodyMark?.details || "",
         others: updated
       }, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
       });
+
+      console.log('bodyMark updated:', {
+        value,
+        updated,
+        formValues: form.getValues().bodyMark      });
     }
   };
 
-  // 傷・タトゥー・アトピー削除ハンドラー
   const handleRemoveBodyMark = (index: number) => {
     const updated = bodyMarks.filter((_, i) => i !== index);
     setBodyMarks(updated);
 
-    // フォームの値も更新
-    const formData = form.getValues();
+    // フォームの値を更新
     form.setValue("bodyMark", {
       hasBodyMark: updated.length > 0,
-      details: formData.bodyMark?.details || "",
+      details: form.getValues().bodyMark?.details || "",
       others: updated
     }, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
+    });
+
+    console.log('bodyMark removed:', {
+      index,
+      updated,
+      formValues: form.getValues().bodyMark
     });
   };
 

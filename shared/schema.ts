@@ -292,9 +292,14 @@ export const talentProfileSchema = z.object({
       "現在の髪色の写真は必須です"
     ),
 
-  bodyMark: bodyMarkSchema.default({
+  bodyMark: z.object({
+    hasBodyMark: z.boolean().default(false),
+    details: z.string().optional(),
+    others: z.array(z.string()).default([]),
+  }).default({
     hasBodyMark: false,
     details: "",
+    others: []
   }),
 
   selfIntroduction: z.string().optional().default(""),
