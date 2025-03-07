@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type Job } from "@shared/schema";
+import { type Job, type ServiceType } from "@shared/schema";
 import {
   Loader2,
   MapPin,
@@ -48,6 +48,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 // アニメーション設定
 const container = {
@@ -229,18 +230,29 @@ export default function HomePage() {
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedArea, setSelectedArea] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("all");
+  const { toast } = useToast();
 
   const { data: jobListings, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs/public"],
+    retry: 1,
+    onError: (error) => {
+      console.error("求人情報取得エラー:", error);
+      toast({
+        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+      });
+    }
   });
-
-  const currentAreaGroup = areaGroups.find(group => group.areas.includes(selectedArea));
 
   const filteredListings = jobListings?.filter(job => {
-    const areaMatch = !selectedArea || job.location.includes(selectedArea);
+    if (!job) return false;
+    const areaMatch = !selectedArea || job.location?.includes(selectedArea);
     const typeMatch = selectedType === "all" || job.serviceType === selectedType;
     return areaMatch && typeMatch;
-  });
+  }).slice(0, 6) || [];
+
+  const currentAreaGroup = areaGroups.find(group => group.areas.includes(selectedArea));
 
   if (authLoading) {
     return (
