@@ -63,46 +63,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 app.get("/api/user/profile", authenticate, async (req: any, res) => {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ message: "認証が必要です" });
-      }
-
-      const [user] = await db
-        .select({
-          id: users.id,
-          username: users.username,
-          role: users.role,
-          displayName: users.displayName,
-          location: users.location,
-          birthDate: users.birthDate,
-          birthDateModified: users.birthDateModified,
-          preferredLocations: users.preferredLocations,
-          createdAt: users.createdAt,
-        })
-        .from(users)
-        .where(eq(users.id, req.user.id));
-
-      if (!user) {
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      // 日付を文字列に変換して返す
-      const userProfile = {
-        ...user,
-        birthDate: user.birthDate.toISOString().split('T')[0],
-        createdAt: user.createdAt.toISOString(),
-      };
-
-      res.json(userProfile);
-    } catch (error) {
-      console.error("User profile fetch error:", error);
-      res.status(500).json({
-        message: "ユーザー情報の取得に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "認証が必要です" });
     }
-  });
+
+    console.log('Profile fetch request received:', {
+      userId: req.user.id,
+      headers: req.headers,
+      timestamp: new Date().toISOString()
+    });
+
+    // データベースクエリの実行を詳細にログ
+    console.log('Executing database query for user:', req.user.id);
+    const [user] = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        role: users.role,
+        displayName: users.displayName,
+        location: users.location,
+        birthDate: users.birthDate,
+        birthDateModified: users.birthDateModified,
+        preferredLocations: users.preferredLocations,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, req.user.id));
+
+    console.log('Database query result:', {
+      userId: req.user.id,
+      hasUser: !!user,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "ユーザーが見つかりません" });
+    }
+
+    // 日付を文字列に変換して返す
+    const userProfile = {
+      ...user,
+      birthDate: user.birthDate ? user.birthDate.toISOString().split('T')[0] : null,
+      createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+    };
+
+    console.log('Profile fetch successful:', {
+      userId: req.user.id,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json(userProfile);
+  } catch (error) {
+    console.error('Profile fetch error:', {
+      error,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(500).json({
+      message: "ユーザー情報の取得に失敗しました",
+      error: error instanceof Error ? error.message : "Unknown error",
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
 
   // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
