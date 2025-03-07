@@ -1,6 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Home, Menu, User, X } from "lucide-react";
+import { 
+  Home, 
+  Menu, 
+  User, 
+  X, 
+  Briefcase, 
+  UserCircle, 
+  History,
+  Heart,
+  Settings,
+  LogOut
+} from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -19,11 +30,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const routes = [
-  { path: "/", label: "ホーム" },
-  { path: "/jobs", label: "求人情報" },
-  { path: "/talent/dashboard", label: "マイページ" },
-  { path: "/talent/profile", label: "プロフィール" },
+// ナビゲーションの構造を定義
+const commonRoutes = [
+  { path: "/", label: "ホーム", icon: Home },
+  { path: "/jobs", label: "求人情報", icon: Briefcase },
+];
+
+const talentRoutes = [
+  { path: "/talent/dashboard", label: "ダッシュボード", icon: UserCircle },
+  { path: "/talent/profile", label: "プロフィール", icon: Settings },
+  { path: "/talent/mypage/keep-list", label: "キープリスト", icon: Heart },
+  { path: "/talent/mypage/view-history", label: "閲覧履歴", icon: History },
+  { path: "/talent/ai-matching", label: "AIマッチング", icon: UserCircle },
+];
+
+const storeRoutes = [
+  { path: "/store/dashboard", label: "店舗ダッシュボード", icon: Briefcase },
 ];
 
 export function Navigation() {
@@ -31,20 +53,38 @@ export function Navigation() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
 
+  // ユーザーの種類に基づいてルートを選択
+  const userRoutes = user?.role === 'store' ? storeRoutes : talentRoutes;
+
   // 現在のパスからパンくずリストを生成
   const breadcrumbs = location.split("/").filter(Boolean);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/">
-            <a className="flex items-center">
-              <Button variant="ghost" size="sm">
-                <Home className="h-5 w-5" />
-              </Button>
-            </a>
-          </Link>
+        {/* デスクトップナビゲーション */}
+        <div className="mr-4 hidden md:flex items-center space-x-4">
+          {commonRoutes.map((route) => (
+            <Link key={route.path} href={route.path}>
+              <a className="flex items-center">
+                <Button variant={location === route.path ? "default" : "ghost"} size="sm">
+                  <route.icon className="h-4 w-4 mr-2" />
+                  {route.label}
+                </Button>
+              </a>
+            </Link>
+          ))}
+
+          {user && userRoutes.map((route) => (
+            <Link key={route.path} href={route.path}>
+              <a className="flex items-center">
+                <Button variant={location === route.path ? "default" : "ghost"} size="sm">
+                  <route.icon className="h-4 w-4 mr-2" />
+                  {route.label}
+                </Button>
+              </a>
+            </Link>
+          ))}
         </div>
 
         {/* モバイルメニュー */}
@@ -59,7 +99,7 @@ export function Navigation() {
               <SheetTitle>メニュー</SheetTitle>
             </SheetHeader>
             <div className="mt-4 space-y-2">
-              {routes.map((route) => (
+              {commonRoutes.map((route) => (
                 <Link key={route.path} href={route.path}>
                   <a className="block">
                     <Button
@@ -67,6 +107,22 @@ export function Navigation() {
                       className="w-full justify-start"
                       onClick={() => setIsOpen(false)}
                     >
+                      <route.icon className="h-4 w-4 mr-2" />
+                      {route.label}
+                    </Button>
+                  </a>
+                </Link>
+              ))}
+
+              {user && userRoutes.map((route) => (
+                <Link key={route.path} href={route.path}>
+                  <a className="block">
+                    <Button
+                      variant={location === route.path ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <route.icon className="h-4 w-4 mr-2" />
                       {route.label}
                     </Button>
                   </a>
@@ -76,8 +132,8 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
 
-        {/* パンくずリスト */}
-        <div className="flex items-center text-sm">
+        {/* パンくずリスト（モバイルでは非表示） */}
+        <div className="hidden md:flex items-center text-sm">
           <Link href="/">
             <a>
               <Button variant="link" size="sm">
@@ -91,7 +147,13 @@ export function Navigation() {
               <Link href={`/${breadcrumbs.slice(0, index + 1).join("/")}`}>
                 <a>
                   <Button variant="link" size="sm">
-                    {crumb === "talent" ? "タレント" : crumb}
+                    {crumb === "talent" ? "タレント" :
+                     crumb === "store" ? "店舗" :
+                     crumb === "jobs" ? "求人" :
+                     crumb === "mypage" ? "マイページ" :
+                     crumb === "profile" ? "プロフィール" :
+                     crumb === "dashboard" ? "ダッシュボード" :
+                     crumb}
                   </Button>
                 </a>
               </Link>
@@ -99,6 +161,7 @@ export function Navigation() {
           ))}
         </div>
 
+        {/* ユーザーメニュー */}
         <div className="ml-auto">
           {user ? (
             <DropdownMenu>
@@ -108,16 +171,16 @@ export function Navigation() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>アカウント</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {user.role === 'store' ? '店舗アカウント' : 'タレントアカウント'}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href="/talent/profile">
+                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/profile"}>
                   <a>
-                    <DropdownMenuItem>プロフィール</DropdownMenuItem>
-                  </a>
-                </Link>
-                <Link href="/talent/dashboard">
-                  <a>
-                    <DropdownMenuItem>マイページ</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="h-4 w-4 mr-2" />
+                      {user.role === 'store' ? 'ダッシュボード' : 'プロフィール'}
+                    </DropdownMenuItem>
                   </a>
                 </Link>
                 <DropdownMenuSeparator />
@@ -125,6 +188,7 @@ export function Navigation() {
                   className="text-destructive"
                   onClick={() => logoutMutation.mutate()}
                 >
+                  <LogOut className="h-4 w-4 mr-2" />
                   ログアウト
                 </DropdownMenuItem>
               </DropdownMenuContent>
