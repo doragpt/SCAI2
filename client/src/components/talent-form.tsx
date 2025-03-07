@@ -654,19 +654,7 @@ export function TalentForm() {
   useEffect(() => {
     if (existingProfile) {
       console.log("Loading existing profile:", existingProfile);
-
-      // 状態の更新
-      setBodyMarks(existingProfile.bodyMark?.others || []);
-      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-      setOtherIds(existingProfile.availableIds?.others || []);
-      setOtherNgOptions(existingProfile.ngOptions?.others || []);
-      setOtherAllergies(existingProfile.allergies?.others || []);
-      setOtherSmokingTypes(existingProfile.smoking?.others || []);
-      setIsEstheOpen(existingProfile.hasEstheExperience || false);
-      setOtherEstheNgOptions(existingProfile.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
-
-      // フォームの初期化
-      const initialData = {
+      form.reset({
         ...existingProfile,
         bust: existingProfile.bust?.toString() ?? "",
         waist: existingProfile.waist?.toString() ?? "",
@@ -679,15 +667,21 @@ export function TalentForm() {
         },
         estheOptions: {
           available: existingProfile.estheOptions?.available || [],
-          otherNgOptions: existingProfile.estheOptions?.otherNgOptions || "",
+          otherNgOptions: existingProfile.estheOptions?.otherNgOptions || ""
         }
-      };
+      });
 
-      form.reset(initialData);
+      setOtherIds(existingProfile.availableIds?.others || []);
+      setOtherNgOptions(existingProfile.ngOptions?.others || []);
+      setOtherAllergies(existingProfile.allergies?.others || []);
+      setOtherSmokingTypes(existingProfile.smoking?.others || []);
+      setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
+      setBodyMarks(existingProfile.bodyMark?.others || []);
+      setOtherEstheNgOptions(existingProfile.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
     }
   }, [existingProfile, form]);
 
-  // handleConfirm関数の修正
   const handleConfirm = async () => {
     if (!formData) return;
 
@@ -704,20 +698,6 @@ export function TalentForm() {
         throw new Error(errorData.message || "プロフィールの更新に失敗しました");
       }
 
-      // レスポンスデータを取得
-      const savedData = await response.json();
-
-      // フォームと状態を更新
-      form.reset(savedData);
-      setBodyMarks(savedData.bodyMark?.others || []);
-      setBodyMarkDetails(savedData.bodyMark?.details || "");
-      setOtherIds(savedData.availableIds?.others || []);
-      setOtherNgOptions(savedData.ngOptions?.others || []);
-      setOtherAllergies(savedData.allergies?.others || []);
-      setOtherSmokingTypes(savedData.smoking?.others || []);
-      setOtherEstheNgOptions(savedData.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
-
-      // キャッシュを更新
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
 
       toast({
@@ -881,9 +861,21 @@ export function TalentForm() {
       bodyMark: {
         hasBodyMark: data.bodyMark.hasBodyMark,
         details: bodyMarkDetails,
-        others: bodyMarks, // 重要: 状態から値を取得
+        others: bodyMarks, // 追加項目を含める
       },
       photos: data.photos || [],
+      // 求人関連フィールドのデフォルト値を設定
+      workType: undefined,
+      workPeriodStart: undefined,
+      workPeriodEnd: undefined,
+      canArrivePreviousDay: false,
+      desiredGuarantee: undefined,
+      desiredRate: undefined,
+      waitingHours: undefined,
+      departureLocation: undefined,
+      returnLocation: undefined,
+      preferredLocations: [],
+      ngLocations: [],
       estheOptions: {
         ...data.estheOptions,
         otherNgOptions: otherEstheNgOptions.join('\n')
@@ -893,6 +885,7 @@ export function TalentForm() {
     console.log('Opening confirmation modal');
     setFormData(formData);
     setIsConfirmationOpen(true);
+    console.log('Modal state updated:', { formData: !!formData, isOpen: isConfirmationOpen });
   };
 
   // 保存ボタンの状態管理を単純化
@@ -924,7 +917,7 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
       // フォームの値も更新
-      form.setValue("bodyMark.others", updated, {
+      form.setValue("bodyMark.others", updated, { 
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -946,7 +939,7 @@ export function TalentForm() {
       <header className="border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary toprimary/70 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               {existingProfile ? "プロフィール編集" : "プロフィール作成"}
             </h1>
             <p className="text-sm text-muted-foreground">
