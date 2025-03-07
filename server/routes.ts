@@ -28,6 +28,44 @@ const scryptAsync = promisify(scrypt);
 // チャンク一時保存用のメモリストア
 const photoChunksStore = new Map<string, string[]>();
 
+// マッチング用のヘルパー関数
+async function calculateMatchScore(jobListing: any, conditions: any) {
+  let score = 0;
+  const maxScore = 100;
+
+  // 勤務地のマッチング
+  if (conditions.preferredLocations.includes(jobListing.location)) {
+    score += 20;
+  }
+
+  // 給与のマッチング
+  if (conditions.desiredGuarantee) {
+    const minGuarantee = Number(jobListing.minimumGuarantee);
+    if (minGuarantee >= Number(conditions.desiredGuarantee)) {
+      score += 20;
+    }
+  }
+
+  // 勤務時間のマッチング
+  if (conditions.desiredTime && jobListing.workingHours) {
+    if (jobListing.workingHours.includes(conditions.desiredTime)) {
+      score += 20;
+    }
+  }
+
+  // その他の条件マッチング
+  if (conditions.workTypes.some((type: string) => jobListing.serviceType === type)) {
+    score += 20;
+  }
+
+  // 除外条件チェック
+  if (conditions.ngLocations.includes(jobListing.location)) {
+    return 0;
+  }
+
+  return Math.min(score, maxScore);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
@@ -136,7 +174,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   }
 });
 
-// 求人情報取得エンドポイント
+  // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {
       console.log('Public jobs fetch request received:', {
@@ -994,10 +1032,82 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       console.error('Photo chunk upload error:', {
         error,
         userId: req.user.id,
+        timestamp: new Date().toISOString      });
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "写真のアップロードに失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // マッチング結果取得エンドポイント
+  app.post("/api/talent/matching", authenticate, async (req: any, res) => {
+    try {
+      console.log('Matching request received:', {
+        userId: req.user?.id,
+        conditions: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      const conditions = req.body;
+
+      // 求人情報を取得
+      const jobListings = await db
+        .select({
+          id: jobs.id,
+          businessName: jobs.businessName,
+          location: jobs.location,
+          serviceType: jobs.serviceType,
+          minimumGuarantee: jobs.minimumGuarantee,
+          maximumGuarantee: jobs.maximumGuarantee,
+          transportationSupport: jobs.transportationSupport,
+          housingSupport: jobs.housingSupport,
+          workingHours: jobs.workingHours,
+          description: jobs.description,
+          requirements: jobs.requirements,
+          benefits: jobs.benefits,
+        })
+        .from(jobs)
+        .orderBy(desc(jobs.createdAt))
+        .limit(50);
+
+      // マッチングスコアを計算
+      const matchedJobs = await Promise.all(
+        jobListings.map(async (job) => {
+          const score = await calculateMatchScore(job, conditions);
+          return {
+            ...job,
+            matchScore: score,
+            matches: score > 0 ? [
+              conditions.preferredLocations.includes(job.location) ? '希望エリア' : null,
+              Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee) ? '希望給与' : null,
+              conditions.workTypes.includes(job.serviceType) ? '希望業態' : null,
+            ].filter(Boolean) : []
+          };
+        })
+      );
+
+      // スコアでソートし、上位の結果のみを返す
+      const results = matchedJobs
+        .filter(job => job.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 10);
+
+      console.log('Matching results generated:', {
+        userId: req.user?.id,
+        resultCount: results.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(results);
+    } catch (error) {
+      console.error('Matching error:', {
+        error,
+        userId: req.user?.id,
         timestamp: new Date().toISOString()
       });
       res.status(500).json({
-        message: error instanceof Error ? error.message : "写真のアップロードに失敗しました",
+        message: "マッチング処理に失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

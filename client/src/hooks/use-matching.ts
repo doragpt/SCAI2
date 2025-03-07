@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Store } from '@shared/types/store';
+import { apiRequest } from "@/lib/queryClient";
 
 interface MatchingConditions {
   workTypes: string[];
@@ -18,28 +18,48 @@ interface MatchingConditions {
   interviewDates: string[];
 }
 
+interface MatchedJob {
+  id: number;
+  businessName: string;
+  location: string;
+  serviceType: string;
+  minimumGuarantee: number;
+  maximumGuarantee: number;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+  workingHours: string;
+  description: string;
+  requirements: string;
+  benefits: string;
+  matchScore: number;
+  matches: string[];
+}
+
 export function useMatching() {
-  const [matchingResults, setMatchingResults] = useState<Store[]>([]);
+  const [matchingResults, setMatchingResults] = useState<MatchedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const startMatching = async (conditions: MatchingConditions) => {
     try {
-      // 実際の実装では、APIを呼び出してマッチング処理を行う
-      // ここではモックデータを返す
-      const mockResults = Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        name: `店舗${i + 1}`,
-        location: '東京都',
-        rating: Math.random(),
-        matches: ['希望時給', '勤務時間帯', '業態'],
-        checked: false
-      }));
+      setIsLoading(true);
+      setError(null);
 
-      setMatchingResults(mockResults);
-      return mockResults;
+      const response = await apiRequest(
+        "POST",
+        "/api/talent/matching",
+        conditions
+      );
+
+      setMatchingResults(response);
+      return response;
     } catch (error) {
       console.error('Error in startMatching:', error);
+      setError(error instanceof Error ? error.message : "マッチング処理に失敗しました");
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,5 +69,7 @@ export function useMatching() {
     currentPage,
     setCurrentPage,
     startMatching,
+    isLoading,
+    error,
   };
 }
