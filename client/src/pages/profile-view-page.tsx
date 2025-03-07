@@ -9,18 +9,27 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 
+interface UserProfile {
+  id: number;
+  username: string;
+  displayName: string | null;
+  birthDate: string | null;
+  preferredLocations: string[] | null;
+}
+
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
-  // ユーザー基本情報のみを取得
   const {
     data: userProfile,
     isLoading,
     error
-  } = useQuery({
+  } = useQuery<UserProfile>({
     queryKey: ["/api/user/profile"],
-    queryFn: () => apiRequest("GET", "/api/user/profile"),
+    queryFn: () => apiRequest<UserProfile>("GET", "/api/user/profile"),
     enabled: !!user,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   if (!user) {
@@ -55,12 +64,14 @@ export default function ProfileViewPage() {
     <div className="container max-w-2xl py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">プロフィール</h1>
-        <Button variant="outline" asChild>
+        <div>
           <Link href="/talent/register">
-            <PenSquare className="h-4 w-4 mr-2" />
-            編集する
+            <Button variant="outline" className="flex items-center gap-2">
+              <PenSquare className="h-4 w-4" />
+              編集する
+            </Button>
           </Link>
-        </Button>
+        </div>
       </div>
 
       <Card className="p-6">

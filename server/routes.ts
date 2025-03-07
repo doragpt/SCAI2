@@ -70,12 +70,9 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
     console.log('Profile fetch request received:', {
       userId: req.user.id,
-      headers: req.headers,
       timestamp: new Date().toISOString()
     });
 
-    // データベースクエリの実行を詳細にログ
-    console.log('Executing database query for user:', req.user.id);
     const [user] = await db
       .select({
         id: users.id,
@@ -94,6 +91,11 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     console.log('Database query result:', {
       userId: req.user.id,
       hasUser: !!user,
+      userDetails: user ? {
+        hasDisplayName: !!user.displayName,
+        hasBirthDate: !!user.birthDate,
+        hasPreferredLocations: !!user.preferredLocations,
+      } : null,
       timestamp: new Date().toISOString()
     });
 
@@ -101,11 +103,12 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       return res.status(404).json({ message: "ユーザーが見つかりません" });
     }
 
-    // 日付を文字列に変換して返す
+    // 日付データと配列の存在チェックを行い、適切な形式に変換
     const userProfile = {
       ...user,
-      birthDate: user.birthDate ? user.birthDate.toISOString().split('T')[0] : null,
-      createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+      birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : null,
+      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+      preferredLocations: Array.isArray(user.preferredLocations) ? user.preferredLocations : [],
     };
 
     console.log('Profile fetch successful:', {
@@ -118,6 +121,10 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     console.error('Profile fetch error:', {
       error,
       userId: req.user?.id,
+      errorDetails: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack
+      } : 'Unknown error',
       timestamp: new Date().toISOString()
     });
 
