@@ -663,7 +663,7 @@ export function TalentForm() {
         bodyMark: {
           hasBodyMark: existingProfile.bodyMark?.hasBodyMark || false,
           details: existingProfile.bodyMark?.details || "",
-          others: existingProfile.bodyMark?.others || [],
+          others: existingProfile.bodyMark?.others || []
         },
         estheOptions: {
           available: existingProfile.estheOptions?.available || [],
@@ -676,9 +676,8 @@ export function TalentForm() {
       setOtherNgOptions(existingProfile.ngOptions?.others || []);
       setOtherAllergies(existingProfile.allergies?.others || []);
       setOtherSmokingTypes(existingProfile.smoking?.others || []);
-      setBodyMarks(existingProfile.bodyMark?.others || []); // bodyMarksの初期化を修正
+      setBodyMarks(existingProfile.bodyMark?.others || []);
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-      setIsEstheOpen(existingProfile.hasEstheExperience || false);
     }
   }, [existingProfile, form]);
 
@@ -859,9 +858,9 @@ export function TalentForm() {
         others: otherSmokingTypes,
       },
       bodyMark: {
-        hasBodyMark: bodyMarks.length > 0 || data.bodyMark?.hasBodyMark || false,
+        hasBodyMark: bodyMarks.length > 0,
         details: bodyMarkDetails,
-        others: bodyMarks,
+        others: bodyMarks
       },
       photos: data.photos || [],
       // 求人関連フィールドのデフォルト値を設定
@@ -917,13 +916,36 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
 
-      // フォームの値を更新
+      // フォームの値を更新（他の項目と同じパターンで）
+      const formData = form.getValues();
       form.setValue("bodyMark", {
         hasBodyMark: true,
-        details: form.getValues().bodyMark?.details || "",
+        details: formData.bodyMark?.details || "",
         others: updated
+      }, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
       });
     }
+  };
+
+  // 傷・タトゥー・アトピー削除ハンドラー
+  const handleRemoveBodyMark = (index: number) => {
+    const updated = bodyMarks.filter((_, i) => i !== index);
+    setBodyMarks(updated);
+
+    // フォームの値も更新
+    const formData = form.getValues();
+    form.setValue("bodyMark", {
+      hasBodyMark: updated.length > 0,
+      details: formData.bodyMark?.details || "",
+      others: updated
+    }, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
   };
 
   // エステNGオプション追加ハンドラー
@@ -932,7 +954,8 @@ export function TalentForm() {
       const updated = [...otherEstheNgOptions, value];
       setOtherEstheNgOptions(updated);
       form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
-    }  };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -1669,11 +1692,7 @@ export function TalentForm() {
                             variant="ghost"
                             size="sm"
                             className="h-4 w-4 p-0 hover:bg-transparent"
-                            onClick={() => {
-                              const updated = bodyMarks.filter((_, i) => i !== index);
-                              setBodyMarks(updated);
-                              form.setValue("bodyMark.others", updated);
-                            }}
+                            onClick={() => handleRemoveBodyMark(index)}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -1952,7 +1971,7 @@ export function TalentForm() {
                     </>
                   ) : (
                     "確認する"
-                                    )}
+                  )}
                 </Button>
               </div>
             </div>

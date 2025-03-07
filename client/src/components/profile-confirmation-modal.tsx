@@ -452,14 +452,14 @@ export function ProfileConfirmationModal({
                 <SectionHeader icon={AlertTriangle} title="傷・タトゥー・アトピー" />
                 <div className="space-y-4 bg-card p-4 rounded-lg">
                   <div className="flex flex-wrap gap-2">
-                    {formData.bodyMark.others && formData.bodyMark.others.map((mark, index) => (
-                      <Badge key={index} variant="outline">
+                    {formData.bodyMark?.others?.map((mark, index) => (
+                      <Badge key={index} variant="outline" className="flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3 text-yellow-500 mr-1" />
                         {mark}
                       </Badge>
                     ))}
                   </div>
-                  {formData.bodyMark.details && (
+                  {formData.bodyMark?.details && (
                     <InfoItem
                       label="詳細"
                       value={
