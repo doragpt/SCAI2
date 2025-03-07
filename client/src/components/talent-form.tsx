@@ -41,6 +41,7 @@ import {
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
 import {Textarea} from "@/components/ui/textarea"
+import React from 'react';
 
 // Store type definitions
 type CurrentStore = {
@@ -476,6 +477,51 @@ const SwitchField = ({
 );
 
 
+const OtherItemInput = React.memo(({
+  onAdd,
+  placeholder,
+}: {
+  onAdd: (value: string) => void;
+  placeholder: string;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleAdd = () => {
+    const value = inputRef.current?.value.trim();
+    if (value) {
+      onAdd(value);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+        inputRef.current.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        ref={inputRef}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+      />
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleAdd}
+      >
+        追加
+      </Button>
+    </div>
+  );
+});
+
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -838,79 +884,30 @@ export function TalentForm() {
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
-  // その他の項目追加コンポーネント
-  const OtherItemInput = ({
-    value,
-    onChange,
-    onAdd,
-    placeholder,
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    onAdd: () => void;
-    placeholder: string;
-  }) => {
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      onChange(e.target.value);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        if (value.trim()) {
-          onAdd();
-        }
-      }
-    };
-
-    return (
-      <div className="flex items-center gap-2">
-        <Input
-          value={value}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-        />
-        <Button
-          type="button"
-          size="sm"
-          onClick={onAdd}
-          disabled={!value.trim()}
-        >
-          追加
-        </Button>
-      </div>
-    );
-  };
-
-  const handleAddAllergy = () => {
-    const trimmedValue = newAllergy.trim();
-    if (trimmedValue && !otherAllergies.includes(trimmedValue)) {
-      const updated = [...otherAllergies, trimmedValue];
+  // アレルギー追加ハンドラー
+  const handleAddAllergy = (value: string) => {
+    if (!otherAllergies.includes(value)) {
+      const updated = [...otherAllergies, value];
       setOtherAllergies(updated);
-      form.setValue("allergies.others", updated, { shouldValidate: true });
-      setNewAllergy("");
+      form.setValue("allergies.others", updated);
     }
   };
 
-  const handleAddSmokingType = () => {
-    const trimmedValue = newSmokingType.trim();
-    if (trimmedValue && !otherSmokingTypes.includes(trimmedValue)) {
-      const updated = [...otherSmokingTypes, trimmedValue];
+  // 喫煙情報追加ハンドラー
+  const handleAddSmokingType = (value: string) => {
+    if (!otherSmokingTypes.includes(value)) {
+      const updated = [...otherSmokingTypes, value];
       setOtherSmokingTypes(updated);
-      form.setValue("smoking.others", updated, { shouldValidate: true });
-      setNewSmokingType("");
+      form.setValue("smoking.others", updated);
     }
   };
 
-  const handleAddBodyMark = () => {
-    const trimmedValue = newBodyMark.trim();
-    if (trimmedValue && !bodyMarks.includes(trimmedValue)) {
-      const updated = [...bodyMarks, trimmedValue];
+  // 傷・タトゥー・アトピー追加ハンドラー
+  const handleAddBodyMark = (value: string) => {
+    if (!bodyMarks.includes(value)) {
+      const updated = [...bodyMarks, value];
       setBodyMarks(updated);
-      form.setValue("bodyMark.others", updated, { shouldValidate: true });
-      setNewBodyMark("");
+      form.setValue("bodyMark.others", updated);
     }
   };
 
@@ -936,15 +933,14 @@ export function TalentForm() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 pb-32">
+      <main className="container mx-auto px-4py-8 pb-32">
         <Form {...form}>
           <form
             onSubmit={handleSubmit}
             className="spacey-8"
           >
             <div>
-              <h3 className="text-lg font-semibold mb-4">氏名</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-lg font-semibold mb-4">氏名</h3>              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="lastName"
@@ -1359,7 +1355,7 @@ export function TalentForm() {
                           onClick={() => {
                             const updated = otherNgOptions.filter((_, i) => i !== index);
                             setOtherNgOptions(updated);
-                            form.setValue("ngOptions.others", updated, {shouldValidate: true})
+                            form.setValue("ngOptions.others", updated)
                           }}
                         >
                           <X className="h-3 w-3" />
@@ -1368,9 +1364,7 @@ export function TalentForm() {
                     ))}
                   </div>
                   <OtherItemInput
-                    value={newNgOption}
-                    onChange={setNewNgOption}
-                    onAdd={() => setOtherNgOptions([...otherNgOptions, newNgOption.trim()])}
+                    onAdd={ (value:string) => setOtherNgOptions([...otherNgOptions, value])}
                     placeholder="その他のNGオプションを入力"
                   />
                 </div>
@@ -1516,7 +1510,7 @@ export function TalentForm() {
                             onClick={() => {
                               const updated = otherAllergies.filter((_, i) => i !== index);
                               setOtherAllergies(updated);
-                              form.setValue("allergies.others", updated, { shouldValidate: true });
+                              form.setValue("allergies.others", updated);
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1525,8 +1519,6 @@ export function TalentForm() {
                       ))}
                     </div>
                     <OtherItemInput
-                      value={newAllergy}
-                      onChange={setNewAllergy}
                       onAdd={handleAddAllergy}
                       placeholder="その他のアレルギーを入力"
                     />
@@ -1587,7 +1579,7 @@ export function TalentForm() {
                               onClick={() => {
                                 const updated = otherSmokingTypes.filter((_, i) => i !== index);
                                 setOtherSmokingTypes(updated);
-                                form.setValue("smoking.others", updated, { shouldValidate: true });
+                                form.setValue("smoking.others", updated);
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1596,8 +1588,6 @@ export function TalentForm() {
                         ))}
                       </div>
                       <OtherItemInput
-                        value={newSmokingType}
-                        onChange={setNewSmokingType}
                         onAdd={handleAddSmokingType}
                         placeholder="その他の喫煙情報を入力"
                       />
@@ -1637,7 +1627,7 @@ export function TalentForm() {
                             onClick={() => {
                               const updated = bodyMarks.filter((_, i) => i !== index);
                               setBodyMarks(updated);
-                              form.setValue("bodyMark.others", updated, { shouldValidate: true });
+                              form.setValue("bodyMark.others", updated);
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1646,8 +1636,6 @@ export function TalentForm() {
                       ))}
                     </div>
                     <OtherItemInput
-                      value={newBodyMark}
-                      onChange={setNewBodyMark}
                       onAdd={handleAddBodyMark}
                       placeholder="傷・タトゥー・アトピーの情報を入力"
                     />
