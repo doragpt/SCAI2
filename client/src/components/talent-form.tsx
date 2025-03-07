@@ -671,14 +671,14 @@ export function TalentForm() {
         }
       });
 
+      // stateの更新
       setOtherIds(existingProfile.availableIds?.others || []);
       setOtherNgOptions(existingProfile.ngOptions?.others || []);
       setOtherAllergies(existingProfile.allergies?.others || []);
       setOtherSmokingTypes(existingProfile.smoking?.others || []);
-      setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarks(existingProfile.bodyMark?.others || []); // bodyMarksの初期化を修正
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-      setBodyMarks(existingProfile.bodyMark?.others || []);
-      setOtherEstheNgOptions(existingProfile.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
+      setIsEstheOpen(existingProfile.hasEstheExperience || false);
     }
   }, [existingProfile, form]);
 
@@ -859,26 +859,26 @@ export function TalentForm() {
         others: otherSmokingTypes,
       },
       bodyMark: {
-        hasBodyMark: data.bodyMark.hasBodyMark,
+        hasBodyMark: bodyMarks.length > 0 || data.bodyMark?.hasBodyMark || false,
         details: bodyMarkDetails,
-        others: bodyMarks, // 追加項目を含める
+        others: bodyMarks,
       },
       photos: data.photos || [],
       // 求人関連フィールドのデフォルト値を設定
-      workType: undefined,
-      workPeriodStart: undefined,
-      workPeriodEnd: undefined,
-      canArrivePreviousDay: false,
-      desiredGuarantee: undefined,
-      desiredRate: undefined,
-      waitingHours: undefined,
-      departureLocation: undefined,
-      returnLocation: undefined,
-      preferredLocations: [],
-      ngLocations: [],
+      workType: data.workType || undefined,
+      workPeriodStart: data.workPeriodStart || undefined,
+      workPeriodEnd: data.workPeriodEnd || undefined,
+      canArrivePreviousDay: data.canArrivePreviousDay || false,
+      desiredGuarantee: data.desiredGuarantee || undefined,
+      desiredRate: data.desiredRate || undefined,
+      waitingHours: data.waitingHours || undefined,
+      departureLocation: data.departureLocation || undefined,
+      returnLocation: data.returnLocation || undefined,
+      preferredLocations: data.preferredLocations || [],
+      ngLocations: data.ngLocations || [],
       estheOptions: {
-        ...data.estheOptions,
-        otherNgOptions: otherEstheNgOptions.join('\n')
+        available: data.estheOptions?.available || [],
+        otherNgOptions: data.estheOptions?.otherNgOptions || "",
       }
     };
 
@@ -916,14 +916,12 @@ export function TalentForm() {
     if (!bodyMarks.includes(value)) {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
-      // フォームの値も更新
+
+      // フォームの値を更新
       form.setValue("bodyMark", {
-        ...form.getValues().bodyMark,
+        hasBodyMark: true,
+        details: form.getValues().bodyMark?.details || "",
         others: updated
-      }, { 
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true
       });
     }
   };
@@ -934,8 +932,7 @@ export function TalentForm() {
       const updated = [...otherEstheNgOptions, value];
       setOtherEstheNgOptions(updated);
       form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
-    }
-  };
+    }  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -1955,7 +1952,7 @@ export function TalentForm() {
                     </>
                   ) : (
                     "確認する"
-                  )}
+                                    )}
                 </Button>
               </div>
             </div>

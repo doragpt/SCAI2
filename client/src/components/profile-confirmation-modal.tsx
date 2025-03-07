@@ -447,15 +447,12 @@ export function ProfileConfirmationModal({
             )}
 
             {/* 傷・タトゥー・アトピーセクション */}
-            {formData.bodyMark?.hasBodyMark && (
+            {(formData.bodyMark?.hasBodyMark || (formData.bodyMark?.others && formData.bodyMark.others.length > 0)) && (
               <section>
                 <SectionHeader icon={AlertTriangle} title="傷・タトゥー・アトピー" />
                 <div className="space-y-4 bg-card p-4 rounded-lg">
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      ...(formData.bodyMark.types || []),
-                      ...(formData.bodyMark.others || [])
-                    ].map((mark, index) => (
+                    {formData.bodyMark.others && formData.bodyMark.others.map((mark, index) => (
                       <Badge key={index} variant="outline">
                         <AlertTriangle className="h-3 w-3 text-yellow-500 mr-1" />
                         {mark}
