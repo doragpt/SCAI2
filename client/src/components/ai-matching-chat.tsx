@@ -1124,27 +1124,39 @@ export const AIMatchingChat = () => {
                 <div className="col-span-2">
                   <Label>希望地域</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {conditions.preferredLocations.map((loc) => (
-                      <span
-                        key={loc}
-                        className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
-                      >
-                        {loc}
+                    {conditions.preferredLocations.length > 0 ? (
+                      conditions.preferredLocations.map((loc) => (
+                        <span
+                          key={loc}
+                          className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
+                        >
+                          {loc}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        全国
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
                 <div className="col-span-2">
                   <Label>NG地域</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {conditions.ngLocations.map((loc) => (
-                      <span
-                        key={loc}
-                        className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
-                      >
-                        {loc}
+                    {conditions.ngLocations.length > 0 ? (
+                      conditions.ngLocations.map((loc) => (
+                        <span
+                          key={loc}
+                          className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                        >
+                          {loc}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                        NGなし
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
                 {conditions.notes && (
