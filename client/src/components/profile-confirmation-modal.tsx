@@ -330,6 +330,87 @@ export function ProfileConfirmationModal({
               </>
             )}
 
+            {/* 傷・タトゥー・アトピーセクション */}
+            {formData.bodyMark?.hasBodyMark && (
+              <section>
+                <SectionHeader icon={AlertTriangle} title="傷・タトゥー・アトピー" />
+                <div className="space-y-4 bg-card p-4 rounded-lg">
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      ...(formData.bodyMark.types || []),
+                      ...(formData.bodyMark.others || [])
+                    ].map((mark, index) => (
+                      <Badge key={index} variant="outline">
+                        <AlertTriangle className="h-3 w-3 text-yellow-500 mr-1" />
+                        {mark}
+                      </Badge>
+                    ))}
+                  </div>
+                  {formData.bodyMark.details && (
+                    <InfoItem
+                      label="詳細"
+                      value={
+                        <p className="text-sm whitespace-pre-wrap">
+                          {formData.bodyMark.details}
+                        </p>
+                      }
+                    />
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* エステ関連セクション */}
+            <section>
+              <SectionHeader icon={Star} title="エステ関連" />
+              <div className="space-y-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="エステ経験"
+                  value={
+                    formData.hasEstheExperience ? (
+                      <div className="flex flex-col space-y-2">
+                        <Badge variant="default">あり</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          経験期間: {formData.estheExperiencePeriod}
+                        </span>
+                      </div>
+                    ) : (
+                      <Badge variant="secondary">なし</Badge>
+                    )
+                  }
+                />
+                {formData.hasEstheExperience && formData.estheOptions && (
+                  <>
+                    <InfoItem
+                      label="可能オプション"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {formData.estheOptions.available?.map((option) => (
+                            <Badge key={option} variant="outline">
+                              <CheckCircle2 className="h-3 w-3 text-green-500 mr-1" />
+                              {option}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                    {formData.estheOptions.otherNgOptions && (
+                      <InfoItem
+                        label="その他できないプレイやオプション"
+                        value={
+                          <div className="bg-muted/10 p-3 rounded-lg">
+                            <p className="text-sm whitespace-pre-wrap">
+                              {formData.estheOptions.otherNgOptions}
+                            </p>
+                          </div>
+                        }
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </section>
+
             {/* 制限事項 */}
             <section>
               <SectionHeader icon={AlertTriangle} title="制限事項・その他" />
@@ -391,29 +472,7 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
-                <InfoItem
-                  label="可能オプション"
-                  value={
-                    <div className="space-y-2">
-                      {formData.estheOptions?.available && formData.estheOptions.available.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.estheOptions.available.map((option) => (
-                            <Badge key={option} variant="outline">
-                              <CheckCircle2 className="h-3 w-3 text-green-500 mr-1" />
-                              {option}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      {formData.estheOptions?.otherNgOptions && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-muted-foreground">その他できないプレイやオプション：</p>
-                          <p className="text-sm mt-1">{formData.estheOptions.otherNgOptions}</p>
-                        </div>
-                      )}
-                    </div>
-                  }
-                />
+                {/*This section is now redundant and should be removed */}
               </div>
             </section>
 
@@ -431,31 +490,7 @@ export function ProfileConfirmationModal({
             <section>
               <SectionHeader icon={FileText} title="その他情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
-                <InfoItem
-                  label="エステ経験"
-                  value={
-                    formData.hasEstheExperience ? (
-                      <div className="flex flex-col space-y-2">
-                        <Badge variant="default">あり</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          経験期間: {formData.estheExperiencePeriod}
-                        </span>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary">なし</Badge>
-                    )
-                  }
-                />
-                {formData.notes && (
-                  <InfoItem
-                    label="備考"
-                    value={
-                      <p className="text-sm whitespace-pre-wrap">
-                        {formData.notes}
-                      </p>
-                    }
-                  />
-                )}
+                {/* This section is now redundant and should be removed */}
               </div>
             </section>
           </div>

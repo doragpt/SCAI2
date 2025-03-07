@@ -529,13 +529,14 @@ export function TalentForm() {
       notes: "",
       estheOptions: {
         available: [],
-        ngOptions: "", // Changed to string to accommodate otherNgOptions
+        otherNgOptions: "", // string型として初期化
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
       bodyMark: {
         hasBodyMark: false,
         details: "",
+        others: [],
       },
       workType: undefined,
       workPeriodStart: undefined,
@@ -598,6 +599,8 @@ export function TalentForm() {
   const [newNgOption, setNewNgOption] = useState("");
   const [newAllergy, setNewAllergy] = useState("");
   const [newSmokingType, setNewSmokingType] = useState("");
+  const [newBodyMark, setNewBodyMark] = useState("");
+  const [bodyMarks, setBodyMarks] = useState<string[]>([]);
 
 
   // 既存のプロフィールデータが取得された時にフォームを更新
@@ -613,10 +616,11 @@ export function TalentForm() {
         bodyMark: existingProfile.bodyMark || {
           hasBodyMark: false,
           details: "",
+          others: [],
         },
         estheOptions: {
           available: existingProfile.estheOptions.available || [],
-          ngOptions: existingProfile.estheOptions.ngOptions || ""
+          otherNgOptions: existingProfile.estheOptions.otherNgOptions || ""
         }
       });
 
@@ -626,6 +630,7 @@ export function TalentForm() {
       setOtherSmokingTypes(existingProfile.smoking?.others || []);
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
+      setBodyMarks(existingProfile.bodyMark?.others || []);
     }
   }, [existingProfile, form]);
 
@@ -805,6 +810,7 @@ export function TalentForm() {
       bodyMark: {
         hasBodyMark: data.bodyMark.hasBodyMark,
         details: bodyMarkDetails,
+        others: bodyMarks,
       },
       photos: data.photos || [],
       // 求人関連フィールドのデフォルト値を設定
@@ -832,7 +838,7 @@ export function TalentForm() {
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
-  // 「その他」の項目追加コンポーネント
+  // その他の項目追加コンポーネント
   const OtherItemInput = ({
     value,
     onChange,
@@ -865,6 +871,33 @@ export function TalentForm() {
       </Button>
     </div>
   );
+
+  const handleAddAllergy = () => {
+    if (newAllergy.trim() && !otherAllergies.includes(newAllergy.trim())) {
+      const updated = [...otherAllergies, newAllergy.trim()];
+      setOtherAllergies(updated);
+      form.setValue("allergies.others", updated, { shouldValidate: true });
+    }
+    setNewAllergy("");
+  };
+
+  const handleAddSmokingType = () => {
+    if (newSmokingType.trim() && !otherSmokingTypes.includes(newSmokingType.trim())) {
+      const updated = [...otherSmokingTypes, newSmokingType.trim()];
+      setOtherSmokingTypes(updated);
+      form.setValue("smoking.others", updated, { shouldValidate: true });
+    }
+    setNewSmokingType("");
+  };
+
+  const handleAddBodyMark = () => {
+    if (newBodyMark.trim() && !bodyMarks.includes(newBodyMark.trim())) {
+      const updated = [...bodyMarks, newBodyMark.trim()];
+      setBodyMarks(updated);
+      form.setValue("bodyMark.others", updated, { shouldValidate: true });
+    }
+    setNewBodyMark("");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -944,7 +977,8 @@ export function TalentForm() {
                       <FormControl>
                         <Input {...field} placeholder="例：ナナコ" />
                       </FormControl>
-                    </FormFieldWrapper>                  )}
+                    </FormFieldWrapper>
+                  )}
                 />
               </div>
             </div>
@@ -1398,12 +1432,17 @@ export function TalentForm() {
 
                     <FormField
                       control={form.control}
-                      name="estheOptions.ngOptions"
+                      name="estheOptions.otherNgOptions"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>その他できないプレイやオプション</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="できないプレイやオプションを入力してください" />
+                            <Textarea
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              placeholder="できないプレイやオプションを入力してください"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1452,11 +1491,7 @@ export function TalentForm() {
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
                       {otherAllergies.map((allergy, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
                           {allergy}
                           <Button
                             variant="ghost"
@@ -1475,7 +1510,7 @@ export function TalentForm() {
                     <OtherItemInput
                       value={newAllergy}
                       onChange={setNewAllergy}
-                      onAdd={() => setOtherAllergies([...otherAllergies, newAllergy.trim()])}
+                      onAdd={handleAddAllergy}
                       placeholder="その他のアレルギーを入力"
                     />
                   </div>
@@ -1545,7 +1580,7 @@ export function TalentForm() {
                       <OtherItemInput
                         value={newSmokingType}
                         onChange={setNewSmokingType}
-                        onAdd={() => setOtherSmokingTypes([...otherSmokingTypes, newSmokingType.trim()])}
+                        onAdd={handleAddSmokingType}
                         placeholder="その他の喫煙情報を入力"
                       />
                     </div>
@@ -1572,27 +1607,36 @@ export function TalentForm() {
               />
               {form.watch("bodyMark.hasBodyMark") && (
                 <div className="mt-4 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="bodyMark.details"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <textarea
-                            {...field}
-                            className="w-full h-32 p-2 border rounded-md"
-                            placeholder="詳細を入力してください"
-                            value={bodyMarkDetails}
-                            onChange={(e) => setBodyMarkDetails(e.target.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                        <p className="text-sm text-muted-foreground mt-2">
-                          ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
-                        </p>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {bodyMarks.map((mark, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {mark}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => {
+                              const updated = bodyMarks.filter((_, i) => i !== index);
+                              setBodyMarks(updated);
+                              form.setValue("bodyMark.others", updated, { shouldValidate: true });
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <OtherItemInput
+                      value={newBodyMark}
+                      onChange={setNewBodyMark}
+                      onAdd={handleAddBodyMark}
+                      placeholder="傷・タトゥー・アトピーの情報を入力"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
