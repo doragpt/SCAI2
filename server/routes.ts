@@ -707,7 +707,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     }
   });
 
-  // ユーザー基本情報の更新エンドポイント
   app.patch("/api/user", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -788,7 +787,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         timestamp: new Date().toISOString()
       });
 
-      // JSONレスポンスを返す
       res.status(400).json({
         error: true,
         message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"

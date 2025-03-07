@@ -52,13 +52,28 @@ const basicInfoSchema = z.object({
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 
+interface UserProfile {
+  id: number;
+  username: string;
+  displayName: string | null;
+  birthDate: string | null;
+  location: string | null;
+  preferredLocations: string[] | null;
+}
+
+interface UserUpdateResponse {
+  message: string;
+  user: UserProfile;
+}
+
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userProfile, isLoading: isUserLoading } = useQuery({
+  const { data: userProfile, isLoading: isUserLoading } = useQuery<UserProfile>({
     queryKey: ["/api/user/profile"],
+    queryFn: () => apiRequest<UserProfile>("GET", "/api/user/profile"),
     enabled: !!user,
   });
 
@@ -76,44 +91,33 @@ export default function BasicInfoEdit() {
     if (userProfile) {
       form.reset({
         username: userProfile.username,
-        displayName: userProfile.displayName,
-        location: userProfile.location,
+        displayName: userProfile.displayName || "",
+        location: userProfile.location || "",
         preferredLocations: userProfile.preferredLocations || [],
       });
     }
   }, [userProfile, form.reset]);
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (updateData: BasicInfoFormData) => {
-      try {
-        const response = await apiRequest("PATCH", "/api/user", {
-          username: updateData.username,
-          displayName: updateData.displayName,
-          location: updateData.location,
-          preferredLocations: updateData.preferredLocations,
-          ...(updateData.newPassword && updateData.currentPassword ? {
-            currentPassword: updateData.currentPassword,
-            newPassword: updateData.newPassword,
-          } : {})
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "ユーザー情報の更新に失敗しました");
-        }
-
-        return data;
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました");
-      }
+  const updateProfileMutation = useMutation<UserUpdateResponse, Error, BasicInfoFormData>({
+    mutationFn: async (updateData) => {
+      const data = await apiRequest<UserUpdateResponse>("PATCH", "/api/user", {
+        username: updateData.username,
+        displayName: updateData.displayName,
+        location: updateData.location,
+        preferredLocations: updateData.preferredLocations,
+        ...(updateData.newPassword && updateData.currentPassword ? {
+          currentPassword: updateData.currentPassword,
+          newPassword: updateData.newPassword,
+        } : {})
+      });
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData<UserProfile>(["/api/user/profile"], data.user);
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "プロフィールを更新しました",
-        description: "基本情報の変更が保存されました。",
+        description: data.message,
       });
     },
     onError: (error: Error) => {
