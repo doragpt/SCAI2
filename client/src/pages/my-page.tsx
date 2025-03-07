@@ -74,10 +74,10 @@ export default function MyPage() {
       color: "bg-purple-500"
     },
     {
-      title: "プロフィール編集",
+      title: "基本情報編集",
       icon: UserCircle,
-      href: "/talent/register",
-      description: "基本情報の更新",
+      href: "/talent/basic-info-edit",
+      description: "登録情報の更新",
       color: "bg-blue-500"
     },
     {
