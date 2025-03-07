@@ -474,7 +474,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       const userId = req.user.id;
       console.log('Profile fetch request received:', {
         userId,
-        headers: req.headers,
         timestamp: new Date().toISOString()
       });
 

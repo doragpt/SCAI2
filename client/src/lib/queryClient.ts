@@ -367,3 +367,28 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// プロフィール取得用のクエリ関数を追加
+export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
+  try {
+    console.log('Fetching talent profile:', {
+      endpoint: QUERY_KEYS.TALENT_PROFILE,
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+
+    console.log('Talent profile fetched successfully:', {
+      hasData: !!response,
+      timestamp: new Date().toISOString()
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Talent profile fetch error:", {
+      error: getErrorMessage(error),
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};

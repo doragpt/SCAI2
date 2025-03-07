@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { getTalentProfileQuery } from "@/lib/api/talent";
 
 interface UserProfile {
   id: number;
@@ -30,8 +32,8 @@ export default function ProfileViewPage() {
     isLoading: isUserLoading,
     error: userError
   } = useQuery<UserProfile>({
-    queryKey: ["/api/user/profile"],
-    queryFn: () => apiRequest<UserProfile>("GET", "/api/user/profile"),
+    queryKey: [QUERY_KEYS.USER_PROFILE],
+    queryFn: () => apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE),
     enabled: !!user,
   });
 
@@ -41,9 +43,18 @@ export default function ProfileViewPage() {
     isLoading: isTalentLoading,
     error: talentError
   } = useQuery<TalentProfileData>({
-    queryKey: ["/api/talent/profile"],
-    queryFn: () => apiRequest<TalentProfileData>("GET", "/api/talent/profile"),
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryFn: getTalentProfileQuery,
     enabled: !!user,
+    retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+
+  console.log('Talent profile data:', {
+    hasData: !!talentProfile,
+    profileData: talentProfile,
+    timestamp: new Date().toISOString()
   });
 
   if (!user) {
