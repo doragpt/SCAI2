@@ -111,6 +111,12 @@ interface MatchedJob {
   matches: string[];
   description?: string; // Added for pickup mode
   features?: string[]; // Added for pickup mode
+  minimumGuarantee?: number; // Added for pickup mode
+  maximumGuarantee?: number; // Added for pickup mode
+  transportationSupport?: boolean; // Added for pickup mode
+  housingSupport?: boolean; // Added for pickup mode
+  workingHours?: string; // Added for pickup mode
+
 }
 
 
@@ -379,13 +385,17 @@ export const AIMatchingChat = () => {
 ${initialDisplay.map((result, index) => `
 ${index + 1}. ${result.businessName}
   • 勤務地: ${result.location}
-  • マッチポイント: ${result.matches.join('、')}
-  • 特徴: ${result.features?.join('、') || '情報なし'}
-  • 詳細: ${result.description || ''}
+  • 待遇: ${result.minimumGuarantee}円～${result.maximumGuarantee}円
+  • サポート: ${[
+    result.transportationSupport ? '交通費あり' : null,
+    result.housingSupport ? '宿泊費あり' : null
+  ].filter(Boolean).join('、') || 'なし'}
+  • 勤務時間: ${result.workingHours}
+  • ${result.description || ''}
 `).join('\n')}
 
 どうかな？気になる店舗はあった？
-条件確認して欲しい店舗があったらチェックしてね！
+確認したい店舗があったらチェックしてね！
 （複数選択可能です）`
     }]);
   };
@@ -406,10 +416,14 @@ ${index + 1}. ${result.businessName}
 【マッチング結果】
 ${results.map((result, index) => `
 ${index + 1}. ${result.businessName}
-  • マッチ度: ${result.matchScore}%
   • 勤務地: ${result.location}
-  • マッチポイント: ${result.matches.join('、')}
-  • 特徴: ${result.features?.join('、') || '情報なし'}
+  • 待遇: ${result.minimumGuarantee}円～${result.maximumGuarantee}円
+  • サポート: ${[
+    result.transportationSupport ? '交通費あり' : null,
+    result.housingSupport ? '宿泊費あり' : null
+  ].filter(Boolean).join('、') || 'なし'}
+  • 勤務時間: ${result.workingHours}
+  • ${result.description || ''}
 `).join('\n')}
 
 これらの店舗に条件を確認してみるね！`
@@ -1002,7 +1016,7 @@ ${index + 1}. ${result.businessName}
               <div className="flex gap-4 justify-center">
                 <Button
                   onClick={() => handleMatchingMethodSelect("auto")}
-                  className="min-w-[200px]"
+                  className="minw-[200px]"
                 >
                   自動で確認する
                 </Button>
