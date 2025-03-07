@@ -12,6 +12,7 @@ import { ja } from "date-fns/locale";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { getTalentProfileQuery } from "@/lib/api/talent";
+import { apiRequest } from "@/lib/queryClient";
 
 interface UserProfile {
   id: number;
@@ -23,38 +24,30 @@ interface UserProfile {
 }
 
 export default function ProfileViewPage() {
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
 
-  // Debug: ログイン状態を確認
-  console.log('ProfileViewPage auth state:', {
-    user,
+  console.log('ProfileViewPage mount:', {
+    hasUser: !!user,
     userId: user?.id,
+    isUserLoading,
     timestamp: new Date().toISOString()
   });
 
   // ユーザー基本情報を取得
   const {
     data: userProfile,
-    isLoading: isUserLoading,
+    isLoading: isUserProfileLoading,
     error: userError
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
     queryFn: async () => {
-      const response = await fetch(`/api/user/profile`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("auth_token")}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
-      const data = await response.json();
-      console.log('User profile API response:', {
-        status: response.status,
-        data: data,
+      const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
+      console.log('User profile fetched:', {
+        hasData: !!response,
+        userId: user?.id,
         timestamp: new Date().toISOString()
       });
-      return data;
+      return response;
     },
     enabled: !!user?.id,
   });
@@ -69,33 +62,33 @@ export default function ProfileViewPage() {
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfileQuery,
     enabled: !!user?.id,
-    retry: 1,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
 
-  // Debug: データの状態を確認
-  console.log('Profile view state:', {
-    hasUser: !!user,
-    userId: user?.id,
+  // ページの状態をログ
+  console.log('Profile page state:', {
+    isUserLoading,
+    isUserProfileLoading,
+    isTalentLoading,
     hasUserProfile: !!userProfile,
     hasTalentProfile: !!talentProfile,
-    userProfileData: userProfile,
-    talentProfileErrors: talentError,
+    userId: user?.id,
+    errors: {
+      user: userError?.message,
+      talent: talentError?.message
+    },
     timestamp: new Date().toISOString()
   });
 
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-
-  if (isUserLoading || isTalentLoading) {
+  if (isUserLoading || isUserProfileLoading || isTalentLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!user) {
+    return <Redirect to="/auth" />;
   }
 
   if (userError || talentError) {

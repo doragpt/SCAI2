@@ -5,9 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
   try {
+    const token = localStorage.getItem("auth_token");
     console.log('Fetching talent profile:', {
       endpoint: QUERY_KEYS.TALENT_PROFILE,
-      token: !!localStorage.getItem("auth_token"),
+      hasToken: !!token,
       timestamp: new Date().toISOString()
     });
 
@@ -15,7 +16,8 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
 
     console.log('Talent profile API response:', {
       hasData: !!response,
-      responseData: JSON.stringify(response),
+      firstName: response?.firstName,
+      lastName: response?.lastName,
       timestamp: new Date().toISOString()
     });
 
@@ -29,7 +31,6 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
   }
 };
 
-// キャッシュの更新や再取得のためのユーティリティ関数
 export const invalidateTalentProfileCache = () => {
   const queryClient = useQueryClient();
   return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });

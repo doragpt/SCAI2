@@ -114,7 +114,7 @@ async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promi
   return null;
 }
 
-// APIリクエスト関数を改善
+// APIリクエスト関数を簡略化
 export async function apiRequest<T>(
   method: string,
   url: string,
@@ -124,36 +124,20 @@ export async function apiRequest<T>(
     console.log('API Request starting:', {
       method,
       url,
-      dataSize: data ? JSON.stringify(data).length : 0,
+      hasToken: !!localStorage.getItem("auth_token"),
       timestamp: new Date().toISOString()
     });
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-Requested-With": "XMLHttpRequest"
     };
 
     const token = localStorage.getItem("auth_token");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      console.log('Token found in localStorage:', {
-        tokenExists: true,
-        tokenPreview: `${token.substring(0, 10)}...`,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      console.warn('No auth token found in localStorage');
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    console.log('Making request to:', {
-      fullUrl,
-      method,
-      headers: { ...headers, Authorization: token ? "Bearer [hidden]" : undefined },
-      hasToken: !!token,
-      timestamp: new Date().toISOString()
-    });
 
     const res = await fetch(fullUrl, {
       method,
@@ -162,32 +146,12 @@ export async function apiRequest<T>(
       credentials: "include",
     });
 
-    console.log('Response received:', {
-      status: res.status,
-      ok: res.ok,
-      url: fullUrl,
-      timestamp: new Date().toISOString()
-    });
-
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      console.error('API request failed:', {
-        status: res.status,
-        statusText: res.statusText,
-        errorData,
-        timestamp: new Date().toISOString()
-      });
       throw new Error(errorData.message || res.statusText);
     }
 
     const responseData = await res.json() as T;
-    console.log('API Request successful:', {
-      method,
-      url,
-      responseData: JSON.stringify(responseData),
-      timestamp: new Date().toISOString()
-    });
-
     return responseData;
   } catch (error) {
     console.error('API Request Failed:', {
@@ -372,7 +336,7 @@ export async function getSignedImageUrl(key: string): Promise<string> {
   }
 }
 
-// クエリクライアントの設定を改善
+// クエリクライアントの設定をシンプルに
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -380,10 +344,6 @@ export const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-      refetchOnReconnect: true,
-    },
-    mutations: {
-      retry: 1,
     },
   },
 });
