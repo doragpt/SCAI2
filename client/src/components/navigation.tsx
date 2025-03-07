@@ -33,21 +33,23 @@ export function Navigation() {
 
   // 現在のパスからパンくずリストを生成
   const breadcrumbs = location.split("/").filter(Boolean);
-  
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/">
-            <Button variant="ghost" size="sm">
-              <Home className="h-5 w-5" />
-            </Button>
+            <a className="flex items-center">
+              <Button variant="ghost" size="sm">
+                <Home className="h-5 w-5" />
+              </Button>
+            </a>
           </Link>
         </div>
 
         {/* モバイルメニュー */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
+          <SheetTrigger className="md:hidden">
             <Button variant="ghost" size="sm">
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -59,13 +61,15 @@ export function Navigation() {
             <div className="mt-4 space-y-2">
               {routes.map((route) => (
                 <Link key={route.path} href={route.path}>
-                  <Button
-                    variant={location === route.path ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {route.label}
-                  </Button>
+                  <a className="block">
+                    <Button
+                      variant={location === route.path ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {route.label}
+                    </Button>
+                  </a>
                 </Link>
               ))}
             </div>
@@ -75,17 +79,21 @@ export function Navigation() {
         {/* パンくずリスト */}
         <div className="flex items-center text-sm">
           <Link href="/">
-            <Button variant="link" size="sm">
-              ホーム
-            </Button>
+            <a>
+              <Button variant="link" size="sm">
+                ホーム
+              </Button>
+            </a>
           </Link>
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center">
               <span className="mx-2 text-muted-foreground">/</span>
               <Link href={`/${breadcrumbs.slice(0, index + 1).join("/")}`}>
-                <Button variant="link" size="sm">
-                  {crumb === "talent" ? "タレント" : crumb}
-                </Button>
+                <a>
+                  <Button variant="link" size="sm">
+                    {crumb === "talent" ? "タレント" : crumb}
+                  </Button>
+                </a>
               </Link>
             </div>
           ))}
@@ -94,7 +102,7 @@ export function Navigation() {
         <div className="ml-auto">
           {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger>
                 <Button variant="ghost" size="sm">
                   <User className="h-5 w-5" />
                 </Button>
@@ -103,10 +111,14 @@ export function Navigation() {
                 <DropdownMenuLabel>アカウント</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href="/talent/profile">
-                  <DropdownMenuItem>プロフィール</DropdownMenuItem>
+                  <a>
+                    <DropdownMenuItem>プロフィール</DropdownMenuItem>
+                  </a>
                 </Link>
                 <Link href="/talent/dashboard">
-                  <DropdownMenuItem>マイページ</DropdownMenuItem>
+                  <a>
+                    <DropdownMenuItem>マイページ</DropdownMenuItem>
+                  </a>
                 </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -119,7 +131,9 @@ export function Navigation() {
             </DropdownMenu>
           ) : (
             <Link href="/auth">
-              <Button size="sm">ログイン</Button>
+              <a>
+                <Button size="sm">ログイン</Button>
+              </a>
             </Link>
           )}
         </div>
