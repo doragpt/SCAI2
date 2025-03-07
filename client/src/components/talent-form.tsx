@@ -575,7 +575,7 @@ export function TalentForm() {
       notes: "",
       estheOptions: {
         available: [],
-        otherNgOptions: "", // string型として初期化
+        otherNgOptions: "",
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
@@ -663,7 +663,7 @@ export function TalentForm() {
         bodyMark: {
           hasBodyMark: existingProfile.bodyMark?.hasBodyMark || false,
           details: existingProfile.bodyMark?.details || "",
-          others: existingProfile.bodyMark?.others || [], // 明示的にothersを設定
+          others: existingProfile.bodyMark?.others || [],
         },
         estheOptions: {
           available: existingProfile.estheOptions?.available || [],
@@ -677,7 +677,7 @@ export function TalentForm() {
       setOtherSmokingTypes(existingProfile.smoking?.others || []);
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-      setBodyMarks(existingProfile.bodyMark?.others || []); // この行を残す
+      setBodyMarks(existingProfile.bodyMark?.others || []);
       setOtherEstheNgOptions(existingProfile.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
     }
   }, [existingProfile, form]);
@@ -859,9 +859,9 @@ export function TalentForm() {
         others: otherSmokingTypes,
       },
       bodyMark: {
-        hasBodyMark: data.bodyMark.hasBodyMark,
+        hasBodyMark: data.bodyMark?.hasBodyMark || false,
         details: bodyMarkDetails,
-        others: bodyMarks, // bodyMarksの値を使用
+        others: bodyMarks,
       },
       photos: data.photos || [],
       estheOptions: {
@@ -904,11 +904,16 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
       // フォームの値も更新
-      const currentBodyMark = form.getValues().bodyMark;
+      const currentBodyMark = form.getValues().bodyMark || {
+        hasBodyMark: true,
+        details: bodyMarkDetails,
+        others: [],
+      };
       form.setValue("bodyMark", {
         ...currentBodyMark,
-        others: updated
-      });
+        hasBodyMark: true,
+        others: updated,
+      }, { shouldValidate: true });
     }
   };
 
@@ -929,8 +934,7 @@ export function TalentForm() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               {existingProfile ? "プロフィール編集" : "プロフィール作成"}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {existingProfile
+            <p className="text-sm text-muted-foreground">{existingProfile
                 ? "プロフィール情報を編集できます"
                 : "安全に働くための詳細情報を登録してください"}
             </p>
