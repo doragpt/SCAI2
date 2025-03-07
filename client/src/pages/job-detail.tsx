@@ -1,10 +1,10 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { StoreProfile } from "@shared/schema";
+import { type Job } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Banknote, Clock, Building, Calendar, Phone } from "lucide-react";
+import { MapPin, Banknote, Clock, Building, Calendar, Phone, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ export default function JobDetail() {
   const [workingHours, setWorkingHours] = useState<number>(8);
   const [workingDays, setWorkingDays] = useState<number>(20);
 
-  const { data: job, isLoading } = useQuery<StoreProfile>({
+  const { data: job, isLoading } = useQuery<Job>({
     queryKey: ["/api/jobs", id],
   });
 
@@ -38,7 +38,7 @@ export default function JobDetail() {
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">求人情報が見つかりませんでした。</p>
             <Button asChild className="mt-4">
-              <Link href="/">トップページに戻る</Link>
+              <Link href="/jobs">求人一覧に戻る</Link>
             </Button>
           </CardContent>
         </Card>
@@ -57,8 +57,8 @@ export default function JobDetail() {
   const { monthlyMin, monthlyMax } = calculateMonthlyIncome();
 
   const breadcrumbItems = [
-    { label: "トップ", href: "/" },
-    { label: job.location, href: `/?area=${encodeURIComponent(job.location)}` },
+    { label: "求人一覧", href: "/jobs" },
+    { label: job.location, href: `/jobs?area=${encodeURIComponent(job.location)}` },
     { label: job.businessName },
   ];
 
@@ -68,7 +68,7 @@ export default function JobDetail() {
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
       description: `${job.location}エリアの${job.serviceType}求人。未経験者歓迎、充実した待遇をご用意しています。`,
-      datePosted: new Date().toISOString(),
+      datePosted: job.createdAt,
       employmentType: "アルバイト",
       hiringOrganization: {
         name: job.businessName,
@@ -123,7 +123,6 @@ export default function JobDetail() {
                 <TabsTrigger value="details">店舗情報</TabsTrigger>
                 <TabsTrigger value="requirements">応募資格</TabsTrigger>
                 <TabsTrigger value="benefits">待遇</TabsTrigger>
-                <TabsTrigger value="interviews">スタッフインタビュー</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4">
@@ -133,7 +132,11 @@ export default function JobDetail() {
                       <div className="flex items-center">
                         <Building className="h-4 w-4 mr-2" />
                         <span className="font-medium">業種:</span>
-                        <span className="ml-2">{job.serviceType}</span>
+                        <span className="ml-2">
+                          {job.serviceType === "deriheru" ? "デリバリーヘルス" :
+                           job.serviceType === "hoteheru" ? "ホテヘル" :
+                           job.serviceType === "esthe" ? "エステ" : job.serviceType}
+                        </span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
@@ -187,29 +190,6 @@ export default function JobDetail() {
                           <span>即日入居可能</span>
                         </div>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="interviews">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-8">
-                      <div className="border-l-4 border-primary pl-4">
-                        <h4 className="font-medium mb-2">Aさん（24歳）の体験談</h4>
-                        <p className="text-muted-foreground">
-                          未経験でしたが、スタッフさんが丁寧に教えてくれて安心して働き始められました。
-                          待機室も完全個室で、プライバシーが守られているので快適に過ごせています。
-                        </p>
-                      </div>
-                      <div className="border-l-4 border-primary pl-4">
-                        <h4 className="font-medium mb-2">Bさん（22歳）の体験談</h4>
-                        <p className="text-muted-foreground">
-                          リピーターのお客様が多く、安定した収入が得られます。
-                          自由出勤制なので、自分のペースで働けるのも魅力です。
-                        </p>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>

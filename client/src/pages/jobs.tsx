@@ -100,8 +100,8 @@ const JobCard = ({ job }: { job: Job }) => {
 
 export default function Jobs() {
   const { user } = useAuth();
-  const [location, setLocation] = useState<string>("");
-  const [serviceType, setServiceType] = useState<string>("");
+  const [location, setLocation] = useState<string | null>(null);
+  const [serviceType, setServiceType] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const limit = 12; // 1ページあたりの表示件数
 
@@ -145,12 +145,12 @@ export default function Jobs() {
       <main className="container mx-auto px-4 py-20">
         {/* フィルター */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <Select value={location} onValueChange={setLocation}>
+          <Select value={location || null} onValueChange={setLocation}>
             <SelectTrigger>
               <SelectValue placeholder="エリアを選択" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全てのエリア</SelectItem>
+              <SelectItem value="all">全てのエリア</SelectItem>
               {prefectures.map((pref) => (
                 <SelectItem key={pref} value={pref}>
                   {pref}
@@ -159,12 +159,12 @@ export default function Jobs() {
             </SelectContent>
           </Select>
 
-          <Select value={serviceType} onValueChange={setServiceType}>
+          <Select value={serviceType || null} onValueChange={setServiceType}>
             <SelectTrigger>
               <SelectValue placeholder="業種を選択" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全ての業種</SelectItem>
+              <SelectItem value="all">全ての業種</SelectItem>
               {serviceTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type === "deriheru" ? "デリバリーヘルス" :
