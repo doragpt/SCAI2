@@ -716,10 +716,13 @@ export function TalentForm() {
     }
   };
 
-  const handleAddIdType = () => {
-    if (!newIdType.trim()) return;
-    setOtherIds([...otherIds, newIdType.trim()]);
-    setNewIdType("");
+  // 身分証追加ハンドラーの修正
+  const handleAddIdType = (value: string) => {
+    if (!otherIds.includes(value)) {
+      const updated = [...otherIds, value];
+      setOtherIds(updated);
+      form.setValue("availableIds.others", updated);
+    }
   };
 
   // ローディング中の表示
@@ -940,7 +943,7 @@ export function TalentForm() {
             className="spacey-8"
           >
             <div>
-              <h3 className="text-lg font-semibold mb-4">氏名</h3>              <div className="grid grid-cols-2 gap-4">
+              <h3 className="textlg font-semibold mb-4">氏名</h3>              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="lastName"
@@ -1364,7 +1367,7 @@ export function TalentForm() {
                     ))}
                   </div>
                   <OtherItemInput
-                    onAdd={ (value:string) => setOtherNgOptions([...otherNgOptions, value])}
+                    onAdd={(value: string) => setOtherNgOptions([...otherNgOptions, value])}
                     placeholder="その他のNGオプションを入力"
                   />
                 </div>

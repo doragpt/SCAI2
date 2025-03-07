@@ -490,7 +490,18 @@ export function ProfileConfirmationModal({
             <section>
               <SectionHeader icon={FileText} title="その他情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
-                {/* This section is now redundant and should be removed */}
+                {formData.notes && (
+                  <InfoItem
+                    label="備考"
+                    value={
+                      <div className="bg-muted/10 p-3 rounded-lg">
+                        <p className="text-sm whitespace-pre-wrap">
+                          {formData.notes}
+                        </p>
+                      </div>
+                    }
+                  />
+                )}
               </div>
             </section>
           </div>
