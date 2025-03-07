@@ -179,15 +179,6 @@ export const talentProfiles = pgTable("talent_profiles", {
   }>().default({ available: [], ngOptions: [] }).notNull(),
   hasEstheExperience: boolean("has_esthe_experience").default(false),
   estheExperiencePeriod: text("esthe_experience_period"),
-  workType: text("work_type", { enum: workTypes }),
-  workPeriodStart: date("work_period_start"),
-  workPeriodEnd: date("work_period_end"),
-  canArrivePreviousDay: boolean("can_arrive_previous_day").default(false),
-  desiredGuarantee: integer("desired_guarantee"),
-  desiredRate: integer("desired_rate"),
-  waitingHours: integer("waiting_hours"),
-  departureLocation: text("departure_location", { enum: prefectures }),
-  returnLocation: text("return_location", { enum: prefectures }),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
   bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
@@ -205,6 +196,9 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
+import { z } from "zod";
+
+// talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -312,16 +306,7 @@ export const talentProfileSchema = z.object({
     ngOptions: z.array(z.string()).default([]),
   }).default({ available: [], ngOptions: [] }),
 
-  // 求人関連フィールドをオプショナルに変更
-  workType: z.enum(workTypes).optional(),
-  workPeriodStart: z.string().optional(),
-  workPeriodEnd: z.string().optional(),
-  canArrivePreviousDay: z.boolean().default(false),
-  desiredGuarantee: z.number().optional(),
-  desiredRate: z.number().optional(),
-  waitingHours: z.number().optional(),
-  departureLocation: z.enum(prefectures).optional(),
-  returnLocation: z.enum(prefectures).optional(),
+  // その他の既存のフィールドはそのまま
   preferredLocations: z.array(z.enum(prefectures)).default([]),
   ngLocations: z.array(z.enum(prefectures)).default([]),
 });
