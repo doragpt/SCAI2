@@ -3,9 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TalentForm } from "@/components/talent-form";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { apiRequest } from "@/lib/queryClient";
+import type { TalentProfileData } from "@shared/schema";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
+
+  // タレントプロフィールデータを取得
+  const { data: talentProfile, isLoading } = useQuery<TalentProfileData>({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryFn: () => apiRequest("GET", QUERY_KEYS.TALENT_PROFILE),
+    enabled: !!user?.id,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +58,13 @@ export default function TalentRegistration() {
               <CardTitle>Web履歴書作成</CardTitle>
             </CardHeader>
             <CardContent>
-              <TalentForm />
+              {isLoading ? (
+                <div className="flex justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <TalentForm initialData={talentProfile} />
+              )}
             </CardContent>
           </Card>
         </div>
