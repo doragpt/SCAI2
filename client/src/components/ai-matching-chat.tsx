@@ -885,18 +885,41 @@ export const AIMatchingChat = () => {
               {/* 各種対応可否 */}
               <h4 className="font-medium mb-2">各種対応可否</h4>
               <div className="space-y-2">
-                <div>
-                  <Label>写メ日記の投稿</Label>
-                  <Badge variant={profileData?.photoDiaryAllowed ? "default" : "secondary"}>
-                    {profileData?.photoDiaryAllowed ? "可能" : "不可"}
-                  </Badge>
-                </div>
-                <div>
-                  <Label>自宅待機での出張</Label>
-                  <Badge variant={profileData?.canHomeDelivery ? "default" : "secondary"}>
-                    {profileData?.canHomeDelivery ? "可能" : "不可"}
-                  </Badge>
-                </div>
+                <InfoItem
+                  label="写メ日記の投稿"
+                  value={
+                    <Badge variant={profileData?.canPhotoDiary ? "default" : "secondary"}>
+                      {profileData?.canPhotoDiary ? "可能" : "不可"}
+                    </Badge>
+                  }
+                />
+                <InfoItem
+                  label="自宅待機での出張"
+                  value={
+                    <Badge variant={profileData?.canHomeDelivery ? "default" : "secondary"}>
+                      {profileData?.canHomeDelivery ? "可能" : "不可"}
+                    </Badge>
+                  }
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* エステ関連 */}
+              <h4 className="font-medium mb-2">エステ関連</h4>
+              <div className="space-y-2">
+                <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
+                  {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
+                </Badge>
+                {profileData?.estheOptions?.available && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {profileData.estheOptions.available.map((option, index) => (
+                      <Badge key={index} variant="outline">
+                        {option}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Separator className="my-4" />
@@ -966,7 +989,7 @@ export const AIMatchingChat = () => {
                     <Badge variant={profileData.smoking.enabled ? "default" : "secondary"}>
                       {profileData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
                     </Badge>
-                    {profileData.smoking.enabled && (
+                                        {profileData.smoking.enabled && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {[
                           ...(profileData.smoking.types || []),
@@ -982,25 +1005,6 @@ export const AIMatchingChat = () => {
                   <Separator className="my-4" />
                 </>
               )}
-
-              {/* エステ関連 */}
-              <h4 className="font-medium mb-2">エステ関連</h4>
-              <div className="space-y-2">
-                <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
-                  {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
-                </Badge>
-                {profileData?.estheOptions?.available && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {profileData.estheOptions.available.map((option, index) => (
-                      <Badge key={index} variant="outline">
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Separator className="my-4" />
 
               {/* 顔出し設定 */}
               <h4 className="font-medium mb-2">顔出し設定</h4>

@@ -186,7 +186,14 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         });
       }
 
-      console.log('Profile fetch successful:', { userId });
+      // 写メ日記の状態をログに出力
+      console.log('Profile data debug:', {
+        userId,
+        canPhotoDiary: profile.canPhotoDiary,
+        rawProfileData: profile,
+        timestamp: new Date().toISOString()
+      });
+
       res.json(profile);
     } catch (error) {
       console.error('Profile fetch error:', error);
