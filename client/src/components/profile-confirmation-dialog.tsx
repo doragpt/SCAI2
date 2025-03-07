@@ -13,7 +13,20 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { 
+  Loader2,
+  Camera,
+  Building2,
+  MapPin,
+  AlertTriangle,
+  FileText,
+  Sparkles,
+  Cigarette,
+  Heart,
+  Home,
+  Clock,
+  Banknote 
+} from "lucide-react";
 import { TalentProfileData } from "@shared/schema";
 
 interface ProfileConfirmationDialogProps {
@@ -23,6 +36,24 @@ interface ProfileConfirmationDialogProps {
   isLoading?: boolean;
   profileData: TalentProfileData;
 }
+
+// InfoItem コンポーネント
+const InfoItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="space-y-1">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <div>{value}</div>
+  </div>
+);
+
+// SectionHeader コンポーネント
+const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <div className="p-2 rounded-full bg-primary/10">
+      <Icon className="h-5 w-5 text-primary" />
+    </div>
+    <h3 className="text-lg font-medium">{title}</h3>
+  </div>
+);
 
 export function ProfileConfirmationDialog({
   isOpen,
@@ -46,226 +77,249 @@ export function ProfileConfirmationDialog({
         <DialogHeader>
           <DialogTitle>プロフィール確認</DialogTitle>
           <DialogDescription>
-            以下の内容で登録します。内容をご確認ください。
+            以下の内容でAIマッチングを開始します。内容をご確認ください。
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">基本情報</TabsTrigger>
-            <TabsTrigger value="appearance">容姿</TabsTrigger>
-            <TabsTrigger value="conditions">条件</TabsTrigger>
-            <TabsTrigger value="other">その他</TabsTrigger>
-          </TabsList>
-
-          <ScrollArea className="flex-1 p-4">
-            <TabsContent value="basic" className="space-y-4">
+        <ScrollArea className="flex-1">
+          <div className="space-y-6 p-4">
+            {/* 基本情報 */}
+            <section>
+              <SectionHeader icon={FileText} title="基本情報" />
               <Card className="p-4">
-                <h3 className="font-semibold mb-4">個人情報</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">氏名</span>
-                    <p>{formatValue(`${profileData.lastName} ${profileData.firstName}`)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">フリガナ</span>
-                    <p>{formatValue(`${profileData.lastNameKana} ${profileData.firstNameKana}`)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">生年月日</span>
-                    <p>{formatValue(profileData.birthDate)} ({profileData.age}歳)</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">電話番号</span>
-                    <p>{formatValue(profileData.phoneNumber)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">メールアドレス</span>
-                    <p>{formatValue(profileData.email)}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">住所情報</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">在住地</span>
-                    <p>{formatValue(profileData.location)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">最寄り駅</span>
-                    <p>{formatValue(profileData.nearestStation)}</p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="appearance" className="space-y-4">
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">身体的特徴</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">身長</span>
-                    <p>{profileData.height}cm</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">体重</span>
-                    <p>{profileData.weight}kg</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">スリーサイズ</span>
-                    <p>B{profileData.bust} W{profileData.waist} H{profileData.hip}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">カップサイズ</span>
-                    <p>{profileData.cupSize}カップ</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">写真設定</h3>
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">顔出し設定</span>
-                    <p>{formatValue(profileData.faceVisibility)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">写メ日記</span>
-                    <Badge variant={profileData.photoDiaryAllowed ? "default" : "secondary"}>
-                      {profileData.photoDiaryAllowed ? "投稿可" : "投稿不可"}
-                    </Badge>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="conditions" className="space-y-4">
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">身分証明書</h3>
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">提示可能な身分証明書</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {profileData.availableIds?.types?.map((id) => (
-                        <Badge key={id} variant="outline">{id}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">本籍地記載の住民票</span>
-                    <Badge variant={profileData.canProvideResidenceRecord ? "default" : "secondary"}>
-                      {profileData.canProvideResidenceRecord ? "提出可" : "提出不可"}
-                    </Badge>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">派遣条件</h3>
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">自宅派遣</span>
-                    <Badge variant={profileData.canHomeDelivery ? "default" : "secondary"}>
-                      {profileData.canHomeDelivery ? "可能" : "不可"}
-                    </Badge>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">NGオプション</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {profileData.ngOptions?.common?.map((option) => (
-                        <Badge key={option} variant="outline">{option}</Badge>
-                      ))}
-                      {profileData.ngOptions?.others?.map((option) => (
-                        <Badge key={option} variant="outline">{option}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="other" className="space-y-4">
-              <Card className="p-4">
-                <h3 className="font-semibold mb-4">エステ経験</h3>
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">経験</span>
-                    <Badge variant={profileData.hasEstheExperience ? "default" : "secondary"}>
-                      {profileData.hasEstheExperience ? `あり（${profileData.estheExperiencePeriod}）` : "無し"}
-                    </Badge>
-                  </div>
-                  {profileData.hasEstheExperience && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">対応可能なメニュー</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profileData.estheOptions?.available?.map((option) => (
-                          <Badge key={option} variant="outline">{option}</Badge>
-                        ))}
+                  <InfoItem label="氏名" value={`${profileData.lastName} ${profileData.firstName}`} />
+                  <InfoItem label="フリガナ" value={`${profileData.lastNameKana} ${profileData.firstNameKana}`} />
+                  <InfoItem label="生年月日" value={formatValue(profileData.birthDate)} />
+                  <InfoItem
+                    label="在住地"
+                    value={
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        {formatValue(profileData.location)}
                       </div>
-                    </div>
+                    }
+                  />
+                  <InfoItem label="最寄り駅" value={formatValue(profileData.nearestStation)} />
+                </div>
+              </Card>
+            </section>
+
+            {/* 身体的特徴 */}
+            <section>
+              <SectionHeader icon={Heart} title="身体的特徴" />
+              <Card className="p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoItem label="身長" value={`${profileData.height}cm`} />
+                  <InfoItem label="体重" value={`${profileData.weight}kg`} />
+                  <InfoItem label="スリーサイズ" value={`B${profileData.bust} W${profileData.waist} H${profileData.hip}`} />
+                  <InfoItem label="カップサイズ" value={`${profileData.cupSize}カップ`} />
+                </div>
+              </Card>
+            </section>
+
+            {/* 写真関連 */}
+            <section>
+              <SectionHeader icon={Camera} title="写真関連" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="写メ日記"
+                    value={
+                      <Badge variant={profileData.canPhotoDiary ? "default" : "secondary"}>
+                        {profileData.canPhotoDiary ? "投稿可" : "投稿不可"}
+                      </Badge>
+                    }
+                  />
+                  <InfoItem label="顔出し設定" value={formatValue(profileData.faceVisibility)} />
+                </div>
+              </Card>
+            </section>
+
+            {/* 勤務情報 */}
+            <section>
+              <SectionHeader icon={Building2} title="勤務情報" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  {profileData.preferredLocations && profileData.preferredLocations.length > 0 && (
+                    <InfoItem
+                      label="希望エリア"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {profileData.preferredLocations.map((location, index) => (
+                            <Badge key={index} variant="outline">
+                              <MapPin className="h-3 w-3 text-green-500 mr-1" />
+                              {location}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {profileData.ngLocations && profileData.ngLocations.length > 0 && (
+                    <InfoItem
+                      label="NGエリア"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {profileData.ngLocations.map((location, index) => (
+                            <Badge key={index} variant="destructive">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {location}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  )}
+
+                  <InfoItem
+                    label="前日到着"
+                    value={
+                      <Badge variant={profileData.canArrivePreviousDay ? "default" : "secondary"}>
+                        {profileData.canArrivePreviousDay ? "可能" : "不可"}
+                      </Badge>
+                    }
+                  />
+
+                  {profileData.desiredGuarantee && (
+                    <InfoItem
+                      label="希望給与"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <Banknote className="h-4 w-4 text-primary" />
+                          <span>{profileData.desiredGuarantee}円</span>
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {profileData.desiredRate && (
+                    <InfoItem
+                      label="希望バック率"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <Banknote className="h-4 w-4 text-primary" />
+                          <span>{profileData.desiredRate}%</span>
+                        </div>
+                      }
+                    />
                   )}
                 </div>
               </Card>
+            </section>
 
+            {/* エステ関連 */}
+            <section>
+              <SectionHeader icon={Sparkles} title="エステ関連" />
               <Card className="p-4">
-                <h3 className="font-semibold mb-4">その他情報</h3>
                 <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">アレルギー</span>
-                    <Badge variant={profileData.hasAllergies ? "destructive" : "secondary"}>
-                      {profileData.hasAllergies ? "あり" : "無し"}
-                    </Badge>
-                    {profileData.hasAllergies && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profileData.allergies?.types?.map((allergy) => (
-                          <Badge key={allergy} variant="outline">{allergy}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">喫煙</span>
-                    <Badge variant={profileData.isSmoker ? "destructive" : "secondary"}>
-                      {profileData.isSmoker ? "あり" : "無し"}
-                    </Badge>
-                    {profileData.isSmoker && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profileData.smoking?.types?.map((type) => (
-                          <Badge key={type} variant="outline">{type}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <InfoItem
+                    label="エステ経験"
+                    value={
+                      <Badge variant={profileData.hasEstheExperience ? "default" : "secondary"}>
+                        {profileData.hasEstheExperience ? `あり（${profileData.estheExperiencePeriod}）` : "無し"}
+                      </Badge>
+                    }
+                  />
+                  {profileData.estheOptions?.available && profileData.estheOptions.available.length > 0 && (
+                    <InfoItem
+                      label="対応可能なメニュー"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {profileData.estheOptions.available.map((option, index) => (
+                            <Badge key={index} variant="outline">
+                              {option}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  )}
                 </div>
               </Card>
+            </section>
 
+            {/* アレルギー・喫煙 */}
+            <section>
+              <SectionHeader icon={AlertTriangle} title="アレルギー・喫煙" />
               <Card className="p-4">
-                <h3 className="font-semibold mb-4">PR・備考</h3>
                 <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">自己PR</span>
-                    <p className="whitespace-pre-wrap mt-2">{formatValue(profileData.selfIntroduction)}</p>
-                  </div>
+                  {profileData.allergies && (
+                    <InfoItem
+                      label="アレルギー"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            ...(profileData.allergies.types || []),
+                            ...(profileData.allergies.others || [])
+                          ].map((allergy, index) => (
+                            <Badge key={index} variant="destructive">
+                              {allergy}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {profileData.smoking && (
+                    <InfoItem
+                      label="喫煙"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            ...(profileData.smoking.types || []),
+                            ...(profileData.smoking.others || [])
+                          ].map((type, index) => (
+                            <Badge key={index} variant="outline">
+                              <Cigarette className="h-3 w-3 mr-1" />
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  )}
+                </div>
+              </Card>
+            </section>
+
+            {/* 自己PR・備考 */}
+            <section>
+              <SectionHeader icon={FileText} title="自己PR・備考" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="自己PR"
+                    value={
+                      <p className="whitespace-pre-wrap text-sm">
+                        {formatValue(profileData.selfIntroduction)}
+                      </p>
+                    }
+                  />
                   <Separator />
-                  <div>
-                    <span className="text-sm text-muted-foreground">備考</span>
-                    <p className="whitespace-pre-wrap mt-2">{formatValue(profileData.notes)}</p>
-                  </div>
+                  <InfoItem
+                    label="備考"
+                    value={
+                      <p className="whitespace-pre-wrap text-sm">
+                        {formatValue(profileData.notes)}
+                      </p>
+                    }
+                  />
                 </div>
               </Card>
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+            </section>
+          </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            戻る
+            修正する
           </Button>
           <Button onClick={onConfirm} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            登録する
+            この内容で開始する
           </Button>
         </DialogFooter>
       </DialogContent>
