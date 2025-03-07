@@ -808,7 +808,13 @@ export const AIMatchingChat = () => {
                 <div>
                   <Label>生年月日</Label>
                   <p className="text-sm font-medium">
-                    {profileData?.birthDate && format(new Date(profileData.birthDate), 'yyyy年MM月dd日', { locale: ja })}
+                    {formatDate(user?.birthDate || '')}
+                  </p>
+                </div>
+                <div>
+                  <Label>年齢</Label>
+                  <p className="text-sm font-medium">
+                    {calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
                   </p>
                 </div>
                 <div>
@@ -979,190 +985,190 @@ export const AIMatchingChat = () => {
 
               {/* エステ関連 */}
               <h4 className="font-medium mb-2">エステ関連</h4>
-                    <div className="space-y-2">
-                      <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
-                        {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
+              <div className="space-y-2">
+                <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
+                  {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
+                </Badge>
+                {profileData?.estheOptions?.available && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {profileData.estheOptions.available.map((option, index) => (
+                      <Badge key={index} variant="outline">
+                        {option}
                       </Badge>
-                      {profileData?.estheOptions?.available && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {profileData.estheOptions.available.map((option, index) => (
-                            <Badge key={index} variant="outline">
-                              {option}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Separator className="my-4" />
-
-                    {/* 顔出し設定 */}
-                    <h4 className="font-medium mb-2">顔出し設定</h4>
-                    <p className="text-sm font-medium">{profileData?.faceVisibility}</p>
-
-                    <Separator className="my-4" />
-
-                    {/* 在籍店舗情報 */}
-                    {(profileData?.currentStores?.length > 0 || profileData?.previousStores?.length > 0) && (
-                      <>
-                        <h4 className="font-medium mb-2">在籍店舗情報</h4>
-                        <div className="space-y-2">
-                          {profileData?.currentStores?.map((store, index) => (
-                            <div key={index}>
-                              <p className="text-sm font-medium">
-                                現在の在籍店舗: {store.storeName}（{store.stageName}）
-                              </p>
-                            </div>
-                          ))}
-                          {profileData?.previousStores?.map((store, index) => (
-                            <div key={index}>
-                              <p className="text-sm font-medium">
-                                過去の在籍店舗: {store.storeName}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                        <Separator className="my-4" />
-                      </>
-                    )}
-
-                    {/* 自己PR・備考 */}
-                    <h4 className="font-medium mb-2">自己PR・備考</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>自己PR</Label>
-                        <p className="text-sm whitespace-pre-wrap mt-1">
-                          {profileData?.selfIntroduction || "未入力"}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>備考</Label>
-                        <p className="text-sm whitespace-pre-wrap mt-1">
-                          {profileData?.notes || "未入力"}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  {/* 希望条件セクション (既存のコード) */}
-                  <div className="border rounded-lg p-6 bg-card">
-                    <h3 className="text-lg font-medium mb-4">希望条件</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>希望する働き方</Label>
-                        <p className="text-sm font-medium text-primary">{selectedType}</p>
+              <Separator className="my-4" />
+
+              {/* 顔出し設定 */}
+              <h4 className="font-medium mb-2">顔出し設定</h4>
+              <p className="text-sm font-medium">{profileData?.faceVisibility}</p>
+
+              <Separator className="my-4" />
+
+              {/* 在籍店舗情報 */}
+              {(profileData?.currentStores?.length > 0 || profileData?.previousStores?.length > 0) && (
+                <>
+                  <h4 className="font-medium mb-2">在籍店舗情報</h4>
+                  <div className="space-y-2">
+                    {profileData?.currentStores?.map((store, index) => (
+                      <div key={index}>
+                        <p className="text-sm font-medium">
+                          現在の在籍店舗: {store.storeName}（{store.stageName}）
+                        </p>
                       </div>
-                      <div>
-                        <Label>希望業種</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {conditions.workTypes.map((type) => (
-                            <span
-                              key={type}
-                              className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
-                            >
-                              {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label}
-                            </span>
-                          ))}
-                        </div>
+                    ))}
+                    {profileData?.previousStores?.map((store, index) => (
+                      <div key={index}>
+                        <p className="text-sm font-medium">
+                          過去の在籍店舗: {store.storeName}
+                        </p>
                       </div>
-                      {selectedType === "出稼ぎ" && (
-                        <>
-                          <div>
-                            <Label>勤務期間</Label>
-                            <p className="text-sm font-medium">
-                              {conditions.workPeriodStart} 〜 {conditions.workPeriodEnd}
-                            </p>
-                          </div>
-                          <div>
-                            <Label>移動</Label>
-                            <p className="text-sm font-medium">
-                              {conditions.departureLocation} → {conditions.returnLocation}
-                            </p>
-                          </div>
-                          <div>
-                            <Label>一日の総勤務時間</Label>
-                            <p className="text-sm font-medium">{conditions.waitingHours}時間</p>
-                          </div>
-                          <div>
-                            <Label>前日入り</Label>
-                            <p className="text-sm font-medium">
-                              {conditions.canArrivePreviousDay ? "可能" : "不可"}
-                            </p>
-                          </div>
-                          {conditions.desiredGuarantee && (
-                            <div>
-                              <Label>希望保証</Label>
-                              <p className="text-sm font-medium">{conditions.desiredGuarantee}</p>
-                            </div>
-                          )}
-                          {conditions.desiredTime && conditions.desiredRate && (
-                            <div>
-                              <Label>希望単価</Label>
-                              <p className="text-sm font-medium">
-                                {conditions.desiredTime}：{conditions.desiredRate}
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {selectedType === "在籍" && conditions.interviewDates.length > 0 && (
-                        <div className="col-span-2">
-                          <Label>面接希望日時</Label>
-                          <div className="space-y-1">
-                            {conditions.interviewDates.map((date, index) => (
-                              <p key={index} className="text-sm font-medium">{date}</p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      <div className="col-span-2">
-                        <Label>希望地域</Label>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {conditions.preferredLocations.map((loc) => (
-                            <span
-                              key={loc}
-                              className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
-                            >
-                              {loc}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="col-span-2">
-                        <Label>NG地域</Label>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {conditions.ngLocations.map((loc) => (
-                            <span
-                              key={loc}
-                              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
-                            >
-                              {loc}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      {conditions.notes && (
-                        <div className="col-span-2">
-                          <Label>その他備考</Label>
-                          <p className="text-sm whitespace-pre-wrap">{conditions.notes}</p>
-                        </div>
-                      )}
-                    </div>
+                    ))}
+                  </div>
+                  <Separator className="my-4" />
+                </>
+              )}
+
+              {/* 自己PR・備考 */}
+              <h4 className="font-medium mb-2">自己PR・備考</h4>
+              <div className="space-y-4">
+                <div>
+                  <Label>自己PR</Label>
+                  <p className="text-sm whitespace-pre-wrap mt-1">
+                    {profileData?.selfIntroduction || "未入力"}
+                  </p>
+                </div>
+                <div>
+                  <Label>備考</Label>
+                  <p className="text-sm whitespace-pre-wrap mt-1">
+                    {profileData?.notes || "未入力"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 希望条件セクション (既存のコード) */}
+            <div className="border rounded-lg p-6 bg-card">
+              <h3 className="text-lg font-medium mb-4">希望条件</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>希望する働き方</Label>
+                  <p className="text-sm font-medium text-primary">{selectedType}</p>
+                </div>
+                <div>
+                  <Label>希望業種</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {conditions.workTypes.map((type) => (
+                      <span
+                        key={type}
+                        className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
+                      >
+                        {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label}
+                      </span>
+                    ))}
                   </div>
                 </div>
-
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={handleConfirmDialogClose}>
-                    修正する
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirmConditions}>
-                    この内容で進める
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                {selectedType === "出稼ぎ" && (
+                  <>
+                    <div>
+                      <Label>勤務期間</Label>
+                      <p className="text-sm font-medium">
+                        {conditions.workPeriodStart} 〜 {conditions.workPeriodEnd}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>移動</Label>
+                      <p className="text-sm font-medium">
+                        {conditions.departureLocation} → {conditions.returnLocation}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>一日の総勤務時間</Label>
+                      <p className="text-sm font-medium">{conditions.waitingHours}時間</p>
+                    </div>
+                    <div>
+                      <Label>前日入り</Label>
+                      <p className="text-sm font-medium">
+                        {conditions.canArrivePreviousDay ? "可能" : "不可"}
+                      </p>
+                    </div>
+                    {conditions.desiredGuarantee && (
+                      <div>
+                        <Label>希望保証</Label>
+                        <p className="text-sm font-medium">{conditions.desiredGuarantee}</p>
+                      </div>
+                    )}
+                    {conditions.desiredTime && conditions.desiredRate && (
+                      <div>
+                        <Label>希望単価</Label>
+                        <p className="text-sm font-medium">
+                          {conditions.desiredTime}：{conditions.desiredRate}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+                {selectedType === "在籍" && conditions.interviewDates.length > 0 && (
+                  <div className="col-span-2">
+                    <Label>面接希望日時</Label>
+                    <div className="space-y-1">
+                      {conditions.interviewDates.map((date, index) => (
+                        <p key={index} className="text-sm font-medium">{date}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <Label>希望地域</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {conditions.preferredLocations.map((loc) => (
+                      <span
+                        key={loc}
+                        className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full"
+                      >
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <Label>NG地域</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {conditions.ngLocations.map((loc) => (
+                      <span
+                        key={loc}
+                        className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                      >
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {conditions.notes && (
+                  <div className="col-span-2">
+                    <Label>その他備考</Label>
+                    <p className="text-sm whitespace-pre-wrap">{conditions.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        );
-      };
 
-      export default AIMatchingChat;
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConfirmDialogClose}>
+              修正する
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmConditions}>
+              この内容で進める
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default AIMatchingChat;
