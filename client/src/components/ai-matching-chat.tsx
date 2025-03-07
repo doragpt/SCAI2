@@ -100,6 +100,20 @@ const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
   label: `${i + 10}時間`,
 }));
 
+// マッチング方法の型定義を追加
+type MatchingMethod = "auto" | "pickup" | null;
+
+// マッチング結果の型定義 (仮)
+interface MatchedJob {
+  businessName: string;
+  matchScore: number;
+  location: string;
+  matches: string[];
+  description?: string; // Added for pickup mode
+  features?: string[]; // Added for pickup mode
+}
+
+
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -110,9 +124,6 @@ export const AIMatchingChat = () => {
   const [workTypes] = useState(["出稼ぎ", "在籍"]);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-
-
-  // メッセージの状態を復元
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "ai",
@@ -127,7 +138,6 @@ export const AIMatchingChat = () => {
 まずは、希望する働き方を選択してください。`
     },
   ]);
-
   const [conditions, setConditions] = useState({
     workTypes: [] as string[],
     workPeriodStart: "",
@@ -144,14 +154,15 @@ export const AIMatchingChat = () => {
     notes: "",
     interviewDates: [] as string[],
   });
-
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
-
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+  const [matchingMethod, setMatchingMethod] = useState<MatchingMethod>(null);
+  const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
+
 
   if (isProfileLoading) {
     return (
@@ -162,7 +173,6 @@ export const AIMatchingChat = () => {
     );
   }
 
-  // 働き方選択のハンドラー
   const handleWorkTypeSelect = (type: "出稼ぎ" | "在籍") => {
     setSelectedType(type);
     setShowForm(true);
@@ -176,7 +186,6 @@ export const AIMatchingChat = () => {
     }]);
   };
 
-  // 戻るボタンのハンドラー
   const handleBack = () => {
     setSelectedType(null);
     setShowForm(false);
@@ -186,7 +195,6 @@ export const AIMatchingChat = () => {
     }]);
   };
 
-  // 日付のフォーマット関数
   const formatDate = (dateString: string) => {
     if (!dateString) return "未入力";
     try {
@@ -202,7 +210,6 @@ export const AIMatchingChat = () => {
     }
   };
 
-  // 条件送信のハンドラー
   const handleConditionSubmit = () => {
     if (!conditions.workTypes.length) {
       toast({
@@ -245,7 +252,6 @@ export const AIMatchingChat = () => {
     setShowConfirmDialog(true);
   };
 
-  // 確認ダイアログ用のフォーマット関数
   const formatProfileValue = (value: unknown): string => {
     if (value === null || value === undefined || value === '') return "未入力";
     if (typeof value === 'number' && value === 0) return "未入力";
@@ -273,56 +279,18 @@ export const AIMatchingChat = () => {
         content: formatConditionsMessage(conditions, selectedType)
       }, {
         type: "ai",
-        content: "ご希望の条件を確認させていただきました。マッチング検索を開始しますか？"
+        content: `確認してくれてありがとう！
+
+【マッチング方法の選択】
+AIがあなたに合いそうな店舗に自動で確認するか、
+AIがあなたに合いそうな店舗をピックアップしてから確認するか選んでください。`
       }]);
 
-      // ユーザーからの応答を待つ
-      const startSearch = await new Promise((resolve) => {
-        setMessages(prev => [...prev, {
-          type: "ai",
-          content: "マッチング検索を開始するには「はい」、条件を変更する場合は「いいえ」とお答えください。"
-        }]);
-        //  In a real application, you would listen for user input here (e.g., using a message input field and submit button)
-        // For this example, we'll simulate a user response after a delay.
-        setTimeout(() => resolve(true), 2000); // Simulate user saying "yes"
+      return new Promise((resolve) => {
+        setMatchingMethod(null); // リセット
+        // ユーザーの選択を待つ
       });
 
-      if (startSearch) {
-        // マッチング検索を開始
-        const results = await startMatching(conditions);
-
-        if (results.length > 0) {
-          setMessages(prev => [...prev, {
-            type: "ai",
-            content: `
-お待たせいたしました。
-あなたの希望条件に合う店舗が${results.length}件見つかりました。
-
-【マッチング結果】
-${results.map((result, index) => `
-${index + 1}. ${result.businessName}
-  • マッチ度: ${result.matchScore}%
-  • 勤務地: ${result.location}
-  • マッチポイント: ${result.matches.join('、')}
-`).join('\n')}
-
-気になる店舗がございましたら、詳細をご確認いただけます。
-ご希望の店舗番号をお知らせください。
-`
-          }]);
-        } else {
-          setMessages(prev => [...prev, {
-            type: "ai",
-            content: `
-申し訳ございません。
-現在、ご希望の条件に完全に合致する店舗が見つかりませんでした。
-
-条件を変更して再度検索することをお勧めいたします。
-条件を変更しますか？
-`
-          }]);
-        }
-      }
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
@@ -335,8 +303,114 @@ ${index + 1}. ${result.businessName}
     }
   };
 
+  // マッチング方法選択ハンドラー
+  const handleMatchingMethodSelect = async (method: MatchingMethod) => {
+    setMatchingMethod(method);
+    setMessages(prev => [...prev, {
+      type: "user",
+      content: method === "auto" ? "自動で確認する" : "ピックアップして確認する"
+    }]);
 
-  // 年齢計算関数を追加
+    if (method === "auto") {
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: "マッチングには時間がかかるから少しだけ時間をもらうね！"
+      }, {
+        type: "ai",
+        content: "マッチング中だよ...もう少し待っててね"
+      }]);
+
+      const results = await startMatching(conditions);
+      handleMatchingResults(results);
+
+    } else {
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: "では合いそうな店舗をリストアップするね！"
+      }]);
+
+      const results = await startMatching(conditions);
+      displayPickupResults(results);
+    }
+  };
+
+  // ピックアップ結果の表示
+  const displayPickupResults = (results: MatchedJob[]) => {
+    const initialDisplay = results.slice(0, 10);
+    setMessages(prev => [...prev, {
+      type: "ai",
+      content: `お待たせ！あなたに合いそうな店舗は${results.length}件程あったよ！
+
+まずは10件、リストアップするね！
+
+【候補店舗】
+${initialDisplay.map((result, index) => `
+${index + 1}. ${result.businessName}
+  • 勤務地: ${result.location}
+  • マッチポイント: ${result.matches.join('、')}
+  • 特徴: ${result.features?.join('、') || '情報なし'}
+  • 詳細: ${result.description || ''}
+`).join('\n')}
+
+どうかな？気になる店舗はあった？
+条件確認して欲しい店舗があったらチェックしてね！
+（複数選択可能です）`
+    }]);
+  };
+
+  // マッチング結果の表示（自動マッチング用）
+  const handleMatchingResults = (results: MatchedJob[]) => {
+    if (results.length > 0) {
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: `マッチングには時間がかかるから少しだけ時間をもらうね！`
+      }, {
+        type: "ai",
+        content: "マッチング中だよ...もう少し待っててね"
+      }, {
+        type: "ai",
+        content: `お待たせ！あなたに合いそうな店舗は${results.length}件程あったよ！
+
+【マッチング結果】
+${results.map((result, index) => `
+${index + 1}. ${result.businessName}
+  • マッチ度: ${result.matchScore}%
+  • 勤務地: ${result.location}
+  • マッチポイント: ${result.matches.join('、')}
+  • 特徴: ${result.features?.join('、') || '情報なし'}
+`).join('\n')}
+
+これらの店舗に条件を確認してみるね！`
+      }]);
+
+      // 店舗への通知処理をシミュレート
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          type: "ai",
+          content: `店舗へ確認メッセージを送信したよ！
+返信があったらすぐにお知らせするね。
+
+※ 通常1営業日以内に返信があります。
+急ぎの場合は、直接お電話での確認も可能です！`
+        }]);
+      }, 2000);
+    } else {
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: `申し訳ございません。
+現在の条件に合う店舗が見つかりませんでした。
+
+条件を変更して再度検索してみませんか？
+例えば：
+• 希望エリアを広げてみる
+• 給与条件を調整してみる
+• 業種の選択を増やしてみる
+
+条件を変更しますか？`
+      }]);
+    }
+  };
+
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
     try {
@@ -885,6 +959,35 @@ ${index + 1}. ${result.businessName}
         </div>
       )}
 
+      {/* マッチング方法選択部分を追加 */}
+      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && (
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+          <div className="container max-w-screen-2xl mx-auto">
+            <div className="flex flex-col gap-4">
+              <p className="text-center text-muted-foreground">
+                マッチング方法を選択してください
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={() => handleMatchingMethodSelect("auto")}
+                  className="min-w-[200px]"
+                >
+                  自動で確認する
+                </Button>
+                <Button
+                  onClick={() => handleMatchingMethodSelect("pickup")}
+                  className="min-w-[200px]"
+                  variant="secondary"
+                >
+                  ピックアップして確認する
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* 確認ダイアログ */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent className="max-w-4xl">
@@ -916,8 +1019,7 @@ ${index + 1}. ${result.businessName}
                 <div className="p-6 space-y-6">
                   {/* 基本情報 */}
                   <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <FileText className="h-4 w-4" />
+                    <h4 className="font-medium text-sm textmuted-foreground">
                       基本情報
                     </h4>
                     <div className="grid grid-cols-2 gap-4">

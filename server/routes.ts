@@ -1032,7 +1032,8 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       console.error('Photo chunk upload error:', {
         error,
         userId: req.user.id,
-        timestamp: new Date().toISOString      });
+        timestamp: new Date().toISOString()
+      });
       res.status(500).json({
         message: error instanceof Error ? error.message : "写真のアップロードに失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
@@ -1075,14 +1076,36 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       const matchedJobs = await Promise.all(
         jobListings.map(async (job) => {
           const score = await calculateMatchScore(job, conditions);
+          const matches: string[] = [];
+
+          // マッチポイントの判定
+          if (conditions.preferredLocations.includes(job.location)) {
+            matches.push('希望エリア');
+          }
+          if (Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee)) {
+            matches.push('希望給与');
+          }
+          if (conditions.workTypes.includes(job.serviceType)) {
+            matches.push('希望業態');
+          }
+          if (job.transportationSupport) {
+            matches.push('交通費サポート');
+          }
+          if (job.housingSupport) {
+            matches.push('宿泊サポート');
+          }
+
           return {
             ...job,
             matchScore: score,
-            matches: score > 0 ? [
-              conditions.preferredLocations.includes(job.location) ? '希望エリア' : null,
-              Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee) ? '希望給与' : null,
-              conditions.workTypes.includes(job.serviceType) ? '希望業態' : null,
-            ].filter(Boolean) : []
+            matches: matches,
+            // ピックアップモード用の追加情報
+            features: [
+              job.transportationSupport ? '交通費サポートあり' : null,
+              job.housingSupport ? '宿泊費サポートあり' : null,
+              `保証${job.minimumGuarantee}円～`,
+              job.workingHours ? `勤務時間: ${job.workingHours}` : null,
+            ].filter(Boolean),
           };
         })
       );
