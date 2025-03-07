@@ -575,7 +575,7 @@ export function TalentForm() {
       notes: "",
       estheOptions: {
         available: [],
-        otherNgOptions: "",
+        otherNgOptions: "", // string型として初期化
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
@@ -660,10 +660,10 @@ export function TalentForm() {
         waist: existingProfile.waist?.toString() ?? "",
         hip: existingProfile.hip?.toString() ?? "",
         photos: existingProfile.photos || [],
-        bodyMark: {
-          hasBodyMark: existingProfile.bodyMark?.hasBodyMark || false,
-          details: existingProfile.bodyMark?.details || "",
-          others: existingProfile.bodyMark?.others || [],
+        bodyMark: existingProfile.bodyMark || {
+          hasBodyMark: false,
+          details: "",
+          others: [],
         },
         estheOptions: {
           available: existingProfile.estheOptions?.available || [],
@@ -859,13 +859,25 @@ export function TalentForm() {
         others: otherSmokingTypes,
       },
       bodyMark: {
-        hasBodyMark: data.bodyMark?.hasBodyMark || false,
+        hasBodyMark: data.bodyMark.hasBodyMark,
         details: bodyMarkDetails,
         others: bodyMarks,
       },
       photos: data.photos || [],
+      // 求人関連フィールドのデフォルト値を設定
+      workType: undefined,
+      workPeriodStart: undefined,
+      workPeriodEnd: undefined,
+      canArrivePreviousDay: false,
+      desiredGuarantee: undefined,
+      desiredRate: undefined,
+      waitingHours: undefined,
+      departureLocation: undefined,
+      returnLocation: undefined,
+      preferredLocations: [],
+      ngLocations: [],
       estheOptions: {
-        available: data.estheOptions?.available || [],
+        ...data.estheOptions,
         otherNgOptions: otherEstheNgOptions.join('\n')
       }
     };
@@ -873,6 +885,7 @@ export function TalentForm() {
     console.log('Opening confirmation modal');
     setFormData(formData);
     setIsConfirmationOpen(true);
+    console.log('Modal state updated:', { formData: !!formData, isOpen: isConfirmationOpen });
   };
 
   // 保存ボタンの状態管理を単純化
@@ -903,17 +916,7 @@ export function TalentForm() {
     if (!bodyMarks.includes(value)) {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
-      // フォームの値も更新
-      const currentBodyMark = form.getValues().bodyMark || {
-        hasBodyMark: true,
-        details: bodyMarkDetails,
-        others: [],
-      };
-      form.setValue("bodyMark", {
-        ...currentBodyMark,
-        hasBodyMark: true,
-        others: updated,
-      }, { shouldValidate: true });
+      form.setValue("bodyMark.others", updated);
     }
   };
 
@@ -934,7 +937,8 @@ export function TalentForm() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               {existingProfile ? "プロフィール編集" : "プロフィール作成"}
             </h1>
-            <p className="text-sm text-muted-foreground">{existingProfile
+            <p className="text-sm text-muted-foreground">
+              {existingProfile
                 ? "プロフィール情報を編集できます"
                 : "安全に働くための詳細情報を登録してください"}
             </p>
