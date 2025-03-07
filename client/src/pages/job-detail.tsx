@@ -1,10 +1,10 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { type JobResponse } from "@shared/schema";
+import { type JobResponse, type ServiceType } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Banknote, Clock, Building, Calendar, Phone, Loader2 } from "lucide-react";
+import { MapPin, Clock, Building, Calendar, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
-import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
+import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -31,7 +31,7 @@ export default function JobDetail() {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+        description: getErrorMessage(error)
       });
     }
   });
@@ -77,10 +77,10 @@ export default function JobDetail() {
 
   const seoData: SEOProps = {
     title: `${job.businessName}の求人情報`,
-    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType)}求人。日給${job.minimumGuarantee?.toLocaleString()}円～${job.maximumGuarantee?.toLocaleString()}円。交通費支給、寮完備など充実した待遇をご用意。`,
+    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。日給${formatSalary(job.minimumGuarantee, job.maximumGuarantee)}。交通費支給、寮完備など充実した待遇をご用意。`,
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
-      description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
+      description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
       datePosted: job.createdAt.toISOString(),
       employmentType: "アルバイト",
       hiringOrganization: {
@@ -146,7 +146,7 @@ export default function JobDetail() {
                         <Building className="h-4 w-4 mr-2" />
                         <span className="font-medium">業種:</span>
                         <span className="ml-2">
-                          {getServiceTypeLabel(job.serviceType)}
+                          {getServiceTypeLabel(job.serviceType as ServiceType)}
                         </span>
                       </div>
                       <div className="flex items-center">
@@ -229,7 +229,7 @@ export default function JobDetail() {
                 <div className="pt-4 border-t">
                   <div className="text-sm text-muted-foreground mb-2">月収シミュレーション</div>
                   <div className="text-2xl font-bold">
-                    ¥{monthlyMin.toLocaleString()} ~ ¥{monthlyMax.toLocaleString()}
+                    {formatSalary(monthlyMin, monthlyMax)}
                   </div>
                 </div>
               </CardContent>

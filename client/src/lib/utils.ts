@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { type ServiceType } from "@shared/schema"
+import { type ServiceType, serviceTypeLabels } from "@shared/schema"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -8,16 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 
 // 業種の日本語表示用ユーティリティ
 export function getServiceTypeLabel(serviceType: ServiceType | "all"): string {
-  const serviceTypeMap: Record<ServiceType | "all", string> = {
-    'deriheru': 'デリバリーヘルス',
-    'hoteheru': 'ホテヘル',
-    'hakoheru': '箱ヘル',
-    'esthe': 'エステ',
-    'onakura': 'オナクラ',
-    'mseikan': 'メンズエステ',
-    'all': '全ての業種'
-  };
-  return serviceTypeMap[serviceType] || serviceType;
+  if (serviceType === "all") return "全ての業種";
+  return serviceTypeLabels[serviceType] || serviceType;
 }
 
 // 給与表示のフォーマット
@@ -29,11 +21,20 @@ export function formatSalary(min?: number | null, max?: number | null): string {
 }
 
 // 日付フォーマットのユーティリティ
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null): string {
+  if (!date) return "未設定";
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('ja-JP', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
+}
+
+// エラーメッセージの日本語化
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "予期せぬエラーが発生しました";
 }
