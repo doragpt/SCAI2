@@ -514,10 +514,13 @@ export function ProfileConfirmationModal({
                       <InfoItem
                         label="その他できないプレイやオプション"
                         value={
-                          <div className="bg-muted/10 p-3 rounded-lg">
-                            <p className="text-sm whitespace-pre-wrap">
-                              {formData.estheOptions.otherNgOptions}
-                            </p>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.estheOptions.otherNgOptions.split('\n').filter(Boolean).map((option, index) => (
+                              <Badge key={index} variant="destructive">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                {option}
+                              </Badge>
+                            ))}
                           </div>
                         }
                       />

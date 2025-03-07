@@ -647,6 +647,7 @@ export function TalentForm() {
   const [newSmokingType, setNewSmokingType] = useState("");
   const [newBodyMark, setNewBodyMark] = useState("");
   const [bodyMarks, setBodyMarks] = useState<string[]>([]);
+  const [otherEstheNgOptions, setOtherEstheNgOptions] = useState<string[]>([]);
 
 
   // 既存のプロフィールデータが取得された時にフォームを更新
@@ -665,8 +666,8 @@ export function TalentForm() {
           others: [],
         },
         estheOptions: {
-          available: existingProfile.estheOptions.available || [],
-          otherNgOptions: existingProfile.estheOptions.otherNgOptions || ""
+          available: existingProfile.estheOptions?.available || [],
+          otherNgOptions: existingProfile.estheOptions?.otherNgOptions || ""
         }
       });
 
@@ -677,6 +678,7 @@ export function TalentForm() {
       setIsEstheOpen(existingProfile.hasEstheExperience || false);
       setBodyMarkDetails(existingProfile.bodyMark?.details || "");
       setBodyMarks(existingProfile.bodyMark?.others || []);
+      setOtherEstheNgOptions(existingProfile.estheOptions?.otherNgOptions?.split('\n').filter(Boolean) || []);
     }
   }, [existingProfile, form]);
 
@@ -874,6 +876,10 @@ export function TalentForm() {
       returnLocation: undefined,
       preferredLocations: [],
       ngLocations: [],
+      estheOptions: {
+        ...data.estheOptions,
+        otherNgOptions: otherEstheNgOptions.join('\n')
+      }
     };
 
     console.log('Opening confirmation modal');
@@ -911,6 +917,15 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
       form.setValue("bodyMark.others", updated);
+    }
+  };
+
+  // エステNGオプション追加ハンドラー
+  const handleAddEstheNgOption = (value: string) => {
+    if (!otherEstheNgOptions.includes(value)) {
+      const updated = [...otherEstheNgOptions, value];
+      setOtherEstheNgOptions(updated);
+      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
     }
   };
 
@@ -1454,14 +1469,31 @@ export function TalentForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>その他できないプレイやオプション</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value)}
-                              placeholder="できないプレイやオプションを入力してください"
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                              {otherEstheNgOptions.map((option, index) => (
+                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                  {option}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0 hover:bg-transparent"
+                                    onClick={() => {
+                                      const updated = otherEstheNgOptions.filter((_, i) => i !== index);
+                                      setOtherEstheNgOptions(updated);
+                                      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </Badge>
+                              ))}
+                            </div>
+                            <OtherItemInput
+                              onAdd={handleAddEstheNgOption}
+                              placeholder="できないプレイやオプションを入力"
                             />
-                          </FormControl>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
