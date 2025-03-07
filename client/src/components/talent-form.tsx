@@ -855,17 +855,18 @@ export function TalentForm() {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex-1"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onAdd();
+          }
+        }}
       />
       <Button
         type="button"
         size="sm"
-        onClick={() => {
-          if (value.trim()) {
-            onAdd();
-            onChange("");
-          }
-        }}
+        onClick={onAdd}
+        disabled={!value.trim()}
       >
         追加
       </Button>
@@ -873,30 +874,33 @@ export function TalentForm() {
   );
 
   const handleAddAllergy = () => {
-    if (newAllergy.trim() && !otherAllergies.includes(newAllergy.trim())) {
-      const updated = [...otherAllergies, newAllergy.trim()];
+    const trimmedValue = newAllergy.trim();
+    if (trimmedValue && !otherAllergies.includes(trimmedValue)) {
+      const updated = [...otherAllergies, trimmedValue];
       setOtherAllergies(updated);
       form.setValue("allergies.others", updated, { shouldValidate: true });
+      setNewAllergy("");
     }
-    setNewAllergy("");
   };
 
   const handleAddSmokingType = () => {
-    if (newSmokingType.trim() && !otherSmokingTypes.includes(newSmokingType.trim())) {
-      const updated = [...otherSmokingTypes, newSmokingType.trim()];
+    const trimmedValue = newSmokingType.trim();
+    if (trimmedValue && !otherSmokingTypes.includes(trimmedValue)) {
+      const updated = [...otherSmokingTypes, trimmedValue];
       setOtherSmokingTypes(updated);
       form.setValue("smoking.others", updated, { shouldValidate: true });
+      setNewSmokingType("");
     }
-    setNewSmokingType("");
   };
 
   const handleAddBodyMark = () => {
-    if (newBodyMark.trim() && !bodyMarks.includes(newBodyMark.trim())) {
-      const updated = [...bodyMarks, newBodyMark.trim()];
+    const trimmedValue = newBodyMark.trim();
+    if (trimmedValue && !bodyMarks.includes(trimmedValue)) {
+      const updated = [...bodyMarks, trimmedValue];
       setBodyMarks(updated);
       form.setValue("bodyMark.others", updated, { shouldValidate: true });
+      setNewBodyMark("");
     }
-    setNewBodyMark("");
   };
 
   return (
@@ -1344,6 +1348,7 @@ export function TalentForm() {
                           onClick={() => {
                             const updated = otherNgOptions.filter((_, i) => i !== index);
                             setOtherNgOptions(updated);
+                            form.setValue("ngOptions.others", updated, {shouldValidate: true})
                           }}
                         >
                           <X className="h-3 w-3" />
@@ -1500,6 +1505,7 @@ export function TalentForm() {
                             onClick={() => {
                               const updated = otherAllergies.filter((_, i) => i !== index);
                               setOtherAllergies(updated);
+                              form.setValue("allergies.others", updated, { shouldValidate: true });
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1570,6 +1576,7 @@ export function TalentForm() {
                               onClick={() => {
                                 const updated = otherSmokingTypes.filter((_, i) => i !== index);
                                 setOtherSmokingTypes(updated);
+                                form.setValue("smoking.others", updated, { shouldValidate: true });
                               }}
                             >
                               <X className="h-3 w-3" />
