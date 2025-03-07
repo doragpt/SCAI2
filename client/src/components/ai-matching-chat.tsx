@@ -286,7 +286,7 @@ export const AIMatchingChat = () => {
         content: `【現在のプロフィール】
 • お名前: ${profileData?.lastName} ${profileData?.firstName}
 • フリガナ: ${profileData?.lastNameKana} ${profileData?.firstNameKana}
-• 生年月日: ${profileData?.birthDate ? format(new Date(profileData?.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
+• 生年月日: ${user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
 
 記入したものの情報に間違いはないか確認してね！
 間違いが無ければマッチングをはじめるよ！`
@@ -348,12 +348,28 @@ export const AIMatchingChat = () => {
 
   // ピックアップ結果の表示
   const displayPickupResults = (results: MatchedJob[]) => {
-    const initialDisplay = results.slice(0, 10);
+    if (results.length === 0) {
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: `
+申し訳ございません。
+現在の条件に合う店舗が見つかりませんでした。
+
+条件を変更して再度検索してみませんか？
+例えば：
+• 希望エリアを広げてみる
+• 給与条件を調整してみる
+• 業種の選択を増やしてみる
+
+条件を変更しますか？`
+      }]);
+      return;
+    }
+
+    const initialDisplay = results.slice(0, Math.min(10, results.length));
     setMessages(prev => [...prev, {
       type: "ai",
-      content: `お待たせ！あなたに合いそうな店舗は${results.length}件程あったよ！
-
-まずは10件、リストアップするね！
+      content: `お待たせ！あなたに合いそうな店舗は${results.length}件見つかったよ！
 
 【候補店舗】
 ${initialDisplay.map((result, index) => `
