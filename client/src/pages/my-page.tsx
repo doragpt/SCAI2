@@ -10,7 +10,8 @@ import {
   Heart,
   Clock,
   Settings,
-  UserCircle
+  UserCircle,
+  FileText
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -64,24 +65,14 @@ export default function MyPage() {
     );
   }
 
-  const notices = [
-    {
-      id: 1,
-      title: "【重要】システムメンテナンスのお知らせ",
-      date: "2024/03/15",
-      type: "important",
-      content: "定期メンテナンスを実施いたします。",
-    },
-    {
-      id: 2,
-      title: "【お知らせ】新機能追加のお知らせ",
-      date: "2024/03/10",
-      type: "info",
-      content: "AIマッチング機能が追加されました。",
-    }
-  ];
-
   const quickAccessItems = [
+    {
+      title: "プロフィール確認",
+      icon: FileText,
+      href: "/talent/profile/view",
+      description: "登録情報の確認",
+      color: "bg-purple-500"
+    },
     {
       title: "プロフィール編集",
       icon: UserCircle,
@@ -102,13 +93,6 @@ export default function MyPage() {
       href: "/jobs",
       description: "新着求人をチェック",
       color: "bg-orange-500"
-    },
-    {
-      title: "キープリスト",
-      icon: Heart,
-      href: "/talent/mypage/keep-list",
-      description: "保存した求人",
-      color: "bg-red-500"
     }
   ];
 
@@ -178,42 +162,49 @@ export default function MyPage() {
               <Bell className="h-5 w-5 text-primary" />
               お知らせ
             </h2>
-            <Button variant="ghost" size="sm" className="text-primary">
-              すべて見る
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
           </div>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
-              {notices.map((notice) => (
-                <motion.div key={notice.id} variants={item}>
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Card className="cursor-pointer transition-all hover:shadow-md">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <p className={`font-medium ${notice.type === 'important' ? 'text-red-600' : 'text-primary'}`}>
-                                {notice.title}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(notice.date), 'yyyy年MM月dd日', { locale: ja })}
-                              </p>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              {applications?.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    お知らせはありません
+                  </CardContent>
+                </Card>
+              ) : (
+                applications?.map((application) => (
+                  <motion.div key={application.id} variants={item}>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">申請 #{application.id}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(application.appliedAt), 'yyyy年MM月dd日', { locale: ja })}
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">{notice.title}</h4>
-                        <p className="text-sm text-muted-foreground">{notice.content}</p>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                </motion.div>
-              ))}
+                          <Badge
+                            variant={
+                              application.status === "accepted" ? "default" :
+                              application.status === "rejected" ? "destructive" :
+                              "secondary"
+                            }
+                          >
+                            {
+                              {
+                                pending: "審査中",
+                                accepted: "承認済み",
+                                rejected: "不採用",
+                                withdrawn: "取り下げ"
+                              }[application.status]
+                            }
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
             </div>
           </ScrollArea>
         </motion.section>
