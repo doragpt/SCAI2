@@ -34,8 +34,6 @@ import {
   Clock4,
   Banknote,
   Navigation,
-  Home,
-  ImagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -84,6 +82,27 @@ export function ProfileConfirmationModal({
     </div>
   );
 
+  // 店舗情報コンポーネント
+  const StoreInfo = ({ stageName, storeName }: { stageName?: string; storeName: string }) => (
+    <div className="flex items-center gap-2">
+      <Building2 className="h-4 w-4 text-primary" />
+      <span>{storeName}{stageName && ` (${stageName})`}</span>
+    </div>
+  );
+
+  // 写メ日記リンクコンポーネント
+  const PhotoDiaryLink = ({ url, index }: { url: string; index: number }) => (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 text-sm text-primary hover:underline"
+    >
+      <LinkIcon className="h-4 w-4" />
+      <span>写メ日記 {index + 1}</span>
+    </a>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -126,6 +145,12 @@ export function ProfileConfirmationModal({
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
                         {formData.availableIds?.types?.map((id) => (
+                          <Badge key={id} variant="outline" className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                            {id}
+                          </Badge>
+                        ))}
+                        {formData.availableIds?.others?.map((id) => (
                           <Badge key={id} variant="outline" className="flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3 text-green-500" />
                             {id}
@@ -213,32 +238,14 @@ export function ProfileConfirmationModal({
                       <Badge variant={formData.canPhotoDiary ? "default" : "secondary"}>
                         {formData.canPhotoDiary ? "投稿可能" : "投稿不可"}
                       </Badge>
-                      {formData.canPhotoDiary && formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
+                      {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
                         <div className="space-y-2">
                           {formData.photoDiaryUrls.map((url, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <ImagePlus className="h-4 w-4 text-primary" />
-                              <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-primary hover:underline"
-                              >
-                                写メ日記 {index + 1}
-                              </a>
-                            </div>
+                            <PhotoDiaryLink key={index} url={url} index={index + 1} />
                           ))}
                         </div>
                       )}
                     </div>
-                  }
-                />
-                <InfoItem
-                  label="自宅待機"
-                  value={
-                    <Badge variant={formData.canHomeDelivery ? "default" : "secondary"}>
-                      {formData.canHomeDelivery ? "可能" : "不可"}
-                    </Badge>
                   }
                 />
               </div>
@@ -257,10 +264,7 @@ export function ProfileConfirmationModal({
                     value={
                       <div className="space-y-2">
                         {formData.currentStores.map((store, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-primary" />
-                            <span>{store.storeName}{store.stageName && ` (${store.stageName})`}</span>
-                          </div>
+                          <StoreInfo key={index} {...store} />
                         ))}
                       </div>
                     }
@@ -272,10 +276,7 @@ export function ProfileConfirmationModal({
                     value={
                       <div className="space-y-2">
                         {formData.previousStores.map((store, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <History className="h-4 w-4 text-primary" />
-                            <span>{store.storeName}</span>
-                          </div>
+                          <StoreInfo key={index} {...store} />
                         ))}
                       </div>
                     }
@@ -325,7 +326,7 @@ export function ProfileConfirmationModal({
                     value={
                       <div className="flex items-center gap-2">
                         <Banknote className="h-4 w-4 text-primary" />
-                        <span>{formData.desiredGuarantee.toLocaleString()}円</span>
+                        <span>{formData.desiredGuarantee}円</span>
                       </div>
                     }
                   />
@@ -540,7 +541,6 @@ export function ProfileConfirmationModal({
                           ...(formData.ngOptions.others || [])
                         ].map((option, index) => (
                           <Badge key={index} variant="destructive">
-                            <XCircle className="h-3 w-3 mr-1" />
                             {option}
                           </Badge>
                         ))}
@@ -559,7 +559,6 @@ export function ProfileConfirmationModal({
                           ...(formData.allergies.others || [])
                         ].map((allergy, index) => (
                           <Badge key={index} variant="outline">
-                            <AlertTriangle className="h-3 w-3 text-yellow-500 mr-1" />
                             {allergy}
                           </Badge>
                         ))}
@@ -568,17 +567,20 @@ export function ProfileConfirmationModal({
                   />
                 )}
 
-                {formData.smoking && formData.smoking.enabled && (
+                {formData.smoking && (
                   <InfoItem
                     label="喫煙"
                     value={
                       <div className="flex flex-wrap gap-2">
-                        {[
+                        <Badge variant={formData.smoking.enabled ? "default" : "secondary"}>
+                          <Cigarette className="h-4 w-4 mr-1" />
+                          {formData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
+                        </Badge>
+                        {formData.smoking.enabled && [
                           ...(formData.smoking.types || []),
                           ...(formData.smoking.others || [])
                         ].map((type, index) => (
                           <Badge key={index} variant="outline">
-                            <Cigarette className="h-3 w-3 mr-1" />
                             {type}
                           </Badge>
                         ))}
@@ -615,18 +617,6 @@ export function ProfileConfirmationModal({
                     }
                   />
                 )}
-              </div>
-            </section>
-            <section>
-              <SectionHeader icon={Clock} title="勤務可能時間帯" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                <InfoItem label="勤務可能時間帯" value={formData.availableTimeSlots?.join(', ') || '未設定'} />
-              </div>
-            </section>
-            <section>
-              <SectionHeader icon={Banknote} title="希望報酬" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                <InfoItem label="希望報酬" value={formData.desiredCompensation?.toLocaleString() || '未設定'} />
               </div>
             </section>
           </div>
