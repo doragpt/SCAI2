@@ -102,28 +102,28 @@ const JobCard = ({ job }: { job: Job }) => {
 
 export default function Jobs() {
   const { user } = useAuth();
-  const [location, setLocation] = useState<string | null>(null);
-  const [serviceType, setServiceType] = useState<string | null>(null);
+  const [location, setLocation] = useState<string>("all");
+  const [serviceType, setServiceType] = useState<string>("all");
   const [page, setPage] = useState(1);
   const limit = 12; // 1ページあたりの表示件数
 
   // URLパラメータからフィルター状態を復元
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const locationParam = params.get("location");
-    const serviceTypeParam = params.get("serviceType");
+    const locationParam = params.get("location") || "all";
+    const serviceTypeParam = params.get("serviceType") || "all";
     const pageParam = params.get("page");
 
-    if (locationParam) setLocation(locationParam);
-    if (serviceTypeParam) setServiceType(serviceTypeParam);
+    setLocation(locationParam);
+    setServiceType(serviceTypeParam);
     if (pageParam) setPage(parseInt(pageParam));
   }, []);
 
   // フィルター変更時にURLを更新
   useEffect(() => {
     const params = new URLSearchParams();
-    if (location) params.set("location", location);
-    if (serviceType) params.set("serviceType", serviceType);
+    if (location !== "all") params.set("location", location);
+    if (serviceType !== "all") params.set("serviceType", serviceType);
     if (page > 1) params.set("page", page.toString());
 
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
@@ -177,7 +177,7 @@ export default function Jobs() {
       <main className="container mx-auto px-4 py-20">
         {/* フィルター */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <Select value={location || "all"} onValueChange={setLocation}>
+          <Select value={location} onValueChange={setLocation}>
             <SelectTrigger>
               <SelectValue placeholder="エリアを選択" />
             </SelectTrigger>
@@ -191,7 +191,7 @@ export default function Jobs() {
             </SelectContent>
           </Select>
 
-          <Select value={serviceType || "all"} onValueChange={setServiceType}>
+          <Select value={serviceType} onValueChange={setServiceType}>
             <SelectTrigger>
               <SelectValue placeholder="業種を選択" />
             </SelectTrigger>

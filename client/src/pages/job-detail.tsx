@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { type Job } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
@@ -67,7 +66,7 @@ export default function JobDetail() {
 
   const breadcrumbItems = [
     { label: "求人一覧", href: "/jobs" },
-    { label: job.location, href: `/jobs?area=${encodeURIComponent(job.location)}` },
+    { label: job.location, href: `/jobs?location=${encodeURIComponent(job.location)}` },
     { label: job.businessName },
   ];
 
