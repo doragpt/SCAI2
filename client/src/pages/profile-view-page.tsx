@@ -12,7 +12,6 @@ import { ja } from "date-fns/locale";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { getTalentProfileQuery } from "@/lib/api/talent";
-import { apiRequest } from "@/lib/queryClient";
 
 interface UserProfile {
   id: number;
@@ -41,12 +40,21 @@ export default function ProfileViewPage() {
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
-      console.log('User profile response:', {
-        data: response,
+      const response = await fetch(`/api/user/profile`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("auth_token")}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      const data = await response.json();
+      console.log('User profile API response:', {
+        status: response.status,
+        data: data,
         timestamp: new Date().toISOString()
       });
-      return response;
+      return data;
     },
     enabled: !!user?.id,
   });
@@ -59,19 +67,23 @@ export default function ProfileViewPage() {
     refetch: refetchTalentProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: async () => {
-      const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
-      console.log('Talent profile response:', {
-        data: response,
-        timestamp: new Date().toISOString()
-      });
-      return response;
-    },
+    queryFn: getTalentProfileQuery,
     enabled: !!user?.id,
     retry: 1,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+  });
+
+  // Debug: データの状態を確認
+  console.log('Profile view state:', {
+    hasUser: !!user,
+    userId: user?.id,
+    hasUserProfile: !!userProfile,
+    hasTalentProfile: !!talentProfile,
+    userProfileData: userProfile,
+    talentProfileErrors: talentError,
+    timestamp: new Date().toISOString()
   });
 
   if (!user) {
@@ -138,7 +150,7 @@ export default function ProfileViewPage() {
       <Card>
         <ScrollArea className="h-[calc(100vh-16rem)]">
           <div className="p-6 space-y-6">
-            {/* ユーザー基本情報 */}
+            {/* 基本情報 */}
             <div>
               <h2 className="text-lg font-medium">基本情報</h2>
               <Card className="p-6 mt-4">
@@ -192,6 +204,7 @@ export default function ProfileViewPage() {
                       </Button>
                     </Link>
                   </div>
+
                   <Card className="p-6 mt-4">
                     <div className="space-y-6">
                       {/* 基本情報 */}

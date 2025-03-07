@@ -1,19 +1,21 @@
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
   try {
     console.log('Fetching talent profile:', {
       endpoint: QUERY_KEYS.TALENT_PROFILE,
+      token: !!localStorage.getItem("auth_token"),
       timestamp: new Date().toISOString()
     });
 
     const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
 
-    console.log('Talent profile fetched successfully:', {
+    console.log('Talent profile API response:', {
       hasData: !!response,
-      profileData: JSON.stringify(response), // 完全なレスポンスデータをログに出力
+      responseData: JSON.stringify(response),
       timestamp: new Date().toISOString()
     });
 
@@ -27,7 +29,7 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
   }
 };
 
-// キャッシュの更新や再取得のためのユーティリティ関数を追加
+// キャッシュの更新や再取得のためのユーティリティ関数
 export const invalidateTalentProfileCache = () => {
   const queryClient = useQueryClient();
   return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
