@@ -2,7 +2,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import type { TalentProfileData, SelectUser, Photo, JobsSearchResponse, Job } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 
-// キャッシュのキー定数
+// キャッシュのキー定数を更新
 export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
   USER: "/api/user",
@@ -124,7 +124,7 @@ async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promi
   return null;
 }
 
-// APIリクエスト関数
+// APIリクエスト関数を改善
 export async function apiRequest<T>(
   method: string,
   url: string,
@@ -352,7 +352,7 @@ export async function getSignedImageUrl(key: string): Promise<string> {
   }
 }
 
-// React Query クライアントの設定
+// React Query クライアントの設定を改善
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -15,7 +15,10 @@ export function useProfile() {
   // プロフィール更新用のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (newData: Partial<TalentProfileData>) => {
-      console.log('Updating profile with:', newData); // デバッグ用
+      console.log('Updating profile with:', {
+        data: newData,
+        timestamp: new Date().toISOString()
+      });
       return await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
     },
     onSuccess: (data) => {
