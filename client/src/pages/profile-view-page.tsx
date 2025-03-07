@@ -10,58 +10,45 @@ import { QUERY_KEYS, apiRequest } from "@/lib/queryClient";
 import { Loader2, PenSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // プロフィールデータを取得
   const {
     data: profile,
-    isLoading,
-    error,
-    refetch
+    isLoading: isProfileLoading,
+    error: profileError,
+    refetch: refetchProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: () => apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE),
     enabled: !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    retry: 1,
-    onError: (error: Error) => {
-      console.error("Profile fetch error:", {
-        error,
-        message: error.message,
-        userId: user?.id,
-        timestamp: new Date().toISOString()
-      });
-
-      // 新規ユーザーの場合は登録ページにリダイレクト
-      if (error.message.includes("新規登録が必要")) {
-        toast({
-          title: "プロフィールが未登録です",
-          description: "プロフィール登録ページに移動します",
-          variant: "default",
-        });
-        window.location.href = "/talent/register";
-        return;
-      }
-
-      // その他のエラーの場合
-      toast({
-        title: "プロフィールの取得に失敗しました",
-        description: "ページを再読み込みするか、しばらく経ってから再度お試しください。",
-        variant: "destructive",
-      });
-    },
   });
 
-  // ユーザーが認証されていない場合
+  // ユーザー基本情報を取得
+  const {
+    data: userProfile,
+    isLoading: isUserLoading,
+    error: userError
+  } = useQuery({
+    queryKey: [QUERY_KEYS.USER_PROFILE],
+    queryFn: () => apiRequest("GET", QUERY_KEYS.USER_PROFILE),
+    enabled: !!user,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+
   if (!user) {
     return <Redirect to="/auth" />;
   }
 
-  // ローディング状態の処理
-  if (isLoading) {
+  if (isProfileLoading || isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -69,8 +56,7 @@ export default function ProfileViewPage() {
     );
   }
 
-  // エラー状態の処理
-  if (error) {
+  if (profileError || userError) {
     return (
       <div className="container max-w-2xl py-8">
         <Card className="p-6">
@@ -79,7 +65,7 @@ export default function ProfileViewPage() {
             <p className="text-muted-foreground">
               プロフィールの取得中にエラーが発生しました。
             </p>
-            <Button onClick={() => refetch()}>
+            <Button onClick={() => refetchProfile()}>
               再読み込み
             </Button>
           </div>
@@ -107,7 +93,6 @@ export default function ProfileViewPage() {
     );
   }
 
-  // 正常なレンダリング
   return (
     <div className="container max-w-2xl py-8">
       <div className="flex items-center justify-between mb-6">
@@ -123,6 +108,49 @@ export default function ProfileViewPage() {
       <Card>
         <ScrollArea className="h-[calc(100vh-16rem)]">
           <div className="p-6 space-y-6">
+            {/* ユーザー基本情報 */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-medium">ユーザー基本情報</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">ニックネーム</p>
+                  <p>{userProfile?.username || "未設定"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">本名</p>
+                  <p>{userProfile?.displayName || "未設定"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">生年月日</p>
+                  <p>
+                    {userProfile?.birthDate
+                      ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
+                          locale: ja,
+                        })
+                      : "未設定"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">希望エリア</p>
+                  <div className="flex flex-wrap gap-2">
+                    {userProfile?.preferredLocations?.length > 0 ? (
+                      userProfile.preferredLocations.map((location) => (
+                        <span
+                          key={location}
+                          className="px-2 py-1 bg-muted rounded-md text-sm"
+                        >
+                          {location}
+                        </span>
+                      ))
+                    ) : (
+                      <p>未設定</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
             {/* 基本情報 */}
             <div className="space-y-4">
               <h2 className="text-lg font-medium">基本情報</h2>
