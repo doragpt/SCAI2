@@ -1,0 +1,732 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+    
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>メール通知設定｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+    
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry_list.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/question_common.css">
+
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+<body>
+    
+    
+<!-- operationId:27598E32-6DE2-4F77-94F18F91098CE616 -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class=" ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class=" ">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class=" ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" ">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class=" ">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class=" borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgba(0, 180, 0, 0.365);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/07 23:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+    
+
+    <div id="ucsContent" class="content">
+        <div id="wrap" class="blogEntry">
+            
+            <div id="ucsHeader">
+  <p id="ucsHeaderTitle">通知設定</p>
+  <ul id="ucsSubMenu">
+    <li>
+      
+      
+      
+      
+      <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?gop=newc" target="_blank" id="shop_preview_btn">お店の公開ページを見る</a>
+      
+      
+    </li>
+  </ul>
+</div>
+<div id="ucsMenu">
+  <ul>
+    <li>
+      
+      
+      <span class="lev1">トーク管理</span>
+      <ul>
+        <li>
+          <a href="/talk/list/" class="lev2 ">トーク一覧</a>
+        </li>
+      </ul>
+      
+    </li>
+    
+        
+    <li>
+      <span class="lev1">応募管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/application/" class="lev2 ">応募一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+        <li>
+      <span class="lev1">検討中管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/favoriteuser/list/" class="lev2 ">検討中ユーザー一覧</a>
+        </li>
+      </ul>
+    </li>
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    <li>
+      
+      
+            
+      
+            
+      <span class="lev1">DX管理(お試し版)</span>
+      
+      <ul>
+        
+        <li>
+          <a href="/dx_pc_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">PCデザイン編集<br>(1カラム)</a>
+        </li>
+        
+        
+        <li>
+          <a href="/dx_sp_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">SPデザイン編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxfreespacelist/" class="lev2 ">DXフリースペース</a>
+        </li>
+        
+        
+        
+        
+        <li>
+          <a href="/dxtemplateedit/" class="lev2 ">テンプレート設定</a>
+        </li>
+        
+                <li>
+          <a href="/shopcontentssort_dx_confirm/" target="_blank" class="lev2">DXページプレビュー</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxlogo/" class="lev2 ">特大ロゴ編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+
+
+    
+
+    <li>
+      <span class="lev1">店長ブログ管理</span>
+      <ul>
+        <li>
+          <a href="/blog/edit/" class="lev2 ">店長ブログを書く</a>
+        </li>
+        <li>
+          <a href="/blog/" class="lev2 ">店長ブログ編集・削除</a>
+        </li>
+        <li>
+          <a href="/blog/restore/" class="lev2 ">店長ブログ復旧</a>
+        </li>
+        <li>
+          <a href="/profile/" class="lev2 ">プロフィール編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+      
+      
+        
+          
+        
+        
+          
+        
+        
+          
+        
+      
+    
+    
+    
+    <li>
+      <span class="lev1">仕事情報管理</span>
+      <ul>
+        <li>
+          <a href="/job/" class="lev2 ">基本情報確認・編集</a>
+        </li>
+        
+                
+        
+        <li>
+          <a href="/jobsearchedit/" class="lev2 ">検索用情報確認・編集</a>
+        </li>
+        
+        
+                
+        
+        
+                
+        <li>
+          <a href="/imageedit/" class="lev2 ">画像確認・文言変更</a>
+        </li>
+                        <li>
+          <a href="/freespace/" class="lev2 ">フリースペース編集</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                            <li>
+          <a href="/privilegelist/" class="lev2 ">特典確認・編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+                <a href="/tainyu/" class="lev2 ">体験入店編集(未契約)</a>
+                
+        
+        
+        <li>
+          <a href="/dxitemlist/" class="lev2 ">Q＆A編集</a>
+        </li>
+                
+        
+        <li>
+          <a href="/drcontentslist/" class="lev2 ">編集部取材レポート</a>
+        </li>
+                
+      </ul>
+    </li>
+          
+            
+            <li>
+      <span class="lev1">デザイン管理</span>
+      <ul>
+        <li>
+          <a href="/shopcontentssort/" target="_blank" class="lev2 ">PC配置変更</a>
+        </li>
+      </ul>
+    </li>
+              
+            
+        
+    
+        
+    <li>
+      <span class="lev1">データ解析</span>
+      <ul>
+        <li>
+          <a href="/joblog/" class="lev2 ">アクセス解析</a>
+        </li>
+      </ul>
+    </li>
+        
+    <li>
+      <span class="lev1">通知設定</span>
+      <ul>
+        <li class="analysis">
+          <a href="/mailsetting/" class="lev2 active">メール通知設定</a>
+        </li>
+        <li class="analysis">
+          <a href="/sns_setting/" class="lev2 ">SNS通知設定</a>
+        </li>
+        
+        <li class="analysis">
+          <a href="/sms_setting/" class="lev2 ">SMS通知設定</a>
+        </li>
+        
+      </ul>
+    </li>
+    
+    
+    <li>
+      <span class="lev1">口コミ管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/reviewlist/" class="lev2 ">口コミ一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+        <li>
+      <span class="lev1">外部連携</span>
+      <ul>
+        <li class="analysis">
+          <a href="/twitter_setting/" class="lev2 ">Twitter連携</a>
+        </li>
+      </ul>
+    </li>
+        
+  </ul>
+</div>
+
+
+<script type="text/javascript">
+var voiceRenewEdit = document.getElementById('voicerenewedit');
+voiceRenewEdit.addEventListener("click", 
+  function() {
+    $.ajax({
+        'type' : 'POST',
+        'async': true,
+        'url'  : '/noscreen/ajax/',
+        'data' : {
+            'ajax_type' : 'voice_renew_check_regist_cnt'
+        }
+    }).done(function(data) {
+      if (data.reload == true) {
+        location.href = "/voice_renew/edit/";
+      }
+      else{
+        alert('登録上限の30 件（公開、非公開、予約含む）に達しているため新規の登録・複製はできません。登録する場合は既存の先輩ボイスを削除してください');
+      }
+    });
+});
+</script>
+
+<!--//#ucsMenu-->
+
+            
+
+            
+            <div id="ucsMainContent">
+                <div class="sorting">
+                    
+                    
+                    <h1>メール通知設定</h1>
+                    
+                </div>
+
+                <div id="subContentsArea">
+                    <div id="questionlist">
+
+                        
+                        <form name="srvEntryListForm" method="post" action="">
+
+                            <div class="questionCommonlist">
+
+                                                                
+                                
+                                <div class="infoArea">
+                                  トーク・応募・口コミが来た際に、設定したメールアドレスにお知らせします。<br>
+                                携帯の場合は予め迷惑メールの受信設定にて「<span class="red">girlsheaven-job.net</span>」をドメイン指定に加えてください。 ソフトバンクの方は「URLリンク付きメール」の設定を「受け取る」に変更してください。<br>
+                                （迷惑メール設定により通知メールが数回ブロックされると自動的に登録が解除されますので予めご了承ください。）<br>
+                                通知を停止する場合は、入力欄を空にして更新してください。
+                                </div>
+                                
+                                <table>
+                                    <tbody>
+                                      <tr class="tr01">
+                                          <th class="th01">メールアドレス1</th>
+                                          <td class="td02">
+                                              
+                                              
+                                              <input name="email_tensou" type="text" class="email_input" data-name="メールアドレス１" data-check="max100 mail" data-length="100" size="105" value=""><br>
+                                              
+                                              <span id="caution_email_tensou" class="cautionTextLine" style="display: inline;">あと100文字</span><div class="infotext">(半角英数字100文字)</div>
+                                          </td>
+                                      </tr>
+                                      <tr class="tr01">
+                                          <th class="th01">メールアドレス2</th>
+                                          <td class="td02">
+                                              <input name="email_tensou_2" type="text" class="email_input" data-name="メールアドレス２" data-check="max100 mail" data-length="100" size="105" value=""><br>
+                                              <span id="caution_email_tensou_2" class="cautionTextLine" style="display: inline;">あと100文字</span><div class="infotext">(半角英数字100文字)</div>
+                                          </td>
+                                      </tr>
+                                      <tr class="tr01">
+                                          <th class="th01">メールアドレス3</th>
+                                          <td class="td02">
+                                              <input name="email_tensou_3" type="text" class="email_input" data-name="メールアドレス３" data-check="max100 mail" data-length="100" size="105" value=""><br>
+                                              <span id="caution_email_tensou_3" class="cautionTextLine" style="display: inline;">あと100文字</span><div class="infotext">(半角英数字100文字)</div>
+                                          </td>
+                                      </tr>
+                                    </tbody>
+                                </table>
+                                <p class="btnDefaultBlock">
+                                    
+                                    <a class="btnDefault" href="javascript:void(0);" data-submit="/mailsetting/" confirm="更新してよろしいですか？" value="updateFlg:::1" data-check="">設定する</a>
+                                </p>
+                            </div>
+                        </form>
+
+                    </div><!-- //contentsForm -->
+                </div><!-- //subContentsArea -->
+
+            </div><!-- //ucsMainContent-->
+        </div><!-- //wrap-->
+    </div><!-- //ucsContent-->
+    
+
+    
+    <p id="pageTop" style="display: none;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+    
+
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>

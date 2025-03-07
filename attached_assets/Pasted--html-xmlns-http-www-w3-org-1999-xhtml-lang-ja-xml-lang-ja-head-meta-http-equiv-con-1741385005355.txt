@@ -1,0 +1,2297 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>基本情報編集｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+<link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/question_common.css">
+<link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry.css">
+<link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry_list.css">
+<link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/infochange.css">
+
+
+
+
+<script src="https://maps.googleapis.com/maps/api/js?v=3&amp;client=gme-worksjapancoltd2" type="text/javascript" charset="utf-8"></script>
+
+
+
+<script language="JavaScript">
+<!--
+    //<![CDATA[
+    function changeEllipsisFlg(ellipsisName) {
+        elListObj = eval('document.getElementById(\''+ellipsisName+'_ellipsis_flg_iconlist\')');
+        elVal     = eval('document.srvEntryListForm.'+ellipsisName+'_ellipsis_flg');
+        if(elVal.value == 1){
+            elListObj.className = 'iconNotChecked';
+            elVal.value         = 0;
+        }else{
+            elListObj.className = 'iconChecked';
+            elVal.value         = 1;
+        }
+    }
+
+    // GoogleAPIから緯度経度の取得(ルート検索用)
+    var geocoder = null;
+
+    // GoogleAPI初期化
+    // ↓2018/10/30
+    //function googlemapload() {
+    //if (GBrowserIsCompatible()) {
+    //    geocoder = new GClientGeocoder();
+    //}
+    //}
+    // ↑2018/10/30
+
+    function showAddressRoot() {
+    var str_address = '';
+    if (document.srvEntryListForm.interview_address.value){
+    str_address = document.srvEntryListForm.interview_address.value;
+    }
+    if (!str_address){
+        return;
+    }
+    // ↓2018/10/30
+    //if (geocoder) {
+    //    geocoder.getLatLng(
+    //    str_address,
+    //    function(point) {
+    //        document.srvEntryListForm.interview_latitude.value='';
+    //        document.srvEntryListForm.interview_longitude.value='';
+    //        if (point) {
+    //        var val = point + "";
+    //        val = val.match(/[0-9\.]+/g);
+    //        document.srvEntryListForm.interview_latitude.value=(val[0]+"0000000000").substr(0,10);
+    //        document.srvEntryListForm.interview_longitude.value=(val[1]+"0000000000").substr(0,10);
+    //        }
+    //    }
+    //    )
+    //}
+    var geocoder = new google.maps.Geocoder();
+    geocoder.geocode({
+        'address': str_address,
+        'region': 'jp'
+      },
+      function(results, status){
+        if(status == google.maps.GeocoderStatus.OK) {
+          if (results.length) {
+            var lat = results[0].geometry.location.lat();
+            var lng = results[0].geometry.location.lng();
+            document.srvEntryListForm.interview_latitude.value  = (lat + '0000000000').substr(0, 10);
+            document.srvEntryListForm.interview_longitude.value = (lng + '0000000000').substr(0, 10);
+          }
+        }
+      }
+    );
+    // ↑2018/10/30
+    }
+    //]]>
+    
+
+    // ↓2022/12/14
+    function Chkcount() {
+        var chk = document.getElementsByName("chk_bci[]");
+        var chksum = 0; //チェックの数のカウンタ
+        for (var i = 0; i < chk.length; i ++) {
+            if (chk[i].checked == true) { //checked == trueであればチェック有り
+                if(chk[i].value != ""){
+                    chksum++; // 未設定でなければ加算
+                }
+            }
+        }
+        // 
+        // ラジオボタンカウント処理
+        $('input[name^=chk_bci_]').each(function(){
+        if ($(this).prop('checked') == true && $(this).val() != "") {
+            chksum++; // 未設定でなければ加算
+        }
+        });
+        // 
+        var cancount = 42;
+        if ( 2 == 1) cancount = cancount + 0;
+        if ( 2 == 1) cancount = cancount + 0;
+        cancount = cancount - chksum;
+        document.getElementById("cancount").innerHTML= "あと" + cancount + "個選択可能です";
+    }
+    // ↑2022/12/14
+// -->
+</script>
+
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    <script type="text/javascript" charset="UTF-8" src="https://maps.googleapis.com/maps-api-v3/api/js/59/8/intl/ja_ALL/common.js"></script><script type="text/javascript" charset="UTF-8" src="https://maps.googleapis.com/maps-api-v3/api/js/59/8/intl/ja_ALL/util.js"></script></head>
+
+
+
+
+
+<body onload="Chkcount()">
+
+
+
+
+<!-- operationId:48D6E3AF-F4FB-4A7B-9FC7EA2EF6F1ABCC -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class=" ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" borderNone">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class="active  ">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class=" ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" ">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class=" ">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class=" borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgba(0, 180, 0, 0.443);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/07 23:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+
+
+<div id="ucsContent" class="content">
+    <div id="wrap">
+    
+    <div id="ucsHeader">
+  <p id="ucsHeaderTitle">仕事情報管理</p>
+  <ul id="ucsSubMenu">
+    <li>
+      
+      
+      
+      
+      <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?gop=newc" target="_blank" id="shop_preview_btn">お店の公開ページを見る</a>
+      
+      
+    </li>
+  </ul>
+</div>
+<div id="ucsMenu">
+  <ul>
+    <li>
+      
+      
+      <span class="lev1">トーク管理</span>
+      <ul>
+        <li>
+          <a href="/talk/list/" class="lev2 ">トーク一覧</a>
+        </li>
+      </ul>
+      
+    </li>
+    
+        
+    <li>
+      <span class="lev1">応募管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/application/" class="lev2 ">応募一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+        <li>
+      <span class="lev1">検討中管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/favoriteuser/list/" class="lev2 ">検討中ユーザー一覧</a>
+        </li>
+      </ul>
+    </li>
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    <li>
+      
+      
+            
+      
+            
+      <span class="lev1">DX管理(お試し版)</span>
+      
+      <ul>
+        
+        <li>
+          <a href="/dx_pc_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">PCデザイン編集<br>(1カラム)</a>
+        </li>
+        
+        
+        <li>
+          <a href="/dx_sp_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">SPデザイン編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxfreespacelist/" class="lev2 ">DXフリースペース</a>
+        </li>
+        
+        
+        
+        
+        <li>
+          <a href="/dxtemplateedit/" class="lev2 ">テンプレート設定</a>
+        </li>
+        
+                <li>
+          <a href="/shopcontentssort_dx_confirm/" target="_blank" class="lev2">DXページプレビュー</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxlogo/" class="lev2 ">特大ロゴ編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+
+
+    
+
+    <li>
+      <span class="lev1">店長ブログ管理</span>
+      <ul>
+        <li>
+          <a href="/blog/edit/" class="lev2 ">店長ブログを書く</a>
+        </li>
+        <li>
+          <a href="/blog/" class="lev2 ">店長ブログ編集・削除</a>
+        </li>
+        <li>
+          <a href="/blog/restore/" class="lev2 ">店長ブログ復旧</a>
+        </li>
+        <li>
+          <a href="/profile/" class="lev2 ">プロフィール編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+      
+      
+        
+          
+        
+        
+          
+        
+        
+          
+        
+      
+    
+    
+    
+    <li>
+      <span class="lev1">仕事情報管理</span>
+      <ul>
+        <li>
+          <a href="/job/" class="lev2 active">基本情報確認・編集</a>
+        </li>
+        
+                
+        
+        <li>
+          <a href="/jobsearchedit/" class="lev2 ">検索用情報確認・編集</a>
+        </li>
+        
+        
+                
+        
+        
+                
+        <li>
+          <a href="/imageedit/" class="lev2 ">画像確認・文言変更</a>
+        </li>
+                        <li>
+          <a href="/freespace/" class="lev2 ">フリースペース編集</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                            <li>
+          <a href="/privilegelist/" class="lev2 ">特典確認・編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+                <a href="/tainyu/" class="lev2 ">体験入店編集(未契約)</a>
+                
+        
+        
+        <li>
+          <a href="/dxitemlist/" class="lev2 ">Q＆A編集</a>
+        </li>
+                
+        
+        <li>
+          <a href="/drcontentslist/" class="lev2 ">編集部取材レポート</a>
+        </li>
+                
+      </ul>
+    </li>
+          
+            
+            <li>
+      <span class="lev1">デザイン管理</span>
+      <ul>
+        <li>
+          <a href="/shopcontentssort/" target="_blank" class="lev2 ">PC配置変更</a>
+        </li>
+      </ul>
+    </li>
+              
+            
+        
+    
+        
+    <li>
+      <span class="lev1">データ解析</span>
+      <ul>
+        <li>
+          <a href="/joblog/" class="lev2 ">アクセス解析</a>
+        </li>
+      </ul>
+    </li>
+        
+    <li>
+      <span class="lev1">通知設定</span>
+      <ul>
+        <li class="analysis">
+          <a href="/mailsetting/" class="lev2 ">メール通知設定</a>
+        </li>
+        <li class="analysis">
+          <a href="/sns_setting/" class="lev2 ">SNS通知設定</a>
+        </li>
+        
+        <li class="analysis">
+          <a href="/sms_setting/" class="lev2 ">SMS通知設定</a>
+        </li>
+        
+      </ul>
+    </li>
+    
+    
+    <li>
+      <span class="lev1">口コミ管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/reviewlist/" class="lev2 ">口コミ一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+        <li>
+      <span class="lev1">外部連携</span>
+      <ul>
+        <li class="analysis">
+          <a href="/twitter_setting/" class="lev2 ">Twitter連携</a>
+        </li>
+      </ul>
+    </li>
+        
+  </ul>
+</div>
+
+
+<script type="text/javascript">
+var voiceRenewEdit = document.getElementById('voicerenewedit');
+voiceRenewEdit.addEventListener("click", 
+  function() {
+    $.ajax({
+        'type' : 'POST',
+        'async': true,
+        'url'  : '/noscreen/ajax/',
+        'data' : {
+            'ajax_type' : 'voice_renew_check_regist_cnt'
+        }
+    }).done(function(data) {
+      if (data.reload == true) {
+        location.href = "/voice_renew/edit/";
+      }
+      else{
+        alert('登録上限の30 件（公開、非公開、予約含む）に達しているため新規の登録・複製はできません。登録する場合は既存の先輩ボイスを削除してください');
+      }
+    });
+});
+</script>
+
+<!--//#ucsMenu-->
+
+    
+
+    
+    <div id="ucsMainContent">
+        <div class="sorting">
+        <h1>基本情報編集</h1>
+        </div>
+
+        
+        
+        
+                
+        
+        
+        
+        <div id="subContentsArea">
+        <div id="questionlist">
+            <form name="srvEntryListForm" class="profileForm infoChangeForm" method="post" action="">
+            <div id="questionlist">
+                                                <div class="infoArea">
+                更新ツールには対応しておりません。使用すると文字化け等が発生する場合が有ります。
+                ページ読み込み中に更新を行うとデータが消去する場合がございますので全て表示されてから更新を行ってください。 <br>
+                ※メールアドレス登録時の注意点<br>
+                コピペをした場合は、半角スペース等の余分な文字が入っていないか確認をしてください。一部の携帯でメールを送信する際にアドレスが入力されない状態になります
+                </div>
+                <table style="table-layout: fixed;">
+                <tbody>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">店名</th>
+                    <td class="td02" style="word-break: break-all;"><dl>シーパラダイス</dl></td>
+                    </tr>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">業種（検索用）</th>
+                    <td class="td02"><dl>デリヘル</dl></td>
+                    </tr>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">業種（表示用）</th>
+                    <td class="td02"><dl>デリヘル</dl></td>
+                    </tr>
+
+                    
+                    
+                    
+                    
+                                        
+                    <tr class="tr01 infoBasicTime">
+                    
+                    
+                    <th class="th01 tdTittleJob">キャッチコピー</th>
+                                            <td class="td02">🌈🫧西船橋素人清楚系デリヘル〜西船橋シーパラダイス〜 🐬女性店長のお店で安心安全女性第一をモットーにしっかりサポート🌟トップクラスのバック率で1日4万円保証付き🐬完全個室待機🫧🌈</td>
+                                        
+                    </tr>
+                    <tr class="tr01 infoBasicTreatment">
+                    
+                    
+                    <th class="th01 tdTittleJob">仕事情報</th>
+                                            <td class="td02">🐬🫧急遽の当日面接、体験入店でも、<br>迅速な対応☆迅速な在籍作成が可能！！🦭💘<br>そのため当日急な入店でも最低5万円以上稼いで頂く自信がございます！💰🫧🐬<br><br>❤️‍🔥エリアTOPの高額バック率7割+ボーナスあり！❤️‍🔥🥰<br><br>🐬女性店長在籍❣👩<br>🍍皆様を全力でサポートいたします！☀️🥹<br><br>🐟男性講習一切なし！🙅‍♀️<br><br>🐟真面目に頑張る女の子は、とことん優遇される各種制度あり！🥹💗<br><br>🐟広範囲無料でお送りします！🚗💨✨<br><br>🐟クリーンな法人営業なので各種手続きがスムーズ！🏄💨✨<br><br>🐟完全自由出勤なので、合間時間に働けます！🔆🎀<br><br>🐟集客率が良いので短時間で稼げます！⛵️✨💰<br><br>🐟完全個室待機！🧚🏻‍♀🏖<br>🌴待機時間もゆったり自分の時間を過ごせます！🦭🍹<br><br>🐟綺麗と評判の個人寮も完備💗お店がお金を負担します❣🍭<br>🌴お部屋の中にお風呂やお手洗いございます✨🛀<br><br>🐟もちろん罰金なんて一切ございません❣🙅‍♀️<br><br>💁‍♀🫶ご質問等はお気軽にお問い合わせください❣🫶✉📱📞🙋‍♀️<br><br>雑費は一律５％！<br>働く女の子によっては雑費カットしちゃいます！✂💰💰🥺</td>
+                                        
+                    </tr>
+                    
+                    
+                                        
+
+                    
+                    
+                                        
+                    <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>画像横文言</th>
+                    <td class="td02">
+                        <div style="padding: 0px 10px 0px;clear:both;">
+                        
+                        
+                        <textarea name="pic_main_comment" id="MpPicMainComment" cols="100" rows="20" label="#caution_pic_main_comment" placeholder="ここに画像横文言を入力してください(900文字以内)" data-check="required  maxomitbr900" data-name="画像横文言">よろしくお願いいたします！
+まずはお問い合わせだけでも構いません！
+いつでもどこでもお待ちしております！</textarea>
+                        
+                        </div>
+                        <span id="caution_pic_main_comment" class="cautionTextLine"></span><div class="infotext">(900文字)</div>
+                    </td>
+                    </tr>
+                                        <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>電話番号1</th>
+                    <td class="td02">
+                        <select name="tel_type_1" data-check="required" data-name="電話番号1" label="#caution_tel_1">
+                        <option value="0" selected="">通常電話</option>
+                        <option value="1">フリーダイヤル</option>
+                        <option value="2">フリーコール</option>
+                        </select>
+                        <div id="caution_tel_1" class="cautionTextMultiLine"></div><br>
+                                                                                                <input type="text" name="tel_1_1" value="047" size="6" data-check="required max5 number" label="#caution_tel_1_1" data-name="電話番号1（第1項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_1_2" value="402" size="6" data-check="required max5 number" label="#caution_tel_1_2" data-name="電話番号1（第2項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_1_3" value="2615" size="6" data-check="required max5 number" label="#caution_tel_1_3" data-name="電話番号1（第3項目）" style="ime-mode: disabled;">[半角数値]<br>
+                        <p class="comentArea" style="font-size:10px;">電話番号1,2,3,4 応募情報に表示される番号になります。</p>
+                        <div id="caution_tel_1_1" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_1_2" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_1_3" class="cautionTextMultiLine"></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">電話番号2</th>
+                    <td class="td02">
+                        <select name="tel_type_2" id="tel_type_2" data-check="required:child:tel_2_1:::tel_2_2:::tel_2_3" label="#caution_tel_2" data-name="電話番号2">
+                        <option value="" selected=""></option>
+                        <option value="0">通常電話</option>
+                        <option value="1">フリーダイヤル</option>
+                        <option value="2">フリーコール</option>
+                        </select>
+                        <div id="caution_tel_2" class="cautionTextMultiLine"></div><br>
+                                                                                                <input type="text" name="tel_2_1" id="tel_2_1" value="" size="6" data-check="required:parent:tel_type_2 max5 number" label="#caution_tel_2_1" data-name="電話番号2（第1項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_2_2" id="tel_2_2" value="" size="6" data-check="required:parent:tel_type_2 max5 number" label="#caution_tel_2_2" data-name="電話番号2（第2項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_2_3" id="tel_2_3" value="" size="6" data-check="required:parent:tel_type_2 max5 number" label="#caution_tel_2_3" data-name="電話番号2（第3項目）" style="ime-mode: disabled;">[半角数値]<br>
+                        <div id="caution_tel_2_1" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_2_2" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_2_3" class="cautionTextMultiLine"></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">電話番号3</th>
+                    <td class="td02">
+                        <select name="tel_type_3" id="tel_type_3" data-check="required:child:tel_3_1:::tel_3_2:::tel_3_3" label="#caution_tel_3" data-name="電話番号3">
+                        <option value="" selected=""></option>
+                        <option value="0">通常電話</option>
+                        <option value="1">フリーダイヤル</option>
+                        <option value="2">フリーコール</option>
+                        </select>
+                        <div id="caution_tel_3" class="cautionTextMultiLine"></div><br>
+                                                                                                <input type="text" name="tel_3_1" id="tel_3_1" value="" size="6" data-check="required:parent:tel_type_3 max5 number" label="#caution_tel_3_1" data-name="電話番号3（第1項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_3_2" id="tel_3_2" value="" size="6" data-check="required:parent:tel_type_3 max5 number" label="#caution_tel_3_2" data-name="電話番号3（第2項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_3_3" id="tel_3_3" value="" size="6" data-check="required:parent:tel_type_3 max5 number" label="#caution_tel_3_3" data-name="電話番号3（第3項目）" style="ime-mode: disabled;">[半角数値]<br>
+                        <div id="caution_tel_3_1" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_3_2" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_3_3" class="cautionTextMultiLine"></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">電話番号4</th>
+                    <td class="td02">
+                        <select name="tel_type_4" id="tel_type_4" data-check="required:child:tel_4_1:::tel_4_2:::tel_4_3" label="#caution_tel_4" data-name="電話番号4">
+                        <option value="" selected=""></option>
+                        <option value="0">通常電話</option>
+                        <option value="1">フリーダイヤル</option>
+                        <option value="2">フリーコール</option>
+                        </select>
+                        <div id="caution_tel_4" class="cautionTextMultiLine"></div><br>
+                                                                                                <input type="text" name="tel_4_1" id="tel_4_1" value="" size="6" data-check="required:parent:tel_type_4 max5 number" label="#caution_tel_4_1" data-name="電話番号4（第1項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_4_2" id="tel_4_2" value="" size="6" data-check="required:parent:tel_type_4 max5 number" label="#caution_tel_4_2" data-name="電話番号4（第2項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="tel_4_3" id="tel_4_3" value="" size="6" data-check="required:parent:tel_type_4 max5 number" label="#caution_tel_4_3" data-name="電話番号4（第3項目）" style="ime-mode: disabled;">[半角数値]<br>
+                        <div id="caution_tel_4_1" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_4_2" class="cautionTextMultiLine"></div>
+                        <div id="caution_tel_4_3" class="cautionTextMultiLine"></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">エリア</th>
+                    <td class="td02">船橋</td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">住所</th>
+                    <td class="td02">
+                        <select name="ken_jis">
+                        <option value=""></option>
+                                                                            <option value="1">北海道</option>
+                                                    <option value="2">青森県</option>
+                                                    <option value="3">岩手県</option>
+                                                    <option value="4">宮城県</option>
+                                                    <option value="5">秋田県</option>
+                                                    <option value="6">山形県</option>
+                                                    <option value="7">福島県</option>
+                                                    <option value="8">茨城県</option>
+                                                    <option value="9">栃木県</option>
+                                                    <option value="10">群馬県</option>
+                                                    <option value="11">埼玉県</option>
+                                                    <option value="12" selected="">千葉県</option>
+                                                    <option value="13">東京都</option>
+                                                    <option value="14">神奈川県</option>
+                                                    <option value="15">新潟県</option>
+                                                    <option value="16">富山県</option>
+                                                    <option value="17">石川県</option>
+                                                    <option value="18">福井県</option>
+                                                    <option value="19">山梨県</option>
+                                                    <option value="20">長野県</option>
+                                                    <option value="21">岐阜県</option>
+                                                    <option value="22">静岡県</option>
+                                                    <option value="23">愛知県</option>
+                                                    <option value="24">三重県</option>
+                                                    <option value="25">滋賀県</option>
+                                                    <option value="26">京都府</option>
+                                                    <option value="27">大阪府</option>
+                                                    <option value="28">兵庫県</option>
+                                                    <option value="29">奈良県</option>
+                                                    <option value="30">和歌山県</option>
+                                                    <option value="31">鳥取県</option>
+                                                    <option value="32">島根県</option>
+                                                    <option value="33">岡山県</option>
+                                                    <option value="34">広島県</option>
+                                                    <option value="35">山口県</option>
+                                                    <option value="36">徳島県</option>
+                                                    <option value="37">香川県</option>
+                                                    <option value="38">愛媛県</option>
+                                                    <option value="39">高知県</option>
+                                                    <option value="40">福岡県</option>
+                                                    <option value="41">佐賀県</option>
+                                                    <option value="42">長崎県</option>
+                                                    <option value="43">熊本県</option>
+                                                    <option value="44">大分県</option>
+                                                    <option value="45">宮崎県</option>
+                                                    <option value="46">鹿児島県</option>
+                                                    <option value="47">沖縄県</option>
+                                                                        </select><br>
+                        <textarea name="address" cols="100" rows="5" data-check="max300" data-name="住所" label="#caution_address">船橋市西船橋</textarea><br>
+                        <span id="caution_address" class="cautionTextLine"></span><div class="infotext">(300文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">地区・最寄り</th>
+                    <td class="td02">
+                        <textarea name="moyorieki" cols="100" rows="3" data-check="max150" data-name="地区・最寄り" label="#caution_moyorieki">西船橋駅周辺</textarea><br>
+                        <span id="caution_moyorieki" class="cautionTextLine"></span><div class="infotext">(150文字)</div>
+                    </td>
+                    </tr>
+
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">面接場所住所</th>
+                    <td class="td02">
+                        <textarea name="interview_address" id="interview_address" cols="100" rows="5" data-length="300" label="#caution_interview_address" data-check="max300" placeholder="ここに面接場所住所を入力してください(300文字以内)" data-name="面接場所住所"></textarea><br>
+                        <span id="caution_interview_address" class="cautionTextLine" style="display: inline;">あと300文字</span><div class="infotext">(300文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob">面接場所緯度・経度</th>
+                    <td class="td02">
+                        <div style="clear: both;">
+                        緯度：<input type="text" name="interview_latitude" id="interview_latitude" value="" maxlength="100" label="#caution_interview_latitude" data-check="max100 numeric" data-name="面接場所緯度" size="20" style="ime-mode: disabled;"><br>
+                        <span id="caution_interview_latitude" class="cautionTextLine"></span><div class="infotext"></div>
+                        </div>
+                        <div style="clear: both;">
+                        経度：<input type="text" name="interview_longitude" id="interview_longitude" value="" maxlength="100" label="#caution_interview_longitude" data-check="max100 numeric" data-name="面接場所経度" size="20" style="ime-mode: disabled;"><br>
+                        <span id="caution_interview_longitude" class="cautionTextLine"></span><div class="infotext"></div>
+                        </div>
+                        <div style="clear: both;">
+                        <input name="" value="面接場所住所からデータを取得" onclick="showAddressRoot();" class="submit" type="button">
+                        </div>
+                    </td>
+                    </tr>
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">電話番号</th>
+                    <td class="td02">
+                                                                                                <input type="text" name="column_tel_1" value="047" size="6" data-check="max5 number" label="#caution_column_tel_1" data-name="電話番号（第1項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="column_tel_2" value="402" size="6" data-check="max5 number" label="#caution_column_tel_2" data-name="電話番号（第2項目）" style="ime-mode: disabled;">-
+                        <input type="text" name="column_tel_3" value="2615" size="6" data-check="max5 number" label="#caution_column_tel_3" data-name="電話番号（第3項目）" style="ime-mode: disabled;">[半角数値]<br>
+                        <p class="comentArea" style="font-size:10px;">スマホ、ガラケー版お店ページの「電話する」のボタンを押した際に表示される番号になります。</p>
+                        <div id="caution_column_tel_1" class="cautionTextMultiLine"></div>
+                        <div id="caution_column_tel_2" class="cautionTextMultiLine"></div>
+                        <div id="caution_column_tel_3" class="cautionTextMultiLine"></div>
+                    </td>
+                    </tr>
+
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">SNSID</th>
+                    <td class="td02">
+                        <input type="text" name="sns_id" value="seapara3210" data-check="maxbytes20" data-name="SNS_ID" label="#caution_sns_id" size="80"><br>
+                        <span id="caution_sns_id" class="cautionTextLine"></span><div class="infotext">(半角英数字20文字)</div>
+                    </td>
+                    </tr>
+
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">SNSテキスト</th>
+                    <td class="td02">
+                        <input type="text" name="sns_text" value="ラインなら24時間受付中♪" data-check="max20" data-name="SNSテキスト" label="#caution_sns_text" size="80"><br>
+                        <span id="caution_sns_text" class="cautionTextLine"></span><div class="infotext">(20文字)</div>
+                    </td>
+                    </tr>
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">SNS友達追加URL</th>
+                    <td class="td02">
+                        
+                        
+                        <input type="text" name="sns_link" value="http://line.me/ti/p/mvm02arXvb" data-check="url max250 ngurl:::^http[s]?:\/\/(dev)?(www|smart)\.girlsheaven-job\.net\/[0-9]+\/(group\/)?[A-Za-z0-9_-]+\/jump\/?\?type=sns" data-name="SNSリンク" label="#caution_sns_link" size="80" style="ime-mode: disabled;"><br>
+                        
+                        <span id="caution_sns_link" class="cautionTextLine"></span><div class="infotext">(半角英数字250文字)</div>
+                    </td>
+                    </tr>
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">気になる追加テキスト</th>
+                    <td class="td02">
+                        <input type="text" name="kininaru_text" value="追加登録ありがとうございます☆ぜひお気軽にお問い合わせください♪" data-check="max100" data-name="気になる追加テキスト" label="#caution_kininaru_text" size="80"><br>
+                        <span id="caution_kininaru_text" class="cautionTextLine"></span><div class="infotext">(100文字)</div>
+                    </td>
+                    </tr>
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">受付時間</th>
+                    <td class="td02">
+                        <input type="text" name="uketukejikan" value="12:00~翌4:00" data-check="max75" data-name="受付時間" label="#caution_uketukejikan" size="80"><br>
+                        <span id="caution_uketukejikan" class="cautionTextLine"></span><div class="infotext">(75文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">担当者氏名</th>
+                    <td class="td02">
+                        <input type="text" name="tantou_name" value="店長：小松(♀)" data-check="max75" label="#caution_tantou_name" data-name="担当者氏名" size="80"><br>
+                        <span id="caution_tantou_name" class="cautionTextLine"></span><div class="infotext">(75文字)</div>
+                    </td>
+                    </tr>
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    
+                    
+                    <th class="th01 tdTittleJob">PCオフィシャルサイト</th>
+                    
+                    <td class="td02">
+                        
+                        
+                        
+                        
+                        
+                        
+                        https://sea-para.com/
+                        
+                    </td>
+                    </tr>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    
+                    
+                    <th class="th01 tdTittleJob">PCオフィシャル求人サイト</th>
+                    
+                    <td class="td02">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </td>
+                    </tr>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    
+                      
+                      <th class="th01 tdTittleJob">スマホオフィシャルサイト</th>
+                    
+                      <td class="td02">
+                        
+                        
+                        
+                        
+                        
+                        
+                        https://sea-para.com/
+                        
+                      </td>
+                    </tr>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    
+                      
+                      <th class="th01 tdTittleJob">スマホオフィシャル求人サイト</th>
+                    
+                      <td class="td02">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    
+                                     
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス１</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_1" value="contact@c-para.com" label="#caution_oubo_disp_email_1" data-check="max150 mail" size="80" data-name="メールアドレス１" style="ime-mode: disabled;"><br>
+                        <span id="caution_oubo_disp_email_1" class="cautionTextLine"></span><div class="infotext">(半角英数字150文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス１但し書き</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_str_1" value="" label="#caution_oubo_disp_email_str_1" data-check="max75" data-name="メールアドレス１但し書き" size="80"><br>
+                        <span id="caution_oubo_disp_email_str_1" class="cautionTextLine"></span><div class="infotext">(75文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス２</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_2" value="" label="#caution_oubo_disp_email_2" data-check="max150 mail" data-name="メールアドレス２" size="80" style="ime-mode: disabled;"><br>
+                        <span id="caution_oubo_disp_email_2" class="cautionTextLine"></span><div class="infotext">(半角英数字150文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス２但し書き</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_str_2" value="" label="#caution_oubo_disp_email_str_2" data-check="max75" data-name="メールアドレス２但し書き" size="80"><br>
+                        <span id="caution_oubo_disp_email_str_2" class="cautionTextLine"></span><div class="infotext">(75文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス３</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_3" value="" label="#caution_oubo_disp_email_3" data-check="max150 mail" data-name="メールアドレス３" size="80" style="ime-mode: disabled;"><br>
+                        <span id="caution_oubo_disp_email_3" class="cautionTextLine"></span><div class="infotext">(半角英数字150文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">メールアドレス３但し書き</th>
+                    <td class="td02">
+                        <input type="text" name="oubo_disp_email_str_3" value="" label="#caution_oubo_disp_email_str_3" data-check="max75" data-name="メールアドレス３但し書き" size="80"><br>
+                        <span id="caution_oubo_disp_email_str_3" class="cautionTextLine"></span><div class="infotext">(75文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">応募資格</th>
+                    <td class="td02">
+                        <textarea name="oubo_jyoken_str" cols="100" rows="5" data-length="300" label="#caution_oubo_jyoken_str" placeholder="ここに応募資格を入力してください(300文字以内)" data-check="max300" data-name="応募資格">🐬18歳(高校生不可) ～ 25歳まで 🐬
+└未経験者大歓迎 💗</textarea><br>
+                        <span id="caution_oubo_jyoken_str" class="cautionTextLine" style="display: inline;">あと265文字</span><div class="infotext">(300文字)</div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">勤務期間</th>
+                    <td class="td02">
+                        <textarea name="kikan_str" cols="100" rows="5" data-length="300" label="#caution_kikan_str" placeholder="ここに勤務期間を入力してください(300文字以内)" data-check="max300" data-name="勤務期間">🐬完全自由出勤！
+☀️貴女のご都合にお合わせ致します！🫧🍹</textarea><br>
+                        <span id="caution_kikan_str" class="cautionTextLine" style="display: inline;">あと268文字</span><div class="infotext">(300文字)<span class="recommendText">※10文字以上推奨</span></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">給与</th>
+                                        <td class="td02" style="word-break: break-all;">
+                        🏝💰日給35,000円以上💰🏝<br>🍹💗完全全額日払い制💗🍹<br>🌻🐋バック率70％🐋🌻<br>🌺罰金・ノルマ無し☆🌺<br><br><br>🌟💰一定数のポイントでの高額スライドバック💰🌟<br><br>💗通常バック💗<br>🐠60分　10000円<br>🦑80分　12000円<br>🐧100分　15000円<br>🐪🐬120分 18000円<br>🦈140分 21000円<br>🐳180分　27000円<br><br>💗ランク１💗<br>🐠60分　13000円<br>🦑80分　15000円<br>🐧100分　18000円<br>🐬120分 21000円<br>🦈140分 24000円<br>🐳180分　30000円<br><br>💗ランク２💗<br>🐠60分　14000円<br>🦑80分　16000円<br>🐧100分　19000円<br>🐬120分 22000円<br>🦈140分 25000円<br>🐳180分　31000<br><br>💗ランク３💗<br>🐠60分　15000円<br>🦑80分　17000円<br>🐧100分　20000円<br>🐬120分 23000円<br>🦈140分 26000円<br>🐳180分　32000円<br><br>💖本指名　バック　3000～7000円<br>💖30分　延長バック　5000円<br><br>🌟　🐬　🌟　🐬　🌟　🐬　🌟　🐬　🌟　🐬　🌟<br><br>🐬💗女の子の給与例をちょっとだけ紹介💗🐬<br><br>🌈👑ひめかさん👑🌈<br>☀️「とにかく稼ぎたい！🥺」<br>🐡1日平均約7万円<br>🐚【週５×9時間】<br>🐟月間収入　✨143万円✨💰<br><br>🌈👑さなさん👑🌈<br>☀️「プライベート重視で稼いでいます😳」<br>🐡1日平均約6万円<br>🐚【週２×6時間】<br>🐟月間収入　✨48万円✨💰<br><br>🌈👑るあさん👑🌈<br>☀️「身バレ対策してしっかり稼ぐ！🤫」<br>🐡1日平均約8万円<br>🐚【週1×8時間】<br>🐟月間収入　✨33万円✨💰
+                    </td>
+                                        </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">勤務日</th>
+                    <td class="td02">
+                        <textarea name="kinmu_keitai_str" cols="100" rows="5" data-length="300" label="#caution_kinmu_keitai_str" placeholder="ここに勤務日を入力してください(300文字以内)" data-check="max300" data-name="勤務日">🐬当店は完全自由出勤制をとっております。
+🌴あなたの希望に沿ったシフトで大丈夫です☆
+</textarea><br>
+                        <span id="caution_kinmu_keitai_str" class="cautionTextLine" style="display: inline;">あと255文字</span><div class="infotext">(300文字)<span class="recommendText">※10文字以上推奨</span></div>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">勤務時間</th>
+                    <td class="td02">
+                        <textarea name="kinmu_kyujitu_str" cols="100" rows="5" data-length="300" label="#caution_kinmu_kyujitu_str" placeholder="ここに勤務時間を入力してください(300文字以内)" data-check="max300" data-name="勤務時間">🐬12:00~翌4:00までのお好きな時間🌟🐬
+🌴完全自由シフト制なのでお好きな時間でOKです！💘</textarea><br>
+                        <span id="caution_kinmu_kyujitu_str" class="cautionTextLine" style="display: inline;">あと246文字</span><div class="infotext">(300文字)<span class="recommendText">※10文字以上推奨</span></div>
+                    </td>
+                    </tr>
+                    
+                    
+                    
+                    
+                                        
+                    <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob">POINT</th>
+                    <td class="td02">
+                        
+                        
+                                                <div style="padding: 0px 10px 0px;clear:both;">
+                        
+                                                
+                            
+                            
+                            
+                            
+                            <textarea name="kinmu_bikou_str" id="MpKinmuBikouStr" cols="100" rows="20" label="#caution_kinmu_bikou_str" data-check="maxbytes3900:1300" data-name="POINT" data-byteslength="3900:1300" data-escape="1" placeholder="ここにPOINTを入力してください(全角1300文字・半角3900文字)">🐬🫧初心者・未経験者の女の子でも分かりやすくお仕事をお教えいたしますので
+あっという間に出勤するたびに稼げる環境を自分で手に入れることが可能です！🐬🫧
+
+🍭ワンランク上のお客様が集うお店だからこそ、初心者・未経験者の方にも安全・安心にお仕事が出来ます。
+
+🎀その日の給料はその日に全額支給！！💰🌈
+
+✨このお仕事が初めてのあなたにも、
+安心していただける自信があります。
+そして、他のお店でお仕事をされた事のある方も、
+今までのお店との違いを実感して頂けるはずです。✨
+
+
+
+🌈☀️🌊POINT🌊☀️🌈
+🐠ヘブンネットランキング上位店！
+🦀完全日払い制度
+🐟完全自由出勤
+🐙送迎あり♪
+🐬バック率7割！
+🦭体験入店OK！
+🐊罰金・ノルマ無し
+🦈Wワーク歓迎！
+🐋短期OK！
+
+🌻🌺その他、気になることはぜひお問い合わせください♪🌺🌻
+
+💁‍♀️ご応募お待ちしております！💖🧚🏻‍♀
+</textarea><br>
+                            
+                            
+                        
+                                                
+                        </div>
+                        <span id="caution_kinmu_bikou_str" class="cautionTextLine" style="display: inline;">あと全角878文字(半角2636文字)</span><div class="infotext">(全角1300文字・半角3900文字)<span class="recommendText">※300文字以上推奨</span></div>
+                    </td>
+                    </tr>
+                                        <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob">こだわり</th>
+                    <td class="td02">
+                        <dd>
+                                                                                                                                                                                                                                                                                <u>働く環境で探す</u><br>
+                                                                                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="1" checked="" disabled="">
+                                                            交通費支給
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="2" checked="" disabled="">
+                                                            車送迎
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="3" checked="" disabled="">
+                                                            食事付き
+                                                                                                                                                                                                                                                                                                                        <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="4" checked="" disabled="">
+                                                            制服貸与
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="5" checked="" disabled="">
+                                                            託児所
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="6" checked="" disabled="">
+                                                            駐車場あり
+                                                                                                                                                                                                                                                            
+                                                                                                                                                <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="7" checked="" disabled="">
+                                                            寮完備
+                                                                                                                                                                                                                                                                                                                        <br><br>                                <u>働くスタイルで探す</u><br>
+                                                                                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="8" checked="" disabled="">
+                                                            掛持ＯＫ
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="9" checked="" disabled="">
+                                                            個室待機
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="10" checked="" disabled="">
+                                                            自宅待機可
+                                                                                                                                                                                                                                                                                                                        <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="11" checked="" disabled="">
+                                                            自由出勤
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="12" checked="" disabled="">
+                                                            体験入店
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="13" checked="" disabled="">
+                                                            短期ＯＫ
+                                                                                                                                                                                                                                                                                                                        <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="14" checked="" disabled="">
+                                                            未経験歓迎
+                                                                                                                                                                                                                                                                                                                        <br><br>                                <u>収入で探す</u><br>
+                                                                                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="15" checked="" disabled="">
+                                                            ノルマなし
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="16" checked="" disabled="">
+                                                            ボーナスあり
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="17" checked="" disabled="">
+                                                            マスコミ手当あり
+                                                                                                                                                                                                                                                                                                                        <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="18" checked="" disabled="">
+                                                            日払い
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="19" checked="" disabled="">
+                                                            罰金ナシ
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="20" checked="" disabled="">
+                                                            保証制度
+                                                                                                                                                                                                                                                                                                                        <br><br>                                <u>安心で探す</u><br>
+                                                                                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="21" checked="" disabled="">
+                                                            アリバイ対策
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="22" disabled="">
+                                                            <font color="#c0c0c0">モニタリング可能</font>
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="23" checked="" disabled="">
+                                                            出張面接
+                                                                                                                                                                                                                                                                                                                        <br>                                                                                    <input type="checkbox" name="chk_kibou_kodawari_id" value="24" disabled="">
+                                                            <font color="#c0c0c0">女性店長</font>
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="25" checked="" disabled="">
+                                                            衛生対策あり
+                                                                                                                                                                                                                                                                                                                                                                                                            <input type="checkbox" name="chk_kibou_kodawari_id" value="26" checked="" disabled="">
+                                                            生理休暇
+                                                                                                                                                                                                </dd>
+                    </td>
+                    </tr>
+                    <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob">状態</th>
+                    
+                    
+                    <td class="td02">非表示</td>
+                    
+                    </tr>
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">大エリア</th>
+                    <td class="td02">千葉県</td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">中エリア</th>
+                    <td class="td02">船橋・市川・浦安</td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">小エリア</th>
+                    <td class="td02">船橋</td>
+                    </tr>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        
+                            
+                        
+                    
+                    
+                    
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">第１業種</th>
+                    <td class="td02">デリヘル
+                        </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">第２業種</th>
+                    <td class="td02">スタンダードデリヘル
+                        </td>
+                    </tr>
+                    <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob">業態(待遇)</th>
+                    <td class="td02"><span id="caution_display" class="cautionText" style="float:right;"><br></span>
+                    <font color="red"><div id="cancount">あと0個選択可能です</div></font>
+                        <dd>
+                                                                                                                        
+                                                
+                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                                                                                                            
+                            
+                                                                                                                                                                                                                                                                                                                                                                            
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                            <u>面接から入店前まで</u><br>
+                                                                                                                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="1" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="1" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="1">見学のみOK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="2" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="2" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="2">体験入店OK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="3" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="3" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="3">店外面接OK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="4" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="4">
+                                
+                                                                
+                                    <label class="category" for="4">面接交通費支給</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="5" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="5" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="5">友達と面接可</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="88" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="88">
+                                
+                                                                
+                                    <label class="category" for="88">オンライン面接○</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="6" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="6" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="6">出張面接○</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="7" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="7" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="7">写メ面接○</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="8" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="8">
+                                
+                                                                
+                                    <label class="category" for="8">採用率50%</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="9" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="9" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="9">採用率70%</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="10" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="10">
+                                
+                                                                
+                                    <label class="category" for="10">採用率90%</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="91" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="91">
+                                
+                                                                
+                                    <label class="category" for="91">採用率99%</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="92" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="92">
+                                
+                                                                
+                                    <label class="category" for="92">入店特典あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br><br>                                <u>自分プランで働く</u><br>
+                                                                                                                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="11" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="11" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="11">自由出勤</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="12" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="12" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="12">週1～2日</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="13" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="13">
+                                
+                                                                
+                                    <label class="category" for="13">週3～4日</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="14" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="14">
+                                
+                                                                
+                                    <label class="category" for="14">週5日以上</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="15" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="15" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="15">土日のみOK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="16" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="16">
+                                
+                                                                
+                                    <label class="category" for="16">1日2時間</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="17" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="17" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="17">1日5時間</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="18" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="18" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="18">短期OK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="19" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="19">
+                                
+                                                                
+                                    <label class="category" for="19">1週間以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="20" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="20">
+                                
+                                                                
+                                    <label class="category" for="20">1ヶ月以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="21" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="21">
+                                
+                                                                
+                                    <label class="category" for="21">3ヶ月以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="22" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="22">
+                                
+                                                                
+                                    <label class="category" for="22">6ヶ月以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="23" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="23">
+                                
+                                                                
+                                    <label class="category" for="23">要相談</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br><br>                                <u>お給料目安</u><br>
+                                                                                                                                                                                                                    
+                                
+                                                                                                <input type="radio" id="24" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="24">
+                                
+                                <label class="category" for="24">日給15,000円～20,000円可</label>
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                
+                                                                                                <input type="radio" id="25" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="25">
+                                
+                                <label class="category" for="25">日給20,000円～30,000円可</label>
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                
+                                                                                                <input type="radio" id="26" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="26">
+                                
+                                <label class="category" for="26">日給30,000円～40,000円可</label>
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                
+                                                                                                <input type="radio" id="27" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="27">
+                                
+                                <label class="category" for="27">日給40,000円～50,000円可</label>
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                
+                                                                                                <input type="radio" id="28" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="28">
+                                
+                                <label class="category" for="28">日給50,000円～60,000円可</label>
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                
+                                
+                                                                                                <input type="radio" id="29" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="29" checked="checked">
+                                
+                                <label class="category" for="29">日給60,000円以上可</label>
+                                                                
+                                
+                                <input type="radio" id="unset_3" name="chk_bci_3[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value=""><label class="category" for="unset_3">未設定</label>
+                                
+                                                                                                                                                                                                                                                                                                    
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br><br>                                <u>お給料+α</u><br>
+                                                                                                                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="85" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="85">
+                                
+                                                                
+                                    <label class="category" for="85">バック率50%以上</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="30" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="30" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="30">バック率60%以上</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="31" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="31" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="31">バック率70%以上</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="32" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="32">
+                                
+                                                                
+                                    <label class="category" for="32">バック率80%以上</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="33" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="33" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="33">保証制度あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="34" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="34">
+                                
+                                                                
+                                    <label class="category" for="34">入店祝い金あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="35" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="35" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="35">完全日払い</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="36" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="36">
+                                
+                                                                
+                                    <label class="category" for="36">交通費支給</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="39" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="39" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="39">ボーナスあり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="40" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="40">
+                                
+                                                                
+                                    <label class="category" for="40">マスコミ手当</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="41" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="41" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="41">指名料バック</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="93" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="93" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="93">オプションバックあり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="94" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="94">
+                                
+                                                                
+                                    <label class="category" for="94">資格制度あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br><br>                                <u>こだわり条件で探す</u><br>
+                                                                                                                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="42" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="42" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="42">送りあり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="43" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="43" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="43">迎えあり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="44" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="44" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="44">無料駐車場あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="45" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="45" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="45">駅から徒歩5分以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="46" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="46" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="46">駅から徒歩10分以内</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="47" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="47" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="47">掛け持ちOK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="48" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="48" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="48">講習なし</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="49" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="49" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="49">マニュアル講習</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="52" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="52" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="52">女性店長</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="53" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="53">
+                                
+                                                                
+                                    <label class="category" for="53">イケメン従業員</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="54" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="54" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="54">衛生対策あり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="55" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="55" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="55">生理休暇</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="56" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="56">
+                                
+                                                                
+                                    <label class="category" for="56">食事付き</label>
+                                                                                                                                                                                                                                                                                                                                                                                            
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="57" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="57">
+                                
+                                                                
+                                    <label class="category" for="57">寮完備</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="58" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="58">
+                                
+                                                                
+                                    <label class="category" for="58">託児所完備</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="59" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="59">
+                                
+                                                                
+                                    <label class="category" for="59">託児所紹介可能</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="60" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="60">
+                                
+                                                                
+                                    <label class="category" for="60">制服貸与</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="61" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="61">
+                                
+                                                                
+                                    <label class="category" for="61">事前モニターチェック可能</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="62" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="62" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="62">個室待機</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="63" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="63">
+                                
+                                                                
+                                    <label class="category" for="63">自宅待機</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="64" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="64">
+                                
+                                                                
+                                    <label class="category" for="64">待機方法自由</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="66" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="66" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="66">アリバイ対策対応可能</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="67" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="67" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="67">即日勤務OK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="95" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="95" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="95">女性スタッフ(在駐)</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="96" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="96" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="96">女性口コミあり</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br><br>                                <u>タイプ別で探す</u><br>
+                                                                                                                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="68" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="68" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="68">未経験者歓迎</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="69" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="69" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="69">経験者歓迎</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="70" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="70">
+                                
+                                                                
+                                    <label class="category" for="70">人妻・主婦歓迎</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="71" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="71">
+                                
+                                                                
+                                    <label class="category" for="71">妊娠線・手術痕OK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="72" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="72" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="72">大学生歓迎</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="73" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="73">
+                                
+                                                                
+                                    <label class="category" for="73">ドMな方</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="74" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="74">
+                                
+                                                                
+                                    <label class="category" for="74">ドSな方</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="75" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="75">
+                                
+                                                                
+                                    <label class="category" for="75">巨乳</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="76" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="76">
+                                
+                                                                
+                                    <label class="category" for="76">貧乳</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="77" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="77" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="77">タトゥーOK</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="78" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="78" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="78">20代前半</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="79" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="79" checked="checked">
+                                
+                                                                
+                                    <label class="category" for="79">20代後半</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="80" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="80">
+                                
+                                                                
+                                    <label class="category" for="80">30代前半</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="81" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="81">
+                                
+                                                                
+                                    <label class="category" for="81">30代後半</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="82" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="82">
+                                
+                                                                
+                                    <label class="category" for="82">40代</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="83" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="83">
+                                
+                                                                
+                                    <label class="category" for="83">50代</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="84" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="84">
+                                
+                                                                
+                                    <label class="category" for="84">60代</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                
+                                                                
+                                    <input type="checkbox" id="97" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="97">
+                                
+                                                                
+                                    <label class="category" for="97">細身の方</label>
+                                                                                                                                                                                                                                                                        
+                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                            <br>                                                                                                                    
+                                                                
+                                    <input type="checkbox" id="98" name="chk_bci[]" onclick="Chkcount()" data-check="entrylimit42" data-name="業態" label="#caution_display" value="98">
+                                
+                                                                
+                                    <label class="category" for="98">ぽっちゃりの方</label>
+                                                                                                                                                                                                            </dd>
+                    </td>
+                    </tr>
+                    
+                </tbody></table>
+                <p class="btnDefaultBlock">
+                <a class="btnDefault" href="javascript:void(0);" data-submit="" confirm="更新してよろしいですか？" value="updateFlg:::1" data-check="">変更する</a>
+                </p>
+            </div>
+            </form>
+        </div>
+        </div>
+            </div>
+    
+
+    </div>
+</div>
+
+
+<p id="pageTop" style="display: block;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+
+
+
+
+<script language="JavaScript">
+<!--
+function checkInputAfterFunction(target) {
+var ret = true;
+    if(!isItemNullOrEmpty("interview_address") || !isItemNullOrEmpty("interview_latitude") || !isItemNullOrEmpty("interview_longitude")){
+        if(isItemNullOrEmpty("interview_address")){
+            showErrorText($('#interview_address'), $('#interview_address').data('name') + "を正しく入力してください。");
+            ret = false;
+        }
+        if(isItemNullOrEmpty("interview_latitude")){
+            showErrorText($('#interview_latitude'), $('#interview_latitude').data('name') + "を正しく入力してください。");
+            ret = false;
+        }
+        if(isItemNullOrEmpty("interview_longitude")){
+            showErrorText($('#interview_longitude'), $('#interview_longitude').data('name') + "を正しく入力してください。");
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
+//-->
+</script>
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>

@@ -1,0 +1,160 @@
+<html lang="ja"><head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    
+    
+    
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/contents_sort.css" media="screen,print">
+    
+    
+        
+        <title>コンテンツ｜ガールズヘブン マネージャー管理</title>
+    <script src="https://manager.girlsheaven-job.net/js/jquery-1.8.3.min.js"></script>
+    <script src="https://manager.girlsheaven-job.net/js/jquery-ui-1.10.3.custom.js"></script>
+    <script src="https://manager.girlsheaven-job.net/js/contents_sort.js?cache01=20250308070626"></script>
+    <script src="https://manager.girlsheaven-job.net/js/ipop.js"></script>
+    
+        
+    
+        
+    <script type="text/javascript">
+    var $i = jQuery.noConflict();
+    $i('document').ready(function(){
+        $i('iframe').load(function(){
+            if (typeof $i(this).attr('height') == 'undefined') {
+                $i(this).height(window.innerHeight - 5);
+            }
+        });
+        $i('iframe').triggerHandler('load');
+
+        //--------------------------------------------------------------------------------------
+        //IE7（互換モード）の場合にヘッダにメッセージ表示
+        //--------------------------------------------------------------------------------------
+        var userAgent = window.navigator.userAgent.toLowerCase();
+        var appVersion = window.navigator.appVersion.toLowerCase();
+
+        if (userAgent.indexOf('msie') != -1 && appVersion.indexOf('msie 7.') != -1) {
+          $i('[id=globalHeaderMsg]').show();
+        } else {
+          $i('[id=globalHeaderMsg]').hide();
+        }
+    });
+    </script>
+  
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+  <body>
+  
+    
+    
+
+    
+    
+    
+    
+    
+    <form method="POST" action="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=4" name="preForm" target="shoptop">
+    
+    
+    
+      <input type="hidden" id="category_sort_list" name="category_sort_list" value="">
+    </form>
+  
+    
+
+    
+    
+    
+    
+
+    <iframe src="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=4" id="shoptop" name="shoptop" style="width: 100%; border: none; height: 914px;"></iframe>
+
+    
+    
+
+
+    <div id="globalHeaderMsg" style="display:none; border:solid 4px #FF0000; text-align:left; width:650px; margin:0px 0px 30px 0px; padding: 30px 10px; float:right;">
+        
+        
+        <span style="font-weight: bold; font-size: 16px;">コンテンツが正しく表示されないお客様は互換表示設定を解除して下さい。</span><br>
+        
+        ■互換表示設定解除方法<br>
+        &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+        &nbsp;&nbsp;②互換表示設定をクリック<br>
+        &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+
+  
+
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>

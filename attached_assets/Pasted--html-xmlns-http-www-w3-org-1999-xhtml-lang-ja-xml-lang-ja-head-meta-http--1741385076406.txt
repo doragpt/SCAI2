@@ -1,0 +1,1338 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+    
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>口コミ一覧｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+    
+
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/question_common.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry_list.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/reviewlist.css">
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/searchlist.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/reviewlist.js"></script>
+
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+
+
+<body>
+    
+    
+<!-- operationId:828EB7B3-62A5-49F6-9158EC6439D6F000 -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class=" ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class=" ">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class=" ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" ">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class=" borderNone">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class="active  borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgb(0, 180, 0);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/07 23:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+    
+
+    <div id="ucsContent" class="content">
+        <div id="wrap">
+            
+            <div id="ucsHeader">
+  <p id="ucsHeaderTitle">口コミ管理</p>
+  <ul id="ucsSubMenu">
+    <li>
+      
+      
+      
+      
+      <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?gop=newc" target="_blank" id="shop_preview_btn">お店の公開ページを見る</a>
+      
+      
+    </li>
+  </ul>
+</div>
+<div id="ucsMenu">
+  <ul>
+    <li>
+      
+      
+      <span class="lev1">トーク管理</span>
+      <ul>
+        <li>
+          <a href="/talk/list/" class="lev2 ">トーク一覧</a>
+        </li>
+      </ul>
+      
+    </li>
+    
+        
+    <li>
+      <span class="lev1">応募管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/application/" class="lev2 ">応募一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+        <li>
+      <span class="lev1">検討中管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/favoriteuser/list/" class="lev2 ">検討中ユーザー一覧</a>
+        </li>
+      </ul>
+    </li>
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    <li>
+      
+      
+            
+      
+            
+      <span class="lev1">DX管理(お試し版)</span>
+      
+      <ul>
+        
+        <li>
+          <a href="/dx_pc_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">PCデザイン編集<br>(1カラム)</a>
+        </li>
+        
+        
+        <li>
+          <a href="/dx_sp_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">SPデザイン編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxfreespacelist/" class="lev2 ">DXフリースペース</a>
+        </li>
+        
+        
+        
+        
+        <li>
+          <a href="/dxtemplateedit/" class="lev2 ">テンプレート設定</a>
+        </li>
+        
+                <li>
+          <a href="/shopcontentssort_dx_confirm/" target="_blank" class="lev2">DXページプレビュー</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxlogo/" class="lev2 ">特大ロゴ編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+
+
+    
+
+    <li>
+      <span class="lev1">店長ブログ管理</span>
+      <ul>
+        <li>
+          <a href="/blog/edit/" class="lev2 ">店長ブログを書く</a>
+        </li>
+        <li>
+          <a href="/blog/" class="lev2 ">店長ブログ編集・削除</a>
+        </li>
+        <li>
+          <a href="/blog/restore/" class="lev2 ">店長ブログ復旧</a>
+        </li>
+        <li>
+          <a href="/profile/" class="lev2 ">プロフィール編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+      
+      
+        
+          
+        
+        
+          
+        
+        
+          
+        
+      
+    
+    
+    
+    <li>
+      <span class="lev1">仕事情報管理</span>
+      <ul>
+        <li>
+          <a href="/job/" class="lev2 ">基本情報確認・編集</a>
+        </li>
+        
+                
+        
+        <li>
+          <a href="/jobsearchedit/" class="lev2 ">検索用情報確認・編集</a>
+        </li>
+        
+        
+                
+        
+        
+                
+        <li>
+          <a href="/imageedit/" class="lev2 ">画像確認・文言変更</a>
+        </li>
+                        <li>
+          <a href="/freespace/" class="lev2 ">フリースペース編集</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                            <li>
+          <a href="/privilegelist/" class="lev2 ">特典確認・編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+                <a href="/tainyu/" class="lev2 ">体験入店編集(未契約)</a>
+                
+        
+        
+        <li>
+          <a href="/dxitemlist/" class="lev2 ">Q＆A編集</a>
+        </li>
+                
+        
+        <li>
+          <a href="/drcontentslist/" class="lev2 ">編集部取材レポート</a>
+        </li>
+                
+      </ul>
+    </li>
+          
+            
+            <li>
+      <span class="lev1">デザイン管理</span>
+      <ul>
+        <li>
+          <a href="/shopcontentssort/" target="_blank" class="lev2 ">PC配置変更</a>
+        </li>
+      </ul>
+    </li>
+              
+            
+        
+    
+        
+    <li>
+      <span class="lev1">データ解析</span>
+      <ul>
+        <li>
+          <a href="/joblog/" class="lev2 ">アクセス解析</a>
+        </li>
+      </ul>
+    </li>
+        
+    <li>
+      <span class="lev1">通知設定</span>
+      <ul>
+        <li class="analysis">
+          <a href="/mailsetting/" class="lev2 ">メール通知設定</a>
+        </li>
+        <li class="analysis">
+          <a href="/sns_setting/" class="lev2 ">SNS通知設定</a>
+        </li>
+        
+        <li class="analysis">
+          <a href="/sms_setting/" class="lev2 ">SMS通知設定</a>
+        </li>
+        
+      </ul>
+    </li>
+    
+    
+    <li>
+      <span class="lev1">口コミ管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/reviewlist/" class="lev2 active">口コミ一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+        <li>
+      <span class="lev1">外部連携</span>
+      <ul>
+        <li class="analysis">
+          <a href="/twitter_setting/" class="lev2 ">Twitter連携</a>
+        </li>
+      </ul>
+    </li>
+        
+  </ul>
+</div>
+
+
+<script type="text/javascript">
+var voiceRenewEdit = document.getElementById('voicerenewedit');
+voiceRenewEdit.addEventListener("click", 
+  function() {
+    $.ajax({
+        'type' : 'POST',
+        'async': true,
+        'url'  : '/noscreen/ajax/',
+        'data' : {
+            'ajax_type' : 'voice_renew_check_regist_cnt'
+        }
+    }).done(function(data) {
+      if (data.reload == true) {
+        location.href = "/voice_renew/edit/";
+      }
+      else{
+        alert('登録上限の30 件（公開、非公開、予約含む）に達しているため新規の登録・複製はできません。登録する場合は既存の先輩ボイスを削除してください');
+      }
+    });
+});
+</script>
+
+<!--//#ucsMenu-->
+
+            
+
+            
+            <form name="srvEntryListForm" method="post">
+                <div id="ucsMainContent">
+                    <div class="sorting">
+                        <h1>口コミ一覧</h1>
+                        <div class="posiAB">
+                            
+                            <ul>
+                                                                <li class="active">新しい順</li>                                                                <li><a href="javascript:void(0);" id="js-sort_asc">古い順</a></li>                                                            </ul>
+                            
+                            
+                            <select id="js-row-count" name="js-row-count" class="sortingSelect">
+                                                                <option value="10" selected="">10件表示</option>
+                                                                <option value="30">30件表示</option>
+                                                                <option value="50">50件表示</option>
+                                                                <option value="100">100件表示</option>
+                                                            </select>
+                            
+                        </div>
+                    </div>
+
+                    
+                                        
+
+                    <div id="subContentsArea">
+                        <div id="reviewList">
+                            <div class="searchForm">
+                                <p class="searchReadText">下記フォームに検索したい内容を入力し、検索するを押すことで関連する口コミを表示することができます。</p>
+                                <p class="searchFormText"><input type="text" class="searchFormInput" name="inputKeyword" size="40" maxlength="20" placeholder="ここに入力してください" value="" data-name="検索条件" data-check="max20" onkeydown="if(event.keyCode == 13 &amp;&amp; !doSearch()) return false;"></p>
+                                <a class="btnDefault" href="javascript:void(0);" onclick="doSearch();">検索する</a>
+                                <span id="caution_inputKeyword" class="cautionTextButtonRight"></span>
+                            </div>
+
+                            
+                                <div class="common-globalPager">
+    <div class="pt01">
+    <ol>
+
+    
+    
+                    <li><em>1</em></li>
+                                <li><a href="/reviewlist/" value="2">2</a></li>
+                                        <li><a href="/reviewlist/" value="3">3</a></li>
+                                        <li><a href="/reviewlist/" value="4">4</a></li>
+                                        <li><a href="/reviewlist/" value="5">5</a></li>
+                                        <li><a href="/reviewlist/" value="6">6</a></li>
+                                        <li><a href="/reviewlist/" value="7">7</a></li>
+                                        <li><a href="/reviewlist/" value="8">8</a></li>
+                                        <li><a href="/reviewlist/" value="9">9</a></li>
+                
+                    <span>...</span>
+                <span><li><a href="/reviewlist/" value="19">19</a></li></span>
+    
+            <li class="next"><a href="/reviewlist/" value="2">次へ</a></li>
+    
+            <p>（1～10件/183件中）</p>
+        </ol>
+    </div>
+    </div>
+
+                            
+
+                            <div id="jobentrylist">
+                                <table class="fix reviewTable">
+                                    <thead>
+                                        <tr class="tr01">
+                                            <th class="th01 reviewDay">投稿日</th>
+                                            <th class="th01 reviewCategory">カテゴリ</th>
+                                            <th class="th01 reviewScore">評価点</th>
+                                            <th class="th01 reviewStatus" rowspan="2">状態</th>
+                                        </tr>
+                                        <tr class="tr01">
+                                            <th class="th01 reviewComment" colspan="2">良い点</th>
+                                            <th class="th01 reviewComment">改善要望</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                                                                                                    
+                                        <tr class="tr01 " data-id="364835">
+                                            
+                                            <td class="td02 reviewDay">2023年09月25日 20:00</td>
+
+                                            
+                                            <td class="td02 reviewCategory">給与/報酬/待遇</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="364835" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="364835" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_364835" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="364835">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>頑張れば頑張るほどお給料が上がるシステムがすごく良くやる気になれます！<br>あとどのくらい頑張れば翌月のお給料が上がるかも相談に乗ってくれてありがたいです。<br>先月は惜しくも3桁いけなかったので今月こそはいけるように頑張ります！！</span>
+                                                </div>
+                                                                                                                                                                                            <div class="good_rep">
+                                                    <p style="display:none;">【お店からの返信】</p>
+                                                    <span></span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="364835" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="362317">
+                                            
+                                            <td class="td02 reviewDay">2023年09月17日 23:30</td>
+
+                                            
+                                            <td class="td02 reviewCategory">通勤環境</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="362317" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="362317" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_362317" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="362317">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>西船橋が色んな電車が通っていて、通いやすい！<br>事務所も車ですぐの場所にあるしコンビニも近いから嬉しい。</span>
+                                                </div>
+                                                                                                                                                                                            <div class="good_rep">
+                                                    <p style="display:none;">【お店からの返信】</p>
+                                                    <span></span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="362317" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="359253">
+                                            
+                                            <td class="td02 reviewDay">2023年09月10日 11:00</td>
+
+                                            
+                                            <td class="td02 reviewCategory">客質/客層</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="359253" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="359253" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_359253" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="359253">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>お客さんの質はかなり良い方だと思う<br>会員の人が多く本指率が高くなるから嬉しい😍<br>良い人も多いと思うので安心！</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます♪
+<br>当店は8年の中でキャスト様は勿論お客様とも良好な関係を築き上げてまいりましたので
+<br>優良会員様も多く連日沢山のお問い合わせを頂けます♪
+<br>また本指名が返しやすいお店でもあると思うので安心してお仕事しやすくもなります♪
+<br>貴方らしさを最大限に出し自分らしく無理のないペースでお仕事して頂けますと幸いです♡</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="359253" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="357328">
+                                            
+                                            <td class="td02 reviewDay">2023年09月04日 01:00</td>
+
+                                            
+                                            <td class="td02 reviewCategory">通勤環境</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="357328" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="357328" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_357328" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="357328">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>終電が無くなっても送りがあるのが嬉しい。<br>少し遠くに住んでいても送ってくれる。終電を気にしながら働かなくて良いから、ラスト枠にお客様が来ても嫌な気分にならない。</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます◎
+<br>当店では深夜帯でも働いて頂きやすいように送迎を出させて頂いております！
+<br>また営業時間も12時〜翌4時と始発も出ているお時間ですのでご自身の都合の良い時間帯でお仕事して頂けます♪
+<br>送迎エリアにつきましては誠に申し訳御座いませんが送りが出せないエリアもございますので面接時やお問い合わせ時にご相談頂ければと思います♪
+<br>
+<br>店長</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="357328" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="357326">
+                                            
+                                            <td class="td02 reviewDay">2023年09月03日 23:45</td>
+
+                                            
+                                            <td class="td02 reviewCategory">給与/報酬/待遇</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="357326" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="357326" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_357326" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="357326">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>お給料がどうしたら上がるか、明確な条件があるのがやる気に繋がります🙂<br>待機室が二種類あって、個室でも大部屋でも過ごせるのがありがたいです！</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます◎
+<br>当店ではコースバックに加えて女性の頑張りがお給料に反映されるシステムを導入しておりますので
+<br>努力がしっかりとお給料として返ってきます♪
+<br>最大で60分17000円バックの女性も多数在籍中でして決して難しい条件は無いので
+<br>どこのお店さんよりもしっかり稼いで頂ける環境を体感して頂きたいです(/ω＼)
+<br>待機場も女性が過ごしやすい環境になるようにこれからもしていきたいので足りないもの等ございましたらお気軽にお伝えください♪
+<br>今後とも宜しくお願い致します♪
+<br>
+<br>店長</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="357326" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="357300">
+                                            
+                                            <td class="td02 reviewDay">2023年09月03日 21:03</td>
+
+                                            
+                                            <td class="td02 reviewCategory">人間関係</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="357300" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="357300" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_357300" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="357300">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>スタッフの皆さんがとても優しくて、働きやすいよう沢山動いてくれるので、安心して働けます！☺️<br>店長さんが女性の方なので、同じ目線に立ってお仕事の相談やプライベートのことも相談に乗ってくれるので働きやすい環境だと思います！<br>お客さんも皆優しくて変な人も少ないです。</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます◎
+<br>当店は安心安全、女性第一をモットーに万全なサポート体制を整えておりますので経験者、未経験者問わず安心して働いて頂ける環境かと思います♪些細な事でもお話しいただけるのはとても嬉しいのでこれからもお話して頂きたいです♪
+<br>今後とも宜しくお願い致します(^^♪
+<br>
+<br>店長</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="357300" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="342677">
+                                            
+                                            <td class="td02 reviewDay">2023年07月25日 12:40</td>
+
+                                            
+                                            <td class="td02 reviewCategory">待機環境</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="342677" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="342677" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_342677" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="342677">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>個室待機で待機中もストレスないですね(*´▽｀*)<br>他の子とかは事務所のそふぁに座ったりとかそれぞれ好きな場所で待機してます(●´ω｀●)</span>
+                                                </div>
+                                                                                                                                                                                            <div class="good_rep">
+                                                    <p style="display:none;">【お店からの返信】</p>
+                                                    <span></span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="342677" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="342676">
+                                            
+                                            <td class="td02 reviewDay">2023年07月25日 12:38</td>
+
+                                            
+                                            <td class="td02 reviewCategory">人間関係</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="342676" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="342676" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_342676" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="342676">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>まずスタッフさんが優しいです(=ﾟωﾟ)ﾉ<br>女性店長の小松さんも私たちに親身になって励ましてくれたり支えてくれるので<br>がんばろー！って思えるパワーになってます😳</span>
+                                                </div>
+                                                                                                                                                                                            <div class="good_rep">
+                                                    <p style="display:none;">【お店からの返信】</p>
+                                                    <span></span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="342676" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="319951">
+                                            
+                                            <td class="td02 reviewDay">2023年05月25日 12:00</td>
+
+                                            
+                                            <td class="td02 reviewCategory">待機環境</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">90点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="319951" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="319951" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_319951" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="319951">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>パーテーションで区切られているから、待機中は自分の時間を過ごせる<br>おやつが置いてあるから小腹が空いたときにうれしい！</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます！
+<br>過ごしやすい待機環境を常に更新させていただきます！
+<br>おやつは飽きないラインナップになるように努めます♪</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="319951" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span>パーテーションの布が薄くて、待機中に隣の女の子とたまに目が合うと、ちょっと気まずくなるときがあるところ</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="bad_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>貴重なご意見ありがとうございます！
+<br>しっかりと参考にさせて頂き改善したいと思うので少しだけお時間ください('◇')ゞ
+<br>今後ともよろしくお願い致します♪</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="319951" data-type="2" value="返信">
+                                                                                        </td>
+                                        </tr>
+                                                                                                                    
+                                        <tr class="tr01 " data-id="314500">
+                                            
+                                            <td class="td02 reviewDay">2023年05月08日 21:18</td>
+
+                                            
+                                            <td class="td02 reviewCategory">給与/報酬/待遇</td>
+
+                                            
+                                            <td class="td02 reviewScore">
+                                                <span class="scoreText">100点</span>
+                                            </td>
+
+                                            
+                                            <td class="td02 reviewStatus" rowspan="2">
+                                                <div class="inner">
+                                                     
+                                                     
+                                                     <input type="button" name="button_disp" value="表示" data-id="314500" data-value="1" disabled=""><br><br>
+                                                     
+                                                     <input type="button" name="button_hide" value="非表示" data-id="314500" data-value="9">
+                                                     <img class="loading" src="https://manager.girlsheaven-job.net/img/loading.gif">
+                                                     
+                                                     <input type="hidden" name="status_flg" id="status_314500" value="1">
+                                                     
+                                                 </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="tr01  reviewComment" data-id="314500">
+                                            
+                                            <td class="td02 reviewComment" colspan="2">
+                                                <div class="good_com">
+                                                    <p>【良い点】</p>
+                                                    <span>予想以上に忙しくて驚きましたが、とても満足出来ています。<br>この時期にこれだけお仕事があって、安定して稼げるので本当にシーパラダイスに来て良かったです(^-^)<br>スタッフさんもいつも気にかけてくれてとても安心できます！</span>
+                                                </div>
+                                                                                                                                                                                                                                                                                                <div class="good_rep">
+                                                    <p style="">【お店からの返信】</p>
+                                                    <span>クチコミ投稿ありがとうございます！
+<br>当店は有料会員様も多く連日しっかり稼いで頂くことが可能です♪
+<br>一緒に目標金額を達成できるように頑張りましょうね♪</span>
+                                                </div>
+                                                <input type="button" class="open_edit_reply" data-id="314500" data-type="1" value="返信">
+                                                                                        </td>
+                                            <td class="td02 reviewComment">
+                                                <div class="bad_com">
+                                                    <p>【改善要望】</p>
+                                                    <span></span>
+                                                </div>
+                                                                                        </td>
+                                        </tr>
+                                                                        </tbody>
+                                </table>
+                            </div>
+
+                            
+                                <div class="common-globalPager">
+    <div class="pt01">
+    <ol>
+
+    
+    
+                    <li><em>1</em></li>
+                                <li><a href="/reviewlist/" value="2">2</a></li>
+                                        <li><a href="/reviewlist/" value="3">3</a></li>
+                                        <li><a href="/reviewlist/" value="4">4</a></li>
+                                        <li><a href="/reviewlist/" value="5">5</a></li>
+                                        <li><a href="/reviewlist/" value="6">6</a></li>
+                                        <li><a href="/reviewlist/" value="7">7</a></li>
+                                        <li><a href="/reviewlist/" value="8">8</a></li>
+                                        <li><a href="/reviewlist/" value="9">9</a></li>
+                
+                    <span>...</span>
+                <span><li><a href="/reviewlist/" value="19">19</a></li></span>
+    
+            <li class="next"><a href="/reviewlist/" value="2">次へ</a></li>
+    
+            <p>（1～10件/183件中）</p>
+        </ol>
+    </div>
+    </div>
+
+                            
+
+                        </div><!-- //reviewList -->
+                    </div><!-- //subContentsArea -->
+                </div><!-- //ucsMainContent-->
+                <input type="hidden" name="keyword" value="">
+                <input type="hidden" name="currentPageNo" value="">
+            </form>
+            
+        </div><!-- //wrap-->
+    </div><!-- //ucsContent-->
+
+    
+    <p id="pageTop" style="display: none;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+    
+
+    
+    <link rel="stylesheet" type="text/css" href="https://manager.girlsheaven-job.net/css/jquery_ui.css?cache01=20141023113813">
+<script type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js?cache01=20141023113813"></script>
+<link rel="stylesheet" type="text/css" href="https://manager.girlsheaven-job.net/css/edit_review_reply.css?cache01=20191001095128">
+<script type="text/javascript" src="https://manager.girlsheaven-job.net/js/edit_review_reply.js?cache01=20191001095129"></script>
+<input type="hidden" id="edit_review_id" name="edit_review_id" value="">
+
+
+
+
+
+<div class="ui-dialog ui-widget ui-widget-content ui-corner-all edit_review" tabindex="-1" role="dialog" aria-labelledby="ui-id-1" style="display: none; outline: 0px; z-index: 1000;"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span id="ui-id-1" class="ui-dialog-title">お店からの返信編集</span><a href="#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick"></span></a></div><div id="edit_reply_container" class="ui-dialog-content ui-widget-content">
+    <div class="reply_box">
+        <div id="reply_msg"></div>
+
+        <p class="comment_title">【良い点】</p>
+        <div id="target_comment"></div>
+
+        <div class="input_box">
+            <p class="reply_title">【お店からの返信】</p>
+            <textarea id="edit_reply" class="edit_reply" label="#caution_edit_reply" data-check="max500" data-name="返信内容" data-length="500"></textarea>
+            <div class="ipt_msg"><span id="caution_edit_reply" class="cautionTextLine" style="display: inline;">あと500文字</span><div class="infotextib">(500文字)</div></div>
+        </div>
+
+        <div class="button_block">
+            <a href="javascript:void(0);" class="btnDefault close_edit_reply">閉じる</a>
+            <a href="javascript:void(0);" class="btnDefault update_reply">更新</a>
+            <div id="reply_loading" style="display:none;">
+                <img src="https://manager.girlsheaven-job.net/img/loading.gif">
+            </div>
+        </div>
+    </div>
+    <div class="error_box">
+        <div class="error_msg">アプリケーションエラーが発生しました。管理者にお問い合わせください。</div>
+        <a href="javascript:void(0);" class="btnDefault close_edit_reply">閉じる</a>
+    </div>
+</div></div><style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>
