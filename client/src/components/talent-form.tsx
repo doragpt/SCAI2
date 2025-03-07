@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus, Eye, Save } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -20,6 +19,29 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
+import { ProfileConfirmationModal } from "./profile-confirmation-modal";
+import {
+  allergyTypes,
+  smokingTypes,
+  cupSizes,
+  faceVisibilityTypes,
+  commonNgOptions,
+  idTypes,
+  prefectures,
+  estheOptions,
+  photoTags,
+  type TalentProfileData,
+  type Photo,
+  talentProfileSchema,
+} from "@shared/schema";
+import { calculateAge } from "@/utils/date";
+import { useAuth } from "@/hooks/use-auth";
+import {Textarea} from "@/components/ui/textarea"
+import React from 'react';
 
 // Store type definitions
 type CurrentStore = {
@@ -564,9 +586,6 @@ export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [showDraftSavedToast, setShowDraftSavedToast] = useState(false);
-  const [draftTimer, setDraftTimer] = useState<NodeJS.Timeout | null>(null);
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -800,54 +819,6 @@ export function TalentForm() {
     form.trigger();
   };
 
-  // 下書き保存のインターバルを5分に変更
-  const DRAFT_SAVE_INTERVAL = 5 * 60 * 1000;
-
-  const saveDraft = useCallback(async () => {
-    if (!form.formState.isDirty) return;
-
-    try {
-      const formData = form.getValues();
-      formData.isDraft = true;
-      formData.lastDraftSaved = new Date().toISOString();
-
-      await apiRequest(
-        existingProfile ? "PUT" : "POST",
-        QUERY_KEYS.TALENT_PROFILE,
-        formData
-      );
-
-      setShowDraftSavedToast(true);
-
-      // 3秒後にトースト非表示
-      setTimeout(() => setShowDraftSavedToast(false), 3000);
-
-      // フォームの状態をリセット（変更済みフラグをクリア）
-      form.reset(formData);
-
-    } catch (error) {
-      console.error("下書き保存エラー:", error);
-      toast({
-        title: "下書き保存エラー",
-        description: "下書きの保存中にエラーが発生しました。しばらく待ってから再度お試しください。",
-        variant: "destructive",
-      });
-    }
-  }, [form, existingProfile, toast]);
-
-  // 自動保存の処理
-  useEffect(() => {
-    if (form.formState.isDirty) {
-      if (draftTimer) clearTimeout(draftTimer);
-      const timer = setTimeout(saveDraft, DRAFT_SAVE_INTERVAL);
-      setDraftTimer(timer);
-    }
-    return () => {
-      if (draftTimer) clearTimeout(draftTimer);
-    };
-  }, [form.formState.isDirty, saveDraft, DRAFT_SAVE_INTERVAL]);
-
-
   // フォームのsubmit処理を再実装
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -855,7 +826,6 @@ export function TalentForm() {
 
     try {
       const data = form.getValues();
-      data.isDraft = false; // Set as final version
       console.log('Raw form data:', data);
 
       // 数値型フィールドの変換
@@ -939,7 +909,7 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
 
-      // フォームの値を更新
+      // フォームの値を更新（他の項目と同じパターンで）
       form.setValue("bodyMark", {
         hasBodyMark: true,
         details: form.getValues().bodyMark?.details || "",
@@ -953,8 +923,7 @@ export function TalentForm() {
       console.log('bodyMark updated:', {
         value,
         updated,
-        formValues: form.getValues().bodyMark
-      });
+        formValues: form.getValues().bodyMark      });
     }
   };
 
@@ -989,497 +958,182 @@ export function TalentForm() {
     }
   };
 
-  const PreviewMode = ({ data }: { data: TalentProfileData }) => (
-    <div>
-      {/* Display the data in a preview format here */}
-      <pre>{JSON.stringify(data, null, 2)}</pre>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-50 bg-background border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {existingProfile ? "プロフィール編集" : "プロフィール作成"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {form.formState.isDirty ? "* 未保存の変更があります" : ""}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsPreviewMode(!isPreviewMode)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                {isPreviewMode ? "編集に戻る" : "プレビュー"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={saveDraft}
-                disabled={!form.formState.isDirty}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                下書き保存
-              </Button>
-              <Button
-                type="submit"
-                disabled={!form.formState.isValid || isSubmitting}
-                onClick={handleSubmit}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    保存中...
-                  </>
-                ) : (
-                  "公開する"
-                )}
-              </Button>
-            </div>
-          </div>
-          {form.formState.isDirty && (
-            <p className="text-sm text-muted-foreground mt-2">
-              自動保存は5分ごとに行われます
+      <header className="border-b bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {existingProfile ? "プロフィール編集" : "プロフィール作成"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {existingProfile
+                ? "プロフィール情報を編集できます"
+                : "安全に働くための詳細情報を登録してください"}
             </p>
-          )}
+          </div>
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/talent/dashboard">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
         </div>
-      </div>
+      </header>
 
       <main className="container mx-auto px-4 py-8 pb-32">
-        {isPreviewMode ? (
-          <PreviewMode data={form.getValues()} />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">氏名</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="姓" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：中山" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="名" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：奈々子" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">フリガナ</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="lastNameKana"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="セイ" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：ナカヤマ" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="firstNameKana"
-                    render={({ field }) => (
-                      <FormFieldWrapper label="メイ" required>
-                        <FormControl>
-                          <Input {...field} placeholder="例：ナナコ" />
-                        </FormControl>
-                      </FormFieldWrapper>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2 border rounded-lg p-4 bg-muted/10">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>生年月日</Label>
-                    <p className="text-lg font-medium">
-                      {userProfile?.birthDate
-                        ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
-                        : '基本情報から設定してください'}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>年齢</Label>
-                    <p className="text-lg font-medium">
-                      {age ? `${age}歳` : '基本情報から設定してください'}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  ※生年月日の設定・修正は基本情報編集ページから行ってください
-                  {userProfile?.birthDateModified && '（修正は1回のみ可能です）'}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Location field */}
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormFieldWrapper label="都道府県" required>
-                      <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {prefectures.map((prefecture) => (
-                              <SelectItem key={prefecture} value={prefecture}>
-                                {prefecture}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormFieldWrapper>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="nearestStation"
-                  render={({ field }) => (
-                    <FormFieldWrapper label="最寄駅" required>
-                      <FormControl>
-                        <Input {...field} placeholder="例：渋谷駅" />
-                      </FormControl>
-                    </FormFieldWrapper>
-                  )}
-                />
-              </div>
-
-              {/* 身分証セクション */}
-              <div>
-                <FormFieldWrapper label="持参可能な身分証明書" required>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {idTypes.map((type) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={form.watch("availableIds.types")?.includes(type)}
-                            onCheckedChange={(checked) => {
-                              const current = form.watch("availableIds.types") || [];
-                              const updated = checked
-                                ? [...current, type]
-                                : current.filter((t) => t !== type);
-                              form.setValue("availableIds.types", updated);
-                            }}
-                          />
-                          <label className="text-sm">{type}</label>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {otherIds.map((id, index) => (
-                          <Badge key={index} variant="outline" className="flex items-center gap-1">
-                            {id}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-transparent"
-                              onClick={() => {
-                                const updated = otherIds.filter((_, i) => i !== index);
-                                setOtherIds(updated);
-                                form.setValue("availableIds.others", updated);
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <OtherItemInput
-                        onAdd={handleAddIdType}
-                        placeholder="その他の身分証明書を入力"
-                      />
-                    </div>
-                  </div>
-                </FormFieldWrapper>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="canProvideResidenceRecord"
-                render={({ field }) => (
-                  <FormItem>
-                    <SwitchField
-                      label="本籍地記載の住民票の提出"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Form {...form}>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="height"
+                  name="lastName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="身長 (cm)" required>
-                        <FormControl>
-                          <Input type="number" {...field} min={100} max={200} />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="体重 (kg)" required>
-                        <FormControl>
-                          <Input type="number" {...field} min={30} max={150} />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="cupSize"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormFieldWrapper label="カップサイズ" required>
+                    <FormFieldWrapper label="姓" required>
                       <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cupSizes.map((size) => (
-                              <SelectItem key={size} value={size}>
-                                {size}カップ
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Input {...field} placeholder="例：中山" />
                       </FormControl>
                     </FormFieldWrapper>
-                    <FormMessage />
-                  </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="名" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：奈々子" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">フリガナ</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="lastNameKana"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="セイ" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：ナカヤマ" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firstNameKana"
+                  render={({ field }) => (
+                    <FormFieldWrapper label="メイ" required>
+                      <FormControl>
+                        <Input {...field} placeholder="例：ナナコ" />
+                      </FormControl>
+                    </FormFieldWrapper>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2 border rounded-lg p-4 bg-muted/10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>生年月日</Label>
+                  <p className="text-lg font-medium">
+                    {userProfile?.birthDate
+                      ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
+                      : '基本情報から設定してください'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label>年齢</Label>
+                  <p className="text-lg font-medium">
+                    {age ? `${age}歳` : '基本情報から設定してください'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                ※生年月日の設定・修正は基本情報編集ページから行ってください
+                {userProfile?.birthDateModified && '（修正は1回のみ可能です）'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Location field */}
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormFieldWrapper label="都道府県" required>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="選択してください" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prefectures.map((prefecture) => (
+                            <SelectItem key={prefecture} value={prefecture}>
+                              {prefecture}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormFieldWrapper>
                 )}
               />
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bust"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="バスト (cm) (任意)">
-                        <FormControl>
-                          <Input
-                            type="text"
-                            {...field}
-                            value={field.value === null ? "" : field.value}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "") {
-                                field.onChange(null);
-                              } else if (!isNaN(Number(value))) {
-                                field.onChange(Number(value));
-                              }
-                            }}
-                            placeholder="未入力可"
-                          />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="waist"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="ウエスト (cm) (任意)">
-                        <FormControl>
-                          <Input
-                            type="text"
-                            {...field}
-                            value={field.value === null ? "" : field.value}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "") {
-                                field.onChange(null);
-                              } else if (!isNaN(Number(value))) {
-                                field.onChange(Number(value));
-                              }
-                            }}
-                            placeholder="未入力可"
-                          />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="hip"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="ヒップ (cm) (任意)">
-                        <FormControl>
-                          <Input
-                            type="text"
-                            {...field}
-                            value={field.value === null ? "" : field.value}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "") {
-                                field.onChange(null);
-                              } else if (!isNaN(Number(value))) {
-                                field.onChange(Number(value));
-                              }
-                            }}
-                            placeholder="未入力可"
-                          />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">顔出し</h3>
-                <FormField
-                  control={form.control}
-                  name="faceVisibility"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="パネルの顔出し" required>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="選択してください" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {faceVisibilityTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="nearestStation"
+                render={({ field }) => (
+                  <FormFieldWrapper label="最寄駅" required>
+                    <FormControl>
+                      <Input {...field} placeholder="例：渋谷駅" />
+                    </FormControl>
+                  </FormFieldWrapper>
+                )}
+              />
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
-                <FormField
-                  control={form.control}
-                  name="canPhotoDiary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="写メ日記の投稿"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        valueLabels={{ checked: "可能", unchecked: "不可" }}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
-                <FormField
-                  control={form.control}
-                  name="canHomeDelivery"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="自宅派遣"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        valueLabels={{ checked: "可能", unchecked: "不可" }}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
-                <FormFieldWrapper label="NGオプション">
+            {/* 身分証セクション */}
+            <div>
+              <FormFieldWrapper label="持参可能な身分証明書" required>
+                <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    {commonNgOptions.map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
+                    {idTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={form.watch("ngOptions.common").includes(option)}
+                          checked={form.watch("availableIds.types")?.includes(type)}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("ngOptions.common") || [];
+                            const current = form.watch("availableIds.types") || [];
                             const updated = checked
-                              ? [...current, option]
-                              : current.filter((o) => o !== option);
-                            form.setValue("ngOptions.common", updated);
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("availableIds.types", updated);
                           }}
                         />
-                        <label className="text-sm">{option}</label>
+                        <label className="text-sm">{type}</label>
                       </div>
                     ))}
                   </div>
+
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {otherNgOptions.map((option, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          {option}
+                      {otherIds.map((id, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {id}
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-4 w-4 p-0 hover:bg-transparent"
                             onClick={() => {
-                              const updated = otherNgOptions.filter((_, i) => i !== index);
-                              setOtherNgOptions(updated);
-                              form.setValue("ngOptions.others", updated)
+                              const updated = otherIds.filter((_, i) => i !== index);
+                              setOtherIds(updated);
+                              form.setValue("availableIds.others", updated);
                             }}
                           >
                             <X className="h-3 w-3" />
@@ -1488,151 +1142,488 @@ export function TalentForm() {
                       ))}
                     </div>
                     <OtherItemInput
-                      onAdd={(value: string) => setOtherNgOptions([...otherNgOptions, value])}
-                      placeholder="その他のNGオプションを入力"
+                      onAdd={handleAddIdType}
+                      placeholder="その他の身分証明書を入力"
                     />
                   </div>
-                </FormFieldWrapper>
-              </div>
+                </div>
+              </FormFieldWrapper>
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
-                <FormField
-                  control={form.control}
-                  name="hasEstheExperience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="エステ経験"
-                        checked={field.value}
+            <FormField
+              control={form.control}
+              name="canProvideResidenceRecord"
+              render={({ field }) => (
+                <FormItem>
+                  <SwitchField
+                    label="本籍地記載の住民票の提出"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="height"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="身長 (cm)" required>
+                      <FormControl>
+                        <Input type="number" {...field} min={100} max={200} />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="体重 (kg)" required>
+                      <FormControl>
+                        <Input type="number" {...field} min={30} max={150} />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="cupSize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldWrapper label="カップサイズ" required>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="選択してください" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cupSizes.map((size) => (
+                            <SelectItem key={size} value={size}>
+                              {size}カップ
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormFieldWrapper>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="bust"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="バスト (cm) (任意)">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="waist"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="ウエスト (cm) (任意)">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="ヒップ (cm) (任意)">
+                      <FormControl>
+                        <Input
+                          type="text"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(null);
+                            } else if (!isNaN(Number(value))) {
+                              field.onChange(Number(value));
+                            }
+                          }}
+                          placeholder="未入力可"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">顔出し</h3>
+              <FormField
+                control={form.control}
+                name="faceVisibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="パネルの顔出し" required>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選択してください" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {faceVisibilityTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
+              <FormField
+                control={form.control}
+                name="canPhotoDiary"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="写メ日記の投稿"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      valueLabels={{ checked: "可能", unchecked: "不可" }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
+              <FormField
+                control={form.control}
+                name="canHomeDelivery"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="自宅派遣"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      valueLabels={{ checked: "可能", unchecked: "不可" }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
+              <FormFieldWrapper label="NGオプション">
+                <div className="grid grid-cols-2 gap-4">
+                  {commonNgOptions.map((option) => (
+                    <div key={option} className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={form.watch("ngOptions.common").includes(option)}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          setIsEstheOpen(checked);
+                          const current = form.watch("ngOptions.common") || [];
+                          const updated = checked
+                            ? [...current, option]
+                            : current.filter((o) => o !== option);
+                          form.setValue("ngOptions.common", updated);
                         }}
                       />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <label className="text-sm">{option}</label>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {otherNgOptions.map((option, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        {option}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
+                          onClick={() => {
+                            const updated = otherNgOptions.filter((_, i) => i !== index);
+                            setOtherNgOptions(updated);
+                            form.setValue("ngOptions.others", updated)
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <OtherItemInput
+                    onAdd={(value: string) => setOtherNgOptions([...otherNgOptions, value])}
+                    placeholder="その他のNGオプションを入力"
+                  />
+                </div>
+              </FormFieldWrapper>
+            </div>
 
-                {form.watch("hasEstheExperience") && (
-                  <Collapsible
-                    open={isEstheOpen}
-                    onOpenChange={setIsEstheOpen}
-                    className="mt-4 space-y-4 border rounded-lg p-4"
-                  >
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="estheExperiencePeriod"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormFieldWrapper label="経験期間">
-                              <FormControl>
-                                <Input {...field} placeholder="例：2年" />
-                              </FormControl>
-                            </FormFieldWrapper>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            <div>
+              <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
+              <FormField
+                control={form.control}
+                name="hasEstheExperience"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="エステ経験"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        setIsEstheOpen(checked);
+                      }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      <FormField
-                        control={form.control}
-                        name="estheOptions.available"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>可能オプション（出来るものだけチェックをつけてください）</FormLabel>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {estheOptions.map((option) => (
-                                <div key={option} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    checked={field.value?.includes(option)}
-                                    onCheckedChange={(checked) => {
-                                      const newValue = checked
-                                        ? [...(field.value || []), option]
-                                        : (field.value || []).filter((value) => value !== option);
-                                      field.onChange(newValue);
+              {form.watch("hasEstheExperience") && (
+                <Collapsible
+                  open={isEstheOpen}
+                  onOpenChange={setIsEstheOpen}
+                  className="mt-4 space-y-4 border rounded-lg p-4"
+                >
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="estheExperiencePeriod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormFieldWrapper label="経験期間">
+                            <FormControl>
+                              <Input {...field} placeholder="例：2年" />
+                            </FormControl>
+                          </FormFieldWrapper>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="estheOptions.available"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>可能オプション（出来るものだけチェックをつけてください）</FormLabel>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {estheOptions.map((option) => (
+                              <div key={option} className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={field.value?.includes(option)}
+                                  onCheckedChange={(checked) => {
+                                    const newValue = checked
+                                      ? [...(field.value || []), option]
+                                      : (field.value || []).filter((value) => value !== option);
+                                    field.onChange(newValue);
+                                  }}
+                                />
+                                <label className="text-sm">{option}</label>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="estheOptions.ngOptions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>その他できないプレイやオプション</FormLabel>
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                              {otherEstheNgOptions.map((option, index) => (
+                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                  {option}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0 hover:bg-transparent"
+                                    onClick={() => {
+                                      const updated = otherEstheNgOptions.filter((_, i) => i !== index);
+                                      setOtherEstheNgOptions(updated);
+                                      form.setValue("estheOptions.ngOptions", updated);
                                     }}
-                                  />
-                                  <label className="text-sm">{option}</label>
-                                </div>
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </Badge>
                               ))}
                             </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            <OtherItemInput
+                              onAdd={handleAddEstheNgOption}
+                              placeholder="できないプレイやオプションを入力"
+                            />
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </Collapsible>
+              )}
+            </div>
 
-                      <FormField
-                        control={form.control}
-                        name="estheOptions.ngOptions"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>その他できないプレイやオプション</FormLabel>
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                {otherEstheNgOptions.map((option, index) => (
-                                  <Badge key={index} variant="outline" className="flex items-center gap-1">
-                                    {option}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-4 w-4 p-0 hover:bg-transparent"
-                                      onClick={() => {
-                                        const updated = otherEstheNgOptions.filter((_, i) => i !== index);
-                                        setOtherEstheNgOptions(updated);
-                                        form.setValue("estheOptions.ngOptions", updated);
-                                      }}
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </Badge>
-                                ))}
-                              </div>
-                              <OtherItemInput
-                                onAdd={handleAddEstheNgOption}
-                                placeholder="できないプレイやオプションを入力"
-                              />
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </Collapsible>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
+              <FormField
+                control={form.control}
+                name="allergies.hasAllergy"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="アレルギーの有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
+              {form.watch("allergies.hasAllergy") && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {allergyTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch("allergies.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("allergies.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("allergies.types", updated);
+                          }}
+                        />
+                        <label className="text-sm">{type}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {otherAllergies.map((allergy, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {allergy}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => {
+                              const updated = otherAllergies.filter((_, i) => i !== index);
+                              setOtherAllergies(updated);
+                              form.setValue("allergies.others", updated);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <OtherItemInput
+                      onAdd={handleAddAllergy}
+                      placeholder="その他のアレルギーを入力"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
-                <FormField
-                  control={form.control}
-                  name="allergies.hasAllergy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="アレルギーの有無"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("allergies.hasAllergy") && (
-                  <div className="mt-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">喫煙</h3>
+              <FormField
+                control={form.control}
+                name="smoking.enabled"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="喫煙の有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("smoking.enabled") && (
+                <div className="mt-4">
+                  <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      {allergyTypes.map((type) => (
+                      {smokingTypes.map((type) => (
                         <div key={type} className="flex items-center space-x-2">
                           <Checkbox
-                            checked={form.watch("allergies.types").includes(type)}
+                            checked={form.watch("smoking.types").includes(type)}
                             onCheckedChange={(checked) => {
-                              const current = form.watch("allergies.types") || [];
+                              const current = form.watch("smoking.types") || [];
                               const updated = checked
                                 ? [...current, type]
                                 : current.filter((t) => t !== type);
-                              form.setValue("allergies.types", updated);
+                              form.setValue("smoking.types", updated);
                             }}
                           />
                           <label className="text-sm">{type}</label>
@@ -1641,17 +1632,21 @@ export function TalentForm() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {otherAllergies.map((allergy, index) => (
-                          <Badge key={index} variant="outline" className="flex items-center gap-1">
-                            {allergy}
+                        {otherSmokingTypes.map((type, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
+                            {type}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-4 w-4 p-0 hover:bg-transparent"
                               onClick={() => {
-                                const updated = otherAllergies.filter((_, i) => i !== index);
-                                setOtherAllergies(updated);
-                                form.setValue("allergies.others", updated);
+                                const updated = otherSmokingTypes.filter((_, i) => i !== index);
+                                setOtherSmokingTypes(updated);
+                                form.setValue("smoking.others", updated);
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1660,399 +1655,328 @@ export function TalentForm() {
                         ))}
                       </div>
                       <OtherItemInput
-                        onAdd={handleAddAllergy}
-                        placeholder="その他のアレルギーを入力"
+                        onAdd={handleAddSmokingType}
+                        placeholder="その他の喫煙情報を入力"
                       />
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">喫煙</h3>
-                <FormField
-                  control={form.control}
-                  name="smoking.enabled"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="喫煙の有無"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("smoking.enabled") && (
-                  <div className="mt-4">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        {smokingTypes.map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={form.watch("smoking.types").includes(type)}
-                              onCheckedChange={(checked) => {
-                                const current = form.watch("smoking.types") || [];
-                                const updated = checked
-                                  ? [...current, type]
-                                  : current.filter((t) => t !== type);
-                                form.setValue("smoking.types", updated);
-                              }}
-                            />
-                            <label className="text-sm">{type}</label>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap gap-2">
-                          {otherSmokingTypes.map((type, index) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="flex items-center gap-1"
-                            >
-                              {type}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                onClick={() => {
-                                  const updated = otherSmokingTypes.filter((_, i) => i !== index);
-                                  setOtherSmokingTypes(updated);
-                                  form.setValue("smoking.others", updated);
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <OtherItemInput
-                          onAdd={handleAddSmokingType}
-                          placeholder="その他の喫煙情報を入力"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
-                <FormField
-                  control={form.control}
-                  name="bodyMark.hasBodyMark"
-                  render={({ field }) => (
-                    <FormItem>
-                      <SwitchField
-                        label="傷・タトゥー・アトピーの有無"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("bodyMark.hasBodyMark") && (
-                  <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {bodyMarks.map((mark, index) => (
-                          <Badge key={index} variant="outline" className="flex items-center gap-1">
-                            {mark}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-transparent"
-                              onClick={() => handleRemoveBodyMark(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <OtherItemInput
-                        onAdd={handleAddBodyMark}
-                        placeholder="傷・タトゥー・アトピーの情報を入力"
-                      />
-                      <p className="text-sm text-muted-foreground mt-2">
-                        ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
+            <div>
+              <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
               <FormField
                 control={form.control}
-                name="hasSnsAccount"
+                name="bodyMark.hasBodyMark"
                 render={({ field }) => (
                   <FormItem>
-                    <>
-                      {field.value && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
-                          <div className="space-y-4">
-                            {form.watch("snsUrls").map((url, index) => (
-                              <div key={index} className="flex gap-2">
-                                <Input
-                                  placeholder="SNSアカウントのURLを入力"
-                                  value={url}
-                                  onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleRemoveSnsUrl(index)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleAddSnsUrl}
-                            >
-                              SNSアカウントを追加
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </>
+                    <SwitchField
+                      label="傷・タトゥー・アトピーの有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
-                <div className="space-y-6">
-                  <div className="border rounded-lg p-6 bg-muted/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">現在の勤務先</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddCurrentStore}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        店舗を追加
-                      </Button>
-                    </div>
-                    <div className="space-y-4">
-                      {form.watch("currentStores")?.map((store, index) => (
-                        <div key={index} className="relative border rounded-lg p-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
-                              <Input
-                                placeholder="店舗名を入力してください"
-                                value={store.storeName}
-                                onChange={(e) =>
-                                  handleUpdateCurrentStore(index, "storeName", e.target.value)
-                                }
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm text-muted-foreground mb-2">源氏名</Label>
-                              <Input
-                                placeholder="源氏名を入力してください"
-                                value={store.stageName}
-                                onChange={(e) =>
-                                  handleUpdateCurrentStore(index, "stageName", e.target.value)
-                                }
-                              />
-                            </div>
-                          </div>
+              {form.watch("bodyMark.hasBodyMark") && (
+                <div className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {bodyMarks.map((mark, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          {mark}
                           <Button
-                            type="button"
                             variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => handleRemoveCurrentStore(index)}
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => handleRemoveBodyMark(index)}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3" />
                           </Button>
-                        </div>
+                        </Badge>
                       ))}
                     </div>
+                    <OtherItemInput
+                      onAdd={handleAddBodyMark}
+                      placeholder="傷・タトゥー・アトピーの情報を入力"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
+                    </p>
                   </div>
+                </div>
+              )}
+            </div>
 
-                  <div className="border rounded-lg p-6 bg-muted/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">過去の勤務先</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddPreviousStore}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        店舗を追加
-                      </Button>
-                    </div>
-                    <div className="space-y-4">
-                      {form.watch("previousStores")?.map((store, index) => (
-                        <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
-                          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="hasSnsAccount"
+              render={({ field }) => (
+                <FormItem>
+                  <>
+                    {field.value && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
+                        <div className="space-y-4">
+                          {form.watch("snsUrls").map((url, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                placeholder="SNSアカウントのURLを入力"
+                                value={url}
+                                onChange={(e) => handleUpdateSnsUrl(index, e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleRemoveSnsUrl(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAddSnsUrl}
+                          >
+                            SNSアカウントを追加
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">現在の勤務先</h3>
+              <div className="space-y-6">
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">現在の勤務先</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddCurrentStore}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      店舗を追加
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {form.watch("currentStores")?.map((store, index) => (
+                      <div key={index} className="relative border rounded-lg p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
                             <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
                             <Input
                               placeholder="店舗名を入力してください"
                               value={store.storeName}
-                              onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateCurrentStore(index, "storeName", e.target.value)
+                              }
                             />
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => handleRemovePreviousStore(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border rounded-lg p-6 bg-muted/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">写メ日記が確認できるURL</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        URLを追加
-                      </Button>
-                    </div>
-                    <div className="space-y-4">
-                      {form.watch("photoDiaryUrls")?.map((url, index) => (
-                        <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
-                          <div className="flex-1">
-                            <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
+                          <div>
+                            <Label className="text-sm text-muted-foreground mb-2">源氏名</Label>
                             <Input
-                              placeholder="写メ日記のURLを入力してください"
-                              value={url}
-                              onChange={(e) => {
-                                const updatedUrls = [...form.watch("photoDiaryUrls") || []];
-                                updatedUrls[index] = e.target.value;
-                                form.setValue("photoDiaryUrls", updatedUrls);
-                              }}
+                              placeholder="源氏名を入力してください"
+                              value={store.stageName}
+                              onChange={(e) =>
+                                handleUpdateCurrentStore(index, "stageName", e.target.value)
+                              }
                             />
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => {
-                                                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => handleRemoveCurrentStore(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">過去の勤務先</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddPreviousStore}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      店舗を追加
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {form.watch("previousStores")?.map((store, index) => (
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
+                          <Input
+                            placeholder="店舗名を入力してください"
+                            value={store.storeName}
+                            onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => handleRemovePreviousStore(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-6 bg-muted/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">写メ日記が確認できるURL</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      URLを追加
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {form.watch("photoDiaryUrls")?.map((url, index) => (
+                      <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
+                          <Input
+                            placeholder="写メ日記のURLを入力してください"
+                            value={url}
+                            onChange={(e) => {
+                              const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                              updatedUrls[index] = e.target.value;
                               form.setValue("photoDiaryUrls", updatedUrls);
                             }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          />
                         </div>
-                      ))}
-                    </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
+                            form.setValue("photoDiaryUrls", updatedUrls);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
-                <FormField
-                  control={form.control}
-                  name="photos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <PhotoUpload
-                        photos={field.value || []}
-                        onChange={handlePhotoUpload}
-                      />
-                      <FormMessage />
-                    </FormItem>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">プロフィール写真</h3>
+              <FormField
+                control={form.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <PhotoUpload
+                      photos={field.value || []}
+                      onChange={handlePhotoUpload}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
+              <FormField
+                control={form.control}
+                name="selfIntroduction"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="自己紹介文">
+                      <FormControl>
+                        <textarea
+                          {...field}
+                          className="w-full h-32 p-2 border rounded-md"
+                          placeholder="自己紹介文を入力してください"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">備考</h3>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldWrapper label="その他の備考">
+                      <FormControl>
+                        <textarea
+                          {...field}
+                          className="w-full h-32 p-2 border rounded-md"
+                          placeholder="その他の備考を入力してください"
+                        />
+                      </FormControl>
+                    </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4">
+              <div className="container mx-auto max-w-4xl flex justify-end gap-4">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isButtonDisabled}
+                  className="min-w-[200px]"
+                >
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                      <span>送信中...</span>
+                    </>
+                  ) : (
+                    "保存"
                   )}
-                />
+                </Button>
               </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
-                <FormField
-                  control={form.control}
-                  name="selfIntroduction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="自己紹介文">
-                        <FormControl>
-                          <textarea
-                            {...field}
-                            className="w-full h-32 p-2 border rounded-md"
-                            placeholder="自己紹介文を入力してください"
-                          />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">備考</h3>
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormFieldWrapper label="その他の備考">
-                        <FormControl>
-                          <textarea
-                            {...field}
-                            className="w-full h-32 p-2 border rounded-md"
-                            placeholder="その他の備考を入力してください"
-                          />
-                        </FormControl>
-                      </FormFieldWrapper>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4">
-                <div className="container mx-auto max-w-4xl flex justify-end gap-4">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={isButtonDisabled}
-                    className="min-w-[200px]"
-                  >
-                    {form.formState.isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                        <span>送信中...</span>
-                      </>
-                    ) : (
-                      "保存"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </Form>
-        )}
+            </div>
+          </form>
+        </Form>
       </main>
-
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
@@ -2064,16 +1988,6 @@ export function TalentForm() {
         formData={formData}
         isSubmitting={isSubmitting}
       />
-      {showDraftSavedToast && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Toast>
-            <div className="flex items-center gap-2 py-2 px-4 bg-primary text-primary-foreground rounded-lg shadow-lg">
-              <Save className="h-4 w-4" />
-              <span>下書きを保存しました</span>
-            </div>
-          </Toast>
-        </div>
-      )}
     </div>
   );
 }

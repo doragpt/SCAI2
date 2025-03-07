@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Enums and constants
+// Enums
 export const photoTags = [
   "現在の髪色",
   "タトゥー",
@@ -14,19 +14,18 @@ export const photoTags = [
   "スタジオ写真（加工済み）"
 ] as const;
 
-// bodyMarkSchema定義
+// bodyMarkSchema定義を更新
 export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
-  others: z.array(z.string()).default([]),
 });
 
-// photoSchema定義
+// photoSchema定義を更新
 export const photoSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional(), // 一意の識別子を追加
   url: z.string(),
   tag: z.enum(photoTags),
-  order: z.number().optional(),
+  order: z.number().optional(), // 順序を保持するフィールドを追加
 });
 
 export const prefectures = [
@@ -182,11 +181,9 @@ export const talentProfiles = pgTable("talent_profiles", {
   estheExperiencePeriod: text("esthe_experience_period"),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "", others: [] }).notNull(),
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
   age: integer("age"),
-  isDraft: boolean("is_draft").default(true).notNull(),
-  lastDraftSaved: timestamp("last_draft_saved").defaultNow(),
 });
 
 // Login and registration schemas
@@ -199,6 +196,8 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
+import { z } from "zod";
+
 // talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
@@ -310,68 +309,10 @@ export const talentProfileSchema = z.object({
   // その他の既存のフィールドはそのまま
   preferredLocations: z.array(z.enum(prefectures)).default([]),
   ngLocations: z.array(z.enum(prefectures)).default([]),
-  isDraft: z.boolean().default(true),
-  lastDraftSaved: z.string().optional(),
-}).superRefine((data, ctx) => {
-  // Add validation for required fields when not in draft mode
-  if (!data.isDraft) {
-    if (!data.lastName || !data.firstName) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "氏名は必須項目です",
-        path: ["lastName"]
-      });
-    }
-    if (!data.lastNameKana || !data.firstNameKana) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "フリガナは必須項目です",
-        path: ["lastNameKana"]
-      });
-    }
-    // Add other required field validations here as needed.  Example:
-    if (!data.location) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "所在地は必須項目です",
-        path: ["location"]
-      });
-    }
-    if (!data.nearestStation) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "最寄り駅は必須項目です",
-        path: ["nearestStation"]
-      });
-    }
-    if (data.photos.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "写真は必須項目です。少なくとも1枚アップロードしてください。",
-        path: ["photos"]
-      });
-    }
-    if (!data.cupSize) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "カップサイズは必須項目です",
-        path: ["cupSize"]
-      });
-    }
-    if (!data.faceVisibility) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "顔出し設定は必須項目です",
-        path: ["faceVisibility"]
-      });
-    }
-
-  }
 });
 
-// Profile update schema
-export const talentProfileUpdateSchema = z.object({
-  ...talentProfileSchema.shape,
+// スキーマ定義の最後に追加
+export const talentProfileUpdateSchema = talentProfileSchema.extend({
   currentPassword: z.string().optional(),
   newPassword: z.string()
     .optional()
@@ -384,19 +325,20 @@ export const talentProfileUpdateSchema = z.object({
         message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
       }
     ),
+}).omit({
+  userId: true
 }).partial();
 
-// Type definitions
+
+// 型定義エクスポートを追加
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
-// その他の型定義
+// Export types
 export type User = typeof users.$inferSelect;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
 export const talentRegisterFormSchema = z.object({
   username: z.string()
     .min(1, "ニックネームを入力してください")
