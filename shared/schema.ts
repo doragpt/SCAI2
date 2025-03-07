@@ -396,34 +396,72 @@ export type PreviousStore = {
 };
 
 // 求人情報テーブル
+// 求人情報関連の新しいenums
+export const jobStatusTypes = ["draft", "published", "closed"] as const;
+export type JobStatus = typeof jobStatusTypes[number];
+
+// 求人条件の型定義
+export const jobRequirementsSchema = z.object({
+  ageMin: z.number().min(18).max(99).optional(),
+  ageMax: z.number().min(18).max(99).optional(),
+  specMin: z.number().optional(),
+  specMax: z.number().optional(),
+  cupSizeConditions: z.array(z.object({
+    cupSize: z.enum(cupSizes),
+    specMin: z.number(),
+  })).optional(),
+  otherConditions: z.array(z.string()).default([]),
+});
+
+export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
+
+// 求人情報テーブルの拡張
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  businessName: text("business_name").notNull(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
+  title: text("title").notNull(),
+  catchPhrase: text("catch_phrase"),
+  description: text("description").notNull(),
+  workingHours: text("working_hours").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
-  workingHours: text("working_hours"),
-  description: text("description"),
-  requirements: text("requirements"),
+  requirements: jsonb("requirements").$type<JobRequirements>().notNull(),
+  qualifications: text("qualifications"),
   benefits: text("benefits"),
+  workingConditions: text("working_conditions"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
   return {
     locationIdx: index("jobs_location_idx").on(table.location),
     serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+    storeIdIdx: index("jobs_store_id_idx").on(table.storeId),
+    statusIdx: index("jobs_status_idx").on(table.status),
     createdAtIdx: index("jobs_created_at_idx").on(table.createdAt),
   };
 });
 
-// データベーステーブル定義の更新
+// Zodスキーマの定義
+export const jobSchema = createInsertSchema(jobs)
+  .extend({
+    requirements: jobRequirementsSchema,
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  });
+
+
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
-  storeId: integer('store_id').notNull().references(() => jobs.id),
+  jobId: integer('job_id').notNull().references(() => jobs.id),
   status: text('status', { enum: ['pending', 'accepted', 'rejected', 'withdrawn'] }).notNull(),
   appliedAt: timestamp('applied_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -433,7 +471,7 @@ export const applications = pgTable('applications', {
 }, (table) => {
   return {
     userIdIdx: index('applications_user_id_idx').on(table.userId),
-    storeIdIdx: index('applications_store_id_idx').on(table.storeId),
+    jobIdIdx: index('applications_job_id_idx').on(table.jobId),
     statusIdx: index('applications_status_idx').on(table.status),
   };
 });
@@ -441,25 +479,25 @@ export const applications = pgTable('applications', {
 export const keepList = pgTable('keepList', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
-  storeId: integer('store_id').notNull().references(() => jobs.id),
+  jobId: integer('job_id').notNull().references(() => jobs.id),
   addedAt: timestamp('added_at').defaultNow(),
   note: text('note')
 }, (table) => {
   return {
     userIdIdx: index('keep_list_user_id_idx').on(table.userId),
-    storeIdIdx: index('keep_list_store_id_idx').on(table.storeId),
+    jobIdIdx: index('keep_list_job_id_idx').on(table.jobId),
   };
 });
 
 export const viewHistory = pgTable('viewHistory', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
-  storeId: integer('store_id').notNull().references(() => jobs.id),
+  jobId: integer('job_id').notNull().references(() => jobs.id),
   viewedAt: timestamp('viewed_at').defaultNow()
 }, (table) => {
   return {
     userIdIdx: index('view_history_user_id_idx').on(table.userId),
-    storeIdIdx: index('view_history_store_id_idx').on(table.storeId),
+    jobIdIdx: index('view_history_job_id_idx').on(table.jobId),
     viewedAtIdx: index('view_history_viewed_at_idx').on(table.viewedAt),
   };
 });
@@ -486,7 +524,7 @@ export const jobsRelations = relations(jobs, ({ many }) => ({
 
 export const applicationsRelations = relations(applications, ({ one }) => ({
   job: one(jobs, {
-    fields: [applications.storeId],
+    fields: [applications.jobId],
     references: [jobs.id],
   }),
   user: one(users, {
@@ -497,7 +535,7 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 
 export const keepListRelations = relations(keepList, ({ one }) => ({
   job: one(jobs, {
-    fields: [keepList.storeId],
+    fields: [keepList.jobId],
     references: [jobs.id],
   }),
   user: one(users, {
@@ -508,7 +546,7 @@ export const keepListRelations = relations(keepList, ({ one }) => ({
 
 export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   job: one(jobs, {
-    fields: [viewHistory.storeId],
+    fields: [viewHistory.jobId],
     references: [jobs.id],
   }),
   user: one(users, {
@@ -518,7 +556,11 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
 }));
 
 // 求人情報のZodスキーマ
-export const jobSchema = createInsertSchema(jobs).omit({ id: true });
+export const jobSchema = createInsertSchema(jobs)
+  .extend({
+    requirements: jobRequirementsSchema,
+  })
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 // 型定義のエクスポート
 export type Job = typeof jobs.$inferSelect;
