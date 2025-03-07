@@ -64,14 +64,15 @@ export default function ProfileViewPage() {
         throw error;
       }
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   // タレントプロフィールを取得
   const {
     data: talentProfile,
     isLoading: isTalentLoading,
-    error: talentError
+    error: talentError,
+    refetch: refetchTalentProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
@@ -104,11 +105,11 @@ export default function ProfileViewPage() {
         throw error;
       }
     },
-    enabled: !!user?.id, // ユーザーIDが存在する場合のみクエリを有効化
+    enabled: !!user?.id,
     retry: 1,
-    staleTime: 0, // キャッシュを無効化
+    staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+    refetchOnWindowFocus: true,
   });
 
   // Debug: データの存在確認
@@ -146,6 +147,13 @@ export default function ProfileViewPage() {
             <h1 className="text-2xl font-semibold text-red-600">エラーが発生しました</h1>
             <p className="text-muted-foreground">
               プロフィールの取得中にエラーが発生しました。
+              <Button
+                variant="outline"
+                className="ml-2"
+                onClick={() => refetchTalentProfile()}
+              >
+                再試行
+              </Button>
             </p>
           </div>
         </Card>
@@ -227,7 +235,7 @@ export default function ProfileViewPage() {
             </div>
 
             {/* タレントプロフィール情報 */}
-            {talentProfile && (
+            {talentProfile ? (
               <>
                 <Separator />
                 <div>
@@ -336,6 +344,15 @@ export default function ProfileViewPage() {
                   </Card>
                 </div>
               </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">ウェブ履歴書が未作成です</p>
+                <Link href="/talent/register">
+                  <Button variant="default" className="mt-4">
+                    ウェブ履歴書を作成する
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </ScrollArea>
