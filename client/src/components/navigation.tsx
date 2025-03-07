@@ -38,7 +38,7 @@ const commonRoutes = [
 
 const talentRoutes = [
   { path: "/talent/dashboard", label: "ダッシュボード", icon: UserCircle },
-  { path: "/talent/profile", label: "プロフィール", icon: Settings },
+  { path: "/talent/mypage", label: "マイページ", icon: Settings },
   { path: "/talent/mypage/keep-list", label: "キープリスト", icon: Heart },
   { path: "/talent/mypage/view-history", label: "閲覧履歴", icon: History },
   { path: "/talent/ai-matching", label: "AIマッチング", icon: UserCircle },
@@ -58,6 +58,21 @@ export function Navigation() {
 
   // 現在のパスからパンくずリストを生成
   const breadcrumbs = location.split("/").filter(Boolean);
+
+  // パンくずリストのラベルを日本語化
+  const getBreadcrumbLabel = (crumb: string) => {
+    const labels: Record<string, string> = {
+      'talent': 'タレント',
+      'store': '店舗',
+      'jobs': '求人',
+      'mypage': 'マイページ',
+      'dashboard': 'ダッシュボード',
+      'ai-matching': 'AIマッチング',
+      'keep-list': 'キープリスト',
+      'view-history': '閲覧履歴',
+    };
+    return labels[crumb] || crumb;
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -147,13 +162,7 @@ export function Navigation() {
               <Link href={`/${breadcrumbs.slice(0, index + 1).join("/")}`}>
                 <a>
                   <Button variant="link" size="sm">
-                    {crumb === "talent" ? "タレント" :
-                     crumb === "store" ? "店舗" :
-                     crumb === "jobs" ? "求人" :
-                     crumb === "mypage" ? "マイページ" :
-                     crumb === "profile" ? "プロフィール" :
-                     crumb === "dashboard" ? "ダッシュボード" :
-                     crumb}
+                    {getBreadcrumbLabel(crumb)}
                   </Button>
                 </a>
               </Link>
@@ -175,11 +184,19 @@ export function Navigation() {
                   {user.role === 'store' ? '店舗アカウント' : 'タレントアカウント'}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/profile"}>
+                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/dashboard"}>
+                  <a>
+                    <DropdownMenuItem>
+                      <UserCircle className="h-4 w-4 mr-2" />
+                      ダッシュボード
+                    </DropdownMenuItem>
+                  </a>
+                </Link>
+                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
                   <a>
                     <DropdownMenuItem>
                       <Settings className="h-4 w-4 mr-2" />
-                      {user.role === 'store' ? 'ダッシュボード' : 'プロフィール'}
+                      {user.role === 'store' ? '店舗設定' : 'マイページ'}
                     </DropdownMenuItem>
                   </a>
                 </Link>
