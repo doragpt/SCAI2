@@ -184,6 +184,8 @@ export const talentProfiles = pgTable("talent_profiles", {
   bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
   age: integer("age"),
+  isDraft: boolean("is_draft").default(true).notNull(),
+  lastDraftSaved: timestamp("last_draft_saved").defaultNow(),
 });
 
 // Login and registration schemas
@@ -309,7 +311,69 @@ export const talentProfileSchema = z.object({
   // その他の既存のフィールドはそのまま
   preferredLocations: z.array(z.enum(prefectures)).default([]),
   ngLocations: z.array(z.enum(prefectures)).default([]),
+  isDraft: z.boolean().default(true),
+  lastDraftSaved: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Add validation for required fields when not in draft mode
+  if (!data.isDraft) {
+    if (!data.lastName || !data.firstName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "氏名は必須項目です",
+        path: ["lastName"]
+      });
+    }
+    if (!data.lastNameKana || !data.firstNameKana) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "フリガナは必須項目です",
+        path: ["lastNameKana"]
+      });
+    }
+    // Add other required field validations here as needed.  Example:
+    if (!data.location) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "所在地は必須項目です",
+        path: ["location"]
+      });
+    }
+    if (!data.nearestStation) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "最寄り駅は必須項目です",
+        path: ["nearestStation"]
+      });
+    }
+    if (data.photos.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "写真は必須項目です。少なくとも1枚アップロードしてください。",
+        path: ["photos"]
+      });
+    }
+    if (!data.cupSize) {
+      ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "カップサイズは必須項目です",
+          path: ["cupSize"]
+      });
+    }
+    if (!data.faceVisibility) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "顔出し設定は必須項目です",
+        path: ["faceVisibility"]
+      });
+    }
+
+  }
 });
+
+
+// Update types
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 
 // スキーマ定義の最後に追加
 export const talentProfileUpdateSchema = talentProfileSchema.extend({
