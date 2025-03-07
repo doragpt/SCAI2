@@ -861,7 +861,7 @@ export function TalentForm() {
         photos: data.photos || [],
         estheOptions: {
           available: data.estheOptions?.available || [],
-          otherNgOptions: otherEstheNgOptions.join('\n'), // 修正: otherEstheNgOptionsを文字列に変換
+          ngOptions: data.estheOptions?.ngOptions || [],
         }
       };
 
