@@ -23,6 +23,13 @@ import {
   Store,
   Check,
   XCircle,
+  Camera,
+  Clock,
+  Home,
+  Building2,
+  Banknote,
+  CreditCard,
+  Share2
 } from "lucide-react";
 import { TalentProfileData } from "@shared/schema";
 
@@ -314,7 +321,7 @@ export function ProfileConfirmationDialog({
               </Card>
             </section>
 
-             {/* 勤務情報 */}
+            {/* 勤務情報 */}
             <section>
               <SectionHeader icon={Building2} title="勤務情報" />
               <Card className="p-4">
@@ -387,6 +394,152 @@ export function ProfileConfirmationDialog({
               </Card>
             </section>
 
+
+            {/* 身分証明書セクション */}
+            <section>
+              <SectionHeader icon={CreditCard} title="身分証明書" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="提示可能な身分証明書"
+                    value={
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.availableIds?.types?.map((id, index) => (
+                          <Badge key={index} variant="outline">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {id}
+                          </Badge>
+                        ))}
+                        {profileData.availableIds?.others?.map((id, index) => (
+                          <Badge key={`other-${index}`} variant="outline">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {id}
+                          </Badge>
+                        ))}
+                      </div>
+                    }
+                  />
+                </div>
+              </Card>
+            </section>
+
+            {/* SNS情報セクション */}
+            {profileData.hasSnsAccount && profileData.snsUrls && profileData.snsUrls.length > 0 && (
+              <section>
+                <SectionHeader icon={Share2} title="SNS情報" />
+                <Card className="p-4">
+                  <div className="space-y-2">
+                    {profileData.snsUrls.map((url, index) => (
+                      <div key={index} className="text-sm break-all">
+                        {url}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </section>
+            )}
+
+            {/* 詳細な勤務条件 */}
+            <section>
+              <SectionHeader icon={Clock} title="詳細な勤務条件" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  {profileData.workType && (
+                    <InfoItem
+                      label="勤務形態"
+                      value={
+                        <Badge variant="outline">
+                          {profileData.workType}
+                        </Badge>
+                      }
+                    />
+                  )}
+
+                  {(profileData.workPeriodStart || profileData.workPeriodEnd) && (
+                    <InfoItem
+                      label="勤務期間"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {profileData.workPeriodStart || '未定'} ～ {profileData.workPeriodEnd || '未定'}
+                          </span>
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {profileData.waitingHours && (
+                    <InfoItem
+                      label="待機時間"
+                      value={`${profileData.waitingHours}時間`}
+                    />
+                  )}
+
+                  {profileData.departureLocation && (
+                    <InfoItem
+                      label="出発地"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <Home className="h-4 w-4 text-muted-foreground" />
+                          {profileData.departureLocation}
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {profileData.returnLocation && (
+                    <InfoItem
+                      label="帰宅地"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <Home className="h-4 w-4 text-muted-foreground" />
+                          {profileData.returnLocation}
+                        </div>
+                      }
+                    />
+                  )}
+                </div>
+              </Card>
+            </section>
+
+            {/* エステNGオプション */}
+            {profileData.estheOptions?.otherNgOptions && (
+              <section>
+                <SectionHeader icon={XCircle} title="エステNGオプション" />
+                <Card className="p-4">
+                  <div className="whitespace-pre-wrap">
+                    {profileData.estheOptions.otherNgOptions}
+                  </div>
+                </Card>
+              </section>
+            )}
+
+            {/* 写真一覧 */}
+            {profileData.photos && profileData.photos.length > 0 && (
+              <section>
+                <SectionHeader icon={Camera} title="登録写真" />
+                <Card className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {profileData.photos.map((photo, index) => (
+                      <div key={index} className="relative aspect-[3/4]">
+                        <img
+                          src={photo.url}
+                          alt={`プロフィール写真 ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Badge
+                          className="absolute top-2 right-2 bg-black/75"
+                          variant="outline"
+                        >
+                          {photo.tag}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </section>
+            )}
 
             {/* 自己PR・備考 */}
             <section>
