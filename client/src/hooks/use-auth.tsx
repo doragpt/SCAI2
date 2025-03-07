@@ -39,23 +39,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        return await apiRequest<SelectUser>("GET", "/api/user");
+        console.log('Fetching user data...');
+        const response = await apiRequest<SelectUser>("GET", "/api/user");
+        console.log('User data fetched:', {
+          userId: response?.id,
+          username: response?.username,
+          timestamp: new Date().toISOString()
+        });
+        return response;
       } catch (error) {
         if (error instanceof Error && error.message.includes("401")) {
+          console.log('Not authenticated, returning null');
           return null;
         }
         throw error;
       }
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+    retry: 2
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
+      console.log('Login attempt:', {
+        username: credentials.username,
+        timestamp: new Date().toISOString()
+      });
+
       const user = await apiRequest<{ user: SelectUser; token: string }>("POST", "/api/login", credentials);
       localStorage.setItem("auth_token", user.token);
       return user.user;
     },
     onSuccess: (user: SelectUser) => {
+      console.log('Login successful:', {
+        userId: user.id,
+        username: user.username,
+        timestamp: new Date().toISOString()
+      });
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "ログイン成功",
@@ -63,9 +83,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error('Login error:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest<void>("POST", "/api/logout");
+      localStorage.removeItem("auth_token");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      toast({
+        title: "ログアウト完了",
+        description: "ログアウトしました。",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "ログアウトエラー",
+        description: error.message || "ログアウトに失敗しました",
         variant: "destructive",
       });
     },
@@ -93,25 +138,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest<void>("POST", "/api/logout");
-      localStorage.removeItem("auth_token");
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
-      toast({
-        title: "ログアウト完了",
-        description: "ログアウトしました。",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "ログアウトエラー",
-        description: error.message || "ログアウトに失敗しました",
-        variant: "destructive",
-      });
-    },
+  // ログ出力を追加
+  console.log('Auth state:', {
+    hasUser: !!user,
+    userId: user?.id,
+    username: user?.username,
+    timestamp: new Date().toISOString()
   });
 
   return (

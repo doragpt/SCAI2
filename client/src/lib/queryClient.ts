@@ -1,17 +1,7 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import type { TalentProfileData, SelectUser, Photo, JobsSearchResponse, Job } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
-
-// キャッシュのキー定数を更新
-export const QUERY_KEYS = {
-  TALENT_PROFILE: "/api/talent/profile",
-  USER: "/api/user",
-  USER_PROFILE: "/api/user/profile",
-  JOBS_PUBLIC: "/api/jobs/public",
-  JOBS_SEARCH: "/api/jobs/search",
-  JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
-  SIGNED_URL: "/api/get-signed-url"
-} as const;
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 // APIのベースURL設定
 const API_BASE_URL = (() => {
@@ -149,11 +139,27 @@ export async function apiRequest<T>(
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    console.log('Making request to:', {
+      fullUrl,
+      method,
+      headers,
+      hasToken: !!token,
+      timestamp: new Date().toISOString()
+    });
+
     const res = await fetch(fullUrl, {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
+    });
+
+    console.log('Response received:', {
+      status: res.status,
+      ok: res.ok,
+      url: fullUrl,
+      timestamp: new Date().toISOString()
     });
 
     if (!res.ok) {
@@ -165,6 +171,7 @@ export async function apiRequest<T>(
     console.log('API Request successful:', {
       method,
       url,
+      responseData: JSON.stringify(responseData),
       timestamp: new Date().toISOString()
     });
 
@@ -352,7 +359,7 @@ export async function getSignedImageUrl(key: string): Promise<string> {
   }
 }
 
-// React Query クライアントの設定を改善
+// クエリクライアントの設定を改善
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -392,3 +399,5 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
     throw error;
   }
 };
+
+export { QUERY_KEYS };

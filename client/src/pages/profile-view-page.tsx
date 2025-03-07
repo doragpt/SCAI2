@@ -25,6 +25,11 @@ interface UserProfile {
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
+  console.log('Auth state:', {
+    user,
+    timestamp: new Date().toISOString()
+  });
+
   // ユーザー基本情報を取得
   const {
     data: userProfile,
@@ -45,18 +50,17 @@ export default function ProfileViewPage() {
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
       try {
-        console.log('Fetching talent profile with:', {
-          endpoint: QUERY_KEYS.TALENT_PROFILE,
+        console.log('Starting talent profile fetch:', {
           userId: user?.id,
+          endpoint: QUERY_KEYS.TALENT_PROFILE,
           timestamp: new Date().toISOString()
         });
 
         const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
 
-        console.log('Talent profile response:', {
+        console.log('Talent profile fetch response:', {
           hasData: !!response,
-          profileData: response,
-          endpoint: QUERY_KEYS.TALENT_PROFILE,
+          responseData: JSON.stringify(response),
           timestamp: new Date().toISOString()
         });
 
@@ -64,14 +68,13 @@ export default function ProfileViewPage() {
       } catch (error) {
         console.error('Talent profile fetch error:', {
           error: error instanceof Error ? error.message : "Unknown error",
-          endpoint: QUERY_KEYS.TALENT_PROFILE,
           timestamp: new Date().toISOString()
         });
         throw error;
       }
     },
     enabled: !!user,
-    retry: false,
+    retry: 1,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -82,6 +85,7 @@ export default function ProfileViewPage() {
     hasUser: !!user,
     hasUserProfile: !!userProfile,
     hasTalentProfile: !!talentProfile,
+    userProfileData: userProfile,
     talentProfileData: talentProfile,
     timestamp: new Date().toISOString()
   });
@@ -169,18 +173,14 @@ export default function ProfileViewPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">希望エリア</p>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {userProfile?.preferredLocations?.length > 0 ? (
-                        userProfile.preferredLocations.map((location) => (
-                          <span
-                            key={location}
-                            className="px-2 py-1 bg-muted rounded-md text-sm"
-                          >
-                            {location}
-                          </span>
-                        ))
-                      ) : (
-                        <p>未設定</p>
-                      )}
+                      {userProfile?.preferredLocations?.map((location) => (
+                        <span
+                          key={location}
+                          className="px-2 py-1 bg-muted rounded-md text-sm"
+                        >
+                          {location}
+                        </span>
+                      )) ?? <p>未設定</p>}
                     </div>
                   </div>
                 </div>
