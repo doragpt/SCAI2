@@ -37,7 +37,31 @@ export default function ProfileViewPage() {
     error: userError
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    queryFn: () => apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE),
+    queryFn: async () => {
+      try {
+        console.log('Fetching user profile:', {
+          userId: user?.id,
+          endpoint: QUERY_KEYS.USER_PROFILE,
+          timestamp: new Date().toISOString()
+        });
+
+        const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
+
+        console.log('User profile fetched:', {
+          hasData: !!response,
+          profileData: JSON.stringify(response),
+          timestamp: new Date().toISOString()
+        });
+
+        return response;
+      } catch (error) {
+        console.error('User profile fetch error:', {
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+    },
     enabled: !!user,
   });
 
