@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ArrowLeft, Search } from "lucide-react";
-import { Redirect, Link } from "wouter";
+import { Loader2, Search } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
 import { QUERY_KEYS, searchJobsQuery } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
 
 // Animation variants
 const container = {
@@ -46,38 +47,38 @@ const JobCard = ({ job }: { job: Job }) => {
   return (
     <motion.div variants={item}>
       <Link href={`/jobs/${job.id}`}>
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="h-full hover:shadow-lg transition-all cursor-pointer group">
           <CardHeader>
-            <CardTitle className="text-lg">{job.businessName}</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Search className="h-4 w-4" />
-              <span>{job.location}</span>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-lg line-clamp-2">
+                  {job.businessName}
+                </CardTitle>
+                <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                  <Search className="h-4 w-4 mr-1" />
+                  {job.location}
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-primary/5">
+                {getServiceTypeLabel(job.serviceType as ServiceType)}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div>
-                <p className="text-sm font-medium">業種</p>
-                <p className="text-sm text-muted-foreground">
-                  {getServiceTypeLabel(job.serviceType as ServiceType)}
-                </p>
+            <div className="space-y-4">
+              <div className="flex items-center text-primary font-semibold">
+                日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
               </div>
-              <div>
-                <p className="text-sm font-medium">給与</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
-                </p>
-              </div>
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2">
                 {job.transportationSupport && (
-                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
                     交通費支給
-                  </span>
+                  </Badge>
                 )}
                 {job.housingSupport && (
-                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                     寮完備
-                  </span>
+                  </Badge>
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
@@ -143,99 +144,93 @@ export default function Jobs() {
     setPage(1);
   }, [location, serviceType]);
 
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="space-y-8">
       {/* ヘッダー */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/talent/dashboard">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <h1 className="text-xl font-bold">お仕事検索</h1>
-          <div className="w-10" /> {/* スペーサー */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className="text-2xl font-bold">お仕事検索</h1>
+          <p className="text-muted-foreground">
+            あなたに合った求人を見つけましょう
+          </p>
         </div>
-      </header>
+      </motion.div>
 
-      {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-20">
-        {/* フィルター */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Select value={location} onValueChange={setLocation}>
-            <SelectTrigger>
-              <SelectValue placeholder="エリアを選択" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全てのエリア</SelectItem>
-              {prefectures.map((pref) => (
-                <SelectItem key={pref} value={pref}>
-                  {pref}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* フィルター */}
+      <div className="grid grid-cols-2 gap-4">
+        <Select value={location} onValueChange={setLocation}>
+          <SelectTrigger>
+            <SelectValue placeholder="エリアを選択" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全てのエリア</SelectItem>
+            {prefectures.map((pref) => (
+              <SelectItem key={pref} value={pref}>
+                {pref}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <Select value={serviceType} onValueChange={setServiceType}>
-            <SelectTrigger>
-              <SelectValue placeholder="業種を選択" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全ての業種</SelectItem>
-              {serviceTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {getServiceTypeLabel(type as ServiceType)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select value={serviceType} onValueChange={setServiceType}>
+          <SelectTrigger>
+            <SelectValue placeholder="業種を選択" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全ての業種</SelectItem>
+            {serviceTypes.map((type) => (
+              <SelectItem key={type} value={type}>
+                {getServiceTypeLabel(type as ServiceType)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 求人一覧 */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      ) : !response?.jobs.length ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            条件に合う求人が見つかりませんでした
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 text-sm text-muted-foreground">
+            {response.pagination.totalItems}件の求人が見つかりました
+          </div>
 
-        {/* 求人一覧 */}
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : !response?.jobs.length ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              条件に合う求人が見つかりませんでした
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-4 text-sm text-muted-foreground">
-              {response.pagination.totalItems}件の求人が見つかりました
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {response.jobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </motion.div>
+
+          {/* ページネーション */}
+          {response.pagination.totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination
+                currentPage={response.pagination.currentPage}
+                totalPages={response.pagination.totalPages}
+                onPageChange={setPage}
+              />
             </div>
-
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-            >
-              {response.jobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </motion.div>
-
-            {/* ページネーション */}
-            {response.pagination.totalPages > 1 && (
-              <div className="mt-8 flex justify-center">
-                <Pagination
-                  currentPage={response.pagination.currentPage}
-                  totalPages={response.pagination.totalPages}
-                  onPageChange={setPage}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </main>
+          )}
+        </>
+      )}
     </div>
   );
 }
