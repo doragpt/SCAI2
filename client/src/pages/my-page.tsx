@@ -74,9 +74,9 @@ export default function MyPage() {
       color: "bg-purple-500"
     },
     {
-      title: "基本情報編集",
+      title: "ウェブ履歴書編集",
       icon: UserCircle,
-      href: "/talent/basic-info-edit",
+      href: "/talent/register",
       description: "登録情報の更新",
       color: "bg-blue-500"
     },
