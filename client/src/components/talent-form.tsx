@@ -40,9 +40,6 @@ import {
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
-import Textarea from "@/components/ui/textarea";
-
-
 
 // Store type definitions
 type CurrentStore = {
@@ -477,69 +474,6 @@ const SwitchField = ({
   </div>
 );
 
-// その他項目入力用のコンポーネント
-const OtherItemInput = ({
-  items,
-  onAdd,
-  onRemove,
-  placeholder,
-}: {
-  items: string[];
-  onAdd: (value: string) => void;
-  onRemove: (index: number) => void;
-  placeholder: string;
-}) => {
-  const [newItem, setNewItem] = useState("");
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Input
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-          placeholder={placeholder}
-          className="flex-1"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            if (newItem.trim()) {
-              onAdd(newItem.trim());
-              setNewItem("");
-            }
-          }}
-        >
-          追加
-        </Button>
-      </div>
-      {items.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {items.map((item, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className="flex items-center gap-1"
-            >
-              {item}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => onRemove(index)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 
 export function TalentForm() {
   const { toast } = useToast();
@@ -595,7 +529,6 @@ export function TalentForm() {
       estheOptions: {
         available: [],
         ngOptions: [],
-        notes:""
       },
       hasEstheExperience: false,
       estheExperiencePeriod: "",
@@ -653,6 +586,12 @@ export function TalentForm() {
 
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<TalentProfileData | null>(null);
+  const [otherIds, setOtherIds] = useState<string[]>([]);
+  const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
+  const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
+  const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [bodyMarkDetails, setBodyMarkDetails] = useState("");
   const [newIdType, setNewIdType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -670,29 +609,16 @@ export function TalentForm() {
           hasBodyMark: false,
           details: "",
         },
-        estheOptions: existingProfile.estheOptions || {
-          available: [],
-          ngOptions: [],
-          notes:""
-        },
-        ngOptions: {
-          common: existingProfile.ngOptions?.common || [],
-          others: existingProfile.ngOptions?.others || [],
-        },
-        allergies: {
-          types: existingProfile.allergies?.types || [],
-          others: existingProfile.allergies?.others || [],
-          hasAllergy: existingProfile.allergies?.hasAllergy || false,
-        },
-        smoking: {
-          enabled: existingProfile.smoking?.enabled || false,
-          types: existingProfile.smoking?.types || [],
-          others: existingProfile.smoking?.others || [],
-        },
       });
-      setNewIdType("");
+
+      setOtherIds(existingProfile.availableIds?.others || []);
+      setOtherNgOptions(existingProfile.ngOptions?.others || []);
+      setOtherAllergies(existingProfile.allergies?.others || []);
+      setOtherSmokingTypes(existingProfile.smoking?.others || []);
+      setIsEstheOpen(existingProfile.hasEstheExperience || false);
+      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
     }
-  }, [existingProfile, form.reset]);
+  }, [existingProfile, form]);
 
   const handleConfirm = async () => {
     if (!formData) return;
@@ -732,7 +658,7 @@ export function TalentForm() {
 
   const handleAddIdType = () => {
     if (!newIdType.trim()) return;
-    form.setValue("availableIds.others", [...form.getValues("availableIds.others") || [], newIdType.trim()]);
+    setOtherIds([...otherIds, newIdType.trim()]);
     setNewIdType("");
   };
 
@@ -851,25 +777,25 @@ export function TalentForm() {
       hip: data.hip === "" ? null : Number(data.hip),
       availableIds: {
         types: data.availableIds.types || [],
-        others: form.getValues("availableIds.others") || [],
+        others: otherIds,
       },
       ngOptions: {
         common: data.ngOptions.common || [],
-        others: form.getValues("ngOptions.others") || [],
+        others: otherNgOptions,
       },
       allergies: {
         types: data.allergies.types || [],
-        others: form.getValues("allergies.others") || [],
+        others: otherAllergies,
         hasAllergy: data.allergies.hasAllergy,
       },
       smoking: {
         enabled: data.smoking.enabled,
         types: data.smoking.types || [],
-        others: form.getValues("smoking.others") || [],
+        others: otherSmokingTypes,
       },
       bodyMark: {
         hasBodyMark: data.bodyMark.hasBodyMark,
-        details: data.bodyMark.details,
+        details: bodyMarkDetails,
       },
       photos: data.photos || [],
       // 求人関連フィールドのデフォルト値を設定
@@ -896,9 +822,6 @@ export function TalentForm() {
   const photos = form.getValues().photos || [];
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
-
-  const [bodyMarkDetails, setBodyMarkDetails] = useState(form.watch("bodyMark.details") || "");
-  const [isEstheOpen, setIsEstheOpen] = useState(form.watch("hasEstheExperience") || false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -946,7 +869,8 @@ export function TalentForm() {
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormFieldWrapper label="名" required>                    <FormControl>
+                    <FormFieldWrapper label="名" required>
+                      <FormControl>
                         <Input {...field} placeholder="例：奈々子" />
                       </FormControl>
                     </FormFieldWrapper>
@@ -1310,13 +1234,12 @@ export function TalentForm() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
-              <div className="space-y-4">
-                <Label>NGオプション</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <FormFieldWrapper label="NGオプション">
+                <div className="grid grid-cols-2 gap-4">
                   {commonNgOptions.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
                       <Checkbox
-                        checked={form.watch("ngOptions.common")?.includes(option)}
+                        checked={form.watch("ngOptions.common").includes(option)}
                         onCheckedChange={(checked) => {
                           const current = form.watch("ngOptions.common") || [];
                           const updated = checked
@@ -1329,88 +1252,234 @@ export function TalentForm() {
                     </div>
                   ))}
                 </div>
-                <div className="pt-2">
-                  <Label className="text-sm text-muted-foreground">その他のNGオプション</Label>
-                  <OtherItemInput
-                    items={form.watch("ngOptions.others") || []}
-                    onAdd={(value) => {
-                      const current = form.watch("ngOptions.others") || [];
-                      form.setValue("ngOptions.others", [...current, value]);
-                    }}
-                    onRemove={(index) => {
-                      const current = form.watch("ngOptions.others") || [];
-                      form.setValue(
-                        "ngOptions.others",
-                        current.filter((_, i) => i !== index)
-                      );
-                    }}
-                    placeholder="その他のNGオプションを入力"
-                  />
+                <div className="mt-4">
+                  <Label>その他のNGオプション</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {otherNgOptions.map((option, index) => (
+                      <Badge key={index} variant="secondary">
+                        {option}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-1 h-4 w-4 p-0"
+                          onClick={() => {
+                            setOtherNgOptions(otherNgOptions.filter((_, i) => i !== index));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="その他のNGオプションを入力"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          const value = e.currentTarget.value.trim();
+                          if (value && !otherNgOptions.includes(value)) {
+                            const newOptions = [...otherNgOptions, value];
+                            setOtherNgOptions(newOptions);
+                            form.setValue("ngOptions.others", newOptions);
+                            e.currentTarget.value = "";
+                          }
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              </FormFieldWrapper>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
+              <FormField
+                control={form.control}
+                name="hasEstheExperience"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="エステ経験"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        setIsEstheOpen(checked);
+                      }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("hasEstheExperience") && (
+                <Collapsible
+                  open={isEstheOpen}
+                  onOpenChange={setIsEstheOpen}
+                  className="mt-4 space-y-4 border rounded-lg p-4"
+                >
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="estheExperiencePeriod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormFieldWrapper label="経験期間">
+                            <FormControl>
+                              <Input {...field} placeholder="例：2年" />
+                            </FormControl>
+                          </FormFieldWrapper>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-2">
+                      <Label>可能オプション</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {estheOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={form.watch("estheOptions.available").includes(option)}
+                              onCheckedChange={(checked) => {
+                                const current = form.watch("estheOptions.available");
+                                const updated = checked
+                                  ? [...current, option]
+                                  : current.filter((o) => o !== option);
+                                form.setValue("estheOptions.available", updated);
+                              }}
+                            />
+                            <Label>{option}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>NGオプション</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {estheOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={form.watch("estheOptions.ngOptions").includes(option)}
+                              onCheckedChange={(checked) => {
+                                const current = form.watch("estheOptions.ngOptions");
+                                const updated = checked
+                                  ? [...current, option]
+                                  : current.filter((o) => o !== option);
+                                form.setValue("estheOptions.ngOptions", updated);
+                              }}
+                            />
+                            <Label>{option}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Collapsible>
+              )}
             </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
-              <div className="space-y-4">
-                <Label>アレルギー</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {allergyTypes.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={form.watch("allergies.types")?.includes(type)}
-                        onCheckedChange={(checked) => {
-                          const current = form.watch("allergies.types") || [];
-                          const updated = checked
-                            ? [...current, type]
-                            : current.filter((t) => t !== type);
-                          form.setValue("allergies.types", updated);
+              <FormField
+                control={form.control}
+                name="allergies.hasAllergy"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="アレルギーの有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("allergies.hasAllergy") && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {allergyTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch("allergies.types").includes(type)}
+                          onCheckedChange={(checked) => {
+                            const current = form.watch("allergies.types") || [];
+                            const updated = checked
+                              ? [...current, type]
+                              : current.filter((t) => t !== type);
+                            form.setValue("allergies.types", updated);
+                          }}
+                        />
+                        <label className="text-sm">{type}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <Label>その他のアレルギー</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {otherAllergies.map((allergy, index) => (
+                        <Badge key={index} variant="secondary">
+                          {allergy}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => {
+                              setOtherAllergies(otherAllergies.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        placeholder="その他のアレルギーを入力"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const value = e.currentTarget.value.trim();
+                            if (value && !otherAllergies.includes(value)) {
+                              const newAllergies = [...otherAllergies, value];
+                              setOtherAllergies(newAllergies);
+                              form.setValue("allergies.others", newAllergies);
+                              e.currentTarget.value = "";
+                            }
+                          }
                         }}
                       />
-                      <label className="text-sm">{type}</label>
                     </div>
-                  ))}
+                  </div>
                 </div>
-                <div className="pt-2">
-                  <Label className="text-sm text-muted-foreground">その他のアレルギー</Label>
-                  <OtherItemInput
-                    items={form.watch("allergies.others") || []}
-                    onAdd={(value) => {
-                      const current = form.watch("allergies.others") || [];
-                      form.setValue("allergies.others", [...current, value]);
-                    }}
-                    onRemove={(index) => {
-                      const current = form.watch("allergies.others") || [];
-                      form.setValue(
-                        "allergies.others",
-                        current.filter((_, i) => i !== index)
-                      );
-                    }}
-                    placeholder="その他のアレルギーを入力"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">喫煙</h3>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    checked={form.watch("smoking.enabled")}
-                    onCheckedChange={(checked) => {
-                      form.setValue("smoking.enabled", checked);
-                    }}
-                  />
-                  <Label>喫煙あり</Label>
-                </div>
-                {form.watch("smoking.enabled") && (
-                  <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pl-6">
+              <FormField
+                control={form.control}
+                name="smoking.enabled"
+                render={({ field }) => (
+                  <FormItem>
+                    <SwitchField
+                      label="喫煙の有無"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("smoking.enabled") && (
+                <div className="mt-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       {smokingTypes.map((type) => (
                         <div key={type} className="flex items-center space-x-2">
                           <Checkbox
-                            checked={form.watch("smoking.types")?.includes(type)}
+                            checked={form.watch("smoking.types").includes(type)}
                             onCheckedChange={(checked) => {
                               const current = form.watch("smoking.types") || [];
                               const updated = checked
@@ -1423,101 +1492,46 @@ export function TalentForm() {
                         </div>
                       ))}
                     </div>
-                    <div className="pt-2 pl-6">
-                      <Label className="text-sm text-muted-foreground">その他の喫煙情報</Label>
-                      <OtherItemInput
-                        items={form.watch("smoking.others") || []}
-                        onAdd={(value) => {
-                          const current = form.watch("smoking.others") || [];
-                          form.setValue("smoking.others", [...current, value]);
-                        }}
-                        onRemove={(index) => {
-                          const current = form.watch("smoking.others") || [];
-                          form.setValue(
-                            "smoking.others",
-                            current.filter((_, i) => i !== index)
-                          );
-                        }}
-                        placeholder="その他の喫煙情報を入力"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    checked={form.watch("hasEstheExperience")}
-                    onCheckedChange={(checked) => {
-                      form.setValue("hasEstheExperience", checked);
-                      setIsEstheOpen(checked);
-                    }}
-                  />
-                  <Label>エステ経験あり</Label>
-                </div>
-                {form.watch("hasEstheExperience") && (
-                  <>
-                    <div className="pl-6 space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="estheExperiencePeriod"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>経験期間</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="例：2年" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div>
-                        <Label>可能オプション（出来るものだけチェックをつけてください）</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                          {estheOptions.map((option) => (
-                            <div key={option} className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={form.watch("estheOptions.available")?.includes(option)}
-                                onCheckedChange={(checked) => {
-                                  const current = form.watch("estheOptions.available") || [];
-                                  const updated = checked
-                                    ? [...current, option]
-                                    : current.filter((o) => o !== option);
-                                  form.setValue("estheOptions.available", updated);
-                                }}
-                              />
-                              <label className="text-sm">{option}</label>
-                            </div>
-                          ))}
-                        </div>
+                    <div>
+                      <Label>その他の喫煙情報</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {otherSmokingTypes.map((type, index) => (
+                          <Badge key={index} variant="secondary">
+                            {type}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="ml-1 h-4 w-4 p-0"
+                              onClick={() => {
+                                setOtherSmokingTypes(otherSmokingTypes.filter((_, i) => i !== index));
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
                       </div>
-                      <div>
-                        <Label>その他できないプレイやオプション</Label>
-                        <FormField
-                          control={form.control}
-                          name="estheOptions.notes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Textarea
-                                  {...field}
-                                  placeholder="できないプレイやオプションを入力してください"
-                                  className="mt-2"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          placeholder="その他の喫煙情報を入力"
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              const value = e.currentTarget.value.trim();
+                              if (value && !otherSmokingTypes.includes(value)) {
+                                const newTypes = [...otherSmokingTypes, value];
+                                setOtherSmokingTypes(newTypes);
+                                form.setValue("smoking.others", newTypes);
+                                e.currentTarget.value = "";
+                              }
+                            }
+                          }}
                         />
                       </div>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
