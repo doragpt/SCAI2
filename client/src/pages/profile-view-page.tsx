@@ -26,8 +26,9 @@ export default function ProfileViewPage() {
   const { user } = useAuth();
 
   // Debug: ログイン状態を確認
-  console.log('Auth state:', {
+  console.log('ProfileViewPage - Auth state:', {
     user,
+    userId: user?.id,
     timestamp: new Date().toISOString()
   });
 
@@ -86,6 +87,8 @@ export default function ProfileViewPage() {
         console.log('Talent profile fetch response:', {
           hasData: !!response,
           responseData: JSON.stringify(response),
+          userAuthState: !!user,
+          userId: user?.id,
           timestamp: new Date().toISOString()
         });
 
@@ -93,6 +96,8 @@ export default function ProfileViewPage() {
       } catch (error) {
         console.error('Talent profile fetch error:', {
           error: error instanceof Error ? error.message : "Unknown error",
+          userAuthState: !!user,
+          userId: user?.id,
           timestamp: new Date().toISOString()
         });
         throw error;
@@ -105,7 +110,7 @@ export default function ProfileViewPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Debug logs
+  // Debug: データの存在確認
   console.log('Profile view state:', {
     hasUser: !!user,
     hasUserProfile: !!userProfile,
@@ -146,6 +151,14 @@ export default function ProfileViewPage() {
       </div>
     );
   }
+
+  // Debug: データの存在確認
+  console.log('Talent profile data check:', {
+    hasData: !!talentProfile,
+    firstName: talentProfile?.firstName,
+    lastName: talentProfile?.lastName,
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <div className="container max-w-2xl py-8">

@@ -136,6 +136,13 @@ export async function apiRequest<T>(
     const token = localStorage.getItem("auth_token");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      console.log('Token found in localStorage:', {
+        tokenExists: true,
+        tokenPreview: `${token.substring(0, 10)}...`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.warn('No auth token found in localStorage');
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -164,6 +171,12 @@ export async function apiRequest<T>(
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ message: res.statusText }));
+      console.error('API request failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        errorData,
+        timestamp: new Date().toISOString()
+      });
       throw new Error(errorData.message || res.statusText);
     }
 
@@ -177,7 +190,7 @@ export async function apiRequest<T>(
 
     return responseData;
   } catch (error) {
-    console.error("API Request Failed:", {
+    console.error('API Request Failed:', {
       method,
       url,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -374,6 +387,5 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
 
 export { QUERY_KEYS };
