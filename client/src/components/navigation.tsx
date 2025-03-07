@@ -74,7 +74,7 @@ export function Navigation() {
   const getDisplayBreadcrumbs = (path: string) => {
     return path.split("/")
       .filter(Boolean)
-      .filter(segment => segment !== "talent") // talentセグメントを除外
+      .filter(segment => segment !== "talent")
       .map(segment => ({
         label: getBreadcrumbLabel(segment),
         path: `/${path.split("/").slice(0, path.split("/").indexOf(segment) + 1).join("/")}`
@@ -90,34 +90,36 @@ export function Navigation() {
         <div className="mr-4 hidden md:flex items-center space-x-4">
           {commonRoutes.map((route) => (
             <Link key={route.path} href={route.path}>
-              <Button
-                variant={location === route.path ? "default" : "ghost"}
-                size="sm"
-                className="cursor-pointer"
-              >
-                <route.icon className="h-4 w-4 mr-2" />
-                {route.label}
-              </Button>
+              <a className="cursor-pointer">
+                <Button
+                  variant={location === route.path ? "default" : "ghost"}
+                  size="sm"
+                >
+                  <route.icon className="h-4 w-4 mr-2" />
+                  {route.label}
+                </Button>
+              </a>
             </Link>
           ))}
 
           {user && userRoutes.map((route) => (
             <Link key={route.path} href={route.path}>
-              <Button
-                variant={location === route.path ? "default" : "ghost"}
-                size="sm"
-                className="cursor-pointer"
-              >
-                <route.icon className="h-4 w-4 mr-2" />
-                {route.label}
-              </Button>
+              <a className="cursor-pointer">
+                <Button
+                  variant={location === route.path ? "default" : "ghost"}
+                  size="sm"
+                >
+                  <route.icon className="h-4 w-4 mr-2" />
+                  {route.label}
+                </Button>
+              </a>
             </Link>
           ))}
         </div>
 
         {/* モバイルメニュー */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger className="md:hidden">
+          <SheetTrigger asChild>
             <Button variant="ghost" size="sm">
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -129,27 +131,31 @@ export function Navigation() {
             <div className="mt-4 space-y-2">
               {commonRoutes.map((route) => (
                 <Link key={route.path} href={route.path}>
-                  <Button
-                    variant={location === route.path ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <route.icon className="h-4 w-4 mr-2" />
-                    {route.label}
-                  </Button>
+                  <a className="cursor-pointer block">
+                    <Button
+                      variant={location === route.path ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <route.icon className="h-4 w-4 mr-2" />
+                      {route.label}
+                    </Button>
+                  </a>
                 </Link>
               ))}
 
               {user && userRoutes.map((route) => (
                 <Link key={route.path} href={route.path}>
-                  <Button
-                    variant={location === route.path ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <route.icon className="h-4 w-4 mr-2" />
-                    {route.label}
-                  </Button>
+                  <a className="cursor-pointer block">
+                    <Button
+                      variant={location === route.path ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <route.icon className="h-4 w-4 mr-2" />
+                      {route.label}
+                    </Button>
+                  </a>
                 </Link>
               ))}
             </div>
@@ -159,17 +165,21 @@ export function Navigation() {
         {/* パンくずリスト（モバイルでは非表示） */}
         <div className="hidden md:flex items-center text-sm">
           <Link href="/">
-            <Button variant="link" size="sm" className="cursor-pointer">
-              ホーム
-            </Button>
+            <a className="cursor-pointer">
+              <Button variant="link" size="sm">
+                ホーム
+              </Button>
+            </a>
           </Link>
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center">
               <span className="mx-2 text-muted-foreground">/</span>
               <Link href={crumb.path}>
-                <Button variant="link" size="sm" className="cursor-pointer">
-                  {crumb.label}
-                </Button>
+                <a className="cursor-pointer">
+                  <Button variant="link" size="sm">
+                    {crumb.label}
+                  </Button>
+                </a>
               </Link>
             </div>
           ))}
@@ -179,8 +189,8 @@ export function Navigation() {
         <div className="ml-auto">
           {user ? (
             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="sm" className="cursor-pointer">
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -190,16 +200,20 @@ export function Navigation() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
-                    <UserCircle className="h-4 w-4 mr-2" />
-                    マイページ
-                  </DropdownMenuItem>
+                  <a>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                      <UserCircle className="h-4 w-4 mr-2" />
+                      マイページ
+                    </DropdownMenuItem>
+                  </a>
                 </Link>
                 <Link href={user.role === 'store' ? "/store/settings" : "/talent/mypage"}>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    アカウント設定
-                  </DropdownMenuItem>
+                  <a>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      アカウント設定
+                    </DropdownMenuItem>
+                  </a>
                 </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -216,9 +230,11 @@ export function Navigation() {
             </DropdownMenu>
           ) : (
             <Link href="/auth">
-              <Button size="sm" className="cursor-pointer">
-                ログイン
-              </Button>
+              <a className="cursor-pointer">
+                <Button size="sm">
+                  ログイン
+                </Button>
+              </a>
             </Link>
           )}
         </div>

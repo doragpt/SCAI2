@@ -477,22 +477,23 @@ const SwitchField = ({
 );
 
 
-const OtherItemInput = React.memo(({
-  onAdd,
-  placeholder,
-}: {
-  onAdd: (value: string) => void;
-  placeholder: string;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+const OtherItemInput = React.forwardRef<
+  HTMLInputElement,
+  {
+    onAdd: (value: string) => void;
+    placeholder: string;
+  }
+>((props, ref) => {
+  const { onAdd, placeholder } = props;
 
   const handleAdd = () => {
-    const value = inputRef.current?.value.trim();
+    const inputEl = ref as React.RefObject<HTMLInputElement>;
+    const value = inputEl.current?.value.trim();
     if (value) {
       onAdd(value);
-      if (inputRef.current) {
-        inputRef.current.value = '';
-        inputRef.current.focus();
+      if (inputEl.current) {
+        inputEl.current.value = '';
+        inputEl.current.focus();
       }
     }
   };
@@ -507,7 +508,7 @@ const OtherItemInput = React.memo(({
   return (
     <div className="flex items-center gap-2">
       <Input
-        ref={inputRef}
+        ref={ref}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
       />
@@ -521,6 +522,8 @@ const OtherItemInput = React.memo(({
     </div>
   );
 });
+
+OtherItemInput.displayName = 'OtherItemInput';
 
 const defaultValues: TalentProfileData = {
   lastName: "",
@@ -947,10 +950,11 @@ export function TalentForm() {
   };
 
   // エステNGオプション追加ハンドラー
-  const handleAddEstheNgOption = (value: string) =>{
+  const handleAddEstheNgOption = (value: string) => {
     if (!otherEstheNgOptions.includes(value)) {
       const updated = [...otherEstheNgOptions, value];
-      setOtherEstheNgOptions(updated);      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
+      setOtherEstheNgOptions(updated);
+      form.setValue("estheOptions.ngOptions", updated);
     }
   };
 
@@ -976,14 +980,12 @@ export function TalentForm() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4py-8 pb-32">
+      <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form
-            onSubmit={handleSubmit}
-            className="spacey-8"
-          >
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div>
-              <h3 className="textlg font-semibold mb-4">氏名</h3>              <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-lg font-semibold mb-4">氏名</h3>
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="lastName"
@@ -1490,7 +1492,7 @@ export function TalentForm() {
 
                     <FormField
                       control={form.control}
-                      name="estheOptions.otherNgOptions"
+                      name="estheOptions.ngOptions"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>その他できないプレイやオプション</FormLabel>
@@ -1506,7 +1508,7 @@ export function TalentForm() {
                                     onClick={() => {
                                       const updated = otherEstheNgOptions.filter((_, i) => i !== index);
                                       setOtherEstheNgOptions(updated);
-                                      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
+                                      form.setValue("estheOptions.ngOptions", updated);
                                     }}
                                   >
                                     <X className="h-3 w-3" />
@@ -1963,11 +1965,11 @@ export function TalentForm() {
                 >
                   {form.formState.isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h4 w-4 animate-spin" />
-                      送信中...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                      <span>送信中...</span>
                     </>
                   ) : (
-                    "確認する"
+                    "保存"
                   )}
                 </Button>
               </div>
@@ -1975,7 +1977,8 @@ export function TalentForm() {
           </form>
         </Form>
       </main>
-      <ProfileConfirmationModal        isOpen={isConfirmationOpen}
+      <ProfileConfirmationModal
+        isOpen={isConfirmationOpen}
         onClose={() => {
           console.log('Modal closing');
           setIsConfirmationOpen(false);
