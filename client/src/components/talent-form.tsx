@@ -680,17 +680,15 @@ export function TalentForm() {
 
     try {
       setIsSubmitting(true);
-      const response = await apiRequest(
+
+      // APIリクエストを実行
+      await apiRequest(
         existingProfile ? "PUT" : "POST",
-        "/api/talent/profile",
+        QUERY_KEYS.TALENT_PROFILE,
         formData
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "プロフィールの更新に失敗しました");
-      }
-
+      // キャッシュを更新
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
 
       toast({
@@ -699,6 +697,7 @@ export function TalentForm() {
       });
 
       setIsConfirmationOpen(false);
+
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
@@ -834,34 +833,33 @@ export function TalentForm() {
         bust: data.bust === "" ? null : Number(data.bust),
         waist: data.waist === "" ? null : Number(data.waist),
         hip: data.hip === "" ? null : Number(data.hip),
-        // その他のフィールドは型定義通りに設定
         availableIds: {
-          types: data.availableIds.types || [],
+          types: data.availableIds?.types || [],
           others: otherIds,
         },
         ngOptions: {
-          common: data.ngOptions.common || [],
+          common: data.ngOptions?.common || [],
           others: otherNgOptions,
         },
         allergies: {
-          types: data.allergies.types || [],
+          types: data.allergies?.types || [],
           others: otherAllergies,
-          hasAllergy: data.allergies.hasAllergy,
+          hasAllergy: data.allergies?.hasAllergy || false,
         },
         smoking: {
-          enabled: data.smoking.enabled,
-          types: data.smoking.types || [],
+          enabled: data.smoking?.enabled || false,
+          types: data.smoking?.types || [],
           others: otherSmokingTypes,
         },
         bodyMark: {
-          hasBodyMark: bodyMarks.length > 0,
-          details: bodyMarkDetails,
+          hasBodyMark: data.bodyMark?.hasBodyMark || false,
+          details: data.bodyMark?.details || "",
           others: bodyMarks
         },
         photos: data.photos || [],
         estheOptions: {
           available: data.estheOptions?.available || [],
-          ngOptions: data.estheOptions?.ngOptions || [],
+          ngOptions: otherEstheNgOptions,
         }
       };
 
@@ -952,8 +950,7 @@ export function TalentForm() {
   const handleAddEstheNgOption = (value: string) =>{
     if (!otherEstheNgOptions.includes(value)) {
       const updated = [...otherEstheNgOptions, value];
-      setOtherEstheNgOptions(updated);
-      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
+      setOtherEstheNgOptions(updated);      form.setValue("estheOptions.otherNgOptions", updated.join('\n'));
     }
   };
 
@@ -1966,7 +1963,7 @@ export function TalentForm() {
                 >
                   {form.formState.isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h4 w-4 animate-spin" />
                       送信中...
                     </>
                   ) : (
@@ -1978,7 +1975,6 @@ export function TalentForm() {
           </form>
         </Form>
       </main>
-
       <ProfileConfirmationModal        isOpen={isConfirmationOpen}
         onClose={() => {
           console.log('Modal closing');
