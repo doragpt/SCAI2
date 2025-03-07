@@ -85,26 +85,32 @@ export default function BasicInfoEdit() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
-      const userResponse = await apiRequest("PATCH", "/api/user", {
-        username: updateData.username,
-        displayName: updateData.displayName,
-        location: updateData.location,
-        preferredLocations: updateData.preferredLocations,
-        ...(updateData.newPassword && updateData.currentPassword ? {
-          currentPassword: updateData.currentPassword,
-          newPassword: updateData.newPassword,
-        } : {})
-      });
+      try {
+        const response = await apiRequest("PATCH", "/api/user", {
+          username: updateData.username,
+          displayName: updateData.displayName,
+          location: updateData.location,
+          preferredLocations: updateData.preferredLocations,
+          ...(updateData.newPassword && updateData.currentPassword ? {
+            currentPassword: updateData.currentPassword,
+            newPassword: updateData.newPassword,
+          } : {})
+        });
 
-      if (!userResponse.ok) {
-        const errorData = await userResponse.json();
-        throw new Error(errorData.message || "ユーザー情報の更新に失敗しました");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "ユーザー情報の更新に失敗しました");
+        }
+
+        return data;
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました");
       }
-
-      return await userResponse.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "プロフィールを更新しました",
         description: "基本情報の変更が保存されました。",

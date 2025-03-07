@@ -738,6 +738,22 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         return acc;
       }, {} as Record<string, any>);
 
+      // パスワード更新の処理
+      if (req.body.newPassword && req.body.currentPassword) {
+        // 現在のパスワードを検証
+        const [hashedPassword, salt] = currentUser.password.split('.');
+        const buf = (await scryptAsync(req.body.currentPassword, salt, 64)) as Buffer;
+        const suppliedHash = buf.toString('hex');
+
+        if (suppliedHash !== hashedPassword) {
+          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
+        }
+
+        // 新しいパスワードをハッシュ化
+        const newHashedPassword = await hashPassword(req.body.newPassword);
+        updateData.password = newHashedPassword;
+      }
+
       // 更新データに必ずタイムスタンプを追加
       updateData.updatedAt = new Date();
 
@@ -760,7 +776,10 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         timestamp: new Date().toISOString()
       });
 
-      res.json(userWithoutPassword);
+      res.json({
+        message: "ユーザー情報を更新しました",
+        user: userWithoutPassword
+      });
     } catch (error) {
       console.error('User update error:', {
         error,
