@@ -267,6 +267,7 @@ export const AIMatchingChat = () => {
     setShowConfirmDialog(false);
   };
 
+  // handleConfirmConditionsの部分を修正
   const handleConfirmConditions = async () => {
     try {
       setIsLoading(true);
@@ -279,17 +280,28 @@ export const AIMatchingChat = () => {
         content: formatConditionsMessage(conditions, selectedType)
       }, {
         type: "ai",
-        content: `確認してくれてありがとう！
+        content: "入力してくれてありがとう！今現在のあなたのプロフィールを確認するね！"
+      }, {
+        type: "ai",
+        content: `【現在のプロフィール】
+• お名前: ${profileData?.lastName} ${profileData?.firstName}
+• フリガナ: ${profileData?.lastNameKana} ${profileData?.firstNameKana}
+• 生年月日: ${profileData?.birthDate ? format(new Date(profileData?.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
 
-【マッチング方法の選択】
-AIがあなたに合いそうな店舗に自動で確認するか、
-AIがあなたに合いそうな店舗をピックアップしてから確認するか選んでください。`
+記入したものの情報に間違いはないか確認してね！
+間違いが無ければマッチングをはじめるよ！`
+      }, {
+        type: "ai",
+        content: `それでは、マッチング方法を選択してください。
+
+【選択肢】
+1. AIが自動で確認：
+   あなたの条件に合う店舗に自動で確認メッセージを送ります。
+
+2. AIがピックアップして確認：
+   あなたに合いそうな店舗をリストアップし、
+   確認したい店舗を選んでから確認メッセージを送ります。`
       }]);
-
-      return new Promise((resolve) => {
-        setMatchingMethod(null); // リセット
-        // ユーザーの選択を待つ
-      });
 
     } catch (error) {
       console.error("送信エラー:", error);
@@ -960,7 +972,7 @@ ${index + 1}. ${result.businessName}
       )}
 
       {/* マッチング方法選択部分を追加 */}
-      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && (
+      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("確認したい店舗を選んでから確認メッセージを送ります。") && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
           <div className="container max-w-screen-2xl mx-auto">
             <div className="flex flex-col gap-4">
@@ -988,6 +1000,7 @@ ${index + 1}. ${result.businessName}
       )}
 
 
+
       {/* 確認ダイアログ */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent className="max-w-4xl">
@@ -1005,156 +1018,149 @@ ${index + 1}. ${result.businessName}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5}}
               className="space-y-6"
             >
-              {/* プロフィール情報セクション */}
-              <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-                <div className="border-b bg-muted/50 p-4">
-                  <h3 className="flex items-center gap-2 text-lg font-semibold">
-                    <User className="h-5 w-5 text-primary" />
-                    プロフィール情報
-                  </h3>
+              <div className="p-6 space-y-6">
+                {/* 基本情報 */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm text-muted-foreground">
+                    基本情報
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>氏名</Label>
+                      <p className="text-sm font-medium">
+                        {profileData?.lastName} {profileData?.firstName}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>フリガナ</Label>
+                      <p className="text-sm font-medium">
+                        {profileData?.lastNameKana} {profileData?.firstNameKana}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>生年月日</Label>
+                      <p className="text-sm font-medium">
+                        {formatDate(user?.birthDate || '')}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>年齢</Label>
+                      <p className="text-sm font-medium">
+                        {calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>居住地</Label>
+                      <p className="text-sm font-medium">{profileData?.location}</p>
+                    </div>
+                    <div>
+                      <Label>最寄り駅</Label>
+                      <p className="text-sm font-medium">{profileData?.nearestStation}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-6 space-y-6">
-                  {/* 基本情報 */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm textmuted-foreground">
-                      基本情報
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>氏名</Label>
-                        <p className="text-sm font-medium">
-                          {profileData?.lastName} {profileData?.firstName}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>フリガナ</Label>
-                        <p className="text-sm font-medium">
-                          {profileData?.lastNameKana} {profileData?.firstNameKana}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>生年月日</Label>
-                        <p className="text-sm font-medium">
-                          {formatDate(user?.birthDate || '')}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>年齢</Label>
-                        <p className="text-sm font-medium">
-                          {calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>居住地</Label>
-                        <p className="text-sm font-medium">{profileData?.location}</p>
-                      </div>
-                      <div>
-                        <Label>最寄り駅</Label>
-                        <p className="text-sm font-medium">{profileData?.nearestStation}</p>
-                      </div>
+
+                <Separator className="my-6" />
+
+                {/* 身体的特徴 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <Heart className="h-4 w-4" />
+                    身体的特徴
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>身長</Label>
+                      <p className="text-sm font-medium">{profileData?.height}cm</p>
+                    </div>
+                    <div>
+                      <Label>体重</Label>
+                      <p className="text-sm font-medium">{profileData?.weight}kg</p>
+                    </div>
+                    <div>
+                      <Label>スリーサイズ</Label>
+                      <p className="text-sm font-medium">
+                        B{profileData?.bust || '未入力'} W{profileData?.waist || '未入力'} H{profileData?.hip || '未入力'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>カップサイズ</Label>
+                      <p className="text-sm font-medium">{profileData?.cupSize}カップ</p>
                     </div>
                   </div>
+                </div>
 
-                  <Separator className="my-6" />
+                <Separator className="my-6" />
 
-                  {/* 身体的特徴 */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <Heart className="h-4 w-4" />
-                      身体的特徴
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>身長</Label>
-                        <p className="text-sm font-medium">{profileData?.height}cm</p>
-                      </div>
-                      <div>
-                        <Label>体重</Label>
-                        <p className="text-sm font-medium">{profileData?.weight}kg</p>
-                      </div>
-                      <div>
-                        <Label>スリーサイズ</Label>
-                        <p className="text-sm font-medium">
-                          B{profileData?.bust || '未入力'} W{profileData?.waist || '未入力'} H{profileData?.hip || '未入力'}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>カップサイズ</Label>
-                        <p className="text-sm font-medium">{profileData?.cupSize}カップ</p>
+                {/* 身分証明書 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <IdCard className="h-4 w-4" />
+                    身分証明書
+                  </h4>
+                  <div className="space-y-2">
+                    <div>
+                      <Label>提示可能な身分証明書</Label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {profileData?.availableIds?.types?.map((id, index) => (
+                          <Badge key={index} variant="outline">
+                            {id}
+                          </Badge>
+                        ))}
+                        {profileData?.availableIds?.others?.map((id, index) => (
+                          <Badge key={`other-${index}`} variant="outline">
+                            {id}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  {/* 身分証明書 */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <IdCard className="h-4 w-4" />
-                      身分証明書
-                    </h4>
-                    <div className="space-y-2">
-                      <div>
-                        <Label>提示可能な身分証明書</Label>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {profileData?.availableIds?.types?.map((id, index) => (
-                            <Badge key={index} variant="outline">
-                              {id}
-                            </Badge>
-                          ))}
-                          {profileData?.availableIds?.others?.map((id, index) => (
-                            <Badge key={`other-${index}`} variant="outline">
-                              {id}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label>本籍地記載の住民票</Label>
-                        <Badge variant={profileData?.canProvideResidenceRecord ? "default" : "secondary"}>
-                          {profileData?.canProvideResidenceRecord ? "提出可能" : "提出不可"}
-                        </Badge>
-                      </div>
+                    <div>
+                      <Label>本籍地記載の住民票</Label>
+                      <Badge variant={profileData?.canProvideResidenceRecord ? "default" : "secondary"}>
+                        {profileData?.canProvideResidenceRecord ? "提出可能" : "提出不可"}
+                      </Badge>
                     </div>
                   </div>
+                </div>
 
-                  <Separator className="my-6" />
+                <Separator className="my-6" />
 
-                  {/* 各種対応可否 */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <CheckCircle className="h-4 w-4" />
-                      各種対応可否
-                    </h4>
-                    <div className="space-y-2">
-                      <div>
-                        <Label>写メ日記の投稿</Label>
-                        <Badge variant={profileData?.canPhotoDiary ? "default" : "secondary"}>
-                          {profileData?.canPhotoDiary ? "可能" : "不可"}
-                        </Badge>
-                      </div>
-                      <div>
-                        <Label>自宅待機での出張</Label>
-                        <Badge variant={profileData?.canHomeDelivery ? "default" : "secondary"}>
-                          {profileData?.canHomeDelivery ? "可能" : "不可"}
-                        </Badge>
-                      </div>
+                {/* 各種対応可否 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <CheckCircle className="h-4 w-4" />
+                    各種対応可否
+                  </h4>
+                  <div className="space-y-2">
+                    <div>
+                      <Label>写メ日記の投稿</Label>
+                      <Badge variant={profileData?.canPhotoDiary ? "default" : "secondary"}>
+                        {profileData?.canPhotoDiary ? "可能" : "不可"}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label>自宅待機での出張</Label>
+                      <Badge variant={profileData?.canHomeDelivery ? "default" : "secondary"}>
+                        {profileData?.canHomeDelivery ? "可能" : "不可"}
+                      </Badge>
                     </div>
                   </div>
+                </div>
 
-                  <Separator className="my-6" />
+                <Separator className="my-6" />
 
-                  {/* NGオプション */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <XCircle className="h-4 w-4" />
-                      NGオプション
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {[
+                {/* NGオプション */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <XCircle className="h-4 w-4" />
+                    NGオプション
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {
+                      [
                         ...(profileData?.ngOptions?.common || []),
                         ...(profileData?.ngOptions?.others || [])
                       ].map((option, index) => (
@@ -1162,378 +1168,377 @@ ${index + 1}. ${result.businessName}
                           {option}
                         </Badge>
                       ))}
-                    </div>
                   </div>
+                </div>
 
-                  <Separator className="my-6" />
+                <Separator className="my-6" />
 
-                  {/* アレルギー */}
-                  {profileData?.allergies && (
-                    <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 font-medium text-primary">
-                        <Warning className="h-4 w-4" />
-                        アレルギー
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          ...(profileData.allergies.types || []),
-                          ...(profileData.allergies.others || [])
-                        ].map((allergy, index) => (
-                          <Badge key={index} variant="destructive">
-                            {allergy}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator className="my-6" />
-
-                  {/* 傷・タトゥー・アトピー */}
-                  {profileData?.bodyMark && (profileData.bodyMark.hasBodyMark || profileData.bodyMark.others?.length > 0) && (
-                    <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 font-medium text-primary">
-                        <PatchCheck className="h-4 w-4" />
-                        傷・タトゥー・アトピー
-                      </h4>
-                      <div className="space-y-2">
-                        {profileData.bodyMark.others && profileData.bodyMark.others.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {profileData.bodyMark.others.map((mark, index) => (
-                              <Badge key={index} variant="outline">
-                                {mark}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        {profileData.bodyMark.details && (
-                          <p className="text-sm whitespace-pre-wrap">
-                            {profileData.bodyMark.details}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator className="my-6" />
-
-                  {/* 喫煙情報 */}
-                  {profileData?.smoking && (
-                    <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 font-medium text-primary">
-                        <Smoke className="h-4 w-4" />
-                        喫煙情報
-                      </h4>
-                      <div className="space-y-2">
-                        <Badge variant={profileData.smoking.enabled ? "default" : "secondary"}>
-                          {profileData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
-                        </Badge>
-                        {profileData.smoking.enabled && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {[
-                              ...(profileData.smoking.types || []),
-                              ...(profileData.smoking.others || [])
-                            ].map((type, index) => (
-                              <Badge key={index} variant="outline">
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator className="my-6" />
-
-                  {/* エステ関連 */}
+                {/* アレルギー */}
+                {profileData?.allergies && (
                   <div className="space-y-4">
                     <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <Droplet className="h-4 w-4" />
-                      エステ関連
+                      <Warning className="h-4 w-4" />
+                      アレルギー
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        ...(profileData.allergies.types || []),
+                        ...(profileData.allergies.others || [])
+                      ].map((allergy, index) => (
+                        <Badge key={index} variant="destructive">
+                          {allergy}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator className="my-6" />
+
+                {/* 傷・タトゥー・アトピー */}
+                {profileData?.bodyMark && (profileData.bodyMark.hasBodyMark || profileData.bodyMark.others?.length > 0) && (
+                  <div className="space-y-4">
+                    <h4 className="flex items-center gap-2 font-medium text-primary">
+                      <PatchCheck className="h-4 w-4" />
+                      傷・タトゥー・アトピー
                     </h4>
                     <div className="space-y-2">
-                      <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
-                        {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
-                      </Badge>
-                      {profileData?.estheOptions?.available && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {profileData.estheOptions.available.map((option, index) => (
+                      {profileData.bodyMark.others && profileData.bodyMark.others.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {profileData.bodyMark.others.map((mark, index) => (
                             <Badge key={index} variant="outline">
-                              {option}
+                              {mark}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {profileData.bodyMark.details && (
+                        <p className="text-sm whitespace-pre-wrap">
+                          {profileData.bodyMark.details}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Separator className="my-6" />
+
+                {/* 喫煙情報 */}
+                {profileData?.smoking && (
+                  <div className="space-y-4">
+                    <h4 className="flex items-center gap-2 font-medium text-primary">
+                      <Smoke className="h-4 w-4" />
+                      喫煙情報
+                    </h4>
+                    <div className="space-y-2">
+                      <Badge variant={profileData.smoking.enabled ? "default" : "secondary"}>
+                        {profileData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
+                      </Badge>
+                      {profileData.smoking.enabled && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {[
+                            ...(profileData.smoking.types || []),
+                            ...(profileData.smoking.others || [])
+                          ].map((type, index) => (
+                            <Badge key={index} variant="outline">
+                              {type}
                             </Badge>
                           ))}
                         </div>
                       )}
                     </div>
                   </div>
+                )}
 
-                  <Separator className="my-6" />
+                <Separator className="my-6" />
 
-                  {/* 顔出し設定 */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <Eye className="h-4 w-4" />
-                      顔出し設定
-                    </h4>
-                    <p className="text-sm font-medium">{profileData?.faceVisibility}</p>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  {/* 在籍店舗情報 */}
-                  {(profileData?.currentStores?.length > 0 || profileData?.previousStores?.length > 0) && (
-                    <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 font-medium text-primary">
-                        <BuildingStore className="h-4 w-4" />
-                        在籍店舗情報
-                      </h4>
-                      <div className="space-y-2">
-                        {profileData?.currentStores?.map((store, index) => (
-                          <div key={index}>
-                            <p className="text-sm font-medium">
-                              現在の在籍店舗: {store.storeName}（{store.stageName}）
-                            </p>
-                          </div>
-                        ))}
-                        {profileData?.previousStores?.map((store, index) => (
-                          <div key={index}>
-                            <p className="text-sm font-medium">
-                              過去の在籍店舗: {store.storeName}
-                            </p>
-                          </div>
+                {/* エステ関連 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <Droplet className="h-4 w-4" />
+                    エステ関連
+                  </h4>
+                  <div className="space-y-2">
+                    <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
+                      {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
+                    </Badge>
+                    {profileData?.estheOptions?.available && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {profileData.estheOptions.available.map((option, index) => (
+                          <Badge key={index} variant="outline">
+                            {option}
+                          </Badge>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  <Separator className="my-6" />
-
-                  {/* 自己PR・備考 */}
-                  <div className="space-y-4">
-                    <h4 className="flex items-center gap-2 font-medium text-primary">
-                      <PencilSquare className="h-4 w-4" />
-                      自己PR・備考
-                    </h4>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>自己PR</Label>
-                        <p className="text-sm whitespace-pre-wrap mt-1">
-                          {profileData?.selfIntroduction || "未入力"}
-                        </p>
-                      </div>
-                      <div>
-                        <Label>備考</Label>
-                        <p className="text-sm whitespace-pre-wrap mt-1">
-                          {profileData?.notes || "未入力"}
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* 希望条件セクション */}
-              <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-                <div className="border-b bg-muted/50 p-4">
-                  <h3 className="flex items-center gap-2 text-lg font-semibold">
-                    <Settings className="h-5 w-5 text-primary" />
-                    希望条件
-                  </h3>
+                <Separator className="my-6" />
+
+                {/* 顔出し設定 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <Eye className="h-4 w-4" />
+                    顔出し設定
+                  </h4>
+                  <p className="text-sm font-medium">{profileData?.faceVisibility}</p>
                 </div>
-                <div className="p-6 space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* 希望する働き方 */}
+
+                <Separator className="my-6" />
+
+                {/* 在籍店舗情報 */}
+                {(profileData?.currentStores?.length > 0 || profileData?.previousStores?.length > 0) && (
+                  <div className="space-y-4">
+                    <h4 className="flex items-center gap-2 font-medium text-primary">
+                      <BuildingStore className="h-4 w-4" />
+                      在籍店舗情報
+                    </h4>
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        希望する働き方
-                      </Label>
-                      <HoverCard>
-                        <HoverCardTrigger>
-                          <div className="flex items-center gap-2 text-sm font-medium text-primary px-3 py-2 rounded-md bg-primary/10">
-                            <Building2 className="h-4 w-4" />
-                            {selectedType}
-                          </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          {selectedType === "出稼ぎ" ? "他エリアでの短期・長期勤務" : "地元エリアでの勤務"}
-                        </HoverCardContent>
-                      </HoverCard>
-                    </div>
-
-                    {/* 希望業種 */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
-                        希望業種
-                      </Label>
-                      <div className="flex flex-wrap gap-2">
-                        {conditions.workTypes.map((type) => (
-                          <TooltipProvider key={type}>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full">
-                                  <Store className="h-3.5 w-3.5" />
-                                  {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.description}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                      </div>
-                    </div>
-
-                    {selectedType === "出稼ぎ" && (
-                      <>
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            勤務期間
-                          </Label>
+                      {profileData?.currentStores?.map((store, index) => (
+                        <div key={index}>
                           <p className="text-sm font-medium">
-                            {formatDate(conditions.workPeriodStart)} 〜 {formatDate(conditions.workPeriodEnd)}
+                            現在の在籍店舗: {store.storeName}（{store.stageName}）
                           </p>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Car className="h-4 w-4 text-muted-foreground" />
-                            移動
-                          </Label>
+                      ))}
+                      {profileData?.previousStores?.map((store, index) => (
+                        <div key={index}>
                           <p className="text-sm font-medium">
-                            {conditions.departureLocation} → {conditions.returnLocation}
+                            過去の在籍店舗: {store.storeName}
                           </p>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            一日の総勤務時間
-                          </Label>
-                          <p className="text-sm font-medium">{conditions.waitingHours}時間</p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-muted-foreground" />
-                            前日入り
-                          </Label>
-                          <p className="text-sm font-medium">
-                            {conditions.canArrivePreviousDay ? "可能" : "不可"}
-                          </p>
-                        </div>
-                        {conditions.desiredGuarantee && (
-                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                              <CurrencyDollar className="h-4 w-4 text-muted-foreground" />
-                              希望保証
-                            </Label>
-                            <p className="text-sm font-medium">{conditions.desiredGuarantee}</p>
-                          </div>
-                        )}
-                        {conditions.desiredTime && conditions.desiredRate && (
-                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                              <CurrencyDollar className="h-4 w-4 text-muted-foreground" />
-                              希望単価
-                            </Label>
-                            <p className="text-sm font-medium">
-                              {conditions.desiredTime}：{conditions.desiredRate}
-                            </p>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {selectedType === "在籍" && conditions.interviewDates.length > 0 && (
-                      <div className="col-span-2 space-y-2">
-                        <Label className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          面接希望日時
-                        </Label>
-                        <div className="space-y-1">
-                          {conditions.interviewDates.map((date, index) => (
-                            <p key={index} className="text-sm font-medium">{formatDate(date)}</p>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* 希望地域 */}
-                    <div className="col-span-2 space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        希望地域
-                      </Label>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {conditions.preferredLocations.length > 0 ? (
-                          conditions.preferredLocations.map((loc) => (
-                            <motion.span
-                              key={loc}
-                              initial={{ scale: 0.9, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full"
-                            >
-                              <MapPin className="h-3.5 w-3.5" />
-                              {loc}
-                            </motion.span>
-                          ))
-                        ) : (
-                          <motion.span
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full"
-                          >
-                            <Globe className="h-3.5 w-3.5" />
-                            全国
-                          </motion.span>
-                        )}
-                      </div>
+                      ))}
                     </div>
+                  </div>
+                )}
 
-                    {/* NG地域 */}
-                    <div className="col-span-2 space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-muted-foreground" />
-                        NG地域
-                      </Label>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {conditions.ngLocations.length > 0 ? (
-                          conditions.ngLocations.map((loc) => (
-                            <motion.span
-                              key={loc}
-                              initial={{ scale: 0.9, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              className="inline-flex items-center gap-1 text-sm bg-red-100 text-red-700 px-3 py-1.5 rounded-full"
-                            >
-                              <XCircle className="h-3.5 w-3.5" />
-                              {loc}
-                            </motion.span>
-                          ))
-                        ) : (
-                          <motion.span
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="inline-flex items-center gap-1 text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            NGなし
-                          </motion.span>
-                        )}
-                      </div>
+                <Separator className="my-6" />
+
+                {/* 自己PR・備考 */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-medium text-primary">
+                    <PencilSquare className="h-4 w-4" />
+                    自己PR・備考
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>自己PR</Label>
+                      <p className="text-sm whitespace-pre-wrap mt-1">
+                        {profileData?.selfIntroduction || "未入力"}
+                      </p>
                     </div>
-                    {conditions.notes && (
-                      <div className="col-span-2 space-y-2">
-                        <Label className="flex items-center gap-2">
-                          <PencilSquare className="h-4 w-4 text-muted-foreground" />
-                          その他備考
-                        </Label>
-                        <p className="text-sm whitespace-pre-wrap">{conditions.notes}</p>
-                      </div>
-                    )}
+                    <div>
+                      <Label>備考</Label>
+                      <p className="text-sm whitespace-pre-wrap mt-1">
+                        {profileData?.notes || "未入力"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </motion.div>
+
+            {/* 希望条件セクション */}
+            <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+              <div className="border-b bg-muted/50 p-4">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <Settings className="h-5 w-5 text-primary" />
+                  希望条件
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* 希望する働き方 */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      希望する働き方
+                    </Label>
+                    <HoverCard>
+                      <HoverCardTrigger>
+                        <div className="flex items-center gap-2 text-sm font-medium text-primary px-3 py-2 rounded-md bg-primary/10">
+                          <Building2 className="h-4 w-4" />
+                          {selectedType}
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        {selectedType === "出稼ぎ" ? "他エリアでの短期・長期勤務" : "地元エリアでの勤務"}
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
+                  {/* 希望業種 */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      希望業種
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {conditions.workTypes.map((type) => (
+                        <TooltipProvider key={type}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <span className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full">
+                                <Store className="h-3.5 w-3.5" />
+                                {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.label}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {WORK_TYPES_WITH_DESCRIPTION.find(t => t.id === type)?.description}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedType === "出稼ぎ" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          勤務期間
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {formatDate(conditions.workPeriodStart)} 〜 {formatDate(conditions.workPeriodEnd)}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Car className="h-4 w-4 text-muted-foreground" />
+                          移動
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {conditions.departureLocation} → {conditions.returnLocation}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          一日の総勤務時間
+                        </Label>
+                        <p className="text-sm font-medium">{conditions.waitingHours}時間</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-muted-foreground" />
+                          前日入り
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {conditions.canArrivePreviousDay ? "可能" : "不可"}
+                        </p>
+                      </div>
+                      {conditions.desiredGuarantee && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <CurrencyDollar className="h-4 w-4 text-muted-foreground" />
+                            希望保証
+                          </Label>
+                          <p className="text-sm font-medium">{conditions.desiredGuarantee}</p>
+                        </div>
+                      )}
+                      {conditions.desiredTime && conditions.desiredRate && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <CurrencyDollar className="h-4 w-4 text-muted-foreground" />
+                            希望単価
+                          </Label>
+                          <p className="text-sm font-medium">
+                            {conditions.desiredTime}：{conditions.desiredRate}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {selectedType === "在籍" && conditions.interviewDates.length > 0 && (
+                    <div className="col-span-2 space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        面接希望日時
+                      </Label>
+                      <div className="space-y-1">
+                        {conditions.interviewDates.map((date, index) => (
+                          <p key={index} className="text-sm font-medium">{formatDate(date)}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* 希望地域 */}
+                  <div className="col-span-2 space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      希望地域
+                    </Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {conditions.preferredLocations.length > 0 ? (
+                        conditions.preferredLocations.map((loc) => (
+                          <motion.span
+                            key={loc}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full"
+                          >
+                            <MapPin className="h-3.5 w-3.5" />
+                            {loc}
+                          </motion.span>
+                        ))
+                      ) : (
+                        <motion.span
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="inline-flex items-center gap-1 text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-full"
+                        >
+                          <Globe className="h-3.5 w-3.5" />
+                          全国
+                        </motion.span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* NG地域 */}
+                  <div className="col-span-2 space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-muted-foreground" />
+                      NG地域
+                    </Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {conditions.ngLocations.length > 0 ? (
+                        conditions.ngLocations.map((loc) => (
+                          <motion.span
+                            key={loc}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="inline-flex items-center gap-1 text-sm bg-red-100 text-red-700 px-3 py-1.5 rounded-full"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            {loc}
+                          </motion.span>
+                        ))
+                      ) : (
+                        <motion.span
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="inline-flex items-center gap-1 text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          NGなし
+                        </motion.span>
+                      )}
+                    </div>
+                  </div>
+                  {conditions.notes && (
+                    <div className="col-span-2 space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <PencilSquare className="h-4 w-4 text-muted-foreground" />
+                        その他備考
+                      </Label>
+                      <p className="text-sm whitespace-pre-wrap">{conditions.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </ScrollArea>
 
           <AlertDialogFooter>
