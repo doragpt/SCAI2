@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export function ConnectionTest() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['/api/health'],
+    queryFn: async () => apiRequest<{ timestamp: string }>("GET", "/api/health"),
     retry: 1,
   });
 

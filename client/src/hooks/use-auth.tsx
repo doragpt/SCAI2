@@ -5,7 +5,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { baseUserSchema, User as SelectUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -37,20 +37,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      try {
+        return await apiRequest<SelectUser>("GET", "/api/user");
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("401")) {
+          return null;
+        }
+        throw error;
+      }
+    }
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "ログインに失敗しました");
-      }
-      const { user, token } = await res.json();
-      // Store the token in localStorage
-      localStorage.setItem("auth_token", token);
-      return user;
+      const user = await apiRequest<{ user: SelectUser; token: string }>("POST", "/api/login", credentials);
+      localStorage.setItem("auth_token", user.token);
+      return user.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -70,15 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "登録に失敗しました");
-      }
-      const { user, token } = await res.json();
-      // Store the token in localStorage
-      localStorage.setItem("auth_token", token);
-      return user;
+      const user = await apiRequest<{ user: SelectUser; token: string }>("POST", "/api/register", credentials);
+      localStorage.setItem("auth_token", user.token);
+      return user.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -98,11 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout");
-      if (!res.ok) {
-        throw new Error("ログアウトに失敗しました");
-      }
-      // Remove the token from localStorage
+      await apiRequest<void>("POST", "/api/logout");
       localStorage.removeItem("auth_token");
     },
     onSuccess: () => {

@@ -1,16 +1,17 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import type { TalentProfileData, SelectUser, Photo } from "@shared/schema";
+import type { TalentProfileData, SelectUser, Photo, JobsSearchResponse, Job } from "@shared/schema";
+import { getErrorMessage } from "@/lib/utils";
 
 // キャッシュのキー定数
 export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
   USER: "/api/user",
   USER_PROFILE: "/api/user/profile",
-  JOBS: "/api/jobs/public",
+  JOBS_PUBLIC: "/api/jobs/public",
+  JOBS_SEARCH: "/api/jobs/search",
+  JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
   SIGNED_URL: "/api/get-signed-url"
 } as const;
-
-type UnauthorizedBehavior = "returnNull" | "throw";
 
 // APIのベースURL設定
 const API_BASE_URL = (() => {
@@ -123,21 +124,12 @@ async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promi
   return null;
 }
 
-export async function apiRequest(
+// APIリクエスト関数
+export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown,
-): Promise<Response> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-Requested-With": "XMLHttpRequest"
-  };
-
-  const token = localStorage.getItem("auth_token");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+): Promise<T> {
   try {
     console.log('API Request starting:', {
       method,
@@ -146,45 +138,14 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
-    // PUT /api/talent/profile の特別処理
-    if (method === "PUT" && url === "/api/talent/profile" && data) {
-      const profileData = data as TalentProfileData;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    };
 
-      if (profileData.photos?.some(photo => photo.url.startsWith('data:'))) {
-        console.log('Photos detected in request, handling separately');
-
-        const photosToUpload = profileData.photos.filter(photo => photo.url.startsWith('data:'));
-        const existingPhotos = profileData.photos.filter(photo => !photo.url.startsWith('data:'));
-
-        // 写真に一意のIDと順序を付与
-        const markedPhotos = photosToUpload.map((photo, index) => ({
-          ...photo,
-          id: photo.id || `${Date.now()}-${index}`,
-          order: typeof photo.order === 'number' ? photo.order : existingPhotos.length + index
-        }));
-
-        const uploadedPhotos: Photo[] = [];
-
-        // 順番に写真をアップロード
-        for (const photo of markedPhotos) {
-          const uploadedPhoto = await uploadPhoto(photo, headers);
-          if (uploadedPhoto) {
-            uploadedPhotos.push(uploadedPhoto);
-          }
-        }
-
-        // 既存の写真と新しくアップロードされた写真を結合し、順序で並び替え
-        profileData.photos = [...existingPhotos, ...uploadedPhotos]
-          .sort((a, b) => (typeof a.order === 'number' ? a.order : 0) - (typeof b.order === 'number' ? b.order : 0));
-
-        console.log('Final photos array:', {
-          totalPhotos: profileData.photos.length,
-          existingPhotos: existingPhotos.length,
-          uploadedPhotos: uploadedPhotos.length,
-          photoIds: profileData.photos.map(p => p.id),
-          timestamp: new Date().toISOString()
-        });
-      }
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -200,7 +161,14 @@ export async function apiRequest(
       throw new Error(errorData.message || res.statusText);
     }
 
-    return res;
+    const responseData = await res.json() as T;
+    console.log('API Request successful:', {
+      method,
+      url,
+      timestamp: new Date().toISOString()
+    });
+
+    return responseData;
   } catch (error) {
     console.error("API Request Failed:", {
       method,
@@ -212,39 +180,44 @@ export async function apiRequest(
   }
 }
 
-// クエリ関数
-export const getQueryFn = <T>({
-  on401,
-}: {
-  on401: UnauthorizedBehavior;
-}): QueryFunction<T> =>
-  async ({ queryKey }) => {
-    try {
-      const url = queryKey[0] as string;
-      const res = await apiRequest("GET", url);
+// 求人一覧取得用のクエリ関数
+export const getJobsQuery = async (): Promise<Job[]> => {
+  try {
+    return await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+  } catch (error) {
+    console.error("Jobs fetch error:", {
+      error: getErrorMessage(error),
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};
 
-      if (res.status === 401) {
-        if (on401 === "returnNull") {
-          return null as T;
-        }
-        throw new Error("認証が必要です");
-      }
+// 求人検索用のクエリ関数
+export const searchJobsQuery = async (params: {
+  location?: string;
+  serviceType?: string;
+  page?: number;
+  limit?: number;
+}): Promise<JobsSearchResponse> => {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params.location) searchParams.set("location", params.location);
+    if (params.serviceType) searchParams.set("serviceType", params.serviceType);
+    if (params.page) searchParams.set("page", params.page.toString());
+    if (params.limit) searchParams.set("limit", params.limit.toString());
 
-      const data = await res.json() as T;
-      return data;
-    } catch (error) {
-      console.error("Query Failed:", {
-        queryKey,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : error,
-        timestamp: new Date().toISOString()
-      });
-      throw error;
-    }
-  };
+    const url = `${QUERY_KEYS.JOBS_SEARCH}?${searchParams.toString()}`;
+    return await apiRequest<JobsSearchResponse>("GET", url);
+  } catch (error) {
+    console.error("Jobs search error:", {
+      error: getErrorMessage(error),
+      params,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};
 
 // プロフィール更新用の関数
 export async function updateTalentProfile(data: Partial<TalentProfileData>) {
@@ -255,8 +228,8 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
     });
 
     // APIリクエストを実行
-    const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
-    const updatedProfile = await response.json() as TalentProfileData;
+    const response = await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
+    const updatedProfile = response;
 
     // キャッシュの更新
     queryClient.setQueryData<TalentProfileData>([QUERY_KEYS.TALENT_PROFILE], updatedProfile);
@@ -271,7 +244,7 @@ export async function updateTalentProfile(data: Partial<TalentProfileData>) {
     return updatedProfile;
   } catch (error) {
     console.error("Profile update failed:", {
-      error,
+      error: getErrorMessage(error),
       timestamp: new Date().toISOString()
     });
     throw error;
@@ -297,8 +270,8 @@ export async function updateUserProfile(data: {
       console.warn("No existing user data in cache");
     }
 
-    const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
-    const updatedUser = await response.json() as SelectUser;
+    const response = await apiRequest<SelectUser>("PATCH", QUERY_KEYS.USER, data);
+    const updatedUser = response;
 
     // 型安全なマージ処理
     const mergedUser: SelectUser = {
@@ -326,12 +299,13 @@ export async function updateUserProfile(data: {
     return mergedUser;
   } catch (error) {
     console.error("User profile update failed:", {
-      error,
+      error: getErrorMessage(error),
       timestamp: new Date().toISOString()
     });
     throw error;
   }
 }
+
 
 // プリサインドURL取得関数を追加
 export async function getSignedImageUrl(key: string): Promise<string> {
@@ -341,16 +315,16 @@ export async function getSignedImageUrl(key: string): Promise<string> {
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest(
+    const response = await apiRequest< {url:string}> (
       "GET",
       `${QUERY_KEYS.SIGNED_URL}?key=${encodeURIComponent(key)}`
     );
-    const data = await response.json();
+    const data = response;
 
     return data.url;
   } catch (error) {
     console.error('Failed to get signed URL:', {
-      error,
+      error: getErrorMessage(error),
       key,
       timestamp: new Date().toISOString()
     });
@@ -362,12 +336,11 @@ export async function getSignedImageUrl(key: string): Promise<string> {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0,
+      staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+      retry: 2,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
       refetchOnReconnect: true,
-      retry: 2,
-      queryFn: getQueryFn({ on401: "throw" }),
     },
     mutations: {
       retry: 1,

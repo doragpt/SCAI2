@@ -16,12 +16,14 @@ import {
   prefectures, 
   serviceTypes, 
   type JobsSearchResponse, 
-  type ServiceType 
+  type ServiceType, 
+  type Job
 } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
+import { QUERY_KEYS, searchJobsQuery } from "@/lib/queryClient";
 
 // Animation variants
 const container = {
@@ -40,7 +42,7 @@ const item = {
 };
 
 // 求人カードコンポーネント
-const JobCard = ({ job }: { job: JobsSearchResponse['jobs'][0] }) => {
+const JobCard = ({ job }: { job: Job }) => {
   return (
     <motion.div variants={item}>
       <Link href={`/jobs/${job.id}`}>
@@ -123,8 +125,9 @@ export default function Jobs() {
     data: response,
     isLoading,
     error
-  } = useQuery<JobsSearchResponse>({
-    queryKey: ["/api/jobs/search", { location, serviceType, page, limit }],
+  } = useQuery({
+    queryKey: [QUERY_KEYS.JOBS_SEARCH, { location, serviceType, page, limit }],
+    queryFn: () => searchJobsQuery({ location, serviceType, page, limit }),
     onError: (error) => {
       console.error("求人情報取得エラー:", error);
       toast({

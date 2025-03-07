@@ -15,7 +15,7 @@ import {
   viewHistorySchema
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { users, talentProfiles } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -107,8 +107,27 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {
+      console.log('Public jobs fetch request received:', {
+        timestamp: new Date().toISOString()
+      });
+
       const jobListings = await db
-        .select()
+        .select({
+          id: jobs.id,
+          businessName: jobs.businessName,
+          location: jobs.location,
+          serviceType: jobs.serviceType,
+          minimumGuarantee: jobs.minimumGuarantee,
+          maximumGuarantee: jobs.maximumGuarantee,
+          transportationSupport: jobs.transportationSupport,
+          housingSupport: jobs.housingSupport,
+          workingHours: jobs.workingHours,
+          description: jobs.description,
+          requirements: jobs.requirements,
+          benefits: jobs.benefits,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+        })
         .from(jobs)
         .orderBy(desc(jobs.createdAt))
         .limit(12);
@@ -124,9 +143,16 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         error,
         timestamp: new Date().toISOString()
       });
+
+      // エラーメッセージの日本語化
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "求人情報の取得に失敗しました";
+
       res.status(500).json({
-        message: "求人情報の取得に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
+        message: errorMessage,
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
+        timestamp: new Date().toISOString()
       });
     }
   });
@@ -138,27 +164,65 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
 
+      console.log('Jobs search request received:', {
+        filters: { location, serviceType },
+        pagination: { page, limit },
+        timestamp: new Date().toISOString()
+      });
+
       if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-        return res.status(400).json({ message: "Invalid pagination parameters" });
+        return res.status(400).json({ 
+          message: "ページネーションパラメータが不正です",
+          timestamp: new Date().toISOString()
+        });
       }
 
       const offset = (pageNum - 1) * limitNum;
 
-      let baseQuery = db.select().from(jobs);
+      let query = db
+        .select({
+          id: jobs.id,
+          businessName: jobs.businessName,
+          location: jobs.location,
+          serviceType: jobs.serviceType,
+          minimumGuarantee: jobs.minimumGuarantee,
+          maximumGuarantee: jobs.maximumGuarantee,
+          transportationSupport: jobs.transportationSupport,
+          housingSupport: jobs.housingSupport,
+          workingHours: jobs.workingHours,
+          description: jobs.description,
+          requirements: jobs.requirements,
+          benefits: jobs.benefits,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+        })
+        .from(jobs);
 
       if (location && location !== "all") {
-        baseQuery = baseQuery.where(eq(jobs.location, location as string));
+        query = query.where(eq(jobs.location, location as string));
       }
 
       if (serviceType && serviceType !== "all") {
-        baseQuery = baseQuery.where(eq(jobs.serviceType, serviceType as string));
+        query = query.where(eq(jobs.serviceType, serviceType as string));
       }
 
       // Get total count for pagination
-      const totalCount = await baseQuery.count();
+      const countResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(jobs)
+        .where(
+          and(
+            ...[
+              location && location !== "all" ? eq(jobs.location, location as string) : undefined,
+              serviceType && serviceType !== "all" ? eq(jobs.serviceType, serviceType as string) : undefined,
+            ].filter(Boolean)
+          )
+        );
+
+      const totalCount = countResult[0].count;
 
       // Get paginated results
-      const jobListings = await baseQuery
+      const jobListings = await query
         .orderBy(desc(jobs.createdAt))
         .limit(limitNum)
         .offset(offset);
@@ -183,9 +247,15 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         query: req.query,
         timestamp: new Date().toISOString()
       });
+
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "求人検索に失敗しました";
+
       res.status(500).json({
-        message: "求人検索に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
+        message: errorMessage,
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
+        timestamp: new Date().toISOString()
       });
     }
   });
