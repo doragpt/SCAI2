@@ -12,6 +12,7 @@ import { ja } from "date-fns/locale";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { getTalentProfileQuery } from "@/lib/api/talent";
+import { apiRequest } from "@/lib/queryClient";
 
 interface UserProfile {
   id: number;
@@ -25,6 +26,13 @@ interface UserProfile {
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
+  // Debug: ログイン状態を確認
+  console.log('ProfileViewPage auth state:', {
+    user,
+    userId: user?.id,
+    timestamp: new Date().toISOString()
+  });
+
   // ユーザー基本情報を取得
   const {
     data: userProfile,
@@ -32,6 +40,14 @@ export default function ProfileViewPage() {
     error: userError
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
+    queryFn: async () => {
+      const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
+      console.log('User profile response:', {
+        data: response,
+        timestamp: new Date().toISOString()
+      });
+      return response;
+    },
     enabled: !!user?.id,
   });
 
@@ -43,22 +59,19 @@ export default function ProfileViewPage() {
     refetch: refetchTalentProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfileQuery,
+    queryFn: async () => {
+      const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+      console.log('Talent profile response:', {
+        data: response,
+        timestamp: new Date().toISOString()
+      });
+      return response;
+    },
     enabled: !!user?.id,
     retry: 1,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-  });
-
-  // Debug: データの存在確認
-  console.log('Profile view state:', {
-    hasUser: !!user,
-    hasUserProfile: !!userProfile,
-    hasTalentProfile: !!talentProfile,
-    userProfileData: userProfile,
-    talentProfileData: talentProfile,
-    timestamp: new Date().toISOString()
   });
 
   if (!user) {
