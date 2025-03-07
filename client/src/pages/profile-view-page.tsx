@@ -11,7 +11,6 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { getTalentProfileQuery } from "@/lib/api/talent";
 import { apiRequest } from "@/lib/queryClient";
 
 interface UserProfile {
@@ -24,31 +23,15 @@ interface UserProfile {
 }
 
 export default function ProfileViewPage() {
-  const { user, isUserLoading } = useAuth();
-
-  console.log('ProfileViewPage mount:', {
-    hasUser: !!user,
-    userId: user?.id,
-    isUserLoading,
-    timestamp: new Date().toISOString()
-  });
+  const { user } = useAuth();
 
   // ユーザー基本情報を取得
   const {
     data: userProfile,
     isLoading: isUserProfileLoading,
-    error: userError
   } = useQuery<UserProfile>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    queryFn: async () => {
-      const response = await apiRequest<UserProfile>("GET", QUERY_KEYS.USER_PROFILE);
-      console.log('User profile fetched:', {
-        hasData: !!response,
-        userId: user?.id,
-        timestamp: new Date().toISOString()
-      });
-      return response;
-    },
+    queryFn: () => apiRequest("GET", QUERY_KEYS.USER_PROFILE),
     enabled: !!user?.id,
   });
 
@@ -56,64 +39,20 @@ export default function ProfileViewPage() {
   const {
     data: talentProfile,
     isLoading: isTalentLoading,
-    error: talentError,
-    refetch: refetchTalentProfile
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfileQuery,
+    queryFn: () => apiRequest("GET", QUERY_KEYS.TALENT_PROFILE),
     enabled: !!user?.id,
   });
-
-  // ページの状態をログ
-  console.log('Profile page state:', {
-    isUserLoading,
-    isUserProfileLoading,
-    isTalentLoading,
-    hasUserProfile: !!userProfile,
-    hasTalentProfile: !!talentProfile,
-    userId: user?.id,
-    errors: {
-      user: userError?.message,
-      talent: talentError?.message
-    },
-    timestamp: new Date().toISOString()
-  });
-
-  if (isUserLoading || isUserProfileLoading || isTalentLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   if (!user) {
     return <Redirect to="/auth" />;
   }
 
-  if (userError || talentError) {
-    console.error('Profile fetch error:', {
-      userError,
-      talentError,
-      timestamp: new Date().toISOString()
-    });
+  if (isUserProfileLoading || isTalentLoading) {
     return (
-      <div className="container max-w-2xl py-8">
-        <Card className="p-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-semibold text-red-600">エラーが発生しました</h1>
-            <p className="text-muted-foreground">
-              プロフィールの取得中にエラーが発生しました。
-              <Button
-                variant="outline"
-                className="ml-2"
-                onClick={() => refetchTalentProfile()}
-              >
-                再試行
-              </Button>
-            </p>
-          </div>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
