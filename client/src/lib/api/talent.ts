@@ -13,7 +13,7 @@ export const getTalentProfileQuery = async (): Promise<TalentProfileData> => {
 
     console.log('Talent profile fetched successfully:', {
       hasData: !!response,
-      profileData: response, // 完全なレスポンスデータをログに出力
+      profileData: JSON.stringify(response), // 完全なレスポンスデータをログに出力
       timestamp: new Date().toISOString()
     });
 

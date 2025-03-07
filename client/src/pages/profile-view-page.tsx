@@ -45,16 +45,26 @@ export default function ProfileViewPage() {
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
       try {
+        console.log('Fetching talent profile with:', {
+          endpoint: QUERY_KEYS.TALENT_PROFILE,
+          userId: user?.id,
+          timestamp: new Date().toISOString()
+        });
+
         const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+
         console.log('Talent profile response:', {
           hasData: !!response,
           profileData: response,
+          endpoint: QUERY_KEYS.TALENT_PROFILE,
           timestamp: new Date().toISOString()
         });
+
         return response;
       } catch (error) {
         console.error('Talent profile fetch error:', {
           error: error instanceof Error ? error.message : "Unknown error",
+          endpoint: QUERY_KEYS.TALENT_PROFILE,
           timestamp: new Date().toISOString()
         });
         throw error;
@@ -65,6 +75,15 @@ export default function ProfileViewPage() {
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
+  });
+
+  // Debug logs
+  console.log('Profile view state:', {
+    hasUser: !!user,
+    hasUserProfile: !!userProfile,
+    hasTalentProfile: !!talentProfile,
+    talentProfileData: talentProfile,
+    timestamp: new Date().toISOString()
   });
 
   if (!user) {

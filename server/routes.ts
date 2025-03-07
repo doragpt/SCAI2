@@ -136,7 +136,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   }
 });
 
-  // 求人情報取得エンドポイント
+// 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {
       console.log('Public jobs fetch request received:', {
@@ -488,7 +488,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         userId,
         hasProfile: !!profile,
         profileId: profile?.id,
-        profileData: profile, // 完全なプロフィールデータをログに出力
+        profileData: JSON.stringify(profile), // 完全なプロフィールデータをログに出力
         timestamp: new Date().toISOString()
       });
 
