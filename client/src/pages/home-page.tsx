@@ -4,7 +4,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { type User } from "@shared/schema";
-import { Loader2, MapPin, Banknote, Clock, Building, Star, Bell, ChevronRight, Search } from "lucide-react";
+import {
+  Loader2,
+  MapPin,
+  Banknote,
+  Clock,
+  Building,
+  Star,
+  Bell,
+  ChevronRight,
+  Search,
+  BookOpen,
+  Wallet,
+  HelpCircle,
+  MessageSquare,
+  User as UserIcon,
+  Building2,
+  Calendar,
+  Briefcase,
+  Store,
+  Globe,
+  XCircle,
+  Check,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,6 +40,19 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { BlockQuote } from "@/components/ui/blockquote";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // アニメーション設定
 const container = {
@@ -33,6 +68,17 @@ const container = {
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
+};
+
+// カスタムアイコンコンポーネント
+const IconWrapper = ({ type, className }: { type: string; className?: string }) => {
+  const IconComponent = {
+    BookOpen,
+    Wallet,
+    HelpCircle,
+  }[type];
+
+  return IconComponent ? <IconComponent className={className} /> : null;
 };
 
 const areaGroups = [
@@ -54,6 +100,146 @@ const serviceTypes = [
   { id: "mseikan", label: "M性感" },
 ];
 
+// データの追加
+const workGuides = [
+  {
+    title: "はじめての方へ",
+    description: "お仕事の流れや準備するものなど、初めての方向けの詳しい説明です",
+    icon: "BookOpen",
+  },
+  {
+    title: "お給料について",
+    description: "給与システムや報酬の受け取り方について詳しく解説",
+    icon: "Wallet",
+  },
+  {
+    title: "よくある質問",
+    description: "求人に関するよくある疑問にお答えします",
+    icon: "HelpCircle",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Aさん (26歳)",
+    role: "エステ",
+    content: "未経験でも丁寧に教えていただき、今では安定した収入を得られています。",
+    image: "/testimonials/1.jpg",
+  },
+  {
+    name: "Bさん (31歳)",
+    role: "セラピスト",
+    content: "子育て中でも柔軟なシフトで働けて助かっています。",
+    image: "/testimonials/2.jpg",
+  },
+];
+
+// エリア統計の型定義
+type AreaStats = {
+  [key: string]: number;
+};
+
+const areaStats: AreaStats = {
+  "北海道・東北": 234,
+  "関東": 567,
+  "中部": 345,
+  "関西": 456,
+  "中国": 123,
+  "四国": 89,
+  "九州・沖縄": 234,
+};
+
+// 給与範囲の表示用フォーマッター
+const formatSalary = (min?: number, max?: number) => {
+  if (!min && !max) return "応相談";
+  if (!max) return `${min?.toLocaleString()}円〜`;
+  if (!min) return `〜${max?.toLocaleString()}円`;
+  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
+};
+
+// インターフェース定義
+interface StoreProfile {
+  id: number;
+  businessName: string;
+  location: string;
+  serviceType: string;
+  minimumGuarantee?: number;
+  maximumGuarantee?: number;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+}
+
+// 求人カードコンポーネント
+const JobCard = ({ job }: { job: StoreProfile }) => {
+  return (
+    <motion.div
+      variants={item}
+      whileHover={{ scale: 1.02 }}
+      className="h-full"
+    >
+      <Card className="group hover:shadow-lg transition-all h-full">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-lg line-clamp-2">
+                {job.businessName}
+              </CardTitle>
+              <CardDescription className="flex items-center mt-1">
+                <MapPin className="h-4 w-4 mr-1" />
+                {job.location}
+              </CardDescription>
+            </div>
+            <HoverCard>
+              <HoverCardTrigger>
+                <Badge variant="outline" className="bg-primary/5">
+                  {job.serviceType}
+                </Badge>
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <p className="text-sm">
+                  {serviceTypes.find(t => t.id === job.serviceType)?.label}に関する求人です
+                </p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center text-primary font-semibold">
+              <Banknote className="h-5 w-5 mr-2" />
+              <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {job.transportationSupport && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  交通費支給
+                </Badge>
+              )}
+              {job.housingSupport && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Building2 className="h-3.5 w-3.5 mr-1" />
+                  寮完備
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              className="w-full mt-4 opacity-0 group-hover:opacity-100 transition-opacity"
+              asChild
+            >
+              <Link href={`/jobs/${job.id}`}>
+                詳細を見る
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [selectedRegion, setSelectedRegion] = useState<string>("");
@@ -64,41 +250,13 @@ export default function HomePage() {
     queryKey: ["/api/jobs/public"],
   });
 
-  const currentAreaGroup = areaGroups.find(group => group.label === selectedRegion);
+  const currentAreaGroup = areaGroups.find(group => group.areas.includes(selectedArea));
 
   const filteredListings = jobListings?.filter(job => {
     const areaMatch = !selectedArea || job.location.includes(selectedArea);
     const typeMatch = selectedType === "all" || job.serviceType === selectedType;
     return areaMatch && typeMatch;
   });
-
-  // キャンペーン情報
-  const campaigns = [
-    {
-      title: "面接交通費支給キャンペーン",
-      description: "最大10,000円まで支給！",
-      color: "bg-pink-500"
-    },
-    {
-      title: "入店祝い金キャンペーン",
-      description: "今なら最大50,000円支給中",
-      color: "bg-purple-500"
-    }
-  ];
-
-  // 新着情報
-  const news = [
-    {
-      date: "2025.03.07",
-      title: "【重要】キャンペーン情報",
-      tag: "キャンペーン"
-    },
-    {
-      date: "2025.03.06",
-      title: "【お知らせ】新機能追加のお知らせ",
-      tag: "お知らせ"
-    }
-  ];
 
   if (authLoading) {
     return (
@@ -111,134 +269,134 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="SCAI - AIマッチング求人サイト"
-        description="セキュアで効率的な求人マッチングプラットフォーム。AIが最適な求人をご提案します。"
+        title="SCAI - 高収入求人マッチングサイト"
+        description="AIが最適な求人をご提案。高収入・好条件の求人が見つかる求人マッチングサイト"
       />
       <div className="min-h-screen bg-background">
-        {/* ヘッダー */}
-        <header className="border-b">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              SCAI
-            </h1>
-            <div className="flex items-center gap-4">
-              {user ? (
-                <Button asChild>
-                  <Link href="/talent/dashboard">マイページ</Link>
-                </Button>
-              ) : (
-                <Button asChild variant="default">
-                  <Link href="/auth">無料会員登録</Link>
-                </Button>
-              )}
+        {/* ヒーローセクション */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative rounded-2xl overflow-hidden mb-12 bg-gradient-to-r from-primary/10 to-primary/5 p-8 md:p-12"
+        >
+          <div className="absolute inset-0 bg-grid-white/10" />
+          <div className="relative z-10">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              AIが最適な求人をご提案
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
+              あなたに合った求人を、最新のAI技術でマッチング。
+              高収入・好条件の求人を簡単検索。
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" asChild className="text-lg">
+                <Link href="/auth">
+                  無料会員登録してAIマッチングを試す
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild className="text-lg">
+                <Link href="/jobs">
+                  求人を探す
+                </Link>
+              </Button>
             </div>
           </div>
-        </header>
+        </motion.section>
 
-        <main className="container mx-auto px-4 py-8">
-          {/* ヒーローセクション */}
-          <motion.section 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-2xl overflow-hidden mb-12 bg-gradient-to-r from-primary/10 to-primary/5"
-          >
-            <div className="absolute inset-0 bg-grid-white/10" />
-            <div className="relative z-10 p-8 md:p-12">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                AIが最適な求人をご提案
+        <main className="container mx-auto px-4 py-8 space-y-16">
+          {/* お仕事ガイド */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <IconWrapper type="BookOpen" className="h-6 w-6 text-primary" />
+                お仕事ガイド
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-                あなたに合った求人を、最新のAI技術でマッチング。
-                高収入・好条件の求人を簡単検索。
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild className="text-lg">
-                  <Link href="/auth">
-                    無料会員登録してAIマッチングを試す
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg">
-                  <Link href="/jobs">
-                    求人を探す
-                  </Link>
-                </Button>
-              </div>
             </div>
-          </motion.section>
-
-          {/* キャンペーンセクション */}
-          <motion.section
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid md:grid-cols-2 gap-6 mb-12"
-          >
-            {campaigns.map((campaign, index) => (
-              <motion.div
-                key={index}
-                variants={item}
-                whileHover={{ scale: 1.02 }}
-                className="relative rounded-xl overflow-hidden shadow-lg"
-              >
-                <div className={`absolute inset-0 ${campaign.color} opacity-10`} />
-                <div className="relative p-6">
-                  <h3 className="text-xl font-bold mb-2">{campaign.title}</h3>
-                  <p className="text-lg text-muted-foreground">{campaign.description}</p>
-                  <Button variant="link" className="mt-4">
-                    詳しく見る
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </motion.section>
-
-          {/* エリア検索セクション */}
-          <section className="mb-12">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold flex items-center gap-2">
-                <MapPin className="h-6 w-6 text-primary" />
-                エリアから探す
-              </h3>
-              <div className="flex gap-4 mt-4 md:mt-0">
-                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="エリアを選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {areaGroups.map((group) => (
-                      <SelectItem key={group.label} value={group.label}>
-                        {group.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedArea}
-                  onValueChange={setSelectedArea}
-                  disabled={!selectedRegion}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder={selectedRegion ? "地域を選択" : "エリアを選択してください"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currentAreaGroup?.areas.map((area) => (
-                      <SelectItem key={area} value={area}>
-                        {area}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* エリアマップ */}
             <motion.div
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-2 md:grid-cols-4 gap-4"
+              className="grid md:grid-cols-3 gap-6"
+            >
+              {workGuides.map((guide, index) => (
+                <motion.div
+                  key={index}
+                  variants={item}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <Card className="cursor-pointer hover:shadow-lg transition-all h-full">
+                    <CardHeader>
+                      <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
+                        <IconWrapper type={guide.icon} className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle>{guide.title}</CardTitle>
+                      <CardDescription>{guide.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </section>
+
+          {/* 体験談セクション */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <MessageSquare className="h-6 w-6 text-primary" />
+                お仕事体験談
+              </h2>
+            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid md:grid-cols-2 gap-8"
+            >
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  variants={item}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <Card className="hover:shadow-lg transition-all">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={testimonial.image} />
+                          <AvatarFallback>
+                            {testimonial.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium">{testimonial.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {testimonial.role}
+                          </p>
+                        </div>
+                      </div>
+                      <BlockQuote className="mt-4 text-muted-foreground">
+                        {testimonial.content}
+                      </BlockQuote>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </section>
+
+          {/* エリアから探す */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-primary" />
+                エリアから探す
+              </h2>
+            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid md:grid-cols-4 gap-6"
             >
               {areaGroups.map((group) => (
                 <motion.div
@@ -248,10 +406,12 @@ export default function HomePage() {
                 >
                   <Card className="cursor-pointer hover:shadow-lg transition-all">
                     <CardHeader>
-                      <CardTitle className="text-lg">{group.label}</CardTitle>
-                      <CardDescription>
-                        {group.areas.length}エリア
-                      </CardDescription>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{group.label}</span>
+                        <Badge variant="outline">
+                          {areaStats[group.label]}件
+                        </Badge>
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
@@ -271,55 +431,48 @@ export default function HomePage() {
             </motion.div>
           </section>
 
-          {/* 新着情報 */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold flex items-center gap-2">
-                <Bell className="h-6 w-6 text-primary" />
-                新着情報
-              </h3>
-              <Button variant="ghost" size="sm">
-                もっと見る
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid md:grid-cols-2 gap-6"
-            >
-              {news.map((item, index) => (
-                <motion.div
-                  key={index}
-                  variants={item}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Card className="cursor-pointer hover:shadow-md transition-all">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="outline">{item.tag}</Badge>
-                        <span className="text-sm text-muted-foreground">{item.date}</span>
-                      </div>
-                      <p className="font-medium">{item.title}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </section>
-
           {/* 新着求人 */}
           <section>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold flex items-center gap-2">
-                <Star className="h-6 w-6 text-primary" />
-                新着求人
-              </h3>
-              <Button variant="ghost" size="sm">
-                すべての求人を見る
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Star className="h-6 w-6 text-primary" />
+                  新着求人
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  最新の高収入求人をチェック
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Select value={selectedType} onValueChange={setSelectedType}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="業種を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">全ての業種</SelectItem>
+                          {serviceTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>業種を選んで絞り込み</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/jobs">
+                    すべての求人を見る
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
 
             {jobsLoading ? (
@@ -334,56 +487,7 @@ export default function HomePage() {
                 className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {filteredListings?.map((job) => (
-                  <motion.div
-                    key={job.id}
-                    variants={item}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <Card className="group hover:shadow-lg transition-all">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span>{job.businessName}</span>
-                          <Badge variant="outline">
-                            <MapPin className="h-4 w-4 inline mr-1" />
-                            {job.location}
-                          </Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="flex items-center text-muted-foreground">
-                            <Building className="h-4 w-4 mr-2" />
-                            <span>{job.serviceType}</span>
-                          </div>
-                          <div className="flex items-center text-muted-foreground">
-                            <Banknote className="h-4 w-4 mr-2" />
-                            <span>日給 ¥{job.minimumGuarantee?.toLocaleString()} ~ ¥{job.maximumGuarantee?.toLocaleString()}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {job.transportationSupport && (
-                              <Badge variant="outline" className="bg-primary/10">
-                                交通費支給
-                              </Badge>
-                            )}
-                            {job.housingSupport && (
-                              <Badge variant="outline" className="bg-primary/10">
-                                寮完備
-                              </Badge>
-                            )}
-                          </div>
-                          <Button
-                            variant="outline"
-                            className="w-full mt-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                            asChild
-                          >
-                            <Link href={`/jobs/${job.id}`}>
-                              詳細を見る
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                  <JobCard key={job.id} job={job} />
                 ))}
               </motion.div>
             )}
@@ -392,15 +496,4 @@ export default function HomePage() {
       </div>
     </>
   );
-}
-
-interface StoreProfile {
-  id: number;
-  businessName: string;
-  location: string;
-  serviceType: string;
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
-  transportationSupport: boolean;
-  housingSupport: boolean;
 }
