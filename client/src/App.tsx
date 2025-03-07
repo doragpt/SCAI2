@@ -1,7 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./hooks/use-auth";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
@@ -26,6 +26,9 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/jobs" component={Jobs} />
       <Route path="/jobs/:id" component={JobDetail} />
+      <Route path="/talent">
+        {() => <Redirect to="/talent/mypage" />}
+      </Route>
       <ProtectedRoute path="/talent/register" component={TalentRegistration} />
       <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
       <ProtectedRoute path="/talent/mypage" component={MyPage} />
