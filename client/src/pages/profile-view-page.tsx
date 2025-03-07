@@ -79,6 +79,7 @@ export default function ProfileViewPage() {
         console.log('Starting talent profile fetch:', {
           userId: user?.id,
           endpoint: QUERY_KEYS.TALENT_PROFILE,
+          authToken: !!localStorage.getItem("auth_token"),
           timestamp: new Date().toISOString()
         });
 
