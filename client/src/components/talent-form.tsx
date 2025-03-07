@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus, Preview } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus, Preview, Save } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Toast } from "@/components/ui/toast";
 import {
   Form,
   FormControl,
@@ -19,31 +20,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
-import { ProfileConfirmationModal } from "./profile-confirmation-modal";
-import {
-  allergyTypes,
-  smokingTypes,
-  cupSizes,
-  faceVisibilityTypes,
-  commonNgOptions,
-  idTypes,
-  prefectures,
-  estheOptions,
-  photoTags,
-  type TalentProfileData,
-  type Photo,
-  talentProfileSchema,
-} from "@shared/schema";
-import { calculateAge } from "@/utils/date";
-import { useAuth } from "@/hooks/use-auth";
-import { Textarea } from "@/components/ui/textarea";
-import React from 'react';
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PreviewMode } from "./preview-mode";
 
 // Store type definitions
 type CurrentStore = {
@@ -824,12 +800,16 @@ export function TalentForm() {
     form.trigger();
   };
 
+  // 下書き保存のインターバルを5分に変更
+  const DRAFT_SAVE_INTERVAL = 5 * 60 * 1000;
+
   const saveDraft = useCallback(async () => {
     if (!form.formState.isDirty) return;
 
     try {
       const formData = form.getValues();
       formData.isDraft = true;
+      formData.lastDraftSaved = new Date().toISOString();
 
       await apiRequest(
         existingProfile ? "PUT" : "POST",
@@ -838,22 +818,34 @@ export function TalentForm() {
       );
 
       setShowDraftSavedToast(true);
+
+      // 3秒後にトースト非表示
       setTimeout(() => setShowDraftSavedToast(false), 3000);
+
+      // フォームの状態をリセット（変更済みフラグをクリア）
+      form.reset(formData);
+
     } catch (error) {
       console.error("下書き保存エラー:", error);
+      toast({
+        title: "下書き保存エラー",
+        description: "下書きの保存中にエラーが発生しました。しばらく待ってから再度お試しください。",
+        variant: "destructive",
+      });
     }
-  }, [form, existingProfile]);
+  }, [form, existingProfile, toast]);
 
+  // 自動保存の処理
   useEffect(() => {
     if (form.formState.isDirty) {
       if (draftTimer) clearTimeout(draftTimer);
-      const timer = setTimeout(saveDraft, 30000); // 30秒後に自動保存
+      const timer = setTimeout(saveDraft, DRAFT_SAVE_INTERVAL);
       setDraftTimer(timer);
     }
     return () => {
       if (draftTimer) clearTimeout(draftTimer);
     };
-  }, [form.formState.isDirty, saveDraft]);
+  }, [form.formState.isDirty, saveDraft, DRAFT_SAVE_INTERVAL]);
 
 
   // フォームのsubmit処理を再実装
@@ -938,10 +930,10 @@ export function TalentForm() {
       const updated = [...otherSmokingTypes, value];
       setOtherSmokingTypes(updated);
       form.setValue("smoking.others", updated);
-        }
+    }
   };
 
-  // 傷・タトゥー・アトピー追加ハンドラー
+  // 傷・タトゥー・アトピー追加ハンドラー```typescript
   const handleAddBodyMark = (value: string) => {
     if (!bodyMarks.includes(value)) {
       const updated = [...bodyMarks, value];
@@ -1006,46 +998,55 @@ export function TalentForm() {
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-50 bg-background border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              {existingProfile ? "プロフィール編集" : "プロフィール作成"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isPreviewMode ? "プレビューモード" : "編集モード"}
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {existingProfile ? "プロフィール編集" : "プロフィール作成"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {form.formState.isDirty ? "* 未保存の変更があります" : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+              >
+                <Preview className="h-4 w-4 mr-2" />
+                {isPreviewMode ? "編集に戻る" : "プレビュー"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={saveDraft}
+                disabled={!form.formState.isDirty}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                下書き保存
+              </Button>
+              <Button
+                type="submit"
+                disabled={!form.formState.isValid || isSubmitting}
+                onClick={handleSubmit}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  "公開する"
+                )}
+              </Button>
+            </div>
+          </div>
+          {form.formState.isDirty && (
+            <p className="text-sm text-muted-foreground mt-2">
+              自動保存は5分ごとに行われます
             </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-            >
-              <Preview className="h-4 w-4 mr-2" />
-              {isPreviewMode ? "編集に戻る" : "プレビュー"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={saveDraft}
-            >
-              下書き保存
-            </Button>
-            <Button
-              type="submit"
-              disabled={!form.formState.isValid || isSubmitting}
-              onClick={handleSubmit}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  保存中...
-                </>
-              ) : (
-                "保存"
-              )}
-            </Button>
-          </div>
+          )}
         </div>
       </div>
 
@@ -2063,8 +2064,13 @@ export function TalentForm() {
         isSubmitting={isSubmitting}
       />
       {showDraftSavedToast && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-          下書きを保存しました
+        <div className="fixed bottom-4 right-4 z-50">
+          <Toast>
+            <div className="flex items-center gap-2 py-2 px-4 bg-primary text-primary-foreground rounded-lg shadow-lg">
+              <Save className="h-4 w-4" />
+              <span>下書きを保存しました</span>
+            </div>
+          </Toast>
         </div>
       )}
     </div>

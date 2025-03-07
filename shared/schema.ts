@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Enums
+// Enums and constants
 export const photoTags = [
   "現在の髪色",
   "タトゥー",
@@ -14,18 +14,19 @@ export const photoTags = [
   "スタジオ写真（加工済み）"
 ] as const;
 
-// bodyMarkSchema定義を更新
+// bodyMarkSchema定義
 export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
+  others: z.array(z.string()).default([]),
 });
 
-// photoSchema定義を更新
+// photoSchema定義
 export const photoSchema = z.object({
-  id: z.string().optional(), // 一意の識別子を追加
+  id: z.string().optional(),
   url: z.string(),
   tag: z.enum(photoTags),
-  order: z.number().optional(), // 順序を保持するフィールドを追加
+  order: z.number().optional(),
 });
 
 export const prefectures = [
@@ -181,7 +182,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   estheExperiencePeriod: text("esthe_experience_period"),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "", others: [] }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
   age: integer("age"),
   isDraft: boolean("is_draft").default(true).notNull(),
@@ -198,8 +199,6 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
-import { z } from "zod";
-
 // talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
@@ -354,9 +353,9 @@ export const talentProfileSchema = z.object({
     }
     if (!data.cupSize) {
       ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "カップサイズは必須項目です",
-          path: ["cupSize"]
+        code: z.ZodIssueCode.custom,
+        message: "カップサイズは必須項目です",
+        path: ["cupSize"]
       });
     }
     if (!data.faceVisibility) {
@@ -370,13 +369,9 @@ export const talentProfileSchema = z.object({
   }
 });
 
-
-// Update types
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-
-// スキーマ定義の最後に追加
-export const talentProfileUpdateSchema = talentProfileSchema.extend({
+// Profile update schema
+export const talentProfileUpdateSchema = z.object({
+  ...talentProfileSchema.shape,
   currentPassword: z.string().optional(),
   newPassword: z.string()
     .optional()
@@ -389,20 +384,19 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
         message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
       }
     ),
-}).omit({
-  userId: true
 }).partial();
 
-
-// 型定義エクスポートを追加
+// Type definitions
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
-// Export types
+// その他の型定義
 export type User = typeof users.$inferSelect;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
 export const talentRegisterFormSchema = z.object({
   username: z.string()
     .min(1, "ニックネームを入力してください")
