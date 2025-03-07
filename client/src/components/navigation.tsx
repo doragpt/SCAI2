@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
   Home, 
@@ -52,12 +52,10 @@ export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // ユーザーの種類に基づいてルートを選択
   const userRoutes = user?.role === 'store' ? storeRoutes : talentRoutes;
-
-  // 現在のパスからパンくずリストを生成
-  const breadcrumbs = location.split("/").filter(Boolean);
 
   // パンくずリストのラベルを日本語化
   const getBreadcrumbLabel = (crumb: string) => {
@@ -72,33 +70,43 @@ export function Navigation() {
     return labels[crumb] || crumb;
   };
 
+  // 現在のパスからパンくずリストを生成
+  const breadcrumbs = location.split("/").filter(Boolean);
+
+  const handleDropdownClick = (href: string) => {
+    setIsDropdownOpen(false);
+    window.location.href = href;
+  };
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         {/* デスクトップナビゲーション */}
         <div className="mr-4 hidden md:flex items-center space-x-4">
           {commonRoutes.map((route) => (
-            <Button
-              key={route.path}
-              variant={location === route.path ? "default" : "ghost"}
-              size="sm"
-              onClick={() => window.location.href = route.path}
-            >
-              <route.icon className="h-4 w-4 mr-2" />
-              {route.label}
-            </Button>
+            <Link key={route.path} href={route.path}>
+              <Button
+                variant={location === route.path ? "default" : "ghost"}
+                size="sm"
+                className="cursor-pointer"
+              >
+                <route.icon className="h-4 w-4 mr-2" />
+                {route.label}
+              </Button>
+            </Link>
           ))}
 
           {user && userRoutes.map((route) => (
-            <Button
-              key={route.path}
-              variant={location === route.path ? "default" : "ghost"}
-              size="sm"
-              onClick={() => window.location.href = route.path}
-            >
-              <route.icon className="h-4 w-4 mr-2" />
-              {route.label}
-            </Button>
+            <Link key={route.path} href={route.path}>
+              <Button
+                variant={location === route.path ? "default" : "ghost"}
+                size="sm"
+                className="cursor-pointer"
+              >
+                <route.icon className="h-4 w-4 mr-2" />
+                {route.label}
+              </Button>
+            </Link>
           ))}
         </div>
 
@@ -115,33 +123,29 @@ export function Navigation() {
             </SheetHeader>
             <div className="mt-4 space-y-2">
               {commonRoutes.map((route) => (
-                <Button
-                  key={route.path}
-                  variant={location === route.path ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => {
-                    setIsOpen(false);
-                    window.location.href = route.path;
-                  }}
-                >
-                  <route.icon className="h-4 w-4 mr-2" />
-                  {route.label}
-                </Button>
+                <Link key={route.path} href={route.path}>
+                  <Button
+                    variant={location === route.path ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <route.icon className="h-4 w-4 mr-2" />
+                    {route.label}
+                  </Button>
+                </Link>
               ))}
 
               {user && userRoutes.map((route) => (
-                <Button
-                  key={route.path}
-                  variant={location === route.path ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => {
-                    setIsOpen(false);
-                    window.location.href = route.path;
-                  }}
-                >
-                  <route.icon className="h-4 w-4 mr-2" />
-                  {route.label}
-                </Button>
+                <Link key={route.path} href={route.path}>
+                  <Button
+                    variant={location === route.path ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <route.icon className="h-4 w-4 mr-2" />
+                    {route.label}
+                  </Button>
+                </Link>
               ))}
             </div>
           </SheetContent>
@@ -149,23 +153,19 @@ export function Navigation() {
 
         {/* パンくずリスト（モバイルでは非表示） */}
         <div className="hidden md:flex items-center text-sm">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => window.location.href = '/'}
-          >
-            ホーム
-          </Button>
+          <Link href="/">
+            <Button variant="link" size="sm" className="cursor-pointer">
+              ホーム
+            </Button>
+          </Link>
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center">
               <span className="mx-2 text-muted-foreground">/</span>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => window.location.href = `/${breadcrumbs.slice(0, index + 1).join("/")}`}
-              >
-                {getBreadcrumbLabel(crumb)}
-              </Button>
+              <Link href={`/${breadcrumbs.slice(0, index + 1).join("/")}`}>
+                <Button variant="link" size="sm" className="cursor-pointer">
+                  {getBreadcrumbLabel(crumb)}
+                </Button>
+              </Link>
             </div>
           ))}
         </div>
@@ -173,9 +173,9 @@ export function Navigation() {
         {/* ユーザーメニュー */}
         <div className="ml-auto">
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
               <DropdownMenuTrigger>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="cursor-pointer">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -184,22 +184,25 @@ export function Navigation() {
                   {user.role === 'store' ? '店舗アカウント' : 'アカウント'}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => window.location.href = user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}
-                >
-                  <UserCircle className="h-4 w-4 mr-2" />
-                  マイページ
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.location.href = user.role === 'store' ? "/store/settings" : "/talent/mypage"}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  {user.role === 'store' ? '店舗設定' : 'アカウント設定'}
-                </DropdownMenuItem>
+                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                    <UserCircle className="h-4 w-4 mr-2" />
+                    マイページ
+                  </DropdownMenuItem>
+                </Link>
+                <Link href={user.role === 'store' ? "/store/settings" : "/talent/mypage"}>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    {user.role === 'store' ? '店舗設定' : 'アカウント設定'}
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => logoutMutation.mutate()}
+                  className="text-destructive cursor-pointer"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    logoutMutation.mutate();
+                  }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   ログアウト
@@ -207,12 +210,11 @@ export function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              size="sm"
-              onClick={() => window.location.href = '/auth'}
-            >
-              ログイン
-            </Button>
+            <Link href="/auth">
+              <Button size="sm" className="cursor-pointer">
+                ログイン
+              </Button>
+            </Link>
           )}
         </div>
       </div>
