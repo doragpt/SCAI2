@@ -57,8 +57,15 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery({
+  // プロフィールデータの取得
+  const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["/api/talent/profile"],
+    enabled: !!user,
+  });
+
+  // ユーザー基本情報の取得
+  const { data: userProfile, isLoading: isUserLoading } = useQuery({
+    queryKey: ["/api/user/profile"],
     enabled: !!user,
   });
 
@@ -73,44 +80,54 @@ export default function BasicInfoEdit() {
   });
 
   useEffect(() => {
-    if (profile && user) {
+    if (userProfile) {
       form.reset({
-        username: user.username,
-        displayName: user.displayName,
-        location: user.location,
-        preferredLocations: user.preferredLocations || [],
+        username: userProfile.username,
+        displayName: userProfile.displayName,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations || [],
       });
     }
-  }, [profile, user, form.reset]);
+  }, [userProfile, form.reset]);
 
+  // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (updateData: BasicInfoFormData) => {
-      try {
-        const response = await apiRequest("PATCH", "/api/user", {
-          username: updateData.username,
-          displayName: updateData.displayName,
+      // ユーザー基本情報の更新
+      const userResponse = await apiRequest("PATCH", "/api/user", {
+        username: updateData.username,
+        displayName: updateData.displayName,
+        location: updateData.location,
+        preferredLocations: updateData.preferredLocations,
+        ...(updateData.newPassword && updateData.currentPassword ? {
+          currentPassword: updateData.currentPassword,
+          newPassword: updateData.newPassword,
+        } : {})
+      });
+
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        throw new Error(errorData.message || "ユーザー情報の更新に失敗しました");
+      }
+
+      // プロフィール情報も更新
+      if (profile) {
+        const profileResponse = await apiRequest("PATCH", "/api/talent/profile", {
+          ...profile,
           location: updateData.location,
-          preferredLocations: updateData.preferredLocations,
-          ...(updateData.newPassword && updateData.currentPassword ? {
-            currentPassword: updateData.currentPassword,
-            newPassword: updateData.newPassword,
-          } : {})
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
+        if (!profileResponse.ok) {
+          const errorData = await profileResponse.json();
           throw new Error(errorData.message || "プロフィールの更新に失敗しました");
         }
-
-        return await response.json();
-      } catch (error) {
-        console.error('プロフィール更新エラー:', error);
-        throw error instanceof Error ? error : new Error("プロフィールの更新に失敗しました");
       }
+
+      return await userResponse.json();
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/user"], data);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/talent/profile"] });
 
       toast({
         title: "プロフィールを更新しました",
@@ -134,7 +151,7 @@ export default function BasicInfoEdit() {
     return <Redirect to="/auth" />;
   }
 
-  if (isLoading) {
+  if (isProfileLoading || isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -190,7 +207,7 @@ export default function BasicInfoEdit() {
             <div className="space-y-2">
               <FormLabel>生年月日</FormLabel>
               <div className="p-3 bg-muted rounded-md">
-                <p>{user.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
+                <p>{userProfile?.birthDate ? format(new Date(userProfile.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
               </div>
               <p className="text-sm text-muted-foreground">
                 ※生年月日の修正が必要な場合は、運営にお問い合わせください。
