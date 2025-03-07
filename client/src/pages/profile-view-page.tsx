@@ -25,6 +25,7 @@ interface UserProfile {
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
+  // Debug: ログイン状態を確認
   console.log('Auth state:', {
     user,
     timestamp: new Date().toISOString()
@@ -127,7 +128,7 @@ export default function ProfileViewPage() {
   }
 
   if (userError || talentError) {
-    console.error("Profile fetch error:", {
+    console.error('Profile fetch error:', {
       userError,
       talentError,
       timestamp: new Date().toISOString()

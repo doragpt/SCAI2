@@ -479,14 +479,14 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       });
 
       // データベースクエリの実行を詳細にログ
-      console.log('Executing database query for user:', userId);
+      console.log('Executing database query for user:', req.user.id);
       const [profile] = await db
         .select()
         .from(talentProfiles)
-        .where(eq(talentProfiles.userId, userId));
+        .where(eq(talentProfiles.userId, req.user.id));
 
       console.log('Database query result:', {
-        userId,
+        userId: req.user.id,
         hasProfile: !!profile,
         profileId: profile?.id,
         profileData: JSON.stringify(profile), // 完全なプロフィールデータをログに出力
@@ -495,7 +495,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
       // プロフィールが存在しない場合は404を返す
       if (!profile) {
-        console.log('Profile not found for user:', userId);
+        console.log('Profile not found for user:', req.user.id);
         return res.status(404).json({
           message: "プロフィールが見つかりません。新規登録が必要です。",
           isNewUser: true
@@ -503,7 +503,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       }
 
       console.log('Profile fetch successful:', {
-        userId,
+        userId: req.user.id,
         profileId: profile.id,
         timestamp: new Date().toISOString()
       });
