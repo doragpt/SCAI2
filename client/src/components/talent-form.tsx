@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus, Preview, Save } from "lucide-react";
+import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus, Eye, Save } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -933,13 +933,13 @@ export function TalentForm() {
     }
   };
 
-  // 傷・タトゥー・アトピー追加ハンドラー```typescript
+  // 傷・タトゥー・アトピー追加ハンドラー
   const handleAddBodyMark = (value: string) => {
     if (!bodyMarks.includes(value)) {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
 
-      // フォームの値を更新（他の項目と同じパターンで）
+      // フォームの値を更新
       form.setValue("bodyMark", {
         hasBodyMark: true,
         details: form.getValues().bodyMark?.details || "",
@@ -953,7 +953,8 @@ export function TalentForm() {
       console.log('bodyMark updated:', {
         value,
         updated,
-        formValues: form.getValues().bodyMark      });
+        formValues: form.getValues().bodyMark
+      });
     }
   };
 
@@ -1014,7 +1015,7 @@ export function TalentForm() {
                 variant="outline"
                 onClick={() => setIsPreviewMode(!isPreviewMode)}
               >
-                <Preview className="h-4 w-4 mr-2" />
+                <Eye className="h-4 w-4 mr-2" />
                 {isPreviewMode ? "編集に戻る" : "プレビュー"}
               </Button>
               <Button
@@ -1953,7 +1954,7 @@ export function TalentForm() {
                             size="icon"
                             className="absolute top-2 right-2"
                             onClick={() => {
-                              const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
+                                                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
                               form.setValue("photoDiaryUrls", updatedUrls);
                             }}
                           >
