@@ -19,6 +19,8 @@ import { useState, useEffect } from "react";
 import AIMatchingPage from "@/pages/talent/ai-matching";
 import { Navigation } from "@/components/navigation";
 import ProfileViewPage from "@/pages/profile-view-page";
+import BasicInfoView from "@/pages/basic-info-view";
+import BasicInfoEdit from "@/pages/basic-info-edit";
 
 function Router() {
   return (
@@ -37,6 +39,8 @@ function Router() {
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
       <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
+      <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
+      <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
       <Route component={NotFound} />
     </Switch>
   );
