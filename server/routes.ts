@@ -5,6 +5,9 @@ import {
   talentProfileSchema,
   talentProfileUpdateSchema,
   type TalentProfileData,
+  jobs,
+  applications,
+  type Application
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -118,6 +121,156 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       });
       res.status(500).json({
         message: "求人情報の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人詳細取得エンドポイント
+  app.get("/api/jobs/:id", async (req, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+      }
+
+      const [job] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!job) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // ユーザーが認証済みの場合、応募状況も返す
+      if (req.user?.id) {
+        const [application] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.storeId, jobId))
+          .where(eq(applications.userId, req.user.id));
+
+        return res.json({
+          ...job,
+          application: application || null
+        });
+      }
+
+      res.json(job);
+    } catch (error) {
+      console.error("Job detail fetch error:", {
+        error,
+        jobId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "求人詳細の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人検索エンドポイント
+  app.get("/api/jobs/search", async (req, res) => {
+    try {
+      const { location, serviceType, page = 1, limit = 20 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+
+      let query = db.select().from(jobs);
+
+      if (location) {
+        query = query.where(eq(jobs.location, location as string));
+      }
+
+      if (serviceType) {
+        query = query.where(eq(jobs.serviceType, serviceType as string));
+      }
+
+      const jobListings = await query
+        .orderBy(jobs.createdAt.desc())
+        .limit(Number(limit))
+        .offset(offset);
+
+      console.log('Jobs search successful:', {
+        filters: { location, serviceType },
+        count: jobListings.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(jobListings);
+    } catch (error) {
+      console.error("Jobs search error:", {
+        error,
+        query: req.query,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "求人検索に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人応募エンドポイント
+  app.post("/api/jobs/:id/apply", authenticate, async (req: any, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+      }
+
+      const [existingJob] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!existingJob) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // 既に応募済みかチェック
+      const [existingApplication] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.storeId, jobId))
+        .where(eq(applications.userId, req.user.id));
+
+      if (existingApplication) {
+        return res.status(400).json({ message: "既に応募済みです" });
+      }
+
+      // 応募データを作成
+      const [application] = await db
+        .insert(applications)
+        .values({
+          userId: req.user.id,
+          storeId: jobId,
+          status: "pending",
+          appliedAt: new Date(),
+          message: req.body.message,
+          desiredStartDate: req.body.desiredStartDate,
+          desiredDuration: req.body.desiredDuration
+        })
+        .returning();
+
+      console.log('Job application successful:', {
+        userId: req.user.id,
+        jobId,
+        applicationId: application.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(application);
+    } catch (error) {
+      console.error("Job application error:", {
+        error,
+        userId: req.user?.id,
+        jobId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({
+        message: "応募処理に失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

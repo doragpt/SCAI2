@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Enums
 export const photoTags = [
@@ -416,7 +417,73 @@ export const jobs = pgTable("jobs", {
   housingSupport: boolean("housing_support").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    locationIdx: index("jobs_location_idx").on(table.location),
+    serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+    createdAtIdx: index("jobs_created_at_idx").on(table.createdAt),
+  };
 });
+
+// Placeholder table definitions -  Replace these with your actual table definitions
+export const applications = pgTable('applications', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id'),
+    storeId: integer('store_id')
+});
+
+export const keepList = pgTable('keepList', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id'),
+    storeId: integer('store_id')
+});
+
+export const viewHistory = pgTable('viewHistory', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id'),
+    storeId: integer('store_id')
+});
+
+
+// リレーションの定義
+export const jobsRelations = relations(jobs, ({ many }) => ({
+  applications: many(applications),
+  keepList: many(keepList),
+  viewHistory: many(viewHistory),
+}));
+
+export const applicationsRelations = relations(applications, ({ one }) => ({
+  job: one(jobs, {
+    fields: [applications.storeId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [applications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const keepListRelations = relations(keepList, ({ one }) => ({
+  job: one(jobs, {
+    fields: [keepList.storeId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [keepList.userId],
+    references: [users.id],
+  }),
+}));
+
+export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
+  job: one(jobs, {
+    fields: [viewHistory.storeId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [viewHistory.userId],
+    references: [users.id],
+  }),
+}));
 
 // 求人情報のZodスキーマ
 export const jobSchema = createInsertSchema(jobs).omit({ id: true });
