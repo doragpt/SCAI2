@@ -1,13 +1,26 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+// S3クライアントの初期化を関数化
+function createS3Client() {
+  const region = process.env.AWS_REGION;
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+  if (!region || !accessKeyId || !secretAccessKey) {
+    throw new Error('AWS credentials are not properly configured');
+  }
+
+  return new S3Client({
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+}
+
+const s3Client = createS3Client();
 
 interface UploadOptions {
   contentType: string;
@@ -22,8 +35,17 @@ export const uploadToS3 = async (
   try {
     console.log('Starting S3 upload:', {
       contentType: options.contentType,
+      extension: options.extension,
+      prefix: options.prefix,
+      bufferSize: buffer.length,
       timestamp: new Date().toISOString()
     });
+
+    // バケット名の確認
+    const bucketName = process.env.AWS_BUCKET_NAME;
+    if (!bucketName) {
+      throw new Error('AWS bucket name is not configured');
+    }
 
     // ファイル名に現在のタイムスタンプを追加して一意にする
     const timestamp = new Date().getTime();
@@ -31,7 +53,7 @@ export const uploadToS3 = async (
 
     // S3にアップロード
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: key,
       Body: buffer,
       ContentType: options.contentType,
@@ -42,13 +64,18 @@ export const uploadToS3 = async (
 
     console.log('S3 upload successful:', {
       key,
+      contentType: options.contentType,
       timestamp: new Date().toISOString()
     });
 
     return { key };
   } catch (error) {
     console.error('S3 upload error:', {
-      error,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack
+      } : 'Unknown error',
+      options,
       timestamp: new Date().toISOString()
     });
     throw error instanceof Error ? error : new Error('画像のアップロードに失敗しました');
@@ -58,16 +85,36 @@ export const uploadToS3 = async (
 // プリサインドURL生成用の関数
 export const getSignedS3Url = async (key: string): Promise<string> => {
   try {
+    const bucketName = process.env.AWS_BUCKET_NAME;
+    if (!bucketName) {
+      throw new Error('AWS bucket name is not configured');
+    }
+
+    console.log('Generating signed URL:', {
+      key,
+      bucket: bucketName,
+      timestamp: new Date().toISOString()
+    });
+
     const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: key
     });
 
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    console.log('Signed URL generated successfully:', {
+      key,
+      timestamp: new Date().toISOString()
+    });
+
     return signedUrl;
   } catch (error) {
     console.error('Failed to generate signed URL:', {
-      error,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack
+      } : 'Unknown error',
       key,
       timestamp: new Date().toISOString()
     });

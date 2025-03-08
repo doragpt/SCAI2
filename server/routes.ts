@@ -19,24 +19,31 @@ import {
   loginSchema,
   type LoginData,
   type SelectUser,
+  users,
+  talentProfiles,
+  blogPosts,
+  type BlogPost,
+  type BlogPostListResponse,
+  blogPostSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { users, talentProfiles, blogPosts } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
 import { uploadToS3, getSignedS3Url } from "./utils/s3";
-import {
-  type BlogPost,
-  type BlogPostListResponse,
-  blogPostSchema,
-} from "@shared/schema";
 import { generateDailyStats, getStoreStats } from "./utils/access-stats";
 import multer from "multer";
 import { validateImageUpload, getTotalImagesCount } from "./utils/image-validation";
 
+// multerの設定を一箇所にまとめる
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 500 * 1024 // 500KB
+  }
+});
 
 const scryptAsync = promisify(scrypt);
 
@@ -1972,20 +1979,538 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ブログ画像アップロードのエンドポイントを追加
-  const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-      fileSize: 500 * 1024 // 500KB
+  // アップロード済み画像を取得するエンドポイント
+  app.get("/api/store/images", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // 店舗の全ブログ記事から画像を収集
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      // 全画像URLを一つの配列にまとめる
+      const allImages = posts.reduce((acc: string[], post) => {
+        if (post.images) {
+          return [...acc, ...post.images];
+        }
+        return acc;
+      }, []);
+
+      // 重複を除去
+      const uniqueImages = Array.from(new Set(allImages));
+
+      res.json(uniqueImages);
+    } catch (error) {
+      console.error("Store images fetch error:", error);
+      res.status(500).json({
+        message: "画像一覧の取得に失敗しました",
+        error: process.env.NODE_ENV ==="development" ? error : undefined
+      });
     }
   });
 
+  // 画像アップロードエンドポイント
   app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
     try {
+      console.log('Image upload request received:', {
+        userId: req.user?.id,
+        fileInfo: req.file ? {
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+          originalname: req.file.originalname
+        } : 'No file uploaded',
+        timestamp: new Date().toISOString()
+      });
+
+      // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
         return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
       }
 
+      // ファイルチェック
+      if (!req.file) {
+        return res.status(400).json({ message: "画像ファイルを選択してください" });
+      }
+
+      // 現在の画像数を取得
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      const currentImagesCount = posts.reduce((total, post) => {
+        return total + (post.images?.length || 0);
+      }, 0);
+
+      console.log('Current images count:', {
+        userId: req.user.id,
+        count: currentImagesCount,
+        timestamp: new Date().toISOString()
+      });
+
+      // バリデーション
+      const validation = validateImageUpload(req.file, currentImagesCount);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // S3にアップロード
+      const uploadResult = await uploadToS3(req.file.buffer, {
+        contentType: req.file.mimetype,
+        extension: req.file.originalname.split(".").pop() || "",
+        prefix: `blog/${req.user.id}/`
+      });
+
+      // 署名付きURLを生成
+      const signedUrl = await getSignedS3Url(uploadResult.key);
+
+      console.log('Image upload successful:', {
+        userId: req.user.id,
+        key: uploadResult.key,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        url: signedUrl,
+        key: uploadResult.key
+      });
+    } catch (error) {
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像のアップロードに失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
+  // 店舗のアクセス統計を取得するエンドポイント
+  app.get("/api/stores/:storeId/stats", authenticate, async (req: any, res) => {
+    try {
+      const storeId = parseInt(req.params.storeId);
+
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "無効な店舗IDです" });
+      }
+
+      // 認証チェック
+      if (!req.user || (req.user.role === 'store' && req.user.id !== storeId)) {
+        return res.status(403).json({ message: "アクセス権限がありません" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7); // 過去7日分のデータ
+
+      const stats = await getStoreStats(storeId, startDate, today);
+
+      if (!stats.length) {
+        // 統計データがない場合は新規作成
+        const todayStats = await generateDailyStats(today, storeId);
+        await saveDailyStats(todayStats);
+        return res.json(todayStats);
+      }
+
+      return res.json(stats[0]); // 最新の統計データを返す
+    } catch (error) {
+      console.error('Access stats fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事一覧の取得
+  app.get("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      console.log('Blog posts fetch request received:', {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        console.log('Unauthorized blog access:', {
+          userId: req.user?.id,
+          role: req.user?.role,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // ブログ記事の取得
+      const posts = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id))
+        .orderBy(desc(blogPosts.createdAt));
+
+      console.log('Blog posts fetched:', {
+        storeId: req.user.id,
+        count: posts.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // BlogPostListResponse型に従ってレスポンスを整形
+      const response: BlogPostListResponse = {
+        posts,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: posts.length
+        }
+      };
+
+      return res.json(response);
+    } catch (error) {
+      console.error('Blog posts fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        storeId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の新規作成
+  app.post("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを作成できます" });
+      }
+
+      console.log('Blog post creation request:', {
+        userId: req.user.id,
+        title: req.body.title,
+        timestamp: new Date().toISOString()
+      });
+
+      // バリデーション
+      const postData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // ブログ記事の作成
+      const [post] = await db
+        .insert(blogPosts)
+        .values({
+          ...postData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      console.log('Blog post created:', {
+        postId: post.id,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Blog post creation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の作成に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の詳細取得
+  app.get("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      console.log('Blog post fetch request:', {
+        postId,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 記事の取得
+      const [post] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!post) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (post.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事へのアクセス権限がありません" });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Blog post fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の更新
+  app.put("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを更新できます" });
+      }
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // バリデーション
+      const updateData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // 記事の更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post updated:', {
+        postId,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の更新に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の公開状態更新
+  app.patch("/api/blog/posts/:id/status", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみステータスを更新できます" });
+      }
+
+      const { status, scheduledAt } = req.body;
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // ステータス更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          status,
+          scheduledAt: status === "scheduled" ? scheduledAt : null,
+          publishedAt: status === "published" ? new Date() : null,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post status updated:', {
+        postId,
+        status,
+        scheduledAt,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post status update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // アクセス統計を取得するエンドポイント
+  app.get("/api/stores/stats/detail", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+
+      const stats = await getStoreStats(req.user.id, startDate, today);
+
+      // 過去7日間のデータを日付順に整形
+      const dailyBreakdown = stats.map(stat => ({
+        date: stat.date,
+        totalVisits: stat.totalVisits,
+        uniqueVisitors: stat.uniqueVisitors
+      })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // 最新（今日）のデータ
+      const latestStats = stats[0] || {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        hourlyStats: {}
+      };
+
+      res.json({
+        totalVisits: latestStats.totalVisits,
+        uniqueVisitors: latestStats.uniqueVisitors,
+        dailyBreakdown
+      });
+    } catch (error) {
+      console.error('Access stats detail fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // アップロード済み画像を取得するエンドポイント
+  app.get("/api/store/images", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // 店舗の全ブログ記事から画像を収集
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      // 全画像URLを一つの配列にまとめる
+      const allImages = posts.reduce((acc: string[], post) => {
+        if (post.images) {
+          return [...acc, ...post.images];
+        }
+        return acc;
+      }, []);
+
+      // 重複を除去
+      const uniqueImages = Array.from(new Set(allImages));
+
+      res.json(uniqueImages);
+    } catch (error) {
+      console.error("Store images fetch error:", error);
+      res.status(500).json({
+        message: "画像一覧の取得に失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
+  // 画像アップロードエンドポイント
+  app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
+    try {
+      // 認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
+      }
+
+      // ファイルチェック
       if (!req.file) {
         return res.status(400).json({ message: "画像ファイルを選択してください" });
       }
@@ -2027,7 +2552,376 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 店舗の画像一覧を取得するエンドポイントを追加
+  // 店舗のアクセス統計を取得するエンドポイント
+  app.get("/api/stores/:storeId/stats", authenticate, async (req: any, res) => {
+    try {
+      const storeId = parseInt(req.params.storeId);
+
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "無効な店舗IDです" });
+      }
+
+      // 認証チェック
+      if (!req.user || (req.user.role === 'store' && req.user.id !== storeId)) {
+        return res.status(403).json({ message: "アクセス権限がありません" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7); // 過去7日分のデータ
+
+      const stats = await getStoreStats(storeId, startDate, today);
+
+      if (!stats.length) {
+        // 統計データがない場合は新規作成
+        const todayStats = await generateDailyStats(today, storeId);
+        await saveDailyStats(todayStats);
+        return res.json(todayStats);
+      }
+
+      return res.json(stats[0]); // 最新の統計データを返す
+    } catch (error) {
+      console.error('Access stats fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事一覧の取得
+  app.get("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      console.log('Blog posts fetch request received:', {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        console.log('Unauthorized blog access:', {
+          userId: req.user?.id,
+          role: req.user?.role,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // ブログ記事の取得
+      const posts = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id))
+        .orderBy(desc(blogPosts.createdAt));
+
+      console.log('Blog posts fetched:', {
+        storeId: req.user.id,
+        count: posts.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // BlogPostListResponse型に従ってレスポンスを整形
+      const response: BlogPostListResponse = {
+        posts,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: posts.length
+        }
+      };
+
+      return res.json(response);
+    } catch (error) {
+      console.error('Blog posts fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        storeId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の新規作成
+  app.post("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを作成できます" });
+      }
+
+      console.log('Blog post creation request:', {
+        userId: req.user.id,
+        title: req.body.title,
+        timestamp: new Date().toISOString()
+      });
+
+      // バリデーション
+      const postData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // ブログ記事の作成
+      const [post] = await db
+        .insert(blogPosts)
+        .values({
+          ...postData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      console.log('Blog post created:', {
+        postId: post.id,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Blog post creation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の作成に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の詳細取得
+  app.get("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      console.log('Blog post fetch request:', {
+        postId,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 記事の取得
+      const [post] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!post) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (post.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事へのアクセス権限がありません" });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Blog post fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の更新
+  app.put("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを更新できます" });
+      }
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // バリデーション
+      const updateData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // 記事の更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post updated:', {
+        postId,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の更新に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の公開状態更新
+  app.patch("/api/blog/posts/:id/status", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみステータスを更新できます" });
+      }
+
+      const { status, scheduledAt } = req.body;
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // ステータス更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          status,
+          scheduledAt: status === "scheduled" ? scheduledAt : null,
+          publishedAt: status === "published" ? new Date() : null,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post status updated:', {
+        postId,
+        status,
+        scheduledAt,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post status update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // アクセス統計を取得するエンドポイント
+  app.get("/api/stores/stats/detail", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+
+      const stats = await getStoreStats(req.user.id, startDate, today);
+
+      // 過去7日間のデータを日付順に整形
+      const dailyBreakdown = stats.map(stat => ({
+        date: stat.date,
+        totalVisits: stat.totalVisits,
+        uniqueVisitors: stat.uniqueVisitors
+      })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // 最新（今日）のデータ
+      const latestStats = stats[0] || {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        hourlyStats: {}
+      };
+
+      res.json({
+        totalVisits: latestStats.totalVisits,
+        uniqueVisitors: latestStats.uniqueVisitors,
+        dailyBreakdown
+      });
+    } catch (error) {
+      console.error('Access stats detail fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // アップロード済み画像を取得するエンドポイント
   app.get("/api/store/images", authenticate, async (req: any, res) => {
     try {
       if (!req.user?.id || req.user.role !== "store") {
