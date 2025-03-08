@@ -347,16 +347,39 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).partial();
 
 
-// 重複した型定義を削除し、一箇所にまとめる
+// 重複している型定義を削除し、一箇所にまとめる
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type ProfileData = TalentProfileData;
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
 
-// 型定義エクスポートを追加
-export type Photo = z.infer<typeof photoSchema>;
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+// APIレスポンスの型定義
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+// 求人詳細レスポンスの型定義
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}
+
+// serviceTypesの定義を更新
+export const serviceTypeLabels: Record<ServiceType, string> = {
+  deriheru: "デリヘル",
+  hoteheru: "ホテヘル",
+  hakoheru: "箱ヘル",
+  esthe: "エステ",
+  onakura: "オナクラ",
+  mseikan: "メンズエステ"
+} as const;
+
 
 // 求人情報関連の新しいenums
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
@@ -604,3 +627,6 @@ export const talentRegisterFormSchema = z.object({
 });
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
+export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;

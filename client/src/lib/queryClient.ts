@@ -1,8 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { TalentProfileData, SelectUser, Photo, JobsSearchResponse, Job } from "@shared/schema";
+import type { TalentProfileData, SelectUser, Photo, Job, JobListingResponse } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import type { JobListingResponse } from "@shared/schema"; // Assuming this type is defined elsewhere
 
 // APIのベースURL設定
 const API_BASE_URL = (() => {
@@ -32,7 +31,6 @@ export async function apiRequest<T>(
 
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      console.log('Adding auth token to request');
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -61,7 +59,6 @@ export async function apiRequest<T>(
 
       // 認証エラーの場合、トークンを削除
       if (res.status === 401) {
-        console.log('Unauthorized request, removing token');
         localStorage.removeItem("auth_token");
       }
 
@@ -195,15 +192,6 @@ export const getJobsQuery = async (): Promise<Job[]> => {
     });
 
     const response = await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
-
-    if (!Array.isArray(response)) {
-      console.error('Invalid jobs response format:', {
-        response,
-        timestamp: new Date().toISOString()
-      });
-      return [];
-    }
-
     return response;
   } catch (error) {
     console.error('Jobs fetch error:', {
@@ -214,7 +202,7 @@ export const getJobsQuery = async (): Promise<Job[]> => {
   }
 };
 
-// 求人一覧取得用のクエリ関数を修正
+// 店舗用求人一覧取得クエリ関数を修正
 export const getStoreJobsQuery = async (): Promise<JobListingResponse> => {
   try {
     console.log('Fetching store jobs:', {
@@ -225,7 +213,7 @@ export const getStoreJobsQuery = async (): Promise<JobListingResponse> => {
     const response = await apiRequest<JobListingResponse>("GET", QUERY_KEYS.JOBS_STORE);
 
     console.log('Store jobs fetch successful:', {
-      count: response.jobs.length,
+      jobCount: response.jobs.length,
       timestamp: new Date().toISOString()
     });
 

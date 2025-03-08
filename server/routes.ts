@@ -172,8 +172,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 求人一覧取得エンドポイント（店舗用）を先に定義
   app.get("/api/jobs/store", authenticate, async (req: any, res) => {
     try {
+      // 認証状態の詳細なログ
+      console.log('Store jobs request authentication:', {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        headers: req.headers,
+        timestamp: new Date().toISOString()
+      });
+
       // 店舗ユーザーの認証チェック
       if (!req.user?.id || req.user.role !== "store") {
+        console.log('Unauthorized store access:', {
+          userId: req.user?.id,
+          role: req.user?.role,
+          timestamp: new Date().toISOString()
+        });
         return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
       }
 
@@ -192,20 +205,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Store jobs fetched:', {
         storeId: req.user.id,
         count: jobListings.length,
+        jobs: jobListings.map(job => ({
+          id: job.id,
+          title: job.title,
+          status: job.status
+        })),
         timestamp: new Date().toISOString()
       });
 
-      return res.json({
+      // JobListingResponse型に従ってレスポンスを整形
+      const response: JobListingResponse = {
         jobs: jobListings,
         pagination: {
           currentPage: 1,
           totalPages: 1,
           totalItems: jobListings.length
         }
-      });
+      };
+
+      return res.json(response);
     } catch (error) {
       console.error('Store jobs fetch error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         storeId: req.user?.id,
         timestamp: new Date().toISOString()
       });
@@ -574,11 +596,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 求人詳細の取得
-  app.get("/api/jobs/:id", authenticate, async (req: any, res) => {
+  // 求人詳細の取得 (Corrected implementation)
+  app.get("/api/jobs/:id", authenticate, async (req: any, res, next) => {
     try {
+      // リクエストパスのログ追加
+      console.log('Job detail request path:', {
+        originalUrl: req.originalUrl,
+        path: req.path,
+        params: req.params,
+        timestamp: new Date().toISOString()
+      });
+
+      // 'store'という文字列の場合はスキップ
+      if (req.params.id === 'store') {
+        return next();
+      }
+
       const jobId = parseInt(req.params.id);
       if (isNaN(jobId)) {
+        console.log('Invalid job ID:', {
+          params: req.params,
+          parsedId: jobId,
+          timestamp: new Date().toISOString()
+        });
         return res.status(400).json({ message: "無効な求人IDです" });
       }
 
@@ -611,51 +651,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // 応募状況の取得（認証済みユーザーのみ）
-      let applicationStatus = null;
-      if (req.user?.id && req.user.role !== 'store') {
-        const [application] = await db
-          .select()
-          .from(applications)
-          .where(and(
-            eq(applications.jobId, jobId),
-            eq(applications.userId, req.user.id)
-          ));
-
-        if (application) {
-          applicationStatus = application.status;
-        }
-
-        // 閲覧履歴を記録
-        await db.insert(viewHistory).values({
-          userId: req.user.id,
-          jobId: jobId,
-          viewedAt: new Date()
-        });
-      }
-
       // レスポンスデータの準備
       const responseData = {
         ...job,
-        applicationStatus,
         // 店舗ユーザーの場合、内部情報も含める
         ...(req.user?.role === 'store' && job.storeId === req.user.id ? {
           requirements: job.requirements,
-          internalNotes: job.internalNotes
         } : {})
       };
-
-      console.log('Job detail fetch successful:', {
-        userId: req.user?.id,
-        jobId,
-        hasApplication: !!applicationStatus,
-        timestamp: new Date().toISOString()
-      });
 
       res.json(responseData);
     } catch (error) {
       console.error("Job detail fetch error:", {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         userId: req.user?.id,
         jobId: req.params.id,
         timestamp: new Date().toISOString()
@@ -941,18 +950,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PUT /api/talent/profile
+  // PUT /api/talent/profile (Corrected implementation)
   app.put("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log('Profile update request received:', {
-        userId,
-        bodyMark: req.body.bodyMark,
-        timestamp: new Date().toISOString()
-      });
+
+      if (!userId) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
 
       // バリデーション
       const updateData = talentProfileUpdateSchema.parse(req.body);
+
+      console.log('Profile update request received:', {
+        userId,
+        updateData,
+        timestamp: new Date().toISOString()
+      });
 
       // プロフィールの更新
       const [updatedProfile] = await db
@@ -965,26 +979,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       if (!updatedProfile) {
-        throw new Error("プロフィールの更新に失敗しました");
+        return res.status(404).json({ message: "プロフィールが見つかりません" });
       }
 
-      console.log('Profile update successful:', {
+      console.log('Profile updated successfully:', {
         userId,
-        bodyMark: updatedProfile.bodyMark,
+        profileId: updatedProfile.id,
         timestamp: new Date().toISOString()
       });
 
       res.json(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         userId: req.user?.id,
-        bodyMark: req.body.bodyMark,
+        stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()
       });
-      res.status(400).json({
-        error: true,
-        message: error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
+
+      res.status(500).json({
+        message: "プロフィールの更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });
@@ -1027,7 +1042,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           updatedAt: new Date(),
         };
-
 
         console.log('Prepared update values:', {
           userId,

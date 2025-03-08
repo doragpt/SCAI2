@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { type Job } from "@shared/schema";
+import { type Job, type JobListingResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 // 求人ステータスのラベル
 const jobStatusLabels = {
@@ -31,20 +32,19 @@ const jobStatusLabels = {
   closed: "締切"
 } as const;
 
-interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
-
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const [selectedTab, setSelectedTab] = useState("jobs");
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  // ユーザー認証状態のログ
+  console.log('Store dashboard auth state:', {
+    userId: user?.id,
+    userRole: user?.role,
+    timestamp: new Date().toISOString()
+  });
 
   // 求人情報の取得
   const { data: jobListings, isLoading: jobsLoading, error, refetch } = useQuery<JobListingResponse>({
@@ -53,6 +53,27 @@ export default function StoreDashboard() {
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
+    onError: (error) => {
+      console.error("Store jobs fetch error:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "求人情報の取得に失敗しました",
+      });
+    },
+  });
+
+  // データ取得状態のログ
+  console.log('Store jobs data state:', {
+    hasData: !!jobListings,
+    jobCount: jobListings?.jobs?.length,
+    isLoading: jobsLoading,
+    hasError: !!error,
+    timestamp: new Date().toISOString()
   });
 
   if (jobsLoading) {
@@ -128,11 +149,11 @@ export default function StoreDashboard() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>本日のアクセス</span>
-                  <span className="font-bold">123</span>
+                  <span className="font-bold">-</span>
                 </div>
                 <div className="flex justify-between">
                   <span>今月のアクセス</span>
-                  <span className="font-bold">1,234</span>
+                  <span className="font-bold">-</span>
                 </div>
               </div>
             </CardContent>
@@ -218,7 +239,7 @@ export default function StoreDashboard() {
                                   <span>{job.location}</span>
                                   <span>•</span>
                                   <span>
-                                    {format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja })}
+                                    {job.createdAt ? format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja }) : "-"}
                                   </span>
                                 </div>
                               </div>
@@ -234,11 +255,11 @@ export default function StoreDashboard() {
                               <div className="flex items-center gap-4">
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">応募数: </span>
-                                  <span className="font-semibold">0</span>
+                                  <span className="font-semibold">-</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">閲覧数: </span>
-                                  <span className="font-semibold">0</span>
+                                  <span className="font-semibold">-</span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -306,19 +327,19 @@ export default function StoreDashboard() {
                       <Card>
                         <CardContent className="p-4">
                           <p className="text-sm text-muted-foreground">応募総数</p>
-                          <p className="text-2xl font-bold">156</p>
+                          <p className="text-2xl font-bold">-</p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4">
                           <p className="text-sm text-muted-foreground">面接設定数</p>
-                          <p className="text-2xl font-bold">42</p>
+                          <p className="text-2xl font-bold">-</p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4">
                           <p className="text-sm text-muted-foreground">採用数</p>
-                          <p className="text-2xl font-bold">28</p>
+                          <p className="text-2xl font-bold">-</p>
                         </CardContent>
                       </Card>
                     </div>
@@ -339,7 +360,7 @@ export default function StoreDashboard() {
               <div className="space-y-2">
                 <div>
                   <p className="font-medium">店舗名</p>
-                  <p className="text-sm text-muted-foreground">{user?.displayName || user?.username}</p>
+                  <p className="text-sm text-muted-foreground">{user?.displayName || user?.username || "未設定"}</p>
                 </div>
                 <div>
                   <p className="font-medium">所在地</p>
