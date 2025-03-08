@@ -141,6 +141,27 @@ interface ImageSize {
   height: number;
 }
 
+// コンテキストメニューの位置調整関数
+const adjustMenuPosition = (x: number, y: number, menuWidth: number, menuHeight: number) => {
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  let adjustedX = x;
+  let adjustedY = y;
+
+  // 右端からはみ出す場合
+  if (x + menuWidth > windowWidth) {
+    adjustedX = x - menuWidth;
+  }
+
+  // 下端からはみ出す場合
+  if (y + menuHeight > windowHeight) {
+    adjustedY = y - menuHeight;
+  }
+
+  return { x: adjustedX, y: adjustedY };
+};
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
@@ -435,43 +456,49 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  // コンテキストメニューを画面内に収めるための調整関数
-  const adjustMenuPosition = (x: number, y: number, menuWidth: number, menuHeight: number) => {
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+  // Quillエディタのコンテキストメニュー処理を設定
+  useEffect(() => {
+    const quill = quillRef.current?.getEditor();
+    if (!quill) return;
 
-    let adjustedX = x;
-    let adjustedY = y;
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
 
-    // 右端からはみ出す場合
-    if (x + menuWidth > windowWidth) {
-      adjustedX = x - menuWidth;
-    }
+      // 右クリックした要素が画像の場合
+      if (target.tagName === 'IMG') {
+        e.preventDefault();
+        const img = target as HTMLImageElement;
 
-    // 下端からはみ出す場合
-    if (y + menuHeight > windowHeight) {
-      adjustedY = y - menuHeight;
-    }
+        const menuWidth = 200;
+        const menuHeight = 150;
+        const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
 
-    return { x: adjustedX, y: adjustedY };
-  };
+        setContextMenu({
+          show: true,
+          x,
+          y,
+          image: {
+            url: img.src,
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+          }
+        });
+      } else {
+        // 画像以外の要素の場合はコンテキストメニューを非表示
+        setContextMenu(prev => ({ ...prev, show: false }));
+      }
+    };
 
-  // コンテキストメニューを表示する関数
-  const showContextMenu = (e: React.MouseEvent, imageUrl: string, width: number, height: number) => {
-    e.preventDefault(); // デフォルトのコンテキストメニューを抑制
-    e.stopPropagation(); // イベントの伝播を停止
+    // Quillエディタのルート要素にイベントリスナーを追加
+    quill.root.addEventListener('contextmenu', handleContextMenu);
 
-    const menuWidth = 200;
-    const menuHeight = 150;
-    const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
-
-    setContextMenu({
-      show: true,
-      x,
-      y,
-      image: { url: imageUrl, width, height }
-    });
-  };
+    // クリーンアップ関数
+    return () => {
+      if (quill && quill.root) {
+        quill.root.removeEventListener('contextmenu', handleContextMenu);
+      }
+    };
+  }, []);
 
   // コンテキストメニューを閉じる関数
   const hideContextMenu = () => {
