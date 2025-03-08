@@ -207,13 +207,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // Quillエディタのコンテキストメニュー処理を設定
   useEffect(() => {
     const quill = quillRef.current?.getEditor();
+    console.log("Quillエディタインスタンス:", quill); // エディタインスタンスの確認
+
     if (!quill) return;
 
     const handleEditorContextMenu = (e: MouseEvent) => {
+      console.log("右クリックイベント発火:", e); // イベント発火の確認
       const target = e.target as HTMLElement;
 
       // 右クリックした要素が画像の場合のみ処理
       if (target.tagName === 'IMG') {
+        console.log("画像要素での右クリック検知"); // 画像要素の確認
         e.preventDefault();
         e.stopPropagation();
 
@@ -238,8 +242,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
     // Quillエディタのルート要素にイベントリスナーを追加
     quill.root.addEventListener('contextmenu', handleEditorContextMenu);
+    console.log("コンテキストメニューイベントリスナーを設定"); // リスナー設定の確認
 
-    // クリーンアップ関数
     return () => {
       if (quill && quill.root) {
         quill.root.removeEventListener('contextmenu', handleEditorContextMenu);
@@ -358,11 +362,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // ルートコンテナのコンテキストメニューを抑制
-  const preventDefaultContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  // ルートコンテナのコンテキストメニューを抑制  --- REMOVED ---
+  //const preventDefaultContextMenu = (e: React.MouseEvent) => {
+  //  e.preventDefault();
+  //  e.stopPropagation();
+  //};
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -628,7 +632,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
 
   return (
-    <div className="container mx-auto px-4 py-8" onContextMenu={e => e.preventDefault()}>
+    <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -1038,7 +1042,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </button>
 
           <button
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-red-600"
+            className="w-full px-4 py-2 text-lefthover:bg-gray-100 flex items-center gap-2 text-red-600"
             onClick={deleteImage}
           >
             <Trash className="h-4 w-4" />
