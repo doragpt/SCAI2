@@ -40,7 +40,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,7 +63,6 @@ import {
   Eye,
   ArrowLeft,
   Upload,
-  Image,
 } from "lucide-react";
 
 // 画像のリサイズハンドルのスタイル
@@ -115,14 +113,83 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
   images: string[];
   isLoading: boolean;
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        { rawFormData: true }
+      );
+
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
+      }
+
+      toast({
+        title: "成功",
+        description: "画像がアップロードされました",
+      });
+
+      // 画像を選択状態にする
+      onSelect(response.url);
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>画像ライブラリ</DialogTitle>
-          <DialogDescription>
-            アップロード済みの画像から選択して挿入できます
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <div>
+            <DialogTitle>画像選択</DialogTitle>
+            <DialogDescription>
+              残り {100 - (images?.length || 0)}/100
+            </DialogDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            アップロード
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/jpeg,image/png,image/gif"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleUpload(file);
+              }
+              e.target.value = "";
+            }}
+          />
         </DialogHeader>
         <div className="grid grid-cols-3 gap-4 py-4">
           {isLoading ? (
@@ -243,7 +310,7 @@ const modules = {
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: ["", "center", "right", "justify"] }],
-    ["link"],  // 画像ボタンを削除
+    ["link"],
     ["clean"]
   ],
   imageResize: true
@@ -261,7 +328,7 @@ const formats = [
   "bullet",
   "align",
   "link",
-  "image"  // 画像フォーマットは残す（リサイズ用）
+  "image"
 ];
 
 interface BlogEditorProps {
@@ -272,10 +339,8 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
 
@@ -299,71 +364,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleImageUpload = async (file: File) => {
-    try {
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ログインが必要です",
-        });
-        return;
-      }
-
-      setIsUploading(true);
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        { rawFormData: true }
-      );
-
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
-      }
-
-      // Quillエディタのインスタンスを取得
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      // 現在のカーソル位置を取得
-      const range = quill.getSelection(true);
-
-      // 画像を挿入
-      quill.insertEmbed(range.index, "image", response.url);
-      quill.setSelection(range.index + 1);
-
-      // アップロード済み画像リストを更新
-      const newImages = [...uploadedImages, response.url];
-      setUploadedImages(newImages);
-      form.setValue("images", newImages);
-
-      toast({
-        title: "成功",
-        description: "画像がアップロードされました",
-      });
-    } catch (error) {
-      console.error('Image upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
-      });
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const insertImage = (imageUrl: string) => {
+  const insertImage = useCallback((imageUrl: string) => {
     try {
       const quill = quillRef.current?.getEditor();
       if (!quill) {
@@ -374,6 +375,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       quill.insertEmbed(range.index, "image", imageUrl);
       quill.setSelection(range.index + 1);
       setIsImageLibraryOpen(false);
+
+      // アップロード済み画像リストを更新
+      setUploadedImages(prev => [...prev, imageUrl]);
+      form.setValue("images", [...uploadedImages, imageUrl]);
     } catch (error) {
       console.error('Image insertion error:', error);
       toast({
@@ -382,7 +387,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "画像の挿入に失敗しました",
       });
     }
-  };
+  }, [quillRef, toast, form, uploadedImages]);
 
   // フォームの送信処理
   const onSubmit = async (data: typeof form.getValues) => {
@@ -503,7 +508,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   <div className="flex items-center justify-between mb-2">
                     <FormLabel>本文</FormLabel>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>画像: {uploadedImages.length}/50</span>
                       <Button
                         type="button"
                         variant="outline"
@@ -513,33 +517,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         <ImageIcon className="h-4 w-4 mr-2" />
                         画像を挿入
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                      >
-                        {isUploading ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Upload className="h-4 w-4 mr-2" />
-                        )}
-                        アップロード
-                      </Button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/jpeg,image/png,image/gif"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleImageUpload(file);
-                          }
-                          e.target.value = "";
-                        }}
-                      />
                     </div>
                   </div>
 
