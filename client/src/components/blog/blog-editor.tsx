@@ -78,15 +78,17 @@ const ReactQuill = dynamic(async () => {
 
 // Quillツールバーの設定
 const modules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ color: [] }, { background: [] }],
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: ["", "center", "right", "justify"] }],
-    ["link"],
-    ["clean"]
-  ]
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ color: [] }, { background: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: ["", "center", "right", "justify"] }],
+      ["link"],
+      ["clean"]
+    ],
+  }
 };
 
 const formats = [
@@ -463,17 +465,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="border rounded-md overflow-hidden">
-                            <ReactQuill
-                              forwardedRef={quillRef}
-                              theme="snow"
-                              modules={modules}
-                              formats={formats}
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="記事の本文を入力"
-                              className="min-h-[400px]"
-                            />
+                          <div className="relative border rounded-md">
+                            <div className="sticky top-0 z-10 bg-white border-b">
+                              <div className="ql-toolbar ql-snow" />
+                            </div>
+                            <div className="h-[600px] overflow-y-auto">
+                              <ReactQuill
+                                forwardedRef={quillRef}
+                                theme="snow"
+                                modules={modules}
+                                formats={formats}
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="記事の本文を入力"
+                              />
+                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
