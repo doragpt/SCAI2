@@ -12,19 +12,25 @@ export interface JwtPayload {
 
 export function generateToken(user: User): string {
   try {
+    if (!user.id || !user.role) {
+      throw new Error('無効なユーザー情報です');
+    }
+
     const payload: JwtPayload = {
       userId: user.id,
       role: user.role,
     };
-    console.log('Generating token for user:', {
+
+    console.log('Generating JWT token:', {
       userId: user.id,
       role: user.role,
       timestamp: new Date().toISOString()
     });
+
     return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRE });
   } catch (error) {
-    console.error('Token generation error:', {
-      error,
+    console.error('Token generation failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       userId: user.id,
       timestamp: new Date().toISOString()
     });
@@ -34,22 +40,26 @@ export function generateToken(user: User): string {
 
 export function verifyToken(token: string): JwtPayload {
   try {
-    if (!token.trim()) {
-      throw new Error('トークンが空です');
+    if (!token || typeof token !== 'string' || !token.trim()) {
+      throw new Error('トークンが無効です');
     }
 
-    console.log('Verifying token:', {
+    console.log('Verifying JWT token:', {
       tokenPreview: token.substring(0, 10) + '...',
       timestamp: new Date().toISOString()
     });
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    if (!decoded || typeof decoded.userId !== 'number' || typeof decoded.role !== 'string') {
+    if (!decoded || typeof decoded !== 'object' || !decoded.userId || !decoded.role) {
       throw new Error('トークンの形式が不正です');
     }
 
-    console.log('Token verified:', {
+    if (typeof decoded.userId !== 'number' || typeof decoded.role !== 'string') {
+      throw new Error('トークンのペイロード形式が不正です');
+    }
+
+    console.log('Token verification successful:', {
       userId: decoded.userId,
       role: decoded.role,
       timestamp: new Date().toISOString()
@@ -57,24 +67,23 @@ export function verifyToken(token: string): JwtPayload {
 
     return decoded;
   } catch (error) {
-    console.error('Token verification error:', {
-      error,
+    console.error('Token verification failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
-    throw new Error('トークンが無効です');
+    throw error;
   }
 }
 
 export function extractTokenFromHeader(header: string | undefined): string {
   if (!header) {
-    console.error('No authorization header');
     throw new Error('認証ヘッダーがありません');
   }
 
   const [type, token] = header.split(' ');
 
-  if (type !== 'Bearer' || !token) {
-    console.error('Invalid authorization header format:', {
+  if (type !== 'Bearer' || !token || !token.trim()) {
+    console.error('Invalid authorization header:', {
       type,
       hasToken: !!token,
       timestamp: new Date().toISOString()

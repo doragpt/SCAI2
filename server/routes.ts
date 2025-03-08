@@ -39,7 +39,7 @@ async function hashPassword(password: string): Promise<string> {
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
     const hashedPassword = buf.toString('hex');
 
-    console.log('Password hashing:', {
+    console.log('Password hashing completed:', {
       saltLength: salt.length,
       hashedLength: hashedPassword.length,
       timestamp: new Date().toISOString()
@@ -48,7 +48,7 @@ async function hashPassword(password: string): Promise<string> {
     return `${hashedPassword}.${salt}`;
   } catch (error) {
     console.error('Password hashing error:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
     throw new Error('パスワードのハッシュ化に失敗しました');
@@ -69,8 +69,7 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       return false;
     }
 
-    console.log('Password comparison:', {
-      inputLength: inputPassword.length,
+    console.log('Starting password comparison:', {
       storedHashLength: hashedPassword.length,
       saltLength: salt.length,
       timestamp: new Date().toISOString()
@@ -79,13 +78,12 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
     const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
     const inputHash = buf.toString('hex');
 
-    // 厳密な比較を行う
     const result = timingSafeEqual(
       Buffer.from(hashedPassword, 'hex'),
       Buffer.from(inputHash, 'hex')
     );
 
-    console.log('Password verification result:', {
+    console.log('Password verification completed:', {
       isValid: result,
       timestamp: new Date().toISOString()
     });
@@ -93,42 +91,48 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
     return result;
   } catch (error) {
     console.error('Password comparison error:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
     return false;
   }
 }
 
-// パスワード更新処理部分の修正
-async function updateUserPassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+// ユーザー情報更新処理の修正
+async function updateUserProfile(userId: number, updateData: any) {
   const [currentUser] = await db
     .select()
     .from(users)
-    .where(eq(users.id, userId));
+    .where(eq(users.id, userId));  // 修正：正しいwhere句
 
   if (!currentUser) {
     throw new Error("ユーザーが見つかりません");
   }
 
-  // パスワード検証の詳細なログ
-  console.log('Password update verification:', {
-    userId,
-    timestamp: new Date().toISOString()
-  });
-
-  const isValidPassword = await comparePasswords(currentPassword, currentUser.password);
-  if (!isValidPassword) {
-    throw new Error("現在のパスワードが正しくありません");
+  // パスワード更新の処理
+  if (updateData.newPassword && updateData.currentPassword) {
+    const isValidPassword = await comparePasswords(updateData.currentPassword, currentUser.password);
+    if (!isValidPassword) {
+      throw new Error("現在のパスワードが正しくありません");
+    }
+    // 新しいパスワードをハッシュ化
+    updateData.password = await hashPassword(updateData.newPassword);
+    // 更新データから不要なフィールドを削除
+    delete updateData.newPassword;
+    delete updateData.currentPassword;
   }
 
-  // 新しいパスワードのハッシュ化
-  const newHashedPassword = await hashPassword(newPassword);
-
-  await db
+  // ユーザー情報の更新
+  const [updatedUser] = await db
     .update(users)
-    .set({ password: newHashedPassword })
-    .where(eq(users.id, userId));
+    .set({
+      ...updateData,
+      updatedAt: new Date()
+    })
+    .where(eq(users.id, userId))
+    .returning();
+
+  return updatedUser;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1023,10 +1027,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // 現在のユーザー情報を取得
-      const [currentUser] = await db
+      const [currentUser] = awaitdb
         .select()
         .from(users)
-        .where(eq(users.id, userId));
+        .where(eq(users.id, userId)); // 修正: 正しいwhere句を使用
 
       if (!currentUser) {
         return res.status(404).json({ message: "ユーザーが見つかりません" });
@@ -1046,7 +1050,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // パスワード更新の処理
       if (req.body.newPassword && req.body.currentPassword) {
         // 現在のパスワードを検証
-        await updateUserPassword(userId, req.body.currentPassword, req.body.newPassword);
+        await updateUserProfile(userId, { currentPassword: req.body.currentPassword, newPassword: req.body.newPassword });
+        delete updateData.currentPassword;
+        delete updateData.newPassword;
       }
 
       // 更新データに必ずタイムスタンプを追加
