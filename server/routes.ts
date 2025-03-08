@@ -22,8 +22,10 @@ import {
   users,
   talentProfiles,
   blogPosts,
+  storeImages,
   type BlogPost,
   type BlogPostListResponse,
+  type JobListingResponse,
   blogPostSchema,
 } from "@shared/schema";
 import { db } from "./db";
@@ -33,6 +35,10 @@ import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
 import { uploadToS3, getSignedS3Url } from "./utils/s3";
+interface S3UploadResult {
+  key: string;
+  url: string;
+}
 import { generateDailyStats, getStoreStats } from "./utils/access-stats";
 import multer from "multer";
 import { validateImageUpload, getTotalImagesCount } from "./utils/image-validation";
@@ -2104,16 +2110,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 画像一覧取得エンドポイント
+  app.get("/api/store/images", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      const images = await db
+        .select({
+          id: storeImages.id,
+          url: storeImages.url,
+          key: storeImages.key,
+          createdAt: storeImages.createdAt,
+        })
+        .from(storeImages)
+        .where(eq(storeImages.storeId, req.user.id))
+        .orderBy(desc(storeImages.createdAt));
+
+      res.json(images);
+    } catch (error) {
+      console.error('Store images fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像一覧の取得に失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
   // 画像アップロードエンドポイント
   app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
     try {
       console.log('Image upload request received:', {
         userId: req.user?.id,
-        fileInfo: req.file ? {
-          size: req.file.size,
+        file: req.file ? {
+          originalname: req.file.originalname,
           mimetype: req.file.mimetype,
-          originalname: req.file.originalname
-        } : 'No file uploaded',
+          size: req.file.size
+        } : 'No file received',
         timestamp: new Date().toISOString()
       });
 
@@ -2141,8 +2180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Current images count:', {
         userId: req.user.id,
-        count: currentImagesCount,
-        timestamp: new Date().toISOString()
+        count: currentImagesCount
       });
 
       // バリデーション
@@ -2151,30 +2189,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validation.error });
       }
 
-      // S3にアップロード
-      const uploadResult = await uploadToS3(req.file.buffer, {
-        contentType: req.file.mimetype,
-        extension: req.file.originalname.split(".").pop() || "",
-        prefix: `blog/${req.user.id}/`
-      });
+      try {
+        // S3にアップロード
+        const uploadResult = await uploadToS3(req.file.buffer, {
+          contentType: req.file.mimetype,
+          extension: req.file.originalname.split(".").pop() || "",
+          prefix: `blog/${req.user.id}/`
+        });
 
-      // 署名付きURLを生成
-      const signedUrl = await getSignedS3Url(uploadResult.key);
+        // DBに画像情報を保存
+        const [storeImage] = await db
+          .insert(storeImages)
+          .values({
+            storeId: req.user.id,
+            url: uploadResult.url,
+            key: uploadResult.key,
+          })
+          .returning();
 
-      console.log('Image upload successful:', {
-        userId: req.user.id,
-        key: uploadResult.key,
-        timestamp: new Date().toISOString()
-      });
+        // 署名付きURLを生成
+        const signedUrl = await getSignedS3Url(uploadResult.key);
 
-      res.json({
-        url: signedUrl,
-        key: uploadResult.key
-      });
+        console.log('Image upload successful:', {
+          userId: req.user.id,
+          imageId: storeImage.id,
+          key: uploadResult.key,
+          url: signedUrl
+        });
+
+        res.json({
+          url: signedUrl,
+          key: uploadResult.key
+        });
+      } catch (uploadError) {
+        console.error('S3 upload error:', {
+          error: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          userId: req.user.id,
+          file: req.file.originalname
+        });
+        throw uploadError;
+      }
     } catch (error) {
       console.error('Image upload error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
         userId: req.user?.id,
         timestamp: new Date().toISOString()
       });
@@ -2555,45 +2612,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // アップロード済み画像を取得するエンドポイント
-  app.get("/api/store/images", authenticate, async (req: any, res) => {
-    try {
-      if (!req.user?.id || req.user.role !== "store") {
-        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
-      }
 
-      // 店舗の全ブログ記事から画像を収集
-      const posts = await db
-        .select({
-          images: blogPosts.images
-        })
-        .from(blogPosts)
-        .where(eq(blogPosts.storeId, req.user.id));
-
-      // 全画像URLを一つの配列にまとめる
-      const allImages = posts.reduce((acc: string[], post) => {
-        if (post.images) {
-          return [...acc, ...post.images];
-        }
-        return acc;
-      }, []);
-
-      // 重複を除去
-      const uniqueImages = Array.from(new Set(allImages));
-
-      res.json(uniqueImages);
-    } catch (error) {
-      console.error("Store images fetch error:", error);
-      res.status(500).json({
-        message: "画像一覧の取得に失敗しました",
-        error: process.env.NODE_ENV === "development" ? error : undefined
-      });
-    }
-  });
 
   // 画像アップロードエンドポイント
   app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
     try {
+      console.log('Image upload request received:', {
+        userId: req.user?.id,
+        file: req.file ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        } : 'No file received',
+        timestamp: new Date().toISOString()
+      });
+
       // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
         return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
@@ -2605,12 +2638,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 現在の画像数を取得
-      const [blogPost] = await db
-        .select()
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
         .from(blogPosts)
         .where(eq(blogPosts.storeId, req.user.id));
 
-      const currentImagesCount = getTotalImagesCount(blogPost?.images || []);
+      const currentImagesCount = posts.reduce((total, post) => {
+        return total + (post.images?.length || 0);
+      }, 0);
+
+      console.log('Current images count:', {
+        userId: req.user.id,
+        count: currentImagesCount
+      });
 
       // バリデーション
       const validation = validateImageUpload(req.file, currentImagesCount);
@@ -2618,22 +2660,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validation.error });
       }
 
-      // S3にアップロード
-      const uploadResult = await uploadToS3(req.file.buffer, {
-        contentType: req.file.mimetype,
-        extension: req.file.originalname.split(".").pop() || "",
-        prefix: `blog/${req.user.id}/`
-      });
+      try {
+        // S3にアップロード
+        const uploadResult = await uploadToS3(req.file.buffer, {
+          contentType: req.file.mimetype,
+          extension: req.file.originalname.split(".").pop() || "",
+          prefix: `blog/${req.user.id}/`
+        });
 
-      // 署名付きURLを生成
-      const signedUrl = await getSignedS3Url(uploadResult.key);
+        // DBに画像情報を保存
+        const [storeImage] = await db
+          .insert(storeImages)
+          .values({
+            storeId: req.user.id,
+            url: uploadResult.url,
+            key: uploadResult.key,
+          })
+          .returning();
 
-      res.json({
-        url: signedUrl,
-        key: uploadResult.key
-      });
+        // 署名付きURLを生成
+        const signedUrl = await getSignedS3Url(uploadResult.key);
+
+        console.log('Image upload successful:', {
+          userId: req.user.id,
+          imageId: storeImage.id,
+          key: uploadResult.key,
+          url: signedUrl
+        });
+
+        res.json({
+          url: signedUrl,
+          key: uploadResult.key
+        });
+      } catch (uploadError) {
+        console.error('S3 upload error:', {
+          error: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          userId: req.user.id,
+          file: req.file.originalname
+        });
+        throw uploadError;
+      }
     } catch (error) {
-      console.error("Image upload error:", error);
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
       res.status(500).json({
         message: "画像のアップロードに失敗しました",
         error: process.env.NODE_ENV === "development" ? error : undefined
@@ -3017,28 +3090,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
       }
 
-      // 店舗の全ブログ記事から画像を収集
-      const blogPosts = await db
+      // 店舗の画像一覧を取得
+      const images = await db
         .select({
-          images: blogPosts.images
+          id: storeImages.id,
+          url: storeImages.url,
+          key: storeImages.key,
+          createdAt: storeImages.createdAt,
         })
-        .from(blogPosts)
-        .where(eq(blogPosts.storeId, req.user.id));
+        .from(storeImages)
+        .where(eq(storeImages.storeId, req.user.id))
+        .orderBy(desc(storeImages.createdAt));
 
-      // 全画像URLを一つの配列にまとめる
-      const allImages = blogPosts.reduce((acc: string[], post) => {
-        if (post.images) {
-          return [...acc, ...post.images];
-        }
-        return acc;
-      }, []);
+      console.log('Store images fetch successful:', {
+        userId: req.user.id,
+        count: images.length,
+        timestamp: new Date().toISOString()
+      });
 
-      // 重複を除去
-      const uniqueImages = [...new Set(allImages)];
-
-      res.json(uniqueImages);
+      res.json(images);
     } catch (error) {
-      console.error("Store images fetch error:", error);
+      console.error('Store images fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
       res.status(500).json({
         message: "画像一覧の取得に失敗しました",
         error: process.env.NODE_ENV === "development" ? error : undefined

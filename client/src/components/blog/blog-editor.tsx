@@ -113,6 +113,13 @@ interface BlogEditorProps {
   initialData?: BlogPost;
 }
 
+interface StoreImage {
+  id: number;
+  url: string;
+  key: string;
+  createdAt: string;
+}
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
@@ -127,7 +134,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
 
   // 店舗の全画像を取得
-  const { data: storeImages, isLoading: isLoadingImages } = useQuery({
+  const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
     queryFn: () => apiRequest("GET", "/api/store/images"),
   });
@@ -186,7 +193,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       setIsUploading(true);
-
       const formData = new FormData();
       formData.append("image", file);
 
@@ -229,8 +235,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         form.setValue("images", [...uploadedImages, response.url]);
 
         // 画像ライブラリのキャッシュを更新
-        queryClient.setQueryData([QUERY_KEYS.STORE_IMAGES], (oldData: string[] = []) => {
-          return [...new Set([...oldData, response.url])];
+        queryClient.setQueryData<StoreImage[]>([QUERY_KEYS.STORE_IMAGES], (oldData = []) => {
+          return [
+            ...oldData,
+            {
+              id: Date.now(), // 一時的なID
+              url: response.url,
+              key: response.key,
+              createdAt: new Date().toISOString()
+            }
+          ];
         });
 
         toast({
@@ -280,7 +294,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       setIsUploading(true);
-
       const formData = new FormData();
       formData.append("image", file);
 
@@ -546,14 +559,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                 アップロード済みの画像がありません
                               </div>
                             ) : (
-                              storeImages.map((image: string) => (
+                              storeImages.map((image) => (
                                 <div
-                                  key={image}
+                                  key={image.id}
                                   className="relative aspect-square cursor-pointer group"
-                                  onClick={() => insertImage(image)}
+                                  onClick={() => insertImage(image.url)}
                                 >
                                   <img
-                                    src={image}
+                                    src={image.url}
                                     alt="ライブラリの画像"
                                     className="w-full h-full object-cover rounded-md"
                                   />
