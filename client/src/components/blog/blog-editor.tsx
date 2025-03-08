@@ -214,41 +214,51 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         })),
       });
 
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("認証エラー：ログインが必要です");
+      }
+
       const response = await fetch("/api/blog/upload-image", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "画像のアップロードに失敗しました");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "画像のアップロードに失敗しました");
       }
 
       const data = await response.json();
       console.log('Upload response:', data);
 
       // 画像URLをエディタに挿入
-      const editor = (document.querySelector(".ql-editor") as HTMLElement);
+      const editor = document.querySelector(".ql-editor");
       if (!editor) {
         throw new Error("エディタが見つかりません");
       }
 
-      const range = (document.getSelection() as Selection).getRangeAt(0);
+      const selection = document.getSelection();
+      if (!selection) {
+        throw new Error("テキストの選択位置が取得できません");
+      }
+
+      const range = selection.getRangeAt(0);
       const img = document.createElement("img");
       img.src = data.url;
       img.alt = file.name;
       range.insertNode(img);
 
       // アップロード済み画像リストを更新
-      setUploadedImages([...uploadedImages, data.url]);
+      setUploadedImages(prev => [...prev, data.url]);
       form.setValue("images", [...uploadedImages, data.url]);
 
       toast({
-        title: "画像をアップロードしました",
-        description: "画像の挿入が完了しました",
+        title: "成功",
+        description: "画像がアップロードされました",
       });
     } catch (error) {
       console.error('Image upload error:', error);
