@@ -35,6 +35,8 @@ import {
   blogPostSchema,
 } from "@shared/schema";
 import { createHash } from "crypto";
+import { getCachedStats, setCachedStats } from "./cache";
+import { withTimeout, DEFAULT_STATS, isAccessStatsEnabled } from "./utils/query-timeout";
 
 const scryptAsync = promisify(scrypt);
 
@@ -1950,10 +1952,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "アクセス権限がありません" });
       }
 
+      // アクセス統計が無効化されている場合はデフォルト値を返す
+      if (!isAccessStatsEnabled()) {
+        console.log('Access stats disabled by environment variable');
+        return res.json(DEFAULT_STATS);
+      }
+
       console.log('Access stats fetch started:', {
         storeId,
         timestamp: new Date().toISOString()
       });
+
+      // キャッシュをチェック
+      const cachedStats = getCachedStats(storeId);
+      if (cachedStats) {
+        console.log('Returning cached stats:', {
+          storeId,
+          timestamp: new Date().toISOString()
+        });
+        return res.json(cachedStats);
+      }
 
       // 今日の日付の開始と終了
       const today = new Date();
@@ -1965,68 +1983,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-      // 日次アクセス数を取得
-      console.time('daily-stats-query');
-      const [todayStats] = await db
-        .select({
-          total: sql<number>`count(*)`,
-          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
-          )
-        );
-      console.timeEnd('daily-stats-query');
+      // 各クエリを並列実行（タイムアウト付き）
+      const QUERY_TIMEOUT = 2000; // 2秒
+      const [todayStats, monthlyStats, hourlyStats] = await Promise.all([
+        // 日次アクセス数を取得
+        withTimeout(
+          db
+            .select({
+              total: sql<number>`count(*)`,
+              unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
+              )
+            ),
+          QUERY_TIMEOUT,
+          [{ total: 0, unique: 0 }]
+        ),
 
-      // 月次アクセス数を取得
-      console.time('monthly-stats-query');
-      const [monthlyStats] = await db
-        .select({
-          total: sql<number>`count(*)`,
-          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
-          )
-        );
-      console.timeEnd('monthly-stats-query');
+        // 月次アクセス数を取得
+        withTimeout(
+          db
+            .select({
+              total: sql<number>`count(*)`,
+              unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
+              )
+            ),
+          QUERY_TIMEOUT,
+          [{ total: 0, unique: 0 }]
+        ),
 
-      // 時間帯別のアクセス数を取得（過去24時間）
-      console.time('hourly-stats-query');
-      const hourlyStats = await db
-        .select({
-          hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
-          count: sql<number>`count(*)`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
-          )
+        // 時間帯別のアクセス数を取得（過去24時間）
+        withTimeout(
+          db
+            .select({
+              hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
+              count: sql<number>`count(*)`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
+              )
+            )
+            .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
+            .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
+            .limit(24),
+          QUERY_TIMEOUT,
+          []
         )
-        .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
-        .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
-        .limit(24);
-      console.timeEnd('hourly-stats-query');
+      ]);
 
       const response: AccessStatsResponse = {
         today: {
-          total: todayStats?.total || 0,
-          unique: todayStats?.unique || 0
+          total: todayStats[0]?.total || 0,
+          unique: todayStats[0]?.unique || 0
         },
         monthly: {
-          total: monthlyStats?.total || 0,
-          unique: monthlyStats?.unique || 0
+          total: monthlyStats[0]?.total || 0,
+          unique: monthlyStats[0]?.unique || 0
         },
         hourly: hourlyStats
       };
+
+      // レスポンスをキャッシュに保存
+      setCachedStats(storeId, response);
 
       const executionTime = Date.now() - startTime;
       console.log('Access stats fetch completed:', {
@@ -2045,14 +2076,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      // グレースフルデグラデーション：エラー時は部分的なデータを返す
+      // キャッシュされたデータがあれば、それを返す
+      const cachedStats = getCachedStats(parseInt(req.params.storeId));
+      if (cachedStats) {
+        console.log('Returning cached stats after error:', {
+          storeId: req.params.storeId,
+          timestamp: new Date().toISOString()
+        });
+        return res.json({
+          ...cachedStats,
+          fromCache: true,
+          error: '最新のデータの取得に失敗しました。キャッシュされたデータを表示しています。'
+        });
+      }
+
+      // キャッシュもない場合はデフォルトのレスポンスを返す
       res.status(200).json({
-        today: { total: 0, unique: 0 },
-        monthly: { total: 0, unique: 0 },
-        hourly: [],
-        error: process.env.NODE_ENV === 'development' ? 
-          error instanceof Error ? error.message : 'Unknown error' 
-          : 'データの取得に一部失敗しました'
+        ...DEFAULT_STATS,
+        error: process.env.NODE_ENV === 'development' ?
+          error instanceof Error ? error.message : 'Unknown error'
+          : 'データの取得に失敗しました'
       });
     }
   });
@@ -2513,10 +2556,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "アクセス権限がありません" });
       }
 
+      // アクセス統計が無効化されている場合はデフォルト値を返す
+      if (!isAccessStatsEnabled()) {
+        console.log('Access stats disabled by environment variable');
+        return res.json(DEFAULT_STATS);
+      }
+
       console.log('Access stats fetch started:', {
         storeId,
         timestamp: new Date().toISOString()
       });
+
+      // キャッシュをチェック
+      const cachedStats = getCachedStats(storeId);
+      if (cachedStats) {
+        console.log('Returning cached stats:', {
+          storeId,
+          timestamp: new Date().toISOString()
+        });
+        return res.json(cachedStats);
+      }
 
       // 今日の日付の開始と終了
       const today = new Date();
@@ -2528,68 +2587,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-      // 日次アクセス数を取得
-      console.time('daily-stats-query');
-      const [todayStats] = await db
-        .select({
-          total: sql<number>`count(*)`,
-          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
-          )
-        );
-      console.timeEnd('daily-stats-query');
+      // 各クエリを並列実行（タイムアウト付き）
+      const QUERY_TIMEOUT = 2000; // 2秒
+      const [todayStats, monthlyStats, hourlyStats] = await Promise.all([
+        // 日次アクセス数を取得
+        withTimeout(
+          db
+            .select({
+              total: sql<number>`count(*)`,
+              unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
+              )
+            ),
+          QUERY_TIMEOUT,
+          [{ total: 0, unique: 0 }]
+        ),
 
-      // 月次アクセス数を取得
-      console.time('monthly-stats-query');
-      const [monthlyStats] = await db
-        .select({
-          total: sql<number>`count(*)`,
-          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
-          )
-        );
-      console.timeEnd('monthly-stats-query');
+        // 月次アクセス数を取得
+        withTimeout(
+          db
+            .select({
+              total: sql<number>`count(*)`,
+              unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
+              )
+            ),
+          QUERY_TIMEOUT,
+          [{ total: 0, unique: 0 }]
+        ),
 
-      // 時間帯別のアクセス数を取得（過去24時間）
-      console.time('hourly-stats-query');
-      const hourlyStats = await db
-        .select({
-          hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
-          count: sql<number>`count(*)`
-        })
-        .from(accessLogs)
-        .where(
-          and(
-            eq(accessLogs.storeId, storeId),
-            sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
-          )
+        // 時間帯別のアクセス数を取得（過去24時間）
+        withTimeout(
+          db
+            .select({
+              hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
+              count: sql<number>`count(*)`
+            })
+            .from(accessLogs)
+            .where(
+              and(
+                eq(accessLogs.storeId, storeId),
+                sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
+              )
+            )
+            .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
+            .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
+            .limit(24),
+          QUERY_TIMEOUT,
+          []
         )
-        .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
-        .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
-        .limit(24);
-      console.timeEnd('hourly-stats-query');
+      ]);
 
       const response: AccessStatsResponse = {
         today: {
-          total: todayStats?.total || 0,
-          unique: todayStats?.unique || 0
+          total: todayStats[0]?.total || 0,
+          unique: todayStats[0]?.unique || 0
         },
         monthly: {
-          total: monthlyStats?.total || 0,
-          unique: monthlyStats?.unique || 0
+          total: monthlyStats[0]?.total || 0,
+          unique: monthlyStats[0]?.unique || 0
         },
         hourly: hourlyStats
       };
+
+      // レスポンスをキャッシュに保存
+      setCachedStats(storeId, response);
 
       const executionTime = Date.now() - startTime;
       console.log('Access stats fetch completed:', {
@@ -2608,14 +2680,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      // グレースフルデグラデーション：エラー時は部分的なデータを返す
+      // キャッシュされたデータがあれば、それを返す
+      const cachedStats = getCachedStats(parseInt(req.params.storeId));
+      if (cachedStats) {
+        console.log('Returning cached stats after error:', {
+          storeId: req.params.storeId,
+          timestamp: new Date().toISOString()
+        });
+        return res.json({
+          ...cachedStats,
+          fromCache: true,
+          error: '最新のデータの取得に失敗しました。キャッシュされたデータを表示しています。'
+        });
+      }
+
+      // キャッシュもない場合はデフォルトのレスポンスを返す
       res.status(200).json({
-        today: { total: 0, unique: 0 },
-        monthly: { total: 0, unique: 0 },
-        hourly: [],
-        error: process.env.NODE_ENV === 'development' ? 
-          error instanceof Error ? error.message : 'Unknown error' 
-          : 'データの取得に一部失敗しました'
+        ...DEFAULT_STATS,
+        error: process.env.NODE_ENV === 'development' ?
+          error instanceof Error ? error.message : 'Unknown error'
+          : 'データの取得に失敗しました'
       });
     }
   });
