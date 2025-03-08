@@ -243,7 +243,7 @@ const modules = {
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: ["", "center", "right", "justify"] }],
-    ["link", "image"],
+    ["link"],  // 画像ボタンを削除
     ["clean"]
   ],
   imageResize: true
@@ -261,7 +261,7 @@ const formats = [
   "bullet",
   "align",
   "link",
-  "image"
+  "image"  // 画像フォーマットは残す（リサイズ用）
 ];
 
 interface BlogEditorProps {
@@ -511,7 +511,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         onClick={() => setIsImageLibraryOpen(true)}
                       >
                         <ImageIcon className="h-4 w-4 mr-2" />
-                        画像ライブラリ
+                        画像を挿入
                       </Button>
                       <Button
                         type="button"
@@ -525,7 +525,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         ) : (
                           <Upload className="h-4 w-4 mr-2" />
                         )}
-                        新規アップロード
+                        アップロード
                       </Button>
                       <input
                         type="file"
