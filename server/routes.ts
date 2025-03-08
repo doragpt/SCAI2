@@ -515,81 +515,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const offset = (pageNum - 1) * limitNum;
 
-      let query = db
-        .select({
-          id: jobs.id,
-          businessName: jobs.businessName,
-          location: jobs.location,
-          serviceType: jobs.serviceType,
-          minimumGuarantee: jobs.minimumGuarantee,
-          maximumGuarantee: jobs.maximumGuarantee,
-          transportationSupport: jobs.transportationSupport,
-          housingSupport: jobs.housingSupport,
-          workingHours: jobs.workingHours,
-          description: jobs.description,
-          requirements: jobs.requirements,
-          benefits: jobs.benefits,
-          createdAt: jobs.createdAt,
-          updatedAt: jobs.updatedAt,
-        })
-        .from(jobs);
+      // クエリの構築を修正
+      let baseQuery = db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.status, 'published'));
 
       if (location && location !== "all") {
-        query = query.where(eq(jobs.location, location as string));
+        baseQuery = baseQuery.where(eq(jobs.location, location as string));
       }
 
       if (serviceType && serviceType !== "all") {
-        query = query.where(eq(jobs.serviceType, serviceType as string));
+        baseQuery = baseQuery.where(eq(jobs.serviceType, serviceType as string));
       }
 
-      // Get total count for pagination
-      const countResult = await db
+      // 総件数の取得
+      const [{ count }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(jobs)
-        .where(
-          and(
-            ...[
-              location && location !== "all" ? eq(jobs.location, location as string) : undefined,
-              serviceType && serviceType !== "all" ? eq(jobs.serviceType, serviceType as string) : undefined,
-            ].filter(Boolean)
-          )
-        );
+        .where(eq(jobs.status, 'published'));
 
-      const totalCount = countResult[0].count;
-
-      // Get paginated results
-      const jobListings = await query
+      // 求人データの取得
+      const jobListings = await baseQuery
         .orderBy(desc(jobs.createdAt))
         .limit(limitNum)
         .offset(offset);
 
       console.log('Jobs search successful:', {
         filters: { location, serviceType },
-        pagination: { page: pageNum, limit: limitNum, total: totalCount },
+        pagination: { page: pageNum, limit: limitNum, total: count },
         timestamp: new Date().toISOString()
       });
 
-      res.json({
+      const response = {
         jobs: jobListings,
         pagination: {
           currentPage: pageNum,
-          totalPages: Math.ceil(totalCount / limitNum),
-          totalItems: totalCount
+          totalPages: Math.ceil(count / limitNum),
+          totalItems: count
         }
-      });
+      };
+
+      res.json(response);
     } catch (error) {
       console.error("Jobs search error:", {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         query: req.query,
         timestamp: new Date().toISOString()
       });
 
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "求人検索に失敗しました";
-
       res.status(500).json({
-        message: errorMessage,
+        message: "求人検索に失敗しました",
         error: process.env.NODE_ENV === 'development' ? error : undefined,
         timestamp: new Date().toISOString()
       });
@@ -1020,7 +997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(talentProfiles)
           .where(eq(talentProfiles.userId, userId));
 
-        if (!currentProfile) {
+        if(!currentProfile) {
           throw new Error("プロフィールが見つかりません");
         }
 
