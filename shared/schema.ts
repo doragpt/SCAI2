@@ -740,3 +740,28 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 export type PreviousStore = {
   storeName: string;
 };
+
+import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { users } from "./schema";
+
+// Store Images table
+export const storeImages = pgTable("store_images", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  url: text("url").notNull(),
+  key: text("key").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations
+export const storeImagesRelations = relations(storeImages, ({ one }) => ({
+  store: one(users, {
+    fields: [storeImages.storeId],
+    references: [users.id],
+  }),
+}));
+
+// Types
+export type StoreImage = typeof storeImages.$inferSelect;
+export type InsertStoreImage = typeof storeImages.$inferInsert;

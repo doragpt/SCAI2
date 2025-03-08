@@ -116,20 +116,22 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
           description: "画像がアップロードされました",
         });
 
-        // キャッシュを無効化
-        await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
+        // キャッシュを完全にクリアして強制的に再取得
+        await queryClient.resetQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
 
-        // 強制的に再取得
-        await queryClient.refetchQueries({ 
+        // データを即座に再取得
+        await queryClient.prefetchQuery({
           queryKey: [QUERY_KEYS.STORE_IMAGES],
-          type: 'active',
-          exact: true // 完全一致のクエリのみを更新
+          queryFn: async () => {
+            const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
+            return response || [];
+          }
         });
 
-        // アップロードした画像を自動選択
+        // アップロードした画像を自動選択してモーダルを閉じる
         if (data?.url) {
           onSelect(data.url);
-          onClose(); // モーダルを閉じる
+          onClose();
         }
       } catch (error) {
         console.error('Cache update error:', error);
@@ -277,7 +279,7 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // 店舗の画像を取得
+  // 店舗の画像を取得するクエリを最適化
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
     queryFn: async () => {
@@ -287,7 +289,8 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
     },
     enabled: !!user?.id,
     refetchInterval: 1000, // 1秒ごとに再取得
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+    staleTime: 0, // データを常に最新とみなす
   });
 
   const form = useForm({
@@ -401,10 +404,7 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 戻る
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsPreview(!isPreview)}
-              >
+              <Button variant="outline" onClick={() => setIsPreview(!isPreview)}>
                 <Eye className="h-4 w-4 mr-2" />
                 {isPreview ? "編集に戻る" : "プレビュー"}
               </Button>
