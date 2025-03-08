@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Navigate } from "wouter";
+import { useParams, Redirect } from "wouter";
 import { BlogEditor } from "@/components/blog/blog-editor";
 import { useAuth } from "@/hooks/use-auth";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -31,7 +31,7 @@ export default function EditBlogPost() {
 
   // 店舗ユーザー以外はダッシュボードにリダイレクト
   if (!user || user.role !== "store") {
-    return <Navigate to="/store/dashboard" />;
+    return <Redirect to="/store/dashboard" />;
   }
 
   // 記事が見つからない場合

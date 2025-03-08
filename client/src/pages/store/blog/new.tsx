@@ -1,6 +1,6 @@
 import { BlogEditor } from "@/components/blog/blog-editor";
 import { useAuth } from "@/hooks/use-auth";
-import { Navigate } from "wouter";
+import { Redirect } from "wouter";
 
 export default function NewBlogPost() {
   const { user, isLoading } = useAuth();
@@ -18,7 +18,7 @@ export default function NewBlogPost() {
 
   // 店舗ユーザー以外はダッシュボードにリダイレクト
   if (!user || user.role !== "store") {
-    return <Navigate to="/store/dashboard" />;
+    return <Redirect to="/store/dashboard" />;
   }
 
   return <BlogEditor />;

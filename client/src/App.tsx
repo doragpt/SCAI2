@@ -22,6 +22,9 @@ import { Navigation } from "@/components/navigation";
 import ProfileViewPage from "@/pages/profile-view-page";
 import BasicInfoView from "@/pages/basic-info-view";
 import BasicInfoEdit from "@/pages/basic-info-edit";
+import NewBlogPost from "@/pages/store/blog/new";
+import EditBlogPost from "@/pages/store/blog/edit/[id]";
+import BlogPostView from "@/pages/blog/[id]";
 
 function Router() {
   return (
@@ -45,6 +48,18 @@ function Router() {
         component={StoreDashboard}
         roleRequired="store"
       />
+      {/* ブログ関連のルートを追加 */}
+      <ProtectedRoute 
+        path="/store/blog/new" 
+        component={NewBlogPost}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/blog/edit/:id" 
+        component={EditBlogPost}
+        roleRequired="store"
+      />
+      <Route path="/blog/:id" component={BlogPostView} />
       <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
       <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
       <Route component={NotFound} />
