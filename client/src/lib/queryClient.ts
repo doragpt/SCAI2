@@ -203,14 +203,9 @@ export const getJobsQuery = async (): Promise<Job[]> => {
       return [];
     }
 
-    console.log('Jobs fetched successfully:', {
-      count: response.length,
-      timestamp: new Date().toISOString()
-    });
-
     return response;
   } catch (error) {
-    console.error("Jobs fetch error:", {
+    console.error('Jobs fetch error:', {
       error: getErrorMessage(error),
       timestamp: new Date().toISOString()
     });

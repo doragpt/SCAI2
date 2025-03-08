@@ -18,10 +18,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { QUERY_KEYS } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
+import { apiRequest } from "@/lib/queryClient";
 
 // 求人ステータスのラベル
 const jobStatusLabels = {
@@ -46,22 +47,35 @@ export default function StoreDashboard() {
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
 
   // 求人情報の取得
-  const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
+  const { data: jobListings, isLoading: jobsLoading, error } = useQuery<JobListingResponse>({
     queryKey: [QUERY_KEYS.JOBS_STORE],
-    queryFn: async () => {
-      const response = await fetch("/api/jobs/store");
-      if (!response.ok) {
-        throw new Error("求人情報の取得に失敗しました");
-      }
-      return response.json();
-    },
-    enabled: user?.role === "store"
+    queryFn: () => apiRequest("GET", "/api/jobs/store"),
+    enabled: !!user?.id && user?.role === "store",
+    retry: 1
   });
 
   if (jobsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-[400px]">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+              <p className="text-destructive">データの取得に失敗しました</p>
+              <Button onClick={() => window.location.reload()}>
+                再読み込み
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -73,7 +87,7 @@ export default function StoreDashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold">{user?.displayName}</h1>
+              <h1 className="text-2xl font-bold">{user?.displayName || user?.username}</h1>
               <p className="text-sm text-muted-foreground">
                 最終更新: {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })}
               </p>
@@ -173,7 +187,7 @@ export default function StoreDashboard() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  {!jobListings?.jobs.length ? (
+                  {!jobListings?.jobs?.length ? (
                     <div className="text-center py-8">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">
@@ -212,15 +226,11 @@ export default function StoreDashboard() {
                               <div className="flex items-center gap-4">
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">応募数: </span>
-                                  <span className="font-semibold">
-                                    {job.applicationCount || 0}
-                                  </span>
+                                  <span className="font-semibold">0</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">閲覧数: </span>
-                                  <span className="font-semibold">
-                                    {job.viewCount || 0}
-                                  </span>
+                                  <span className="font-semibold">0</span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -321,11 +331,11 @@ export default function StoreDashboard() {
               <div className="space-y-2">
                 <div>
                   <p className="font-medium">店舗名</p>
-                  <p className="text-sm text-muted-foreground">{user?.displayName}</p>
+                  <p className="text-sm text-muted-foreground">{user?.displayName || user?.username}</p>
                 </div>
                 <div>
                   <p className="font-medium">所在地</p>
-                  <p className="text-sm text-muted-foreground">{user?.location}</p>
+                  <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
                 </div>
               </div>
             </CardContent>
