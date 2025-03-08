@@ -94,20 +94,6 @@ export const serviceTypes = [
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export type WorkType = typeof workTypes[number];
 
-// Type definitions
-export type Prefecture = typeof prefectures[number];
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type PhotoTag = typeof photoTags[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-// 型定義を更新
-export type EstheOption = typeof estheOptions[number];
-export type ServiceType = typeof serviceTypes[number];
-
 // Database tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -353,6 +339,12 @@ export type InsertUser = typeof users.$inferInsert;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type KeepList = typeof keepList.$inferSelect;
+export type InsertKeepList = typeof keepList.$inferInsert;
+export type ViewHistory = typeof viewHistory.$inferSelect;
+export type InsertViewHistory = typeof viewHistory.$inferInsert;
 
 // APIレスポンスの型定義
 export interface JobListingResponse {
@@ -370,7 +362,7 @@ export interface JobResponse extends Job {
   applicationStatus?: string;
 }
 
-// serviceTypesの定義を更新
+// service types の定義（重複を削除）
 export const serviceTypeLabels: Record<ServiceType, string> = {
   deriheru: "デリヘル",
   hoteheru: "ホテヘル",
@@ -379,6 +371,16 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   onakura: "オナクラ",
   mseikan: "メンズエステ"
 } as const;
+
+// その他の型定義
+export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
+export type ProfileData = TalentProfileData;
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
 // 求人情報関連の新しいenums
@@ -539,38 +541,24 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   }),
 }));
 
-// 型定義のエクスポート
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
 
-// APIレスポンスの型定義を追加
-export interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
+export type Prefecture = typeof prefectures[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type PhotoTag = typeof photoTags[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type ServiceType = typeof serviceTypes[number];
 
-// 既存のJobResponse型を修正
-export interface JobResponse extends Job {
-  hasApplied?: boolean;
-  applicationStatus?: string;
-}
-
-// service types の定義を更新
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  deriheru: "デリバリーヘルス",
-  hoteheru: "ホテヘル",
-  hakoheru: "箱ヘル",
-  esthe: "エステ",
-  onakura: "オナクラ",
-  mseikan: "メンズエステ"
-} as const;
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-
+export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type SelectUser = {
   id: number;
   username: string;
@@ -583,13 +571,9 @@ export type SelectUser = {
   createdAt: Date;
 };
 
-// ProfileData型の定義を統一
 export type TalentProfileData = typeof talentProfiles.$inferSelect;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-
-// 他のエクスポートは変更なし
 export type ProfileData = TalentProfileData;
-
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
@@ -625,8 +609,3 @@ export const talentRegisterFormSchema = z.object({
   message: "パスワードが一致しません",
   path: ["passwordConfirm"],
 });
-
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type Photo = z.infer<typeof photoSchema>;
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
