@@ -107,6 +107,58 @@ if (typeof window !== 'undefined') {
   document.head.appendChild(style);
 }
 
+// 画像ライブラリモーダルのコンポーネント
+const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (url: string) => void;
+  images: string[];
+  isLoading: boolean;
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>画像ライブラリ</DialogTitle>
+          <DialogDescription>
+            アップロード済みの画像から選択して挿入できます
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-3 gap-4 py-4">
+          {isLoading ? (
+            <div className="col-span-3 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : !images || images.length === 0 ? (
+            <div className="col-span-3 text-center text-muted-foreground">
+              アップロード済みの画像がありません
+            </div>
+          ) : (
+            images.map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                className="relative aspect-square cursor-pointer group overflow-hidden rounded-md"
+                onClick={() => onSelect(image)}
+              >
+                <img
+                  src={image}
+                  alt={`ライブラリ画像 ${index + 1}`}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button variant="secondary" size="sm">
+                    選択
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
@@ -398,7 +450,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
@@ -453,19 +504,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormLabel>本文</FormLabel>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>画像: {uploadedImages.length}/50</span>
-                      <ImageLibraryModal
-                        isOpen={isImageLibraryOpen}
-                        onClose={() => setIsImageLibraryOpen(false)}
-                        onSelect={insertImage}
-                        images={storeImages || []}
-                        isLoading={isLoadingImages}
-                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsImageLibraryOpen(true)}
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        画像ライブラリ
+                      </Button>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading || uploadedImages.length >= 50}
+                        disabled={isUploading}
                       >
                         {isUploading ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -624,6 +677,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </AlertDialog>
         </CardFooter>
       </Card>
+      <ImageLibraryModal
+        isOpen={isImageLibraryOpen}
+        onClose={() => setIsImageLibraryOpen(false)}
+        onSelect={insertImage}
+        images={storeImages || []}
+        isLoading={isLoadingImages}
+      />
     </div>
   );
 }
