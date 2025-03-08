@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
+import imageCompression from "browser-image-compression";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -117,6 +118,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
+  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [resizeOptions, setResizeOptions] = useState({
+    maxSizeMB: 0.5,
+    maxWidthOrHeight: 1024
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
@@ -125,6 +132,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
     queryFn: () => apiRequest("GET", "/api/store/images"),
+    enabled: !!user?.id
   });
 
   const form = useForm({
@@ -174,97 +182,81 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleImageUpload = async (file: File) => {
+  const handleFileSelect = async (file: File) => {
+    // ファイル形式のチェック
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    setIsResizeDialogOpen(true);
+  };
+
+  const handleImageResize = async () => {
     try {
-      // ファイルサイズのチェック（500KB）
-      if (file.size > 500 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは500KB以下にしてください",
-        });
-        return;
-      }
-
-      // ファイル形式のチェック
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      // 画像数の制限チェック
-      if (uploadedImages.length >= 50) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像は最大50枚までアップロード可能です",
-        });
-        return;
-      }
-
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ログインが必要です",
-        });
-        return;
-      }
+      if (!selectedFile) return;
 
       setIsUploading(true);
 
+      // 画像を圧縮
+      const compressedFile = await imageCompression(selectedFile, {
+        maxSizeMB: resizeOptions.maxSizeMB,
+        maxWidthOrHeight: resizeOptions.maxWidthOrHeight,
+        useWebWorker: true
+      });
+
+      // FormDataの作成とアップロード
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", compressedFile);
 
-      try {
-        const response = await apiRequest<{ url: string; key: string }>(
-          "POST",
-          "/api/blog/upload-image",
-          formData,
-          {
-            rawFormData: true
-          }
-        );
-
-        if (!response?.url) {
-          throw new Error("アップロードされた画像のURLが取得できません");
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        {
+          rawFormData: true
         }
+      );
 
-        // Quillエディタのインスタンスを取得
-        const quill = quillRef.current?.getEditor();
-        if (!quill) {
-          throw new Error("エディタが見つかりません");
-        }
-
-        // 現在のカーソル位置を取得
-        const range = quill.getSelection(true);
-
-        // 画像を挿入
-        quill.insertEmbed(range.index, "image", response.url);
-        // カーソルを画像の後ろに移動
-        quill.setSelection(range.index + 1);
-
-        // アップロード済み画像リストを更新
-        setUploadedImages(prev => [...prev, response.url]);
-        form.setValue("images", [...uploadedImages, response.url]);
-
-        toast({
-          title: "成功",
-          description: "画像がアップロードされました",
-        });
-      } catch (uploadError) {
-        console.error('Image upload request error:', uploadError);
-        throw uploadError;
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
       }
+
+      // Quillエディタのインスタンスを取得
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
+
+      // 現在のカーソル位置を取得
+      const range = quill.getSelection(true);
+
+      // 画像を挿入
+      quill.insertEmbed(range.index, "image", response.url);
+      quill.setSelection(range.index + 1);
+
+      // アップロード済み画像リストとフォームの値を更新
+      const newImages = [...uploadedImages, response.url];
+      setUploadedImages(newImages);
+      form.setValue("images", newImages);
+
+      toast({
+        title: "成功",
+        description: "画像がアップロードされました",
+      });
+
+      setIsResizeDialogOpen(false);
+      setSelectedFile(null);
     } catch (error) {
       console.error('Image upload error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
+        file: selectedFile?.name,
       });
       toast({
         variant: "destructive",
@@ -275,6 +267,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       setIsUploading(false);
     }
   };
+
 
   const insertImage = (imageUrl: string) => {
     try {
@@ -383,12 +376,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               <div className="col-span-3 flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
-                            ) : storeImages?.length === 0 ? (
+                            ) : !storeImages || storeImages.length === 0 ? (
                               <div className="col-span-3 text-center text-muted-foreground">
                                 アップロード済みの画像がありません
                               </div>
                             ) : (
-                              storeImages?.map((image: string) => (
+                              storeImages.map((image: string) => (
                                 <div
                                   key={image}
                                   className="relative aspect-square cursor-pointer group"
@@ -432,13 +425,76 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            handleImageUpload(file);
+                            handleFileSelect(file);
                           }
                           e.target.value = "";
                         }}
                       />
                     </div>
                   </div>
+
+                  {/* リサイズダイアログ */}
+                  <Dialog open={isResizeDialogOpen} onOpenChange={setIsResizeDialogOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>画像のリサイズ</DialogTitle>
+                        <DialogDescription>
+                          アップロードする画像のサイズを調整できます
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium">最大サイズ (MB)</label>
+                          <Input
+                            type="number"
+                            value={resizeOptions.maxSizeMB}
+                            onChange={(e) => setResizeOptions(prev => ({
+                              ...prev,
+                              maxSizeMB: parseFloat(e.target.value)
+                            }))}
+                            min={0.1}
+                            max={2}
+                            step={0.1}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">最大幅/高さ (px)</label>
+                          <Input
+                            type="number"
+                            value={resizeOptions.maxWidthOrHeight}
+                            onChange={(e) => setResizeOptions(prev => ({
+                              ...prev,
+                              maxWidthOrHeight: parseInt(e.target.value)
+                            }))}
+                            min={100}
+                            max={2048}
+                            step={100}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsResizeDialogOpen(false);
+                              setSelectedFile(null);
+                            }}
+                          >
+                            キャンセル
+                          </Button>
+                          <Button
+                            onClick={handleImageResize}
+                            disabled={isUploading}
+                          >
+                            {isUploading ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
+                            アップロード
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                   <FormField
                     control={form.control}
                     name="content"
