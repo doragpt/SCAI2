@@ -40,20 +40,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         console.log('Fetching user data...');
-        const response = await apiRequest<SelectUser>("GET", "/api/user");
-        console.log('User data fetched:', {
-          userId: response?.id,
-          username: response?.username,
-          role: response?.role,
-          timestamp: new Date().toISOString()
-        });
-        return response;
-      } catch (error) {
-        if (error instanceof Error && error.message.includes("401")) {
-          console.log('Not authenticated, returning null');
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          console.log('No auth token found');
           return null;
         }
-        throw error;
+
+        const response = await fetch("/api/user", {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log('Session expired or invalid token');
+            localStorage.removeItem("auth_token");
+            return null;
+          }
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        console.log('User data fetched:', {
+          userId: userData?.id,
+          username: userData?.username,
+          role: userData?.role,
+          timestamp: new Date().toISOString()
+        });
+        return userData;
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return null;
       }
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
@@ -87,9 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const result = await response.json();
-      if (result.token) {
-        localStorage.setItem("auth_token", result.token);
+      if (!result.token) {
+        throw new Error("認証トークンが見つかりません");
       }
+
+      localStorage.setItem("auth_token", result.token);
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -110,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: error.message,
         timestamp: new Date().toISOString()
       });
+      localStorage.removeItem("auth_token");
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -120,8 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem("auth_token");
       await fetch("/api/logout", {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         credentials: "include",
       });
       localStorage.removeItem("auth_token");

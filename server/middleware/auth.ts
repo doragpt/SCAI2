@@ -25,7 +25,10 @@ export async function authenticate(
     console.log('認証処理を開始:', {
       path: req.path,
       method: req.method,
-      headers: req.headers
+      headers: {
+        ...req.headers,
+        authorization: req.headers.authorization ? 'Bearer ...' : undefined
+      }
     });
 
     const token = extractTokenFromHeader(req.headers.authorization);

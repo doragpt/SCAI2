@@ -34,16 +34,27 @@ export function generateToken(user: User): string {
 
 export function verifyToken(token: string): JwtPayload {
   try {
+    if (!token.trim()) {
+      throw new Error('トークンが空です');
+    }
+
     console.log('Verifying token:', {
       tokenPreview: token.substring(0, 10) + '...',
       timestamp: new Date().toISOString()
     });
+
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+    if (!decoded || typeof decoded.userId !== 'number' || typeof decoded.role !== 'string') {
+      throw new Error('トークンの形式が不正です');
+    }
+
     console.log('Token verified:', {
       userId: decoded.userId,
       role: decoded.role,
       timestamp: new Date().toISOString()
     });
+
     return decoded;
   } catch (error) {
     console.error('Token verification error:', {
@@ -71,5 +82,5 @@ export function extractTokenFromHeader(header: string | undefined): string {
     throw new Error('認証ヘッダーの形式が不正です');
   }
 
-  return token;
+  return token.trim();
 }

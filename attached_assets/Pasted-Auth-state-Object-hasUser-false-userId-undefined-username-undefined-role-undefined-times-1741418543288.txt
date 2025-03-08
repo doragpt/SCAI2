@@ -1,0 +1,58 @@
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:21:51.949Z"}
+Fetching user data...
+API Request starting: 
+Object {method: "GET", url: "/api/user", hasToken: true, timestamp: "2025-03-08T07:21:51.961Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:21:51.975Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-08T07:21:52.083Z"}
+error: "トークンが無効です"
+method: "GET"
+timestamp: "2025-03-08T07:21:52.083Z"
+url: "/api/user"
+[[Prototype]]: Object
+
+Fetching user data...
+API Request starting: 
+Object {method: "GET", url: "/api/user", hasToken: true, timestamp: "2025-03-08T07:21:53.086Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-08T07:21:53.204Z"}
+error: "トークンが無効です"
+method: "GET"
+timestamp: "2025-03-08T07:21:53.204Z"
+url: "/api/user"
+[[Prototype]]: Object
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:21:53.205Z"}
+店舗ログイン試行: 
+Object {username: "store_test", timestamp: "2025-03-08T07:22:01.694Z"}
+Login attempt: 
+Object {username: "store_test", role: "store", timestamp: "2025-03-08T07:22:01.700Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:22:01.703Z"}
+Login error response: 
+Object {status: 401, statusText: "Unauthorized", responseText: "{"message":"認証に失敗しました"}", timestamp: "2025-03-08T07:22:04.170Z"}
+responseText: "{"message":"認証に失敗しました"}"
+status: 401
+statusText: "Unauthorized"
+timestamp: "2025-03-08T07:22:04.170Z"
+[[Prototype]]: Object
+
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T07:22:04.170Z"}
+error: "ログインに失敗しました"
+timestamp: "2025-03-08T07:22:04.170Z"
+[[Prototype]]: Object
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T07:22:04.170Z"}
+error: Error
+timestamp: "2025-03-08T07:22:04.170Z"
+[[Prototype]]: Object
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:22:04.172Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T07:22:11.995Z"
