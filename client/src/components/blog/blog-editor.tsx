@@ -39,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -70,7 +71,10 @@ import {
   Trash,
   Info,
   Link,
+  Edit,
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+
 
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -133,12 +137,16 @@ interface ContextMenuState {
     url: string;
     width: number;
     height: number;
+    element?: HTMLImageElement;
   };
 }
 
-interface ImageSize {
+interface ImageEditDialogState {
+  show: boolean;
   width: number;
   height: number;
+  aspectRatio: number;
+  element?: HTMLImageElement;
 }
 
 // コンテキストメニューの位置調整関数
@@ -149,12 +157,10 @@ const adjustMenuPosition = (x: number, y: number, menuWidth: number, menuHeight:
   let adjustedX = x;
   let adjustedY = y;
 
-  // 右端からはみ出す場合
   if (x + menuWidth > windowWidth) {
     adjustedX = x - menuWidth;
   }
 
-  // 下端からはみ出す場合
   if (y + menuHeight > windowHeight) {
     adjustedY = y - menuHeight;
   }
@@ -176,6 +182,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({ show: false, x: 0, y: 0 });
   const [imageSizes, setImageSizes] = useState<Record<string, ImageSize>>({});
+  const [imageEditDialog, setImageEditDialog] = useState<ImageEditDialogState>({
+    show: false,
+    width: 0,
+    height: 0,
+    aspectRatio: 1,
+  });
 
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
@@ -467,10 +479,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       // 右クリックした要素が画像の場合
       if (target.tagName === 'IMG') {
         e.preventDefault();
-        const img = target as HTMLImageElement;
+        e.stopPropagation();
 
+        const img = target as HTMLImageElement;
         const menuWidth = 200;
-        const menuHeight = 150;
+        const menuHeight = 200;
         const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
 
         setContextMenu({
@@ -481,11 +494,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             url: img.src,
             width: img.naturalWidth,
             height: img.naturalHeight,
+            element: img,
           }
         });
-      } else {
-        // 画像以外の要素の場合はコンテキストメニューを非表示
-        setContextMenu(prev => ({ ...prev, show: false }));
       }
     };
 
@@ -500,12 +511,67 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     };
   }, []);
 
-  // コンテキストメニューを閉じる関数
+  // 画像ライブラリのコンテキストメニュー処理
+  const handleLibraryImageContextMenu = (e: React.MouseEvent, image: StoreImage, imgElement: HTMLImageElement) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const menuWidth = 200;
+    const menuHeight = 200;
+    const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
+
+    setContextMenu({
+      show: true,
+      x,
+      y,
+      image: {
+        url: image.url,
+        width: imgElement.naturalWidth,
+        height: imgElement.naturalHeight,
+        element: imgElement,
+      }
+    });
+  };
+
+  // コンテキストメニューを閉じる
   const hideContextMenu = () => {
     setContextMenu(prev => ({ ...prev, show: false }));
   };
 
-  // コンテキストメニューの外側をクリックした時に閉じる
+  // 画像サイズ変更ダイアログを開く
+  const openImageEditDialog = () => {
+    if (contextMenu.image?.element) {
+      const width = contextMenu.image.width;
+      const height = contextMenu.image.height;
+      setImageEditDialog({
+        show: true,
+        width,
+        height,
+        aspectRatio: width / height,
+        element: contextMenu.image.element,
+      });
+      hideContextMenu();
+    }
+  };
+
+  // 画像サイズを更新
+  const updateImageSize = (width: number, height: number) => {
+    if (imageEditDialog.element) {
+      imageEditDialog.element.style.width = `${width}px`;
+      imageEditDialog.element.style.height = `${height}px`;
+      setImageEditDialog(prev => ({ ...prev, show: false }));
+    }
+  };
+
+  // 画像を削除
+  const deleteImage = () => {
+    if (contextMenu.image?.element) {
+      contextMenu.image.element.remove();
+      hideContextMenu();
+    }
+  };
+
+  // コンテキストメニューの外側クリックで閉じる
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const menu = document.getElementById('context-menu');
@@ -518,11 +584,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ESCキーでコンテキストメニューを閉じる
+  // ESCキーでメニューを閉じる
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         hideContextMenu();
+        setImageEditDialog(prev => ({ ...prev, show: false }));
       }
     };
 
@@ -685,7 +752,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                   onContextMenu={(e) => {
                                     const img = e.currentTarget.querySelector('img');
                                     if (img) {
-                                      showContextMenu(e, image.url, img.naturalWidth, img.naturalHeight);
+                                      handleLibraryImageContextMenu(e, image, img as HTMLImageElement);
                                     }
                                   }}
                                 >
@@ -943,6 +1010,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             URLをコピー
           </button>
 
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={openImageEditDialog}
+          >
+            <Edit className="h-4 w-4" />
+            サイズ変更
+          </button>
+
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-red-600"
+            onClick={deleteImage}
+          >
+            <Trash className="h-4 w-4" />
+            削除
+          </button>
+
           <Separator className="my-1" />
 
           <div className="px-4 py-2 text-sm text-gray-500 flex items-center gap-2">
@@ -955,7 +1038,68 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           </div>
         </div>
-      )}
+            )}
+
+      {/* 画像サイズ編集ダイアログ */}
+      <Dialog open={imageEditDialog.show} onOpenChange={(show) => setImageEditDialog(prev => ({ ...prev, show }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>画像サイズの変更</DialogTitle>
+            <DialogDescription>
+              新しい画像サイズを入力してください
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="width">幅 (px)</Label>
+                <Input
+                  id="width"
+                  type="number"
+                  value={imageEditDialog.width}
+                  onChange={(e) => {
+                    const width = parseInt(e.target.value);
+                    setImageEditDialog(prev => ({
+                      ...prev,
+                      width,
+                      height: Math.round(width / prev.aspectRatio),
+                    }));
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="height">高さ (px)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  value={imageEditDialog.height}
+                  onChange={(e) => {
+                    const height = parseInt(e.target.value);
+                    setImageEditDialog(prev => ({
+                      ...prev,
+                      height,
+                      width: Math.round(height * prev.aspectRatio),
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setImageEditDialog(prev => ({ ...prev, show: false }))}
+            >
+              キャンセル
+            </Button>
+            <Button
+              onClick={() => updateImageSize(imageEditDialog.width, imageEditDialog.height)}
+            >
+              適用
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
