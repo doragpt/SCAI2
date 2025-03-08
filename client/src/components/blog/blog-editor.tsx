@@ -1,7 +1,9 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
@@ -12,10 +14,10 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Form,
@@ -38,201 +40,34 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  ImageIcon,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Calendar,
+  Clock,
+  Image as ImageIcon,
   Loader2,
   Save,
   Eye,
   ArrowLeft,
   Upload,
+  Image,
 } from "lucide-react";
 
-// スタイル定義
-const editorStyles = `
-.ql-editor {
-  min-height: 400px;
-  max-height: 600px;
-  overflow-y: auto !important;
-  padding: 1rem;
-}
-
-.ql-container {
-  height: auto !important;
-}
-
-.ql-editor img {
-  max-width: 100%;
-  height: auto;
-  margin: 1rem 0;
-}
-
-.ql-editor p {
-  margin: 1rem 0;
-}
-`;
-
-// スタイルの適用
-if (typeof window !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = editorStyles;
-  document.head.appendChild(style);
-}
-
-// 画像ライブラリモーダル
-const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelect: (url: string) => void;
-  images: string[];
-  isLoading: boolean;
-}) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("image", file);
-      return apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        { rawFormData: true }
-      );
-    },
-    onMutate: () => {
-      setIsUploading(true);
-    },
-    onSuccess: async (data) => {
-      try {
-        // 成功トースト表示
-        toast({
-          title: "成功",
-          description: "画像がアップロードされました",
-        });
-
-        // キャッシュを完全にクリアして強制的に再取得
-        await queryClient.resetQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
-
-        // データを即座に再取得
-        await queryClient.prefetchQuery({
-          queryKey: [QUERY_KEYS.STORE_IMAGES],
-          queryFn: async () => {
-            const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
-            return response || [];
-          }
-        });
-
-        // アップロードした画像を自動選択してモーダルを閉じる
-        if (data?.url) {
-          onSelect(data.url);
-          onClose();
-        }
-      } catch (error) {
-        console.error('Cache update error:', error);
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像の更新に失敗しました",
-        });
-      }
-    },
-    onError: (error) => {
-      console.error('Image upload error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像のアップロードに失敗しました",
-      });
-    },
-    onSettled: () => {
-      setIsUploading(false);
-    }
-  });
-
-  const handleUpload = (file: File) => {
-    if (!file) return;
-    uploadMutation.mutate(file);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <div>
-            <DialogTitle>画像選択</DialogTitle>
-            <DialogDescription>
-              残り {100 - (images?.length || 0)}/100
-            </DialogDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Upload className="h-4 w-4 mr-2" />
-            )}
-            アップロード
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/jpeg,image/png,image/gif"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleUpload(file);
-              }
-              e.target.value = "";
-            }}
-          />
-        </DialogHeader>
-        <div className="grid grid-cols-3 gap-4 py-4">
-          {isLoading ? (
-            <div className="col-span-3 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : !images || images.length === 0 ? (
-            <div className="col-span-3 text-center text-muted-foreground">
-              アップロード済みの画像がありません
-            </div>
-          ) : (
-            images.map((image, index) => (
-              <div
-                key={`${image}-${index}`}
-                className="relative aspect-square cursor-pointer group overflow-hidden rounded-md"
-                onClick={() => onSelect(image)}
-              >
-                <img
-                  src={image}
-                  alt={`ライブラリ画像 ${index + 1}`}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button variant="secondary" size="sm">
-                    選択
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// Quillエディター
+// Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
   return function wrap(props: any) {
@@ -243,7 +78,7 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-// エディタ設定
+// Quillツールバーの設定
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -271,26 +106,25 @@ const formats = [
   "image"
 ];
 
-export function BlogEditor({ postId, initialData }: { postId?: number; initialData?: BlogPost }) {
+interface BlogEditorProps {
+  postId?: number;
+  initialData?: BlogPost;
+}
+
+export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // 店舗の画像を取得するクエリを最適化
+  // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
-    queryFn: async () => {
-      const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
-      console.log('Store images response:', response);
-      return response || [];
-    },
-    enabled: !!user?.id,
-    refetchInterval: 1000, // 1秒ごとに再取得
-    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
-    staleTime: 0, // データを常に最新とみなす
+    queryFn: () => apiRequest("GET", "/api/store/images"),
   });
 
   const form = useForm({
@@ -302,53 +136,6 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
       images: [],
     },
   });
-
-  const insertImage = useCallback((imageUrl: string) => {
-    try {
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      const range = quill.getSelection(true);
-      quill.insertEmbed(range.index, "image", imageUrl);
-      quill.setSelection(range.index + 1);
-      setIsImageLibraryOpen(false);
-    } catch (error) {
-      console.error('Image insertion error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像の挿入に失敗しました",
-      });
-    }
-  }, [quillRef, toast]);
-
-  const onSubmit = async (data: typeof form.getValues) => {
-    try {
-      // 本文内の画像URLを収集
-      const editor = document.querySelector('.ql-editor');
-      const images = editor?.getElementsByTagName('img') || [];
-      const imageUrls = Array.from(images).map(img => img.getAttribute('src')).filter(Boolean) as string[];
-
-      const formData = {
-        ...data,
-        images: imageUrls
-      };
-
-      if (postId) {
-        await updateMutation.mutateAsync(formData);
-      } else {
-        await createMutation.mutateAsync(formData);
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "保存に失敗しました",
-      });
-    }
-  };
 
   const createMutation = useMutation({
     mutationFn: (data: typeof form.getValues) =>
@@ -377,7 +164,6 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
         title: "記事を更新しました",
         description: "ブログ記事の更新が完了しました。",
       });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
     },
     onError: (error) => {
       toast({
@@ -388,9 +174,140 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
     },
   });
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      // ファイルサイズのチェック（500KB）
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      // ファイル形式のチェック
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      // 画像数の制限チェック
+      if (uploadedImages.length >= 50) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像は最大50枚までアップロード可能です",
+        });
+        return;
+      }
+
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ログインが必要です",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await apiRequest<{ url: string; key: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          {
+            rawFormData: true
+          }
+        );
+
+        if (!response?.url) {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+
+        // Quillエディタのインスタンスを取得
+        const quill = quillRef.current?.getEditor();
+        if (!quill) {
+          throw new Error("エディタが見つかりません");
+        }
+
+        // 現在のカーソル位置を取得
+        const range = quill.getSelection(true);
+
+        // 画像を挿入
+        quill.insertEmbed(range.index, "image", response.url);
+        // カーソルを画像の後ろに移動
+        quill.setSelection(range.index + 1);
+
+        // アップロード済み画像リストを更新
+        setUploadedImages(prev => [...prev, response.url]);
+        form.setValue("images", [...uploadedImages, response.url]);
+
+        toast({
+          title: "成功",
+          description: "画像がアップロードされました",
+        });
+      } catch (uploadError) {
+        console.error('Image upload request error:', uploadError);
+        throw uploadError;
+      }
+    } catch (error) {
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const insertImage = (imageUrl: string) => {
+    try {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
+
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, "image", imageUrl);
+      quill.setSelection(range.index + 1);
+      setIsImageLibraryOpen(false);
+    } catch (error) {
+      console.error('Image insertion error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像の挿入に失敗しました",
+      });
+    }
+  };
+
+  const onSubmit = (data: typeof form.getValues) => {
+    if (postId) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card>
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -404,7 +321,10 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 戻る
               </Button>
-              <Button variant="outline" onClick={() => setIsPreview(!isPreview)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsPreview(!isPreview)}
+              >
                 <Eye className="h-4 w-4 mr-2" />
                 {isPreview ? "編集に戻る" : "プレビュー"}
               </Button>
@@ -413,7 +333,7 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
         </CardHeader>
         <CardContent>
           {isPreview ? (
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none ql-editor">
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
@@ -437,24 +357,95 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <FormLabel>本文</FormLabel>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsImageLibraryOpen(true)}
-                    >
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      画像を挿入
-                    </Button>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>画像: {uploadedImages.length}/50</span>
+                      <Dialog open={isImageLibraryOpen} onOpenChange={setIsImageLibraryOpen}>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mr-2"
+                          >
+                            <Image className="h-4 w-4 mr-2" />
+                            画像ライブラリ
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>画像ライブラリ</DialogTitle>
+                            <DialogDescription>
+                              アップロード済みの画像から選択して挿入できます
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid grid-cols-3 gap-4 py-4">
+                            {isLoadingImages ? (
+                              <div className="col-span-3 flex items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                              </div>
+                            ) : storeImages?.length === 0 ? (
+                              <div className="col-span-3 text-center text-muted-foreground">
+                                アップロード済みの画像がありません
+                              </div>
+                            ) : (
+                              storeImages?.map((image: string) => (
+                                <div
+                                  key={image}
+                                  className="relative aspect-square cursor-pointer group"
+                                  onClick={() => insertImage(image)}
+                                >
+                                  <img
+                                    src={image}
+                                    alt="ライブラリの画像"
+                                    className="w-full h-full object-cover rounded-md"
+                                  />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                                    <Button variant="secondary" size="sm">
+                                      選択
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading || uploadedImages.length >= 50}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        新規アップロード
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/jpeg,image/png,image/gif"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
                   </div>
-
                   <FormField
                     control={form.control}
                     name="content"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="border rounded-md">
+                          <div className="border rounded-md overflow-hidden">
                             <ReactQuill
                               forwardedRef={quillRef}
                               theme="snow"
@@ -463,6 +454,7 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
                               value={field.value}
                               onChange={field.onChange}
                               placeholder="記事の本文を入力"
+                              className="min-h-[400px]"
                             />
                           </div>
                         </FormControl>
@@ -490,39 +482,101 @@ export function BlogEditor({ postId, initialData }: { postId?: number; initialDa
                         <SelectContent>
                           <SelectItem value="draft">下書き</SelectItem>
                           <SelectItem value="published">公開</SelectItem>
+                          <SelectItem value="scheduled">予約投稿</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {form.watch("status") === "scheduled" && (
+                  <FormField
+                    control={form.control}
+                    name="scheduledAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>公開予定日時</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="datetime-local"
+                              value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
+                              onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </form>
             </Form>
           )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => {
-            form.setValue("status", "draft");
-            form.handleSubmit(onSubmit)();
-          }}>
-            下書き保存
-          </Button>
-          <Button onClick={() => {
-            form.setValue("status", "published");
-            form.handleSubmit(onSubmit)();
-          }}>
-            <Save className="h-4 w-4 mr-2" />
-            公開する
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">下書き保存</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>下書き保存の確認</AlertDialogTitle>
+                <AlertDialogDescription>
+                  現在の内容を下書きとして保存します。
+                  後でいつでも編集できます。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    form.setValue("status", "draft");
+                    form.handleSubmit(onSubmit)();
+                  }}
+                >
+                  保存する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button>
+                {createMutation.isPending || updateMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                公開する
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>公開の確認</AlertDialogTitle>
+                <AlertDialogDescription>
+                  記事を公開します。公開後は一般に公開され、
+                  誰でも閲覧できるようになります。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    form.setValue("status", "published");
+                    form.handleSubmit(onSubmit)();
+                  }}
+                >
+                  公開する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardFooter>
       </Card>
-      <ImageLibraryModal
-        isOpen={isImageLibraryOpen}
-        onClose={() => setIsImageLibraryOpen(false)}
-        onSelect={insertImage}
-        images={storeImages || []}
-        isLoading={isLoadingImages}
-      />
     </div>
   );
 }
