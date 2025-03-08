@@ -39,7 +39,7 @@ async function hashPassword(password: string): Promise<string> {
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
     const hashedPassword = buf.toString('hex');
 
-    console.log('Password hashing completed:', {
+    console.log('パスワードハッシュ化完了:', {
       saltLength: salt.length,
       hashedLength: hashedPassword.length,
       timestamp: new Date().toISOString()
@@ -47,7 +47,7 @@ async function hashPassword(password: string): Promise<string> {
 
     return `${hashedPassword}.${salt}`;
   } catch (error) {
-    console.error('Password hashing error:', {
+    console.error('パスワードハッシュ化エラー:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
@@ -61,7 +61,7 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
     const [hashedPassword, salt] = storedPassword.split('.');
 
     if (!hashedPassword || !salt) {
-      console.error('Invalid stored password format', {
+      console.error('パスワード形式が不正:', {
         hasHashedPassword: !!hashedPassword,
         hasSalt: !!salt,
         timestamp: new Date().toISOString()
@@ -69,7 +69,7 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       return false;
     }
 
-    console.log('Starting password comparison:', {
+    console.log('パスワード比較開始:', {
       storedHashLength: hashedPassword.length,
       saltLength: salt.length,
       timestamp: new Date().toISOString()
@@ -83,14 +83,14 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       Buffer.from(inputHash, 'hex')
     );
 
-    console.log('Password verification completed:', {
+    console.log('パスワード検証結果:', {
       isValid: result,
       timestamp: new Date().toISOString()
     });
 
     return result;
   } catch (error) {
-    console.error('Password comparison error:', {
+    console.error('パスワード比較エラー:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
@@ -152,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 統合ログインエンドポイント
   app.post("/api/login", async (req, res) => {
     try {
-      console.log('Login request received:', {
+      console.log('ログインリクエスト受信:', {
         username: req.body.username,
         role: req.body.role,
         timestamp: new Date().toISOString()
@@ -167,23 +167,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.username, loginData.username));
 
       if (!user) {
-        console.log('Login failed: User not found', {
+        console.log('ログイン失敗: ユーザーが存在しません', {
           username: loginData.username,
           timestamp: new Date().toISOString()
         });
         return res.status(401).json({ message: "認証に失敗しました" });
       }
 
-      // パスワード検証のデバッグログを追加
-      console.log('Password verification:', {
+      console.log('パスワード検証:', {
         username: loginData.username,
+        hashedPasswordLength: user.password.length,
         timestamp: new Date().toISOString()
       });
 
       const isValidPassword = await comparePasswords(loginData.password, user.password);
 
       if (!isValidPassword) {
-        console.log('Login failed: Invalid password', {
+        console.log('ログイン失敗: パスワードが無効', {
           username: loginData.username,
           timestamp: new Date().toISOString()
         });
@@ -198,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // JWTトークンを生成
       const token = generateToken(user);
 
-      console.log('Login successful:', {
+      console.log('ログイン成功:', {
         userId: user.id,
         username: user.username,
         role: user.role,
@@ -209,8 +209,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword, token });
     } catch (error) {
-      console.error('Login error:', {
-        error,
+      console.error('ログインエラー:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
       res.status(400).json({
@@ -1027,7 +1027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // 現在のユーザー情報を取得
-      const [currentUser] = awaitdb
+      const [currentUser] = await db
         .select()
         .from(users)
         .where(eq(users.id, userId)); // 修正: 正しいwhere句を使用
