@@ -26,13 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -74,7 +67,6 @@ import {
   Edit,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-
 
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -181,7 +173,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({ show: false, x: 0, y: 0 });
-  const [imageSizes, setImageSizes] = useState<Record<string, ImageSize>>({});
   const [imageEditDialog, setImageEditDialog] = useState<ImageEditDialogState>({
     show: false,
     width: 0,
@@ -205,6 +196,158 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       thumbnail: null,
     },
   });
+
+  // Quillエディタのコンテキストメニュー処理を設定
+  useEffect(() => {
+    const quill = quillRef.current?.getEditor();
+    if (!quill) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // 右クリックした要素が画像の場合のみ処理
+      if (target.tagName === 'IMG') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const img = target as HTMLImageElement;
+        const menuWidth = 200;
+        const menuHeight = 200;
+        const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
+
+        setContextMenu({
+          show: true,
+          x,
+          y,
+          image: {
+            url: img.src,
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            element: img,
+          }
+        });
+      }
+    };
+
+    // Quillエディタのルート要素にイベントリスナーを追加
+    quill.root.addEventListener('contextmenu', handleContextMenu);
+
+    // クリーンアップ関数
+    return () => {
+      if (quill && quill.root) {
+        quill.root.removeEventListener('contextmenu', handleContextMenu);
+      }
+    };
+  }, []);
+
+  // 画像ライブラリのコンテキストメニュー処理
+  const handleLibraryImageContextMenu = (e: React.MouseEvent, image: StoreImage, imgElement: HTMLImageElement) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const menuWidth = 200;
+    const menuHeight = 200;
+    const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
+
+    setContextMenu({
+      show: true,
+      x,
+      y,
+      image: {
+        url: image.url,
+        width: imgElement.naturalWidth,
+        height: imgElement.naturalHeight,
+        element: imgElement,
+      }
+    });
+  };
+
+  // コンテキストメニューを閉じる
+  const hideContextMenu = () => {
+    setContextMenu(prev => ({ ...prev, show: false }));
+  };
+
+  // 画像サイズ変更ダイアログを開く
+  const openImageEditDialog = () => {
+    if (contextMenu.image?.element) {
+      const width = contextMenu.image.width;
+      const height = contextMenu.image.height;
+      setImageEditDialog({
+        show: true,
+        width,
+        height,
+        aspectRatio: width / height,
+        element: contextMenu.image.element,
+      });
+      hideContextMenu();
+    }
+  };
+
+  // 画像サイズを更新
+  const updateImageSize = (width: number, height: number) => {
+    if (imageEditDialog.element) {
+      imageEditDialog.element.style.width = `${width}px`;
+      imageEditDialog.element.style.height = `${height}px`;
+      setImageEditDialog(prev => ({ ...prev, show: false }));
+
+      // Quillエディタの内容を更新
+      const quill = quillRef.current?.getEditor();
+      if (quill) {
+        const format = {
+          width: `${width}px`,
+          height: `${height}px`,
+        };
+        quill.formatText(quill.getSelection(), format);
+      }
+    }
+  };
+
+  // 画像を削除
+  const deleteImage = () => {
+    if (contextMenu.image?.element) {
+      const quill = quillRef.current?.getEditor();
+      if (quill) {
+        const range = quill.getSelection();
+        if (range) {
+          quill.deleteText(range.index, 1);
+        }
+      }
+      contextMenu.image.element.remove();
+      hideContextMenu();
+    }
+  };
+
+  // コンテキストメニューの外側クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const menu = document.getElementById('context-menu');
+      if (menu && !menu.contains(e.target as Node)) {
+        hideContextMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ESCキーでメニューを閉じる
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        hideContextMenu();
+        setImageEditDialog(prev => ({ ...prev, show: false }));
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  // ルートコンテナのコンテキストメニューを抑制
+  const preventDefaultContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -468,138 +611,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  // Quillエディタのコンテキストメニュー処理を設定
-  useEffect(() => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-
-    const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-
-      // 右クリックした要素が画像の場合
-      if (target.tagName === 'IMG') {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const img = target as HTMLImageElement;
-        const menuWidth = 200;
-        const menuHeight = 200;
-        const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
-
-        setContextMenu({
-          show: true,
-          x,
-          y,
-          image: {
-            url: img.src,
-            width: img.naturalWidth,
-            height: img.naturalHeight,
-            element: img,
-          }
-        });
-      }
-    };
-
-    // Quillエディタのルート要素にイベントリスナーを追加
-    quill.root.addEventListener('contextmenu', handleContextMenu);
-
-    // クリーンアップ関数
-    return () => {
-      if (quill && quill.root) {
-        quill.root.removeEventListener('contextmenu', handleContextMenu);
-      }
-    };
-  }, []);
-
-  // 画像ライブラリのコンテキストメニュー処理
-  const handleLibraryImageContextMenu = (e: React.MouseEvent, image: StoreImage, imgElement: HTMLImageElement) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const menuWidth = 200;
-    const menuHeight = 200;
-    const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
-
-    setContextMenu({
-      show: true,
-      x,
-      y,
-      image: {
-        url: image.url,
-        width: imgElement.naturalWidth,
-        height: imgElement.naturalHeight,
-        element: imgElement,
-      }
-    });
-  };
-
-  // コンテキストメニューを閉じる
-  const hideContextMenu = () => {
-    setContextMenu(prev => ({ ...prev, show: false }));
-  };
-
-  // 画像サイズ変更ダイアログを開く
-  const openImageEditDialog = () => {
-    if (contextMenu.image?.element) {
-      const width = contextMenu.image.width;
-      const height = contextMenu.image.height;
-      setImageEditDialog({
-        show: true,
-        width,
-        height,
-        aspectRatio: width / height,
-        element: contextMenu.image.element,
-      });
-      hideContextMenu();
-    }
-  };
-
-  // 画像サイズを更新
-  const updateImageSize = (width: number, height: number) => {
-    if (imageEditDialog.element) {
-      imageEditDialog.element.style.width = `${width}px`;
-      imageEditDialog.element.style.height = `${height}px`;
-      setImageEditDialog(prev => ({ ...prev, show: false }));
-    }
-  };
-
-  // 画像を削除
-  const deleteImage = () => {
-    if (contextMenu.image?.element) {
-      contextMenu.image.element.remove();
-      hideContextMenu();
-    }
-  };
-
-  // コンテキストメニューの外側クリックで閉じる
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const menu = document.getElementById('context-menu');
-      if (menu && !menu.contains(e.target as Node)) {
-        hideContextMenu();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // ESCキーでメニューを閉じる
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        hideContextMenu();
-        setImageEditDialog(prev => ({ ...prev, show: false }));
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
-
 
   return (
-    <div className="container mx-auto px-4 py-8" onContextMenu={e => e.preventDefault()}>
+    <div className="container mx-auto px-4 py-8" onContextMenu={preventDefaultContextMenu}>
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -760,16 +774,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     src={image.url}
                                     alt="ライブラリの画像"
                                     className="w-full h-full object-cover rounded-md"
-                                    onLoad={(e) => {
-                                      const img = e.target as HTMLImageElement;
-                                      setImageSizes(prev => ({
-                                        ...prev,
-                                        [image.url]: {
-                                          width: img.naturalWidth,
-                                          height: img.naturalHeight,
-                                        },
-                                      }));
-                                    }}
                                   />
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                                     <Button variant="secondary" size="sm">
@@ -951,7 +955,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       {contextMenu.show && (
         <div
           id="context-menu"
-          className="fixed z-50 bg-white rounded-lg shadow-lg py-1 min-w-[200px]"
+          className="fixed z-[100] bg-white rounded-lg shadow-lg py-1 min-w-[200px] border"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
@@ -1033,12 +1037,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             <div>
               <div>サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px</div>
               <div className="text-xs text-gray-400">
-                {((contextMenu.image?.width || 0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
+                {((contextMenu.image?.width ||0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
               </div>
             </div>
           </div>
         </div>
-            )}
+      )}
 
       {/* 画像サイズ編集ダイアログ */}
       <Dialog open={imageEditDialog.show} onOpenChange={(show) => setImageEditDialog(prev => ({ ...prev, show }))}>
