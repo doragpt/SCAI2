@@ -203,19 +203,39 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const formData = new FormData();
       formData.append("image", file);
 
+      // デバッグ用のログ出力
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        formData: Array.from(formData.entries()).map(([key, value]) => ({
+          key,
+          value: value instanceof File ? `File: ${value.name}` : value,
+        })),
+      });
+
       const response = await fetch("/api/blog/upload-image", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("画像のアップロードに失敗しました");
+        const error = await response.json();
+        throw new Error(error.message || "画像のアップロードに失敗しました");
       }
 
       const data = await response.json();
+      console.log('Upload response:', data);
 
       // 画像URLをエディタに挿入
       const editor = (document.querySelector(".ql-editor") as HTMLElement);
+      if (!editor) {
+        throw new Error("エディタが見つかりません");
+      }
+
       const range = (document.getSelection() as Selection).getRangeAt(0);
       const img = document.createElement("img");
       img.src = data.url;
@@ -231,6 +251,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "画像の挿入が完了しました",
       });
     } catch (error) {
+      console.error('Image upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
