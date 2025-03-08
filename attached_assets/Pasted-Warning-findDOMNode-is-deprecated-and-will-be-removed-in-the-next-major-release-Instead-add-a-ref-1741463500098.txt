@@ -1,0 +1,54 @@
+Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at ReactQuill2 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-quill.js?v=80899269:12915:30)
+    at LoadableComponent (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next_dynamic.js?v=80899269:133:9)
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=80899269:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=80899269:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:129:9
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AT4FH6P3.js?v=80899269:321:35)
+    at FormField (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:32:6)
+    at div
+    at form
+    at FormProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AT4FH6P3.js?v=80899269:103:11)
+    at div
+    at _c9 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at BlogEditor (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/blog/blog-editor.tsx:140:30)
+    at NewBlogPost (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/store/blog/new.tsx:23:31)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=80899269:338:16)
+    at ProtectedRoute (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=80899269:394:17)
+    at Router
+    at main
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=80899269:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=f7vNcj1kURJD237U4uNcC:213:57)
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-08T19:51:07.555Z"}
+API Request starting: 
+Object {method: "POST", url: "/api/blog/upload-image", hasData: true, isFormData: true, timestamp: "2025-03-08T19:51:14.742Z"}
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-08T19:51:15.986Z"}
+Image upload request error: 
+Error {}
+message: "エディタが見つかりません"
+stack: "Error: エディタが見つかりません↵ at handleImageUpload (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/blog/blog-editor.tsx:352:17)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Image upload error: 
+Object {error: "エディタが見つかりません", file: "481ec640addd0a7f41975927ea001228_600.jpg"}
+error: "エディタが見つかりません"
+file: "481ec640addd0a7f41975927ea001228_600.jpg"
+[[Prototype]]: Object
+
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-08T19:51:15.993Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-08T19:51:24.183Z"}
