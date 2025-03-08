@@ -98,127 +98,81 @@ if (typeof window !== 'undefined') {
   document.head.appendChild(style);
 }
 
-// 画像ライブラリモーダルのコンポーネント
-const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelect: (url: string) => void;
-  images: string[];
-  isLoading: boolean;
-}) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+// Quillエディターを動的にインポート
+const ReactQuill = dynamic(async () => {
+  const { default: RQ } = await import("react-quill");
 
-  const handleUpload = async (file: File) => {
-    try {
-      setIsUploading(true);
+  // Quillインスタンスとモジュールを取得
+  const Quill = RQ.Quill;
 
-      const formData = new FormData();
-      formData.append("image", file);
+  // カスタムモジュールを追加
+  Quill.register('modules/imageResize', function(quill: any) {
+    quill.on('editor-change', function() {
+      const editor = quill.root;
+      const images = editor.getElementsByTagName('img');
 
-      const response = await apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        { rawFormData: true }
-      );
+      Array.from(images).forEach((img: HTMLImageElement) => {
+        if (!img.parentElement || img.getAttribute('data-resize-initialized')) return;
 
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
-      }
+        img.setAttribute('data-resize-initialized', 'true');
 
-      toast({
-        title: "成功",
-        description: "画像がアップロードされました",
+        // リサイズハンドルを追加
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle se';
+        img.parentElement.style.position = 'relative';
+        img.parentElement.appendChild(handle);
+
+        let isResizing = false;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+          isResizing = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startWidth = img.offsetWidth;
+          startHeight = img.offsetHeight;
+          img.classList.add('resizing');
+
+          const onMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            // アスペクト比を維持しながらリサイズ
+            const aspectRatio = startWidth / startHeight;
+            const width = Math.max(50, startWidth + deltaX);
+            const height = width / aspectRatio;
+
+            img.style.width = `${width}px`;
+            img.style.height = `${height}px`;
+          };
+
+          const onMouseUp = () => {
+            isResizing = false;
+            img.classList.remove('resizing');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+          e.preventDefault();
+        });
       });
+    });
+  });
 
-      // キャッシュを更新して新しい画像をすぐに表示
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
-    } catch (error) {
-      console.error('Image upload error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
+  return function wrap(props: any) {
+    return <RQ {...props} ref={props.forwardedRef} />;
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <div>
-            <DialogTitle>画像選択</DialogTitle>
-            <DialogDescription>
-              残り {100 - (images?.length || 0)}/100
-            </DialogDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Upload className="h-4 w-4 mr-2" />
-            )}
-            アップロード
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/jpeg,image/png,image/gif"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleUpload(file);
-              }
-              e.target.value = "";
-            }}
-          />
-        </DialogHeader>
-        <div className="grid grid-cols-3 gap-4 py-4">
-          {isLoading ? (
-            <div className="col-span-3 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : !images || images.length === 0 ? (
-            <div className="col-span-3 text-center text-muted-foreground">
-              アップロード済みの画像がありません
-            </div>
-          ) : (
-            images.map((image, index) => (
-              <div
-                key={`${image}-${index}`}
-                className="relative aspect-square cursor-pointer group overflow-hidden rounded-md"
-                onClick={() => onSelect(image)}
-              >
-                <img
-                  src={image}
-                  alt={`ライブラリ画像 ${index + 1}`}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button variant="secondary" size="sm">
-                    選択
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+}, {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+});
 
 // エディタのツールバー設定
 const modules = {
