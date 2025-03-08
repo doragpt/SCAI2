@@ -21,6 +21,7 @@ import {
   User as UserIcon,
   Check,
   Building2,
+  AlertCircle,
 } from "lucide-react";
 import {
   Select,
@@ -234,10 +235,12 @@ export default function HomePage() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
 
-  const { data: jobListings, isLoading: jobsLoading, error } = useQuery({
+  // 求人データの取得処理を改善
+  const { data: jobListings = [], isLoading: jobsLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: getJobsQuery,
-    retry: 1,
+    retry: 2,
+    retryDelay: 1000,
     onError: (error) => {
       console.error("求人情報取得エラー:", error);
       toast({
@@ -249,7 +252,7 @@ export default function HomePage() {
   });
 
   const filteredListings = React.useMemo(() => {
-    if (!jobListings || !Array.isArray(jobListings)) return [];
+    if (!Array.isArray(jobListings)) return [];
 
     return jobListings
       .filter(job => {
@@ -261,12 +264,13 @@ export default function HomePage() {
       .slice(0, 6);
   }, [jobListings, selectedArea, selectedType]);
 
-  const currentAreaGroup = areaGroups.find(group => group.areas.includes(selectedArea));
-
-  if (authLoading) {
+  if (authLoading || jobsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">データを読み込み中...</p>
+        </div>
       </div>
     );
   }
@@ -482,7 +486,28 @@ export default function HomePage() {
 
             {jobsLoading ? (
               <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-muted-foreground">求人情報を読み込み中...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <Card className="max-w-md mx-auto">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+                      <p className="text-destructive font-medium">データの取得に失敗しました</p>
+                      <p className="text-sm text-muted-foreground">
+                        {error instanceof Error ? error.message : "エラーが発生しました"}
+                      </p>
+                      <Button onClick={() => refetch()} className="w-full">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        再読み込み
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : !filteredListings.length ? (
               <div className="text-center py-12">

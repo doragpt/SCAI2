@@ -1,0 +1,69 @@
+[vite] connecting...
+[vite] connected.
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T10:30:49.930Z"}
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of &lt;a&gt;.
+    at a
+    at a
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f47afbd1:352:18
+    at div
+    at div
+    at nav
+    at Navigation (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/navigation.tsx:65:31)
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f47afbd1:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=HHu_Qtob10zT0jz5Fteiy:150:57)
+Fetching public jobs: 
+Object {endpoint: "/api/jobs/public", timestamp: "2025-03-08T10:30:49.939Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/public", hasData: false, timestamp: "2025-03-08T10:30:49.939Z"}
+Adding auth token to request
+Fetching user data...
+API Response received: 
+Object {status: 500, statusText: "Internal Server Error", timestamp: "2025-03-08T10:30:50.047Z"}
+API Request Failed: 
+Object {status: 500, statusText: "Internal Server Error", responseText: "{"message":"Cannot convert undefined or null to…", timestamp: "2025-03-08T10:30:50.047Z"}
+
+API Request Error: 
+Object {method: "GET", url: "/api/jobs/public", error: "Cannot convert undefined or null to object", timestamp: "2025-03-08T10:30:50.048Z"}
+
+Jobs fetch error: 
+Object {error: "Cannot convert undefined or null to object", timestamp: "2025-03-08T10:30:50.048Z"}
+
+User data fetched: 
+Object {userId: 14, username: "store_test", role: "store", timestamp: "2025-03-08T10:30:50.381Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-08T10:30:50.382Z"}
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`.
+    at Select (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=f47afbd1:86:5)
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f47afbd1:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f47afbd1:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-CPFL7ZFD.js?v=f47afbd1:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f47afbd1:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f47afbd1:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-CPFL7ZFD.js?v=f47afbd1:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PSLAEUKM.js?v=f47afbd1:1980:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f47afbd1:189:13
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=f47afbd1:38:15)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PSLAEUKM.js?v=f47afbd1:1915:15)
+    at Popper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PSLAEUKM.js?v=f47afbd1:1972:11)
+    at Tooltip (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f47afbd1:107:5)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=f47afbd1:38:15)
+    at TooltipProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f47afbd1:63:5)
+    at div
+    at div
+    at section
+    at main
+    at div
+    at HomePage (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/home-page.tsx:330:44)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f47afbd1:338:16)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f47afbd1:394:17)
+    at Router
+    at main
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f47afbd1:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=HHu_Qtob10zT0jz5Fteiy:150:57)

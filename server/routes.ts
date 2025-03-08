@@ -426,7 +426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const jobListings = await db
         .select({
           id: jobs.id,
-          businessName: jobs.businessName,
+          title: jobs.title,
+          catchPhrase: jobs.catchPhrase,
           location: jobs.location,
           serviceType: jobs.serviceType,
           minimumGuarantee: jobs.minimumGuarantee,
@@ -439,8 +440,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           benefits: jobs.benefits,
           createdAt: jobs.createdAt,
           updatedAt: jobs.updatedAt,
+          status: jobs.status
         })
         .from(jobs)
+        .where(eq(jobs.status, 'published'))
         .orderBy(desc(jobs.createdAt))
         .limit(12);
 
@@ -456,7 +459,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      // エラーメッセージの日本語化
       const errorMessage = error instanceof Error
         ? error.message
         : "求人情報の取得に失敗しました";
