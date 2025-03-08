@@ -4,56 +4,48 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Calendar,
-  Clock,
-  Image as ImageIcon,
-  Loader2,
-  Save,
-  Eye,
-  ArrowLeft,
-} from "lucide-react";
 
+// Quillエディターを動的にインポート（SSRの問題を回避）
+const ReactQuill = dynamic(() => import("react-quill"), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+});
+
+// Quillツールバーの設定
+const modules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ color: [] }, { background: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["link", "image"],
+    ["clean"]
+  ]
+};
+
+const formats = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "list",
+  "bullet",
+  "align",
+  "link",
+  "image"
+];
+
+// 残りのコードは変更なし
 interface BlogEditorProps {
   postId?: number;
   initialData?: BlogPost;
@@ -175,16 +167,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormItem>
                       <FormLabel>本文</FormLabel>
                       <FormControl>
-                        <div className="border rounded-md">
-                          <div className="border-b p-2 flex items-center gap-2 bg-muted/50">
-                            <Button type="button" variant="ghost" size="sm">
-                              <ImageIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <textarea
-                            className="w-full min-h-[400px] p-4 focus:outline-none"
+                        <div className="border rounded-md overflow-hidden">
+                          <ReactQuill
+                            theme="snow"
+                            modules={modules}
+                            formats={formats}
+                            value={field.value}
+                            onChange={field.onChange}
                             placeholder="記事の本文を入力"
-                            {...field}
+                            className="min-h-[400px]"
                           />
                         </div>
                       </FormControl>
