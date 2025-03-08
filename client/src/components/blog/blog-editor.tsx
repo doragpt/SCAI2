@@ -10,13 +10,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -32,13 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,8 +124,12 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
         description: "画像がアップロードされました",
       });
 
-      // キャッシュを更新して新しい画像をすぐに表示
+      // キャッシュを無効化して強制的に再取得
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
+
+      // 即座にデータを再取得
+      await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
+
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
@@ -342,10 +338,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     queryKey: [QUERY_KEYS.STORE_IMAGES],
     queryFn: async () => {
       const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
-      console.log('Store images response:', response); // Added for debugging
+      console.log('Store images response:', response);
       return response || [];
     },
     enabled: !!user?.id,
+    staleTime: 0, // キャッシュを無効化して常に最新データを取得
   });
 
   const form = useForm({
@@ -452,7 +449,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
