@@ -202,7 +202,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     const quill = quillRef.current?.getEditor();
     if (!quill) return;
 
-    const handleContextMenu = (e: MouseEvent) => {
+    const handleEditorContextMenu = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
       // 右クリックした要素が画像の場合のみ処理
@@ -230,12 +230,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     };
 
     // Quillエディタのルート要素にイベントリスナーを追加
-    quill.root.addEventListener('contextmenu', handleContextMenu);
+    quill.root.addEventListener('contextmenu', handleEditorContextMenu);
 
     // クリーンアップ関数
     return () => {
       if (quill && quill.root) {
-        quill.root.removeEventListener('contextmenu', handleContextMenu);
+        quill.root.removeEventListener('contextmenu', handleEditorContextMenu);
       }
     };
   }, []);
@@ -286,19 +286,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像サイズを更新
   const updateImageSize = (width: number, height: number) => {
     if (imageEditDialog.element) {
-      imageEditDialog.element.style.width = `${width}px`;
-      imageEditDialog.element.style.height = `${height}px`;
-      setImageEditDialog(prev => ({ ...prev, show: false }));
-
-      // Quillエディタの内容を更新
       const quill = quillRef.current?.getEditor();
       if (quill) {
-        const format = {
-          width: `${width}px`,
-          height: `${height}px`,
-        };
-        quill.formatText(quill.getSelection(), format);
+        const range = quill.getSelection();
+        if (range) {
+          // 画像のDOM要素を更新
+          imageEditDialog.element.style.width = `${width}px`;
+          imageEditDialog.element.style.height = `${height}px`;
+
+          // Quillの内部状態を更新
+          const [blot] = quill.getLeaf(range.index);
+          if (blot && blot.domNode) {
+            const format = quill.getFormat(range.index);
+            quill.formatText(range.index, 1, {
+              ...format,
+              width: `${width}px`,
+              height: `${height}px`,
+            }, 'user');
+          }
+        }
       }
+      setImageEditDialog(prev => ({ ...prev, show: false }));
     }
   };
 
@@ -307,9 +315,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (contextMenu.image?.element) {
       const quill = quillRef.current?.getEditor();
       if (quill) {
-        const range = quill.getSelection();
-        if (range) {
-          quill.deleteText(range.index, 1);
+        const [leaf, offset] = quill.getLeaf(quill.getSelection()?.index || 0);
+        if (leaf) {
+          quill.deleteText(offset, 1);
         }
       }
       contextMenu.image.element.remove();
@@ -613,7 +621,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
 
   return (
-    <div className="container mx-auto px-4 py-8" onContextMenu={preventDefaultContextMenu}>
+    <div className="container mx-auto px-4 py-8" onContextMenu={e => e.preventDefault()}>
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -1037,7 +1045,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             <div>
               <div>サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px</div>
               <div className="text-xs text-gray-400">
-                {((contextMenu.image?.width ||0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
+                {((contextMenu.image?.width || 0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
               </div>
             </div>
           </div>
@@ -1045,7 +1053,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       )}
 
       {/* 画像サイズ編集ダイアログ */}
-      <Dialog open={imageEditDialog.show} onOpenChange={(show) => setImageEditDialog(prev => ({ ...prev, show }))}>
+      <Dialog 
+        open={imageEditDialog.show} 
+        onOpenChange={(show) => setImageEditDialog(prev => ({ ...prev, show }))}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>画像サイズの変更</DialogTitle>
