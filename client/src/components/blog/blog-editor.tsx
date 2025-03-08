@@ -69,7 +69,7 @@ const modules = {
     ["bold", "italic", "underline", "strike"],
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: [] }],
+    [{ align: ["", "center", "right", "justify"] }],
     ["link", "image"],
     ["clean"]
   ]
@@ -183,7 +183,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         </CardHeader>
         <CardContent>
           {isPreview ? (
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none ql-editor">
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
