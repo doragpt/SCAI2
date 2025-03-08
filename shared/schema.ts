@@ -609,3 +609,57 @@ export const talentRegisterFormSchema = z.object({
   message: "パスワードが一致しません",
   path: ["passwordConfirm"],
 });
+
+// ブログ関連の型定義とテーブルを追加
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  scheduledAt: timestamp("scheduled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  thumbnail: text("thumbnail"),
+  images: jsonb("images").$type<string[]>().default([]),
+}, (table) => {
+  return {
+    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
+    statusIdx: index("blog_posts_status_idx").on(table.status),
+    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+  };
+});
+
+// ブログ投稿のスキーマ定義
+export const blogPostSchema = createInsertSchema(blogPosts)
+  .extend({
+    images: z.array(z.string()).optional(),
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+// 型定義のエクスポート
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+// リレーションの定義
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  store: one(users, {
+    fields: [blogPosts.storeId],
+    references: [users.id],
+  }),
+}));
+
+// APIレスポンスの型定義
+export interface BlogPostListResponse {
+  posts: BlogPost[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}

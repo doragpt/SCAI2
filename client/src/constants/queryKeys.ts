@@ -6,5 +6,9 @@ export const QUERY_KEYS = {
   JOBS_SEARCH: "/api/jobs/search",
   JOBS_STORE: "/api/jobs/store",
   JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
-  SIGNED_URL: "/api/get-signed-url"
+  SIGNED_URL: "/api/get-signed-url",
+  // ブログ関連のクエリキーを追加
+  BLOG_POSTS: "/api/blog/posts",
+  BLOG_POST_DETAIL: (id: string) => `/api/blog/posts/${id}`,
+  BLOG_POST_STATUS: (id: string) => `/api/blog/posts/${id}/status`
 } as const;

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { type Job, type JobListingResponse } from "@shared/schema";
+import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,7 +20,9 @@ import {
   Eye,
   Calendar,
   LineChart,
-  Settings
+  Settings,
+  Pencil,
+  Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -39,6 +41,13 @@ const jobStatusLabels = {
   closed: "締切"
 } as const;
 
+// ブログ投稿のステータスラベル
+const blogStatusLabels = {
+  draft: "下書き",
+  published: "公開中",
+  scheduled: "予約投稿"
+} as const;
+
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const [selectedTab, setSelectedTab] = useState("jobs");
@@ -47,7 +56,7 @@ export default function StoreDashboard() {
   const { toast } = useToast();
 
   // 求人情報の取得
-  const { data: jobListings, isLoading: jobsLoading, error, refetch } = useQuery<JobListingResponse>({
+  const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
     queryKey: [QUERY_KEYS.JOBS_STORE],
     queryFn: () => apiRequest("GET", "/api/jobs/store"),
     enabled: !!user?.id && user?.role === "store",
@@ -67,7 +76,28 @@ export default function StoreDashboard() {
     },
   });
 
-  if (jobsLoading) {
+  // ブログ投稿の取得
+  const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
+    queryKey: [QUERY_KEYS.BLOG_POSTS],
+    queryFn: () => apiRequest("GET", "/api/blog/posts"),
+    enabled: !!user?.id && user?.role === "store",
+    retry: 2,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error("Blog posts fetch error:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "ブログ記事の取得に失敗しました",
+      });
+    },
+  });
+
+  if (jobsLoading || blogsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -194,7 +224,7 @@ export default function StoreDashboard() {
           {/* メインコンテンツ */}
           <div className="col-span-6">
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="grid grid-cols-4 h-auto">
+              <TabsList className="grid grid-cols-5 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
                   <FileEdit className="h-4 w-4 mr-2" />
                   求人管理
@@ -202,6 +232,10 @@ export default function StoreDashboard() {
                 <TabsTrigger value="applications" className="py-2">
                   <Users className="h-4 w-4 mr-2" />
                   応募一覧
+                </TabsTrigger>
+                <TabsTrigger value="blog" className="py-2">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  ブログ管理
                 </TabsTrigger>
                 <TabsTrigger value="freeSpace" className="py-2">
                   <PenBox className="h-4 w-4 mr-2" />
@@ -315,6 +349,90 @@ export default function StoreDashboard() {
                 <Card>
                   <CardContent className="p-6">
                     <StoreApplicationView />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* ブログ管理タブ */}
+              <TabsContent value="blog">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>ブログ記事一覧</CardTitle>
+                      <CardDescription>
+                        ブログの投稿・管理ができます
+                      </CardDescription>
+                    </div>
+                    <Button onClick={() => window.open('/store/blog/new', '_blank')}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      新規作成
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {!blogListings?.posts?.length ? (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          ブログ記事がありません
+                        </p>
+                        <Button variant="outline" className="mt-4" onClick={() => window.open('/store/blog/new', '_blank')}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          記事を作成する
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {blogListings.posts.map((post) => (
+                          <Card key={post.id} className="hover:bg-accent/5 transition-colors">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="font-semibold">{post.title}</h3>
+                                    <Badge variant={
+                                      post.status === "published" ? "default" :
+                                      post.status === "scheduled" ? "secondary" : "outline"
+                                    }>
+                                      {blogStatusLabels[post.status]}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>
+                                      {post.publishedAt 
+                                        ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
+                                        : "未公開"}
+                                    </span>
+                                    {post.status === "scheduled" && (
+                                      <>
+                                        <Clock className="h-4 w-4" />
+                                        <span>
+                                          {format(new Date(post.scheduledAt!), "yyyy年MM月dd日 HH:mm", { locale: ja })}
+                                          に公開予定
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => window.open(`/blog/${post.id}`, '_blank')}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    プレビュー
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => window.open(`/store/blog/edit/${post.id}`, '_blank')}
+                                  >
+                                    <FileEdit className="h-4 w-4 mr-2" />
+                                    編集
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
