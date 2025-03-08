@@ -220,82 +220,6 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
   );
 };
 
-// Quillエディターを動的にインポート
-const ReactQuill = dynamic(async () => {
-  const { default: RQ } = await import("react-quill");
-
-  // Quillインスタンスとモジュールを取得
-  const Quill = RQ.Quill;
-
-  // カスタムモジュールを追加
-  Quill.register('modules/imageResize', function(quill: any) {
-    quill.on('editor-change', function() {
-      const editor = quill.root;
-      const images = editor.getElementsByTagName('img');
-
-      Array.from(images).forEach((img: HTMLImageElement) => {
-        if (!img.parentElement || img.getAttribute('data-resize-initialized')) return;
-
-        img.setAttribute('data-resize-initialized', 'true');
-
-        // リサイズハンドルを追加
-        const handle = document.createElement('div');
-        handle.className = 'resize-handle se';
-        img.parentElement.style.position = 'relative';
-        img.parentElement.appendChild(handle);
-
-        let isResizing = false;
-        let startX = 0;
-        let startY = 0;
-        let startWidth = 0;
-        let startHeight = 0;
-
-        handle.addEventListener('mousedown', (e) => {
-          isResizing = true;
-          startX = e.clientX;
-          startY = e.clientY;
-          startWidth = img.offsetWidth;
-          startHeight = img.offsetHeight;
-          img.classList.add('resizing');
-
-          const onMouseMove = (e: MouseEvent) => {
-            if (!isResizing) return;
-
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-
-            // アスペクト比を維持しながらリサイズ
-            const aspectRatio = startWidth / startHeight;
-            const width = Math.max(50, startWidth + deltaX);
-            const height = width / aspectRatio;
-
-            img.style.width = `${width}px`;
-            img.style.height = `${height}px`;
-          };
-
-          const onMouseUp = () => {
-            isResizing = false;
-            img.classList.remove('resizing');
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-          };
-
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-          e.preventDefault();
-        });
-      });
-    });
-  });
-
-  return function wrap(props: any) {
-    return <RQ {...props} ref={props.forwardedRef} />;
-  };
-}, {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
-});
-
 // エディタのツールバー設定
 const modules = {
   toolbar: [
@@ -344,6 +268,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     queryKey: [QUERY_KEYS.STORE_IMAGES],
     queryFn: async () => {
       const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
+      console.log('Store images response:', response); // Added for debugging
       return response || [];
     },
     enabled: !!user?.id,
