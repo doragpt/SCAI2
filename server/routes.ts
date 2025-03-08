@@ -1478,80 +1478,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 求人情報一覧の取得（店舗用）
+  // 店舗用求人一覧エンドポイントを追加
   app.get("/api/jobs/store", authenticate, async (req: any, res) => {
     try {
-      const { status = "all", page = "1", limit = "20" } = req.query;
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
 
       console.log('Store jobs fetch request received:', {
-        userId: req.user.id,
-        filters: { status },
-        pagination: { page, limit },
+        storeId: req.user.id,
         timestamp: new Date().toISOString()
       });
 
-      // 店舗ユーザーのみ許可
-      if (req.user.role !== 'store') {
-        return res.status(403).json({
-          message: "店舗アカウントのみアクセス可能です"
-        });
-      }
-
-      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-        return res.status(400).json({
-          message: "ページネーションパラメータが不正です",
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      const offset = (pageNum - 1) * limitNum;
-
-      // クエリの構築
-      let query = db
-        .select()
-        .from(jobs)
-        .where(eq(jobs.storeId, req.user.id));
-
-      if (status !== "all") {
-        query = query.where(eq(jobs.status, status));
-      }
-
-      // 総件数の取得
-      const countResult = await db
-        .select({ count: sql<number>`count(*)` })
+      const jobListings = await db
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          catchPhrase: jobs.catchPhrase,
+          status: jobs.status,
+          location: jobs.location,
+          serviceType: jobs.serviceType,
+          description: jobs.description,
+          workingHours: jobs.workingHours,
+          transportationSupport: jobs.transportationSupport,
+          housingSupport: jobs.housingSupport,
+          minimumGuarantee: jobs.minimumGuarantee,
+          maximumGuarantee: jobs.maximumGuarantee,
+          requirements: jobs.requirements,
+          benefits: jobs.benefits,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+        })
         .from(jobs)
         .where(eq(jobs.storeId, req.user.id))
-        .where(status !== "all" ? eq(jobs.status, status) : undefined);
-
-      const totalCount = countResult[0].count;
-
-      // 求人情報の取得
-      const jobListings = await query
-        .orderBy(desc(jobs.createdAt))
-        .limit(limitNum)
-        .offset(offset);
+        .orderBy(desc(jobs.createdAt));
 
       console.log('Store jobs fetch successful:', {
-        userId: req.user.id,
+        storeId: req.user.id,
         count: jobListings.length,
-        totalCount,
         timestamp: new Date().toISOString()
       });
 
       res.json({
         jobs: jobListings,
         pagination: {
-          currentPage: pageNum,
-          totalPages: Math.ceil(totalCount / limitNum),
-          totalItems: totalCount
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: jobListings.length
         }
       });
     } catch (error) {
-      console.error("Store jobs fetch error:", {
-        error,
-        userId: req.user?.id,
+      console.error('Store jobs fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        storeId: req.user?.id,
         timestamp: new Date().toISOString()
       });
 
@@ -1561,6 +1540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
   // 求人ステータスの更新
   app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {
     try {
