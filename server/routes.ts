@@ -31,12 +31,20 @@ import { uploadToS3, getSignedS3Url } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
+// パスワード関連の定数
+const SALT_LENGTH = 32; // 一定のソルト長を使用
+const KEY_LENGTH = 64;  // scryptの出力長
+
 // パスワードハッシュ化関数の実装を修正
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   try {
-    // 新しいソルトを生成（32バイト）
-    const salt = randomBytes(32).toString('hex');
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    if (!password || typeof password !== 'string') {
+      throw new Error('無効なパスワードです');
+    }
+
+    // 新しいソルトを生成（32バイト固定）
+    const salt = randomBytes(SALT_LENGTH).toString('hex');
+    const buf = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
     const hashedPassword = buf.toString('hex');
 
     console.log('パスワードハッシュ化完了:', {
@@ -56,14 +64,25 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 // パスワード比較関数の実装を修正
-async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
+export async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
   try {
+    if (!inputPassword || !storedPassword) {
+      console.error('無効なパスワード入力:', {
+        hasInput: !!inputPassword,
+        hasStored: !!storedPassword,
+        timestamp: new Date().toISOString()
+      });
+      return false;
+    }
+
     const [hashedPassword, salt] = storedPassword.split('.');
 
-    if (!hashedPassword || !salt) {
+    if (!hashedPassword || !salt || salt.length !== SALT_LENGTH * 2) { // hex文字列なので長さは2倍
       console.error('パスワード形式が不正:', {
         hasHashedPassword: !!hashedPassword,
         hasSalt: !!salt,
+        saltLength: salt?.length,
+        expectedLength: SALT_LENGTH * 2,
         timestamp: new Date().toISOString()
       });
       return false;
@@ -75,9 +94,10 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       timestamp: new Date().toISOString()
     });
 
-    const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
+    const buf = (await scryptAsync(inputPassword, salt, KEY_LENGTH)) as Buffer;
     const inputHash = buf.toString('hex');
 
+    // 厳密な比較を行う
     const result = timingSafeEqual(
       Buffer.from(hashedPassword, 'hex'),
       Buffer.from(inputHash, 'hex')
@@ -158,6 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
+      // リクエストボディのバリデーション
       const loginData = loginSchema.parse(req.body);
 
       // ユーザーの取得とロールチェック
@@ -171,9 +192,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: loginData.username,
           timestamp: new Date().toISOString()
         });
-        return res.status(401).json({ message: "認証に失敗しました" });
+        return res.status(401).json({ message: "ユーザー名またはパスワードが間違っています" });
       }
 
+      // パスワード検証
       console.log('パスワード検証:', {
         username: loginData.username,
         hashedPasswordLength: user.password.length,
@@ -187,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: loginData.username,
           timestamp: new Date().toISOString()
         });
-        return res.status(401).json({ message: "認証に失敗しました" });
+        return res.status(401).json({ message: "ユーザー名またはパスワードが間違っています" });
       }
 
       // 店舗ユーザーの場合のロールチェック
