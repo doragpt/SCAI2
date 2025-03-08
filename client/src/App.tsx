@@ -39,12 +39,12 @@ function Router() {
       <ProtectedRoute path="/talent/profile/view" component={ProfileViewPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
+      <Route path="/manager/login" component={ManagerLogin} />
       <ProtectedRoute 
-        path="/manager/dashboard" 
+        path="/store/dashboard" 
         component={StoreDashboard}
         roleRequired="store"
       />
-      <Route path="/manager/login" component={ManagerLogin} />
       <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
       <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
       <Route component={NotFound} />

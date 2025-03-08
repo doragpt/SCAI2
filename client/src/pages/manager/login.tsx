@@ -22,17 +22,18 @@ import { useAuth } from "@/hooks/use-auth";
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function ManagerLogin() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { loginMutation, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // ログイン済みの場合はダッシュボードにリダイレクト
+  // ログイン済みの場合のリダイレクト処理を修正
   useEffect(() => {
-    if (user && user.role === "store") {
+    // ログインページ以外でのみリダイレクトを行う
+    if (user && user.role === "store" && location !== "/manager/login") {
       setLocation("/store/dashboard");
     }
-  }, [user, setLocation]);
+  }, [user, location, setLocation]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
