@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import ReactQuill from "react-quill";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -75,11 +76,22 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
+// ReactQuillの型定義
+type ReactQuillType = typeof ReactQuill & { 
+  Quill: any;
+};
+
 // Quillエディターを動的にインポート
-const ReactQuill = dynamic(() => import("react-quill"), {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
-});
+const ReactQuillEditor = dynamic(
+  async () => {
+    const { default: RQ } = await import("react-quill");
+    return RQ;
+  },
+  {
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+  }
+) as ReactQuillType;
 
 // Quillツールバーの設定
 const modules = {
@@ -171,7 +183,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const quillRef = useRef<any>(null);
+  const quillRef = useRef<ReactQuill>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({ show: false, x: 0, y: 0 });
@@ -233,7 +245,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     };
 
     // エディタのDOMが存在する場合にのみイベントリスナーを設定
-    const editorRoot = quillRef.current?.editor?.root;
+    const editorRoot = quillRef.current?.getEditor()?.root;
     if (editorRoot) {
       console.log("コンテキストメニューイベントリスナーを設定"); // リスナー設定の確認
       editorRoot.addEventListener('contextmenu', handleEditorContextMenu);
@@ -292,7 +304,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像サイズを更新
   const updateImageSize = (width: number, height: number) => {
     if (imageEditDialog.element) {
-      const quill = quillRef.current?.editor;
+      const quill = quillRef.current?.getEditor();
       if (quill) {
         const range = quill.getSelection();
         if (range) {
@@ -319,7 +331,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像を削除
   const deleteImage = () => {
     if (contextMenu.image?.element) {
-      const quill = quillRef.current?.editor;
+      const quill = quillRef.current?.getEditor();
       if (quill) {
         const [leaf, offset] = quill.getLeaf(quill.getSelection()?.index || 0);
         if (leaf) {
@@ -419,24 +431,20 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         }
 
         // Quillエディタのインスタンスを取得
-        const quill = quillRef.current?.editor;
-        if (!quill) {
+        const editor = quillRef.current?.getEditor();
+        if (!editor) {
+          console.error('Quillエディタ参照:', quillRef.current);
           throw new Error("エディタが見つかりません");
         }
 
         // 現在のカーソル位置を取得
-        const range = quill.getSelection(true);
+        const range = editor.getSelection() || { index: editor.getLength(), length: 0 };
 
         // 画像を挿入
-        quill.insertEmbed(range.index, "image", response.url);
+        editor.insertEmbed(range.index, "image", response.url);
 
-        // カーソルを画像の後ろに移動し、スクロールして表示
-        quill.setSelection(range.index + 1);
-        const [leaf] = quill.getLeaf(range.index);
-        const domNode = leaf.domNode;
-        if (domNode) {
-          domNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        // カーソルを画像の後ろに移動
+        editor.setSelection(range.index + 1, 0);
 
         // アップロード済み画像リストを更新
         setUploadedImages(prev => [...prev, response.url]);
@@ -447,7 +455,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           return [
             ...oldData,
             {
-              id: Date.now(), // 一時的なID
+              id: Date.now(),
               url: response.url,
               key: response.key,
               createdAt: new Date().toISOString()
@@ -464,10 +472,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         throw uploadError;
       }
     } catch (error) {
-      console.error('Image upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
-      });
+      console.error('Image upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -548,7 +553,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const insertImage = (imageUrl: string) => {
     try {
-      const quill = quillRef.current?.editor;
+      const quill = quillRef.current?.getEditor();
       if (!quill) {
         throw new Error("エディタが見つかりません");
       }
@@ -830,7 +835,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormItem>
                         <FormControl>
                           <div className="relative border rounded-md">
-                            <ReactQuill
+                            <ReactQuillEditor
                               ref={quillRef}
                               theme="snow"
                               modules={modules}
@@ -1053,8 +1058,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       )}
 
       {/* 画像サイズ編集ダイアログ */}
-      <Dialog 
-        open={imageEditDialog.show} 
+      <Dialog
+        open={imageEditDialog.show}
         onOpenChange={(show) => setImageEditDialog(prev => ({ ...prev, show }))}
       >
         <DialogContent>
