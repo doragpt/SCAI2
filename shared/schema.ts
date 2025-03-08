@@ -187,10 +187,19 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Login and registration schemas
+// loginSchemaを修正して店舗用のバリデーションを追加
 export const loginSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
   role: z.enum(["talent", "store"]),
+}).refine((data) => {
+  if (data.role === "store") {
+    return data.username.length > 0 && data.password.length > 0;
+  }
+  return true;
+}, {
+  message: "店舗IDとパスワードを入力してください",
+  path: ["username"],
 });
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
@@ -328,6 +337,12 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
   userId: true
 }).partial();
 
+
+// 重複した型定義を削除し、一箇所にまとめる
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
+export type ProfileData = TalentProfileData;
 
 // 型定義エクスポートを追加
 export type Photo = z.infer<typeof photoSchema>;

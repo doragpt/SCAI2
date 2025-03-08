@@ -42,6 +42,7 @@ export default function ManagerLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, role: "store" }),
+        credentials: "include", // セッションCookieを送信するために必要
       });
 
       if (!response.ok) {
