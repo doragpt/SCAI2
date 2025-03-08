@@ -997,6 +997,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 画像アップロードエンドポイント
+  app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
+    try {
+      console.log('Image upload request received:', {
+        userId: req.user?.id,
+        file: req.file ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        } : 'No file received',
+        timestamp: new Date().toISOString()
+      });
+
+      // 認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
+      }
+
+      // ファイルチェック
+      if (!req.file) {
+        return res.status(400).json({ message: "画像ファイルを選択してください" });
+      }
+
+      // 現在の画像数を取得
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      const currentImagesCount = posts.reduce((total, post) => {
+        return total + (post.images?.length || 0);
+      }, 0);
+
+      console.log('Current images count:', {
+        userId: req.user.id,
+        count: currentImagesCount
+      });
+
+      // バリデーション
+      const validation = validateImageUpload(req.file, currentImagesCount);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      try {
+        // S3にアップロード
+        const uploadResult = await uploadToS3(req.file.buffer, {
+          contentType: req.file.mimetype,
+          extension: req.file.originalname.split(".").pop() || "",
+          prefix: `blog/${req.user.id}/`
+        });
+
+        // 署名付きURLを生成
+        const signedUrl = await getSignedS3Url(uploadResult.key);
+
+        console.log('Image upload successful:', {
+          userId: req.user.id,
+          key: uploadResult.key,
+          url: signedUrl
+        });
+
+        res.json({
+          url: signedUrl,
+          key: uploadResult.key
+        });
+      } catch (uploadError) {
+        console.error('S3 upload error:', {
+          error: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          userId: req.user.id,
+          file: req.file.originalname
+        });
+        throw uploadError;
+      }
+    } catch (error) {
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像のアップロードに失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;

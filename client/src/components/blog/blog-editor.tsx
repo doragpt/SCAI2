@@ -167,39 +167,40 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   });
 
   const handleImageUpload = async (file: File) => {
-    // ファイルサイズのチェック（500KB）
-    if (file.size > 500 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "ファイルサイズは500KB以下にしてください",
-      });
-      return;
-    }
-
-    // ファイル形式のチェック
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-      });
-      return;
-    }
-
-    // 画像数の制限チェック
-    if (uploadedImages.length >= 50) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像は最大50枚までアップロード可能です",
-      });
-      return;
-    }
-
     try {
+      // ファイルサイズのチェック（500KB）
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      // ファイル形式のチェック
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      // 画像数の制限チェック
+      if (uploadedImages.length >= 50) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像は最大50枚までアップロード可能です",
+        });
+        return;
+      }
+
       setIsUploading(true);
+
       const formData = new FormData();
       formData.append("image", file);
 
@@ -208,10 +209,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         name: file.name,
         type: file.type,
         size: file.size,
-        formData: Array.from(formData.entries()).map(([key, value]) => ({
-          key,
-          value: value instanceof File ? `File: ${value.name}` : value,
-        })),
       });
 
       const token = localStorage.getItem("token");
@@ -219,49 +216,62 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         throw new Error("認証エラー：ログインが必要です");
       }
 
-      const response = await fetch("/api/blog/upload-image", {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      // APIリクエストを試行
+      try {
+        const response = await fetch("/api/blog/upload-image", {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "画像のアップロードに失敗しました");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "画像のアップロードに失敗しました");
+        }
+
+        const data = await response.json();
+        console.log('Upload response:', data);
+
+        if (!data.url) {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+
+        // 画像URLをエディタに挿入
+        const editor = document.querySelector(".ql-editor");
+        if (!editor) {
+          throw new Error("エディタが見つかりません");
+        }
+
+        const selection = document.getSelection();
+        if (!selection) {
+          throw new Error("テキストの選択位置が取得できません");
+        }
+
+        const range = selection.getRangeAt(0);
+        const img = document.createElement("img");
+        img.src = data.url;
+        img.alt = file.name;
+        range.insertNode(img);
+
+        // アップロード済み画像リストを更新
+        setUploadedImages(prev => [...prev, data.url]);
+        form.setValue("images", [...uploadedImages, data.url]);
+
+        toast({
+          title: "成功",
+          description: "画像がアップロードされました",
+        });
+      } catch (uploadError) {
+        console.error('Image upload request error:', uploadError);
+        throw uploadError;
       }
-
-      const data = await response.json();
-      console.log('Upload response:', data);
-
-      // 画像URLをエディタに挿入
-      const editor = document.querySelector(".ql-editor");
-      if (!editor) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      const selection = document.getSelection();
-      if (!selection) {
-        throw new Error("テキストの選択位置が取得できません");
-      }
-
-      const range = selection.getRangeAt(0);
-      const img = document.createElement("img");
-      img.src = data.url;
-      img.alt = file.name;
-      range.insertNode(img);
-
-      // アップロード済み画像リストを更新
-      setUploadedImages(prev => [...prev, data.url]);
-      form.setValue("images", [...uploadedImages, data.url]);
-
-      toast({
-        title: "成功",
-        description: "画像がアップロードされました",
-      });
     } catch (error) {
-      console.error('Image upload error:', error);
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
       toast({
         variant: "destructive",
         title: "エラー",
