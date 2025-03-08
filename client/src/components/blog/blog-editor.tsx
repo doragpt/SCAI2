@@ -28,6 +28,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -551,36 +558,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         <SelectContent>
                           <SelectItem value="draft">下書き</SelectItem>
                           <SelectItem value="published">公開</SelectItem>
-                          <SelectItem value="scheduled">予約投稿</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {form.watch("status") === "scheduled" && (
-                  <FormField
-                    control={form.control}
-                    name="scheduledAt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>公開予定日時</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="datetime-local"
-                              value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
-                              onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </form>
             </Form>
           )}
