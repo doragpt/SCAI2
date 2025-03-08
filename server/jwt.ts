@@ -2,11 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '@shared/schema';
 
 // JWT設定
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRETが設定されていません');
-}
-
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const TOKEN_EXPIRE = '24h';
 
 export interface JwtPayload {
@@ -15,41 +11,63 @@ export interface JwtPayload {
 }
 
 export function generateToken(user: User): string {
-  const payload: JwtPayload = {
-    userId: user.id,
-    role: user.role,
-  };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRE });
+  try {
+    const payload: JwtPayload = {
+      userId: user.id,
+      role: user.role,
+    };
+    console.log('Generating token for user:', {
+      userId: user.id,
+      role: user.role,
+      timestamp: new Date().toISOString()
+    });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRE });
+  } catch (error) {
+    console.error('Token generation error:', {
+      error,
+      userId: user.id,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error('トークンの生成に失敗しました');
+  }
 }
 
 export function verifyToken(token: string): JwtPayload {
   try {
-    console.log('トークンの検証を開始:', { token: token.substring(0, 10) + '...' });
-    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    console.log('トークンの検証成功:', { userId: payload.userId, role: payload.role });
-    return payload;
+    console.log('Verifying token:', {
+      tokenPreview: token.substring(0, 10) + '...',
+      timestamp: new Date().toISOString()
+    });
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    console.log('Token verified:', {
+      userId: decoded.userId,
+      role: decoded.role,
+      timestamp: new Date().toISOString()
+    });
+    return decoded;
   } catch (error) {
-    console.error('トークンの検証に失敗:', error);
+    console.error('Token verification error:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
     throw new Error('トークンが無効です');
   }
 }
 
 export function extractTokenFromHeader(header: string | undefined): string {
   if (!header) {
-    console.error('認証ヘッダーがありません');
+    console.error('No authorization header');
     throw new Error('認証ヘッダーがありません');
   }
 
   const [type, token] = header.split(' ');
 
-  console.log('トークンの抽出:', {
-    headerType: type,
-    hasToken: !!token,
-    tokenPreview: token ? token.substring(0, 10) + '...' : 'なし'
-  });
-
   if (type !== 'Bearer' || !token) {
-    console.error('認証ヘッダーの形式が不正です:', { type, hasToken: !!token });
+    console.error('Invalid authorization header format:', {
+      type,
+      hasToken: !!token,
+      timestamp: new Date().toISOString()
+    });
     throw new Error('認証ヘッダーの形式が不正です');
   }
 

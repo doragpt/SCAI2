@@ -33,9 +33,23 @@ const scryptAsync = promisify(scrypt);
 
 // パスワードハッシュ化関数の実装を修正
 async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString('hex');
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString('hex')}.${salt}`;
+  try {
+    const salt = randomBytes(16).toString('hex');
+    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    const hashedPassword = buf.toString('hex');
+    console.log('Password hashing:', {
+      salt,
+      hashedLength: hashedPassword.length,
+      timestamp: new Date().toISOString()
+    });
+    return `${hashedPassword}.${salt}`;
+  } catch (error) {
+    console.error('Password hashing error:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error('パスワードのハッシュ化に失敗しました');
+  }
 }
 
 // パスワード比較関数の実装を修正
@@ -50,8 +64,22 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       });
       return false;
     }
+
     const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
-    return timingSafeEqual(Buffer.from(hashedPassword, 'hex'), buf);
+    const inputHash = buf.toString('hex');
+
+    // 厳密な比較を行う
+    const result = timingSafeEqual(
+      Buffer.from(hashedPassword, 'hex'),
+      Buffer.from(inputHash, 'hex')
+    );
+
+    console.log('Password comparison:', {
+      isValid: result,
+      timestamp: new Date().toISOString()
+    });
+
+    return result;
   } catch (error) {
     console.error('Password comparison error:', {
       error,
@@ -1017,13 +1045,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('User update error:', {
-                error,
+        error,
         userId: req.user?.id,
         requestBody: req.body,
         timestamp: new Date().toISOString()
       });
-      res.status(400).json({        error: true,
-        message: error instanceof Error ? error.message :"ユーザー情報の更新に失敗しました"
+      res.status(400).json({
+        error: true,
+        message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"
       });
     }
   });
