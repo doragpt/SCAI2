@@ -163,7 +163,7 @@ async function updateUserProfile(userId: number, updateData: any) {
   return updatedUser;
 }
 
-export async function registerRoutes(app: Express): Promise<Express> {
+export async function registerRoutes(app: Express): Promise<Server> {
   // APIルートを最初に登録
   app.use("/api/*", (req, res, next) => {
     console.log('API request received:', {
@@ -995,7 +995,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       console.log('Profile update request received:', {
         userId,
         requestData: req.body,
-        timestamp: new Date().toISOString()
+        timestamp:new Date().toISOString()
       });
 
       const updatedProfile = await db.transaction(async (tx) => {
@@ -1923,6 +1923,51 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       res.status(400).json({
         message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // アクセス統計を取得するエンドポイント
+  app.get("/api/stores/stats/detail", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+
+      const stats = await getStoreStats(req.user.id, startDate, today);
+
+      // 過去7日間のデータを日付順に整形
+      const dailyBreakdown = stats.map(stat => ({
+        date: stat.date,
+        totalVisits: stat.totalVisits,
+        uniqueVisitors: stat.uniqueVisitors
+      })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // 最新（今日）のデータ
+      const latestStats = stats[0] || {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        hourlyStats: {}
+      };
+
+      res.json({
+        totalVisits: latestStats.totalVisits,
+        uniqueVisitors: latestStats.uniqueVisitors,
+        dailyBreakdown
+      });
+    } catch (error) {
+      console.error('Access stats detail fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });

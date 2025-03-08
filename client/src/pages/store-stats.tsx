@@ -1,17 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Users, LineChart } from "lucide-react";
 import { useLocation } from "wouter";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 export default function StoreStatsPage() {
   const [_, setLocation] = useLocation();
@@ -34,12 +27,6 @@ export default function StoreStatsPage() {
     );
   }
 
-  // 時間帯別データの整形
-  const hourlyData = stats?.hourlyStats ? Object.entries(stats.hourlyStats).map(([hour, count]) => ({
-    hour: `${hour}時`,
-    count
-  })) : [];
-
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -51,81 +38,62 @@ export default function StoreStatsPage() {
       </div>
 
       <div className="grid gap-6">
-        {/* 基本統計 */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">本日の総アクセス数</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {stats?.totalVisits?.toLocaleString() || 0}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">ユニークユーザー数</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {stats?.uniqueVisitors?.toLocaleString() || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 時間帯別グラフ */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">時間帯別アクセス数</CardTitle>
+            <CardTitle className="text-lg">
+              {format(new Date(), "yyyy年MM月dd日", { locale: ja })}のアクセス状況
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={hourlyData}
-                  margin={{
-                    top: 10,
-                    right: 30,
-                    left: 0,
-                    bottom: 0,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="hour"
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                    className="text-muted-foreground"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                    className="text-muted-foreground"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "var(--radius)",
-                    }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary) / 0.2)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <LineChart className="h-4 w-4" />
+                  総アクセス数
+                </div>
+                <div className="text-4xl font-bold text-primary">
+                  {stats?.totalVisits?.toLocaleString() || 0}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  ユニークユーザー
+                </div>
+                <div className="text-4xl font-bold text-primary">
+                  {stats?.uniqueVisitors?.toLocaleString() || 0}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {stats?.dailyBreakdown && (
+          <div className="grid gap-4">
+            <h2 className="text-lg font-semibold">過去7日間の推移</h2>
+            <div className="grid gap-4">
+              {stats.dailyBreakdown.map((day) => (
+                <Card key={day.date} className="hover:bg-accent/5 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="text-sm text-muted-foreground">
+                          {format(new Date(day.date), "M月d日（E）", { locale: ja })}
+                        </div>
+                        <div className="font-semibold">
+                          {day.totalVisits.toLocaleString()} アクセス
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        ユニーク: {day.uniqueVisitors.toLocaleString()}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
