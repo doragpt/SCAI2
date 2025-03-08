@@ -996,8 +996,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Profile update request received:', {
         userId,
         requestData: req.body,
-        timestamp:new Date().toISOString()
-      });
+        timestamp:new Date().toISOString()      });
 
       const updatedProfile = await db.transaction(async (tx) => {
         // 現在のプロフィールを取得
@@ -2023,6 +2022,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Image upload error:", error);
       res.status(500).json({
         message: "画像のアップロードに失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
+  // 店舗の画像一覧を取得するエンドポイントを追加
+  app.get("/api/store/images", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // 店舗の全ブログ記事から画像を収集
+      const blogPosts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      // 全画像URLを一つの配列にまとめる
+      const allImages = blogPosts.reduce((acc: string[], post) => {
+        if (post.images) {
+          return [...acc, ...post.images];
+        }
+        return acc;
+      }, []);
+
+      // 重複を除去
+      const uniqueImages = [...new Set(allImages)];
+
+      res.json(uniqueImages);
+    } catch (error) {
+      console.error("Store images fetch error:", error);
+      res.status(500).json({
+        message: "画像一覧の取得に失敗しました",
         error: process.env.NODE_ENV === "development" ? error : undefined
       });
     }

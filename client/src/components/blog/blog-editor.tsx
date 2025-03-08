@@ -47,6 +47,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Calendar,
   Clock,
   Image as ImageIcon,
@@ -55,6 +63,7 @@ import {
   Eye,
   ArrowLeft,
   Upload,
+  Image,
 } from "lucide-react";
 
 // Quillエディターを動的にインポート（SSRの問題を回避）
@@ -100,8 +109,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
+  const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // 店舗の全画像を取得
+  const { data: storeImages, isLoading: isLoadingImages } = useQuery({
+    queryKey: [QUERY_KEYS.STORE_IMAGES],
+    queryFn: () => apiRequest("GET", "/api/store/images"),
+  });
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -121,7 +137,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を作成しました",
         description: "ブログ記事の作成が完了しました。",
       });
-      // ブログ一覧を更新
       window.location.href = "/store/dashboard";
     },
     onError: (error) => {
@@ -226,6 +241,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
+  const insertImage = (imageUrl: string) => {
+    const editor = (document.querySelector(".ql-editor") as HTMLElement);
+    const range = (document.getSelection() as Selection).getRangeAt(0);
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.alt = "挿入された画像";
+    range.insertNode(img);
+    setIsImageLibraryOpen(false);
+  };
+
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
       updateMutation.mutate(data);
@@ -288,6 +313,57 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormLabel>本文</FormLabel>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>画像: {uploadedImages.length}/50</span>
+                      <Dialog open={isImageLibraryOpen} onOpenChange={setIsImageLibraryOpen}>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mr-2"
+                          >
+                            <Image className="h-4 w-4 mr-2" />
+                            画像ライブラリ
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>画像ライブラリ</DialogTitle>
+                            <DialogDescription>
+                              アップロード済みの画像から選択して挿入できます
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid grid-cols-3 gap-4 py-4">
+                            {isLoadingImages ? (
+                              <div className="col-span-3 flex items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                              </div>
+                            ) : storeImages?.length === 0 ? (
+                              <div className="col-span-3 text-center text-muted-foreground">
+                                アップロード済みの画像がありません
+                              </div>
+                            ) : (
+                              storeImages?.map((image: string) => (
+                                <div
+                                  key={image}
+                                  className="relative aspect-square cursor-pointer group"
+                                  onClick={() => insertImage(image)}
+                                >
+                                  <img
+                                    src={image}
+                                    alt="ライブラリの画像"
+                                    className="w-full h-full object-cover rounded-md"
+                                  />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                                    <Button variant="secondary" size="sm">
+                                      選択
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <Button
                         type="button"
                         variant="outline"
@@ -300,7 +376,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         ) : (
                           <Upload className="h-4 w-4 mr-2" />
                         )}
-                        画像をアップロード
+                        新規アップロード
                       </Button>
                       <input
                         type="file"
