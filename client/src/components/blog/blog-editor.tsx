@@ -466,23 +466,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormItem>
                         <FormControl>
                           <div className="relative border rounded-md">
-                            {/* ツールバーを固定位置に */}
-                            <div className="sticky top-0 z-10 bg-white border-b">
-                              <div className="ql-toolbar ql-snow" />
-                            </div>
-                            {/* 本文エリアをスクロール可能に */}
-                            <div className="h-[400px] overflow-y-auto">
-                              <ReactQuill
-                                forwardedRef={quillRef}
-                                theme="snow"
-                                modules={modules}
-                                formats={formats}
-                                value={field.value}
-                                onChange={field.onChange}
-                                placeholder="記事の本文を入力"
-                                className="h-full"
-                              />
-                            </div>
+                            <ReactQuill
+                              forwardedRef={quillRef}
+                              theme="snow"
+                              modules={modules}
+                              formats={formats}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="記事の本文を入力"
+                              className="h-[400px]"
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />

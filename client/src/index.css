@@ -11,3 +11,24 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Quillエディタのカスタムスタイル */
+.ql-container {
+  height: 400px !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.ql-editor {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 300px;
+}
+
+.ql-toolbar.ql-snow {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  border-bottom: 1px solid #ccc;
+}
