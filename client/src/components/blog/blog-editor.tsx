@@ -5,7 +5,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
-import imageCompression from "browser-image-compression";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -71,6 +70,10 @@ import {
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
+  const { ImageResize } = await import('quill-image-resize-module');
+
+  RQ.Quill.register('modules/imageResize', ImageResize);
+
   return function wrap(props: any) {
     return <RQ {...props} ref={props.forwardedRef} />;
   };
@@ -89,7 +92,22 @@ const modules = {
     [{ align: ["", "center", "right", "justify"] }],
     ["link"],
     ["clean"]
-  ]
+  ],
+  imageResize: {
+    parchment: {
+      image: {
+        attribute: ['width', 'height', 'style']
+      }
+    },
+    modules: ['Resize', 'DisplaySize'],
+    displaySize: true,
+    handleStyles: {
+      backgroundColor: 'black',
+      border: '1px solid white',
+      height: '12px',
+      width: '12px'
+    }
+  }
 };
 
 const formats = [
@@ -104,7 +122,10 @@ const formats = [
   "bullet",
   "align",
   "link",
-  "image"
+  "image",
+  "width",
+  "height",
+  "style"
 ];
 
 interface BlogEditorProps {
