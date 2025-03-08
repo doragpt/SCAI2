@@ -100,7 +100,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "認証に失敗しました" });
       }
 
+      // パスワード検証のデバッグログを追加
+      console.log('Password verification:', {
+        username: loginData.username,
+        hashedPassword: user.password,
+        timestamp: new Date().toISOString()
+      });
+
       const isValidPassword = await comparePasswords(loginData.password, user.password);
+
       if (!isValidPassword) {
         console.log('Login failed: Invalid password', {
           username: loginData.username,
@@ -998,7 +1006,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // パスワード情報を除外
       const { password, ...userWithoutPassword } = updatedUser;
-
       console.log('User update successful:', {
         userId,
         timestamp: new Date().toISOString()
@@ -1010,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('User update error:', {
-        error,
+                error,
         userId: req.user?.id,
         requestBody: req.body,
         timestamp: new Date().toISOString()
