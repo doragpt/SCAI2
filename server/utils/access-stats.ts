@@ -1,4 +1,3 @@
-```typescript
 import { db } from "../db";
 import { accessLogs, accessStats, type InsertAccessStat } from "@shared/schema";
 import { sql } from "drizzle-orm";
@@ -68,4 +67,3 @@ export async function getStoreStats(storeId: number, startDate: Date, endDate: D
     `)
     .orderBy(sql`date DESC`);
 }
-```

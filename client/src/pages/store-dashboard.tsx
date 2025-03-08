@@ -35,6 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AccessStats } from "@/components/dashboard/access-stats";
 
 // 求人ステータスのラベル
 const jobStatusLabels = {
@@ -159,49 +160,7 @@ export default function StoreDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-full bg-primary"></div>
-                      本日のアクセス
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Card className="hover:bg-accent/5 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold text-primary">-</div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </CardContent>
-                      </Card>
-                      <Card className="hover:bg-accent/5 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold text-primary">-</div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-full bg-primary"></div>
-                      今月のアクセス
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Card className="hover:bg-accent/5 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold text-primary">-</div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </CardContent>
-                      </Card>
-                      <Card className="hover:bg-accent/5 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold text-primary">-</div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
+                <AccessStats storeId={user?.id ?? 0} />
               </CardContent>
             </Card>
 
@@ -306,7 +265,7 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold group-hover:text-primary transition-colors">{job.title}</h3>
                                     <Badge variant={
                                       job.status === "published" ? "default" :
-                                      job.status === "draft" ? "secondary" : "destructive"
+                                        job.status === "draft" ? "secondary" : "destructive"
                                     } className="shadow-sm">
                                       {jobStatusLabels[job.status]}
                                     </Badge>
@@ -326,8 +285,8 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => {
                                       setSelectedJobId(job.id);
@@ -401,9 +360,9 @@ export default function StoreDashboard() {
                         <p className="text-muted-foreground">
                           ブログ記事がありません
                         </p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-4" 
+                        <Button
+                          variant="outline"
+                          className="mt-4"
                           onClick={() => setLocation('/store/blog/new')}
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -421,14 +380,14 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold group-hover:text-primary transition-colors">{post.title}</h3>
                                     <Badge variant={
                                       post.status === "published" ? "default" :
-                                      post.status === "scheduled" ? "secondary" : "outline"
+                                        post.status === "scheduled" ? "secondary" : "outline"
                                     } className="shadow-sm">
                                       {blogStatusLabels[post.status]}
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>
-                                      {post.publishedAt 
+                                      {post.publishedAt
                                         ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
                                         : "未公開"}
                                     </span>
@@ -448,8 +407,8 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                                     className="hover:bg-primary/5"

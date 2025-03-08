@@ -34,6 +34,8 @@ import {
   type BlogPostListResponse,
   blogPostSchema,
 } from "@shared/schema";
+import { generateDailyStats, getStoreStats } from "./utils/access-stats";
+
 
 const scryptAsync = promisify(scrypt);
 
@@ -161,7 +163,7 @@ async function updateUserProfile(userId: number, updateData: any) {
   return updatedUser;
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<Express> {
   // APIルートを最初に登録
   app.use("/api/*", (req, res, next) => {
     console.log('API request received:', {
@@ -1601,6 +1603,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 店舗のアクセス統計を取得するエンドポイント
+  app.get("/api/stores/:storeId/stats", authenticate, async (req: any, res) => {
+    try {
+      const storeId = parseInt(req.params.storeId);
+
+      if (isNaN(storeId)) {
+        return res.status(400).json({ message: "無効な店舗IDです" });
+      }
+
+      // 認証チェック
+      if (!req.user || (req.user.role === 'store' && req.user.id !== storeId)) {
+        return res.status(403).json({ message: "アクセス権限がありません" });
+      }
+
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7); // 過去7日分のデータ
+
+      const stats = await getStoreStats(storeId, startDate, today);
+
+      if (!stats.length) {
+        // 統計データがない場合は新規作成
+        const todayStats = await generateDailyStats(today, storeId);
+        await saveDailyStats(todayStats);
+        return res.json(todayStats);
+      }
+
+      return res.json(stats[0]); // 最新の統計データを返す
+    } catch (error) {
+      console.error('Access stats fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "アクセス統計の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   // ブログ記事一覧の取得
   app.get("/api/blog/posts", authenticate, async (req: any, res) => {
     try {
@@ -1900,6 +1943,20 @@ async function calculateMatchScore(job: Job, conditions: any): Promise<number> {
     score++;
   }
   return score;
+}
+
+async function saveDailyStats(stats: any) {
+  // データベースへの保存処理を実装する必要があります。
+  // 例：Prisma, Drizzle-ORM などを使用します。
+  try {
+    console.log('Saving daily stats:', stats);
+    // ここにデータベースへの保存ロジックを記述します。
+    // 例： await prisma.dailyStats.create({ data: stats });
+  } catch (error) {
+    console.error('Error saving daily stats:', error);
+    throw new Error('統計データの保存に失敗しました。');
+  }
+
 }
 
 const photoChunksStore = new Map();
