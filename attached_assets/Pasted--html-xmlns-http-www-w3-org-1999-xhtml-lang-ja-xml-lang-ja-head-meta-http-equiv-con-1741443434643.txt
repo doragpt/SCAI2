@@ -1,0 +1,4170 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>アクセス解析｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/question_common.css?cache01=20220705153222">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/entry_list.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/infochange.css">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/mypage.css?cache01=20240625091448">
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/highcharts.js"></script>
+    
+    <style type="text/css">
+    #questionlist > table {
+        table-layout: fixed;
+        width: auto;
+        max-width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0px;
+        overflow: hidden;
+    }
+    #questionlist > table .tr006 .th01 {
+        padding: 4px 0;
+        font-size: 11px;
+        box-sizing: border-box;
+    }
+    #questionlist > table .tr01 .th01 {
+        padding: 9px 0;
+        font-size: 11px;
+        box-sizing: border-box;
+    }
+    #questionlist > table .tr01 .td02 {
+        padding: 9px 0;
+        width: 50px;
+        box-sizing: border-box;
+    }
+    #questionlist > table .tr01 .td02:nth-child(1) {
+        width: 45px;
+    }
+    #questionlist > table .tr01 .td02:nth-child(2) {
+        width: 95px;
+    }
+    #questionlist > table .tr01 .td02:nth-child(13) {
+        width: 55px;
+    }
+    .joblog_notice {
+      float: right;
+      width: 800px;
+      margin: 10px 15px 15px 0;
+      background: #faeaea;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #fababa;
+      line-height: 1.5em;
+      font-size: 14px;
+    }
+    </style>
+    
+
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+
+<body>
+  
+  
+<!-- operationId:755409FE-8772-4C6E-AC84FCE45DA73A71 -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class=" ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class=" borderNone">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class="active  ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" ">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class=" ">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class=" borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgba(0, 180, 0, 0.184);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/08 23:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+  
+
+  <div id="ucsContent" class="content">
+    <div id="wrap">
+      
+      <div id="ucsHeader">
+  <p id="ucsHeaderTitle">データ解析</p>
+  <ul id="ucsSubMenu">
+    <li>
+      
+      
+      
+      
+      <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?gop=newc" target="_blank" id="shop_preview_btn">お店の公開ページを見る</a>
+      
+      
+    </li>
+  </ul>
+</div>
+<div id="ucsMenu">
+  <ul>
+    <li>
+      
+      
+      <span class="lev1">トーク管理</span>
+      <ul>
+        <li>
+          <a href="/talk/list/" class="lev2 ">トーク一覧</a>
+        </li>
+      </ul>
+      
+    </li>
+    
+        
+    <li>
+      <span class="lev1">応募管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/application/" class="lev2 ">応募一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+        <li>
+      <span class="lev1">検討中管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/favoriteuser/list/" class="lev2 ">検討中ユーザー一覧</a>
+        </li>
+      </ul>
+    </li>
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    <li>
+      
+      
+            
+      
+            
+      <span class="lev1">DX管理(お試し版)</span>
+      
+      <ul>
+        
+        <li>
+          <a href="/dx_pc_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">PCデザイン編集<br>(1カラム)</a>
+        </li>
+        
+        
+        <li>
+          <a href="/dx_sp_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">SPデザイン編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxfreespacelist/" class="lev2 ">DXフリースペース</a>
+        </li>
+        
+        
+        
+        
+        <li>
+          <a href="/dxtemplateedit/" class="lev2 ">テンプレート設定</a>
+        </li>
+        
+                <li>
+          <a href="/shopcontentssort_dx_confirm/" target="_blank" class="lev2">DXページプレビュー</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxlogo/" class="lev2 ">特大ロゴ編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+
+
+    
+
+    <li>
+      <span class="lev1">店長ブログ管理</span>
+      <ul>
+        <li>
+          <a href="/blog/edit/" class="lev2 ">店長ブログを書く</a>
+        </li>
+        <li>
+          <a href="/blog/" class="lev2 ">店長ブログ編集・削除</a>
+        </li>
+        <li>
+          <a href="/blog/restore/" class="lev2 ">店長ブログ復旧</a>
+        </li>
+        <li>
+          <a href="/profile/" class="lev2 ">プロフィール編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+      
+      
+        
+          
+        
+        
+          
+        
+        
+          
+        
+      
+    
+    
+    
+    <li>
+      <span class="lev1">仕事情報管理</span>
+      <ul>
+        <li>
+          <a href="/job/" class="lev2 ">基本情報確認・編集</a>
+        </li>
+        
+                
+        
+        <li>
+          <a href="/jobsearchedit/" class="lev2 ">検索用情報確認・編集</a>
+        </li>
+        
+        
+                
+        
+        
+                
+        <li>
+          <a href="/imageedit/" class="lev2 ">画像確認・文言変更</a>
+        </li>
+                        <li>
+          <a href="/freespace/" class="lev2 ">フリースペース編集</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                            <li>
+          <a href="/privilegelist/" class="lev2 ">特典確認・編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+                <a href="/tainyu/" class="lev2 ">体験入店編集(未契約)</a>
+                
+        
+        
+        <li>
+          <a href="/dxitemlist/" class="lev2 ">Q＆A編集</a>
+        </li>
+                
+        
+        <li>
+          <a href="/drcontentslist/" class="lev2 ">編集部取材レポート</a>
+        </li>
+                
+      </ul>
+    </li>
+          
+            
+            <li>
+      <span class="lev1">デザイン管理</span>
+      <ul>
+        <li>
+          <a href="/shopcontentssort/" target="_blank" class="lev2 ">PC配置変更</a>
+        </li>
+      </ul>
+    </li>
+              
+            
+        
+    
+        
+    <li>
+      <span class="lev1">データ解析</span>
+      <ul>
+        <li>
+          <a href="/joblog/" class="lev2 active">アクセス解析</a>
+        </li>
+      </ul>
+    </li>
+        
+    <li>
+      <span class="lev1">通知設定</span>
+      <ul>
+        <li class="analysis">
+          <a href="/mailsetting/" class="lev2 ">メール通知設定</a>
+        </li>
+        <li class="analysis">
+          <a href="/sns_setting/" class="lev2 ">SNS通知設定</a>
+        </li>
+        
+        <li class="analysis">
+          <a href="/sms_setting/" class="lev2 ">SMS通知設定</a>
+        </li>
+        
+      </ul>
+    </li>
+    
+    
+    <li>
+      <span class="lev1">口コミ管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/reviewlist/" class="lev2 ">口コミ一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+        <li>
+      <span class="lev1">外部連携</span>
+      <ul>
+        <li class="analysis">
+          <a href="/twitter_setting/" class="lev2 ">Twitter連携</a>
+        </li>
+      </ul>
+    </li>
+        
+  </ul>
+</div>
+
+
+<script type="text/javascript">
+var voiceRenewEdit = document.getElementById('voicerenewedit');
+voiceRenewEdit.addEventListener("click", 
+  function() {
+    $.ajax({
+        'type' : 'POST',
+        'async': true,
+        'url'  : '/noscreen/ajax/',
+        'data' : {
+            'ajax_type' : 'voice_renew_check_regist_cnt'
+        }
+    }).done(function(data) {
+      if (data.reload == true) {
+        location.href = "/voice_renew/edit/";
+      }
+      else{
+        alert('登録上限の30 件（公開、非公開、予約含む）に達しているため新規の登録・複製はできません。登録する場合は既存の先輩ボイスを削除してください');
+      }
+    });
+});
+</script>
+
+<!--//#ucsMenu-->
+
+      
+
+<div id="ucsMainContent">
+<div class="sorting">
+  <h1>アクセス解析</h1>
+</div>
+
+<div class="infoArea">
+数値はリアルタイムで加算されます。<br>
+※検討中は、解除して再登録した方の数も追加でカウントされます
+
+</div>
+
+<div id="subContentsArea">
+<div id="questionlist">
+<form name="srvEntryListForm" class="profileForm accessanalysis" method="post" action="">
+
+<div id="entrySort">
+
+
+    
+
+
+
+
+
+<div id="entryYear">
+  <a href="javascript:void(0);" style="text-decoration:none;" data-submit="" value="sel_year:::202412:::sel_day:::20241231">
+    <img src="https://manager.girlsheaven-job.net/img/manager/paging_l.png" alt="ページング左ON" class="narrow">
+  </a>
+  <span id="allYear"><span id="year">2025</span><span id="yearText">年</span></span>
+  <img src="https://manager.girlsheaven-job.net/img/manager/paging_r_off.gif" alt="ページング右OFF" class="parrow">
+</div>
+
+<ul id="entryMonth">
+
+
+  
+        
+                    <li><a href="javascript:void(0);" data-submit="" value="sel_month:::20251:::sel_day:::20250101"><span class="noEntry">1月</span></a></li>
+                     
+                    <li><a href="javascript:void(0);" data-submit="" value="sel_month:::20252:::sel_day:::20250201"><span class="noEntry">2月</span></a></li>
+                     
+                    <li id="nowMonthLi"><span id="nowMonth"><a href="javascript:void(0);" data-submit="" value="sel_month:::20253:::sel_day:::20250301">3月</a></span></li>
+                     
+                <li><span class="noEntry">4月</span></li>
+                  
+                <li><span class="noEntry">5月</span></li>
+                  
+                <li><span class="noEntry">6月</span></li>
+                  
+                <li><span class="noEntry">7月</span></li>
+                  
+                <li><span class="noEntry">8月</span></li>
+                  
+                <li><span class="noEntry">9月</span></li>
+                  
+                <li><span class="noEntry">10月</span></li>
+                  
+                <li><span class="noEntry">11月</span></li>
+                  
+                <li class="lastItem on"><span class="noEntry">12月</span></li>
+          
+</ul>
+</div>
+
+<div id="entryShopInfo">
+ページタイプ：<span style="color: #F00;">レギュラー(A)</span>&nbsp;&nbsp;デコオプション：<span style="color: #F00;">未契約</span>&nbsp;&nbsp;DXオプション：<span style="color: #F00;">未契約</span>
+
+<style type="text/css">
+
+#entryShopInfo {
+    position: relative;
+}
+#joblogswitch_wrap {
+    position: absolute;
+    right: 4px;
+    bottom: 0;
+    width: 190px;
+    height: 52px;
+    text-align: center;
+    box-sizing: border-box;
+}
+#joblogswitch_wrap .joblogswitch_chk {
+    display: none;
+}
+#joblogswitch_wrap #joblogswitch_txt {
+    position: relative;
+    height: 24px;
+    line-height: 24px;
+    color: #666;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+#joblogswitch_wrap .open_notes {
+    margin: 0 0 0 4px;
+    position: relative;
+    top: 3px;
+    height: 16px;
+    vertical-align: top;
+}
+#joblogswitch_wrap #joblogswitch_box {
+    font-size: 0;
+}
+#joblogswitch_wrap #joblogswitch_box label {
+    display: inline-block;
+    width: 95px;
+    height: 25px;
+    line-height: 25px;
+    color: #1e8fff;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    background-color: #fff;
+    border: 2px solid #1e8fff;
+    box-sizing: border-box;
+    vertical-align: top;
+    cursor: pointer;
+}
+#joblogswitch_wrap #joblogswitch_box label:nth-of-type(1) {
+    border-radius: 5px 0 0 5px;
+}
+#joblogswitch_wrap #joblogswitch_box label:nth-of-type(2) {
+    border-radius: 0 5px 5px 0;
+}
+#joblogswitch_wrap #joblogswitch_chk1:checked ~ #joblogswitch_box label:nth-of-type(1) {
+    color: #fff;
+    background-color: #1e8fff;
+    cursor: default;
+}
+#joblogswitch_wrap #joblogswitch_chk2:checked ~ #joblogswitch_box label:nth-of-type(2) {
+    color: #fff;
+    background-color: #1e8fff;
+    cursor: default;
+}
+#joblognote {
+    display: none;
+    border-radius: 5px;
+    background-color: #d1ffc5;
+    position: absolute;
+    top: -86px;
+    right: -10px;
+    padding: 5px 8px;
+    width: 254px;
+    height: 68px;
+    line-height: 17px;
+    color: #f00;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: left;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+}
+#joblognote::before,
+#joblognote::after {
+    content: '';
+    position: absolute;
+    right: 35px;
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+}
+#joblognote::before {
+    bottom: -8px;
+    border-top: 8px solid #d1ffc5;
+}
+#joblognote::after {
+    bottom: -6px;
+    border-top: 8px solid #d1ffc5;
+}
+
+</style>
+<div id="joblogswitch_wrap">
+    <div id="joblogswitch_txt">アクション数 表示切替<img class="open_notes" src="https://manager.girlsheaven-job.net/img/manager/icon_question.png?cache01=20230828093251&amp;imgopt=y"></div>
+    <input type="radio" id="joblogswitch_chk1" class="joblogswitch_chk" name="joblogswitch_chk" value="1" autocomplete="off" checked="">
+    <input type="radio" id="joblogswitch_chk2" class="joblogswitch_chk" name="joblogswitch_chk" value="2" autocomplete="off">
+    <div id="joblogswitch_box">
+        <label for="joblogswitch_chk1">ユニーク数</label>
+        <label for="joblogswitch_chk2">総数</label>
+    </div>
+    <div id="joblognote">ユニーク数は1ユーザーにつき1アクションとしてカウントします。1日に同一ユーザーから複数アクションがあった場合でもアクション数は1回としてカウントされます。</div>
+</div>
+<script type="text/javascript">
+
+$(function() {
+    $(document).on('change', '.joblogswitch_chk', function() {
+        var s = '.joblog1';
+        var h = '.joblog2';
+        if ($(this).val() == '2') {
+            s = '.joblog2';
+            h = '.joblog1';
+        }
+        $(h).hide();
+        $(s).fadeIn(600);
+    });
+    $('#joblogswitch_wrap .open_notes').mouseover(function() {
+        $('#joblognote').fadeIn();
+    }).mouseout(function() {
+        $('#joblognote').fadeOut();
+    });
+});
+
+</script>
+
+
+</div>
+
+<div id="questionlist">
+
+
+
+<table id="t1" class="joblog1">
+
+  <tbody>
+    <tr class="tr006 tranalysis">
+      <th rowspan="2" class="th01">日付</th>
+      <th rowspan="2" class="th01">ページタイプ</th>
+
+
+
+      <th colspan="4" class="th01">アクセス状況</th>
+      
+      
+      
+      
+      <th colspan="6" class="th01">
+          <span>アクション状況(ユニーク)</span>
+      </th>
+      
+      
+
+
+      <th colspan="3" class="th01">更新状況</th>
+    </tr>
+    <tr class="tr006 tranalysis">
+      <th class="th01">総数</th>
+      <th class="th01">PC</th>
+      <th class="th01">スマホ</th>
+
+      <th class="th01">検討中</th>
+
+      <th class="th01">応募</th>
+      <th class="th01">質問</th>
+      <th class="th01">電話</th>
+      <th class="th01">メール</th>
+
+      <th class="th01">SNS</th>
+      
+      <th class="th01">オファー</th>
+      
+
+
+
+
+      <th class="th01">ブログ</th>
+      <th class="th01">動画</th>
+      
+      
+      <th class="th01">表示順<br>Up</th>
+      
+    </tr>
+
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/1</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/2</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/3</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/4</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/5</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/6</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/7</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/8</td>
+      
+      
+                <td class="td02">レギュラー(A)</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/9</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/10</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/11</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/12</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/13</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/14</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/15</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/16</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/17</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/18</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/19</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/20</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/21</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/22</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/23</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/24</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/25</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/26</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/27</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/28</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/29</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/30</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/31</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+    
+    <tr class="tr01 tranalysis">
+      <td class="td02">合計</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+      
+
+
+
+
+      
+      
+      <td class="td02">0</td>
+      
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+    </tr>
+    
+    <tr class="tr006 tranalysis">
+      <th rowspan="2" class="th01">日付</th>
+      <th rowspan="2" class="th01">ページタイプ</th>
+
+
+
+      <th colspan="4" class="th01">アクセス状況</th>
+      
+      
+      
+      
+      <th colspan="6" class="th01">
+          <span>アクション状況(ユニーク)</span>
+      </th>
+      
+      
+
+
+      <th colspan="3" class="th01">更新状況</th>
+    </tr>
+    <tr class="tr006 tranalysis">
+      <th class="th01">総数</th>
+      <th class="th01">PC</th>
+      <th class="th01">スマホ</th>
+
+      <th class="th01">検討中</th>
+
+      <th class="th01">応募</th>
+      <th class="th01">質問</th>
+      <th class="th01">電話</th>
+      <th class="th01">メール</th>
+
+      <th class="th01">SNS</th>
+
+
+
+
+      
+      <th class="th01">オファー</th>
+      
+      <th class="th01">ブログ</th>
+      <th class="th01">動画</th>
+      
+      <th class="th01">表示順<br>Up</th>
+      
+    </tr>
+
+    <tr class="tr01 tranalysis tranalysisTittle">
+      <td class="th01"></td>
+      <td class="th01">-</td>
+      <td class="th01">日平均</td>
+      <td class="th01">日平均</td>
+      <td class="th01">日平均</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+
+      
+      <td class="th01">月合計</td>
+      
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      </tr>
+    <tr class="tr01 tranalysis">
+      <td class="td02">今月</td>
+      <td class="td02">-</td>
+        <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+                <td class="td02">0</td>
+      
+
+      
+      <td class="td02">0</td>
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+    </tr>
+    <tr class="tr01 tranalysis">
+      <td class="td02">前月</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+                <td class="td02">0</td>
+       
+
+      
+      <td class="td02">0</td>
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+            
+                <td class="td02">0</td>
+            
+                <td class="td02">0</td>
+      
+      </tr>
+
+    
+                                
+        
+    
+        
+            
+
+    <tr class="tr01 tranalysis">
+      <td class="td02">増減</td>
+      <td class="td02">-</td>
+
+      
+                <td class="td02">0</td>
+      
+                <td class="td02">0</td>
+      
+      
+
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+
+
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      </tr>
+  </tbody>
+</table>
+
+
+  <table id="t2" class="joblog2">
+
+  <tbody>
+    <tr class="tr006 tranalysis">
+      <th rowspan="2" class="th01">日付</th>
+      <th rowspan="2" class="th01">ページタイプ</th>
+
+
+
+      <th colspan="4" class="th01">アクセス状況</th>
+      
+      
+      
+      
+      <th colspan="6" class="th01">
+          <span>アクション状況(総数)</span>
+      </th>
+      
+      
+
+
+      <th colspan="3" class="th01">更新状況</th>
+    </tr>
+    <tr class="tr006 tranalysis">
+      <th class="th01">総数</th>
+      <th class="th01">PC</th>
+      <th class="th01">スマホ</th>
+
+      <th class="th01">検討中</th>
+
+      <th class="th01">応募</th>
+      <th class="th01">質問</th>
+      <th class="th01">電話</th>
+      <th class="th01">メール</th>
+
+      <th class="th01">SNS</th>
+      
+      <th class="th01">オファー</th>
+      
+
+
+
+
+      <th class="th01">ブログ</th>
+      <th class="th01">動画</th>
+      
+      
+      <th class="th01">表示順<br>Up</th>
+      
+    </tr>
+
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/1</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/2</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/3</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/4</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/5</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/6</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/7</td>
+      
+      
+                <td class="td02">-</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+            
+      
+              <td class="td02">3/8</td>
+      
+      
+                <td class="td02">レギュラー(A)</td>
+      
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+              <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+              <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+              <td class="td02">0</td>
+            
+
+      
+              
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+        
+        
+                  <td class="td02">0</td>
+              
+      
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/9</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/10</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/11</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/12</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/13</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/14</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/15</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/16</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/17</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/18</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/19</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/20</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/21</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/22</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/23</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/24</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/25</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/26</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/27</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/28</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01" style="background: #DDF0FF;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/29</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+      <tr class="tr01" style="background: #FFDDF0;">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/30</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+  
+    
+       <tr class="tr01">
+  
+  
+        
+        
+  
+      
+      <td class="td02">3/31</td>
+    
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">-</td>
+      
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+      <td class="td02">-</td>
+    </tr>
+
+    
+    <tr class="tr01 tranalysis">
+      <td class="td02">合計</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+
+      
+      <td class="td02">0</td>
+
+      
+
+
+
+
+      
+      
+      <td class="td02">0</td>
+      
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+      
+      <td class="td02">0</td>
+
+    </tr>
+    
+    <tr class="tr006 tranalysis">
+      <th rowspan="2" class="th01">日付</th>
+      <th rowspan="2" class="th01">ページタイプ</th>
+
+
+
+      <th colspan="4" class="th01">アクセス状況</th>
+      
+      
+      
+      
+      <th colspan="6" class="th01">
+          <span>アクション状況(総数)</span>
+      </th>
+      
+      
+
+
+      <th colspan="3" class="th01">更新状況</th>
+    </tr>
+    <tr class="tr006 tranalysis">
+      <th class="th01">総数</th>
+      <th class="th01">PC</th>
+      <th class="th01">スマホ</th>
+
+      <th class="th01">検討中</th>
+
+      <th class="th01">応募</th>
+      <th class="th01">質問</th>
+      <th class="th01">電話</th>
+      <th class="th01">メール</th>
+
+      <th class="th01">SNS</th>
+
+
+
+
+      
+      <th class="th01">オファー</th>
+      
+      <th class="th01">ブログ</th>
+      <th class="th01">動画</th>
+      
+      <th class="th01">表示順<br>Up</th>
+      
+    </tr>
+
+    <tr class="tr01 tranalysis tranalysisTittle">
+      <td class="th01"></td>
+      <td class="th01">-</td>
+      <td class="th01">日平均</td>
+      <td class="th01">日平均</td>
+      <td class="th01">日平均</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+
+      
+      <td class="th01">月合計</td>
+      
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      <td class="th01">月合計</td>
+      </tr>
+    <tr class="tr01 tranalysis">
+      <td class="td02">今月</td>
+      <td class="td02">-</td>
+        <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+                <td class="td02">0</td>
+      
+
+      
+      <td class="td02">0</td>
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+    </tr>
+    <tr class="tr01 tranalysis">
+      <td class="td02">前月</td>
+      <td class="td02">-</td>
+
+      
+      <td class="td02">0</td>
+      <td class="td02">0</td>
+      
+      <td class="td02">0</td>
+
+
+      
+                <td class="td02">0</td>
+       
+
+      
+      <td class="td02">0</td>
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+            
+                <td class="td02">0</td>
+            
+                <td class="td02">0</td>
+      
+      </tr>
+
+    
+                                
+        
+    
+        
+            
+
+    <tr class="tr01 tranalysis">
+      <td class="td02">増減</td>
+      <td class="td02">-</td>
+
+      
+                <td class="td02">0</td>
+      
+                <td class="td02">0</td>
+      
+      
+
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+
+      
+                <td class="td02">0</td>
+      
+      
+
+
+
+
+
+
+
+
+
+
+      
+                <td class="td02">0</td>
+            
+
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      
+                <td class="td02">0</td>
+      
+      </tr>
+  </tbody>
+</table>
+
+
+
+</div>
+
+</form>
+
+
+</div>
+</div>
+
+
+</div>
+  <div class="joblog_notice">
+    <p>
+    ※上記の「アクセス数」は"PV"を示しています。ただしランキングは"訪問者数"を基に序列しています。<br>
+    （訪問者数は弊社独自の集計方法にて算出しています。なお公平を期すためデータは非公開とさせていただきます。）<br>
+    ※「アクション数」の各項目はPC・スマホの合計値になります。
+    </p>
+  </div>
+</div>
+</div>
+
+  
+  <p id="pageTop" style="display: none;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+  
+
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>
