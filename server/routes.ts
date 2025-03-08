@@ -1015,8 +1015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestBody: req.body,
         timestamp: new Date().toISOString()
       });
-      res.status(400).json({
-        error: true,
+      res.status(400).json({        error: true,
         message: error instanceof Error ? error.message :"ユーザー情報の更新に失敗しました"
       });
     }

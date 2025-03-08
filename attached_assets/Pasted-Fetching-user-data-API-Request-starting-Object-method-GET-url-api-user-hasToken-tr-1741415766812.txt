@@ -1,0 +1,71 @@
+Fetching user data...
+API Request starting: 
+Object {method: "GET", url: "/api/user", hasToken: true, timestamp: "2025-03-08T06:35:20.393Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:20.430Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-08T06:35:20.562Z"}
+
+Fetching user data...
+API Request starting: 
+Object {method: "GET", url: "/api/user", hasToken: true, timestamp: "2025-03-08T06:35:21.563Z"}
+API Request Failed: 
+Object {method: "GET", url: "/api/user", error: "トークンが無効です", timestamp: "2025-03-08T06:35:21.680Z"}
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:21.681Z"}
+店舗ログイン試行: 
+Object {username: "store_test", timestamp: "2025-03-08T06:35:44.202Z"}
+Login attempt: 
+Object {username: "store_test", role: "store", timestamp: "2025-03-08T06:35:44.205Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:44.208Z"}
+Login error response: 
+Object {status: 401, statusText: "Unauthorized", responseText: "{"message":"認証に失敗しました"}", timestamp: "2025-03-08T06:35:47.386Z"}
+
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T06:35:47.386Z"}
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T06:35:47.387Z"}
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:47.388Z"}
+店舗ログイン試行: 
+Object {username: "store_test", timestamp: "2025-03-08T06:35:55.939Z"}
+Login attempt: 
+Object {username: "store_test", role: "store", timestamp: "2025-03-08T06:35:55.942Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:55.945Z"}
+Login error response: 
+Object {status: 401, statusText: "Unauthorized", responseText: "{"message":"認証に失敗しました"}", timestamp: "2025-03-08T06:35:56.123Z"}
+
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T06:35:56.123Z"}
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T06:35:56.123Z"}
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:56.124Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:56.588Z"}
+店舗ログイン試行: 
+Object {username: "store_test", timestamp: "2025-03-08T06:35:56.859Z"}
+Login attempt: 
+Object {username: "store_test", role: "store", timestamp: "2025-03-08T06:35:56.861Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:56.864Z"}
+Login error response: 
+Object {status: 401, statusText: "Unauthorized", responseText: "{"message":"認証に失敗しました"}", timestamp: "2025-03-08T06:35:57.037Z"}
+
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T06:35:57.038Z"}
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T06:35:57.038Z"}
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:35:57.039Z"}
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:36:01.129Z"}
