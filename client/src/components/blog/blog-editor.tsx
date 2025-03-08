@@ -72,6 +72,7 @@ const imageResizeCSS = `
 .ql-editor img {
   position: relative;
   display: inline-block;
+  max-width: 100%;
 }
 
 .ql-editor img:hover {
@@ -89,6 +90,7 @@ const imageResizeCSS = `
   background: white;
   border: 1px solid #4299e1;
   border-radius: 50%;
+  z-index: 100;
 }
 
 .resize-handle.se {
@@ -99,34 +101,79 @@ const imageResizeCSS = `
 `;
 
 // カスタムスタイルを追加
-const style = document.createElement('style');
-style.textContent = imageResizeCSS;
-document.head.appendChild(style);
+if (typeof window !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = imageResizeCSS;
+  document.head.appendChild(style);
+}
 
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
 
-  // 画像リサイズ機能を追加
+  // Quillインスタンスとモジュールを取得
   const Quill = RQ.Quill;
-  const Parchment = Quill.import('parchment');
 
-  class ImageResize extends Parchment.Embed {
-    static create(value: string) {
-      const node = super.create(value);
-      node.setAttribute('src', value);
-      return node;
-    }
+  // カスタムモジュールを追加
+  Quill.register('modules/imageResize', function(quill: any) {
+    quill.on('editor-change', function() {
+      const editor = quill.root;
+      const images = editor.getElementsByTagName('img');
 
-    static value(node: HTMLElement) {
-      return node.getAttribute('src');
-    }
-  }
+      Array.from(images).forEach((img: HTMLImageElement) => {
+        if (!img.parentElement || img.getAttribute('data-resize-initialized')) return;
 
-  ImageResize.blotName = 'imageResize';
-  ImageResize.tagName = 'img';
+        img.setAttribute('data-resize-initialized', 'true');
 
-  Quill.register(ImageResize);
+        // リサイズハンドルを追加
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle se';
+        img.parentElement.style.position = 'relative';
+        img.parentElement.appendChild(handle);
+
+        let isResizing = false;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+          isResizing = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startWidth = img.offsetWidth;
+          startHeight = img.offsetHeight;
+          img.classList.add('resizing');
+
+          const onMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            // アスペクト比を維持しながらリサイズ
+            const aspectRatio = startWidth / startHeight;
+            const width = Math.max(50, startWidth + deltaX);
+            const height = width / aspectRatio;
+
+            img.style.width = `${width}px`;
+            img.style.height = `${height}px`;
+          };
+
+          const onMouseUp = () => {
+            isResizing = false;
+            img.classList.remove('resizing');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+          e.preventDefault();
+        });
+      });
+    });
+  });
 
   return function wrap(props: any) {
     return <RQ {...props} ref={props.forwardedRef} />;
@@ -144,9 +191,10 @@ const modules = {
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: ["", "center", "right", "justify"] }],
-    ["link"],
+    ["link", "image"],
     ["clean"]
-  ]
+  ],
+  imageResize: true
 };
 
 const formats = [
@@ -182,8 +230,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
-    queryFn: () => apiRequest("GET", "/api/store/images"),
-    enabled: !!user?.id
+    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_IMAGES),
+    enabled: !!user?.id,
   });
 
   const form = useForm({
@@ -196,70 +244,121 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  // 画像リサイズの初期化
-  const initializeImageResize = useCallback(() => {
-    const editor = document.querySelector('.ql-editor');
-    if (!editor) return;
+  const handleImageUpload = async (file: File) => {
+    try {
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ログインが必要です",
+        });
+        return;
+      }
 
-    const images = editor.getElementsByTagName('img');
-    Array.from(images).forEach(img => {
-      if (!img.parentElement) return;
+      setIsUploading(true);
 
-      // リサイズハンドルを追加
-      const handle = document.createElement('div');
-      handle.className = 'resize-handle se';
-      img.parentElement.style.position = 'relative';
-      img.parentElement.appendChild(handle);
+      const formData = new FormData();
+      formData.append("image", file);
 
-      let isResizing = false;
-      let startX = 0;
-      let startY = 0;
-      let startWidth = 0;
-      let startHeight = 0;
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        { rawFormData: true }
+      );
 
-      handle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = img.offsetWidth;
-        startHeight = img.offsetHeight;
-        img.classList.add('resizing');
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
+      }
 
-        const onMouseMove = (e: MouseEvent) => {
-          if (!isResizing) return;
+      // Quillエディタのインスタンスを取得
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
 
-          const deltaX = e.clientX - startX;
-          const deltaY = e.clientY - startY;
-          const newWidth = startWidth + deltaX;
-          const newHeight = startHeight + deltaY;
+      // 現在のカーソル位置を取得
+      const range = quill.getSelection(true);
 
-          const aspectRatio = startWidth / startHeight;
-          const width = Math.max(50, newWidth);
-          const height = width / aspectRatio;
+      // 画像を挿入
+      quill.insertEmbed(range.index, "image", response.url);
+      quill.setSelection(range.index + 1);
 
-          img.style.width = `${width}px`;
-          img.style.height = `${height}px`;
-        };
+      // アップロード済み画像リストを更新
+      const newImages = [...uploadedImages, response.url];
+      setUploadedImages(newImages);
+      form.setValue("images", newImages);
 
-        const onMouseUp = () => {
-          isResizing = false;
-          img.classList.remove('resizing');
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-        };
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+      toast({
+        title: "成功",
+        description: "画像がアップロードされました",
       });
-    });
-  }, []);
+    } catch (error) {
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-  // エディタの内容が変更されたときにリサイズハンドルを再初期化
-  const handleEditorChange = useCallback((content: string) => {
-    form.setValue("content", content);
-    setTimeout(initializeImageResize, 100);
-  }, [form, initializeImageResize]);
+  const insertImage = (imageUrl: string) => {
+    try {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
 
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, "image", imageUrl);
+      quill.setSelection(range.index + 1);
+      setIsImageLibraryOpen(false);
+    } catch (error) {
+      console.error('Image insertion error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像の挿入に失敗しました",
+      });
+    }
+  };
+
+  // フォームの送信処理
+  const onSubmit = async (data: typeof form.getValues) => {
+    try {
+      // 本文内の画像URLを収集
+      const editor = document.querySelector('.ql-editor');
+      const images = editor?.getElementsByTagName('img') || [];
+      const imageUrls = Array.from(images).map(img => img.getAttribute('src')).filter(Boolean) as string[];
+
+      // フォームデータを更新
+      const formData = {
+        ...data,
+        images: imageUrls
+      };
+
+      if (postId) {
+        await updateMutation.mutateAsync(formData);
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "保存に失敗しました",
+      });
+    }
+  };
+
+  // 以下、コンポーネントのレンダリング部分は変更なし
   const createMutation = useMutation({
     mutationFn: (data: typeof form.getValues) =>
       apiRequest("POST", "/api/blog/posts", data),
@@ -297,126 +396,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleImageUpload = async (file: File) => {
-    try {
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ログインが必要です",
-        });
-        return;
-      }
-
-      setIsUploading(true);
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        {
-          rawFormData: true
-        }
-      );
-
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
-      }
-
-      // Quillエディタのインスタンスを取得
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      // 現在のカーソル位置を取得
-      const range = quill.getSelection(true);
-
-      // 画像を挿入
-      quill.insertEmbed(range.index, "image", response.url);
-      quill.setSelection(range.index + 1);
-
-      // アップロード済み画像リストを更新
-      const newImages = [...uploadedImages, response.url];
-      setUploadedImages(newImages);
-      form.setValue("images", newImages);
-
-      toast({
-        title: "成功",
-        description: "画像がアップロードされました",
-      });
-
-      // リサイズハンドルを初期化
-      setTimeout(initializeImageResize, 100);
-    } catch (error) {
-      console.error('Image upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
-      });
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const insertImage = (imageUrl: string) => {
-    try {
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      const range = quill.getSelection(true);
-      quill.insertEmbed(range.index, "image", imageUrl);
-      quill.setSelection(range.index + 1);
-      setIsImageLibraryOpen(false);
-
-      // リサイズハンドルを初期化
-      setTimeout(initializeImageResize, 100);
-    } catch (error) {
-      console.error('Image insertion error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像の挿入に失敗しました",
-      });
-    }
-  };
-
-  const onSubmit = async (data: typeof form.getValues) => {
-    try {
-      // 本文内の画像URLを収集
-      const editor = document.querySelector('.ql-editor');
-      const images = editor?.getElementsByTagName('img') || [];
-      const imageUrls = Array.from(images).map(img => img.getAttribute('src')).filter(Boolean) as string[];
-
-      // フォームデータを更新
-      const formData = {
-        ...data,
-        images: imageUrls
-      };
-
-      if (postId) {
-        await updateMutation.mutateAsync(formData);
-      } else {
-        await createMutation.mutateAsync(formData);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "保存に失敗しました",
-      });
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -566,7 +545,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               modules={modules}
                               formats={formats}
                               value={field.value}
-                              onChange={handleEditorChange}
+                              onChange={field.onChange}
                               placeholder="記事の本文を入力"
                               className="min-h-[400px]"
                             />
@@ -660,11 +639,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button>
-                {createMutation.isPending || updateMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
+                <Save className="h-4 w-4 mr-2" />
                 公開する
               </Button>
             </AlertDialogTrigger>

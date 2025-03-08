@@ -7,8 +7,10 @@ export const QUERY_KEYS = {
   JOBS_STORE: "/api/jobs/store",
   JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
   SIGNED_URL: "/api/get-signed-url",
-  // ブログ関連のクエリキーを追加
+  // ブログ関連のクエリキー
   BLOG_POSTS: "/api/blog/posts",
   BLOG_POST_DETAIL: (id: string) => `/api/blog/posts/${id}`,
-  BLOG_POST_STATUS: (id: string) => `/api/blog/posts/${id}/status`
+  BLOG_POST_STATUS: (id: string) => `/api/blog/posts/${id}/status`,
+  // 店舗画像関連のクエリキー
+  STORE_IMAGES: "/api/store/images"
 } as const;
