@@ -40,8 +40,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +52,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   Clock,
@@ -67,6 +67,9 @@ import {
   Plus,
   X,
   Copy,
+  Trash,
+  Info,
+  Link,
 } from "lucide-react";
 
 // Quillエディターを動的にインポート
@@ -432,12 +435,73 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  // コンテキストメニューを画面内に収めるための調整関数
+  const adjustMenuPosition = (x: number, y: number, menuWidth: number, menuHeight: number) => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    let adjustedX = x;
+    let adjustedY = y;
+
+    if (x + menuWidth > windowWidth) {
+      adjustedX = windowWidth - menuWidth - 10;
+    }
+
+    if (y + menuHeight > windowHeight) {
+      adjustedY = windowHeight - menuHeight - 10;
+    }
+
+    return { x: adjustedX, y: adjustedY };
+  };
+
+  // コンテキストメニューを表示する関数
+  const showContextMenu = (e: React.MouseEvent, imageUrl: string, width: number, height: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const menuWidth = 200; // コンテキストメニューの幅
+    const menuHeight = 150; // コンテキストメニューの高さ
+    const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
+
+    setContextMenu((prev) => ({
+      ...prev,
+      show: true,
+      x,
+      y,
+      image: {
+        url: imageUrl,
+        width,
+        height,
+      },
+    }));
+  };
+
+  // コンテキストメニューを閉じる関数
+  const hideContextMenu = () => {
+    setContextMenu((prev) => ({ ...prev, show: false }));
+  };
+
+  // クリックイベントでコンテキストメニューを閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (contextMenu.show) {
+        const menuElement = document.getElementById('context-menu');
+        if (menuElement && !menuElement.contains(e.target as Node)) {
+          hideContextMenu();
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenu.show]);
+
+
   useEffect(() => {
     const handleClick = () => setContextMenu((prev) => ({ ...prev, show: false }));
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, []);
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -591,21 +655,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                   className="relative aspect-square cursor-pointer group"
                                   onClick={() => insertImage(image.url)}
                                   onContextMenu={(e) => {
-                                    e.preventDefault();
                                     const img = e.currentTarget.querySelector('img');
                                     if (img) {
-                                      const rect = img.getBoundingClientRect();
-                                      setContextMenu((prev) => ({
-                                        ...prev,
-                                        show: true,
-                                        x: e.clientX,
-                                        y: e.clientY,
-                                        image: {
-                                          url: image.url,
-                                          width: img.naturalWidth,
-                                          height: img.naturalHeight,
-                                        },
-                                      }));
+                                      showContextMenu(e, image.url, img.naturalWidth, img.naturalHeight);
                                     }
                                   }}
                                 >
@@ -615,15 +667,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     className="w-full h-full object-cover rounded-md"
                                     onLoad={(e) => {
                                       const img = e.target as HTMLImageElement;
-                                      if (img) {
-                                        setImageSizes(prev => ({
-                                          ...prev,
-                                          [image.url]: {
-                                            width: img.naturalWidth,
-                                            height: img.naturalHeight,
-                                          },
-                                        }));
-                                      }
+                                      setImageSizes(prev => ({
+                                        ...prev,
+                                        [image.url]: {
+                                          width: img.naturalWidth,
+                                          height: img.naturalHeight,
+                                        },
+                                      }));
                                     }}
                                   />
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
@@ -802,31 +852,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </AlertDialog>
         </CardFooter>
       </Card>
-      {/* コンテキストメニュー */}
+      {/* カスタムコンテキストメニュー */}
       {contextMenu.show && (
         <div
+          id="context-menu"
           className="fixed z-50 bg-white rounded-lg shadow-lg py-1 min-w-[200px]"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <button
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-            onClick={() => {
-              if (contextMenu.image) {
-                navigator.clipboard.writeText(contextMenu.image.url);
-                toast({
-                  title: "コピーしました",
-                  description: "画像URLをクリップボードにコピーしました",
-                });
-              }
-              setContextMenu((prev) => ({ ...prev, show: false }));
-            }}
-          >
-            <Copy className="h-4 w-4" />
-            URLをコピー
-          </button>
+          <div className="px-2 py-1 text-sm font-medium text-gray-500 bg-gray-50">
+            画像オプション
+          </div>
+
           <button
             className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
             onClick={async () => {
@@ -840,7 +880,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     })
                   ]);
                   toast({
-                    title: "コピーしました",
+                    title: "成功",
                     description: "画像をクリップボードにコピーしました",
                   });
                 } catch (error) {
@@ -851,15 +891,40 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   });
                 }
               }
-              setContextMenu((prev) => ({ ...prev, show: false }));
+              hideContextMenu();
             }}
           >
-            <Image className="h-4 w-4" />
-            画像をコピー
+            <Copy className="h-4 w-4" />
+            コピー
           </button>
+
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              if (contextMenu.image) {
+                navigator.clipboard.writeText(contextMenu.image.url);
+                toast({
+                  title: "成功",
+                  description: "画像URLをコピーしました",
+                });
+              }
+              hideContextMenu();
+            }}
+          >
+            <Link className="h-4 w-4" />
+            URLをコピー
+          </button>
+
           <Separator className="my-1" />
-          <div className="px-4 py-2 text-sm text-gray-500">
-            画像サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px
+
+          <div className="px-4 py-2 text-sm text-gray-500 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            <div>
+              <div>サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px</div>
+              <div className="text-xs text-gray-400">
+                {((contextMenu.image?.width || 0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
+              </div>
+            </div>
           </div>
         </div>
       )}
