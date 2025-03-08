@@ -22,6 +22,7 @@ type AuthContextType = {
 type LoginData = {
   username: string;
   password: string;
+  role?: "talent" | "store";
 };
 
 // 登録用のデータ型
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('User data fetched:', {
           userId: response?.id,
           username: response?.username,
+          role: response?.role,
           timestamp: new Date().toISOString()
         });
         return response;
@@ -56,24 +58,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-    retry: 2
+    retry: 1
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
+      const endpoint = credentials.role === "store" 
+        ? "/api/auth/manager/login" 
+        : "/api/auth/login";
+
       console.log('Login attempt:', {
         username: credentials.username,
+        role: credentials.role,
+        endpoint,
         timestamp: new Date().toISOString()
       });
 
-      const user = await apiRequest<{ user: SelectUser; token: string }>("POST", "/api/login", credentials);
-      localStorage.setItem("auth_token", user.token);
-      return user.user;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ログインに失敗しました");
+      }
+
+      const result = await response.json();
+      if (result.token) {
+        localStorage.setItem("auth_token", result.token);
+      }
+      return result.user;
     },
     onSuccess: (user: SelectUser) => {
       console.log('Login successful:', {
         userId: user.id,
         username: user.username,
+        role: user.role,
         timestamp: new Date().toISOString()
       });
       queryClient.setQueryData(["/api/user"], user);
@@ -97,7 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest<void>("POST", "/api/logout");
+      const endpoint = user?.role === "store" 
+        ? "/api/auth/manager/logout" 
+        : "/api/auth/logout";
+
+      await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+      });
       localStorage.removeItem("auth_token");
     },
     onSuccess: () => {
@@ -118,9 +148,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const user = await apiRequest<{ user: SelectUser; token: string }>("POST", "/api/register", credentials);
-      localStorage.setItem("auth_token", user.token);
-      return user.user;
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "登録に失敗しました");
+      }
+
+      const result = await response.json();
+      if (result.token) {
+        localStorage.setItem("auth_token", result.token);
+      }
+      return result.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -143,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasUser: !!user,
     userId: user?.id,
     username: user?.username,
+    role: user?.role,
     timestamp: new Date().toISOString()
   });
 

@@ -17,12 +17,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { loginMutation } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -37,21 +39,25 @@ export default function ManagerLogin() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/auth/manager/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
+      console.log('店舗ログイン試行:', {
+        username: data.username,
+        timestamp: new Date().toISOString()
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
-      }
+      await loginMutation.mutateAsync(data);
+
+      console.log('店舗ログイン成功:', {
+        timestamp: new Date().toISOString()
+      });
 
       // ログイン成功時は店舗ダッシュボードへ
       setLocation("/manager/dashboard");
     } catch (error) {
+      console.error('店舗ログインエラー:', {
+        error,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
