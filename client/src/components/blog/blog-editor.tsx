@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +53,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   Calendar,
   Clock,
@@ -65,6 +66,7 @@ import {
   Image,
   Plus,
   X,
+  Copy,
 } from "lucide-react";
 
 // Quillエディターを動的にインポート
@@ -120,6 +122,22 @@ interface StoreImage {
   createdAt: string;
 }
 
+interface ContextMenuState {
+  show: boolean;
+  x: number;
+  y: number;
+  image?: {
+    url: string;
+    width: number;
+    height: number;
+  };
+}
+
+interface ImageSize {
+  width: number;
+  height: number;
+}
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
@@ -132,6 +150,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({ show: false, x: 0, y: 0 });
+  const [imageSizes, setImageSizes] = useState<Record<string, ImageSize>>({});
 
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
@@ -412,6 +432,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  useEffect(() => {
+    const handleClick = () => setContextMenu((prev) => ({ ...prev, show: false }));
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -564,11 +590,41 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                   key={image.id}
                                   className="relative aspect-square cursor-pointer group"
                                   onClick={() => insertImage(image.url)}
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    const img = e.currentTarget.querySelector('img');
+                                    if (img) {
+                                      const rect = img.getBoundingClientRect();
+                                      setContextMenu((prev) => ({
+                                        ...prev,
+                                        show: true,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                        image: {
+                                          url: image.url,
+                                          width: img.naturalWidth,
+                                          height: img.naturalHeight,
+                                        },
+                                      }));
+                                    }
+                                  }}
                                 >
                                   <img
                                     src={image.url}
                                     alt="ライブラリの画像"
                                     className="w-full h-full object-cover rounded-md"
+                                    onLoad={(e) => {
+                                      const img = e.target as HTMLImageElement;
+                                      if (img) {
+                                        setImageSizes(prev => ({
+                                          ...prev,
+                                          [image.url]: {
+                                            width: img.naturalWidth,
+                                            height: img.naturalHeight,
+                                          },
+                                        }));
+                                      }
+                                    }}
                                   />
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                                     <Button variant="secondary" size="sm">
@@ -746,6 +802,67 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </AlertDialog>
         </CardFooter>
       </Card>
+      {/* コンテキストメニュー */}
+      {contextMenu.show && (
+        <div
+          className="fixed z-50 bg-white rounded-lg shadow-lg py-1 min-w-[200px]"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+          }}
+        >
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              if (contextMenu.image) {
+                navigator.clipboard.writeText(contextMenu.image.url);
+                toast({
+                  title: "コピーしました",
+                  description: "画像URLをクリップボードにコピーしました",
+                });
+              }
+              setContextMenu((prev) => ({ ...prev, show: false }));
+            }}
+          >
+            <Copy className="h-4 w-4" />
+            URLをコピー
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={async () => {
+              if (contextMenu.image) {
+                try {
+                  const response = await fetch(contextMenu.image.url);
+                  const blob = await response.blob();
+                  await navigator.clipboard.write([
+                    new ClipboardItem({
+                      [blob.type]: blob
+                    })
+                  ]);
+                  toast({
+                    title: "コピーしました",
+                    description: "画像をクリップボードにコピーしました",
+                  });
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "エラー",
+                    description: "画像のコピーに失敗しました",
+                  });
+                }
+              }
+              setContextMenu((prev) => ({ ...prev, show: false }));
+            }}
+          >
+            <Image className="h-4 w-4" />
+            画像をコピー
+          </button>
+          <Separator className="my-1" />
+          <div className="px-4 py-2 text-sm text-gray-500">
+            画像サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px
+          </div>
+        </div>
+      )}
     </div>
   );
 }
