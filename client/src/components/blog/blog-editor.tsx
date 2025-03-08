@@ -34,6 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,14 +56,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Calendar,
   Clock,
   Image as ImageIcon,
@@ -67,8 +67,13 @@ import {
   Image,
 } from "lucide-react";
 
-// Quillエディターを動的にインポート（SSRの問題を回避）
-const ReactQuill = dynamic(() => import("react-quill"), {
+// Quillエディターを動的にインポート
+const ReactQuill = dynamic(async () => {
+  const { default: RQ } = await import("react-quill");
+  return function wrap(props: any) {
+    return <RQ {...props} ref={props.forwardedRef} />;
+  };
+}, {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
@@ -113,6 +118,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const quillRef = useRef<any>(null);
   const { toast } = useToast();
 
   // 店舗の全画像を取得
@@ -215,7 +221,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const formData = new FormData();
       formData.append("image", file);
 
-
       try {
         const response = await apiRequest<{ url: string; key: string }>(
           "POST",
@@ -230,22 +235,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           throw new Error("アップロードされた画像のURLが取得できません");
         }
 
-        // 画像URLをエディタに挿入
-        const editor = document.querySelector(".ql-editor");
-        if (!editor) {
+        // Quillエディタのインスタンスを取得
+        const quill = quillRef.current?.getEditor();
+        if (!quill) {
           throw new Error("エディタが見つかりません");
         }
 
-        const selection = document.getSelection();
-        if (!selection) {
-          throw new Error("テキストの選択位置が取得できません");
-        }
+        // 現在のカーソル位置を取得
+        const range = quill.getSelection(true);
 
-        const range = selection.getRangeAt(0);
-        const img = document.createElement("img");
-        img.src = response.url;
-        img.alt = file.name;
-        range.insertNode(img);
+        // 画像を挿入
+        quill.insertEmbed(range.index, "image", response.url);
+        // カーソルを画像の後ろに移動
+        quill.setSelection(range.index + 1);
 
         // アップロード済み画像リストを更新
         setUploadedImages(prev => [...prev, response.url]);
@@ -275,13 +277,24 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
 
   const insertImage = (imageUrl: string) => {
-    const editor = (document.querySelector(".ql-editor") as HTMLElement);
-    const range = (document.getSelection() as Selection).getRangeAt(0);
-    const img = document.createElement("img");
-    img.src = imageUrl;
-    img.alt = "挿入された画像";
-    range.insertNode(img);
-    setIsImageLibraryOpen(false);
+    try {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
+
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, "image", imageUrl);
+      quill.setSelection(range.index + 1);
+      setIsImageLibraryOpen(false);
+    } catch (error) {
+      console.error('Image insertion error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像の挿入に失敗しました",
+      });
+    }
   };
 
   const onSubmit = (data: typeof form.getValues) => {
@@ -434,6 +447,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         <FormControl>
                           <div className="border rounded-md overflow-hidden">
                             <ReactQuill
+                              forwardedRef={quillRef}
                               theme="snow"
                               modules={modules}
                               formats={formats}
