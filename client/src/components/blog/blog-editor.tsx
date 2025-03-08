@@ -201,10 +201,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   // Quillエディタのコンテキストメニュー処理を設定
   useEffect(() => {
-    const quill = quillRef.current?.editor;
-    console.log("Quillエディタインスタンス:", quill); // エディタインスタンスの確認
-
-    if (!quill) return;
+    console.log("Quillエディタ参照:", quillRef.current); // refの確認
 
     const handleEditorContextMenu = (e: MouseEvent) => {
       console.log("右クリックイベント発火:", e); // イベント発火の確認
@@ -235,16 +232,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
     };
 
-    // Quillエディタのルート要素にイベントリスナーを追加
-    quill.root.addEventListener('contextmenu', handleEditorContextMenu);
-    console.log("コンテキストメニューイベントリスナーを設定"); // リスナー設定の確認
+    // エディタのDOMが存在する場合にのみイベントリスナーを設定
+    const editorRoot = quillRef.current?.editor?.root;
+    if (editorRoot) {
+      console.log("コンテキストメニューイベントリスナーを設定"); // リスナー設定の確認
+      editorRoot.addEventListener('contextmenu', handleEditorContextMenu);
+    }
 
     return () => {
-      if (quill && quill.root) {
-        quill.root.removeEventListener('contextmenu', handleEditorContextMenu);
+      if (editorRoot) {
+        editorRoot.removeEventListener('contextmenu', handleEditorContextMenu);
       }
     };
-  }, []);
+  }, [quillRef.current]); // エディタインスタンスが変更されたときに再設定
 
   // 画像ライブラリのコンテキストメニュー処理
   const handleLibraryImageContextMenu = (e: React.MouseEvent, image: StoreImage, imgElement: HTMLImageElement) => {
@@ -619,7 +619,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
     },
   });
-
 
   return (
     <div className="container mx-auto px-4 py-8">
