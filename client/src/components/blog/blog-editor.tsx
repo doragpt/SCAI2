@@ -70,10 +70,6 @@ import {
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  // ImageResizeモジュールをインポート
-  const { ImageResize } = await import('quill-image-resize-module-react');
-  // Quillにモジュールを登録
-  RQ.Quill.register('modules/imageResize', ImageResize);
   return function wrap(props: any) {
     return <RQ {...props} ref={props.forwardedRef} />;
   };
@@ -91,12 +87,9 @@ const modules = {
       [{ color: [] }, { background: [] }],
       [{ list: "ordered" }, { list: "bullet" }],
       [{ align: ["", "center", "right", "justify"] }],
-      ["link", "image"],
+      ["link"],
       ["clean"]
     ],
-  },
-  imageResize: {
-    modules: ['Resize', 'DisplaySize']
   }
 };
 
