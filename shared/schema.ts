@@ -90,7 +90,7 @@ export const serviceTypes = [
   "mseikan"
 ] as const;
 
-// 出稼ぎ/在籍の選択肢
+//// 出稼ぎ/在籍の選択肢
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export type WorkType = typeof workTypes[number];
 
@@ -663,3 +663,51 @@ export interface BlogPostListResponse {
     totalItems: number;
   };
 }
+
+// アクセスログ関連のスキーマを追加
+export const accessLogs = pgTable("access_logs", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").references(() => users.id),
+  url: text("url").notNull(),
+  ipHash: text("ip_hash").notNull(),
+  userAgent: text("user_agent"),
+  referer: text("referer"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    storeIdIdx: index("access_logs_store_id_idx").on(table.storeId),
+    createdAtIdx: index("access_logs_created_at_idx").on(table.createdAt),
+  };
+});
+
+// アクセスログのZodスキーマ
+export const accessLogSchema = createInsertSchema(accessLogs)
+  .omit({
+    id: true,
+    createdAt: true,
+  });
+
+// 型定義のエクスポート
+export type AccessLog = typeof accessLogs.$inferSelect;
+export type InsertAccessLog = typeof accessLogs.$inferInsert;
+
+// APIレスポンスの型定義
+export interface AccessStatsResponse {
+  today: {
+    total: number;
+    unique: number;
+  };
+  monthly: {
+    total: number;
+    unique: number;
+  };
+  hourly: Array<{
+    hour: number;
+    count: number;
+  }>;
+}
+
+import { jsonb } from "drizzle-orm/pg-core";
+
+export type { AccessLog, InsertAccessLog };
+export { accessLogSchema, accessLogs, AccessStatsResponse };

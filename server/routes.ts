@@ -22,7 +22,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { users, talentProfiles } from "@shared/schema";
+import { users, talentProfiles, accessLogs, type AccessStatsResponse, type InsertAccessLog } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
@@ -34,6 +34,7 @@ import {
   type BlogPostListResponse,
   blogPostSchema,
 } from "@shared/schema";
+import { createHash } from "crypto";
 
 const scryptAsync = promisify(scrypt);
 
@@ -171,6 +172,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     if (req.headers.accept?.includes("application/json")) {
       res.setHeader("Content-Type", "application/json");
+    }
+    next();
+  });
+
+  // アクセスログミドルウェアを追加
+  app.use(async (req, res, next) => {
+    try {
+      // 店舗ページへのアクセスのみ記録
+      if (req.path.startsWith('/store/') && req.method === 'GET') {
+        const storeId = parseInt(req.path.split('/')[2]);
+        if (!isNaN(storeId)) {
+          const ipHash = createHash('sha256')
+            .update(req.ip + process.env.JWT_SECRET)
+            .digest('hex');
+
+          await db
+            .insert(accessLogs)
+            .values({
+              storeId,
+              url: req.path,
+              ipHash,
+              userAgent: req.headers['user-agent'],
+              referer: req.headers.referer,
+            });
+        }
+      }
+    } catch (error) {
+      console.error('Access log middleware error:', error);
     }
     next();
   });
@@ -972,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(updatedProfile);
-    } catch (error) {
+    } catch (error){
       console.error('Profile update error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         userId: req.user?.id,
@@ -996,8 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      const updatedProfile = await db.transaction(async (tx) => {
-        // 現在のプロフィールを取得
+      const updatedProfile = await db.transaction(async (tx) => {        // 現在のプロフィールを取得
         const [currentProfile] = await tx
           .select()
           .from(talentProfiles)
@@ -1881,6 +1909,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({
         message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
       });
+    }
+  });
+
+  // アクセスログ記録エンドポイント
+  app.post("/api/access-logs", async (req, res) => {
+    try {
+      const { storeId, url, ipAddress, userAgent, referer } = req.body;
+
+      // IPアドレスをハッシュ化して匿名化
+      const ipHash = createHash('sha256')
+        .update(ipAddress + process.env.JWT_SECRET)
+        .digest('hex');
+
+      const [log] = await db
+        .insert(accessLogs)
+        .values({
+          storeId,
+          url,
+          ipHash,
+          userAgent,
+          referer,
+        })
+        .returning();
+
+      res.status(201).json(log);
+    } catch (error) {
+      console.error('Access log creation error:', error);
+      res.status(500).json({ message: "アクセスログの記録に失敗しました" });
+    }
+  });
+
+  // アクセス統計取得エンドポイント
+  app.get("/api/stores/:storeId/access-stats", authenticate, async (req: any, res) => {
+    try {
+      const storeId = parseInt(req.params.storeId);
+
+      if (req.user.role !== 'store' || req.user.id !== storeId) {
+        return res.status(403).json({ message: "アクセス権限がありません" });
+      }
+
+      // 今日の日付の開始と終了
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // 今月の開始と終了
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      // 日次アクセス数を取得
+      const [todayStats] = await db
+        .select({
+          total: sql<number>`count(*)`,
+          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
+          )
+        );
+
+      // 月次アクセス数を取得
+      const [monthlyStats] = await db
+        .select({
+          total: sql<number>`count(*)`,
+          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
+          )
+        );
+
+      // 時間帯別のアクセス数を取得（過去24時間）
+      const hourlyStats = await db
+        .select({
+          hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
+          count: sql<number>`count(*)`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
+          )
+        )
+        .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
+        .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
+        .limit(24); // 24時間分のデータに制限
+
+      const response: AccessStatsResponse = {
+        today: {
+          total: todayStats?.total || 0,
+          unique: todayStats?.unique || 0
+        },
+        monthly: {
+          total: monthlyStats?.total || 0,
+          unique: monthlyStats?.unique || 0
+        },
+        hourly: hourlyStats
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Access stats fetch error:', error);
+      res.status(500).json({ message: "アクセス統計の取得に失敗しました" });
     }
   });
 
