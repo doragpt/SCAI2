@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { type z } from "zod";
 import { loginSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,10 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type LoginFormData = {
-  username: string;
-  password: string;
-};
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
@@ -28,10 +26,11 @@ export default function ManagerLogin() {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema.omit({ role: true })),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
-      password: ""
+      password: "",
+      role: "store"
     }
   });
 
@@ -41,8 +40,8 @@ export default function ManagerLogin() {
       const response = await fetch("/api/auth/manager/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, role: "store" }),
-        credentials: "include", // セッションCookieを送信するために必要
+        body: JSON.stringify(data),
+        credentials: "include",
       });
 
       if (!response.ok) {

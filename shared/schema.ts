@@ -189,17 +189,26 @@ export const talentProfiles = pgTable("talent_profiles", {
 // Login and registration schemas
 // loginSchemaを修正して店舗用のバリデーションを追加
 export const loginSchema = z.object({
-  username: z.string().min(1, "ニックネームを入力してください"),
+  username: z.string().min(1, "ログインIDを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]),
-}).refine((data) => {
+  role: z.enum(["talent", "store"]).default("store"),
+}).superRefine((data, ctx) => {
   if (data.role === "store") {
-    return data.username.length > 0 && data.password.length > 0;
+    if (data.username.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "店舗IDを入力してください",
+        path: ["username"]
+      });
+    }
+    if (data.password.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "パスワードを入力してください",
+        path: ["password"]
+      });
+    }
   }
-  return true;
-}, {
-  message: "店舗IDとパスワードを入力してください",
-  path: ["username"],
 });
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
