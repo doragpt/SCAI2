@@ -76,12 +76,7 @@ import {
 import { Label } from "@/components/ui/label";
 
 // Quillエディターを動的にインポート
-const ReactQuill = dynamic(async () => {
-  const { default: RQ } = await import("react-quill");
-  return function wrap(props: any) {
-    return <RQ {...props} ref={props.forwardedRef} />;
-  };
-}, {
+const ReactQuill = dynamic(() => import("react-quill"), {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
@@ -362,11 +357,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // ルートコンテナのコンテキストメニューを抑制  --- REMOVED ---
-  //const preventDefaultContextMenu = (e: React.MouseEvent) => {
-  //  e.preventDefault();
-  //  e.stopPropagation();
-  //};
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -842,7 +832,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         <FormControl>
                           <div className="relative border rounded-md">
                             <ReactQuill
-                              forwardedRef={quillRef}
+                              ref={quillRef}
                               theme="snow"
                               modules={modules}
                               formats={formats}
