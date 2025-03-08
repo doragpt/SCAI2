@@ -196,7 +196,6 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
-import { z } from "zod";
 
 // talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
@@ -335,67 +334,6 @@ export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
-// Export types
-export type User = typeof users.$inferSelect;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export const talentRegisterFormSchema = z.object({
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    ),
-  passwordConfirm: z.string(),
-  displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
-  role: z.literal("talent"),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-});
-
-// Updated SelectUser type definition
-export type SelectUser = {
-  id: number;
-  username: string;
-  role: "talent" | "store";
-  displayName: string;
-  location: string;
-  birthDate: string;
-  birthDateModified: boolean;
-  preferredLocations: string[];
-  createdAt: Date;
-};
-
-// ProfileData型の定義を統一
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-
-// 他のエクスポートは変更なし
-export type ProfileData = TalentProfileData;
-
-export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
-export type PreviousStore = {
-  storeName: string;
-};
-
-// 求人情報テーブル
 // 求人情報関連の新しいenums
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
 export type JobStatus = typeof jobStatusTypes[number];
@@ -415,7 +353,7 @@ export const jobRequirementsSchema = z.object({
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
-// 求人情報テーブルの拡張
+// 求人情報テーブル
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
@@ -446,7 +384,7 @@ export const jobs = pgTable("jobs", {
   };
 });
 
-// Zodスキーマの定義
+// 求人情報のZodスキーマ（重複を解消）
 export const jobSchema = createInsertSchema(jobs)
   .extend({
     requirements: jobRequirementsSchema,
@@ -456,7 +394,6 @@ export const jobSchema = createInsertSchema(jobs)
     createdAt: true,
     updatedAt: true
   });
-
 
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
@@ -555,17 +492,9 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   }),
 }));
 
-// 求人情報のZodスキーマ
-export const jobSchema = createInsertSchema(jobs)
-  .extend({
-    requirements: jobRequirementsSchema,
-  })
-  .omit({ id: true, createdAt: true, updatedAt: true });
-
 // 型定義のエクスポート
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 
 // APIレスポンスの型定義を追加
 export interface JobResponse extends Job {
@@ -591,3 +520,62 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   onakura: "オナクラ",
   mseikan: "メンズエステ"
 } as const;
+
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
+
+export type SelectUser = {
+  id: number;
+  username: string;
+  role: "talent" | "store";
+  displayName: string;
+  location: string;
+  birthDate: string;
+  birthDateModified: boolean;
+  preferredLocations: string[];
+  createdAt: Date;
+};
+
+// ProfileData型の定義を統一
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
+
+// 他のエクスポートは変更なし
+export type ProfileData = TalentProfileData;
+
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
+export type PreviousStore = {
+  storeName: string;
+};
+
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };

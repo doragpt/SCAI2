@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { TalentProfile } from "@shared/schema";
+import { type Job } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,14 +30,23 @@ const jobStatusLabels = {
   closed: "締切"
 } as const;
 
+interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const [selectedTab, setSelectedTab] = useState("jobs");
   const [showJobForm, setShowJobForm] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
 
   // 求人情報の取得
-  const { data: jobListings, isLoading: jobsLoading } = useQuery({
+  const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
     queryKey: [QUERY_KEYS.JOBS_STORE],
     queryFn: async () => {
       const response = await fetch("/api/jobs/store");
@@ -164,20 +173,20 @@ export default function StoreDashboard() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  {jobListings?.jobs?.length === 0 ? (
+                  {!jobListings?.jobs.length ? (
                     <div className="text-center py-8">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">
                         求人情報がありません
                       </p>
-                      <Button variant="outline" className="mt-4">
+                      <Button variant="outline" className="mt-4" onClick={() => setShowJobForm(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         求人を作成する
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {jobListings?.jobs?.map((job: any) => (
+                      {jobListings.jobs.map((job) => (
                         <Card key={job.id}>
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
@@ -195,7 +204,7 @@ export default function StoreDashboard() {
                                 job.status === "published" ? "default" :
                                 job.status === "draft" ? "secondary" : "destructive"
                               }>
-                                {jobStatusLabels[job.status as keyof typeof jobStatusLabels]}
+                                {jobStatusLabels[job.status]}
                               </Badge>
                             </div>
                             <Separator className="my-4" />
@@ -328,7 +337,7 @@ export default function StoreDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={() => setShowJobForm(true)}>
                   求人情報を編集
                 </Button>
                 <Button className="w-full" variant="outline">
@@ -345,7 +354,7 @@ export default function StoreDashboard() {
         open={showJobForm}
         onOpenChange={setShowJobForm}
         jobId={selectedJobId}
-        initialData={selectedJobId ? jobListings?.jobs?.find(j => j.id === selectedJobId) : undefined}
+        initialData={selectedJobId ? jobListings?.jobs.find(j => j.id === selectedJobId) : undefined}
       />
     </div>
   );

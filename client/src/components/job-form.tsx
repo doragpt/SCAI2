@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, prefectures, serviceTypes } from "@shared/schema";
+import { jobSchema, prefectures, serviceTypes, type Job, type InsertJob } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,10 +25,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
+import { type z } from "zod";
+
+type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
-  jobId?: number;
-  initialData?: any;
+  jobId: number | null;
+  initialData?: Job;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -37,7 +40,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm({
+  const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: initialData || {
       title: "",
@@ -64,7 +67,13 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: JobFormData) => {
+      console.log('Submitting job form:', {
+        jobId,
+        isUpdate: !!jobId,
+        timestamp: new Date().toISOString()
+      });
+
       const response = await fetch(jobId ? `/api/jobs/${jobId}` : "/api/jobs", {
         method: jobId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,10 +81,11 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
       });
 
       if (!response.ok) {
-        throw new Error("求人情報の保存に失敗しました");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
 
-      return response.json();
+      return response.json() as Promise<Job>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
@@ -86,6 +96,12 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
       onSuccess?.();
     },
     onError: (error) => {
+      console.error('Job form submission error:', {
+        error,
+        jobId,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -94,7 +110,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: JobFormData) => {
     mutate(data);
   };
 
@@ -231,7 +247,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
                     {...field}
                     type="number"
                     placeholder="例：30000"
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                   />
                 </FormControl>
                 <FormDescription>1日の最低保証額を入力してください</FormDescription>
@@ -251,7 +267,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
                     {...field}
                     type="number"
                     placeholder="例：50000"
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                   />
                 </FormControl>
                 <FormDescription>1日の最高保証額を入力してください</FormDescription>

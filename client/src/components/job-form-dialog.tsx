@@ -6,12 +6,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { JobForm } from "./job-form";
+import { type Job } from "@shared/schema";
 
 type JobFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  jobId?: number;
-  initialData?: any;
+  jobId: number | null;
+  initialData?: Job;
 };
 
 export function JobFormDialog({
