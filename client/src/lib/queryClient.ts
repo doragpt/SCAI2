@@ -10,6 +10,76 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
+// APIリクエスト関数を改善
+export async function apiRequest<T>(
+  method: string,
+  url: string,
+  data?: unknown,
+): Promise<T> {
+  try {
+    console.log('API Request starting:', {
+      method,
+      url,
+      hasData: !!data,
+      timestamp: new Date().toISOString()
+    });
+
+    const token = localStorage.getItem("auth_token");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      console.log('Adding auth token to request');
+    }
+
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    const res = await fetch(fullUrl, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+
+    console.log('API Response received:', {
+      status: res.status,
+      statusText: res.statusText,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: res.statusText }));
+      console.error('API Request Failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        responseText: JSON.stringify(errorData),
+        timestamp: new Date().toISOString()
+      });
+
+      // 認証エラーの場合、トークンを削除
+      if (res.status === 401) {
+        console.log('Unauthorized request, removing token');
+        localStorage.removeItem("auth_token");
+      }
+
+      throw new Error(errorData.message || res.statusText);
+    }
+
+    const responseData = await res.json() as T;
+    return responseData;
+  } catch (error) {
+    console.error('API Request Error:', {
+      method,
+      url,
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 // 写真アップロード処理を修正
 async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promise<Photo | null> {
   let retryCount = 0;
@@ -114,55 +184,6 @@ async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promi
   return null;
 }
 
-// APIリクエスト関数を簡略化
-export async function apiRequest<T>(
-  method: string,
-  url: string,
-  data?: unknown,
-): Promise<T> {
-  try {
-    console.log('API Request starting:', {
-      method,
-      url,
-      hasToken: !!localStorage.getItem("auth_token"),
-      timestamp: new Date().toISOString()
-    });
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    const res = await fetch(fullUrl, {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(errorData.message || res.statusText);
-    }
-
-    const responseData = await res.json() as T;
-    return responseData;
-  } catch (error) {
-    console.error('API Request Failed:', {
-      method,
-      url,
-      error: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
-    });
-    throw error;
-  }
-}
 
 // 求人一覧取得用のクエリ関数
 export const getJobsQuery = async (): Promise<Job[]> => {
@@ -336,12 +357,18 @@ export async function getSignedImageUrl(key: string): Promise<string> {
   }
 }
 
-// クエリクライアントの設定をシンプルに
+// クエリクライアントの設定を改善
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-      retry: 2,
+      retry: (failureCount, error) => {
+        // 認証エラーの場合はリトライしない
+        if (error instanceof Error && error.message.includes("401")) {
+          return false;
+        }
+        return failureCount < 2;
+      },
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     },

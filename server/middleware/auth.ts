@@ -28,11 +28,15 @@ export async function authenticate(
       headers: {
         ...req.headers,
         authorization: req.headers.authorization ? 'Bearer ...' : undefined
-      }
+      },
+      timestamp: new Date().toISOString()
     });
 
     const token = extractTokenFromHeader(req.headers.authorization);
-    console.log('トークンの抽出結果:', { token: token ? '取得済み' : '未取得' });
+    console.log('トークンの抽出結果:', { 
+      hasToken: !!token,
+      timestamp: new Date().toISOString()
+    });
 
     if (!token) {
       console.log('トークンが見つかりません');
@@ -40,7 +44,10 @@ export async function authenticate(
     }
 
     const payload = verifyToken(token);
-    console.log('トークンの検証結果:', { userId: payload.userId });
+    console.log('トークンの検証結果:', { 
+      userId: payload.userId,
+      timestamp: new Date().toISOString()
+    });
 
     // ユーザーの存在確認
     const [user] = await db
@@ -52,17 +59,27 @@ export async function authenticate(
       .where(eq(users.id, payload.userId));
 
     if (!user) {
-      console.log('ユーザーが見つかりません:', payload.userId);
+      console.log('ユーザーが見つかりません:', {
+        userId: payload.userId,
+        timestamp: new Date().toISOString()
+      });
       return res.status(401).json({ message: 'Authentication failed: User not found' });
     }
 
-    console.log('認証成功:', { userId: user.id, role: user.role });
+    console.log('認証成功:', {
+      userId: user.id,
+      role: user.role,
+      timestamp: new Date().toISOString()
+    });
 
     req.user = user;
     req.token = token;
     next();
   } catch (error) {
-    console.error('認証エラー:', error);
+    console.error('認証エラー:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
     return res.status(401).json({ 
       message: error instanceof Error ? error.message : 'Authentication failed'
     });
@@ -79,7 +96,8 @@ export function authorize(...roles: string[]) {
     if (!roles.includes(req.user.role)) {
       console.log('認可エラー: 権限不足', {
         userRole: req.user.role,
-        requiredRoles: roles
+        requiredRoles: roles,
+        timestamp: new Date().toISOString()
       });
       return res.status(403).json({ message: 'Not authorized' });
     }
@@ -87,7 +105,8 @@ export function authorize(...roles: string[]) {
     console.log('認可成功:', {
       userId: req.user.id,
       role: req.user.role,
-      requiredRoles: roles
+      requiredRoles: roles,
+      timestamp: new Date().toISOString()
     });
 
     next();

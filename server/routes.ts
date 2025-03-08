@@ -34,14 +34,17 @@ const scryptAsync = promisify(scrypt);
 // パスワードハッシュ化関数の実装を修正
 async function hashPassword(password: string): Promise<string> {
   try {
-    const salt = randomBytes(16).toString('hex');
+    // 新しいソルトを生成（32バイト）
+    const salt = randomBytes(32).toString('hex');
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
     const hashedPassword = buf.toString('hex');
+
     console.log('Password hashing:', {
-      salt,
+      saltLength: salt.length,
       hashedLength: hashedPassword.length,
       timestamp: new Date().toISOString()
     });
+
     return `${hashedPassword}.${salt}`;
   } catch (error) {
     console.error('Password hashing error:', {
@@ -56,6 +59,7 @@ async function hashPassword(password: string): Promise<string> {
 async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
   try {
     const [hashedPassword, salt] = storedPassword.split('.');
+
     if (!hashedPassword || !salt) {
       console.error('Invalid stored password format', {
         hasHashedPassword: !!hashedPassword,
@@ -64,6 +68,13 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       });
       return false;
     }
+
+    console.log('Password comparison:', {
+      inputLength: inputPassword.length,
+      storedHashLength: hashedPassword.length,
+      saltLength: salt.length,
+      timestamp: new Date().toISOString()
+    });
 
     const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
     const inputHash = buf.toString('hex');
@@ -74,7 +85,7 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
       Buffer.from(inputHash, 'hex')
     );
 
-    console.log('Password comparison:', {
+    console.log('Password verification result:', {
       isValid: result,
       timestamp: new Date().toISOString()
     });
@@ -87,6 +98,37 @@ async function comparePasswords(inputPassword: string, storedPassword: string): 
     });
     return false;
   }
+}
+
+// パスワード更新処理部分の修正
+async function updateUserPassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+  const [currentUser] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (!currentUser) {
+    throw new Error("ユーザーが見つかりません");
+  }
+
+  // パスワード検証の詳細なログ
+  console.log('Password update verification:', {
+    userId,
+    timestamp: new Date().toISOString()
+  });
+
+  const isValidPassword = await comparePasswords(currentPassword, currentUser.password);
+  if (!isValidPassword) {
+    throw new Error("現在のパスワードが正しくありません");
+  }
+
+  // 新しいパスワードのハッシュ化
+  const newHashedPassword = await hashPassword(newPassword);
+
+  await db
+    .update(users)
+    .set({ password: newHashedPassword })
+    .where(eq(users.id, userId));
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -131,7 +173,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // パスワード検証のデバッグログを追加
       console.log('Password verification:', {
         username: loginData.username,
-        hashedPassword: user.password,
         timestamp: new Date().toISOString()
       });
 
@@ -1005,17 +1046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // パスワード更新の処理
       if (req.body.newPassword && req.body.currentPassword) {
         // 現在のパスワードを検証
-        const [hashedPassword, salt] = currentUser.password.split('.');
-        const buf = (await scryptAsync(req.body.currentPassword, salt, 64)) as Buffer;
-        const suppliedHash = buf.toString('hex');
-
-        if (suppliedHash !== hashedPassword) {
-          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
-        }
-
-        // 新しいパスワードをハッシュ化
-        const newHashedPassword = await hashPassword(req.body.newPassword);
-        updateData.password = newHashedPassword;
+        await updateUserPassword(userId, req.body.currentPassword, req.body.newPassword);
       }
 
       // 更新データに必ずタイムスタンプを追加
