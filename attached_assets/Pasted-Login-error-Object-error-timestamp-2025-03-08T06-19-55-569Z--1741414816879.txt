@@ -1,0 +1,48 @@
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T06:19:55.569Z"}
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T06:19:55.569Z"}
+
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:19:55.571Z"}
+店舗ログイン試行: 
+Object {username: "store_test", timestamp: "2025-03-08T06:19:56.795Z"}
+timestamp: "2025-03-08T06:19:56.795Z"
+username: "store_test"
+[[Prototype]]: Object
+Login attempt: 
+Object {username: "store_test", role: "store", timestamp: "2025-03-08T06:19:56.798Z"}
+role: "store"
+timestamp: "2025-03-08T06:19:56.798Z"
+username: "store_test"
+[[Prototype]]: Object
+Auth state: 
+Object {hasUser: false, userId: undefined, username: undefined, role: undefined, timestamp: "2025-03-08T06:19:56.801Z"}
+hasUser: false
+role: undefined
+timestamp: "2025-03-08T06:19:56.801Z"
+userId: undefined
+username: undefined
+[[Prototype]]: Object
+Login error response: 
+Object {status: 400, statusText: "Bad Request", responseText: "{"message":"The "salt" argument must be of type string or an instance of ArrayBuffer,…", timestamp: "2025-03-08T06:19:56.978Z"}
+responseText: "{"message":"The \"salt\" argument must be of type string or an instance of ArrayBuffer, Buffer, TypedArray, or DataView. Received undefined"}"
+status: 400
+statusText: "Bad Request"
+timestamp: "2025-03-08T06:19:56.978Z"
+[[Prototype]]: Object
+
+Login error: 
+Object {error: "ログインに失敗しました", timestamp: "2025-03-08T06:19:56.978Z"}
+error: "ログインに失敗しました"
+timestamp: "2025-03-08T06:19:56.978Z"
+[[Prototype]]: Object
+
+店舗ログインエラー: 
+Object {error: Error, timestamp: "2025-03-08T06:19:56.978Z"}
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

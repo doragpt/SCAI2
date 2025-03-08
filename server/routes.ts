@@ -31,9 +31,44 @@ import { uploadToS3, getSignedS3Url } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
+// パスワードハッシュ化関数の実装を修正
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString('hex');
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString('hex')}.${salt}`;
+}
+
+// パスワード比較関数の実装を修正
+async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
+  try {
+    const [hashedPassword, salt] = storedPassword.split('.');
+    if (!hashedPassword || !salt) {
+      console.error('Invalid stored password format', {
+        hasHashedPassword: !!hashedPassword,
+        hasSalt: !!salt,
+        timestamp: new Date().toISOString()
+      });
+      return false;
+    }
+    const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
+    return timingSafeEqual(Buffer.from(hashedPassword, 'hex'), buf);
+  } catch (error) {
+    console.error('Password comparison error:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    return false;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // APIルートを最初に登録
   app.use("/api/*", (req, res, next) => {
+    console.log('API request received:', {
+      method: req.method,
+      url: req.url,
+      timestamp: new Date().toISOString()
+    });
     if (req.headers.accept?.includes("application/json")) {
       res.setHeader("Content-Type", "application/json");
     }
@@ -57,7 +92,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(users)
         .where(eq(users.username, loginData.username));
 
-      if (!user || !(await comparePasswords(loginData.password, user.password))) {
+      if (!user) {
+        console.log('Login failed: User not found', {
+          username: loginData.username,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(401).json({ message: "認証に失敗しました" });
+      }
+
+      const isValidPassword = await comparePasswords(loginData.password, user.password);
+      if (!isValidPassword) {
+        console.log('Login failed: Invalid password', {
+          username: loginData.username,
+          timestamp: new Date().toISOString()
+        });
         return res.status(401).json({ message: "認証に失敗しました" });
       }
 
@@ -967,10 +1015,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestBody: req.body,
         timestamp: new Date().toISOString()
       });
-
       res.status(400).json({
         error: true,
-        message: error instanceof Error ? error.message : "ユーザー情報の更新に失敗しました"
+        message: error instanceof Error ? error.message :"ユーザー情報の更新に失敗しました"
       });
     }
   });
@@ -1020,7 +1067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 写真アップロード用の新しいエンドポイント
-  app.post("/api/upload-photo", authenticate, async (req: anyres) => {
+  app.post("/api/upload-photo", authenticate, async (req: any, res) => {
     try {
       console.log('Photo upload request received:', {
         userId: req.user.id,
@@ -1043,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `${req.user.id}-${Date.now()}.jpg`
       );
 
-      console.log('Photo uploadsuccessful:', {
+      console.log('Photo upload successful:', {
         userId: req.user.id,
         url: s3Url,
         timestamp: new Date().toISOString()
@@ -1504,14 +1551,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
-}
-
-// パスワード比較関数
-async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
-  const [hashedPassword, salt] = storedPassword.split('.');
-  const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
-  const suppliedHash = buf.toString('hex');
-  return hashedPassword === suppliedHash;
 }
 
 async function calculateMatchScore(job: Job, conditions: any): Promise<number> {
