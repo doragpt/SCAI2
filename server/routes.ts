@@ -1482,6 +1482,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/jobs/store", authenticate, async (req: any, res) => {
     try {
       if (!req.user?.id || req.user.role !== "store") {
+        console.log('Unauthorized store access:', {
+          userId: req.user?.id,
+          role: req.user?.role,
+          timestamp: new Date().toISOString()
+        });
         return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
       }
 
@@ -1490,25 +1495,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
+      // 店舗IDに紐づく求人を全て取得
       const jobListings = await db
-        .select({
-          id: jobs.id,
-          title: jobs.title,
-          catchPhrase: jobs.catchPhrase,
-          status: jobs.status,
-          location: jobs.location,
-          serviceType: jobs.serviceType,
-          description: jobs.description,
-          workingHours: jobs.workingHours,
-          transportationSupport: jobs.transportationSupport,
-          housingSupport: jobs.housingSupport,
-          minimumGuarantee: jobs.minimumGuarantee,
-          maximumGuarantee: jobs.maximumGuarantee,
-          requirements: jobs.requirements,
-          benefits: jobs.benefits,
-          createdAt: jobs.createdAt,
-          updatedAt: jobs.updatedAt,
-        })
+        .select()
         .from(jobs)
         .where(eq(jobs.storeId, req.user.id))
         .orderBy(desc(jobs.createdAt));
@@ -1519,6 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
+      // ページネーション情報を含めてレスポンスを返す
       res.json({
         jobs: jobListings,
         pagination: {
