@@ -1,9 +1,7 @@
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
@@ -120,6 +118,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
@@ -246,12 +245,23 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
         // 画像を挿入
         quill.insertEmbed(range.index, "image", response.url);
-        // カーソルを画像の後ろに移動
+
+        // カーソルを画像の後ろに移動し、スクロールして表示
         quill.setSelection(range.index + 1);
+        const [leaf] = quill.getLeaf(range.index);
+        const domNode = leaf.domNode;
+        if (domNode) {
+          domNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
         // アップロード済み画像リストを更新
         setUploadedImages(prev => [...prev, response.url]);
         form.setValue("images", [...uploadedImages, response.url]);
+
+        // 画像ライブラリのキャッシュを更新
+        queryClient.setQueryData([QUERY_KEYS.STORE_IMAGES], (oldData: string[] = []) => {
+          return [...new Set([...oldData, response.url])];
+        });
 
         toast({
           title: "成功",
@@ -285,7 +295,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
       const range = quill.getSelection(true);
       quill.insertEmbed(range.index, "image", imageUrl);
+
+      // カーソルを画像の後ろに移動し、スクロールして表示
       quill.setSelection(range.index + 1);
+      const [leaf] = quill.getLeaf(range.index);
+      const domNode = leaf.domNode;
+      if (domNode) {
+        domNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
       setIsImageLibraryOpen(false);
     } catch (error) {
       console.error('Image insertion error:', error);
@@ -383,12 +401,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               <div className="col-span-3 flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
-                            ) : storeImages?.length === 0 ? (
+                            ) : !storeImages || storeImages.length === 0 ? (
                               <div className="col-span-3 text-center text-muted-foreground">
                                 アップロード済みの画像がありません
                               </div>
                             ) : (
-                              storeImages?.map((image: string) => (
+                              storeImages.map((image: string) => (
                                 <div
                                   key={image}
                                   className="relative aspect-square cursor-pointer group"
@@ -501,9 +519,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           <div className="flex items-center gap-2">
                             <Input
                               type="datetime-local"
-                              value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
+                              value={field.value || ""}
                               onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                              min={new Date().toISOString().slice(0, 16)}
                             />
                           </div>
                         </FormControl>
