@@ -201,7 +201,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   // Quillエディタのコンテキストメニュー処理を設定
   useEffect(() => {
-    const quill = quillRef.current?.getEditor();
+    const quill = quillRef.current?.editor;
     console.log("Quillエディタインスタンス:", quill); // エディタインスタンスの確認
 
     if (!quill) return;
@@ -292,7 +292,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像サイズを更新
   const updateImageSize = (width: number, height: number) => {
     if (imageEditDialog.element) {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (quill) {
         const range = quill.getSelection();
         if (range) {
@@ -319,7 +319,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像を削除
   const deleteImage = () => {
     if (contextMenu.image?.element) {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (quill) {
         const [leaf, offset] = quill.getLeaf(quill.getSelection()?.index || 0);
         if (leaf) {
@@ -419,7 +419,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         }
 
         // Quillエディタのインスタンスを取得
-        const quill = quillRef.current?.getEditor();
+        const quill = quillRef.current?.editor;
         if (!quill) {
           throw new Error("エディタが見つかりません");
         }
@@ -548,7 +548,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const insertImage = (imageUrl: string) => {
     try {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (!quill) {
         throw new Error("エディタが見つかりません");
       }
