@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -16,6 +16,9 @@ import {
   jobSchema,
   type Job,
   type JobRequirements,
+  loginSchema,
+  type LoginData,
+  type SelectUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -28,48 +31,85 @@ import { uploadToS3, getSignedS3Url } from "./utils/s3";
 
 const scryptAsync = promisify(scrypt);
 
-// チャンク一時保存用のメモリストア
-const photoChunksStore = new Map<string, string[]>();
-
-// マッチング用のヘルパー関数
-async function calculateMatchScore(jobListing: any, conditions: any) {
-  let score = 0;
-  const maxScore = 100;
-
-  // 勤務地のマッチング
-  if (conditions.preferredLocations.includes(jobListing.location)) {
-    score += 20;
-  }
-
-  // 給与のマッチング
-  if (conditions.desiredGuarantee) {
-    const minGuarantee = Number(jobListing.minimumGuarantee);
-    if (minGuarantee >= Number(conditions.desiredGuarantee)) {
-      score += 20;
-    }
-  }
-
-  // 勤務時間のマッチング
-  if (conditions.desiredTime && jobListing.workingHours) {
-    if (jobListing.workingHours.includes(conditions.desiredTime)) {
-      score += 20;
-    }
-  }
-
-  // その他の条件マッチング
-  if (conditions.workTypes.some((type: string) => jobListing.serviceType === type)) {
-    score += 20;
-  }
-
-  // 除外条件チェック
-  if (conditions.ngLocations.includes(jobListing.location)) {
-    return 0;
-  }
-
-  return Math.min(score, maxScore);
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
+  // APIルートを最初に登録
+  app.use("/api/*", (req, res, next) => {
+    if (req.headers.accept?.includes("application/json")) {
+      res.setHeader("Content-Type", "application/json");
+    }
+    next();
+  });
+
+  // 統合ログインエンドポイント
+  app.post("/api/login", async (req, res) => {
+    try {
+      console.log('Login request received:', {
+        username: req.body.username,
+        role: req.body.role,
+        timestamp: new Date().toISOString()
+      });
+
+      const loginData = loginSchema.parse(req.body);
+
+      // ユーザーの取得とロールチェック
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, loginData.username));
+
+      if (!user || !(await comparePasswords(loginData.password, user.password))) {
+        return res.status(401).json({ message: "認証に失敗しました" });
+      }
+
+      // 店舗ユーザーの場合のロールチェック
+      if (loginData.role === "store" && user.role !== "store") {
+        return res.status(403).json({ message: "店舗管理者用のログインページです" });
+      }
+
+      // JWTトークンを生成
+      const token = generateToken(user);
+
+      console.log('Login successful:', {
+        userId: user.id,
+        username: user.username,
+        role: user.role,
+        timestamp: new Date().toISOString()
+      });
+
+      // パスワードハッシュを除外して返す
+      const { password, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, token });
+    } catch (error) {
+      console.error('Login error:', {
+        error,
+        timestamp: new Date().toISOString()
+      });
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ログインに失敗しました"
+      });
+    }
+  });
+
+  // ログアウトエンドポイント
+  app.post("/api/logout", authenticate, async (req: any, res) => {
+    try {
+      console.log('Logout request:', {
+        userId: req.user?.id,
+        role: req.user?.role,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "ログアウトしました" });
+    } catch (error) {
+      console.error('Logout error:', {
+        error,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ message: "ログアウトに失敗しました" });
+    }
+  });
+
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -103,79 +143,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-app.get("/api/user/profile", authenticate, async (req: any, res) => {
-  try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "認証が必要です" });
+  app.get("/api/user/profile", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      console.log('Profile fetch request received:', {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      const [user] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          role: users.role,
+          displayName: users.displayName,
+          location: users.location,
+          birthDate: users.birthDate,
+          birthDateModified: users.birthDateModified,
+          preferredLocations: users.preferredLocations,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, req.user.id));
+
+      console.log('Database query result:', {
+        userId: req.user.id,
+        hasUser: !!user,
+        userDetails: user ? {
+          hasDisplayName: !!user.displayName,
+          hasBirthDate: !!user.birthDate,
+          hasPreferredLocations: !!user.preferredLocations,
+        } : null,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      // 日付データと配列の存在チェックを行い、適切な形式に変換
+      const userProfile = {
+        ...user,
+        birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : null,
+        createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+        preferredLocations: Array.isArray(user.preferredLocations) ? user.preferredLocations : [],
+      };
+
+      console.log('Profile fetch successful:', {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(userProfile);
+    } catch (error) {
+      console.error('Profile fetch error:', {
+        error,
+        userId: req.user?.id,
+        errorDetails: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack
+        } : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ユーザー情報の取得に失敗しました",
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
-
-    console.log('Profile fetch request received:', {
-      userId: req.user.id,
-      timestamp: new Date().toISOString()
-    });
-
-    const [user] = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        role: users.role,
-        displayName: users.displayName,
-        location: users.location,
-        birthDate: users.birthDate,
-        birthDateModified: users.birthDateModified,
-        preferredLocations: users.preferredLocations,
-        createdAt: users.createdAt,
-      })
-      .from(users)
-      .where(eq(users.id, req.user.id));
-
-    console.log('Database query result:', {
-      userId: req.user.id,
-      hasUser: !!user,
-      userDetails: user ? {
-        hasDisplayName: !!user.displayName,
-        hasBirthDate: !!user.birthDate,
-        hasPreferredLocations: !!user.preferredLocations,
-      } : null,
-      timestamp: new Date().toISOString()
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "ユーザーが見つかりません" });
-    }
-
-    // 日付データと配列の存在チェックを行い、適切な形式に変換
-    const userProfile = {
-      ...user,
-      birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : null,
-      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
-      preferredLocations: Array.isArray(user.preferredLocations) ? user.preferredLocations : [],
-    };
-
-    console.log('Profile fetch successful:', {
-      userId: req.user.id,
-      timestamp: new Date().toISOString()
-    });
-
-    res.json(userProfile);
-  } catch (error) {
-    console.error('Profile fetch error:', {
-      error,
-      userId: req.user?.id,
-      errorDetails: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack
-      } : 'Unknown error',
-      timestamp: new Date().toISOString()
-    });
-
-    res.status(500).json({
-      message: "ユーザー情報の取得に失敗しました",
-      error: error instanceof Error ? error.message : "Unknown error",
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    });
-  }
-});
+  });
 
   // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
@@ -218,8 +258,8 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       });
 
       // エラーメッセージの日本語化
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "求人情報の取得に失敗しました";
 
       res.status(500).json({
@@ -244,7 +284,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       });
 
       if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "ページネーションパラメータが不正です",
           timestamp: new Date().toISOString()
         });
@@ -321,8 +361,8 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         timestamp: new Date().toISOString()
       });
 
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "求人検索に失敗しました";
 
       res.status(500).json({
@@ -606,28 +646,6 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     }
   });
 
-  app.post("/api/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username));
-
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return res.status(401).json({ message: "認証に失敗しました" });
-      }
-
-      // JWTトークンを生成
-      const token = generateToken(user);
-
-      res.json({ user, token });
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ message: "ログインに失敗しました" });
-    }
-  });
 
   // 認証が必要なエンドポイント
   // profilesテーブルのデータ取得のエラーハンドリングを改善
@@ -1002,7 +1020,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
   });
 
   // 写真アップロード用の新しいエンドポイント
-  app.post("/api/upload-photo", authenticate, async (req: any, res) => {
+  app.post("/api/upload-photo", authenticate, async (req: anyres) => {
     try {
       console.log('Photo upload request received:', {
         userId: req.user.id,
@@ -1271,8 +1289,8 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
       // 店舗ユーザーのみ許可
       if (req.user.role !== 'store') {
-        return res.status(403).json({ 
-          message: "店舗アカウントのみ求人投稿が可能です" 
+        return res.status(403).json({
+          message: "店舗アカウントのみ求人投稿が可能です"
         });
       }
 
@@ -1335,13 +1353,13 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
 
       // 店舗ユーザーのみ許可
       if (req.user.role !== 'store') {
-        return res.status(403).json({ 
-          message: "店舗アカウントのみアクセス可能です" 
+        return res.status(403).json({
+          message: "店舗アカウントのみアクセス可能です"
         });
       }
 
       if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "ページネーションパラメータが不正です",
           timestamp: new Date().toISOString()
         });
@@ -1477,21 +1495,37 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     }
   });
 
+  // 店舗管理者用のログインエンドポイント(removed)
+  //app.post("/api/auth/manager/login", async (req, res) => { ... });
+
+  // 店舗管理者用のログアウトエンドポイント(removed)
+  //app.post("/api/auth/manager/logout", authenticate, async (req: any, res) => { ... });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }
 
-// パスワードハッシュ化関数
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+// パスワード比較関数
+async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
+  const [hashedPassword, salt] = storedPassword.split('.');
+  const buf = (await scryptAsync(inputPassword, salt, 64)) as Buffer;
+  const suppliedHash = buf.toString('hex');
+  return hashedPassword === suppliedHash;
 }
 
-// パスワード検証関数
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+async function calculateMatchScore(job: Job, conditions: any): Promise<number> {
+  let score = 0;
+  if (conditions.preferredLocations.includes(job.location)) {
+    score++;
+  }
+  if (Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee)) {
+    score++;
+  }
+  if (conditions.workTypes.includes(job.serviceType)) {
+    score++;
+  }
+  return score;
 }
+
+const photoChunksStore = new Map();

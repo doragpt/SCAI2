@@ -18,14 +18,12 @@ type AuthContextType = {
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
 };
 
-// ログイン用のデータ型
 type LoginData = {
   username: string;
   password: string;
   role?: "talent" | "store";
 };
 
-// 登録用のデータ型
 type RegisterData = z.infer<typeof baseUserSchema>;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -63,18 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const endpoint = credentials.role === "store" 
-        ? "/api/auth/manager/login" 
-        : "/api/auth/login";
-
       console.log('Login attempt:', {
         username: credentials.username,
         role: credentials.role,
-        endpoint,
         timestamp: new Date().toISOString()
       });
 
-      const response = await fetch(endpoint, {
+      // JSON形式のリクエストを送信
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -82,8 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+        // エラーレスポンスの詳細をログに出力
+        const responseText = await response.text();
+        console.error('Login error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          responseText,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error("ログインに失敗しました");
       }
 
       const result = await response.json();
@@ -120,11 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const endpoint = user?.role === "store" 
-        ? "/api/auth/manager/logout" 
-        : "/api/auth/logout";
-
-      await fetch(endpoint, {
+      await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -148,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -182,7 +179,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // ログ出力を追加
   console.log('Auth state:', {
     hasUser: !!user,
     userId: user?.id,
