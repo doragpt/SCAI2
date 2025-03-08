@@ -12,7 +12,10 @@ import {
   type KeepList,
   applicationSchema,
   keepListSchema,
-  viewHistorySchema
+  viewHistorySchema,
+  jobSchema,
+  type Job,
+  type JobRequirements,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -330,14 +333,22 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
     }
   });
 
-  // 求人詳細取得エンドポイント
-  app.get("/api/jobs/:id", async (req, res) => {
+  // 求人詳細の取得
+  app.get("/api/jobs/:id", authenticate, async (req: any, res) => {
     try {
       const jobId = parseInt(req.params.id);
       if (isNaN(jobId)) {
-        return res.status(400).json({ message: "Invalid job ID" });
+        return res.status(400).json({ message: "無効な求人IDです" });
       }
 
+      console.log('Job detail fetch request received:', {
+        userId: req.user?.id,
+        jobId,
+        userRole: req.user?.role,
+        timestamp: new Date().toISOString()
+      });
+
+      // 求人情報の取得
       const [job] = await db
         .select()
         .from(jobs)
@@ -347,40 +358,153 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         return res.status(404).json({ message: "求人が見つかりません" });
       }
 
-      // ユーザーが認証済みの場合、応募状況も返す
-      if (req.user?.id) {
+      // 非公開求人へのアクセス制御
+      if (job.status !== 'published') {
+        // 店舗ユーザーの場合、自身の求人のみアクセス可能
+        if (!req.user || (req.user.role === 'store' && job.storeId !== req.user.id)) {
+          return res.status(403).json({ message: "この求人情報へのアクセス権限がありません" });
+        }
+        // 一般ユーザーの場合、公開済みの求人のみアクセス可能
+        if (req.user.role !== 'store') {
+          return res.status(403).json({ message: "この求人情報は現在非公開です" });
+        }
+      }
+
+      // 応募状況の取得（認証済みユーザーのみ）
+      let applicationStatus = null;
+      if (req.user?.id && req.user.role !== 'store') {
         const [application] = await db
           .select()
           .from(applications)
           .where(and(
-            eq(applications.storeId, jobId),
+            eq(applications.jobId, jobId),
             eq(applications.userId, req.user.id)
           ));
+
+        if (application) {
+          applicationStatus = application.status;
+        }
 
         // 閲覧履歴を記録
         await db.insert(viewHistory).values({
           userId: req.user.id,
-          storeId: jobId,
+          jobId: jobId,
           viewedAt: new Date()
-        });
-
-        return res.json({
-          ...job,
-          application: application || null
         });
       }
 
-      res.json(job);
+      // レスポンスデータの準備
+      const responseData = {
+        ...job,
+        applicationStatus,
+        // 店舗ユーザーの場合、内部情報も含める
+        ...(req.user?.role === 'store' && job.storeId === req.user.id ? {
+          requirements: job.requirements,
+          internalNotes: job.internalNotes
+        } : {})
+      };
+
+      console.log('Job detail fetch successful:', {
+        userId: req.user?.id,
+        jobId,
+        hasApplication: !!applicationStatus,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(responseData);
     } catch (error) {
       console.error("Job detail fetch error:", {
         error,
+        userId: req.user?.id,
         jobId: req.params.id,
         timestamp: new Date().toISOString()
       });
+
       res.status(500).json({
         message: "求人詳細の取得に失敗しました",
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
+    }
+  });
+
+  // 求人情報の更新
+  app.put("/api/jobs/:id", authenticate, async (req: any, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "無効な求人IDです" });
+      }
+
+      console.log('Job update request received:', {
+        userId: req.user?.id,
+        jobId,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({ message: "店舗アカウントのみ求人情報を更新できます" });
+      }
+
+      // 求人情報の取得
+      const [existingJob] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!existingJob) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // 自身の求人のみ更新可能
+      if (existingJob.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この求人情報の更新権限がありません" });
+      }
+
+      // バリデーション（statusは別エンドポイントで更新）
+      const updateData = jobSchema
+        .omit({ storeId: true, status: true })
+        .parse(req.body);
+
+      // 求人情報の更新
+      const [updatedJob] = await db
+        .update(jobs)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(jobs.id, jobId))
+        .returning();
+
+      console.log('Job update successful:', {
+        userId: req.user.id,
+        jobId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedJob);
+    } catch (error) {
+      console.error('Job update error:', {
+        error,
+        userId: req.user?.id,
+        jobId: req.params.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      if (error instanceof Error) {
+        res.status(400).json({
+          error: true,
+          message: error.message,
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      } else {
+        res.status(500).json({
+          error: true,
+          message: "求人情報の更新に失敗しました"
+        });
+      }
     }
   });
 
@@ -396,7 +520,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       const validatedData = applicationSchema.parse({
         ...req.body,
         userId: req.user.id,
-        storeId: jobId
+        jobId
       });
 
       // 既存の求人確認
@@ -414,7 +538,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         .select()
         .from(applications)
         .where(and(
-          eq(applications.storeId, jobId),
+          eq(applications.jobId, jobId),
           eq(applications.userId, req.user.id)
         ));
 
@@ -901,7 +1025,7 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
         `${req.user.id}-${Date.now()}.jpg`
       );
 
-      console.log('Photo upload successful:', {
+      console.log('Photo uploadsuccessful:', {
         userId: req.user.id,
         url: s3Url,
         timestamp: new Date().toISOString()
@@ -1132,6 +1256,223 @@ app.get("/api/user/profile", authenticate, async (req: any, res) => {
       res.status(500).json({
         message: "マッチング処理に失敗しました",
         error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // 求人情報の新規投稿
+  app.post("/api/jobs", authenticate, async (req: any, res) => {
+    try {
+      console.log('Job posting request received:', {
+        userId: req.user.id,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({ 
+          message: "店舗アカウントのみ求人投稿が可能です" 
+        });
+      }
+
+      // バリデーション
+      const jobData = jobSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        status: 'draft'
+      });
+
+      // 求人情報の保存
+      const [newJob] = await db
+        .insert(jobs)
+        .values(jobData)
+        .returning();
+
+      console.log('Job posting successful:', {
+        userId: req.user.id,
+        jobId: newJob.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(newJob);
+    } catch (error) {
+      console.error('Job posting error:', {
+        error,
+        userId: req.user?.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      if (error instanceof Error) {
+        res.status(400).json({
+          error: true,
+          message: error.message,
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      } else {
+        res.status(500).json({
+          error: true,
+          message: "求人情報の投稿に失敗しました"
+        });
+      }
+    }
+  });
+
+  // 求人情報一覧の取得（店舗用）
+  app.get("/api/jobs/store", authenticate, async (req: any, res) => {
+    try {
+      const { status = "all", page = "1", limit = "20" } = req.query;
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+
+      console.log('Store jobs fetch request received:', {
+        userId: req.user.id,
+        filters: { status },
+        pagination: { page, limit },
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({ 
+          message: "店舗アカウントのみアクセス可能です" 
+        });
+      }
+
+      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+        return res.status(400).json({ 
+          message: "ページネーションパラメータが不正です",
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      const offset = (pageNum - 1) * limitNum;
+
+      // クエリの構築
+      let query = db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.storeId, req.user.id));
+
+      if (status !== "all") {
+        query = query.where(eq(jobs.status, status));
+      }
+
+      // 総件数の取得
+      const countResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(jobs)
+        .where(eq(jobs.storeId, req.user.id))
+        .where(status !== "all" ? eq(jobs.status, status) : undefined);
+
+      const totalCount = countResult[0].count;
+
+      // 求人情報の取得
+      const jobListings = await query
+        .orderBy(desc(jobs.createdAt))
+        .limit(limitNum)
+        .offset(offset);
+
+      console.log('Store jobs fetch successful:', {
+        userId: req.user.id,
+        count: jobListings.length,
+        totalCount,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        jobs: jobListings,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalCount / limitNum),
+          totalItems: totalCount
+        }
+      });
+    } catch (error) {
+      console.error("Store jobs fetch error:", {
+        error,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "求人情報の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+  // 求人ステータスの更新
+  app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "無効な求人IDです" });
+      }
+
+      const { status } = req.body;
+      if (!status || !["draft", "published", "closed"].includes(status)) {
+        return res.status(400).json({ message: "無効なステータスです" });
+      }
+
+      console.log('Job status update request received:', {
+        userId: req.user?.id,
+        jobId,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({ message: "店舗アカウントのみステータスを更新できます" });
+      }
+
+      // 求人情報の取得
+      const [existingJob] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!existingJob) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // 自身の求人のみ更新可能
+      if (existingJob.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この求人情報の更新権限がありません" });
+      }
+
+      // ステータスの更新
+      const [updatedJob] = await db
+        .update(jobs)
+        .set({
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(jobs.id, jobId))
+        .returning();
+
+      console.log('Job status update successful:', {
+        userId: req.user.id,
+        jobId,
+        oldStatus: existingJob.status,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedJob);
+    } catch (error) {
+      console.error('Job status update error:', {
+        error,
+        userId: req.user?.id,
+        jobId: req.params.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        error: true,
+        message: "ステータスの更新に失敗しました"
       });
     }
   });
