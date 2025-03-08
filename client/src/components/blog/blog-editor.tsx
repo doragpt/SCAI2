@@ -5,7 +5,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
-import imageCompression from "browser-image-compression";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -176,13 +175,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
-  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [resizingImage, setResizingImage] = useState<HTMLImageElement | null>(null);
-  const [resizeOptions, setResizeOptions] = useState({
-    maxSizeMB: 0.5,
-    maxWidthOrHeight: 1024
-  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
@@ -305,38 +297,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleFileSelect = async (file: File) => {
-    // ファイル形式のチェック
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-    setIsResizeDialogOpen(true);
-  };
-
-  const handleImageResize = async () => {
+  const handleImageUpload = async (file: File) => {
     try {
-      if (!selectedFile) return;
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ログインが必要です",
+        });
+        return;
+      }
 
       setIsUploading(true);
 
-      // 画像を圧縮
-      const compressedFile = await imageCompression(selectedFile, {
-        maxSizeMB: resizeOptions.maxSizeMB,
-        maxWidthOrHeight: resizeOptions.maxWidthOrHeight,
-        useWebWorker: true
-      });
-
-      // FormDataの作成とアップロード
       const formData = new FormData();
-      formData.append("image", compressedFile);
+      formData.append("image", file);
 
       const response = await apiRequest<{ url: string; key: string }>(
         "POST",
@@ -364,7 +339,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       quill.insertEmbed(range.index, "image", response.url);
       quill.setSelection(range.index + 1);
 
-      // アップロード済み画像リストとフォームの値を更新
+      // アップロード済み画像リストを更新
       const newImages = [...uploadedImages, response.url];
       setUploadedImages(newImages);
       form.setValue("images", newImages);
@@ -374,15 +349,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "画像がアップロードされました",
       });
 
-      setIsResizeDialogOpen(false);
-      setSelectedFile(null);
-
       // リサイズハンドルを初期化
       setTimeout(initializeImageResize, 100);
     } catch (error) {
       console.error('Image upload error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        file: selectedFile?.name,
+        file: file.name,
       });
       toast({
         variant: "destructive",
@@ -573,75 +545,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            handleFileSelect(file);
+                            handleImageUpload(file);
                           }
                           e.target.value = "";
                         }}
                       />
                     </div>
                   </div>
-
-                  {/* リサイズダイアログ */}
-                  <Dialog open={isResizeDialogOpen} onOpenChange={setIsResizeDialogOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>画像のリサイズ</DialogTitle>
-                        <DialogDescription>
-                          アップロードする画像のサイズを調整できます
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-sm font-medium">最大サイズ (MB)</label>
-                          <Input
-                            type="number"
-                            value={resizeOptions.maxSizeMB}
-                            onChange={(e) => setResizeOptions(prev => ({
-                              ...prev,
-                              maxSizeMB: parseFloat(e.target.value)
-                            }))}
-                            min={0.1}
-                            max={2}
-                            step={0.1}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">最大幅/高さ (px)</label>
-                          <Input
-                            type="number"
-                            value={resizeOptions.maxWidthOrHeight}
-                            onChange={(e) => setResizeOptions(prev => ({
-                              ...prev,
-                              maxWidthOrHeight: parseInt(e.target.value)
-                            }))}
-                            min={100}
-                            max={2048}
-                            step={100}
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setIsResizeDialogOpen(false);
-                              setSelectedFile(null);
-                            }}
-                          >
-                            キャンセル
-                          </Button>
-                          <Button
-                            onClick={handleImageResize}
-                            disabled={isUploading}
-                          >
-                            {isUploading ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : null}
-                            アップロード
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
 
                   <FormField
                     control={form.control}
