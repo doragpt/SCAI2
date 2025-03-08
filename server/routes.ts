@@ -751,6 +751,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 店舗画像一覧取得エンドポイント
+  app.get("/api/store/images", authenticate, async (req: any, res) => {
+    try {
+      console.log('Store images fetch request received:', {
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // ブログ投稿から画像URLを収集
+      const posts = await db
+        .select({
+          images: blogPosts.images
+        })
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      // 重複を除去して画像URLの配列を作成
+      const imageUrls = Array.from(new Set(
+        posts.reduce<string[]>((acc, post) => {
+          if (post.images) {
+            acc.push(...post.images);
+          }
+          return acc;
+        }, [])
+      ));
+
+      console.log('Store images fetch successful:', {
+        userId: req.user.id,
+        imageCount: imageUrls.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(imageUrls);
+    } catch (error) {
+      console.error('Store images fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像一覧の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   // 求人応募エンドポイント
   app.post("/api/jobs/:id/apply", authenticate, async (req: any, res) => {
     try {

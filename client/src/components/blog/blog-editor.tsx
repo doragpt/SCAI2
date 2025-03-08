@@ -58,7 +58,7 @@ import {
 import {
   Calendar,
   Clock,
-  Image as ImageIcon,
+  ImageIcon,
   Loader2,
   Save,
   Eye,
@@ -183,7 +183,7 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-// Quillツールバーの設定
+// エディタのツールバー設定
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -227,10 +227,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
 
-  // 店舗の全画像を取得
+  // 店舗の画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
     queryKey: [QUERY_KEYS.STORE_IMAGES],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_IMAGES),
+    queryFn: async () => {
+      const response = await apiRequest<string[]>("GET", QUERY_KEYS.STORE_IMAGES);
+      return response || [];
+    },
     enabled: !!user?.id,
   });
 
@@ -358,7 +361,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  // 以下、コンポーネントのレンダリング部分は変更なし
   const createMutation = useMutation({
     mutationFn: (data: typeof form.getValues) =>
       apiRequest("POST", "/api/blog/posts", data),
@@ -451,57 +453,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormLabel>本文</FormLabel>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>画像: {uploadedImages.length}/50</span>
-                      <Dialog open={isImageLibraryOpen} onOpenChange={setIsImageLibraryOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mr-2"
-                          >
-                            <Image className="h-4 w-4 mr-2" />
-                            画像ライブラリ
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>画像ライブラリ</DialogTitle>
-                            <DialogDescription>
-                              アップロード済みの画像から選択して挿入できます
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-3 gap-4 py-4">
-                            {isLoadingImages ? (
-                              <div className="col-span-3 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                              </div>
-                            ) : !storeImages || storeImages.length === 0 ? (
-                              <div className="col-span-3 text-center text-muted-foreground">
-                                アップロード済みの画像がありません
-                              </div>
-                            ) : (
-                              storeImages.map((image: string) => (
-                                <div
-                                  key={image}
-                                  className="relative aspect-square cursor-pointer group"
-                                  onClick={() => insertImage(image)}
-                                >
-                                  <img
-                                    src={image}
-                                    alt="ライブラリの画像"
-                                    className="w-full h-full object-cover rounded-md"
-                                  />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                                    <Button variant="secondary" size="sm">
-                                      選択
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <ImageLibraryModal
+                        isOpen={isImageLibraryOpen}
+                        onClose={() => setIsImageLibraryOpen(false)}
+                        onSelect={insertImage}
+                        images={storeImages || []}
+                        isLoading={isLoadingImages}
+                      />
                       <Button
                         type="button"
                         variant="outline"
