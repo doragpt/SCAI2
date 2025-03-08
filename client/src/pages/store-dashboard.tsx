@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
+import { useLocation } from "wouter";
 import { 
   Loader2, 
   LogOut, 
@@ -54,6 +55,7 @@ export default function StoreDashboard() {
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // 求人情報の取得
   const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
@@ -363,7 +365,7 @@ export default function StoreDashboard() {
                         ブログの投稿・管理ができます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => window.open('/store/blog/new', '_blank')}>
+                    <Button onClick={() => setLocation('/store/blog/new')}>
                       <Plus className="h-4 w-4 mr-2" />
                       新規作成
                     </Button>
@@ -375,7 +377,11 @@ export default function StoreDashboard() {
                         <p className="text-muted-foreground">
                           ブログ記事がありません
                         </p>
-                        <Button variant="outline" className="mt-4" onClick={() => window.open('/store/blog/new', '_blank')}>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4" 
+                          onClick={() => setLocation('/store/blog/new')}
+                        >
                           <Plus className="h-4 w-4 mr-2" />
                           記事を作成する
                         </Button>
@@ -414,14 +420,14 @@ export default function StoreDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => window.open(`/blog/${post.id}`, '_blank')}>
+                                  <Button variant="outline" size="sm" onClick={() => setLocation(`/blog/${post.id}`)}>
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => window.open(`/store/blog/edit/${post.id}`, '_blank')}
+                                    onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                                   >
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
