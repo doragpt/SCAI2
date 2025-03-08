@@ -163,7 +163,7 @@ async function updateUserProfile(userId: number, updateData: any) {
   return updatedUser;
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<Express> {
   // APIルートを最初に登録
   app.use("/api/*", (req, res, next) => {
     console.log('API request received:', {
@@ -1644,62 +1644,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 店舗の詳細アクセス統計を取得するエンドポイント
-  app.get("/api/stores/:storeId/stats/detail", authenticate, async (req: any, res) => {
-    try {
-      const storeId = parseInt(req.params.storeId);
-      const dateStr = req.query.date as string; // Format: YYYY-MM
-
-      if (isNaN(storeId)) {
-        return res.status(400).json({ message: "無効な店舗IDです" });
-      }
-
-      // 認証チェック
-      if (!req.user || (req.user.role === 'store' && req.user.id !== storeId)) {
-        return res.status(403).json({ message: "アクセス権限がありません" });
-      }
-
-      const [year, month] = dateStr.split('-').map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-
-      const stats = await getStoreStats(storeId, startDate, endDate);
-
-      // 日次データの配列を作成
-      const dailyStats = [];
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const stat = stats.find(s =>
-          new Date(s.date).toISOString().split('T')[0] === d.toISOString().split('T')[0]
-        ) || {
-          date: d.toISOString(),
-          totalVisits: 0,
-          pcVisits: 0,
-          mobileVisits: 0,
-          applications: 0,
-          questions: 0,
-          calls: 0,
-          emails: 0,
-          blogViews: 0,
-          rankingUpdates: 0
-        };
-        dailyStats.push(stat);
-      }
-
-      res.json({ dailyStats });
-    } catch (error) {
-      console.error('Access stats detail fetch error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-
-      res.status(500).json({
-        message: "アクセス統計の取得に失敗しました",
-        error: process.env.NODE_ENV === 'development' ? error : undefined
-      });
-    }
-  });
-
   // ブログ記事一覧の取得
   app.get("/api/blog/posts", authenticate, async (req: any, res) => {
     try {
@@ -2016,4 +1960,3 @@ async function saveDailyStats(stats: any) {
 }
 
 const photoChunksStore = new Map();
-}
