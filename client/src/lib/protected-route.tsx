@@ -5,9 +5,11 @@ import { Redirect, Route } from "wouter";
 export function ProtectedRoute({
   path,
   component: Component,
+  roleRequired
 }: {
   path: string;
   component: () => React.JSX.Element;
+  roleRequired?: "store" | "talent";
 }) {
   const { user, isLoading } = useAuth();
 
@@ -23,7 +25,14 @@ export function ProtectedRoute({
         }
 
         if (!user) {
-          return <Redirect to="/auth" />;
+          // 未認証の場合、store roleが必要なパスは店舗管理ログインページへ、
+          // それ以外は通常のログインページへリダイレクト
+          return <Redirect to={roleRequired === "store" ? "/manager/login" : "/auth"} />;
+        }
+
+        // ロールチェック
+        if (roleRequired && user.role !== roleRequired) {
+          return <Redirect to="/" />;
         }
 
         return <Component />;

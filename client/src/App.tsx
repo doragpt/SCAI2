@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import JobDetail from "@/pages/job-detail";
 import StoreDashboard from "@/pages/store-dashboard";
+import ManagerLogin from "@/pages/manager/login";
 import MyPage from "@/pages/my-page";
 import Jobs from "@/pages/jobs";
 import KeepListPage from "@/pages/keep-list";
@@ -38,7 +39,12 @@ function Router() {
       <ProtectedRoute path="/talent/profile/view" component={ProfileViewPage} />
       <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
-      <ProtectedRoute path="/store/dashboard" component={StoreDashboard} />
+      <ProtectedRoute 
+        path="/manager/dashboard" 
+        component={StoreDashboard}
+        roleRequired="store"
+      />
+      <Route path="/manager/login" component={ManagerLogin} />
       <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
       <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
       <Route component={NotFound} />
@@ -68,7 +74,9 @@ export default function App() {
     setShowAgeVerification(false);
   };
 
-  if (!isAgeVerified && showAgeVerification) {
+  // 店舗管理ページでは年齢確認を表示しない
+  const isManagerPath = window.location.pathname.startsWith('/manager');
+  if (!isManagerPath && !isAgeVerified && showAgeVerification) {
     return (
       <AgeVerificationModal
         open={showAgeVerification}
@@ -82,7 +90,8 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen bg-background">
-          <Navigation />
+          {/* 店舗管理ページではナビゲーションを表示しない */}
+          {!isManagerPath && <Navigation />}
           <main className="container mx-auto px-4 py-6">
             <Router />
           </main>
