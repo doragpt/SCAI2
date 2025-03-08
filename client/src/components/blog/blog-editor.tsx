@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
@@ -28,13 +28,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -44,19 +37,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Calendar,
-  Clock,
   ImageIcon,
   Loader2,
   Save,
@@ -67,6 +47,12 @@ import {
 
 // 画像のリサイズハンドルのスタイル
 const imageResizeCSS = `
+.ql-editor {
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
 .ql-editor img {
   position: relative;
   display: inline-block;
@@ -116,6 +102,7 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleUpload = async (file: File) => {
     try {
@@ -140,8 +127,8 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
         description: "画像がアップロードされました",
       });
 
-      // 画像を選択状態にする
-      onSelect(response.url);
+      // キャッシュを更新して新しい画像をすぐに表示
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
     } catch (error) {
       console.error('Image upload error:', error);
       toast({
@@ -343,6 +330,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // 店舗の画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery({
@@ -445,6 +433,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を更新しました",
         description: "ブログ記事の更新が完了しました。",
       });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
     },
     onError: (error) => {
       toast({
@@ -483,7 +472,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         </CardHeader>
         <CardContent>
           {isPreview ? (
-            <div className="prose prose-sm max-w-none ql-editor">
+            <div className="prose prose-sm max-w-none">
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
@@ -526,7 +515,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="border rounded-md overflow-hidden">
+                          <div className="border rounded-md">
                             <ReactQuill
                               forwardedRef={quillRef}
                               theme="snow"
@@ -535,7 +524,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               value={field.value}
                               onChange={field.onChange}
                               placeholder="記事の本文を入力"
-                              className="min-h-[400px]"
                             />
                           </div>
                         </FormControl>
@@ -598,60 +586,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">下書き保存</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>下書き保存の確認</AlertDialogTitle>
-                <AlertDialogDescription>
-                  現在の内容を下書きとして保存します。
-                  後でいつでも編集できます。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    form.setValue("status", "draft");
-                    form.handleSubmit(onSubmit)();
-                  }}
-                >
-                  保存する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button>
-                <Save className="h-4 w-4 mr-2" />
-                公開する
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>公開の確認</AlertDialogTitle>
-                <AlertDialogDescription>
-                  記事を公開します。公開後は一般に公開され、
-                  誰でも閲覧できるようになります。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    form.setValue("status", "published");
-                    form.handleSubmit(onSubmit)();
-                  }}
-                >
-                  公開する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button variant="outline" onClick={() => {
+            form.setValue("status", "draft");
+            form.handleSubmit(onSubmit)();
+          }}>
+            下書き保存
+          </Button>
+          <Button onClick={() => {
+            form.setValue("status", "published");
+            form.handleSubmit(onSubmit)();
+          }}>
+            <Save className="h-4 w-4 mr-2" />
+            公開する
+          </Button>
         </CardFooter>
       </Card>
       <ImageLibraryModal
