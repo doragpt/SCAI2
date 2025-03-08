@@ -18,13 +18,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormField,
@@ -39,6 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,53 +50,38 @@ import {
   Upload,
 } from "lucide-react";
 
-// 画像のリサイズハンドルのスタイル
-const imageResizeCSS = `
+// スタイル定義
+const editorStyles = `
 .ql-editor {
   min-height: 400px;
   max-height: 600px;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  padding: 1rem;
+}
+
+.ql-container {
+  height: auto !important;
 }
 
 .ql-editor img {
-  position: relative;
-  display: inline-block;
   max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
 }
 
-.ql-editor img:hover {
-  outline: 2px solid #4299e1;
-}
-
-.ql-editor img.resizing {
-  user-select: none;
-}
-
-.resize-handle {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: white;
-  border: 1px solid #4299e1;
-  border-radius: 50%;
-  z-index: 100;
-}
-
-.resize-handle.se {
-  bottom: -4px;
-  right: -4px;
-  cursor: se-resize;
+.ql-editor p {
+  margin: 1rem 0;
 }
 `;
 
-// カスタムスタイルを追加
+// スタイルの適用
 if (typeof window !== 'undefined') {
   const style = document.createElement('style');
-  style.textContent = imageResizeCSS;
+  style.textContent = editorStyles;
   document.head.appendChild(style);
 }
 
-// 画像ライブラリモーダルのコンポーネント
+// 画像ライブラリモーダル
 const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }: {
   isOpen: boolean;
   onClose: () => void;
@@ -109,45 +94,68 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleUpload = async (file: File) => {
-    try {
-      setIsUploading(true);
-
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("image", file);
-
-      const response = await apiRequest<{ url: string; key: string }>(
+      return apiRequest<{ url: string; key: string }>(
         "POST",
         "/api/blog/upload-image",
         formData,
         { rawFormData: true }
       );
+    },
+    onMutate: () => {
+      setIsUploading(true);
+    },
+    onSuccess: async (data) => {
+      try {
+        // 成功トースト表示
+        toast({
+          title: "成功",
+          description: "画像がアップロードされました",
+        });
 
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
+        // キャッシュを無効化
+        await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
+
+        // 強制的に再取得
+        await queryClient.refetchQueries({ 
+          queryKey: [QUERY_KEYS.STORE_IMAGES],
+          type: 'active',
+          exact: true // 完全一致のクエリのみを更新
+        });
+
+        // アップロードした画像を自動選択
+        if (data?.url) {
+          onSelect(data.url);
+          onClose(); // モーダルを閉じる
+        }
+      } catch (error) {
+        console.error('Cache update error:', error);
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像の更新に失敗しました",
+        });
       }
-
-      toast({
-        title: "成功",
-        description: "画像がアップロードされました",
-      });
-
-      // キャッシュを無効化して強制的に再取得
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
-
-      // 即座にデータを再取得
-      await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
-
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Image upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
         description: "画像のアップロードに失敗しました",
       });
-    } finally {
+    },
+    onSettled: () => {
       setIsUploading(false);
     }
+  });
+
+  const handleUpload = (file: File) => {
+    if (!file) return;
+    uploadMutation.mutate(file);
   };
 
   return (
@@ -222,74 +230,9 @@ const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }
   );
 };
 
-// Quillエディターを動的にインポート
+// Quillエディター
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-
-  // Quillインスタンスとモジュールを取得
-  const Quill = RQ.Quill;
-
-  // カスタムモジュールを追加
-  Quill.register('modules/imageResize', function(quill: any) {
-    quill.on('editor-change', function() {
-      const editor = quill.root;
-      const images = editor.getElementsByTagName('img');
-
-      Array.from(images).forEach((img: HTMLImageElement) => {
-        if (!img.parentElement || img.getAttribute('data-resize-initialized')) return;
-
-        img.setAttribute('data-resize-initialized', 'true');
-
-        // リサイズハンドルを追加
-        const handle = document.createElement('div');
-        handle.className = 'resize-handle se';
-        img.parentElement.style.position = 'relative';
-        img.parentElement.appendChild(handle);
-
-        let isResizing = false;
-        let startX = 0;
-        let startY = 0;
-        let startWidth = 0;
-        let startHeight = 0;
-
-        handle.addEventListener('mousedown', (e) => {
-          isResizing = true;
-          startX = e.clientX;
-          startY = e.clientY;
-          startWidth = img.offsetWidth;
-          startHeight = img.offsetHeight;
-          img.classList.add('resizing');
-
-          const onMouseMove = (e: MouseEvent) => {
-            if (!isResizing) return;
-
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-
-            // アスペクト比を維持しながらリサイズ
-            const aspectRatio = startWidth / startHeight;
-            const width = Math.max(50, startWidth + deltaX);
-            const height = width / aspectRatio;
-
-            img.style.width = `${width}px`;
-            img.style.height = `${height}px`;
-          };
-
-          const onMouseUp = () => {
-            isResizing = false;
-            img.classList.remove('resizing');
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-          };
-
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-          e.preventDefault();
-        });
-      });
-    });
-  });
-
   return function wrap(props: any) {
     return <RQ {...props} ref={props.forwardedRef} />;
   };
@@ -298,7 +241,7 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-// エディタのツールバー設定
+// エディタ設定
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -308,8 +251,7 @@ const modules = {
     [{ align: ["", "center", "right", "justify"] }],
     ["link"],
     ["clean"]
-  ],
-  imageResize: true
+  ]
 };
 
 const formats = [
@@ -327,16 +269,10 @@ const formats = [
   "image"
 ];
 
-interface BlogEditorProps {
-  postId?: number;
-  initialData?: BlogPost;
-}
-
-export function BlogEditor({ postId, initialData }: BlogEditorProps) {
+export function BlogEditor({ postId, initialData }: { postId?: number; initialData?: BlogPost }) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -350,7 +286,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       return response || [];
     },
     enabled: !!user?.id,
-    staleTime: 0, // キャッシュを無効化して常に最新データを取得
+    refetchInterval: 1000, // 1秒ごとに再取得
+    refetchOnWindowFocus: true,
   });
 
   const form = useForm({
@@ -374,10 +311,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       quill.insertEmbed(range.index, "image", imageUrl);
       quill.setSelection(range.index + 1);
       setIsImageLibraryOpen(false);
-
-      // アップロード済み画像リストを更新
-      setUploadedImages(prev => [...prev, imageUrl]);
-      form.setValue("images", [...uploadedImages, imageUrl]);
     } catch (error) {
       console.error('Image insertion error:', error);
       toast({
@@ -386,9 +319,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "画像の挿入に失敗しました",
       });
     }
-  }, [quillRef, toast, form, uploadedImages]);
+  }, [quillRef, toast]);
 
-  // フォームの送信処理
   const onSubmit = async (data: typeof form.getValues) => {
     try {
       // 本文内の画像URLを収集
@@ -396,7 +328,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const images = editor?.getElementsByTagName('img') || [];
       const imageUrls = Array.from(images).map(img => img.getAttribute('src')).filter(Boolean) as string[];
 
-      // フォームデータを更新
       const formData = {
         ...data,
         images: imageUrls
@@ -408,7 +339,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         await createMutation.mutateAsync(formData);
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -507,17 +437,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <FormLabel>本文</FormLabel>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsImageLibraryOpen(true)}
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        画像を挿入
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsImageLibraryOpen(true)}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      画像を挿入
+                    </Button>
                   </div>
 
                   <FormField

@@ -22,8 +22,11 @@ import {
   users,
   talentProfiles,
   blogPosts,
+  storeImages,
+  type StoreImage,
   type BlogPost,
   type BlogPostListResponse,
+  type JobListingResponse,
   blogPostSchema,
 } from "@shared/schema";
 import { db } from "./db";
@@ -763,23 +766,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
       }
 
-      // ブログ投稿から画像URLを収集
-      const posts = await db
+      // アップロード済み画像とブログ投稿の画像を結合して取得
+      const [uploadedImages] = await db
         .select({
-          images: blogPosts.images
+          uploadedImages: sql<string[]>`array_agg(DISTINCT url)`
+        })
+        .from(storeImages)
+        .where(eq(storeImages.storeId, req.user.id));
+
+      const [blogImages] = await db
+        .select({
+          blogImages: sql<string[]>`array_agg(DISTINCT unnest(images))`
         })
         .from(blogPosts)
         .where(eq(blogPosts.storeId, req.user.id));
 
       // 重複を除去して画像URLの配列を作成
-      const imageUrls = Array.from(new Set(
-        posts.reduce<string[]>((acc, post) => {
-          if (post.images) {
-            acc.push(...post.images);
-          }
-          return acc;
-        }, [])
-      ));
+      const imageUrls = Array.from(new Set([
+        ...(uploadedImages?.uploadedImages || []),
+        ...(blogImages?.blogImages || [])
+      ])).filter(Boolean);
 
       console.log('Store images fetch successful:', {
         userId: req.user.id,
@@ -1053,76 +1059,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Image upload request received:', {
         userId: req.user?.id,
-        file: req.file ? {
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size
-        } : 'No file received',
+        file: {
+          originalname: req.file?.originalname,
+          mimetype: req.file?.mimetype,
+          size: req.file?.size
+        },
         timestamp: new Date().toISOString()
       });
 
-      // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
-        return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
       }
 
-      // ファイルチェック
       if (!req.file) {
-        return res.status(400).json({ message: "画像ファイルを選択してください" });
+        return res.status(400).json({ message: "画像ファイルが必要です" });
       }
 
       // 現在の画像数を取得
-      const posts = await db
-        .select({
-          images: blogPosts.images
-        })
-        .from(blogPosts)
-        .where(eq(blogPosts.storeId, req.user.id));
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(storeImages)
+        .where(eq(storeImages.storeId, req.user.id));
 
-      const currentImagesCount = posts.reduce((total, post) => {
-        return total + (post.images?.length || 0);
-      }, 0);
+      if (count >= 100) {
+        return res.status(400).json({ message: "画像の上限数に達しました" });
+      }
 
-      console.log('Current images count:', {
-        userId: req.user.id,
-        count: currentImagesCount
+      // S3にアップロード
+      const uploadResult = await uploadToS3(req.file.buffer, {
+        contentType: req.file.mimetype,
+        extension: req.file.originalname.split(".").pop() || "",
+        prefix: `blog/${req.user.id}/`
       });
 
-      // バリデーション
-      const validation = validateImageUpload(req.file, currentImagesCount);
-      if (!validation.isValid) {
-        return res.status(400).json({ message: validation.error });
-      }
+      // 署名付きURLを生成
+      const url = await getSignedS3Url(uploadResult.key);
 
-      try {
-        // S3にアップロード
-        const uploadResult = await uploadToS3(req.file.buffer, {
-          contentType: req.file.mimetype,
-          extension: req.file.originalname.split(".").pop() || "",
-          prefix: `blog/${req.user.id}/`
-        });
+      // データベースに画像情報を保存
+      await db.insert(storeImages).values({
+        storeId: req.user.id,
+        url,
+        key: uploadResult.key,
+        createdAt: new Date()
+      });
 
-        // 署名付きURLを生成
-        const signedUrl = await getSignedS3Url(uploadResult.key);
+      console.log('Image upload successful:', {
+        userId: req.user.id,
+        key: uploadResult.key,
+        url,
+        timestamp: new Date().toISOString()
+      });
 
-        console.log('Image upload successful:', {
-          userId: req.user.id,
-          key: uploadResult.key,
-          url: signedUrl
-        });
-
-        res.json({
-          url: signedUrl,
-          key: uploadResult.key
-        });
-      } catch (uploadError) {
-        console.error('S3 upload error:', {
-          error: uploadError instanceof Error ? uploadError.message : 'Unknown error',
-          userId: req.user.id,
-          file: req.file.originalname
-        });
-        throw uploadError;
-      }
+      res.json({ url, key });
     } catch (error) {
       console.error('Image upload error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -1131,8 +1119,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(500).json({
-        message: "画像のアップロードに失敗しました",
-        error: process.env.NODE_ENV === "development" ? error : undefined
+        message: "画像のアップロードに失敗しました", 
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });
@@ -1375,18 +1363,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid photo data" });
       }
 
-      const s3Url = await uploadToS3(
-        photo,
-        `${req.user.id}-${Date.now()}.jpg`
-      );
+      // Extract file info from data URL
+      const [header, content] = photo.split(',');
+      const matches = header.match(/^data:([A-Za-z-+/]+);base64,$/);
+      
+      if (!matches) {
+        return res.status(400).json({ message: "Invalid photo data format" });
+      }
+
+      const contentType = matches[1];
+      const extension = contentType.split('/')[1] || 'jpg';
+      const buffer = Buffer.from(content, 'base64');
+
+      // S3にアップロード
+      const { key } = await uploadToS3(buffer, {
+        contentType,
+        extension,
+        prefix: `photos/${req.user.id}/`
+      });
+
+      // 署名付きURLを生成
+      const url = await getSignedS3Url(key);
 
       console.log('Photo upload successful:', {
         userId: req.user.id,
-        url: s3Url,
+        key,
+        url,
         timestamp: new Date().toISOString()
       });
 
-      res.json({ url: s3Url });
+      res.json({ url, key });
     } catch (error) {
       console.error('Photo upload error:', {
         error,
@@ -1427,6 +1433,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Base64データの処理
         const [header, content] = photo.split(',');
+        const matches = header.match(/^data:([A-Za-z-+/]+);base64,$/);
+        
+        if (!matches) {
+          return res.status(400).json({ message: "Invalid photo data format" });
+        }
+
+        const contentType = matches[1];
+        const extension = contentType.split('/')[1] || 'jpg';
         const base64Content = content;
 
         // チャンクデータを一時保存
@@ -1449,17 +1463,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (chunkIndex === totalChunks - 1) {
           try {
             // チャンクの検証
-            if (chunks.some(chunk => !chunk)) {
+            if (chunks.some((chunk: string) => !chunk)) {
               throw new Error(`Missing chunk data. Expected ${totalChunks} chunks, got ${chunks.filter(Boolean).length}`);
             }
 
             const completeBase64 = chunks.join('');
+            const buffer = Buffer.from(completeBase64, 'base64');
 
             // S3にアップロード
-            const s3Url = await uploadToS3(
-              `${header},${completeBase64}`,
-              `${req.user.id}-${photoId}.jpg`
-            );
+            const { key } = await uploadToS3(buffer, {
+              contentType,
+              extension,
+              prefix: `photos/${req.user.id}/chunks/`
+            });
+
+            // 署名付きURLを生成
+            const url = await getSignedS3Url(key);
 
             // チャンクデータをクリア
             photoChunksStore.delete(chunkKey);
@@ -1467,7 +1486,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Complete photo upload successful:', {
               userId: req.user.id,
               photoId,
-              url: s3Url,
+              key,
+              url,
               tag,
               order,
               timestamp: new Date().toISOString()
@@ -1477,7 +1497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               'ETag': `"${photoId}"`,
               'Content-Type': 'application/json'
             }).json({
-              url: s3Url,
+              url,
+              key,
               id: photoId,
               tag,
               order
@@ -1535,7 +1556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const jobListings = await db
         .select({
           id: jobs.id,
-          businessName: jobs.businessName,
+          title: jobs.title,
+          storeId: jobs.storeId,
+          status: jobs.status,
           location: jobs.location,
           serviceType: jobs.serviceType,
           minimumGuarantee: jobs.minimumGuarantee,
@@ -1546,6 +1569,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: jobs.description,
           requirements: jobs.requirements,
           benefits: jobs.benefits,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
         })
         .from(jobs)
         .orderBy(desc(jobs.createdAt))
