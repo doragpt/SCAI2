@@ -443,12 +443,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     let adjustedX = x;
     let adjustedY = y;
 
+    // 右端からはみ出す場合
     if (x + menuWidth > windowWidth) {
-      adjustedX = windowWidth - menuWidth - 10;
+      adjustedX = x - menuWidth;
     }
 
+    // 下端からはみ出す場合
     if (y + menuHeight > windowHeight) {
-      adjustedY = windowHeight - menuHeight - 10;
+      adjustedY = y - menuHeight;
     }
 
     return { x: adjustedX, y: adjustedY };
@@ -456,55 +458,54 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   // コンテキストメニューを表示する関数
   const showContextMenu = (e: React.MouseEvent, imageUrl: string, width: number, height: number) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); // デフォルトのコンテキストメニューを抑制
+    e.stopPropagation(); // イベントの伝播を停止
 
-    const menuWidth = 200; // コンテキストメニューの幅
-    const menuHeight = 150; // コンテキストメニューの高さ
+    const menuWidth = 200;
+    const menuHeight = 150;
     const { x, y } = adjustMenuPosition(e.clientX, e.clientY, menuWidth, menuHeight);
 
-    setContextMenu((prev) => ({
-      ...prev,
+    setContextMenu({
       show: true,
       x,
       y,
-      image: {
-        url: imageUrl,
-        width,
-        height,
-      },
-    }));
+      image: { url: imageUrl, width, height }
+    });
   };
 
   // コンテキストメニューを閉じる関数
   const hideContextMenu = () => {
-    setContextMenu((prev) => ({ ...prev, show: false }));
+    setContextMenu(prev => ({ ...prev, show: false }));
   };
 
-  // クリックイベントでコンテキストメニューを閉じる
+  // コンテキストメニューの外側をクリックした時に閉じる
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (contextMenu.show) {
-        const menuElement = document.getElementById('context-menu');
-        if (menuElement && !menuElement.contains(e.target as Node)) {
-          hideContextMenu();
-        }
+      const menu = document.getElementById('context-menu');
+      if (menu && !menu.contains(e.target as Node)) {
+        hideContextMenu();
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [contextMenu.show]);
-
-
-  useEffect(() => {
-    const handleClick = () => setContextMenu((prev) => ({ ...prev, show: false }));
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // ESCキーでコンテキストメニューを閉じる
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        hideContextMenu();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" onContextMenu={e => e.preventDefault()}>
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
