@@ -6,11 +6,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { useLocation } from "wouter";
-import { 
-  Loader2, 
-  LogOut, 
-  MessageCircle, 
-  Users, 
+import {
+  Loader2,
+  LogOut,
+  MessageCircle,
+  Users,
   BarChart,
   Plus,
   FileEdit,
@@ -23,7 +23,8 @@ import {
   LineChart,
   Settings,
   Pencil,
-  Clock
+  Clock,
+  MapPin
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -113,17 +114,18 @@ export default function StoreDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* ヘッダー */}
-      <header className="border-b bg-card sticky top-0 z-50">
+      <header className="border-b bg-card sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold">{user?.displayName || user?.username}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-2xl font-bold tracking-tight">{user?.displayName || user?.username}</h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Clock className="h-4 w-4" />
                 最終更新: {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })}
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => window.open('/store/settings', '_blank')}>
+              <Button variant="outline" size="sm" onClick={() => setLocation('/store/settings')}>
                 <Settings className="h-4 w-4 mr-2" />
                 設定
               </Button>
@@ -149,27 +151,30 @@ export default function StoreDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* 左サイドバー - 重要な統計情報 */}
           <div className="col-span-3 space-y-6">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LineChart className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <LineChart className="h-5 w-5 text-primary" />
                   アクセス状況
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-primary"></div>
+                      本日のアクセス
+                    </h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <Card>
+                      <Card className="hover:bg-accent/5 transition-colors">
                         <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
+                          <div className="text-2xl font-bold text-primary">-</div>
                           <div className="text-xs text-muted-foreground">総アクセス</div>
                         </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="hover:bg-accent/5 transition-colors">
                         <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
+                          <div className="text-2xl font-bold text-primary">-</div>
                           <div className="text-xs text-muted-foreground">ユニーク</div>
                         </CardContent>
                       </Card>
@@ -177,17 +182,20 @@ export default function StoreDashboard() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-primary"></div>
+                      今月のアクセス
+                    </h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <Card>
+                      <Card className="hover:bg-accent/5 transition-colors">
                         <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
+                          <div className="text-2xl font-bold text-primary">-</div>
                           <div className="text-xs text-muted-foreground">総アクセス</div>
                         </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="hover:bg-accent/5 transition-colors">
                         <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
+                          <div className="text-2xl font-bold text-primary">-</div>
                           <div className="text-xs text-muted-foreground">ユニーク</div>
                         </CardContent>
                       </Card>
@@ -197,26 +205,35 @@ export default function StoreDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
                   スケジュール
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">予約面接</span>
-                    <Badge variant="outline">0件</Badge>
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/5 transition-colors">
+                    <span className="text-sm flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      予約面接
+                    </span>
+                    <Badge variant="outline" className="bg-primary/5">0件</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">未対応応募</span>
-                    <Badge variant="outline">0件</Badge>
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/5 transition-colors">
+                    <span className="text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      未対応応募
+                    </span>
+                    <Badge variant="outline" className="bg-primary/5">0件</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">未読メッセージ</span>
-                    <Badge variant="outline">0件</Badge>
+                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/5 transition-colors">
+                    <span className="text-sm flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4 text-primary" />
+                      未読メッセージ
+                    </span>
+                    <Badge variant="outline" className="bg-primary/5">0件</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -225,25 +242,25 @@ export default function StoreDashboard() {
 
           {/* メインコンテンツ */}
           <div className="col-span-6">
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
               <TabsList className="grid grid-cols-5 h-auto">
-                <TabsTrigger value="jobs" className="py-2">
+                <TabsTrigger value="jobs" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <FileEdit className="h-4 w-4 mr-2" />
                   求人管理
                 </TabsTrigger>
-                <TabsTrigger value="applications" className="py-2">
+                <TabsTrigger value="applications" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Users className="h-4 w-4 mr-2" />
                   応募一覧
                 </TabsTrigger>
-                <TabsTrigger value="blog" className="py-2">
+                <TabsTrigger value="blog" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Pencil className="h-4 w-4 mr-2" />
                   ブログ管理
                 </TabsTrigger>
-                <TabsTrigger value="freeSpace" className="py-2">
+                <TabsTrigger value="freeSpace" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <PenBox className="h-4 w-4 mr-2" />
                   フリースペース
                 </TabsTrigger>
-                <TabsTrigger value="qa" className="py-2">
+                <TabsTrigger value="qa" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <HelpCircle className="h-4 w-4 mr-2" />
                   Q&A管理
                 </TabsTrigger>
@@ -251,7 +268,7 @@ export default function StoreDashboard() {
 
               {/* 求人管理タブ */}
               <TabsContent value="jobs">
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>求人一覧</CardTitle>
@@ -259,7 +276,7 @@ export default function StoreDashboard() {
                         掲載中の求人情報を管理できます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setShowJobForm(true)}>
+                    <Button onClick={() => setShowJobForm(true)} className="bg-primary hover:bg-primary/90">
                       <Plus className="h-4 w-4 mr-2" />
                       新規作成
                     </Button>
@@ -267,7 +284,9 @@ export default function StoreDashboard() {
                   <CardContent>
                     {!jobListings?.jobs?.length ? (
                       <div className="text-center py-8">
-                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                          <AlertCircle className="h-6 w-6" />
+                        </div>
                         <p className="text-muted-foreground">
                           求人情報がありません
                         </p>
@@ -279,29 +298,31 @@ export default function StoreDashboard() {
                     ) : (
                       <div className="space-y-4">
                         {jobListings.jobs.map((job) => (
-                          <Card key={job.id} className="hover:bg-accent/5 transition-colors">
+                          <Card key={job.id} className="hover:shadow-sm transition-all duration-200 group">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold">{job.title}</h3>
+                                    <h3 className="font-semibold group-hover:text-primary transition-colors">{job.title}</h3>
                                     <Badge variant={
                                       job.status === "published" ? "default" :
                                       job.status === "draft" ? "secondary" : "destructive"
-                                    }>
+                                    } className="shadow-sm">
                                       {jobStatusLabels[job.status]}
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <MapPin className="h-4 w-4" />
                                     <span>{job.location}</span>
                                     <span>•</span>
+                                    <Calendar className="h-4 w-4" />
                                     <span>
                                       {job.createdAt ? format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja }) : "-"}
                                     </span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm">
+                                  <Button variant="outline" size="sm" className="hover:bg-primary/5">
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
@@ -312,6 +333,7 @@ export default function StoreDashboard() {
                                       setSelectedJobId(job.id);
                                       setShowJobForm(true);
                                     }}
+                                    className="hover:bg-primary/5"
                                   >
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
@@ -322,19 +344,19 @@ export default function StoreDashboard() {
                               <div className="grid grid-cols-4 gap-4">
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">応募数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold text-primary">-</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">閲覧数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold text-primary">-</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">面接設定: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold text-primary">-</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">採用数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold text-primary">-</span>
                                 </div>
                               </div>
                             </CardContent>
@@ -348,7 +370,7 @@ export default function StoreDashboard() {
 
               {/* 応募一覧タブ */}
               <TabsContent value="applications">
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <StoreApplicationView />
                   </CardContent>
@@ -357,7 +379,7 @@ export default function StoreDashboard() {
 
               {/* ブログ管理タブ */}
               <TabsContent value="blog">
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>ブログ記事一覧</CardTitle>
@@ -365,7 +387,7 @@ export default function StoreDashboard() {
                         ブログの投稿・管理ができます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setLocation('/store/blog/new')}>
+                    <Button onClick={() => setLocation('/store/blog/new')} className="bg-primary hover:bg-primary/90">
                       <Plus className="h-4 w-4 mr-2" />
                       新規作成
                     </Button>
@@ -373,7 +395,9 @@ export default function StoreDashboard() {
                   <CardContent>
                     {!blogListings?.posts?.length ? (
                       <div className="text-center py-8">
-                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                          <AlertCircle className="h-6 w-6" />
+                        </div>
                         <p className="text-muted-foreground">
                           ブログ記事がありません
                         </p>
@@ -389,16 +413,16 @@ export default function StoreDashboard() {
                     ) : (
                       <div className="space-y-4">
                         {blogListings.posts.map((post) => (
-                          <Card key={post.id} className="hover:bg-accent/5 transition-colors">
+                          <Card key={post.id} className="hover:shadow-sm transition-all duration-200 group">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold">{post.title}</h3>
+                                    <h3 className="font-semibold group-hover:text-primary transition-colors">{post.title}</h3>
                                     <Badge variant={
                                       post.status === "published" ? "default" :
                                       post.status === "scheduled" ? "secondary" : "outline"
-                                    }>
+                                    } className="shadow-sm">
                                       {blogStatusLabels[post.status]}
                                     </Badge>
                                   </div>
@@ -420,7 +444,7 @@ export default function StoreDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => setLocation(`/blog/${post.id}`)}>
+                                  <Button variant="outline" size="sm" onClick={() => setLocation(`/blog/${post.id}`)} className="hover:bg-primary/5">
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
@@ -428,6 +452,7 @@ export default function StoreDashboard() {
                                     variant="outline" 
                                     size="sm"
                                     onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
+                                    className="hover:bg-primary/5"
                                   >
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
@@ -445,7 +470,7 @@ export default function StoreDashboard() {
 
               {/* フリースペースタブ */}
               <TabsContent value="freeSpace">
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle>フリースペース編集</CardTitle>
                     <CardDescription>
@@ -454,7 +479,7 @@ export default function StoreDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full hover:bg-primary/5">
                         <PenBox className="h-4 w-4 mr-2" />
                         フリースペースを編集
                       </Button>
@@ -465,7 +490,7 @@ export default function StoreDashboard() {
 
               {/* Q&A管理タブ */}
               <TabsContent value="qa">
-                <Card>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle>Q&A管理</CardTitle>
                     <CardDescription>
@@ -474,7 +499,7 @@ export default function StoreDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full hover:bg-primary/5">
                         <HelpCircle className="h-4 w-4 mr-2" />
                         Q&Aを編集
                       </Button>
@@ -487,16 +512,16 @@ export default function StoreDashboard() {
 
           {/* 右サイドバー - クイックアクション */}
           <div className="col-span-3 space-y-6">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Image className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Image className="h-5 w-5 text-primary" />
                   画像管理
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full hover:bg-primary/5">
                     <Image className="h-4 w-4 mr-2" />
                     画像を管理
                   </Button>
@@ -504,41 +529,41 @@ export default function StoreDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>店舗情報</CardTitle>
+                <CardTitle className="text-lg">店舗情報</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div>
-                    <p className="font-medium">店舗名</p>
-                    <p className="text-sm text-muted-foreground">{user?.displayName || user?.username || "未設定"}</p>
+                  <div className="p-3 rounded-lg bg-accent/5">
+                    <p className="font-medium text-sm text-muted-foreground">店舗名</p>
+                    <p className="mt-1">{user?.displayName || user?.username || "未設定"}</p>
                   </div>
-                  <div>
-                    <p className="font-medium">所在地</p>
-                    <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
+                  <div className="p-3 rounded-lg bg-accent/5">
+                    <p className="font-medium text-sm text-muted-foreground">所在地</p>
+                    <p className="mt-1">{user?.location || "未設定"}</p>
                   </div>
-                  <div>
-                    <p className="font-medium">連絡先</p>
-                    <p className="text-sm text-muted-foreground">{user?.phone || "未設定"}</p>
+                  <div className="p-3 rounded-lg bg-accent/5">
+                    <p className="font-medium text-sm text-muted-foreground">連絡先</p>
+                    <p className="mt-1">{user?.phone || "未設定"}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>お知らせ</CardTitle>
+                <CardTitle className="text-lg">お知らせ</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="border-l-4 border-primary pl-4">
+                  <div className="p-3 rounded-lg bg-primary/5 border-l-4 border-primary">
                     <p className="font-medium">システムメンテナンスのお知らせ</p>
-                    <p className="text-sm text-muted-foreground">2024/03/15</p>
+                    <p className="text-sm text-muted-foreground mt-1">2024/03/15</p>
                   </div>
-                  <div className="border-l-4 border-primary pl-4">
+                  <div className="p-3 rounded-lg bg-primary/5 border-l-4 border-primary">
                     <p className="font-medium">新機能追加のお知らせ</p>
-                    <p className="text-sm text-muted-foreground">2024/03/10</p>
+                    <p className="text-sm text-muted-foreground mt-1">2024/03/10</p>
                   </div>
                 </div>
               </CardContent>
