@@ -10,6 +10,7 @@ import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Card,
   CardContent,
@@ -106,6 +107,7 @@ interface BlogEditorProps {
 }
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
+  const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
@@ -199,42 +201,32 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ログインが必要です",
+        });
+        return;
+      }
+
       setIsUploading(true);
 
       const formData = new FormData();
       formData.append("image", file);
 
-      // デバッグ用のログ出力
-      console.log('Uploading file:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("認証エラー：ログインが必要です");
-      }
-
-      // APIリクエストを試行
       try {
-        const response = await fetch("/api/blog/upload-image", {
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
+        const response = await apiRequest<{ url: string; key: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          {
+            rawFormData: true
+          }
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "画像のアップロードに失敗しました");
-        }
-
-        const data = await response.json();
-        console.log('Upload response:', data);
-
-        if (!data.url) {
+        if (!response?.url) {
           throw new Error("アップロードされた画像のURLが取得できません");
         }
 
@@ -251,13 +243,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
         const range = selection.getRangeAt(0);
         const img = document.createElement("img");
-        img.src = data.url;
+        img.src = response.url;
         img.alt = file.name;
         range.insertNode(img);
 
         // アップロード済み画像リストを更新
-        setUploadedImages(prev => [...prev, data.url]);
-        form.setValue("images", [...uploadedImages, data.url]);
+        setUploadedImages(prev => [...prev, response.url]);
+        form.setValue("images", [...uploadedImages, response.url]);
 
         toast({
           title: "成功",
