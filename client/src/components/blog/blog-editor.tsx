@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -54,6 +54,7 @@ import {
   Save,
   Eye,
   ArrowLeft,
+  Upload,
 } from "lucide-react";
 
 // Quillエディターを動的にインポート（SSRの問題を回避）
@@ -70,7 +71,7 @@ const modules = {
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: ["", "center", "right", "justify"] }],
-    ["link", "image"],
+    ["link"],
     ["clean"]
   ]
 };
@@ -97,6 +98,9 @@ interface BlogEditorProps {
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -146,6 +150,81 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
     },
   });
+
+  const handleImageUpload = async (file: File) => {
+    // ファイルサイズのチェック（500KB）
+    if (file.size > 500 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "ファイルサイズは500KB以下にしてください",
+      });
+      return;
+    }
+
+    // ファイル形式のチェック
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+      });
+      return;
+    }
+
+    // 画像数の制限チェック
+    if (uploadedImages.length >= 50) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像は最大50枚までアップロード可能です",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/blog/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("画像のアップロードに失敗しました");
+      }
+
+      const data = await response.json();
+
+      // 画像URLをエディタに挿入
+      const editor = (document.querySelector(".ql-editor") as HTMLElement);
+      const range = (document.getSelection() as Selection).getRangeAt(0);
+      const img = document.createElement("img");
+      img.src = data.url;
+      img.alt = file.name;
+      range.insertNode(img);
+
+      // アップロード済み画像リストを更新
+      setUploadedImages([...uploadedImages, data.url]);
+      form.setValue("images", [...uploadedImages, data.url]);
+
+      toast({
+        title: "画像をアップロードしました",
+        description: "画像の挿入が完了しました",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
@@ -204,29 +283,63 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>本文</FormLabel>
-                      <FormControl>
-                        <div className="border rounded-md overflow-hidden">
-                          <ReactQuill
-                            theme="snow"
-                            modules={modules}
-                            formats={formats}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="記事の本文を入力"
-                            className="min-h-[400px]"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <FormLabel>本文</FormLabel>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>画像: {uploadedImages.length}/50</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading || uploadedImages.length >= 50}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        画像をアップロード
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/jpeg,image/png,image/gif"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="border rounded-md overflow-hidden">
+                            <ReactQuill
+                              theme="snow"
+                              modules={modules}
+                              formats={formats}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="記事の本文を入力"
+                              className="min-h-[400px]"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -265,7 +378,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           <div className="flex items-center gap-2">
                             <Input
                               type="datetime-local"
-                              {...field}
+                              value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
+                              onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
                               min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
                             />
                           </div>

@@ -22,19 +22,20 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { users, talentProfiles } from "@shared/schema";
+import { users, talentProfiles, blogPosts } from "@shared/schema";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
 import { uploadToS3, getSignedS3Url } from "./utils/s3";
 import {
-  blogPosts,
   type BlogPost,
   type BlogPostListResponse,
   blogPostSchema,
 } from "@shared/schema";
 import { generateDailyStats, getStoreStats } from "./utils/access-stats";
+import multer from "multer";
+import { validateImageUpload, getTotalImagesCount } from "./utils/image-validation";
 
 
 const scryptAsync = promisify(scrypt);
@@ -1968,6 +1969,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "アクセス統計の取得に失敗しました",
         error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ画像アップロードのエンドポイントを追加
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 500 * 1024 // 500KB
+    }
+  });
+
+  app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "画像ファイルを選択してください" });
+      }
+
+      // 現在の画像数を取得
+      const [blogPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id));
+
+      const currentImagesCount = getTotalImagesCount(blogPost?.images || []);
+
+      // バリデーション
+      const validation = validateImageUpload(req.file, currentImagesCount);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // S3にアップロード
+      const uploadResult = await uploadToS3(req.file.buffer, {
+        contentType: req.file.mimetype,
+        extension: req.file.originalname.split(".").pop() || "",
+        prefix: `blog/${req.user.id}/`
+      });
+
+      // 署名付きURLを生成
+      const signedUrl = await getSignedS3Url(uploadResult.key);
+
+      res.json({
+        url: signedUrl,
+        key: uploadResult.key
+      });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({
+        message: "画像のアップロードに失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
       });
     }
   });
