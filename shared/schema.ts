@@ -521,18 +521,19 @@ export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
 
 // APIレスポンスの型定義を追加
-export interface JobResponse extends Job {
-  hasApplied?: boolean;
-  applicationStatus?: string;
-}
-
-export interface JobsSearchResponse {
+export interface JobListingResponse {
   jobs: Job[];
   pagination: {
     currentPage: number;
     totalPages: number;
     totalItems: number;
   };
+}
+
+// 既存のJobResponse型を修正
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
 }
 
 // service types の定義を更新

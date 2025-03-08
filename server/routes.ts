@@ -169,6 +169,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // 求人一覧取得エンドポイント（店舗用）を先に定義
+  app.get("/api/jobs/store", authenticate, async (req: any, res) => {
+    try {
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      console.log('Store jobs fetch request:', {
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗の求人一覧を取得
+      const jobListings = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.storeId, req.user.id))
+        .orderBy(desc(jobs.createdAt));
+
+      console.log('Store jobs fetched:', {
+        storeId: req.user.id,
+        count: jobListings.length,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.json({
+        jobs: jobListings,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: jobListings.length
+        }
+      });
+    } catch (error) {
+      console.error('Store jobs fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        storeId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(500).json({
+        message: "求人情報の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   // 統合ログインエンドポイント
   app.post("/api/login", async (req, res) => {
     try {
@@ -1478,58 +1526,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 店舗用求人一覧エンドポイントを追加
-  app.get("/api/jobs/store", authenticate, async (req: any, res) => {
-    try {
-      if (!req.user?.id || req.user.role !== "store") {
-        console.log('Unauthorized store access:', {
-          userId: req.user?.id,
-          role: req.user?.role,
-          timestamp: new Date().toISOString()
-        });
-        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
-      }
-
-      console.log('Store jobs fetch request received:', {
-        storeId: req.user.id,
-        timestamp: new Date().toISOString()
-      });
-
-      // 店舗IDに紐づく求人を全て取得
-      const jobListings = await db
-        .select()
-        .from(jobs)
-        .where(eq(jobs.storeId, req.user.id))
-        .orderBy(desc(jobs.createdAt));
-
-      console.log('Store jobs fetch successful:', {
-        storeId: req.user.id,
-        count: jobListings.length,
-        timestamp: new Date().toISOString()
-      });
-
-      // ページネーション情報を含めてレスポンスを返す
-      res.json({
-        jobs: jobListings,
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: jobListings.length
-        }
-      });
-    } catch (error) {
-      console.error('Store jobs fetch error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        storeId: req.user?.id,
-        timestamp: new Date().toISOString()
-      });
-
-      res.status(500).json({
-        message: "求人情報の取得に失敗しました",
-        error: process.env.NODE_ENV === 'development' ? error : undefined
-      });
-    }
-  });
 
   // 求人ステータスの更新
   app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {
@@ -1605,12 +1601,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
-  // 店舗管理者用のログインエンドポイント(removed)
-  //app.post("/api/auth/manager/login", async (req, res) => { ... });
-
-  // 店舗管理者用のログアウトエンドポイント(removed)
-  //app.post("/api/auth/manager/logout", authenticate, async (req: any, res) => { ... });
 
 
   const httpServer = createServer(app);
