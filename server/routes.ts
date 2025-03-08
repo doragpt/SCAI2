@@ -1942,12 +1942,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // アクセス統計取得エンドポイント
   app.get("/api/stores/:storeId/access-stats", authenticate, async (req: any, res) => {
+    const startTime = Date.now();
     try {
       const storeId = parseInt(req.params.storeId);
 
       if (req.user.role !== 'store' || req.user.id !== storeId) {
         return res.status(403).json({ message: "アクセス権限がありません" });
       }
+
+      console.log('Access stats fetch started:', {
+        storeId,
+        timestamp: new Date().toISOString()
+      });
 
       // 今日の日付の開始と終了
       const today = new Date();
@@ -1960,6 +1966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
       // 日次アクセス数を取得
+      console.time('daily-stats-query');
       const [todayStats] = await db
         .select({
           total: sql<number>`count(*)`,
@@ -1972,8 +1979,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
           )
         );
+      console.timeEnd('daily-stats-query');
 
       // 月次アクセス数を取得
+      console.time('monthly-stats-query');
       const [monthlyStats] = await db
         .select({
           total: sql<number>`count(*)`,
@@ -1986,8 +1995,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
           )
         );
+      console.timeEnd('monthly-stats-query');
 
       // 時間帯別のアクセス数を取得（過去24時間）
+      console.time('hourly-stats-query');
       const hourlyStats = await db
         .select({
           hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
@@ -2002,7 +2013,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
         .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
-        .limit(24); // 24時間分のデータに制限
+        .limit(24);
+      console.timeEnd('hourly-stats-query');
 
       const response: AccessStatsResponse = {
         today: {
@@ -2016,10 +2028,595 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hourly: hourlyStats
       };
 
+      const executionTime = Date.now() - startTime;
+      console.log('Access stats fetch completed:', {
+        storeId,
+        executionTime: `${executionTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
       res.json(response);
     } catch (error) {
-      console.error('Access stats fetch error:', error);
-      res.status(500).json({ message: "アクセス統計の取得に失敗しました" });
+      const executionTime = Date.now() - startTime;
+      console.error('Access stats fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        executionTime: `${executionTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
+      // グレースフルデグラデーション：エラー時は部分的なデータを返す
+      res.status(200).json({
+        today: { total: 0, unique: 0 },
+        monthly: { total: 0, unique: 0 },
+        hourly: [],
+        error: process.env.NODE_ENV === 'development' ? 
+          error instanceof Error ? error.message : 'Unknown error' 
+          : 'データの取得に一部失敗しました'
+      });
+    }
+  });
+
+  // 求人情報の新規投稿
+  app.post("/api/jobs", authenticate, async (req: any, res) => {
+    try {
+      console.log('Job posting request received:', {
+        userId: req.user.id,
+        requestData: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({
+          message: "店舗アカウントのみ求人投稿が可能です"
+        });
+      }
+
+      // バリデーション
+      const jobData = jobSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        status: 'draft'
+      });
+
+      // 求人情報の保存
+      const [newJob] = await db
+        .insert(jobs)
+        .values(jobData)
+        .returning();
+
+      console.log('Job posting successful:', {
+        userId: req.user.id,
+        jobId: newJob.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(newJob);
+    } catch (error) {
+      console.error('Job posting error:', {
+        error,
+        userId: req.user?.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      if (error instanceof Error) {
+        res.status(400).json({
+          error: true,
+          message: error.message,
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      } else {
+        res.status(500).json({
+          error: true,
+          message: "求人情報の投稿に失敗しました"
+        });
+      }
+    }
+  });
+
+
+  // 求人ステータスの更新
+  app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {
+    try {
+      const jobId = parseInt(req.params.id);
+      if (isNaN(jobId)) {
+        return res.status(400).json({ message: "無効な求人IDです" });
+      }
+
+      const { status } = req.body;
+      if (!status || !["draft", "published", "closed"].includes(status)) {
+        return res.status(400).json({ message: "無効なステータスです" });
+      }
+
+      console.log('Job status update request received:', {
+        userId: req.user?.id,
+        jobId,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (req.user.role !== 'store') {
+        return res.status(403).json({ message: "店舗アカウントのみステータスを更新できます" });
+      }
+
+      // 求人情報の取得
+      const [existingJob] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, jobId));
+
+      if (!existingJob) {
+        return res.status(404).json({ message: "求人が見つかりません" });
+      }
+
+      // 自身の求人のみ更新可能
+      if (existingJob.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この求人情報の更新権限がありません" });
+      }
+
+      // ステータスの更新
+      const [updatedJob] = await db
+        .update(jobs)
+        .set({
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(jobs.id, jobId))
+        .returning();
+
+      console.log('Job status update successful:', {
+        userId: req.user.id,
+        jobId,
+        oldStatus: existingJob.status,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedJob);
+    } catch (error) {
+      console.error('Job status update error:', {
+        error,
+        userId: req.user?.id,
+        jobId: req.params.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        error: true,
+        message: "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事一覧の取得
+  app.get("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      console.log('Blog posts fetch request received:', {
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        console.log('Unauthorized blog access:', {
+          userId: req.user?.id,
+          role: req.user?.role,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
+      }
+
+      // ブログ記事の取得
+      const posts = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.storeId, req.user.id))
+        .orderBy(desc(blogPosts.createdAt));
+
+      console.log('Blog posts fetched:', {
+        storeId: req.user.id,
+        count: posts.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // BlogPostListResponse型に従ってレスポンスを整形
+      const response: BlogPostListResponse = {
+        posts,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: posts.length
+        }
+      };
+
+      return res.json(response);
+    } catch (error) {
+      console.error('Blog posts fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        storeId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の新規作成
+  app.post("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを作成できます" });
+      }
+
+      console.log('Blog post creation request:', {
+        userId: req.user.id,
+        title: req.body.title,
+        timestamp: new Date().toISOString()
+      });
+
+      // バリデーション
+      const postData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // ブログ記事の作成
+      const [post] = await db
+        .insert(blogPosts)
+        .values({
+          ...postData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      console.log('Blog post created:', {
+        postId: post.id,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Blog post creation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の作成に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の詳細取得
+  app.get("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      console.log('Blog post fetch request:', {
+        postId,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 記事の取得
+      const [post] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!post) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (post.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事へのアクセス権限がありません" });
+      }
+
+      res.json(post);
+    } catch (error) {
+      console.error('Blog post fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ記事の取得に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事の更新
+  app.put("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを更新できます" });
+      }
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // バリデーション
+      const updateData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id
+      });
+
+      // 記事の更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post updated:', {
+        postId,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ブログ記事の更新に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の公開状態更新
+  app.patch("/api/blog/posts/:id/status", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみステータスを更新できます" });
+      }
+
+      const { status, scheduledAt } = req.body;
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の更新権限がありません" });
+      }
+
+      // ステータス更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          status,
+          scheduledAt: status === "scheduled" ? scheduledAt : null,
+          publishedAt: status === "published" ? new Date() : null,
+          updatedAt: new Date()
+        })
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post status updated:', {
+        postId,
+        status,
+        scheduledAt,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post status update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // アクセスログ記録エンドポイント
+  app.post("/api/access-logs", async (req, res) => {
+    try {
+      const { storeId, url, ipAddress, userAgent, referer } = req.body;
+
+      // IPアドレスをハッシュ化して匿名化
+      const ipHash = createHash('sha256')
+        .update(ipAddress + process.env.JWT_SECRET)
+        .digest('hex');
+
+      const [log] = await db
+        .insert(accessLogs)
+        .values({
+          storeId,
+          url,
+          ipHash,
+          userAgent,
+          referer,
+        })
+        .returning();
+
+      res.status(201).json(log);
+    } catch (error) {
+      console.error('Access log creation error:', error);
+      res.status(500).json({ message: "アクセスログの記録に失敗しました" });
+    }
+  });
+
+  // アクセス統計取得エンドポイント
+  app.get("/api/stores/:storeId/access-stats", authenticate, async (req: any, res) => {
+    const startTime = Date.now();
+    try {
+      const storeId = parseInt(req.params.storeId);
+
+      if (req.user.role !== 'store' || req.user.id !== storeId) {
+        return res.status(403).json({ message: "アクセス権限がありません" });
+      }
+
+      console.log('Access stats fetch started:', {
+        storeId,
+        timestamp: new Date().toISOString()
+      });
+
+      // 今日の日付の開始と終了
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // 今月の開始と終了
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      // 日次アクセス数を取得
+      console.time('daily-stats-query');
+      const [todayStats] = await db
+        .select({
+          total: sql<number>`count(*)`,
+          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= ${today} AND ${accessLogs.createdAt} < ${tomorrow}`
+          )
+        );
+      console.timeEnd('daily-stats-query');
+
+      // 月次アクセス数を取得
+      console.time('monthly-stats-query');
+      const [monthlyStats] = await db
+        .select({
+          total: sql<number>`count(*)`,
+          unique: sql<number>`count(distinct ${accessLogs.ipHash})`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= ${monthStart} AND ${accessLogs.createdAt} <= ${monthEnd}`
+          )
+        );
+      console.timeEnd('monthly-stats-query');
+
+      // 時間帯別のアクセス数を取得（過去24時間）
+      console.time('hourly-stats-query');
+      const hourlyStats = await db
+        .select({
+          hour: sql<number>`extract(hour from ${accessLogs.createdAt})::integer`,
+          count: sql<number>`count(*)`
+        })
+        .from(accessLogs)
+        .where(
+          and(
+            eq(accessLogs.storeId, storeId),
+            sql`${accessLogs.createdAt} >= NOW() - INTERVAL '24 hours'`
+          )
+        )
+        .groupBy(sql`extract(hour from ${accessLogs.createdAt})`)
+        .orderBy(sql`extract(hour from ${accessLogs.createdAt})`)
+        .limit(24);
+      console.timeEnd('hourly-stats-query');
+
+      const response: AccessStatsResponse = {
+        today: {
+          total: todayStats?.total || 0,
+          unique: todayStats?.unique || 0
+        },
+        monthly: {
+          total: monthlyStats?.total || 0,
+          unique: monthlyStats?.unique || 0
+        },
+        hourly: hourlyStats
+      };
+
+      const executionTime = Date.now() - startTime;
+      console.log('Access stats fetch completed:', {
+        storeId,
+        executionTime: `${executionTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(response);
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      console.error('Access stats fetch error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        executionTime: `${executionTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
+      // グレースフルデグラデーション：エラー時は部分的なデータを返す
+      res.status(200).json({
+        today: { total: 0, unique: 0 },
+        monthly: { total: 0, unique: 0 },
+        hourly: [],
+        error: process.env.NODE_ENV === 'development' ? 
+          error instanceof Error ? error.message : 'Unknown error' 
+          : 'データの取得に一部失敗しました'
+      });
     }
   });
 
