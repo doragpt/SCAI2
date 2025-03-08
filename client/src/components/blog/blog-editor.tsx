@@ -2,8 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
@@ -97,6 +95,128 @@ if (typeof window !== 'undefined') {
   style.textContent = imageResizeCSS;
   document.head.appendChild(style);
 }
+
+// 画像ライブラリモーダルのコンポーネント
+const ImageLibraryModal = ({ isOpen, onClose, onSelect, images = [], isLoading }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (url: string) => void;
+  images: string[];
+  isLoading: boolean;
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        { rawFormData: true }
+      );
+
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
+      }
+
+      toast({
+        title: "成功",
+        description: "画像がアップロードされました",
+      });
+
+      // キャッシュを更新して新しい画像をすぐに表示
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_IMAGES] });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <div>
+            <DialogTitle>画像選択</DialogTitle>
+            <DialogDescription>
+              残り {100 - (images?.length || 0)}/100
+            </DialogDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            アップロード
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/jpeg,image/png,image/gif"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleUpload(file);
+              }
+              e.target.value = "";
+            }}
+          />
+        </DialogHeader>
+        <div className="grid grid-cols-3 gap-4 py-4">
+          {isLoading ? (
+            <div className="col-span-3 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : !images || images.length === 0 ? (
+            <div className="col-span-3 text-center text-muted-foreground">
+              アップロード済みの画像がありません
+            </div>
+          ) : (
+            images.map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                className="relative aspect-square cursor-pointer group overflow-hidden rounded-md"
+                onClick={() => onSelect(image)}
+              >
+                <img
+                  src={image}
+                  alt={`ライブラリ画像 ${index + 1}`}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button variant="secondary" size="sm">
+                    選択
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
