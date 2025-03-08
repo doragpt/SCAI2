@@ -121,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: user.role,
         timestamp: new Date().toISOString()
       });
+
+      // キャッシュを即座に更新
       queryClient.setQueryData(["/api/user"], user);
+
       toast({
         title: "ログイン成功",
         description: "ログインしました。",

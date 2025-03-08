@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,8 +24,15 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { loginMutation } = useAuth();
+  const { loginMutation, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // ログイン済みの場合はダッシュボードにリダイレクト
+  useEffect(() => {
+    if (user && user.role === "store") {
+      setLocation("/store/dashboard");
+    }
+  }, [user, setLocation]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -51,7 +58,7 @@ export default function ManagerLogin() {
       });
 
       // ログイン成功時は店舗ダッシュボードへ
-      setLocation("/manager/dashboard");
+      setLocation("/store/dashboard");
     } catch (error) {
       console.error('店舗ログインエラー:', {
         error,
