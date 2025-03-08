@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import JobDetail from "@/pages/job-detail";
 import StoreDashboard from "@/pages/store-dashboard";
+import StoreStatsPage from "@/pages/store-stats"; // Added import
 import ManagerLogin from "@/pages/manager/login";
 import MyPage from "@/pages/my-page";
 import Jobs from "@/pages/jobs";
@@ -48,7 +49,11 @@ function Router() {
         component={StoreDashboard}
         roleRequired="store"
       />
-      {/* ブログ関連のルートを追加 */}
+      <ProtectedRoute 
+        path="/store/stats" 
+        component={StoreStatsPage}
+        roleRequired="store"
+      />
       <ProtectedRoute 
         path="/store/blog/new" 
         component={NewBlogPost}
