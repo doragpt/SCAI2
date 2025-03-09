@@ -108,7 +108,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      if (!user.id) {
+      if (!user?.id) {
         toast({
           variant: "destructive",
           title: "エラー",
@@ -118,7 +118,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       const parsedStoreId = Number(user.id);
-      if (isNaN(parsedStoreId)) {
+      if (!parsedStoreId || isNaN(parsedStoreId) || parsedStoreId <= 0) {
         toast({
           variant: "destructive",
           title: "エラー",
