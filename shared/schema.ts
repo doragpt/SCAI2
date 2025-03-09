@@ -337,7 +337,7 @@ export const blogPostSchema = z.object({
   content: z.string().min(1, "本文を入力してください"),
   status: z.enum(["draft", "published", "scheduled"]),
   thumbnail: z.string().nullable(),
-  scheduledAt: z.string().nullable().optional(),
+  scheduledAt: z.string().nullable(),
   storeId: z.number().optional(),
   images: z.array(z.string()).default([]),
 }).superRefine((data, ctx) => {
@@ -575,6 +575,7 @@ export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 export type StoreImage = typeof storeImages.$inferSelect;
 export type InsertStoreImage = typeof storeImages.$inferInsert;
+
 
 
 // APIレスポンスの型定義
