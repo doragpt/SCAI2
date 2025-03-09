@@ -129,6 +129,29 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      let scheduledAt = null;
+      if (status === "scheduled") {
+        try {
+          const scheduledDate = new Date(scheduledDateTime);
+          if (isNaN(scheduledDate.getTime())) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "無効な日時形式です",
+            });
+            return;
+          }
+          scheduledAt = scheduledDate.toISOString();
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "エラー",
+            description: "日時の形式が正しくありません",
+          });
+          return;
+        }
+      }
+
       // フォームデータの構築
       const formData = {
         title: data.title,
@@ -136,7 +159,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         status: status,
         thumbnail: data.thumbnail,
         storeId: parsedStoreId,
-        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
+        scheduledAt: scheduledAt,
       };
 
       console.log("Submitting form data:", formData);
