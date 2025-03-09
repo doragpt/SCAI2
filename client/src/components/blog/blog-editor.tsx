@@ -185,14 +185,25 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  const handleSubmit = async (saveDraft: boolean = false) => {
+  const handleSubmit = async (isDraft: boolean = false) => {
     try {
-      const currentValues = form.getValues();
+      const values = form.getValues();
+
+      // 必須フィールドのチェック
+      if (!values.title || !values.content) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "タイトルと本文は必須です",
+        });
+        return;
+      }
+
       const submissionData = {
-        ...currentValues,
-        status: saveDraft ? "draft" : isScheduling ? "scheduled" : "published",
-        scheduledAt: isScheduling ? new Date(currentValues.scheduledAt as string) : null,
-        publishedAt: !saveDraft && !isScheduling ? new Date() : null,
+        ...values,
+        status: isDraft ? "draft" : isScheduling ? "scheduled" : "published",
+        scheduledAt: isScheduling && values.scheduledAt ? new Date(values.scheduledAt) : null,
+        publishedAt: !isDraft && !isScheduling ? new Date() : null,
       };
 
       if (postId) {
@@ -361,6 +372,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             onClick={() => handleSubmit(true)}
             disabled={createMutation.isPending || updateMutation.isPending}
           >
+            <Save className="h-4 w-4 mr-2" />
             下書き保存
           </Button>
 

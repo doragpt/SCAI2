@@ -1,0 +1,51 @@
+API Response received: 
+Object {status: 400, statusText: "Bad Request", timestamp: "2025-03-09T23:52:33.656Z"}
+API Request Failed: 
+Object {status: 400, statusText: "Bad Request", responseText: "{"message":"[↵  {↵    "code": "invalid_type",↵    "expected":…", timestamp: "2025-03-09T23:52:33.663Z"}
+
+API Request Error: 
+Object {method: "POST", url: "/api/blog/posts", error: "[↵  {↵    "code": "invalid_type",↵    "expected": "string",↵    "received":…", timestamp: "2025-03-09T23:52:33.663Z"}
+
+Form submission error: 
+Error {}
+
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:33.665Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:34.607Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:34.804Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:37.918Z"}
+API Request starting: 
+Object {method: "POST", url: "/api/blog/posts", hasData: true, timestamp: "2025-03-09T23:52:40.423Z"}
+API Response received: 
+Object {status: 400, statusText: "Bad Request", timestamp: "2025-03-09T23:52:40.668Z"}
+API Request Failed: 
+Object {status: 400, statusText: "Bad Request", responseText: "{"message":"[↵  {↵    "code": "invalid_type",↵    "expected":…", timestamp: "2025-03-09T23:52:40.673Z"}
+responseText: "{"message":"[\n {\n \"code\": \"invalid_type\",\n \"expected\": \"string\",\n \"received\": \"undefined\",\n \"path\": [\n \"content\"\n ],\n \"message\": \"Required\"\n }\n]"}"
+status: 400
+statusText: "Bad Request"
+timestamp: "2025-03-09T23:52:40.673Z"
+[[Prototype]]: Object
+
+API Request Error: 
+Object {method: "POST", url: "/api/blog/posts", error: "[↵  {↵    "code": "invalid_type",↵    "expected": "string",↵    "received":…", timestamp: "2025-03-09T23:52:40.673Z"}
+error: "[↵ {↵ "code": "invalid_type",↵ "expected": "string",↵ "received": "undefined",↵ "path": [↵ "content"↵ ],↵ "message": "Required"↵ }↵]"
+method: "POST"
+timestamp: "2025-03-09T23:52:40.673Z"
+url: "/api/blog/posts"
+[[Prototype]]: Object
+
+Form submission error: 
+Error {}
+message: "[↵ {↵ "code": "invalid_type",↵ "expected": "string",↵ "received": "undefined",↵ "path": [↵ "content"↵ ],↵ "message": "Required"↵ }↵]"
+stack: "Error: [↵ {↵ "code": "invalid_type",↵ "expected": "string",↵ "received": "undefined",↵ "path": [↵ "content"↵ ],↵ "message": "Required"↵ }↵]↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:50:13)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:40.675Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T23:52:47.966Z"}
