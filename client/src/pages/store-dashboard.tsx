@@ -8,6 +8,12 @@ import { StoreApplicationView } from "@/components/store-application-view";
 import { useLocation } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Loader2,
   LogOut,
   MessageCircle,
@@ -26,6 +32,9 @@ import {
   Pencil,
   Clock,
   Trash2,
+  MoreVertical,
+  Globe,
+  Archive,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -136,6 +145,37 @@ export default function StoreDashboard() {
       });
     },
   });
+
+  // 記事のステータス更新用のmutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ postIds, status }: { postIds: number[], status: string }) => {
+      await apiRequest("PATCH", "/api/blog/posts/status", { postIds, status });
+    },
+    onSuccess: () => {
+      toast({
+        title: "記事を更新しました",
+        description: `${selectedPostIds.size}件の記事を更新しました。`,
+      });
+      setSelectedPostIds(new Set());
+      // ブログ一覧を更新
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "記事の更新に失敗しました",
+      });
+    },
+  });
+
+  // 選択した記事のステータスを更新
+  const handleUpdateStatus = (status: string) => {
+    updateStatusMutation.mutate({
+      postIds: Array.from(selectedPostIds),
+      status,
+    });
+  };
 
   const handlePostSelect = (postId: number) => {
     const newSelectedIds = new Set(selectedPostIds);
@@ -424,37 +464,64 @@ export default function StoreDashboard() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      {selectedPostIds.size > 0 && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              選択した記事を削除 ({selectedPostIds.size})
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>記事の一括削除</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                選択した{selectedPostIds.size}件の記事を削除してもよろしいですか？
-                                この操作は取り消せません。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(Array.from(selectedPostIds))}
-                              >
-                                削除する
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      {selectedPostIds.size > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {selectedPostIds.size}件選択中
+                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline">
+                                <MoreVertical className="h-4 w-4 mr-2" />
+                                一括操作
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleUpdateStatus("published")}>
+                                <Globe className="h-4 w-4 mr-2" />
+                                公開する
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus("draft")}>
+                                <Archive className="h-4 w-4 mr-2" />
+                                下書きに戻す
+                              </DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    削除する
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>記事の一括削除</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      選択した{selectedPostIds.size}件の記事を削除してもよろしいですか？
+                                      この操作は取り消せません。
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteMutation.mutate(Array.from(selectedPostIds))}
+                                    >
+                                      削除する
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      ) : (
+                        <Button onClick={() => setLocation('/store/blog/new')}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          新規作成
+                        </Button>
                       )}
-                      <Button onClick={() => setLocation('/store/blog/new')}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        新規作成
-                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
