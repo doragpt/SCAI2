@@ -98,6 +98,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      if (!user?.userId) {
+        throw new Error("店舗IDが取得できません");
+      }
+
       // 現在のフォーム値を取得して送信データを構築
       const currentValues = form.getValues();
       const formData = {
@@ -105,15 +109,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: currentValues.content,
         status: status,
         thumbnail: currentValues.thumbnail,
-        storeId: user?.userId,
+        storeId: user.userId,
         scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
 
       console.log("Submitting form data:", formData);
-
-      if (!user?.userId) {
-        throw new Error("店舗IDが取得できません");
-      }
 
       if (postId) {
         await updateMutation.mutateAsync(formData);
