@@ -51,8 +51,8 @@ import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  return function wrap(props: any) {
-    return <RQ {...props} ref={props.forwardedRef} />;
+  return function wrap({ forwardedRef, ...props }: any) {
+    return <RQ ref={forwardedRef} {...props} />;
   };
 }, {
   ssr: false,
@@ -75,91 +75,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
-  // Quillエディタの設定
-  const modules = {
-    toolbar: {
-      container: [
-        [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline", "strike"],
-        [{ color: [] }, { background: [] }],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [{ align: ["", "center", "right", "justify"] }],
-        ["link", "image"],
-        ["clean"]
-      ],
-    }
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "color",
-    "background",
-    "list",
-    "bullet",
-    "align",
-    "link",
-    "image"
-  ];
-
-  const handleThumbnailUpload = async (file: File) => {
-    try {
-      if (file.size > 500 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは500KB以下にしてください",
-        });
-        return;
-      }
-
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        { rawFormData: true }
-      );
-
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
-      }
-
-      setThumbnailPreview(response.url);
-      form.setValue("thumbnail", response.url);
-
-      toast({
-        title: "成功",
-        description: "サムネイル画像がアップロードされました",
-      });
-    } catch (error) {
-      console.error('Thumbnail upload error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "サムネイル画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
     defaultValues: initialData || {
@@ -174,7 +89,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
-      console.log("scheduledDateTime:", scheduledDateTime);
+      if (status === "scheduled" && !scheduledDateTime) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "公開予定日時を選択してください",
+        });
+        return;
+      }
 
       const formData = {
         ...data,
@@ -240,6 +162,91 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  const handleThumbnailUpload = async (file: File) => {
+    try {
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        { rawFormData: true }
+      );
+
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
+      }
+
+      setThumbnailPreview(response.url);
+      form.setValue("thumbnail", response.url);
+
+      toast({
+        title: "成功",
+        description: "サムネイル画像がアップロードされました",
+      });
+    } catch (error) {
+      console.error('Thumbnail upload error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "サムネイル画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const modules = {
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: ["", "center", "right", "justify"] }],
+        ["link", "image"],
+        ["clean"]
+      ],
+    }
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "color",
+    "background",
+    "list",
+    "bullet",
+    "align",
+    "link",
+    "image"
+  ];
+
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
@@ -277,106 +284,108 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <div className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>タイトル</FormLabel>
-                      <FormControl>
-                        <Input placeholder="記事のタイトルを入力" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors ${
-                              thumbnailPreview ? 'border-0' : 'border-gray-300'
-                            }`}
-                            onClick={() => thumbnailInputRef.current?.click()}
-                          >
-                            {thumbnailPreview ? (
-                              <>
-                                <img
-                                  src={thumbnailPreview}
-                                  alt="サムネイル"
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                                <button
-                                  type="button"
-                                  className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setThumbnailPreview(null);
-                                    field.onChange(null);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <div className="text-center">
-                                <Plus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                                <span className="text-sm text-gray-500">画像を選択</span>
-                              </div>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            ref={thumbnailInputRef}
-                            className="hidden"
-                            accept="image/jpeg,image/png,image/gif"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleThumbnailUpload(file);
-                              }
-                              e.target.value = "";
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-2">
-                  <FormLabel>本文</FormLabel>
+              <form onSubmit={form.handleSubmit(() => {})}>
+                <div className="space-y-6">
                   <FormField
                     control={form.control}
-                    name="content"
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>タイトル</FormLabel>
                         <FormControl>
-                          <ReactQuill
-                            forwardedRef={quillRef}
-                            theme="snow"
-                            modules={modules}
-                            formats={formats}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="記事の本文を入力"
-                            className="h-[400px]"
-                          />
+                          <Input placeholder="記事のタイトルを入力" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="thumbnail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>サムネイル画像</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors ${
+                                thumbnailPreview ? 'border-0' : 'border-gray-300'
+                              }`}
+                              onClick={() => thumbnailInputRef.current?.click()}
+                            >
+                              {thumbnailPreview ? (
+                                <>
+                                  <img
+                                    src={thumbnailPreview}
+                                    alt="サムネイル"
+                                    className="w-full h-full object-cover rounded-lg"
+                                  />
+                                  <button
+                                    type="button"
+                                    className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setThumbnailPreview(null);
+                                      field.onChange(null);
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="text-center">
+                                  <Plus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                  <span className="text-sm text-gray-500">画像を選択</span>
+                                </div>
+                              )}
+                            </div>
+                            <input
+                              type="file"
+                              ref={thumbnailInputRef}
+                              className="hidden"
+                              accept="image/jpeg,image/png,image/gif"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleThumbnailUpload(file);
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <FormLabel>本文</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <ReactQuill
+                              forwardedRef={quillRef}
+                              theme="snow"
+                              modules={modules}
+                              formats={formats}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="記事の本文を入力"
+                              className="h-[400px]"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
+              </form>
             </Form>
           )}
         </CardContent>
@@ -389,17 +398,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>下書き保存の確認</AlertDialogTitle>
                 <AlertDialogDescription>
-                  現在の内容を下書きとして保存します。
-                  後でいつでも編集できます。
+                  現在の内容を下書きとして保存します。後でいつでも編集できます。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => {
-                    const data = form.getValues();
-                    handleSubmit(data, "draft");
-                  }}
+                  onClick={() => handleSubmit(form.getValues(), "draft")}
                 >
                   保存する
                 </AlertDialogAction>
@@ -418,8 +423,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>予約投稿の設定</AlertDialogTitle>
                 <AlertDialogDescription>
-                  記事を指定した日時に自動で公開します。
-                  予約日時を選択してください。
+                  記事を指定した日時に自動で公開します。予約日時を選択してください。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-4">
@@ -436,18 +440,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => {
-                    const data = form.getValues();
-                    if (!scheduledDateTime) {
-                      toast({
-                        variant: "destructive",
-                        title: "エラー",
-                        description: "公開予定日時を選択してください",
-                      });
-                      return;
-                    }
-                    handleSubmit(data, "scheduled");
-                  }}
+                  onClick={() => handleSubmit(form.getValues(), "scheduled")}
                 >
                   予約する
                 </AlertDialogAction>
@@ -466,17 +459,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>公開の確認</AlertDialogTitle>
                 <AlertDialogDescription>
-                  記事を公開します。公開後は一般に公開され、
-                  誰でも閲覧できるようになります。
+                  記事を公開します。公開後は一般に公開され、誰でも閲覧できるようになります。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => {
-                    const data = form.getValues();
-                    handleSubmit(data, "published");
-                  }}
+                  onClick={() => handleSubmit(form.getValues(), "published")}
                 >
                   公開する
                 </AlertDialogAction>
