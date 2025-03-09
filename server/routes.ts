@@ -941,6 +941,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 画像サイズの更新エンドポイント
+  app.patch("/api/store/images/:id", authenticate, async (req: any, res) => {
+    try {
+      const imageId = parseInt(req.params.id);
+      
+      console.log('Image size update request:', {
+        imageId,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      if (isNaN(imageId)) {
+        return res.status(400).json({ message: "無効な画像IDです" });
+      }
+
+      // サイズパラメータのバリデーション
+      const width = parseInt(req.body.width);
+      const height = parseInt(req.body.height);
+
+      if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+        return res.status(400).json({ 
+          message: "無効な画像サイズです",
+          details: { width, height }
+        });
+      }
+
+      // 認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみ画像を更新できます" });
+      }
+
+      // 画像の存在確認とオーナーシップチェック
+      const [existingImage] = await db
+        .select()
+        .from(storeImages)
+        .where(and(
+          eq(storeImages.id, imageId),
+          eq(storeImages.storeId, req.user.id)
+        ));
+
+      if (!existingImage) {
+        return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
+      }
+
+      // 画像サイズの更新
+      const [updatedImage] = await db
+        .update(storeImages)
+        .set({
+          width,
+          height,
+          updatedAt: new Date()
+        })
+        .where(eq(storeImages.id, imageId))
+        .returning();
+
+      console.log('Image size update successful:', {
+        imageId,
+        oldSize: {
+          width: existingImage.width,
+          height: existingImage.height
+        },
+        newSize: {
+          width: updatedImage.width,
+          height: updatedImage.height
+        },
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedImage);
+    } catch (error) {
+      console.error('Image size update error:', {
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack
+        } : 'Unknown error',
+        imageId: req.params.id,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像サイズの更新に失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
   // 求人応募エンドポイント
   app.post("/api/jobs/:id/apply", authenticate, async (req: any, res) => {
     try {
