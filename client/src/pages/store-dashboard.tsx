@@ -95,8 +95,16 @@ export default function StoreDashboard() {
   // ブログ投稿の取得
   const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
     queryKey: [QUERY_KEYS.BLOG_POSTS_STORE],
-    queryFn: () => apiRequest("GET", "/api/blog/posts/store"),
+    queryFn: () => apiRequest("GET", `/api/blog/posts/store/${user?.id}`),
     enabled: !!user?.id && user?.role === "store",
+    onError: (error) => {
+      console.error("Blog posts fetch error:", error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "ブログ記事の取得に失敗しました",
+      });
+    }
   });
 
   if (jobsLoading || blogsLoading) {

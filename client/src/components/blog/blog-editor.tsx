@@ -51,7 +51,10 @@ import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  return React.forwardRef((props: any, ref) => <RQ ref={ref} {...props} />);
+  // React.forwardRefを使用して正しくrefを渡す
+  return React.forwardRef((props: any, ref) => (
+    <RQ {...props} ref={ref} />
+  ));
 }, {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
@@ -127,14 +130,17 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) =
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
-        storeId: user?.id
+        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
+        storeId: user?.id  // Ensure we're using the same ID reference
       };
 
       console.log("Submitting form data:", formData);
 
       if (postId) {
-        await updateMutation.mutateAsync(formData);
+        await updateMutation.mutateAsync({
+          ...formData,
+          id: postId
+        });
       } else {
         await createMutation.mutateAsync(formData);
       }
