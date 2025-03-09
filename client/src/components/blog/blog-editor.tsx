@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -66,6 +66,13 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import {
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
+} from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Quillエディターを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -120,6 +127,144 @@ interface StoreImage {
   createdAt: string;
 }
 
+interface ImageResizeDialogProps {
+  image: StoreImage;
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (url: string) => void;
+}
+
+function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
+  const [aspectLocked, setAspectLocked] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (image && imgRef.current) {
+      const img = imgRef.current;
+      img.onload = () => {
+        setWidth(img.naturalWidth);
+        setHeight(img.naturalHeight);
+        setIsLoading(false);
+      };
+    }
+  }, [image]);
+
+  const handleWidthChange = (value: number) => {
+    setWidth(value);
+    if (aspectLocked && imgRef.current) {
+      const aspectRatio = imgRef.current.naturalWidth / imgRef.current.naturalHeight;
+      setHeight(Math.round(value / aspectRatio));
+    }
+  };
+
+  const handleHeightChange = (value: number) => {
+    setHeight(value);
+    if (aspectLocked && imgRef.current) {
+      const aspectRatio = imgRef.current.naturalWidth / imgRef.current.naturalHeight;
+      setWidth(Math.round(value * aspectRatio));
+    }
+  };
+
+  const handleInsert = () => {
+    // リサイズパラメータを追加したURLを生成
+    const url = new URL(image.url);
+    url.searchParams.set('width', width.toString());
+    url.searchParams.set('height', height.toString());
+    onInsert(url.toString());
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>画像サイズの調整</DialogTitle>
+          <DialogDescription>
+            挿入する画像のサイズを調整できます
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          <div className="aspect-video relative overflow-hidden rounded-lg border">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <img
+                ref={imgRef}
+                src={image.url}
+                alt="リサイズプレビュー"
+                className="object-contain"
+                style={{ width, height }}
+              />
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2">
+              <label className="w-16">幅:</label>
+              <Slider
+                value={[width]}
+                onValueChange={([value]) => handleWidthChange(value)}
+                min={50}
+                max={imgRef.current?.naturalWidth || 1000}
+                step={1}
+              />
+              <Input
+                type="number"
+                value={width}
+                onChange={(e) => handleWidthChange(Number(e.target.value))}
+                className="w-20"
+              />
+              <span>px</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="w-16">高さ:</label>
+              <Slider
+                value={[height]}
+                onValueChange={([value]) => handleHeightChange(value)}
+                min={50}
+                max={imgRef.current?.naturalHeight || 1000}
+                step={1}
+              />
+              <Input
+                type="number"
+                value={height}
+                onChange={(e) => handleHeightChange(Number(e.target.value))}
+                className="w-20"
+              />
+              <span>px</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="aspect-ratio"
+                checked={aspectLocked}
+                onCheckedChange={(checked) => setAspectLocked(checked as boolean)}
+              />
+              <label htmlFor="aspect-ratio">アスペクト比を維持</label>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            キャンセル
+          </Button>
+          <Button onClick={handleInsert}>
+            この設定で挿入
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
@@ -132,6 +277,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedImage, setSelectedImage] = useState<StoreImage | null>(null);
+  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
 
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
@@ -412,6 +559,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  const handleImageClick = (image: StoreImage) => {
+    setSelectedImage(image);
+    setIsResizeDialogOpen(true);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -563,7 +714,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                 <div
                                   key={image.id}
                                   className="relative aspect-square cursor-pointer group"
-                                  onClick={() => insertImage(image.url)}
+                                  onClick={() => handleImageClick(image)}
                                 >
                                   <img
                                     src={image.url}
@@ -746,6 +897,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </AlertDialog>
         </CardFooter>
       </Card>
+      {selectedImage && (
+        <ImageResizeDialog
+          image={selectedImage}
+          isOpen={isResizeDialogOpen}
+          onClose={() => {
+            setIsResizeDialogOpen(false);
+            setSelectedImage(null);
+          }}
+          onInsert={insertImage}
+        />
+      )}
     </div>
   );
 }
