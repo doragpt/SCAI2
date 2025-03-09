@@ -141,8 +141,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             });
             return;
           }
-          scheduledAt = scheduledDate.toISOString();
+          // PostgreSQLのtimestamp型に合わせてDate型で送信
+          scheduledAt = scheduledDate;
         } catch (error) {
+          console.error("Date parsing error:", error);
           toast({
             variant: "destructive",
             title: "エラー",
