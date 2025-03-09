@@ -270,7 +270,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  // Quillエディタの設定
+  // Quillエディタの設定を更新
   const modules = {
     toolbar: {
       container: [
@@ -282,6 +282,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         ["link", "image"],
         ["clean"]
       ],
+    },
+    clipboard: {
+      matchVisual: false // プレーンテキストの貼り付けを許可
     }
   };
   const formats = [
@@ -311,8 +314,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         throw new Error("エディタが見つかりません");
       }
 
-      // スタイル付きの画像HTMLを作成
-      const imageHtml = `<img src="${url}" style="width: ${width}px; height: ${height}px;" alt="ブログ画像"/>`;
+      // スタイル付きの画像HTMLを作成（max-width制限付き）
+      const imageHtml = `
+        <img 
+          src="${url}" 
+          style="width: ${width}px; height: ${height}px; max-width: 100%; object-fit: contain;" 
+          data-original-width="${width}"
+          data-original-height="${height}"
+          alt="ブログ画像"
+        />
+      `;
 
       // 現在のカーソル位置を取得
       const range = quill.getSelection(true);
