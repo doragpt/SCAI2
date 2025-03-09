@@ -1,11 +1,16 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// S3クライアントの初期化と環境変数チェック
+if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.AWS_BUCKET_NAME || !process.env.AWS_REGION) {
+  throw new Error("Required AWS environment variables are not set");
+}
+
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
+  region: process.env.AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
 
@@ -15,20 +20,20 @@ export const getSignedUploadUrl = async (
   contentType: string
 ): Promise<{ url: string; key: string }> => {
   try {
-    // ファイル名にタイムスタンプを追加して一意にする
+    // ファイル名にタイムスタンプと乱数を追加して一意にする
     const timestamp = new Date().getTime();
-    const key = `${timestamp}-${fileName}`;
+    const random = Math.random().toString(36).substring(7);
+    const key = `uploads/${timestamp}-${random}-${fileName}`;
 
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
       ContentType: contentType,
-      // CORSに関連するメタデータを追加
       Metadata: {
         'x-amz-meta-uploaded-by': 'scai-app',
         'x-amz-meta-timestamp': new Date().toISOString()
       },
-      CacheControl: 'max-age=31536000' // 1年間のキャッシュを設定
+      CacheControl: 'max-age=31536000'
     });
 
     console.log('Generating signed upload URL:', {
@@ -56,7 +61,7 @@ export const getSignedUploadUrl = async (
 export const getSignedDownloadUrl = async (key: string): Promise<string> => {
   try {
     const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
+      Bucket: process.env.AWS_BUCKET_NAME,
       Key: key
     });
 

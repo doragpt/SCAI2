@@ -144,22 +144,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (!file) return;
 
     try {
-      console.log('Uploading thumbnail:', {
+      console.log('Starting thumbnail upload:', {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size
       });
 
       // 署名付きURLの取得
-      const { url, key } = await apiRequest("POST", QUERY_KEYS.SIGNED_URL, {
+      const response = await apiRequest("POST", QUERY_KEYS.SIGNED_URL, {
         fileName: file.name,
         fileType: file.type,
       });
 
-      console.log('Got signed URL:', { url, key });
+      if (!response || !response.url || !response.key) {
+        throw new Error('Invalid response from signed URL endpoint');
+      }
+
+      const { url, key } = response;
+      console.log('Received signed URL:', { url, key });
 
       // S3へのアップロード
-      const response = await fetch(url, {
+      const uploadResponse = await fetch(url, {
         method: "PUT",
         body: file,
         headers: {
@@ -167,25 +172,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
       }
 
       // プレビューの更新
-      const imageUrl = `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.${process.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
+      const imageUrl = `https://${import.meta.env.VITE_AWS_BUCKET_NAME}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
       setThumbnailPreview(imageUrl);
       form.setValue("thumbnail", imageUrl);
 
       toast({
-        title: "サムネイル画像をアップロードしました",
-        description: "画像の設定が完了しました。",
+        title: "アップロード完了",
+        description: "サムネイル画像を設定しました。",
       });
     } catch (error) {
-      console.error("Thumbnail upload error:", error);
+      console.error('Thumbnail upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
-        description: "サムネイル画像のアップロードに失敗しました",
+        description: error instanceof Error 
+          ? error.message 
+          : "サムネイル画像のアップロードに失敗しました",
       });
     }
   };
