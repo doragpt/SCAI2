@@ -351,20 +351,29 @@ export const blogPostSchema = z.object({
       return;
     }
 
-    const scheduledDate = new Date(data.scheduledAt);
-    if (isNaN(scheduledDate.getTime())) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "無効な日時形式です",
-        path: ["scheduledAt"]
-      });
-      return;
-    }
+    try {
+      const scheduledDate = new Date(data.scheduledAt);
+      if (isNaN(scheduledDate.getTime())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "無効な日時形式です",
+          path: ["scheduledAt"]
+        });
+        return;
+      }
 
-    if (scheduledDate <= new Date()) {
+      if (scheduledDate <= new Date()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "予約日時は現在より後の日時を指定してください",
+          path: ["scheduledAt"]
+        });
+        return;
+      }
+    } catch (error) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "予約日時は現在より後の日時を指定してください",
+        message: "日時の形式が正しくありません",
         path: ["scheduledAt"]
       });
       return;

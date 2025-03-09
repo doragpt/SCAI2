@@ -179,7 +179,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const formData = {
         ...data,
         status,
-        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
+        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
       console.log("Submitting form data:", formData);
