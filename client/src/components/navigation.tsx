@@ -130,29 +130,6 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
 
-        {/* パンくずリスト（モバイルでは非表示） */}
-        <div className="hidden md:flex items-center text-sm">
-          <Link href="/">
-            <a className="cursor-pointer">
-              <Button variant="link" size="sm">
-                ホーム
-              </Button>
-            </a>
-          </Link>
-          {breadcrumbs.map((crumb, index) => (
-            <div key={index} className="flex items-center">
-              <span className="mx-2 text-muted-foreground">/</span>
-              <Link href={crumb.path}>
-                <a className="cursor-pointer">
-                  <Button variant="link" size="sm">
-                    {crumb.label}
-                  </Button>
-                </a>
-              </Link>
-            </div>
-          ))}
-        </div>
-
         {/* ユーザーメニュー */}
         <div className="ml-auto">
           {user ? (
