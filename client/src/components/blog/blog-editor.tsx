@@ -114,7 +114,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const handleThumbnailUpload = async (file: File) => {
     try {
-      // ファイルサイズのチェック（500KB）
       if (file.size > 500 * 1024) {
         toast({
           variant: "destructive",
@@ -124,7 +123,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      // ファイル形式のチェック
       const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!allowedTypes.includes(file.type)) {
         toast({
@@ -139,41 +137,30 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const formData = new FormData();
       formData.append("image", file);
 
-      try {
-        const response = await apiRequest<{ url: string; key: string }>(
-          "POST",
-          "/api/blog/upload-image",
-          formData,
-          {
-            rawFormData: true
-          }
-        );
+      const response = await apiRequest<{ url: string; key: string }>(
+        "POST",
+        "/api/blog/upload-image",
+        formData,
+        { rawFormData: true }
+      );
 
-        if (!response?.url) {
-          throw new Error("アップロードされた画像のURLが取得できません");
-        }
-
-        // サムネイル画像を設定
-        setThumbnailPreview(response.url);
-        form.setValue("thumbnail", response.url);
-
-        toast({
-          title: "成功",
-          description: "サムネイル画像がアップロードされました",
-        });
-      } catch (uploadError) {
-        console.error('Thumbnail upload error:', uploadError);
-        throw uploadError;
+      if (!response?.url) {
+        throw new Error("アップロードされた画像のURLが取得できません");
       }
-    } catch (error) {
-      console.error('Thumbnail upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
+
+      setThumbnailPreview(response.url);
+      form.setValue("thumbnail", response.url);
+
+      toast({
+        title: "成功",
+        description: "サムネイル画像がアップロードされました",
       });
+    } catch (error) {
+      console.error('Thumbnail upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error instanceof Error ? error.message : "サムネイル画像のアップロードに失敗しました",
+        description: "サムネイル画像のアップロードに失敗しました",
       });
     } finally {
       setIsUploading(false);
@@ -190,21 +177,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const onSubmit = async (data: typeof form.getValues) => {
+  const handleSubmit = async (data: any, status: "draft" | "published") => {
     try {
       const formData = {
-        ...data,
-        content: form.getValues("content"),
-        status: form.getValues("status"),
-        thumbnail: form.getValues("thumbnail"),
+        title: data.title,
+        content: data.content,
+        status: status,
+        thumbnail: data.thumbnail,
       };
 
       if (postId) {
-        // 更新の場合
-        updateMutation.mutate(formData);
+        await updateMutation.mutateAsync(formData);
       } else {
-        // 新規作成の場合
-        createMutation.mutate(formData);
+        await createMutation.mutateAsync(formData);
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -217,7 +202,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
+    mutationFn: (data: any) =>
       apiRequest("PUT", `/api/blog/posts/${postId}`, data),
     onSuccess: () => {
       toast({
@@ -225,18 +210,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "ブログ記事の更新が完了しました。",
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      window.location.href = "/store/dashboard";
     },
     onError: (error) => {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error instanceof Error ? error.message : "記事の更新に失敗しました",
+        description: "記事の更新に失敗しました",
       });
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
+    mutationFn: (data: any) =>
       apiRequest("POST", "/api/blog/posts", data),
     onSuccess: () => {
       toast({
@@ -250,7 +236,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error instanceof Error ? error.message : "記事の作成に失敗しました",
+        description: "記事の作成に失敗しました",
       });
     },
   });
@@ -292,7 +278,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form className="space-y-6">
                 <FormField
                   control={form.control}
                   name="title"
@@ -367,7 +353,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   )}
                 />
 
-                <div>
+                <div className="space-y-2 border-none">
                   <FormLabel>本文</FormLabel>
                   <FormField
                     control={form.control}
@@ -375,25 +361,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="relative border rounded-md">
-                            <ReactQuill
-                              forwardedRef={quillRef}
-                              theme="snow"
-                              modules={modules}
-                              formats={formats}
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="記事の本文を入力"
-                              className="h-[400px]"
-                            />
-                          </div>
+                          <ReactQuill
+                            forwardedRef={quillRef}
+                            theme="snow"
+                            modules={modules}
+                            formats={formats}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="記事の本文を入力"
+                            className="h-[400px]"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
                 <div className="mt-8 pt-6 border-t">
                   <FormField
                     control={form.control}
@@ -441,8 +424,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    form.setValue("status", "draft");
-                    form.handleSubmit(onSubmit)();
+                    const data = form.getValues();
+                    handleSubmit(data, "draft");
                   }}
                 >
                   保存する
@@ -470,8 +453,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    form.setValue("status", "published");
-                    form.handleSubmit(onSubmit)();
+                    const data = form.getValues();
+                    handleSubmit(data, "published");
                   }}
                 >
                   公開する
