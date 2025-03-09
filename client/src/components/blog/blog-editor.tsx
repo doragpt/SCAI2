@@ -141,8 +141,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             });
             return;
           }
-          // PostgreSQLのtimestamp型に合わせてDate型で送信
-          scheduledAt = scheduledDate;
+
+          // 現在時刻より前の日時をチェック
+          const now = new Date();
+          if (scheduledDate <= now) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "予約日時は現在より後の日時を指定してください",
+            });
+            return;
+          }
+
+          scheduledAt = scheduledDate.toISOString();
         } catch (error) {
           console.error("Date parsing error:", error);
           toast({
@@ -154,7 +165,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         }
       }
 
-      // フォームデータの構築
       const formData = {
         title: data.title,
         content: data.content,
