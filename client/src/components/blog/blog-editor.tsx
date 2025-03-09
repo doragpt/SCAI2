@@ -10,15 +10,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -35,18 +39,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -100,13 +92,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      // フォームデータの構築
       const formData = {
         title: data.title,
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
-        storeId: user?.userId
+        storeId: user?.userId,
+        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
       console.log("Submitting form data:", formData);
@@ -289,7 +282,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={(e) => { e.preventDefault(); }}>
+              <form onSubmit={(e) => e.preventDefault()}>
                 <div className="space-y-6">
                   <FormField
                     control={form.control}
