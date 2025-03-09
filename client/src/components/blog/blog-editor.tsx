@@ -51,9 +51,8 @@ import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  // React.forwardRefを使用して正しくrefを渡す
-  return React.forwardRef((props: any, ref) => (
-    <RQ {...props} ref={ref} />
+  return React.forwardRef<any, any>((props, ref) => (
+    <RQ ref={ref} {...props} />
   ));
 }, {
   ssr: false,

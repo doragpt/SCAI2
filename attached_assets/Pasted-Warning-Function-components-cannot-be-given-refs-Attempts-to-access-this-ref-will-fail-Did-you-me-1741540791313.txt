@@ -1,0 +1,65 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`.
+    at Select (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=3790bb6c:86:5)
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=3790bb6c:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=3790bb6c:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VJJ3I66J.js?v=3790bb6c:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=3790bb6c:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GWNN5Q73.js?v=3790bb6c:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VJJ3I66J.js?v=3790bb6c:41:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HPXFDPTQ.js?v=3790bb6c:1980:13
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3790bb6c:189:13
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-KFL2BQUL.js?v=3790bb6c:38:15)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HPXFDPTQ.js?v=3790bb6c:1915:15)
+    at Popper (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HPXFDPTQ.js?v=3790bb6c:1972:11)
+    at Tooltip (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3790bb6c:107:5)
+    at Provider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-KFL2BQUL.js?v=3790bb6c:38:15)
+    at TooltipProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3790bb6c:63:5)
+    at div
+    at div
+    at section
+    at main
+    at div
+    at HomePage (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/home-page.tsx:331:44)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3790bb6c:338:16)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3790bb6c:394:17)
+    at Router
+    at main
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3790bb6c:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=VIk5DQ-c0kvqgnRKOSq3e:213:57)
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/search?location=all&serviceType=all&page=1&limit=12", hasData: false, isFormData: false, timestamp: "2025-03-09T17:19:28.768Z"}
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-09T17:19:29.197Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/jobs/store", hasData: false, isFormData: false, timestamp: "2025-03-09T17:19:29.401Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/blog/posts/store/14", hasData: false, isFormData: false, timestamp: "2025-03-09T17:19:29.406Z"}
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-09T17:19:29.526Z"}
+API Request Error: 
+Object {method: "GET", url: "/api/blog/posts/store/14", error: "Unexpected token '<', "<!DOCTYPE "... is not valid JSON", timestamp: "2025-03-09T17:19:29.545Z"}
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-09T17:19:29.633Z"}
+API Request starting: 
+Object {method: "GET", url: "/api/blog/posts/store/14", hasData: false, isFormData: false, timestamp: "2025-03-09T17:19:30.554Z"}
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-09T17:19:30.663Z"}
+API Request Error: 
+Object {method: "GET", url: "/api/blog/posts/store/14", error: "Unexpected token '<', "<!DOCTYPE "... is not valid JSON", timestamp: "2025-03-09T17:19:30.692Z"}
+
+API Request starting: 
+Object {method: "GET", url: "/api/blog/posts/store/14", hasData: false, isFormData: false, timestamp: "2025-03-09T17:19:32.699Z"}
+API Response received: 
+Object {status: 200, statusText: "OK", timestamp: "2025-03-09T17:19:32.811Z"}
+API Request Error: 
+Object {method: "GET", url: "/api/blog/posts/store/14", error: "Unexpected token '<', "<!DOCTYPE "... is not valid JSON", timestamp: "2025-03-09T17:19:32.827Z"}
+
