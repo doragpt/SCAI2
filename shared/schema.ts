@@ -353,7 +353,6 @@ export const blogPostSchema = z.object({
 
     try {
       const scheduledDate = new Date(data.scheduledAt);
-
       if (isNaN(scheduledDate.getTime())) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

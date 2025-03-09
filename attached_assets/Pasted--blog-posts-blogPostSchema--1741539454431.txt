@@ -1,0 +1,210 @@
+### **エンジニア向け具体的な指示書（予約投稿機能の実装）**
+
+---
+
+## **📌 目的**
+現在の `blog_posts` テーブルと `blogPostSchema` には `scheduledAt` フィールドがあり、予約投稿のデータを保存できるようになっています。しかし、予約投稿が自動で公開される仕組みが未実装のため、以下のタスクを実施し、予約投稿機能を完成させてください。
+
+---
+
+## **🛠 実装タスク**
+### **1️⃣ フロントエンド修正（React）**
+#### **📌 タスク**
+1. `scheduledAt` の値を **ISO 8601（UTC）** に変換して API に送信する。
+2. 予約日時のバリデーションを追加し、過去の日時を選択できないようにする。
+
+#### **✅ 修正コード**
+#### **(1) `handleSubmit` の修正**
+```tsx
+const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
+  try {
+    let scheduledAt = null;
+    if (status === "scheduled") {
+      if (!scheduledDateTime || new Date(scheduledDateTime) <= new Date()) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "未来の日時を選択してください",
+        });
+        return;
+      }
+      scheduledAt = new Date(scheduledDateTime).toISOString(); // ISO形式（UTC）
+    }
+
+    const formData = {
+      title: data.title,
+      content: data.content,
+      status: status,
+      thumbnail: data.thumbnail,
+      scheduledAt: scheduledAt,
+      storeId: user?.userId
+    };
+
+    if (postId) {
+      await updateMutation.mutateAsync(formData);
+    } else {
+      await createMutation.mutateAsync(formData);
+    }
+  } catch (error) {
+    toast({ variant: "destructive", title: "エラー", description: "フォームの送信に失敗しました" });
+  }
+};
+```
+#### **(2) `datetime-local` のバリデーション**
+```tsx
+<Input
+  type="datetime-local"
+  value={scheduledDateTime}
+  onChange={(e) => setScheduledDateTime(e.target.value)}
+  min={new Date().toISOString().slice(0, 16)} // 過去の日時を無効化
+/>
+```
+---
+### **2️⃣ バックエンド修正（Express + Drizzle ORM）**
+#### **📌 タスク**
+1. `POST /api/blog/posts` に `scheduledAt` を渡せるようにし、データベースに保存する。
+2. 定期的に `scheduledAt` が過去のものを `published` に更新するバッチ処理を追加。
+
+#### **✅ 修正コード**
+#### **(1) `POST /api/blog/posts` の修正**
+```ts
+app.post("/api/blog/posts", async (req, res) => {
+  const { title, content, status, scheduledAt, storeId, thumbnail, images } = req.body;
+
+  if (status === "scheduled" && !scheduledAt) {
+    return res.status(400).json({ error: "予約投稿には公開予定日時が必要です" });
+  }
+
+  const result = await db.insert(blogPosts).values({
+    title,
+    content,
+    status,
+    scheduledAt: scheduledAt ? new Date(scheduledAt) : null, // UTC形式で保存
+    storeId,
+    thumbnail,
+    images,
+    createdAt: new Date(),
+  }).returning();
+
+  res.json(result);
+});
+```
+#### **(2) `PUT /api/blog/posts/:id` の修正**
+```ts
+app.put("/api/blog/posts/:id", async (req, res) => {
+  const { title, content, status, scheduledAt, thumbnail, images } = req.body;
+  const { id } = req.params;
+
+  if (status === "scheduled" && !scheduledAt) {
+    return res.status(400).json({ error: "予約投稿には公開予定日時が必要です" });
+  }
+
+  const result = await db.update(blogPosts)
+    .set({
+      title,
+      content,
+      status,
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      thumbnail,
+      images,
+      updatedAt: new Date(),
+    })
+    .where({ id });
+
+  res.json(result);
+});
+```
+---
+### **3️⃣ 予約投稿の自動公開バッチ処理**
+#### **📌 タスク**
+1. `scheduledAt` の時間が現在時刻を超えた記事を自動で `published` にする。
+2. 定期的にチェックするバッチ処理を追加（`setInterval` or `cron`）。
+
+#### **✅ 修正コード**
+```ts
+import { db } from "@/lib/db";
+
+async function publishScheduledPosts() {
+  const now = new Date();
+  try {
+    const postsToPublish = await db.query.blogPosts.findMany({
+      where: {
+        status: "scheduled",
+        scheduledAt: { lte: now }, // 現在時刻より前の予約投稿を取得
+      },
+    });
+
+    for (const post of postsToPublish) {
+      await db.update(blogPosts)
+        .set({ status: "published", publishedAt: now })
+        .where({ id: post.id });
+      console.log(`Published post: ${post.id}`);
+    }
+  } catch (error) {
+    console.error("Error publishing scheduled posts:", error);
+  }
+}
+
+// 15分ごとに予約投稿をチェック
+setInterval(publishScheduledPosts, 15 * 60 * 1000);
+```
+---
+### **4️⃣ データベースの確認**
+#### **📌 タスク**
+1. `blog_posts` テーブルの `scheduledAt` を `TIMESTAMP WITH TIME ZONE` に変更。
+2. `scheduledAt` にインデックスを追加し、検索を高速化。
+
+#### **✅ 修正コード**
+```ts
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  thumbnail: text("thumbnail"),
+  images: jsonb("images").$type<string[]>().default([]),
+}, (table) => {
+  return {
+    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
+    statusIdx: index("blog_posts_status_idx").on(table.status),
+    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+    scheduledAtIdx: index("blog_posts_scheduled_at_idx").on(table.scheduledAt), // 追加
+  };
+});
+```
+---
+## **📌 期待する動作**
+1. **フロントエンド**
+   - 記事作成時に「予約投稿」を選択し、日時を指定できる。
+   - 過去の日時は選択できない（バリデーション）。
+   - 予約投稿が正しく API に送信される。
+
+2. **バックエンド**
+   - 予約投稿のデータが `scheduledAt` フィールドに保存される。
+   - `status === "scheduled"` の記事が、`scheduledAt` を超えたら `published` に自動変更される。
+
+3. **データベース**
+   - `scheduledAt` に適切なインデックスが追加され、検索が高速化される。
+   - 予約投稿のステータスが適切に管理される。
+
+---
+## **📝 まとめ**
+✅ **フロントエンド**
+- `scheduledAt` の日時変換 (`toISOString()`)
+- 未来の日時のみ選択可能にするバリデーション
+
+✅ **バックエンド**
+- `POST` / `PUT` API で `scheduledAt` を受け取れるようにする
+- `scheduledAt` を超えた記事を `published` にするバッチ処理 (`setInterval`)
+
+✅ **データベース**
+- `scheduledAt` のインデックスを追加 (`scheduledAtIdx`)
+
+---
+## **💡 これを実装すれば、予約投稿機能が完成します！**
+このタスクを進めてください。質問があればすぐに連絡してください！ 🚀
