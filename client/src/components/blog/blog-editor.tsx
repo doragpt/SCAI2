@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,12 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import {
   Card,
@@ -57,187 +54,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Image as ImageIcon, ArrowLeft, Upload, Plus, X, Edit, Save, Eye } from "lucide-react";
-
-
-interface StoreImage {
-  id: number;
-  url: string;
-  key: string;
-  createdAt: string;
-}
-
-interface ImageResizeDialogProps {
-  image: StoreImage;
-  isOpen: boolean;
-  onClose: () => void;
-  onInsert: (url: string, width: number, height: number) => void;
-}
-
-function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
-  const [aspectLocked, setAspectLocked] = useState(true);
-  const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (image) {
-      const img = new Image();
-      img.onload = () => {
-        const originalWidth = img.naturalWidth;
-        const originalHeight = img.naturalHeight;
-        setOriginalSize({ width: originalWidth, height: originalHeight });
-        setWidth(Math.min(Math.max(50, originalWidth), 10000));
-        setHeight(Math.min(Math.max(50, originalHeight), 10000));
-      };
-      img.onerror = () => {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像サイズの取得に失敗しました",
-        });
-      };
-      img.src = image.url;
-    }
-  }, [image, toast]);
-
-  const handleWidthChange = (value: number) => {
-    const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
-    setWidth(clampedValue);
-    if (aspectLocked && originalSize) {
-      const aspectRatio = originalSize.width / originalSize.height;
-      const newHeight = Math.round(clampedValue / aspectRatio);
-      setHeight(Math.min(Math.max(50, newHeight), 10000));
-    }
-  };
-
-  const handleHeightChange = (value: number) => {
-    const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
-    setHeight(clampedValue);
-    if (aspectLocked && originalSize) {
-      const aspectRatio = originalSize.width / originalSize.height;
-      const newWidth = Math.round(clampedValue * aspectRatio);
-      setWidth(Math.min(Math.max(50, newWidth), 10000));
-    }
-  };
-
-  const handleInsert = () => {
-    try {
-      onInsert(image.url, width, height);
-      onClose();
-    } catch (error) {
-      console.error('Image insertion error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像の挿入に失敗しました",
-      });
-    }
-  };
-
-  if (!originalSize) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>画像サイズの取得中...</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>画像サイズの調整</DialogTitle>
-          <DialogDescription>
-            元のサイズ: {originalSize.width}x{originalSize.height}px
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2">
-              <label className="w-16">幅:</label>
-              <Slider
-                value={[width]}
-                onValueChange={([value]) => handleWidthChange(value)}
-                min={50}
-                max={10000}
-                step={1}
-              />
-              <Input
-                type="number"
-                value={width}
-                onChange={(e) => handleWidthChange(Number(e.target.value))}
-                className="w-20"
-              />
-              <span>px</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="w-16">高さ:</label>
-              <Slider
-                value={[height]}
-                onValueChange={([value]) => handleHeightChange(value)}
-                min={50}
-                max={10000}
-                step={1}
-              />
-              <Input
-                type="number"
-                value={height}
-                onChange={(e) => handleHeightChange(Number(e.target.value))}
-                className="w-20"
-              />
-              <span>px</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="aspect-ratio"
-                checked={aspectLocked}
-                onCheckedChange={(checked) => setAspectLocked(checked as boolean)}
-              />
-              <label htmlFor="aspect-ratio">アスペクト比を維持</label>
-            </div>
-          </div>
-
-          <div className="relative aspect-square border rounded-md overflow-hidden">
-            <img
-              src={image.url}
-              alt="プレビュー"
-              style={{
-                width: `${width}px`,
-                height: `${height}px`,
-                maxWidth: "none",
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)"
-              }}
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            キャンセル
-          </Button>
-          <Button onClick={handleInsert}>
-            この設定で挿入
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { ArrowLeft, Save, Eye } from "lucide-react";
 
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -258,16 +75,8 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
-  const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<StoreImage | null>(null);
-  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
-  const [isUploading, setIsUploading] = useState(false);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   // Quillエディタの設定を更新
@@ -279,7 +88,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         [{ color: [] }, { background: [] }],
         [{ list: "ordered" }, { list: "bullet" }],
         [{ align: ["", "center", "right", "justify"] }],
-        ["link", "image"],
+        ["link"],
         ["clean"]
       ],
     },
@@ -287,6 +96,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       matchVisual: false // プレーンテキストの貼り付けを許可
     }
   };
+
   const formats = [
     "header",
     "bold",
@@ -298,63 +108,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     "list",
     "bullet",
     "align",
-    "link",
-    "image"
+    "link"
   ];
-
-  const handleImageClick = (image: StoreImage) => {
-    setSelectedImage(image);
-    setIsResizeDialogOpen(true);
-  };
-
-  const handleImageInsert = (url: string, width: number, height: number) => {
-    try {
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      // スタイル付きの画像HTMLを作成（max-width制限付き）
-      const imageHtml = `
-        <img 
-          src="${url}" 
-          style="width: ${width}px; height: ${height}px; max-width: 100%; object-fit: contain;" 
-          data-original-width="${width}"
-          data-original-height="${height}"
-          alt="ブログ画像"
-        />
-      `;
-
-      // 現在のカーソル位置を取得
-      const range = quill.getSelection(true);
-
-      // HTMLとして画像を挿入
-      quill.clipboard.dangerouslyPasteHTML(range.index, imageHtml);
-
-      // 画像の後ろにカーソルを移動
-      quill.setSelection(range.index + 1);
-
-      toast({
-        title: "成功",
-        description: "画像を挿入しました",
-      });
-
-      setIsImageLibraryOpen(false);
-    } catch (error) {
-      console.error('Image insertion error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像の挿入に失敗しました",
-      });
-    }
-  };
-
-  // 店舗の全画像を取得
-  const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
-    queryKey: [QUERY_KEYS.STORE_IMAGES],
-    queryFn: () => apiRequest("GET", "/api/store/images"),
-  });
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -362,179 +117,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
-      images: [],
-      thumbnail: null,
     },
   });
-
-  const handleImageUpload = async (file: File) => {
-    try {
-      // ファイルサイズのチェック（500KB）
-      if (file.size > 500 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは500KB以下にしてください",
-        });
-        return;
-      }
-
-      // ファイル形式のチェック
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      // 画像数の制限チェック
-      if (uploadedImages.length >= 50) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像は最大50枚までアップロード可能です",
-        });
-        return;
-      }
-
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ログインが必要です",
-        });
-        return;
-      }
-
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-
-      try {
-        const response = await apiRequest<{ url: string; key: string }>(
-          "POST",
-          "/api/blog/upload-image",
-          formData,
-          {
-            rawFormData: true
-          }
-        );
-
-        if (!response?.url) {
-          throw new Error("アップロードされた画像のURLが取得できません");
-        }
-
-        // アップロード済み画像リストを更新
-        setUploadedImages(prev => [...prev, response.url]);
-        form.setValue("images", [...uploadedImages, response.url]);
-
-        // 画像ライブラリのキャッシュを更新
-        queryClient.setQueryData<StoreImage[]>([QUERY_KEYS.STORE_IMAGES], (oldData = []) => {
-          return [
-            ...oldData,
-            {
-              id: Date.now(), // 一時的なID
-              url: response.url,
-              key: response.key,
-              createdAt: new Date().toISOString()
-            }
-          ];
-        });
-
-        toast({
-          title: "画像アップロード完了",
-          description: "画像ライブラリに追加されました",
-        });
-      } catch (uploadError) {
-        console.error('Image upload request error:', uploadError);
-        throw uploadError;
-      }
-    } catch (error) {
-      console.error('Image upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
-      });
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleThumbnailUpload = async (file: File) => {
-    try {
-      // ファイルサイズのチェック（500KB）
-      if (file.size > 500 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは500KB以下にしてください",
-        });
-        return;
-      }
-
-      // ファイル形式のチェック
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-
-      try {
-        const response = await apiRequest<{ url: string; key: string }>(
-          "POST",
-          "/api/blog/upload-image",
-          formData,
-          {
-            rawFormData: true
-          }
-        );
-
-        if (!response?.url) {
-          throw new Error("アップロードされた画像のURLが取得できません");
-        }
-
-        // サムネイル画像を設定
-        setThumbnailPreview(response.url);
-        form.setValue("thumbnail", response.url);
-
-        toast({
-          title: "成功",
-          description: "サムネイル画像がアップロードされました",
-        });
-      } catch (uploadError) {
-        console.error('Thumbnail upload error:', uploadError);
-        throw uploadError;
-      }
-    } catch (error) {
-      console.error('Thumbnail upload error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        file: file.name,
-      });
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "サムネイル画像のアップロードに失敗しました",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
 
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
@@ -552,6 +136,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を更新しました",
         description: "ブログ記事の更新が完了しました。",
       });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
     },
     onError: (error) => {
       toast({
@@ -611,9 +196,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           {isPreview ? (
             <div className="prose prose-sm max-w-none ql-editor">
               <h1>{form.watch("title")}</h1>
-              {thumbnailPreview && (
-                <img src={thumbnailPreview} alt="サムネイル" className="max-w-full h-auto mb-4" />
-              )}
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
           ) : (
@@ -633,162 +215,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors ${
-                              thumbnailPreview ? 'border-0' : 'border-gray-300'
-                            }`}
-                            onClick={() => thumbnailInputRef.current?.click()}
-                          >
-                            {thumbnailPreview ? (
-                              <>
-                                <img
-                                  src={thumbnailPreview}
-                                  alt="サムネイル"
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                                <button
-                                  type="button"
-                                  className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setThumbnailPreview(null);
-                                    field.onChange(null);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <div className="text-center">
-                                <Plus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                                <span className="text-sm text-gray-500">画像を選択</span>
-                              </div>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            ref={thumbnailInputRef}
-                            className="hidden"
-                            accept="image/jpeg,image/png,image/gif"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleThumbnailUpload(file);
-                              }
-                              e.target.value = "";
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <FormLabel>本文</FormLabel>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>画像: {uploadedImages.length}/50</span>
-                      <Dialog open={isImageLibraryOpen} onOpenChange={setIsImageLibraryOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mr-2"
-                          >
-                            <ImageIcon className="h-4 w-4 mr-2" />
-                            画像ライブラリ
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>画像ライブラリ</DialogTitle>
-                            <DialogDescription>
-                              アップロード済みの画像から選択して挿入できます
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-3 gap-4 py-4">
-                            {isLoadingImages ? (
-                              <div className="col-span-3 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                              </div>
-                            ) : !storeImages || storeImages.length === 0 ? (
-                              <div className="col-span-3 text-center text-muted-foreground">
-                                アップロード済みの画像がありません
-                              </div>
-                            ) : (
-                              storeImages.map((image) => (
-                                <div
-                                  key={image.id}
-                                  className="relative aspect-square cursor-pointer group"
-                                >
-                                  <img
-                                    src={image.url}
-                                    alt="ライブラリの画像"
-                                    className="w-full h-full object-cover rounded-md"
-                                  />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-2">
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => handleImageInsert(image.url, 0, 0)} // width and height are initially 0
-                                    >
-                                      使用
-                                    </Button>
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => handleImageClick(image)}
-                                    >
-                                      <Edit className="h-4 w-4 mr-1" />
-                                      編集
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading || uploadedImages.length >= 50}
-                      >
-                        {isUploading ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Upload className="h-4 w-4 mr-2" />
-                        )}
-                        新規アップロード
-                      </Button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/jpeg,image/png,image/gif"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleImageUpload(file);
-                          }
-                          e.target.value = "";
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <FormLabel>本文</FormLabel>
                   <FormField
                     control={form.control}
                     name="content"
@@ -833,36 +261,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           <SelectContent>
                             <SelectItem value="draft">下書き</SelectItem>
                             <SelectItem value="published">公開</SelectItem>
-                            <SelectItem value="scheduled">予約投稿</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {form.watch("status") === "scheduled" && (
-                    <FormField
-                      control={form.control}
-                      name="scheduledAt"
-                      render={({ field }) => (
-                        <FormItem className="mt-4">
-                          <FormLabel>公開予定日時</FormLabel>
-                          <FormControl>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="datetime-local"
-                                value={field.value || ""}
-                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                                min={new Date().toISOString().slice(0, 16)}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                 </div>
               </form>
             </Form>
@@ -925,17 +329,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </AlertDialog>
         </CardFooter>
       </Card>
-      {selectedImage && (
-        <ImageResizeDialog
-          image={selectedImage}
-          isOpen={isResizeDialogOpen}
-          onClose={() => {
-            setIsResizeDialogOpen(false);
-            setSelectedImage(null);
-          }}
-          onInsert={handleImageInsert}
-        />
-      )}
     </div>
   );
 }

@@ -25,15 +25,6 @@
   min-height: 300px;
 }
 
-/* エディタ内の画像スタイル */
-.ql-editor img {
-  max-width: 100% !important;
-  height: auto !important;
-  object-fit: contain;
-  margin: 1em 0;
-  display: block;
-}
-
 /* ツールバーのスタイル */
 .ql-toolbar.ql-snow {
   position: sticky;
@@ -41,9 +32,4 @@
   z-index: 10;
   background: white;
   border-bottom: 1px solid #ccc;
-}
-
-/* 画像のリサイズハンドルを非表示 */
-.ql-editor img::after {
-  display: none !important;
 }
