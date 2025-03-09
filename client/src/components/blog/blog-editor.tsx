@@ -150,44 +150,33 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
       const intWidth = Math.min(Math.max(50, Math.round(width)), 10000);
       const intHeight = Math.min(Math.max(50, Math.round(height)), 10000);
 
-      console.log('Attempting to save image size:', {
-        imageId: image.id,
-        width: intWidth,
-        height: intHeight
-      });
+      // Quillエディタのインスタンスを取得
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
 
-      // 画像サイズの更新
-      await apiRequest(
-        "PATCH",
-        `/api/store/images/${image.id}`,
-        {
-          width: intWidth,
-          height: intHeight
-        }
-      );
+      // 画像を挿入（styleタグ付き）
+      const imageHtml = `<img src="${image.url}" style="width: ${intWidth}px; height: ${intHeight}px;" alt="ブログ画像"/>`;
 
-      // キャッシュを更新
-      queryClient.setQueryData<StoreImage[]>(
-        [QUERY_KEYS.STORE_IMAGES],
-        (oldData = []) => oldData.map(img =>
-          img.id === image.id
-            ? { ...img, width: intWidth, height: intHeight }
-            : img
-        )
-      );
+      // 現在のカーソル位置を取得
+      const range = quill.getSelection(true);
+
+      // HTMLとして画像を挿入
+      quill.clipboard.dangerouslyPasteHTML(range.index, imageHtml);
 
       toast({
         title: "成功",
-        description: "画像サイズを保存しました",
+        description: "画像を挿入しました",
       });
 
       onClose();
     } catch (error) {
-      console.error('Image save error:', error);
+      console.error('Image insertion error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
-        description: "画像サイズの保存に失敗しました",
+        description: "画像の挿入に失敗しました",
       });
     } finally {
       setIsSaving(false);
