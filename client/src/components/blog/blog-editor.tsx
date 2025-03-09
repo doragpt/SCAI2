@@ -128,10 +128,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
     try {
       // AWS S3の署名付きURLを取得
-      const { url, key } = await apiRequest("GET", QUERY_KEYS.SIGNED_URL);
+      const response = await apiRequest<{ url: string; key: string }>("GET", QUERY_KEYS.SIGNED_URL);
 
       // S3にアップロード
-      await fetch(url, {
+      await fetch(response.url, {
         method: "PUT",
         body: file,
         headers: {
@@ -144,7 +144,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       setThumbnailPreview(objectUrl);
 
       // フォームの値を更新
-      form.setValue("thumbnail", key);
+      form.setValue("thumbnail", response.key);
 
       toast({
         title: "アップロード完了",
@@ -161,8 +161,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
-      apiRequest("POST", "/api/blog/posts", data),
+    mutationFn: async (data: BlogPost) => {
+      return apiRequest("POST", "/api/blog/posts", data);
+    },
     onSuccess: () => {
       toast({
         title: "記事を作成しました",
@@ -181,8 +182,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
-      apiRequest("PUT", `/api/blog/posts/${postId}`, data),
+    mutationFn: async (data: BlogPost) => {
+      return apiRequest("PUT", `/api/blog/posts/${postId}`, data);
+    },
     onSuccess: () => {
       toast({
         title: "記事を更新しました",
@@ -198,11 +200,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const onSubmit = (data: typeof form.getValues) => {
+  const onSubmit = async (data: BlogPost) => {
     if (postId) {
-      updateMutation.mutate(data);
+      await updateMutation.mutateAsync(data);
     } else {
-      createMutation.mutate(data);
+      await createMutation.mutateAsync(data);
     }
   };
 
