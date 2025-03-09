@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { type Job, type BlogPost } from "@shared/schema";
+import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,45 +37,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AccessStats } from "@/components/dashboard/access-stats";
 
-// ブログ投稿のステータスラベル更新
+// 求人ステータスのラベル
+const jobStatusLabels = {
+  draft: "下書き",
+  published: "公開中",
+  closed: "締切"
+} as const;
+
+// ブログ投稿のステータスラベル
 const blogStatusLabels = {
   draft: "下書き",
   published: "公開中",
   scheduled: "予約投稿"
 } as const;
-
-// ブログステータスに応じたバッジのバリアント
-const getBlogStatusVariant = (status: string) => {
-  switch (status) {
-    case "published":
-      return "default";
-    case "scheduled":
-      return "secondary";
-    default:
-      return "outline";
-  }
-};
-
-// 日時フォーマット関数の改善
-const formatDateTime = (dateString: string) => {
-  return format(new Date(dateString), "yyyy年MM月dd日 HH:mm", { locale: ja });
-};
-
-const formatScheduledDateTime = (post: BlogPost) => {
-  if (post.status === "scheduled" && post.scheduledAt) {
-    return formatDateTime(post.scheduledAt);
-  }
-  return null;
-};
-
-// レスポンス型の定義
-interface JobListingResponse {
-  jobs: Job[];
-}
-
-interface BlogPostListResponse {
-  posts: BlogPost[];
-}
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
@@ -90,21 +64,41 @@ export default function StoreDashboard() {
     queryKey: [QUERY_KEYS.JOBS_STORE],
     queryFn: () => apiRequest("GET", "/api/jobs/store"),
     enabled: !!user?.id && user?.role === "store",
+    retry: 2,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error("Store jobs fetch error:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "求人情報の取得に失敗しました",
+      });
+    },
   });
 
   // ブログ投稿の取得
   const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
-    queryKey: [QUERY_KEYS.BLOG_POSTS_STORE],
-    queryFn: () => apiRequest("GET", `/api/blog/posts/store/${user?.id}`),
+    queryKey: [QUERY_KEYS.BLOG_POSTS],
+    queryFn: () => apiRequest("GET", "/api/blog/posts"),
     enabled: !!user?.id && user?.role === "store",
+    retry: 2,
+    retryDelay: 1000,
     onError: (error) => {
-      console.error("Blog posts fetch error:", error);
+      console.error("Blog posts fetch error:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
       toast({
         variant: "destructive",
         title: "エラー",
-        description: "ブログ記事の取得に失敗しました",
+        description: error instanceof Error ? error.message : "ブログ記事の取得に失敗しました",
       });
-    }
+    },
   });
 
   if (jobsLoading || blogsLoading) {
@@ -384,21 +378,25 @@ export default function StoreDashboard() {
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
                                     <h3 className="font-semibold group-hover:text-primary transition-colors">{post.title}</h3>
-                                    <Badge variant={getBlogStatusVariant(post.status)} className="shadow-sm">
+                                    <Badge variant={
+                                      post.status === "published" ? "default" :
+                                        post.status === "scheduled" ? "secondary" : "outline"
+                                    } className="shadow-sm">
                                       {blogStatusLabels[post.status]}
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>
                                       {post.publishedAt
-                                        ? formatDateTime(post.publishedAt)
+                                        ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
                                         : "未公開"}
                                     </span>
                                     {post.status === "scheduled" && (
                                       <>
                                         <Clock className="h-4 w-4" />
                                         <span>
-                                          {formatScheduledDateTime(post)}に公開予定
+                                          {format(new Date(post.scheduledAt!), "yyyy年MM月dd日 HH:mm", { locale: ja })}
+                                          に公開予定
                                         </span>
                                       </>
                                     )}

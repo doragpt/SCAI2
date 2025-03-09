@@ -48,12 +48,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
-// Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  return React.forwardRef<any, any>((props, ref) => (
-    <RQ ref={ref} {...props} />
-  ));
+  return React.forwardRef((props: any, ref) => <RQ ref={ref} {...props} />);
 }, {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
@@ -64,7 +61,7 @@ interface BlogEditorProps {
   initialData?: BlogPost | null;
 }
 
-export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) => {
+export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
   const quillRef = useRef<any>(null);
@@ -73,52 +70,59 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) =
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const [scheduledDateTime, setScheduledDateTime] = useState<string>(
-    initialData?.scheduledAt ? new Date(initialData.scheduledAt).toISOString().slice(0, 16) : ""
-  );
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: {
-      title: initialData?.title || "",
-      content: initialData?.content || "",
-      status: initialData?.status || "draft",
-      thumbnail: initialData?.thumbnail || null,
-      scheduledAt: initialData?.scheduledAt || null,
+    defaultValues: initialData || {
+      title: "",
+      content: "",
+      status: "draft",
+      thumbnail: null,
+      scheduledAt: null,
     },
   });
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
-      console.log("Current form data:", data);
       console.log("scheduledDateTime:", scheduledDateTime);
 
+      if (status === "scheduled" && !scheduledDateTime) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "公開予定日時を選択してください",
+        });
+        return;
+      }
+
+      let formattedScheduledAt = null;
       if (status === "scheduled") {
-        if (!scheduledDateTime) {
+        try {
+          const scheduledDate = new Date(scheduledDateTime);
+          if (isNaN(scheduledDate.getTime())) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "無効な日時形式です",
+            });
+            return;
+          }
+          if (scheduledDate <= new Date()) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "予約日時は現在より後の日時を指定してください",
+            });
+            return;
+          }
+          formattedScheduledAt = scheduledDate.toISOString();
+        } catch (error) {
           toast({
             variant: "destructive",
             title: "エラー",
-            description: "公開予定日時を選択してください",
-          });
-          return;
-        }
-
-        const scheduledDate = new Date(scheduledDateTime);
-        if (isNaN(scheduledDate.getTime())) {
-          toast({
-            variant: "destructive",
-            title: "エラー",
-            description: "無効な日時形式です",
-          });
-          return;
-        }
-
-        if (scheduledDate <= new Date()) {
-          toast({
-            variant: "destructive",
-            title: "エラー",
-            description: "予約日時は現在より後の日時を指定してください",
+            description: "日時の形式が正しくありません",
           });
           return;
         }
@@ -129,17 +133,14 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) =
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
-        storeId: user?.id  // Ensure we're using the same ID reference
+        scheduledAt: formattedScheduledAt,
+        storeId: user?.userId
       };
 
       console.log("Submitting form data:", formData);
 
       if (postId) {
-        await updateMutation.mutateAsync({
-          ...formData,
-          id: postId
-        });
+        await updateMutation.mutateAsync(formData);
       } else {
         await createMutation.mutateAsync(formData);
       }
@@ -277,6 +278,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) =
     "link",
     "image"
   ];
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -505,4 +507,4 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) =
       </Card>
     </div>
   );
-};
+}
