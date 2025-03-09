@@ -450,6 +450,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "無効な画像IDです" });
       }
 
+      // リクエストボディのバリデーション
+      if (!req.body.url || !req.body.width || !req.body.height) {
+        return res.status(400).json({ message: "必要なパラメータが不足しています" });
+      }
+
       // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
         return res.status(403).json({ message: "店舗アカウントのみ画像を更新できます" });
@@ -468,11 +473,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
       }
 
-      // 画像URLの更新
+      // 画像URLと設定の更新
       const [updatedImage] = await db
         .update(storeImages)
         .set({
           url: req.body.url,
+          width: req.body.width,
+          height: req.body.height,
+          updatedAt: new Date()
         })
         .where(eq(storeImages.id, imageId))
         .returning();
@@ -480,7 +488,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Image settings updated:', {
         userId: req.user.id,
         imageId,
-        newUrl: req.body.url,
+        newSettings: {
+          url: req.body.url,
+          width: req.body.width,
+          height: req.body.height
+        },
         timestamp: new Date().toISOString()
       });
 
@@ -490,12 +502,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error instanceof Error ? error.message : 'Unknown error',
         userId: req.user?.id,
         imageId: req.params.id,
+        requestBody: req.body,
         timestamp: new Date().toISOString()
       });
 
       res.status(500).json({
         message: "画像設定の更新に失敗しました",
-        error: process.env.NODE_ENV === "development" ? error : undefined
+        error: process.env.NODE_ENV === "development" ? error : undefined 
       });
     }
   });

@@ -191,7 +191,11 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
       const response = await apiRequest(
         "PATCH",
         `/api/store/images/${image.id}`,
-        { url: url.toString() }
+        {
+          url: url.toString(),
+          width: width,
+          height: height
+        }
       );
 
       // キャッシュを更新
@@ -210,7 +214,6 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
       });
 
       onClose();
-      // 本文に挿入する場合はここで実行
       onInsert(url.toString());
     } catch (error) {
       console.error('Image save error:', error);
