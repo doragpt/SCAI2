@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -86,6 +86,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
   const { toast } = useToast();
+  const quillRef = useRef<ReactQuill>(null);
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -271,6 +272,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormControl>
                         <div className="border rounded-md">
                           <ReactQuill
+                            ref={quillRef}
                             theme="snow"
                             modules={modules}
                             formats={formats}
