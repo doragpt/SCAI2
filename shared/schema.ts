@@ -341,7 +341,7 @@ export const blogPostSchema = z.object({
   storeId: z.number({
     required_error: "店舗IDは必須です",
     invalid_type_error: "店舗IDは数値である必要があります"
-  })
+  }).int().positive("店舗IDは正の整数である必要があります")
 }).superRefine((data, ctx) => {
   if (data.status === "scheduled") {
     if (!data.scheduledAt) {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
@@ -40,15 +41,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-const ReactQuill = dynamic(async () => {
-  const { default: RQ } = await import("react-quill");
-  return function wrap({ forwardedRef, ...props }: any) {
-    return <RQ ref={forwardedRef} {...props} />;
-  };
-}, {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
-});
+// ReactQuillのダイナミックインポートを最適化
+const ReactQuill = dynamic(
+  () => import("react-quill").then((module) => {
+    return React.forwardRef((props: any, ref) => (
+      <module.default {...props} ref={ref} />
+    ));
+  }),
+  {
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+  }
+);
 
 interface BlogEditorProps {
   postId?: string | number | null;
@@ -75,7 +79,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: initialData?.storeId || user?.userId
+      storeId: initialData?.storeId || user?.userId || null
     }
   });
 
@@ -102,15 +106,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         throw new Error("店舗IDが取得できません");
       }
 
-      // 現在のフォーム値を取得して送信データを構築
-      const currentValues = form.getValues();
+      // フォームデータの構築
       const formData = {
-        title: currentValues.title,
-        content: currentValues.content,
+        title: data.title,
+        content: data.content,
         status: status,
-        thumbnail: currentValues.thumbnail,
-        storeId: user.userId, // Directly using user.userId
-        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
+        thumbnail: data.thumbnail,
+        storeId: Number(user.userId), // 数値型に確実に変換
+        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
       console.log("Submitting form data:", formData);
