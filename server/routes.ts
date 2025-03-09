@@ -451,9 +451,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // リクエストボディのバリデーション
-      if (!req.body.width || !req.body.height) {
-        return res.status(400).json({ message: "必要なパラメータが不足しています" });
+      const width = parseInt(req.body.width);
+      const height = parseInt(req.body.height);
+
+      if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+        return res.status(400).json({ 
+          message: "無効な画像サイズです",
+          details: { width, height }
+        });
       }
+
+      console.log('Processing image size update:', {
+        imageId,
+        width,
+        height,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
 
       // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
@@ -477,8 +491,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [updatedImage] = await db
         .update(storeImages)
         .set({
-          width: req.body.width,
-          height: req.body.height,
+          width: width,
+          height: height,
           updatedAt: new Date()
         })
         .where(eq(storeImages.id, imageId))
@@ -487,17 +501,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Image size updated:', {
         userId: req.user.id,
         imageId,
-        newSize: {
-          width: req.body.width,
-          height: req.body.height
-        },
+        newSize: { width, height },
         timestamp: new Date().toISOString()
       });
 
       res.json(updatedImage);
     } catch (error) {
       console.error('Image update error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack
+        } : 'Unknown error',
         userId: req.user?.id,
         imageId: req.params.id,
         requestBody: req.body,

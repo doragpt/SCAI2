@@ -142,13 +142,23 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     try {
       setIsSaving(true);
 
+      // width/heightを整数に確実に変換
+      const intWidth = Math.round(width);
+      const intHeight = Math.round(height);
+
+      console.log('Saving image size:', {
+        imageId: image.id,
+        width: intWidth,
+        height: intHeight
+      });
+
       // 画像サイズの設定を更新
       const response = await apiRequest(
         "PATCH",
         `/api/store/images/${image.id}`,
         {
-          width,
-          height
+          width: intWidth,
+          height: intHeight
         }
       );
 
@@ -157,7 +167,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
         [QUERY_KEYS.STORE_IMAGES],
         (oldData = []) => {
           return oldData.map(img =>
-            img.id === image.id ? { ...img, width, height } : img
+            img.id === image.id ? { ...img, width: intWidth, height: intHeight } : img
           );
         }
       );
