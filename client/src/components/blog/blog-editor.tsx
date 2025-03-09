@@ -50,9 +50,7 @@ import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  return function wrap({ forwardedRef, ...props }: any) {
-    return <RQ ref={forwardedRef} {...props} />;
-  };
+  return React.forwardRef((props: any, ref) => <RQ ref={ref} {...props} />);
 }, {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
@@ -99,26 +97,35 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      let scheduledAt = null;
+      let formattedScheduledAt = null;
       if (status === "scheduled") {
-        const scheduledDate = new Date(scheduledDateTime);
-        if (isNaN(scheduledDate.getTime())) {
+        try {
+          const scheduledDate = new Date(scheduledDateTime);
+          if (isNaN(scheduledDate.getTime())) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "無効な日時形式です",
+            });
+            return;
+          }
+          if (scheduledDate <= new Date()) {
+            toast({
+              variant: "destructive",
+              title: "エラー",
+              description: "予約日時は現在より後の日時を指定してください",
+            });
+            return;
+          }
+          formattedScheduledAt = scheduledDate.toISOString();
+        } catch (error) {
           toast({
             variant: "destructive",
             title: "エラー",
-            description: "無効な日時形式です",
+            description: "日時の形式が正しくありません",
           });
           return;
         }
-        if (scheduledDate <= new Date()) {
-          toast({
-            variant: "destructive",
-            title: "エラー",
-            description: "予約日時は現在より後の日時を指定してください",
-          });
-          return;
-        }
-        scheduledAt = scheduledDate.toISOString();
       }
 
       const formData = {
@@ -126,7 +133,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: scheduledAt,
+        scheduledAt: formattedScheduledAt,
         storeId: user?.userId
       };
 
