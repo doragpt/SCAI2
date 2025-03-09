@@ -76,10 +76,10 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-// ReactQuillの型定義
-type ReactQuillType = typeof ReactQuill & { 
-  Quill: any;
-};
+// ReactQuillの型定義を修正
+interface ReactQuillInstance extends ReactQuill {
+  editor: any;
+}
 
 // Quillエディターを動的にインポート
 const ReactQuillEditor = dynamic(
@@ -91,7 +91,7 @@ const ReactQuillEditor = dynamic(
     ssr: false,
     loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
   }
-) as ReactQuillType;
+);
 
 // Quillツールバーの設定
 const modules = {
@@ -183,7 +183,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const quillRef = useRef<ReactQuill>(null);
+  const quillRef = useRef<ReactQuillInstance>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({ show: false, x: 0, y: 0 });
@@ -245,7 +245,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     };
 
     // エディタのDOMが存在する場合にのみイベントリスナーを設定
-    const editorRoot = quillRef.current?.getEditor()?.root;
+    const editorRoot = quillRef.current?.editor?.root;
     if (editorRoot) {
       console.log("コンテキストメニューイベントリスナーを設定"); // リスナー設定の確認
       editorRoot.addEventListener('contextmenu', handleEditorContextMenu);
@@ -304,7 +304,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像サイズを更新
   const updateImageSize = (width: number, height: number) => {
     if (imageEditDialog.element) {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (quill) {
         const range = quill.getSelection();
         if (range) {
@@ -331,7 +331,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 画像を削除
   const deleteImage = () => {
     if (contextMenu.image?.element) {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (quill) {
         const [leaf, offset] = quill.getLeaf(quill.getSelection()?.index || 0);
         if (leaf) {
@@ -431,7 +431,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         }
 
         // Quillエディタのインスタンスを取得
-        const editor = quillRef.current?.getEditor();
+        const editor = quillRef.current?.editor;
         if (!editor) {
           console.error('Quillエディタ参照:', quillRef.current);
           throw new Error("エディタが見つかりません");
@@ -553,7 +553,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const insertImage = (imageUrl: string) => {
     try {
-      const quill = quillRef.current?.getEditor();
+      const quill = quillRef.current?.editor;
       if (!quill) {
         throw new Error("エディタが見つかりません");
       }
@@ -1046,8 +1046,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           <Separator className="my-1" />
 
           <div className="px-4 py-2 text-sm text-gray-500 flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            <div>
+            <Info className="h-4 w-4" />            <div>
               <div>サイズ: {contextMenu.image?.width || 0} x {contextMenu.image?.height || 0} px</div>
               <div className="text-xs text-gray-400">
                 {((contextMenu.image?.width || 0) * (contextMenu.image?.height || 0) / 1000000).toFixed(2)} MP
