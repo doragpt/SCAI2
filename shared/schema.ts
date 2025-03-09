@@ -337,9 +337,11 @@ export const blogPostSchema = z.object({
   content: z.string().min(1, "本文を入力してください"),
   status: z.enum(["draft", "published", "scheduled"]),
   thumbnail: z.string().nullable(),
-  scheduledAt: z.string().nullable().optional(),
-  storeId: z.number().optional(),
-  images: z.array(z.string()).default([]),
+  scheduledAt: z.string().nullable(),
+  storeId: z.number({
+    required_error: "店舗IDは必須です",
+    invalid_type_error: "店舗IDは数値である必要があります"
+  }),
 }).superRefine((data, ctx) => {
   if (data.status === "scheduled") {
     if (!data.scheduledAt) {
@@ -353,7 +355,6 @@ export const blogPostSchema = z.object({
 
     try {
       const scheduledDate = new Date(data.scheduledAt);
-
       if (isNaN(scheduledDate.getTime())) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -378,7 +379,6 @@ export const blogPostSchema = z.object({
         message: "日時の形式が正しくありません",
         path: ["scheduledAt"]
       });
-      return;
     }
   }
 });

@@ -1,0 +1,43 @@
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T17:39:33.386Z"}
+Auth state: 
+Object {hasUser: true, userId: 14, username: "store_test", role: "store", timestamp: "2025-03-09T17:39:38.403Z"}
+Submitting with status: scheduled
+scheduledDateTime: 2025-03-10T02:42
+Submitting form data: 
+Object {title: "あああああ", content: "<p>111111111</p>", status: "scheduled", thumbnail: "https://scoutai1.s3.ap-southeast-2.amazonaws.com/blog/14/1741541932878.jpg?X-Amz-Algorithm=AWS4-HMA…", storeId: undefined, …}
+API Request starting: 
+Object {method: "POST", url: "/api/blog/posts", hasData: true, isFormData: false, timestamp: "2025-03-09T17:39:44.877Z"}
+API Response received: 
+Object {status: 500, statusText: "Internal Server Error", timestamp: "2025-03-09T17:39:45.236Z"}
+API Request Failed: 
+Object {status: 500, statusText: "Internal Server Error", responseText: "{"message":"ブログ投稿の作成に失敗しました","error":{}}", timestamp: "2025-03-09T17:39:45.242Z"}
+responseText: "{"message":"ブログ投稿の作成に失敗しました","error":{}}"
+status: 500
+statusText: "Internal Server Error"
+timestamp: "2025-03-09T17:39:45.242Z"
+[[Prototype]]: Object
+
+API Request Error: 
+Object {method: "POST", url: "/api/blog/posts", error: "ブログ投稿の作成に失敗しました", timestamp: "2025-03-09T17:39:45.242Z"}
+error: "ブログ投稿の作成に失敗しました"
+method: "POST"
+timestamp: "2025-03-09T17:39:45.242Z"
+url: "/api/blog/posts"
+[[Prototype]]: Object
+
+Create mutation error: 
+Error {}
+message: "ブログ投稿の作成に失敗しました"
+stack: "Error: ブログ投稿の作成に失敗しました↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:51:13)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+Form submission error: 
+Error {}
+message: "ブログ投稿の作成に失敗しました"
+stack: "Error: ブログ投稿の作成に失敗しました↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:51:13)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object

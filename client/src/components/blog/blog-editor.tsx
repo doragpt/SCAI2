@@ -40,7 +40,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
   return function wrap({ forwardedRef, ...props }: any) {
@@ -69,20 +68,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: initialData || {
-      title: "",
-      content: "",
-      status: "draft",
-      thumbnail: null,
-      scheduledAt: null,
+    defaultValues: {
+      title: initialData?.title || "",
+      content: initialData?.content || "",
+      status: initialData?.status || "draft",
+      thumbnail: initialData?.thumbnail || null,
+      scheduledAt: initialData?.scheduledAt || null,
+      storeId: user?.userId || 0
     },
   });
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
-      console.log("scheduledDateTime:", scheduledDateTime);
-
       if (status === "scheduled" && !scheduledDateTime) {
         toast({
           variant: "destructive",
@@ -92,13 +90,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      // フォームデータの構築
+      if (!user?.userId) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "店舗IDが取得できません",
+        });
+        return;
+      }
+
       const formData = {
         title: data.title,
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        storeId: user?.userId,
+        storeId: user.userId,
         scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
@@ -114,7 +120,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: "フォームの送信に失敗しました",
+        description: error instanceof Error ? error.message : "フォームの送信に失敗しました",
       });
     }
   };
