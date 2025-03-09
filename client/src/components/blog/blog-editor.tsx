@@ -105,8 +105,8 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
         setOriginalSize({ width: originalWidth, height: originalHeight });
         // 初期値が設定されていない場合のみ、元のサイズを設定
         if (!image.width || !image.height) {
-          setWidth(originalWidth);
-          setHeight(originalHeight);
+          setWidth(Math.min(Math.max(50, originalWidth), 10000));
+          setHeight(Math.min(Math.max(50, originalHeight), 10000));
         }
       };
       img.onerror = () => {
@@ -121,20 +121,24 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   }, [image, toast]);
 
   const handleWidthChange = (value: number) => {
-    setWidth(value);
+    // 範囲を制限
+    const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
+    setWidth(clampedValue);
     if (aspectLocked && originalSize) {
       const aspectRatio = originalSize.width / originalSize.height;
-      const newHeight = Math.round(value / aspectRatio);
-      setHeight(newHeight);
+      const newHeight = Math.round(clampedValue / aspectRatio);
+      setHeight(Math.min(Math.max(50, newHeight), 10000));
     }
   };
 
   const handleHeightChange = (value: number) => {
-    setHeight(value);
+    // 範囲を制限
+    const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
+    setHeight(clampedValue);
     if (aspectLocked && originalSize) {
       const aspectRatio = originalSize.width / originalSize.height;
-      const newWidth = Math.round(value * aspectRatio);
-      setWidth(newWidth);
+      const newWidth = Math.round(clampedValue * aspectRatio);
+      setWidth(Math.min(Math.max(50, newWidth), 10000));
     }
   };
 
@@ -142,9 +146,9 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     try {
       setIsSaving(true);
 
-      // 整数値に変換
-      const intWidth = Math.round(width);
-      const intHeight = Math.round(height);
+      // 整数値に変換して範囲を制限
+      const intWidth = Math.min(Math.max(50, Math.round(width)), 10000);
+      const intHeight = Math.min(Math.max(50, Math.round(height)), 10000);
 
       console.log('Attempting to save image size:', {
         imageId: image.id,
@@ -223,7 +227,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[width]}
                 onValueChange={([value]) => handleWidthChange(value)}
                 min={50}
-                max={Math.max(originalSize.width * 2, 1000)}
+                max={10000}
                 step={1}
               />
               <Input
@@ -241,7 +245,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[height]}
                 onValueChange={([value]) => handleHeightChange(value)}
                 min={50}
-                max={Math.max(originalSize.height * 2, 1000)}
+                max={10000}
                 step={1}
               />
               <Input
@@ -293,7 +297,6 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   );
 }
 
-// ... Rest of the BlogEditor component remains unchanged
 const modules = {
   toolbar: {
     container: [

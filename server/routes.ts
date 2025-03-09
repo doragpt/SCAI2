@@ -446,28 +446,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/store/images/:id", authenticate, async (req: any, res) => {
     try {
       const imageId = parseInt(req.params.id);
+      
+      console.log('Image size update request:', {
+        imageId,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+
       if (isNaN(imageId)) {
         return res.status(400).json({ message: "無効な画像IDです" });
       }
 
-      // リクエストボディのバリデーション
-      const width = parseInt(req.body.width);
-      const height = parseInt(req.body.height);
+      // サイズパラメータのバリデーション
+      const width = Math.min(Math.max(50, Math.round(Number(req.body.width))), 10000);
+      const height = Math.min(Math.max(50, Math.round(Number(req.body.height))), 10000);
 
-      console.log('Request body validation:', {
+      console.log('Validated dimensions:', {
+        width,
+        height,
         originalWidth: req.body.width,
-        originalHeight: req.body.height,
-        parsedWidth: width,
-        parsedHeight: height,
-        timestamp: new Date().toISOString()
+        originalHeight: req.body.height
       });
 
-      if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+      if (isNaN(width) || isNaN(height)) {
         return res.status(400).json({ 
           message: "無効な画像サイズです",
           details: { width, height }
         });
-      };
+      }
 
       // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
@@ -483,16 +489,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(storeImages.storeId, req.user.id)
         ));
 
-      console.log('Image validation:', {
-        imageId,
-        exists: !!existingImage,
-        currentSize: existingImage ? {
-          width: existingImage.width,
-          height: existingImage.height
-        } : null,
-        timestamp: new Date().toISOString()
-      });
-
       if (!existingImage) {
         return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
       }
@@ -501,16 +497,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [updatedImage] = await db
         .update(storeImages)
         .set({
-          width: width,
-          height: height,
+          width,
+          height,
           updatedAt: new Date()
         })
         .where(eq(storeImages.id, imageId))
         .returning();
 
-      console.log('Image size updated successfully:', {
+      console.log('Image size update successful:', {
         imageId,
-        updatedSize: {
+        oldSize: {
+          width: existingImage.width,
+          height: existingImage.height
+        },
+        newSize: {
           width: updatedImage.width,
           height: updatedImage.height
         },
@@ -519,20 +519,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedImage);
     } catch (error) {
-      console.error('Image update error:', {
+      console.error('Image size update error:', {
         error: error instanceof Error ? {
           message: error.message,
           stack: error.stack
         } : 'Unknown error',
-        userId: req.user?.id,
         imageId: req.params.id,
-        requestBody: req.body,
+        body: req.body,
         timestamp: new Date().toISOString()
       });
 
       res.status(500).json({
         message: "画像サイズの更新に失敗しました",
-        error: process.env.NODE_ENV === "development" ? error : undefined 
+        error: process.env.NODE_ENV === "development" ? error : undefined
       });
     }
   });
@@ -957,10 +956,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // サイズパラメータのバリデーション
-      const width = parseInt(req.body.width);
-      const height = parseInt(req.body.height);
+      const width = Math.min(Math.max(50, Math.round(Number(req.body.width))), 10000);
+      const height = Math.min(Math.max(50, Math.round(Number(req.body.height))), 10000);
 
-      if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+      console.log('Validated dimensions:', {
+        width,
+        height,
+        originalWidth: req.body.width,
+        originalHeight: req.body.height
+      });
+
+      if (isNaN(width) || isNaN(height)) {
         return res.status(400).json({ 
           message: "無効な画像サイズです",
           details: { width, height }
