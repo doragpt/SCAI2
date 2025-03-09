@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { useLocation } from "wouter";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2,
   LogOut,
@@ -47,7 +48,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-
 // 求人ステータスのラベル
 const jobStatusLabels = {
   draft: "下書き",
@@ -67,6 +67,7 @@ export default function StoreDashboard() {
   const [selectedTab, setSelectedTab] = useState("jobs");
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [selectedPostIds, setSelectedPostIds] = useState<Set<number>>(new Set());
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -113,13 +114,17 @@ export default function StoreDashboard() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (postId: number) =>
-      apiRequest("DELETE", `/api/blog/posts/${postId}`),
+    mutationFn: async (postIds: number[]) => {
+      for (const id of postIds) {
+        await apiRequest("DELETE", `/api/blog/posts/${id}`);
+      }
+    },
     onSuccess: () => {
       toast({
         title: "記事を削除しました",
-        description: "ブログ記事の削除が完了しました。",
+        description: `${selectedPostIds.size}件の記事を削除しました。`,
       });
+      setSelectedPostIds(new Set());
       // ブログ一覧を更新
       window.location.reload();
     },
@@ -131,6 +136,26 @@ export default function StoreDashboard() {
       });
     },
   });
+
+  const handlePostSelect = (postId: number) => {
+    const newSelectedIds = new Set(selectedPostIds);
+    if (newSelectedIds.has(postId)) {
+      newSelectedIds.delete(postId);
+    } else {
+      newSelectedIds.add(postId);
+    }
+    setSelectedPostIds(newSelectedIds);
+  };
+
+  const handleSelectAll = () => {
+    if (blogListings?.posts) {
+      if (selectedPostIds.size === blogListings.posts.length) {
+        setSelectedPostIds(new Set());
+      } else {
+        setSelectedPostIds(new Set(blogListings.posts.map(post => post.id)));
+      }
+    }
+  };
 
   if (jobsLoading || blogsLoading) {
     return (
@@ -398,10 +423,39 @@ export default function StoreDashboard() {
                         ブログの投稿・管理ができます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setLocation('/store/blog/new')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      新規作成
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {selectedPostIds.size > 0 && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              選択した記事を削除 ({selectedPostIds.size})
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>記事の一括削除</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                選択した{selectedPostIds.size}件の記事を削除してもよろしいですか？
+                                この操作は取り消せません。
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteMutation.mutate(Array.from(selectedPostIds))}
+                              >
+                                削除する
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                      <Button onClick={() => setLocation('/store/blog/new')}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        新規作成
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {!blogListings?.posts?.length ? (
@@ -421,35 +475,55 @@ export default function StoreDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-4">
+                        <div className="flex items-center justify-between pb-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSelectAll}
+                          >
+                            {selectedPostIds.size === blogListings.posts.length
+                              ? "全選択解除"
+                              : "全選択"}
+                          </Button>
+                          <span className="text-sm text-muted-foreground">
+                            全{blogListings.posts.length}件中{selectedPostIds.size}件選択中
+                          </span>
+                        </div>
                         {blogListings.posts.map((post) => (
                           <Card key={post.id} className="hover:bg-accent/5 transition-colors">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold">{post.title}</h3>
-                                    <Badge variant={
-                                      post.status === "published" ? "default" :
-                                        post.status === "scheduled" ? "secondary" : "outline"
-                                    }>
-                                      {blogStatusLabels[post.status]}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>
-                                      {post.publishedAt
-                                        ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
-                                        : "未公開"}
-                                    </span>
-                                    {post.status === "scheduled" && (
-                                      <>
-                                        <Clock className="h-4 w-4" />
-                                        <span>
-                                          {format(new Date(post.scheduledAt!), "yyyy年MM月dd日 HH:mm", { locale: ja })}
-                                          に公開予定
-                                        </span>
-                                      </>
-                                    )}
+                                <div className="flex items-start gap-4">
+                                  <Checkbox
+                                    checked={selectedPostIds.has(post.id)}
+                                    onCheckedChange={() => handlePostSelect(post.id)}
+                                  />
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <h3 className="font-semibold">{post.title}</h3>
+                                      <Badge variant={
+                                        post.status === "published" ? "default" :
+                                          post.status === "scheduled" ? "secondary" : "outline"
+                                      }>
+                                        {blogStatusLabels[post.status]}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <span>
+                                        {post.publishedAt
+                                          ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
+                                          : "未公開"}
+                                      </span>
+                                      {post.status === "scheduled" && (
+                                        <>
+                                          <Clock className="h-4 w-4" />
+                                          <span>
+                                            {format(new Date(post.scheduledAt!), "yyyy年MM月dd日 HH:mm", { locale: ja })}
+                                            に公開予定
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -465,31 +539,6 @@ export default function StoreDashboard() {
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
                                   </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="sm">
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        削除
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>記事の削除</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          この記事を削除してもよろしいですか？
-                                          この操作は取り消せません。
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => deleteMutation.mutate(post.id)}
-                                        >
-                                          削除する
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
                                 </div>
                               </div>
                             </CardContent>
