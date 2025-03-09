@@ -6,11 +6,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { useLocation } from "wouter";
-import { 
-  Loader2, 
-  LogOut, 
-  MessageCircle, 
-  Users, 
+import {
+  Loader2,
+  LogOut,
+  MessageCircle,
+  Users,
   BarChart,
   Plus,
   FileEdit,
@@ -23,7 +23,9 @@ import {
   LineChart,
   Settings,
   Pencil,
-  Clock
+  Clock,
+  MoreVertical,
+  Trash
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -34,6 +36,26 @@ import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 
 // 求人ステータスのラベル
 const jobStatusLabels = {
@@ -56,6 +78,7 @@ export default function StoreDashboard() {
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   // 求人情報の取得
   const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
@@ -95,6 +118,46 @@ export default function StoreDashboard() {
         variant: "destructive",
         title: "エラー",
         description: error instanceof Error ? error.message : "ブログ記事の取得に失敗しました",
+      });
+    },
+  });
+
+  // 記事の削除Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (postId: number) =>
+      apiRequest("DELETE", `/api/blog/posts/${postId}`),
+    onSuccess: () => {
+      toast({
+        title: "記事を削除しました",
+      });
+      // ブログ一覧を更新
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "記事の削除に失敗しました",
+      });
+    },
+  });
+
+  // 記事のステータス更新Mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ postId, status }: { postId: number; status: string }) =>
+      apiRequest("PATCH", `/api/blog/posts/${postId}/status`, { status }),
+    onSuccess: () => {
+      toast({
+        title: "記事のステータスを更新しました",
+      });
+      // ブログ一覧を更新
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "ステータスの更新に失敗しました",
       });
     },
   });
@@ -305,8 +368,8 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => {
                                       setSelectedJobId(job.id);
@@ -377,9 +440,9 @@ export default function StoreDashboard() {
                         <p className="text-muted-foreground">
                           ブログ記事がありません
                         </p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-4" 
+                        <Button
+                          variant="outline"
+                          className="mt-4"
                           onClick={() => setLocation('/store/blog/new')}
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -404,7 +467,7 @@ export default function StoreDashboard() {
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>
-                                      {post.publishedAt 
+                                      {post.publishedAt
                                         ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
                                         : "未公開"}
                                     </span>
@@ -424,14 +487,67 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                                   >
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
                                   </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {post.status !== "published" && (
+                                        <DropdownMenuItem
+                                          onClick={() => updateStatusMutation.mutate({ postId: post.id, status: "published" })}
+                                        >
+                                          公開する
+                                        </DropdownMenuItem>
+                                      )}
+                                      {post.status === "published" && (
+                                        <DropdownMenuItem
+                                          onClick={() => updateStatusMutation.mutate({ postId: post.id, status: "draft" })}
+                                        >
+                                          非公開にする
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuSeparator />
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <DropdownMenuItem
+                                            onSelect={(e) => e.preventDefault()}
+                                            className="text-destructive"
+                                          >
+                                            <Trash className="h-4 w-4 mr-2" />
+                                            削除
+                                          </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>記事の削除</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              この記事を削除してもよろしいですか？
+                                              この操作は取り消せません。
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => deleteMutation.mutate(post.id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              削除する
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
                               </div>
                             </CardContent>

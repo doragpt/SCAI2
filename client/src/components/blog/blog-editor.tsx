@@ -28,13 +28,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,14 +42,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Calendar,
-  Clock,
-  Image as ImageIcon,
-  Loader2,
-  Save,
-  Eye,
-  ArrowLeft,
-} from "lucide-react";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 // Quillの設定
 Quill.register('modules/imageResize', ImageResize);
@@ -93,6 +84,7 @@ interface BlogEditorProps {
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
   const { toast } = useToast();
 
   const form = useForm({
@@ -101,7 +93,30 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
+      thumbnail: "",
       images: [],
+    },
+  });
+
+  // サムネイル画像アップロード用のMutation
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiRequest("POST", "/api/upload", formData);
+    },
+    onSuccess: (data) => {
+      form.setValue("thumbnail", data.url);
+      toast({
+        title: "サムネイル画像をアップロードしました",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+      });
     },
   });
 
@@ -114,7 +129,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: "ブログ記事の作成が完了しました。",
       });
       // ブログ一覧を更新
-      window.location.href = "/store/dashboard";
+      window.history.back();
     },
     onError: (error) => {
       toast({
@@ -142,6 +157,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
     },
   });
+
+  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadMutation.mutate(file);
+    }
+  };
 
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
@@ -180,6 +202,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         <CardContent>
           {isPreview ? (
             <div className="prose prose-sm max-w-none">
+              {form.watch("thumbnail") && (
+                <img 
+                  src={form.watch("thumbnail")} 
+                  alt="サムネイル"
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+              )}
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
@@ -194,6 +223,39 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormLabel>タイトル</FormLabel>
                       <FormControl>
                         <Input placeholder="記事のタイトルを入力" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="thumbnail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormControl>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleThumbnailUpload}
+                              className="flex-1"
+                            />
+                            {uploadMutation.isPending && (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            )}
+                          </div>
+                          {field.value && (
+                            <img
+                              src={field.value}
+                              alt="サムネイル"
+                              className="w-full h-48 object-cover rounded-lg"
+                            />
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,33 +285,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>公開設定</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="公開設定を選択" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">下書き</SelectItem>
-                          <SelectItem value="published">公開</SelectItem>
-                          <SelectItem value="scheduled">予約投稿</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("status") === "scheduled" && (
+                {isScheduling && (
                   <FormField
                     control={form.control}
                     name="scheduledAt"
@@ -275,64 +311,41 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">下書き保存</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>下書き保存の確認</AlertDialogTitle>
-                <AlertDialogDescription>
-                  現在の内容を下書きとして保存します。
-                  後でいつでも編集できます。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    form.setValue("status", "draft");
-                    form.handleSubmit(onSubmit)();
-                  }}
-                >
-                  保存する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="outline"
+            onClick={() => {
+              form.setValue("status", "draft");
+              form.handleSubmit(onSubmit)();
+            }}
+          >
+            下書き保存
+          </Button>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button>
-                {createMutation.isPending || updateMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                公開する
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>公開の確認</AlertDialogTitle>
-                <AlertDialogDescription>
-                  記事を公開します。公開後は一般に公開され、
-                  誰でも閲覧できるようになります。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    form.setValue("status", "published");
-                    form.handleSubmit(onSubmit)();
-                  }}
-                >
-                  公開する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="outline"
+            onClick={() => setIsScheduling(!isScheduling)}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            予約投稿
+          </Button>
+
+          <Button
+            onClick={() => {
+              if (isScheduling && form.getValues("scheduledAt")) {
+                form.setValue("status", "scheduled");
+              } else {
+                form.setValue("status", "published");
+              }
+              form.handleSubmit(onSubmit)();
+            }}
+          >
+            {createMutation.isPending || updateMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            {isScheduling ? "予約を確定" : "公開する"}
+          </Button>
         </CardFooter>
       </Card>
     </div>
