@@ -7,7 +7,6 @@ import { ja } from "date-fns/locale";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -56,29 +55,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-// CKEditor設定
-const editorConfig = {
-  toolbar: [
-    'heading',
-    '|',
-    'bold',
-    'italic',
-    'link',
-    'bulletedList',
-    'numberedList',
-    '|',
-    'outdent',
-    'indent',
-    '|',
-    'imageUpload',
-    'blockQuote',
-    'insertTable',
-    'mediaEmbed',
-    'undo',
-    'redo'
-  ]
-};
-
 interface BlogEditorProps {
   postId?: number;
   initialData?: BlogPost;
@@ -101,18 +77,25 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  const handleEditorError = (error: Error) => {
+    console.error("CKEditor error:", error);
+    toast({
+      variant: "destructive",
+      title: "エディターエラー",
+      description: "エディターの読み込み中にエラーが発生しました。",
+    });
+  };
+
   const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      // Get presigned URL for upload
       const presignedUrlResponse = await apiRequest("POST", "/api/upload/presigned", {
         fileName: file.name,
         fileType: file.type,
       });
 
-      // Upload to S3
       await fetch(presignedUrlResponse.url, {
         method: "PUT",
         body: file,
@@ -121,7 +104,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         },
       });
 
-      // Update form
       form.setValue("thumbnailUrl", presignedUrlResponse.publicUrl);
       setThumbnailFile(file);
 
@@ -276,10 +258,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         <div className="border rounded-md overflow-hidden min-h-[400px]">
                           <CKEditor
                             editor={ClassicEditor}
-                            config={editorConfig}
                             data={field.value}
-                            onChange={(_, editor) => {
-                              field.onChange(editor.getData());
+                            onError={handleEditorError}
+                            onChange={(event, editor) => {
+                              const data = editor.getData();
+                              field.onChange(data);
                             }}
                           />
                         </div>
