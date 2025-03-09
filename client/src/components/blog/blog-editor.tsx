@@ -48,9 +48,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
+// Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
-  return React.forwardRef((props: any, ref) => <RQ ref={ref} {...props} />);
+  return function wrap({ forwardedRef, ...props }: any) {
+    return <RQ ref={forwardedRef} {...props} />;
+  };
 }, {
   ssr: false,
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
@@ -97,43 +100,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      let formattedScheduledAt = null;
-      if (status === "scheduled") {
-        try {
-          const scheduledDate = new Date(scheduledDateTime);
-          if (isNaN(scheduledDate.getTime())) {
-            toast({
-              variant: "destructive",
-              title: "エラー",
-              description: "無効な日時形式です",
-            });
-            return;
-          }
-          if (scheduledDate <= new Date()) {
-            toast({
-              variant: "destructive",
-              title: "エラー",
-              description: "予約日時は現在より後の日時を指定してください",
-            });
-            return;
-          }
-          formattedScheduledAt = scheduledDate.toISOString();
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "エラー",
-            description: "日時の形式が正しくありません",
-          });
-          return;
-        }
-      }
-
       const formData = {
         title: data.title,
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: formattedScheduledAt,
+        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
         storeId: user?.userId
       };
 

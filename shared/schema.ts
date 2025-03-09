@@ -353,6 +353,7 @@ export const blogPostSchema = z.object({
 
     try {
       const scheduledDate = new Date(data.scheduledAt);
+
       if (isNaN(scheduledDate.getTime())) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -377,7 +378,7 @@ export const blogPostSchema = z.object({
         message: "日時の形式が正しくありません",
         path: ["scheduledAt"]
       });
-      return; // Corrected return statement
+      return;
     }
   }
 });
@@ -400,9 +401,16 @@ export const blogPosts = pgTable("blog_posts", {
     storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
     statusIdx: index("blog_posts_status_idx").on(table.status),
     publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
-    scheduledAtIdx: index("blog_posts_scheduled_at_idx").on(table.scheduledAt),
   };
 });
+
+// リレーションの定義
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  store: one(users, {
+    fields: [blogPosts.storeId],
+    references: [users.id],
+  }),
+}));
 
 // 求人情報関連の新しいenums
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
