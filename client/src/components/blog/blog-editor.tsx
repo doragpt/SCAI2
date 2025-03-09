@@ -10,6 +10,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -33,15 +46,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -52,31 +56,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  Clock,
-  Image as ImageIcon,
-  Loader2,
-  Save,
-  Eye,
-  ArrowLeft,
-  Upload,
-  Image,
-  Plus,
-  X,
-  Edit,
-} from "lucide-react";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Image as ImageIcon, ArrowLeft, Upload, Plus, X, Edit, Save, Eye } from "lucide-react";
+
 
 interface StoreImage {
   id: number;
   url: string;
   key: string;
-  width?: number;
-  height?: number;
   createdAt: string;
 }
 
@@ -84,30 +70,25 @@ interface ImageResizeDialogProps {
   image: StoreImage;
   isOpen: boolean;
   onClose: () => void;
-  onInsert: (url: string) => void;
+  onInsert: (url: string, width: number, height: number) => void;
 }
 
 function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
-  const [width, setWidth] = useState<number>(image.width || 0);
-  const [height, setHeight] = useState<number>(image.height || 0);
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
   const [aspectLocked, setAspectLocked] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (image) {
-      const img = document.createElement('img');
+      const img = new Image();
       img.onload = () => {
         const originalWidth = img.naturalWidth;
         const originalHeight = img.naturalHeight;
         setOriginalSize({ width: originalWidth, height: originalHeight });
-        // 初期値が設定されていない場合のみ、元のサイズを設定
-        if (!image.width || !image.height) {
-          setWidth(Math.min(Math.max(50, originalWidth), 10000));
-          setHeight(Math.min(Math.max(50, originalHeight), 10000));
-        }
+        setWidth(Math.min(Math.max(50, originalWidth), 10000));
+        setHeight(Math.min(Math.max(50, originalHeight), 10000));
       };
       img.onerror = () => {
         toast({
@@ -121,7 +102,6 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   }, [image, toast]);
 
   const handleWidthChange = (value: number) => {
-    // 範囲を制限
     const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
     setWidth(clampedValue);
     if (aspectLocked && originalSize) {
@@ -132,7 +112,6 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   };
 
   const handleHeightChange = (value: number) => {
-    // 範囲を制限
     const clampedValue = Math.min(Math.max(50, Math.round(value)), 10000);
     setHeight(clampedValue);
     if (aspectLocked && originalSize) {
@@ -142,34 +121,9 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     }
   };
 
-  const handleSave = async () => {
+  const handleInsert = () => {
     try {
-      setIsSaving(true);
-
-      // 整数値に変換して範囲を制限
-      const intWidth = Math.min(Math.max(50, Math.round(width)), 10000);
-      const intHeight = Math.min(Math.max(50, Math.round(height)), 10000);
-
-      // Quillエディタのインスタンスを取得
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      // 画像を挿入（styleタグ付き）
-      const imageHtml = `<img src="${image.url}" style="width: ${intWidth}px; height: ${intHeight}px;" alt="ブログ画像"/>`;
-
-      // 現在のカーソル位置を取得
-      const range = quill.getSelection(true);
-
-      // HTMLとして画像を挿入
-      quill.clipboard.dangerouslyPasteHTML(range.index, imageHtml);
-
-      toast({
-        title: "成功",
-        description: "画像を挿入しました",
-      });
-
+      onInsert(image.url, width, height);
       onClose();
     } catch (error) {
       console.error('Image insertion error:', error);
@@ -178,8 +132,6 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
         title: "エラー",
         description: "画像の挿入に失敗しました",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -260,8 +212,15 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
             <img
               src={image.url}
               alt="プレビュー"
-              style={{ width: `${width}px`, height: `${height}px` }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+              style={{
+                width: `${width}px`,
+                height: `${height}px`,
+                maxWidth: "none",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)"
+              }}
             />
           </div>
         </div>
@@ -270,15 +229,8 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
           <Button variant="outline" onClick={onClose}>
             キャンセル
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                保存中...
-              </>
-            ) : (
-              'この設定で保存'
-            )}
+          <Button onClick={handleInsert}>
+            この設定で挿入
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -286,35 +238,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   );
 }
 
-const modules = {
-  toolbar: {
-    container: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ color: [] }, { background: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ align: ["", "center", "right", "justify"] }],
-      ["link"],
-      ["clean"]
-    ],
-  }
-};
-
-const formats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "color",
-  "background",
-  "list",
-  "bullet",
-  "align",
-  "link",
-  "image"
-];
-
+// Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
   return function wrap(props: any) {
@@ -325,7 +249,6 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-
 interface BlogEditorProps {
   postId?: string | number | null;
   initialData?: BlogPost | null;
@@ -334,17 +257,86 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<StoreImage | null>(null);
+  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
+  const quillRef = useRef<any>(null);
+  const { toast } = useToast();
+  const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
+  const [isUploading, setIsUploading] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const quillRef = useRef<any>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedImage, setSelectedImage] = useState<StoreImage | null>(null);
-  const [isResizeDialogOpen, setIsResizeDialogOpen] = useState(false);
+
+  // Quillエディタの設定
+  const modules = {
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: ["", "center", "right", "justify"] }],
+        ["link", "image"],
+        ["clean"]
+      ],
+    }
+  };
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "color",
+    "background",
+    "list",
+    "bullet",
+    "align",
+    "link",
+    "image"
+  ];
+
+  const handleImageClick = (image: StoreImage) => {
+    setSelectedImage(image);
+    setIsResizeDialogOpen(true);
+  };
+
+  const handleImageInsert = (url: string, width: number, height: number) => {
+    try {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) {
+        throw new Error("エディタが見つかりません");
+      }
+
+      // スタイル付きの画像HTMLを作成
+      const imageHtml = `<img src="${url}" style="width: ${width}px; height: ${height}px;" alt="ブログ画像"/>`;
+
+      // 現在のカーソル位置を取得
+      const range = quill.getSelection(true);
+
+      // HTMLとして画像を挿入
+      quill.clipboard.dangerouslyPasteHTML(range.index, imageHtml);
+
+      // 画像の後ろにカーソルを移動
+      quill.setSelection(range.index + 1);
+
+      toast({
+        title: "成功",
+        description: "画像を挿入しました",
+      });
+
+      setIsImageLibraryOpen(false);
+    } catch (error) {
+      console.error('Image insertion error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像の挿入に失敗しました",
+      });
+    }
+  };
 
   // 店舗の全画像を取得
   const { data: storeImages, isLoading: isLoadingImages } = useQuery<StoreImage[]>({
@@ -531,34 +523,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  const insertImage = (imageUrl: string) => {
-    try {
-      const quill = quillRef.current?.getEditor();
-      if (!quill) {
-        throw new Error("エディタが見つかりません");
-      }
-
-      const range = quill.getSelection(true);
-      quill.insertEmbed(range.index, "image", imageUrl);
-
-      // カーソルを画像の後ろに移動し、スクロールして表示
-      quill.setSelection(range.index + 1);
-      const [leaf] = quill.getLeaf(range.index);
-      const domNode = leaf.domNode;
-      if (domNode) {
-        domNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      setIsImageLibraryOpen(false);
-    } catch (error) {
-      console.error('Image insertion error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像の挿入に失敗しました",
-      });
-    }
-  };
 
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
@@ -604,11 +568,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
     },
   });
-
-  const handleImageClick = (image: StoreImage) => {
-    setSelectedImage(image);
-    setIsResizeDialogOpen(true);
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -735,7 +694,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             size="sm"
                             className="mr-2"
                           >
-                            <Image className="h-4 w-4 mr-2" />
+                            <ImageIcon className="h-4 w-4 mr-2" />
                             画像ライブラリ
                           </Button>
                         </DialogTrigger>
@@ -770,7 +729,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     <Button
                                       variant="secondary"
                                       size="sm"
-                                      onClick={() => insertImage(image.url)}
+                                      onClick={() => handleImageInsert(image.url, 0, 0)} // width and height are initially 0
                                     >
                                       使用
                                     </Button>
@@ -962,7 +921,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             setIsResizeDialogOpen(false);
             setSelectedImage(null);
           }}
-          onInsert={insertImage}
+          onInsert={handleImageInsert}
         />
       )}
     </div>

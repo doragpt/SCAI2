@@ -741,14 +741,11 @@ export type PreviousStore = {
   storeName: string;
 };
 
-// storeImagesテーブルを追加
 export const storeImages = pgTable("store_images", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
   url: text("url").notNull(),
   key: text("key").notNull(),
-  width: integer("width"),
-  height: integer("height"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
@@ -757,17 +754,8 @@ export const storeImages = pgTable("store_images", {
   };
 });
 
-// 型定義を追加
 export type StoreImage = typeof storeImages.$inferSelect;
 export type InsertStoreImage = typeof storeImages.$inferInsert;
-
-// リレーションを追加
-export const storeImagesRelations = relations(storeImages, ({ one }) => ({
-  store: one(users, {
-    fields: [storeImages.storeId],
-    references: [users.id],
-  }),
-}));
 
 // クエリキーを追加
 export const QUERY_KEYS = {
