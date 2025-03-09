@@ -454,20 +454,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const width = parseInt(req.body.width);
       const height = parseInt(req.body.height);
 
+      console.log('Request body validation:', {
+        originalWidth: req.body.width,
+        originalHeight: req.body.height,
+        parsedWidth: width,
+        parsedHeight: height,
+        timestamp: new Date().toISOString()
+      });
+
       if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
         return res.status(400).json({ 
           message: "無効な画像サイズです",
           details: { width, height }
         });
-      }
-
-      console.log('Processing image size update:', {
-        imageId,
-        width,
-        height,
-        userId: req.user?.id,
-        timestamp: new Date().toISOString()
-      });
+      };
 
       // 認証チェック
       if (!req.user?.id || req.user.role !== "store") {
@@ -482,6 +482,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(storeImages.id, imageId),
           eq(storeImages.storeId, req.user.id)
         ));
+
+      console.log('Image validation:', {
+        imageId,
+        exists: !!existingImage,
+        currentSize: existingImage ? {
+          width: existingImage.width,
+          height: existingImage.height
+        } : null,
+        timestamp: new Date().toISOString()
+      });
 
       if (!existingImage) {
         return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
@@ -498,10 +508,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(storeImages.id, imageId))
         .returning();
 
-      console.log('Image size updated:', {
-        userId: req.user.id,
+      console.log('Image size updated successfully:', {
         imageId,
-        newSize: { width, height },
+        updatedSize: {
+          width: updatedImage.width,
+          height: updatedImage.height
+        },
         timestamp: new Date().toISOString()
       });
 

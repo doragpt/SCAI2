@@ -747,7 +747,10 @@ export const storeImages = pgTable("store_images", {
   storeId: integer("store_id").notNull().references(() => users.id),
   url: text("url").notNull(),
   key: text("key").notNull(),
+  width: integer("width"),
+  height: integer("height"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
   return {
     storeIdIdx: index("store_images_store_id_idx").on(table.storeId),
