@@ -105,6 +105,44 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // ファイル形式のチェック
+    const allowedTypes = ['image/gif', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "アップロードできるファイル形式は gif, jpg, png のみです",
+      });
+      return;
+    }
+
+    // ファイルサイズのチェック (1MB = 1024 * 1024 bytes)
+    if (file.size > 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "ファイルサイズは1MB以下にしてください",
+      });
+      return;
+    }
+
+    // 画像サイズのチェック
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise((resolve) => {
+      img.onload = resolve;
+    });
+
+    if (img.width !== 240 || img.height !== 320) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像サイズは横240px × 縦320pxにしてください",
+      });
+      URL.revokeObjectURL(img.src);
+      return;
+    }
+
     try {
       // AWS S3の署名付きURLを取得
       const { url, key } = await apiRequest("GET", QUERY_KEYS.SIGNED_URL);
@@ -119,8 +157,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
 
       // プレビューを更新
-      const objectUrl = URL.createObjectURL(file);
-      setThumbnailPreview(objectUrl);
+      setThumbnailPreview(img.src);
 
       // フォームの値を更新
       form.setValue("thumbnail", key);
@@ -136,6 +173,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "エラー",
         description: "サムネイル画像のアップロードに失敗しました",
       });
+    } finally {
+      URL.revokeObjectURL(img.src);
     }
   };
 
@@ -275,7 +314,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     クリックしてサムネイル画像をアップロード
                                   </div>
                                   <div className="text-xs text-muted-foreground">
-                                    推奨サイズ: 1200 x 630px
+                                    推奨サイズ: 横240px × 縦320px<br />
+                                    ファイル形式: gif, jpg, png<br />
+                                    容量: 1MB以下
                                   </div>
                                 </div>
                               </label>
