@@ -128,7 +128,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
     try {
       // AWS S3の署名付きURLを取得
-      const response = await apiRequest<{ url: string; key: string }>("GET", QUERY_KEYS.SIGNED_URL);
+      const response = await apiRequest<{ url: string; key: string }>(
+        "GET", 
+        `${QUERY_KEYS.SIGNED_URL}?filename=${encodeURIComponent(file.name)}&contentType=${encodeURIComponent(file.type)}`
+      );
 
       // S3にアップロード
       await fetch(response.url, {
