@@ -374,7 +374,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </Form>
           )}
         </CardContent>
-        <CardFooter className="flex justify-end gap-2 pt-6 border-t">
+        <CardFooter className="flex justify-end gap-2 pt-8 mt-6 border-t">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline">下書き保存</Button>
