@@ -89,6 +89,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
+      console.log("scheduledDateTime:", scheduledDateTime);
+
       if (status === "scheduled" && !scheduledDateTime) {
         toast({
           variant: "destructive",
@@ -99,9 +101,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       const formData = {
-        ...data,
-        status,
-        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
+        title: data.title,
+        content: data.content,
+        status: status,
+        thumbnail: data.thumbnail,
+        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
+        storeId: user?.userId
       };
 
       console.log("Submitting form data:", formData);
@@ -284,7 +289,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(() => {})}>
+              <form onSubmit={(e) => { e.preventDefault(); }}>
                 <div className="space-y-6">
                   <FormField
                     control={form.control}
@@ -360,30 +365,28 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <FormLabel>本文</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="content"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <ReactQuill
-                              forwardedRef={quillRef}
-                              theme="snow"
-                              modules={modules}
-                              formats={formats}
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="記事の本文を入力"
-                              className="h-[400px]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>本文</FormLabel>
+                        <FormControl>
+                          <ReactQuill
+                            forwardedRef={quillRef}
+                            theme="snow"
+                            modules={modules}
+                            formats={formats}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="記事の本文を入力"
+                            className="h-[400px]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </form>
             </Form>

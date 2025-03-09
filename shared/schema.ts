@@ -353,6 +353,7 @@ export const blogPostSchema = z.object({
 
     try {
       const scheduledDate = new Date(data.scheduledAt);
+
       if (isNaN(scheduledDate.getTime())) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -362,7 +363,8 @@ export const blogPostSchema = z.object({
         return;
       }
 
-      if (scheduledDate <= new Date()) {
+      const now = new Date();
+      if (scheduledDate <= now) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "予約日時は現在より後の日時を指定してください",
