@@ -26,13 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -43,17 +36,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   Calendar,
   Clock,
@@ -82,7 +64,7 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-// Quillツールバーの設定
+// ツールバーの設定
 const modules = {
   toolbar: {
     container: [
@@ -132,33 +114,46 @@ interface ImageResizeDialogProps {
 }
 
 function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
-  const [width, setWidth] = useState(0);
-  const [height, setHeight] = useState(0);
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
   const [aspectLocked, setAspectLocked] = useState(true);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // 画像のピクセルサイズを取得
-    const img = new Image();
-    img.onload = () => {
-      setWidth(img.naturalWidth);
-      setHeight(img.naturalHeight);
-    };
-    img.src = image.url;
-  }, [image]);
+    if (image) {
+      const img = document.createElement('img');
+      img.onload = () => {
+        setWidth(img.naturalWidth);
+        setHeight(img.naturalHeight);
+        setOriginalSize({
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        });
+      };
+      img.onerror = () => {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像サイズの取得に失敗しました",
+        });
+      };
+      img.src = image.url;
+    }
+  }, [image, toast]);
 
   const handleWidthChange = (value: number) => {
     setWidth(value);
-    if (aspectLocked && imgRef.current) {
-      const aspectRatio = imgRef.current.naturalWidth / imgRef.current.naturalHeight;
+    if (aspectLocked && originalSize) {
+      const aspectRatio = originalSize.width / originalSize.height;
       setHeight(Math.round(value / aspectRatio));
     }
   };
 
   const handleHeightChange = (value: number) => {
     setHeight(value);
-    if (aspectLocked && imgRef.current) {
-      const aspectRatio = imgRef.current.naturalWidth / imgRef.current.naturalHeight;
+    if (aspectLocked && originalSize) {
+      const aspectRatio = originalSize.width / originalSize.height;
       setWidth(Math.round(value * aspectRatio));
     }
   };
@@ -172,13 +167,28 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     onClose();
   };
 
+  if (!originalSize) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>画像サイズの取得中...</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>画像サイズの調整</DialogTitle>
           <DialogDescription>
-            元のサイズ: {width}x{height}px
+            元のサイズ: {originalSize.width}x{originalSize.height}px
           </DialogDescription>
         </DialogHeader>
 
@@ -190,7 +200,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[width]}
                 onValueChange={([value]) => handleWidthChange(value)}
                 min={50}
-                max={Math.max(width * 2, 1000)}
+                max={Math.max(originalSize.width * 2, 1000)}
                 step={1}
               />
               <Input
@@ -208,7 +218,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[height]}
                 onValueChange={([value]) => handleHeightChange(value)}
                 min={50}
-                max={Math.max(height * 2, 1000)}
+                max={Math.max(originalSize.height * 2, 1000)}
                 step={1}
               />
               <Input
