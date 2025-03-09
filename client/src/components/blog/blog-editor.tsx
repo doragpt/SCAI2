@@ -73,6 +73,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
   // Quillエディタの設定
   const modules = {
@@ -177,7 +178,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: status === "scheduled" ? data.scheduledAt : null,
+        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
 
       if (postId) {
@@ -371,25 +372,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="scheduledAt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>公開予定日時</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          value={field.value || ""}
-                          min={new Date().toISOString().slice(0, 16)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </Form>
           )}
@@ -437,32 +419,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-4">
-                {/* Removed unnecessary Form here */}
-                <FormField
-                  control={form.control}
-                  name="scheduledAt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>公開予定日時</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          min={new Date().toISOString().slice(0, 16)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">公開予定日時</label>
+                  <Input
+                    type="datetime-local"
+                    value={scheduledDateTime}
+                    onChange={(e) => setScheduledDateTime(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
                     const data = form.getValues();
-                    if (!data.scheduledAt) {
+                    if (!scheduledDateTime) {
                       toast({
                         variant: "destructive",
                         title: "エラー",
