@@ -631,16 +631,36 @@ export const blogPosts = pgTable("blog_posts", {
   };
 });
 
-// ブログ投稿のスキーマ定義
-export const blogPostSchema = createInsertSchema(blogPosts)
-  .extend({
-    images: z.array(z.string()).optional(),
-  })
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  });
+// blogPostSchemaの更新部分
+export const blogPostSchema = z.object({
+  title: z.string().min(1, "タイトルを入力してください"),
+  content: z.string().min(1, "本文を入力してください"),
+  status: z.enum(["draft", "published", "scheduled"]),
+  thumbnail: z.string().nullable(),
+  scheduledAt: z.string().nullable().optional(),
+  storeId: z.number().optional(),
+  images: z.array(z.string()).default([]),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).superRefine((data, ctx) => {
+  if (data.status === "scheduled" && !data.scheduledAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "予約投稿には公開予定日時の設定が必要です",
+      path: ["scheduledAt"]
+    });
+  }
+  if (data.status === "scheduled" && data.scheduledAt) {
+    const scheduledDate = new Date(data.scheduledAt);
+    if (scheduledDate <= new Date()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "予約日時は現在より後の日時を指定してください",
+        path: ["scheduledAt"]
+      });
+    }
+  }
+});
 
 // 型定義のエクスポート
 export type BlogPost = typeof blogPosts.$inferSelect;
@@ -715,7 +735,7 @@ export type InsertAccessLog = typeof accessLogs.$inferInsert;
 export type AccessStat = typeof accessStats.$inferSelect;
 export type InsertAccessStat = typeof accessStats.$inferInsert;
 
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory, AccessLog, InsertAccessLog, AccessStat, InsertAccessStat, BlogPost, InsertBlogPost};
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory, AccessLog, InsertAccessLog, AccessStat, InsertAccessStat, BlogPost, InsertBlogPost };
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
@@ -760,7 +780,7 @@ export type InsertStoreImage = typeof storeImages.$inferInsert;
 // クエリキーを追加
 export const QUERY_KEYS = {
   // ... 既存のキー
-  STORE_IMAGES: "/api/store/images",
+  STOREIMAGES: "/api/store/images",
 } as const;
 
 import { jsonb } from "drizzle-orm/pg-core";

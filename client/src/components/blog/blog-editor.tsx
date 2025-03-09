@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -47,7 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Eye, Plus, X } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -68,6 +67,7 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
@@ -167,16 +167,18 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       content: "",
       status: "draft",
       thumbnail: null,
+      scheduledAt: null,
     },
   });
 
-  const handleSubmit = async (data: any, status: "draft" | "published") => {
+  const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       const formData = {
         title: data.title,
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
+        scheduledAt: status === "scheduled" ? data.scheduledAt : null,
       };
 
       if (postId) {
@@ -396,6 +398,63 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   }}
                 >
                   保存する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">
+                <Calendar className="h-4 w-4 mr-2" />
+                予約投稿
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>予約投稿の設定</AlertDialogTitle>
+                <AlertDialogDescription>
+                  記事を指定した日時に自動で公開します。
+                  予約日時を選択してください。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                <FormField
+                  control={form.control}
+                  name="scheduledAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>公開予定日時</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    const data = form.getValues();
+                    if (!data.scheduledAt) {
+                      toast({
+                        variant: "destructive",
+                        title: "エラー",
+                        description: "公開予定日時を選択してください",
+                      });
+                      return;
+                    }
+                    handleSubmit(data, "scheduled");
+                  }}
+                >
+                  予約する
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
