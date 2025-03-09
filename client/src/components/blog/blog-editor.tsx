@@ -371,6 +371,25 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="scheduledAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>公開予定日時</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          value={field.value || ""}
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </Form>
           )}
@@ -418,6 +437,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-4">
+                {/* Removed unnecessary Form here */}
                 <FormField
                   control={form.control}
                   name="scheduledAt"
