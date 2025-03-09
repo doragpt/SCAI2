@@ -92,6 +92,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   const [height, setHeight] = useState<number>(image.height || 0);
   const [aspectLocked, setAspectLocked] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -99,28 +100,41 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     if (image) {
       const img = document.createElement('img');
       img.onload = () => {
+        const originalWidth = img.naturalWidth;
+        const originalHeight = img.naturalHeight;
+        setOriginalSize({ width: originalWidth, height: originalHeight });
+        // 初期値が設定されていない場合のみ、元のサイズを設定
         if (!image.width || !image.height) {
-          setWidth(img.naturalWidth);
-          setHeight(img.naturalHeight);
+          setWidth(originalWidth);
+          setHeight(originalHeight);
         }
+      };
+      img.onerror = () => {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像サイズの取得に失敗しました",
+        });
       };
       img.src = image.url;
     }
-  }, [image]);
+  }, [image, toast]);
 
   const handleWidthChange = (value: number) => {
     setWidth(value);
-    if (aspectLocked && image.width && image.height) {
-      const aspectRatio = image.width / image.height;
-      setHeight(Math.round(value / aspectRatio));
+    if (aspectLocked && originalSize) {
+      const aspectRatio = originalSize.width / originalSize.height;
+      const newHeight = Math.round(value / aspectRatio);
+      setHeight(newHeight);
     }
   };
 
   const handleHeightChange = (value: number) => {
     setHeight(value);
-    if (aspectLocked && image.width && image.height) {
-      const aspectRatio = image.width / image.height;
-      setWidth(Math.round(height * aspectRatio));
+    if (aspectLocked && originalSize) {
+      const aspectRatio = originalSize.width / originalSize.height;
+      const newWidth = Math.round(value * aspectRatio);
+      setWidth(newWidth);
     }
   };
 
@@ -166,13 +180,28 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     }
   };
 
+  if (!originalSize) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>画像サイズの取得中...</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>画像サイズの調整</DialogTitle>
           <DialogDescription>
-            元のサイズ: {image.width || "不明"}x{image.height || "不明"}px
+            元のサイズ: {originalSize.width}x{originalSize.height}px
           </DialogDescription>
         </DialogHeader>
 
@@ -184,7 +213,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[width]}
                 onValueChange={([value]) => handleWidthChange(value)}
                 min={50}
-                max={Math.max((image.width || 800) * 2, 1000)}
+                max={Math.max(originalSize.width * 2, 1000)}
                 step={1}
               />
               <Input
@@ -202,7 +231,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[height]}
                 onValueChange={([value]) => handleHeightChange(value)}
                 min={50}
-                max={Math.max((image.height || 600) * 2, 1000)}
+                max={Math.max(originalSize.height * 2, 1000)}
                 step={1}
               />
               <Input
@@ -931,4 +960,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       )}
     </div>
   );
+}
+
+interface BlogEditorProps {
+  postId?: string | number | null;
+  initialData?: BlogPost | null;
 }
