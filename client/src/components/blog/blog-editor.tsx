@@ -144,20 +144,32 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (!file) return;
 
     try {
+      console.log('Uploading thumbnail:', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      });
+
       // 署名付きURLの取得
       const { url, key } = await apiRequest("POST", QUERY_KEYS.SIGNED_URL, {
         fileName: file.name,
         fileType: file.type,
       });
 
+      console.log('Got signed URL:', { url, key });
+
       // S3へのアップロード
-      await fetch(url, {
+      const response = await fetch(url, {
         method: "PUT",
         body: file,
         headers: {
           "Content-Type": file.type,
         },
       });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
 
       // プレビューの更新
       const imageUrl = `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.${process.env.VITE_AWS_REGION}.amazonaws.com/${key}`;

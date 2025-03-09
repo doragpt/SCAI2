@@ -27,7 +27,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { generateToken, verifyToken } from "./jwt";
 import { authenticate } from "./middleware/auth";
-import { uploadToS3, getSignedS3Url } from "./utils/s3";
+import { uploadToS3, getSignedS3Url, getSignedUploadUrl } from "./utils/s3"; //Added getSignedUploadUrl
 import {
   blogPosts,
   type BlogPost,
@@ -987,100 +987,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 現在のプロフィールを取得
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log('Profile update request received:', {
+      consolelog('Profile update request received:', {
         userId,
-        requestData: req.body,
+        updateData,
         timestamp: new Date().toISOString()
       });
 
       const updatedProfile = await db.transaction(async (tx) => {
-        // 現在のプロフィールを取得
-        const [currentProfile] = await tx          .select()
+        const [currentProfile] = await tx
+          .select()
           .from(talentProfiles)
-          .where(eq(talentProfiles.userId,req.user.id));
-        if(!currentProfile) {
+          .where(eq(talentProfiles.userId, req.user.id));
+
+        if (!currentProfile) {
           throw new Error("プロフィールが見つかりません");
         }
 
-        // リクエストデータをバリデーション
-        const updateData = talentProfileUpdateSchema.parse(req.body);
-
-        // 編集不可フィールドのリスト
-        const immutableFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
-
-        // マージされたデータを準備
-        const processedData = {
-          ...currentProfile,  // 既存のデータをベースに
-          ...updateData,      // 更新データを上書き
-          // 編集不可フィールドは必ず既存の値を維持
-          ...immutableFields.reduce((acc, field) => ({
-            ...acc,
-            [field]: currentProfile[field as keyof typeof currentProfile]
-          }), {} as Partial<typeof currentProfile>),
-          userId,
-          updatedAt: new Date(),
-        };
-
-        console.log('Prepared update values:', {
-          userId,
-          processedData,
-          timestamp: new Date().toISOString()
-        });
-
-        // プロフィールを更新
+        // プロフィールの更新処理
         const [updated] = await tx
           .update(talentProfiles)
-          .set(processedData)
-          .where(eq(talentProfiles.userId, userId))
+          .set({
+            ...req.body,
+            updatedAt: new Date(),
+          })
+          .where(eq(talentProfiles.userId, req.user.id))
           .returning();
 
-        if (!updated) {
-          throw new Error("プロフィールの更新に失敗しました");
-        }
-
-        // 更新されたプロフィールを再取得して返す（完全なデータを確実に返す）
-        const [freshProfile] = await tx
-          .select()
-          .from(talentProfiles)
-          .where(eq(talentProfiles.userId, userId));
-
-        console.log('Profile update successful:', {
-          userId,
-          profileId: freshProfile.id,
-          timestamp: new Date().toISOString()
-        });
-
-        return freshProfile;
+        return updated;
       });
 
-      // 完全なプロフィールデータを返す
       res.json(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', {
-        error,
-        userId: req.user.id,
-        requestBody: req.body,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString()
       });
 
-      if (error instanceof Error) {
-        const status = error.message === "プロフィールが見つかりません" ? 404 : 400;
-        res.status(status).json({
-          error: true,
-          message: error.message,
-          details: error.stack,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        res.status(500).json({
-          error: true,
-          message: "プロフィールの更新に失敗しました",
-          timestamp: new Date().toISOString()
-        });
-      }
+      res.status(500).json({
+        message: "プロフィールの更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
   });
 
@@ -1522,7 +1474,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-
 
   // 求人ステータスの更新
   app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {
@@ -2018,8 +1969,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-
   // マッチング結果取得エンドポイント
   app.post("/api/talent/matching", authenticate, async (req: any, res) => {
     try {
@@ -2058,7 +2007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const matches: string[] = [];
 
           // マッチポイントの判定
-          if (conditions.preferredLocations.includes(job.location)) {
+          if(conditions.preferredLocations.includes(job.location)) {
             matches.push('希望エリア');
           }
           if (Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee)) {
@@ -2589,6 +2538,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(500).json({
         message: "記事の削除に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ記事のステータス一括更新
+  app.patch("/api/blog/posts/status", authenticate, async (req: any, res) => {
+    try {
+      const { postIds, status } = req.body;
+
+      if (!Array.isArray(postIds) || !postIds.length) {
+        return res.status(400).json({ message: "記事IDが指定されていません" });
+      }
+
+      if (!["published", "draft", "scheduled"].includes(status)) {
+        return res.status(400).json({ message: "無効なステータスです" });
+      }
+
+      console.log('Blog posts status update request:', {
+        postIds,
+        status,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみ記事を更新できます" });
+      }
+
+      // トランザクション内で更新を実行
+      await db.transaction(async (tx) => {
+        // 更新対象の記事を取得して権限チェック
+        const posts = await tx
+          .select()
+          .from(blogPosts)
+          .where(sql`id = ANY(${postIds})`);
+
+        // 権限チェック: すべての記事が現在のユーザーのものであることを確認
+        const unauthorized = posts.some(post => post.storeId !== req.user.id);
+        if (unauthorized) {
+          throw new Error("一部の記事の更新権限がありません");
+        }
+
+        // 記事のステータスを更新
+        await tx
+          .update(blogPosts)
+          .set({
+            status,
+            updatedAt: new Date(),
+            ...(status === "published" ? { publishedAt: new Date() } : {})
+          })
+          .where(sql`id = ANY(${postIds})`);
+      });
+
+      console.log('Blog posts status updated:', {
+        postIds,
+        status,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "記事のステータスを更新しました" });
+    } catch (error) {
+      console.error('Blog posts status update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postIds: req.body.postIds,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "記事の更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // S3署名付きURL生成エンドポイント
+  app.post("/api/s3/signed-url", authenticate, async (req: any, res) => {
+    try {
+      console.log('Signed URL request received:', {
+        userId: req.user?.id,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      const { fileName, fileType } = req.body;
+
+      if (!fileName || !fileType) {
+        return res.status(400).json({
+          message: "ファイル名とファイルタイプは必須です"
+        });
+      }
+
+      // 署名付きURLの生成
+      const { url, key } = await getSignedUploadUrl(fileName, fileType);
+
+      console.log('Signed URL generated:', {
+        userId: req.user?.id,
+        key,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ url, key });
+    } catch (error) {
+      console.error('Signed URL generation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "署名付きURLの生成に失敗しました",
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }

@@ -9,6 +9,75 @@ const s3Client = new S3Client({
   },
 });
 
+// アップロード用の署名付きURL生成
+export const getSignedUploadUrl = async (
+  fileName: string,
+  contentType: string
+): Promise<{ url: string; key: string }> => {
+  try {
+    // ファイル名にタイムスタンプを追加して一意にする
+    const timestamp = new Date().getTime();
+    const key = `${timestamp}-${fileName}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key,
+      ContentType: contentType,
+      // CORSに関連するメタデータを追加
+      Metadata: {
+        'x-amz-meta-uploaded-by': 'scai-app',
+        'x-amz-meta-timestamp': new Date().toISOString()
+      },
+      CacheControl: 'max-age=31536000' // 1年間のキャッシュを設定
+    });
+
+    console.log('Generating signed upload URL:', {
+      bucket: process.env.AWS_BUCKET_NAME,
+      key,
+      contentType,
+      timestamp: new Date().toISOString()
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    return { url, key };
+  } catch (error) {
+    console.error('Failed to generate signed upload URL:', {
+      error,
+      fileName,
+      contentType,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error(`Failed to generate signed upload URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// 画像表示用の署名付きURL生成
+export const getSignedDownloadUrl = async (key: string): Promise<string> => {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key
+    });
+
+    console.log('Generating signed download URL:', {
+      bucket: process.env.AWS_BUCKET_NAME,
+      key,
+      timestamp: new Date().toISOString()
+    });
+
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    return signedUrl;
+  } catch (error) {
+    console.error('Failed to generate signed download URL:', {
+      error,
+      key,
+      timestamp: new Date().toISOString()
+    });
+    throw new Error(`Failed to generate signed download URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
 export const uploadToS3 = async (
   base64Data: string,
   fileName: string
@@ -79,25 +148,5 @@ export const uploadToS3 = async (
       timestamp: new Date().toISOString()
     });
     throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
-
-// プリサインドURL生成用の関数を追加
-export const getSignedS3Url = async (key: string): Promise<string> => {
-  try {
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key
-    });
-
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-    return signedUrl;
-  } catch (error) {
-    console.error('Failed to generate signed URL:', {
-      error,
-      key,
-      timestamp: new Date().toISOString()
-    });
-    throw new Error(`Failed to generate signed URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
