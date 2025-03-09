@@ -66,7 +66,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
-  // フォームの初期化を useEffect 内で行う
+  // フォームの初期化
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
@@ -75,7 +75,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: user?.userId || null
+      storeId: user?.userId || undefined
     }
   });
 
@@ -98,25 +98,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      if (!user?.userId) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "店舗IDが取得できません。再度ログインしてください。",
-        });
-        return;
-      }
-
+      // 現在のフォーム値を取得して送信データを構築
+      const currentValues = form.getValues();
       const formData = {
-        title: data.title,
-        content: data.content,
+        title: currentValues.title,
+        content: currentValues.content,
         status: status,
-        thumbnail: data.thumbnail,
-        storeId: user.userId,
-        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
+        thumbnail: currentValues.thumbnail,
+        storeId: user?.userId,
+        scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
 
       console.log("Submitting form data:", formData);
+
+      if (!user?.userId) {
+        throw new Error("店舗IDが取得できません");
+      }
 
       if (postId) {
         await updateMutation.mutateAsync(formData);
