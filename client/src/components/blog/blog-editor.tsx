@@ -198,7 +198,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
       queryClient.setQueryData<StoreImage[]>(
         [QUERY_KEYS.STORE_IMAGES],
         (oldData = []) => {
-          return oldData.map(img => 
+          return oldData.map(img =>
             img.id === image.id ? { ...img, url: url.toString() } : img
           );
         }
@@ -410,26 +410,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           throw new Error("アップロードされた画像のURLが取得できません");
         }
 
-        // Quillエディタのインスタンスを取得
-        const quill = quillRef.current?.getEditor();
-        if (!quill) {
-          throw new Error("エディタが見つかりません");
-        }
-
-        // 現在のカーソル位置を取得
-        const range = quill.getSelection(true);
-
-        // 画像を挿入
-        quill.insertEmbed(range.index, "image", response.url);
-
-        // カーソルを画像の後ろに移動し、スクロールして表示
-        quill.setSelection(range.index + 1);
-        const [leaf] = quill.getLeaf(range.index);
-        const domNode = leaf.domNode;
-        if (domNode) {
-          domNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
         // アップロード済み画像リストを更新
         setUploadedImages(prev => [...prev, response.url]);
         form.setValue("images", [...uploadedImages, response.url]);
@@ -448,8 +428,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         });
 
         toast({
-          title: "成功",
-          description: "画像がアップロードされました",
+          title: "画像アップロード完了",
+          description: "画像ライブラリに追加されました",
         });
       } catch (uploadError) {
         console.error('Image upload request error:', uploadError);
