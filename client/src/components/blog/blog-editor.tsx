@@ -70,7 +70,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
-  // ユーザー情報がない場合はローディング表示
+  // Loading状態の追加
   if (!user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
@@ -129,7 +129,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      let scheduledAt = null;
+      let scheduledAt: string | null = null;
       if (status === "scheduled") {
         try {
           const scheduledDate = new Date(scheduledDateTime);
@@ -142,7 +142,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             return;
           }
 
-          // 現在時刻より前の日時をチェック
           const now = new Date();
           if (scheduledDate <= now) {
             toast({
