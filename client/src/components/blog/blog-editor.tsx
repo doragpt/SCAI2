@@ -8,6 +8,8 @@ import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import {
   Card,
   CardContent,
@@ -119,6 +121,29 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
+  // CKEditorの設定
+  const editorConfig = {
+    toolbar: [
+      'heading',
+      '|',
+      'bold',
+      'italic',
+      'link',
+      'bulletedList',
+      'numberedList',
+      '|',
+      'indent',
+      'outdent',
+      '|',
+      'blockQuote',
+      'insertTable',
+      'undo',
+      'redo'
+    ],
+    language: 'ja',
+    placeholder: '記事の本文を入力',
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
@@ -175,16 +200,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormItem>
                       <FormLabel>本文</FormLabel>
                       <FormControl>
-                        <div className="border rounded-md">
+                        <div className="border rounded-md overflow-hidden">
                           <div className="border-b p-2 flex items-center gap-2 bg-muted/50">
                             <Button type="button" variant="ghost" size="sm">
                               <ImageIcon className="h-4 w-4" />
                             </Button>
                           </div>
-                          <textarea
-                            className="w-full min-h-[400px] p-4 focus:outline-none"
-                            placeholder="記事の本文を入力"
-                            {...field}
+                          <CKEditor
+                            editor={ClassicEditor}
+                            config={editorConfig}
+                            data={field.value}
+                            onChange={(event, editor) => {
+                              field.onChange(editor.getData());
+                            }}
                           />
                         </div>
                       </FormControl>
