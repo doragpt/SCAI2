@@ -38,6 +38,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -65,13 +66,9 @@ import {
   Image,
   Plus,
   X,
+  Edit,
 } from "lucide-react";
-import {
-  Slider,
-  SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
-} from "@/components/ui/slider";
+import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // Quillエディターを動的にインポート
@@ -714,16 +711,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                 <div
                                   key={image.id}
                                   className="relative aspect-square cursor-pointer group"
-                                  onClick={() => handleImageClick(image)}
                                 >
                                   <img
                                     src={image.url}
                                     alt="ライブラリの画像"
                                     className="w-full h-full object-cover rounded-md"
                                   />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                                    <Button variant="secondary" size="sm">
-                                      選択
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-2">
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => insertImage(image.url)}
+                                    >
+                                      使用
+                                    </Button>
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => handleImageClick(image)}
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      編集
                                     </Button>
                                   </div>
                                 </div>
