@@ -377,7 +377,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     )}
                   />
                 </div>
-                <div className="mt-8 pt-6 border-t">
+                <div className="mt-8 pt-6 border-t space-y-4 mb-8">
                   <FormField
                     control={form.control}
                     name="status"
@@ -407,7 +407,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </Form>
           )}
         </CardContent>
-        <CardFooter className="flex justify-end gap-2">
+        <CardFooter className="flex justify-end gap-2 pt-6 border-t">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline">下書き保存</Button>
