@@ -341,21 +341,33 @@ export const blogPostSchema = z.object({
   storeId: z.number().optional(),
   images: z.array(z.string()).default([]),
 }).superRefine((data, ctx) => {
-  if (data.status === "scheduled" && !data.scheduledAt) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "予約投稿には公開予定日時の設定が必要です",
-      path: ["scheduledAt"]
-    });
-  }
-  if (data.status === "scheduled" && data.scheduledAt) {
+  if (data.status === "scheduled") {
+    if (!data.scheduledAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "予約投稿には公開予定日時の設定が必要です",
+        path: ["scheduledAt"]
+      });
+      return;
+    }
+
     const scheduledDate = new Date(data.scheduledAt);
+    if (isNaN(scheduledDate.getTime())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "無効な日時形式です",
+        path: ["scheduledAt"]
+      });
+      return;
+    }
+
     if (scheduledDate <= new Date()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "予約日時は現在より後の日時を指定してください",
         path: ["scheduledAt"]
       });
+      return;
     }
   }
 });

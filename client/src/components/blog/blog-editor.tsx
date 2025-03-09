@@ -173,13 +173,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
+      console.log("Submitting with status:", status);
+      console.log("scheduledDateTime:", scheduledDateTime);
+
       const formData = {
-        title: data.title,
-        content: data.content,
-        status: status,
-        thumbnail: data.thumbnail,
+        ...data,
+        status,
         scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
+
+      console.log("Submitting form data:", formData);
 
       if (postId) {
         await updateMutation.mutateAsync(formData);
@@ -228,6 +231,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       window.location.href = "/store/dashboard";
     },
     onError: (error) => {
+      console.error('Create mutation error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
