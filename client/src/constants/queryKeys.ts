@@ -12,6 +12,8 @@ export const QUERY_KEYS = {
   SIGNED_URL: "/api/get-signed-url",
   // ブログ関連のクエリキー
   BLOG_POSTS: "/api/blog/posts",
+  BLOG_POSTS_STORE: "/api/blog/posts/store",
   BLOG_POST_DETAIL: (id: string) => `/api/blog/posts/${id}`,
   BLOG_POST_STATUS: (id: string) => `/api/blog/posts/${id}/status`,
+  BLOG_POST_SCHEDULED: "/api/blog/posts/scheduled",
 } as const;

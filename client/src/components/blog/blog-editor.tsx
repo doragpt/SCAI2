@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
 
+// Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
   const { default: RQ } = await import("react-quill");
   return React.forwardRef((props: any, ref) => <RQ ref={ref} {...props} />);
@@ -61,7 +62,7 @@ interface BlogEditorProps {
   initialData?: BlogPost | null;
 }
 
-export function BlogEditor({ postId, initialData }: BlogEditorProps) {
+export const BlogEditor: React.FC<BlogEditorProps> = ({ postId, initialData }) => {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
   const quillRef = useRef<any>(null);
@@ -70,59 +71,52 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>(
+    initialData?.scheduledAt ? new Date(initialData.scheduledAt).toISOString().slice(0, 16) : ""
+  );
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: initialData || {
-      title: "",
-      content: "",
-      status: "draft",
-      thumbnail: null,
-      scheduledAt: null,
+    defaultValues: {
+      title: initialData?.title || "",
+      content: initialData?.content || "",
+      status: initialData?.status || "draft",
+      thumbnail: initialData?.thumbnail || null,
+      scheduledAt: initialData?.scheduledAt || null,
     },
   });
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
+      console.log("Current form data:", data);
       console.log("scheduledDateTime:", scheduledDateTime);
 
-      if (status === "scheduled" && !scheduledDateTime) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "公開予定日時を選択してください",
-        });
-        return;
-      }
-
-      let formattedScheduledAt = null;
       if (status === "scheduled") {
-        try {
-          const scheduledDate = new Date(scheduledDateTime);
-          if (isNaN(scheduledDate.getTime())) {
-            toast({
-              variant: "destructive",
-              title: "エラー",
-              description: "無効な日時形式です",
-            });
-            return;
-          }
-          if (scheduledDate <= new Date()) {
-            toast({
-              variant: "destructive",
-              title: "エラー",
-              description: "予約日時は現在より後の日時を指定してください",
-            });
-            return;
-          }
-          formattedScheduledAt = scheduledDate.toISOString();
-        } catch (error) {
+        if (!scheduledDateTime) {
           toast({
             variant: "destructive",
             title: "エラー",
-            description: "日時の形式が正しくありません",
+            description: "公開予定日時を選択してください",
+          });
+          return;
+        }
+
+        const scheduledDate = new Date(scheduledDateTime);
+        if (isNaN(scheduledDate.getTime())) {
+          toast({
+            variant: "destructive",
+            title: "エラー",
+            description: "無効な日時形式です",
+          });
+          return;
+        }
+
+        if (scheduledDate <= new Date()) {
+          toast({
+            variant: "destructive",
+            title: "エラー",
+            description: "予約日時は現在より後の日時を指定してください",
           });
           return;
         }
@@ -133,8 +127,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        scheduledAt: formattedScheduledAt,
-        storeId: user?.userId
+        scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
+        storeId: user?.id
       };
 
       console.log("Submitting form data:", formData);
@@ -278,7 +272,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     "link",
     "image"
   ];
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -507,4 +500,4 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       </Card>
     </div>
   );
-}
+};
