@@ -8,6 +8,10 @@ import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
+import Quill from 'quill';
 import {
   Card,
   CardContent,
@@ -53,6 +57,34 @@ import {
   Eye,
   ArrowLeft,
 } from "lucide-react";
+
+// Quillの設定
+Quill.register('modules/imageResize', ImageResize);
+
+const modules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image'],
+    ['clean']
+  ],
+  imageResize: {
+    parchment: Quill.import('parchment'),
+    modules: ['Resize', 'DisplaySize']
+  }
+};
+
+const formats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'color', 'background',
+  'align',
+  'list', 'bullet',
+  'link', 'image'
+];
 
 interface BlogEditorProps {
   postId?: number;
@@ -176,15 +208,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormLabel>本文</FormLabel>
                       <FormControl>
                         <div className="border rounded-md">
-                          <div className="border-b p-2 flex items-center gap-2 bg-muted/50">
-                            <Button type="button" variant="ghost" size="sm">
-                              <ImageIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <textarea
-                            className="w-full min-h-[400px] p-4 focus:outline-none"
-                            placeholder="記事の本文を入力"
-                            {...field}
+                          <ReactQuill
+                            theme="snow"
+                            modules={modules}
+                            formats={formats}
+                            value={field.value}
+                            onChange={field.onChange}
+                            className="min-h-[400px]"
                           />
                         </div>
                       </FormControl>
