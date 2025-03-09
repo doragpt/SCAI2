@@ -54,7 +54,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, X } from "lucide-react";
 
 // Quillエディタを動的にインポート
 const ReactQuill = dynamic(async () => {
@@ -77,6 +77,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   // Quillエディタの設定を更新
@@ -88,12 +91,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         [{ color: [] }, { background: [] }],
         [{ list: "ordered" }, { list: "bullet" }],
         [{ align: ["", "center", "right", "justify"] }],
-        ["link"],
+        ["link", "image"],
         ["clean"]
       ],
-    },
-    clipboard: {
-      matchVisual: false // プレーンテキストの貼り付けを許可
     }
   };
 
@@ -108,8 +108,77 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     "list",
     "bullet",
     "align",
-    "link"
+    "link",
+    "image"
   ];
+
+  const handleThumbnailUpload = async (file: File) => {
+    try {
+      // ファイルサイズのチェック（500KB）
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      // ファイル形式のチェック
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await apiRequest<{ url: string; key: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          {
+            rawFormData: true
+          }
+        );
+
+        if (!response?.url) {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+
+        // サムネイル画像を設定
+        setThumbnailPreview(response.url);
+        form.setValue("thumbnail", response.url);
+
+        toast({
+          title: "成功",
+          description: "サムネイル画像がアップロードされました",
+        });
+      } catch (uploadError) {
+        console.error('Thumbnail upload error:', uploadError);
+        throw uploadError;
+      }
+    } catch (error) {
+      console.error('Thumbnail upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "サムネイル画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -117,6 +186,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
+      thumbnail: null,
     },
   });
 
@@ -196,6 +266,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           {isPreview ? (
             <div className="prose prose-sm max-w-none ql-editor">
               <h1>{form.watch("title")}</h1>
+              {thumbnailPreview && (
+                <img src={thumbnailPreview} alt="サムネイル" className="max-w-full h-auto mb-4" />
+              )}
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
           ) : (
@@ -209,6 +282,66 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormLabel>タイトル</FormLabel>
                       <FormControl>
                         <Input placeholder="記事のタイトルを入力" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="thumbnail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors ${
+                              thumbnailPreview ? 'border-0' : 'border-gray-300'
+                            }`}
+                            onClick={() => thumbnailInputRef.current?.click()}
+                          >
+                            {thumbnailPreview ? (
+                              <>
+                                <img
+                                  src={thumbnailPreview}
+                                  alt="サムネイル"
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setThumbnailPreview(null);
+                                    field.onChange(null);
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <div className="text-center">
+                                <Plus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                <span className="text-sm text-gray-500">画像を選択</span>
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            ref={thumbnailInputRef}
+                            className="hidden"
+                            accept="image/jpeg,image/png,image/gif"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleThumbnailUpload(file);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
