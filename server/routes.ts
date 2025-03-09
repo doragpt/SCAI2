@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [currentProfile] = await tx
           .select()
           .from(talentProfiles)
-          .where(eq(talentProfiles.userId, userId));
+          .where(eq(talentProfiles.userId,req.user.id));
 
         if(!currentProfile) {
           throw new Error("プロフィールが見つかりません");
@@ -1880,6 +1880,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(400).json({
         message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      });
+    }
+  });
+
+  // ブログ記事の削除
+  app.delete("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
+      }
+
+      console.log('Blog post deletion request:', {
+        postId,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみ記事を削除できます" });
+      }
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の削除権限がありません" });
+      }
+
+      // 記事の削除
+      await db
+        .delete(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      console.log('Blog post deleted:', {
+        postId,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "記事を削除しました" });
+    } catch (error) {
+      console.error('Blog post deletion error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "記事の削除に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,11 +6,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { useLocation } from "wouter";
-import { 
-  Loader2, 
-  LogOut, 
-  MessageCircle, 
-  Users, 
+import {
+  Loader2,
+  LogOut,
+  MessageCircle,
+  Users,
   BarChart,
   Plus,
   FileEdit,
@@ -23,7 +23,8 @@ import {
   LineChart,
   Settings,
   Pencil,
-  Clock
+  Clock,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -34,6 +35,18 @@ import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 // 求人ステータスのラベル
 const jobStatusLabels = {
@@ -95,6 +108,26 @@ export default function StoreDashboard() {
         variant: "destructive",
         title: "エラー",
         description: error instanceof Error ? error.message : "ブログ記事の取得に失敗しました",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (postId: number) =>
+      apiRequest("DELETE", `/api/blog/posts/${postId}`),
+    onSuccess: () => {
+      toast({
+        title: "記事を削除しました",
+        description: "ブログ記事の削除が完了しました。",
+      });
+      // ブログ一覧を更新
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "記事の削除に失敗しました",
       });
     },
   });
@@ -287,7 +320,7 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold">{job.title}</h3>
                                     <Badge variant={
                                       job.status === "published" ? "default" :
-                                      job.status === "draft" ? "secondary" : "destructive"
+                                        job.status === "draft" ? "secondary" : "destructive"
                                     }>
                                       {jobStatusLabels[job.status]}
                                     </Badge>
@@ -305,8 +338,8 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => {
                                       setSelectedJobId(job.id);
@@ -377,9 +410,9 @@ export default function StoreDashboard() {
                         <p className="text-muted-foreground">
                           ブログ記事がありません
                         </p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-4" 
+                        <Button
+                          variant="outline"
+                          className="mt-4"
                           onClick={() => setLocation('/store/blog/new')}
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -397,14 +430,14 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold">{post.title}</h3>
                                     <Badge variant={
                                       post.status === "published" ? "default" :
-                                      post.status === "scheduled" ? "secondary" : "outline"
+                                        post.status === "scheduled" ? "secondary" : "outline"
                                     }>
                                       {blogStatusLabels[post.status]}
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>
-                                      {post.publishedAt 
+                                      {post.publishedAt
                                         ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
                                         : "未公開"}
                                     </span>
@@ -424,14 +457,39 @@ export default function StoreDashboard() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                                   >
                                     <FileEdit className="h-4 w-4 mr-2" />
                                     編集
                                   </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm">
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        削除
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>記事の削除</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          この記事を削除してもよろしいですか？
+                                          この操作は取り消せません。
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteMutation.mutate(post.id)}
+                                        >
+                                          削除する
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 </div>
                               </div>
                             </CardContent>
