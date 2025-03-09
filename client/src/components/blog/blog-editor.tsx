@@ -75,13 +75,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  // storeIdを数値に変換して確認
-  const parsedStoreId = Number(user.userId);
-  if (isNaN(parsedStoreId)) {
-    console.error("Invalid storeId:", user.userId);
-    return <div>Error: Invalid store ID</div>;
-  }
-
   // フォームの初期化
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -91,27 +84,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: parsedStoreId
+      storeId: initialData?.storeId || Number(user.userId) || undefined
     }
   });
 
   // ユーザー情報が変更されたらフォームの storeId を更新
   useEffect(() => {
-    console.log("Updating storeId:", user.userId, typeof user.userId);
     if (user?.userId) {
       const parsedId = Number(user.userId);
-      if (!isNaN(parsedId)) {
-        form.setValue("storeId", parsedId);
-        console.log("StoreId updated to:", parsedId);
-      }
+      console.log("Setting storeId:", parsedId, typeof parsedId);
+      form.setValue("storeId", parsedId);
     }
   }, [user, form]);
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
-      console.log("Current user:", user);
-      console.log("Submitting with status:", status);
-
       if (status === "scheduled" && !scheduledDateTime) {
         toast({
           variant: "destructive",
@@ -121,26 +108,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      // storeIdを数値として取得
-      const currentStoreId = Number(user.userId);
-      console.log("Current storeId:", currentStoreId, typeof currentStoreId);
-
-      if (isNaN(currentStoreId)) {
+      const parsedStoreId = Number(user.userId);
+      if (!parsedStoreId || isNaN(parsedStoreId)) {
         toast({
           variant: "destructive",
           title: "エラー",
-          description: "店舗IDが正しくありません",
+          description: "店舗IDの取得に失敗しました",
         });
         return;
       }
 
-      // フォームデータの構築
       const formData = {
         title: data.title,
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        storeId: currentStoreId,
+        storeId: parsedStoreId,
         scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
