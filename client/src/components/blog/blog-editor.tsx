@@ -126,23 +126,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       return;
     }
 
-    // 画像サイズのチェック
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    await new Promise((resolve) => {
-      img.onload = resolve;
-    });
-
-    if (img.width !== 240 || img.height !== 320) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像サイズは横240px × 縦320pxにしてください",
-      });
-      URL.revokeObjectURL(img.src);
-      return;
-    }
-
     try {
       // AWS S3の署名付きURLを取得
       const { url, key } = await apiRequest("GET", QUERY_KEYS.SIGNED_URL);
@@ -157,7 +140,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
 
       // プレビューを更新
-      setThumbnailPreview(img.src);
+      const objectUrl = URL.createObjectURL(file);
+      setThumbnailPreview(objectUrl);
 
       // フォームの値を更新
       form.setValue("thumbnail", key);
@@ -173,8 +157,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "エラー",
         description: "サムネイル画像のアップロードに失敗しました",
       });
-    } finally {
-      URL.revokeObjectURL(img.src);
     }
   };
 
