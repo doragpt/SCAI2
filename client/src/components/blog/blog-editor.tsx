@@ -75,7 +75,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: user?.userId || undefined
+      storeId: initialData?.storeId || user?.userId
     }
   });
 
@@ -109,7 +109,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: currentValues.content,
         status: status,
         thumbnail: currentValues.thumbnail,
-        storeId: user.userId,
+        storeId: user.userId, // 直接user.userIdを使用
         scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
 
