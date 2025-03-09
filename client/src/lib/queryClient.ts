@@ -15,6 +15,9 @@ export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown,
+  options?: {
+    headers?: Record<string, string>;
+  }
 ): Promise<T> {
   try {
     console.log('API Request starting:', {
@@ -26,11 +29,16 @@ export async function apiRequest<T>(
 
     const token = localStorage.getItem("auth_token");
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      ...options?.headers,
     };
 
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+    if (!(data instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -38,7 +46,7 @@ export async function apiRequest<T>(
     const res = await fetch(fullUrl, {
       method,
       headers,
-      body: data ? JSON.stringify(data) : undefined,
+      body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
 

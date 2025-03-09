@@ -104,15 +104,31 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      return apiRequest("POST", "/api/upload", formData);
+
+      return apiRequest(
+        "POST", 
+        "/api/upload", 
+        formData,
+        {
+          headers: {
+            // Content-Typeはブラウザが自動で設定するため、ここでは設定しない
+            Accept: "application/json",
+          },
+        }
+      );
     },
     onSuccess: (data) => {
-      form.setValue("thumbnail", data.url);
-      toast({
-        title: "サムネイル画像をアップロードしました",
-      });
+      if (data?.url) {
+        form.setValue("thumbnail", data.url);
+        toast({
+          title: "サムネイル画像をアップロードしました",
+        });
+      } else {
+        throw new Error("アップロード結果のURLが見つかりません");
+      }
     },
     onError: (error) => {
+      console.error('Upload error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -162,6 +178,24 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは5MB以下にしてください",
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像ファイルのみアップロード可能です",
+        });
+        return;
+      }
+
       uploadMutation.mutate(file);
     }
   };

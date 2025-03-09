@@ -34,6 +34,7 @@ import {
   type BlogPostListResponse,
   blogPostSchema,
 } from "@shared/schema";
+import multer from "multer";
 
 const scryptAsync = promisify(scrypt);
 
@@ -160,6 +161,21 @@ async function updateUserProfile(userId: number, updateData: any) {
 
   return updatedUser;
 }
+
+// Multerの設定
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('許可されていないファイル形式です'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // APIルートを最初に登録
@@ -1878,8 +1894,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      res.status(400).json({
-        message: error instanceof Error ? error.message : "ステータスの更新に失敗しました"
+      res.status(500).json({
+        message: "記事のステータス更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });
@@ -2031,27 +2048,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // サムネイル画像アップロードエンドポイント
-  app.post("/api/upload", authenticate, async (req: any, res) => {
+  // ブログ記事の削除
+  app.delete("/api/blog/posts/:id", authenticate, async (req: any, res) => {
     try {
-      if (!req.files || !req.files.file) {
-        return res.status(400).json({ message: "ファイルがアップロードされていません" });
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な記事IDです" });
       }
 
-      const file = req.files.file;
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `thumbnails/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-
-      console.log('File upload request received:', {
-        originalName: file.name,
-        size: file.size,
-        type: file.mimetype,
+      console.log('Blog post deletion request:', {
+        postId,
         userId: req.user?.id,
         timestamp: new Date().toISOString()
       });
 
+      // 店舗ユーザーの認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみ記事を削除できます" });
+      }
+
+      // 既存の記事を確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
+      // 権限チェック
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この記事の削除権限がありません" });
+      }
+
+      // 記事の削除
+      await db
+        .delete(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      console.log('Blog post deleted:', {
+        postId,
+        storeId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "記事を削除しました" });
+    } catch (error) {
+      console.error('Blog post deletion error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        postId: req.params.id,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "記事の削除に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // サムネイル画像アップロードエンドポイント
+  app.post("/api/upload", authenticate, upload.single('file'), async (req: any, res) => {
+    try {
+      console.log('File upload request received:', {
+        file: req.file,
+        body: req.body,
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!req.file) {
+        return res.status(400).json({ message: "ファイルがアップロードされていません" });
+      }
+
+      const fileExtension = req.file.originalname.split('.').pop();
+      const fileName = `thumbnails/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+
       // Base64エンコード
-      const base64Data = `data:${file.mimetype};base64,${file.data.toString('base64')}`;
+      const base64Data = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
       // S3にアップロード
       const url = await uploadToS3(base64Data, fileName);
@@ -2137,7 +2214,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-
 
   // 求人ステータスの更新
   app.patch("/api/jobs/:id/status", authenticate, async (req: any, res) => {

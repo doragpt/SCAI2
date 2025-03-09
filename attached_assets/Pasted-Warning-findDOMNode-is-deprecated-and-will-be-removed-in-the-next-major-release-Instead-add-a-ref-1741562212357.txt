@@ -1,0 +1,51 @@
+Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at ReactQuill2 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-quill.js?v=f573b513:1577:30)
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f573b513:52:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-DKHUMOWT.js?v=f573b513:33:11
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:129:9
+    at div
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JRXU44SF.js?v=f573b513:321:35)
+    at FormField (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/form.tsx:32:6)
+    at form
+    at FormProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JRXU44SF.js?v=f573b513:103:11)
+    at div
+    at _c9 (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at BlogEditor (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/blog/blog-editor.tsx:79:30)
+    at NewBlogPost (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/store/blog/new.tsx:23:31)
+    at Route (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f573b513:338:16)
+    at ProtectedRoute (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f573b513:394:17)
+    at Router
+    at main
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f573b513:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=dNgOJYD3votZsyRXcGLQQ:194:57)
+API Request starting: 
+Object {method: "POST", url: "/api/upload", hasData: true, timestamp: "2025-03-09T23:16:37.936Z"}
+API Response received: 
+Object {status: 400, statusText: "Bad Request", timestamp: "2025-03-09T23:16:38.146Z"}
+API Request Failed: 
+Object {status: 400, statusText: "Bad Request", responseText: "{"message":"ファイルがアップロードされていません"}", timestamp: "2025-03-09T23:16:38.146Z"}
+responseText: "{"message":"ファイルがアップロードされていません"}"
+status: 400
+statusText: "Bad Request"
+timestamp: "2025-03-09T23:16:38.146Z"
+[[Prototype]]: Object
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+API Request Error: 
+Object {method: "POST", url: "/api/upload", error: "ファイルがアップロードされていません", timestamp: "2025-03-09T23:16:38.147Z"}
+error: "ファイルがアップロードされていません"
+method: "POST"
+timestamp: "2025-03-09T23:16:38.147Z"
+url: "/api/upload"
+[[Prototype]]: Object
