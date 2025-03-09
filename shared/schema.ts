@@ -635,11 +635,41 @@ export const blogPosts = pgTable("blog_posts", {
 export const blogPostSchema = createInsertSchema(blogPosts)
   .extend({
     images: z.array(z.string()).optional(),
+    scheduledAt: z.union([
+      z.date(),
+      z.string().transform((val) => new Date(val)),
+      z.null(),
+    ]).optional(),
+    publishedAt: z.union([
+      z.date(),
+      z.string().transform((val) => new Date(val)),
+      z.null(),
+    ]).optional(),
   })
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "scheduled") {
+      if (!data.scheduledAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "予約投稿には公開日時の指定が必要です",
+          path: ["scheduledAt"]
+        });
+      } else {
+        const scheduledDate = new Date(data.scheduledAt);
+        if (scheduledDate < new Date()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "予約日時は現在時刻より後に設定してください",
+            path: ["scheduledAt"]
+          });
+        }
+      }
+    }
   });
 
 // 型定義のエクスポート

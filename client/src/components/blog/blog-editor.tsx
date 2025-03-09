@@ -88,9 +88,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { toast } = useToast();
   const quillRef = useRef<ReactQuill>(null);
 
-  const form = useForm({
+  const form = useForm<BlogPost>({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: initialData || {
+    defaultValues: {
+      ...initialData,
+      scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt) : undefined,
+      publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt) : undefined,
+    } || {
       title: "",
       content: "",
       status: "draft",
@@ -111,7 +115,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         formData,
         {
           headers: {
-            // Content-Typeはブラウザが自動で設定するため、ここでは設定しない
             Accept: "application/json",
           },
         }
@@ -138,7 +141,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
+    mutationFn: (data: BlogPost) =>
       apiRequest("POST", "/api/blog/posts", data),
     onSuccess: () => {
       toast({
@@ -158,7 +161,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof form.getValues) =>
+    mutationFn: (data: BlogPost) =>
       apiRequest("PUT", `/api/blog/posts/${postId}`, data),
     onSuccess: () => {
       toast({
@@ -200,11 +203,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  const onSubmit = (data: typeof form.getValues) => {
-    if (postId) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
+  const onSubmit = async (data: BlogPost) => {
+    try {
+      const submissionData = {
+        ...data,
+        status: isScheduling ? "scheduled" : data.status,
+        scheduledAt: isScheduling ? new Date(data.scheduledAt as string) : null,
+        publishedAt: data.status === "published" ? new Date() : null,
+      };
+
+      if (postId) {
+        await updateMutation.mutateAsync(submissionData);
+      } else {
+        await createMutation.mutateAsync(submissionData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "投稿に失敗しました",
+      });
     }
   };
 
@@ -238,11 +257,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           {isPreview ? (
             <div className="prose prose-sm max-w-none">
               {form.watch("thumbnail") && (
-                <img 
-                  src={form.watch("thumbnail")} 
-                  alt="サムネイル"
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
+                <div className="relative w-full mb-6">
+                  <img 
+                    src={form.watch("thumbnail")} 
+                    alt="サムネイル画像"
+                    className="w-full h-auto max-h-[400px] object-contain mx-auto"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
               )}
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
@@ -284,11 +306,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             )}
                           </div>
                           {field.value && (
-                            <img
-                              src={field.value}
-                              alt="サムネイル"
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
+                            <div className="relative w-full">
+                              <img
+                                src={field.value}
+                                alt="サムネイル"
+                                className="w-full max-h-[400px] object-contain mx-auto"
+                              />
+                            </div>
                           )}
                         </div>
                       </FormControl>
@@ -329,13 +353,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormItem>
                         <FormLabel>公開予定日時</FormLabel>
                         <FormControl>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="datetime-local"
-                              {...field}
-                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                            />
-                          </div>
+                          <Input
+                            type="datetime-local"
+                            value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
+                            onChange={(e) => {
+                              const date = e.target.value ? new Date(e.target.value) : null;
+                              field.onChange(date);
+                            }}
+                            min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -366,14 +392,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </Button>
 
           <Button
-            onClick={() => {
-              if (isScheduling && form.getValues("scheduledAt")) {
-                form.setValue("status", "scheduled");
-              } else {
-                form.setValue("status", "published");
-              }
-              form.handleSubmit(onSubmit)();
-            }}
+            onClick={() => form.handleSubmit(onSubmit)()}
           >
             {createMutation.isPending || updateMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
