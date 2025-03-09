@@ -1,0 +1,92 @@
+以下のエラーは、クライアント側のコード自体はほぼ正しく送信されているものの、バックエンド側（API エンドポイント）で受け取ったデータのうち特に **scheduledAt** の値の型・変換に問題がある場合によく発生します。  
+エラーメッセージ「ブログ投稿の作成に失敗しました」が 500 エラーとして返されていることから、データベースへ挿入する際の型不整合や値の変換に起因している可能性が高いです。
+
+以下、解決に向けた包括的な指示を示します。
+
+---
+
+## ① API エンドポイント側の修正
+
+### A. **scheduledAt の型変換**
+
+- **現状の問題点：**  
+  クライアント側では、`scheduledAt` を ISO 形式の文字列（例："2025-03-09T19:19:35.498Z"）として送信しています。  
+  しかし、データベース（Drizzle ORM で定義されたテーブル）の `scheduledAt` は `timestamp("scheduled_at")` となっており、Date 型が必要です。  
+  自動変換が期待できない場合、変換せずにそのまま渡すと型不整合が発生し、500 エラーとなる可能性があります。
+
+- **対応策：**  
+  API エンドポイント（例：`pages/api/blog/posts.ts` など）の処理内で、受け取ったペイロードの `scheduledAt` フィールドが存在する場合は、必ず `new Date(scheduledAt)` によって Date オブジェクトに変換してください。
+
+- **例：**
+  ```ts
+  // 例: POST /api/blog/posts の処理内
+  const payload = req.body;
+
+  // 予約投稿の場合、scheduledAt を Date に変換する
+  let scheduledAtDate = null;
+  if (payload.status === "scheduled" && payload.scheduledAt) {
+    const parsed = new Date(payload.scheduledAt);
+    if (isNaN(parsed.getTime())) {
+      return res.status(400).json({ message: "無効な日時形式です" });
+    }
+    scheduledAtDate = parsed;
+  }
+
+  // 挿入用データの構築
+  const insertData = {
+    title: payload.title,
+    content: payload.content,
+    status: payload.status,
+    thumbnail: payload.thumbnail,
+    storeId: payload.storeId,
+    scheduledAt: scheduledAtDate,
+    // 他の必要なフィールド...
+  };
+
+  try {
+    const result = await db.insert(blogPosts).values(insertData);
+    res.status(200).json({ message: "ブログ投稿が作成されました", result });
+  } catch (error) {
+    console.error("ブログ投稿の作成に失敗しました", error);
+    res.status(500).json({ message: "ブログ投稿の作成に失敗しました", error });
+  }
+  ```
+
+### B. **エラーログの強化**
+
+- API 側で try/catch 内のエラー内容を詳細にログ出力し、どのフィールドの変換や挿入処理で失敗しているかを特定してください。
+
+---
+
+## ② フロントエンド側の確認
+
+### A. **送信データの型確認**
+
+- クライアント側ではすでに `storeId` を `Number(user.id)` で数値に変換して送信しているので、この部分は問題なさそうです。
+
+- ただし、予約投稿の場合、`scheduledDateTime` は入力された値を `new Date(scheduledDateTime).toISOString()` で変換して送信しています。クライアント側は ISO 文字列で送る形で問題ありませんが、API で受け取った後に Date に変換する処理が必須です。
+
+### B. **Zod スキーマについて**
+
+- 現在の `blogPostSchema` では `scheduledAt` は文字列（nullable）として定義されています。これはクライアント側の検証用なので、サーバ側で受け取った後に Date への変換を行う実装と整合性を取る必要があります。
+
+---
+
+## ③ 全体のまとめ・指示
+
+1. **API エンドポイント修正**
+   - **必ず** 予約投稿（`status === "scheduled"`）の場合、`scheduledAt` を受け取った ISO 文字列から `new Date(...)` を使って Date オブジェクトに変換する。
+   - 変換後の Date オブジェクトをデータベースに挿入する。
+
+2. **エラーログの拡充**
+   - API 側のエラーハンドリングで、詳細なエラー内容（どのフィールドで失敗したのか、型変換のエラーか DB のエラーかなど）をコンソールに出力し、問題箇所を特定しやすくする。
+
+3. **クライアント側**
+   - クライアント側の送信データはそのままで問題ありませんが、送信前に `storeId` や `scheduledAt` の値が正しく生成されているかを `console.log` などで再確認する。
+
+4. **再テスト**
+   - 修正後、予約投稿での作成が正常に行われるかを再度テストしてください。
+
+---
+
+これらの対応で、バックエンド側の型変換エラーが解消され、ブログ投稿の作成エラー（500 Internal Server Error）が解消されるはずです。もし修正後も問題が発生する場合は、API のログ出力をもとにさらに詳細な原因の特定を進めてください。

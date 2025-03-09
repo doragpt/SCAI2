@@ -92,8 +92,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   useEffect(() => {
     if (user?.id) {
       const parsedId = Number(user.id);
-      console.log("Setting storeId:", parsedId, typeof parsedId);
-      form.setValue("storeId", parsedId);
+      if (!isNaN(parsedId) && parsedId > 0) {
+        console.log("Setting storeId:", parsedId, typeof parsedId);
+        form.setValue("storeId", parsedId);
+      }
     }
   }, [user, form]);
 
@@ -127,6 +129,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      // フォームデータの構築
       const formData = {
         title: data.title,
         content: data.content,
