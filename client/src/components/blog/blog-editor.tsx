@@ -136,7 +136,9 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   const [height, setHeight] = useState<number>(0);
   const [aspectLocked, setAspectLocked] = useState(true);
   const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (image) {
@@ -176,13 +178,50 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     }
   };
 
-  const handleInsert = () => {
-    // リサイズパラメータを追加したURLを生成
-    const url = new URL(image.url);
-    url.searchParams.set('width', width.toString());
-    url.searchParams.set('height', height.toString());
-    onInsert(url.toString());
-    onClose();
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      // リサイズパラメータを追加したURLを生成
+      const url = new URL(image.url);
+      url.searchParams.set('width', width.toString());
+      url.searchParams.set('height', height.toString());
+
+      // 新しい設定でURLを更新
+      const response = await apiRequest(
+        "PATCH",
+        `/api/store/images/${image.id}`,
+        { url: url.toString() }
+      );
+
+      // キャッシュを更新
+      queryClient.setQueryData<StoreImage[]>(
+        [QUERY_KEYS.STORE_IMAGES],
+        (oldData = []) => {
+          return oldData.map(img => 
+            img.id === image.id ? { ...img, url: url.toString() } : img
+          );
+        }
+      );
+
+      toast({
+        title: "成功",
+        description: "画像設定を保存しました",
+      });
+
+      onClose();
+      // 本文に挿入する場合はここで実行
+      onInsert(url.toString());
+    } catch (error) {
+      console.error('Image save error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像設定の保存に失敗しました",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!originalSize) {
@@ -263,8 +302,15 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
           <Button variant="outline" onClick={onClose}>
             キャンセル
           </Button>
-          <Button onClick={handleInsert}>
-            この設定で挿入
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                保存中...
+              </>
+            ) : (
+              'この設定で画像を保存'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

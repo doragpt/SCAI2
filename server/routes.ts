@@ -442,6 +442,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 画像設定の更新エンドポイント
+  app.patch("/api/store/images/:id", authenticate, async (req: any, res) => {
+    try {
+      const imageId = parseInt(req.params.id);
+      if (isNaN(imageId)) {
+        return res.status(400).json({ message: "無効な画像IDです" });
+      }
+
+      // 認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみ画像を更新できます" });
+      }
+
+      // 画像の存在確認とオーナーシップチェック
+      const [existingImage] = await db
+        .select()
+        .from(storeImages)
+        .where(and(
+          eq(storeImages.id, imageId),
+          eq(storeImages.storeId, req.user.id)
+        ));
+
+      if (!existingImage) {
+        return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
+      }
+
+      // 画像URLの更新
+      const [updatedImage] = await db
+        .update(storeImages)
+        .set({
+          url: req.body.url,
+        })
+        .where(eq(storeImages.id, imageId))
+        .returning();
+
+      console.log('Image settings updated:', {
+        userId: req.user.id,
+        imageId,
+        newUrl: req.body.url,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedImage);
+    } catch (error) {
+      console.error('Image update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        imageId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像設定の更新に失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
