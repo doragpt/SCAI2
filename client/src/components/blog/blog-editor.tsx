@@ -70,6 +70,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
+  // Loading状態の追加
+  if (!user) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
   // フォームの初期化
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -79,30 +84,39 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: initialData?.storeId || null
+      storeId: Number(initialData?.storeId || user.userId) || undefined
     }
   });
 
   // ユーザー情報が変更されたらフォームの storeId を更新
   useEffect(() => {
     if (user?.userId) {
-      form.setValue("storeId", Number(user.userId));
+      const parsedStoreId = Number(user.userId);
+      if (!isNaN(parsedStoreId)) {
+        form.setValue("storeId", parsedStoreId);
+      }
     }
   }, [user, form]);
-
-  // Loading状態の追加
-  if (!user) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
       console.log("Submitting with status:", status);
+
       if (status === "scheduled" && !scheduledDateTime) {
         toast({
           variant: "destructive",
           title: "エラー",
           description: "公開予定日時を選択してください",
+        });
+        return;
+      }
+
+      const parsedStoreId = Number(user.userId);
+      if (isNaN(parsedStoreId)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "店舗IDの形式が正しくありません",
         });
         return;
       }
@@ -113,7 +127,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        storeId: Number(user.userId), // 数値型に確実に変換
+        storeId: parsedStoreId,
         scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
