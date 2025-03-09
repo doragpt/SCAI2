@@ -79,16 +79,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: initialData?.storeId || user?.userId || null
+      storeId: initialData?.storeId || null
     }
   });
 
   // ユーザー情報が変更されたらフォームの storeId を更新
   useEffect(() => {
     if (user?.userId) {
-      form.setValue("storeId", user.userId);
+      form.setValue("storeId", Number(user.userId));
     }
   }, [user, form]);
+
+  // Loading状態の追加
+  if (!user) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
@@ -100,10 +105,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           description: "公開予定日時を選択してください",
         });
         return;
-      }
-
-      if (!user?.userId) {
-        throw new Error("店舗IDが取得できません");
       }
 
       // フォームデータの構築
