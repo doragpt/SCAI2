@@ -16,13 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Image as ImageIcon, ArrowLeft, Upload, Plus, X, Edit, Save, Eye } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -57,6 +56,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Image as ImageIcon, ArrowLeft, Upload, Plus, X, Edit, Save, Eye } from "lucide-react";
+
 
 interface StoreImage {
   id: number;
@@ -134,13 +135,28 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
     }
   };
 
+  if (!originalSize) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>画像サイズの取得中...</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>画像サイズの調整</DialogTitle>
           <DialogDescription>
-            元のサイズ: {originalSize?.width}x{originalSize?.height}px
+            元のサイズ: {originalSize.width}x{originalSize.height}px
           </DialogDescription>
         </DialogHeader>
 
@@ -233,7 +249,12 @@ const ReactQuill = dynamic(async () => {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
 });
 
-export function BlogEditor({ postId, initialData }: { postId?: string | number | null; initialData?: BlogPost | null }) {
+interface BlogEditorProps {
+  postId?: string | number | null;
+  initialData?: BlogPost | null;
+}
+
+export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
@@ -247,17 +268,6 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-
-  const form = useForm({
-    resolver: zodResolver(blogPostSchema),
-    defaultValues: initialData || {
-      title: "",
-      content: "",
-      status: "draft",
-      images: [],
-      thumbnail: null,
-    },
-  });
 
   // Quillエディタの設定
   const modules = {
@@ -273,7 +283,6 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
       ],
     }
   };
-
   const formats = [
     "header",
     "bold",
@@ -335,20 +344,196 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
     queryFn: () => apiRequest("GET", "/api/store/images"),
   });
 
-  const onSubmit = async (data: any) => {
+  const form = useForm({
+    resolver: zodResolver(blogPostSchema),
+    defaultValues: initialData || {
+      title: "",
+      content: "",
+      status: "draft",
+      images: [],
+      thumbnail: null,
+    },
+  });
+
+  const handleImageUpload = async (file: File) => {
     try {
-      if (postId) {
-        await updateMutation.mutateAsync(data);
-      } else {
-        await createMutation.mutateAsync(data);
+      // ファイルサイズのチェック（500KB）
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      // ファイル形式のチェック
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      // 画像数の制限チェック
+      if (uploadedImages.length >= 50) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像は最大50枚までアップロード可能です",
+        });
+        return;
+      }
+
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ログインが必要です",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await apiRequest<{ url: string; key: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          {
+            rawFormData: true
+          }
+        );
+
+        if (!response?.url) {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+
+        // アップロード済み画像リストを更新
+        setUploadedImages(prev => [...prev, response.url]);
+        form.setValue("images", [...uploadedImages, response.url]);
+
+        // 画像ライブラリのキャッシュを更新
+        queryClient.setQueryData<StoreImage[]>([QUERY_KEYS.STORE_IMAGES], (oldData = []) => {
+          return [
+            ...oldData,
+            {
+              id: Date.now(), // 一時的なID
+              url: response.url,
+              key: response.key,
+              createdAt: new Date().toISOString()
+            }
+          ];
+        });
+
+        toast({
+          title: "画像アップロード完了",
+          description: "画像ライブラリに追加されました",
+        });
+      } catch (uploadError) {
+        console.error('Image upload request error:', uploadError);
+        throw uploadError;
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (file: File) => {
+    try {
+      // ファイルサイズのチェック（500KB）
+      if (file.size > 500 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは500KB以下にしてください",
+        });
+        return;
+      }
+
+      // ファイル形式のチェック
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "JPG、PNG、GIF形式のファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await apiRequest<{ url: string; key: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          {
+            rawFormData: true
+          }
+        );
+
+        if (!response?.url) {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+
+        // サムネイル画像を設定
+        setThumbnailPreview(response.url);
+        form.setValue("thumbnail", response.url);
+
+        toast({
+          title: "成功",
+          description: "サムネイル画像がアップロードされました",
+        });
+      } catch (uploadError) {
+        console.error('Thumbnail upload error:', uploadError);
+        throw uploadError;
+      }
+    } catch (error) {
+      console.error('Thumbnail upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        file: file.name,
+      });
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "サムネイル画像のアップロードに失敗しました",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+
+  const onSubmit = (data: typeof form.getValues) => {
+    if (postId) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
     }
   };
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: (data: typeof form.getValues) =>
       apiRequest("PUT", `/api/blog/posts/${postId}`, data),
     onSuccess: () => {
       toast({
@@ -366,7 +551,7 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: (data: typeof form.getValues) =>
       apiRequest("POST", "/api/blog/posts", data),
     onSuccess: () => {
       toast({
@@ -436,6 +621,66 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="thumbnail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors ${
+                              thumbnailPreview ? 'border-0' : 'border-gray-300'
+                            }`}
+                            onClick={() => thumbnailInputRef.current?.click()}
+                          >
+                            {thumbnailPreview ? (
+                              <>
+                                <img
+                                  src={thumbnailPreview}
+                                  alt="サムネイル"
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setThumbnailPreview(null);
+                                    field.onChange(null);
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <div className="text-center">
+                                <Plus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                <span className="text-sm text-gray-500">画像を選択</span>
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            ref={thumbnailInputRef}
+                            className="hidden"
+                            accept="image/jpeg,image/png,image/gif"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleThumbnailUpload(file);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <FormLabel>本文</FormLabel>
@@ -453,7 +698,7 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
                             画像ライブラリ
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent>
                           <DialogHeader>
                             <DialogTitle>画像ライブラリ</DialogTitle>
                             <DialogDescription>
@@ -484,10 +729,17 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
                                     <Button
                                       variant="secondary"
                                       size="sm"
+                                      onClick={() => handleImageInsert(image.url, 0, 0)} // width and height are initially 0
+                                    >
+                                      使用
+                                    </Button>
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
                                       onClick={() => handleImageClick(image)}
                                     >
                                       <Edit className="h-4 w-4 mr-1" />
-                                      サイズ調整
+                                      編集
                                     </Button>
                                   </div>
                                 </div>
@@ -569,12 +821,36 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
                           <SelectContent>
                             <SelectItem value="draft">下書き</SelectItem>
                             <SelectItem value="published">公開</SelectItem>
+                            <SelectItem value="scheduled">予約投稿</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  {form.watch("status") === "scheduled" && (
+                    <FormField
+                      control={form.control}
+                      name="scheduledAt"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>公開予定日時</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="datetime-local"
+                                value={field.value || ""}
+                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                                min={new Date().toISOString().slice(0, 16)}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               </form>
             </Form>
@@ -637,7 +913,6 @@ export function BlogEditor({ postId, initialData }: { postId?: string | number |
           </AlertDialog>
         </CardFooter>
       </Card>
-
       {selectedImage && (
         <ImageResizeDialog
           image={selectedImage}
