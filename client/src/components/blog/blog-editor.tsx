@@ -41,7 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// ReactQuillのダイナミックインポートを最適化
+// ReactQuillのダイナミックインポート
 const ReactQuill = dynamic(
   () => import("react-quill").then((module) => {
     return React.forwardRef((props: any, ref) => (
@@ -61,18 +61,25 @@ interface BlogEditorProps {
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isPreview, setIsPreview] = useState(false);
   const quillRef = useRef<any>(null);
-  const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
-  // Loading状態の追加
+  // ユーザー情報がない場合はローディング表示
   if (!user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  // storeIdを数値に変換して確認
+  const parsedStoreId = Number(user.userId);
+  if (isNaN(parsedStoreId)) {
+    console.error("Invalid storeId:", user.userId);
+    return <div>Error: Invalid store ID</div>;
   }
 
   // フォームの初期化
@@ -84,22 +91,25 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: Number(initialData?.storeId || user.userId) || undefined
+      storeId: parsedStoreId
     }
   });
 
   // ユーザー情報が変更されたらフォームの storeId を更新
   useEffect(() => {
+    console.log("Updating storeId:", user.userId, typeof user.userId);
     if (user?.userId) {
-      const parsedStoreId = Number(user.userId);
-      if (!isNaN(parsedStoreId)) {
-        form.setValue("storeId", parsedStoreId);
+      const parsedId = Number(user.userId);
+      if (!isNaN(parsedId)) {
+        form.setValue("storeId", parsedId);
+        console.log("StoreId updated to:", parsedId);
       }
     }
   }, [user, form]);
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
+      console.log("Current user:", user);
       console.log("Submitting with status:", status);
 
       if (status === "scheduled" && !scheduledDateTime) {
@@ -111,12 +121,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      const parsedStoreId = Number(user.userId);
-      if (isNaN(parsedStoreId)) {
+      // storeIdを数値として取得
+      const currentStoreId = Number(user.userId);
+      console.log("Current storeId:", currentStoreId, typeof currentStoreId);
+
+      if (isNaN(currentStoreId)) {
         toast({
           variant: "destructive",
           title: "エラー",
-          description: "店舗IDの形式が正しくありません",
+          description: "店舗IDが正しくありません",
         });
         return;
       }
@@ -127,7 +140,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: data.content,
         status: status,
         thumbnail: data.thumbnail,
-        storeId: parsedStoreId,
+        storeId: currentStoreId,
         scheduledAt: status === "scheduled" ? new Date(scheduledDateTime).toISOString() : null,
       };
 
