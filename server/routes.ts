@@ -376,22 +376,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "画像ファイルを選択してください" });
       }
 
-      // 現在の画像数を取得
-      const currentImagesCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(storeImages)
-        .where(eq(storeImages.storeId, req.user.id))
-        .then(result => result[0]?.count || 0);
+      // ファイルサイズと形式のチェック
+      if (req.file.size > 500 * 1024) {
+        return res.status(400).json({ message: "ファイルサイズは500KB以下にしてください" });
+      }
 
-      console.log('Current images count:', {
-        userId: req.user.id,
-        count: currentImagesCount
-      });
-
-      // バリデーション
-      const validation = validateImageUpload(req.file, currentImagesCount);
-      if (!validation.isValid) {
-        return res.status(400).json({ message: validation.error });
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: "JPG、PNG、GIF形式のファイルのみアップロード可能です" });
       }
 
       try {
