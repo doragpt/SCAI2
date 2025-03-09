@@ -427,11 +427,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormControl>
                         <Input
                           type="datetime-local"
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                          onChange={(e) => {
-                            const date = new Date(e.target.value);
-                            field.onChange(date.toISOString());
-                          }}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                           min={new Date().toISOString().slice(0, 16)}
                         />
                       </FormControl>
