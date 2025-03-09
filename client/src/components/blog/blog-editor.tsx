@@ -109,7 +109,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         content: currentValues.content,
         status: status,
         thumbnail: currentValues.thumbnail,
-        storeId: user.userId, // 直接user.userIdを使用
+        storeId: user.userId, // Directly using user.userId
         scheduledAt: status === "scheduled" ? scheduledDateTime : null,
       };
 
@@ -254,7 +254,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     "link",
     "image"
   ];
-
 
   return (
     <div className="container mx-auto px-4 py-8">

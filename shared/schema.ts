@@ -383,6 +383,9 @@ export const blogPostSchema = z.object({
   }
 });
 
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
 // ブログ関連のテーブル定義
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
