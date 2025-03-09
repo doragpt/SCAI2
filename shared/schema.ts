@@ -616,13 +616,15 @@ export const blogPosts = pgTable("blog_posts", {
   storeId: integer("store_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
+  status: text("status", {
+    enum: ["draft", "published", "scheduled"]
+  }).notNull().default("draft"),
   publishedAt: timestamp("published_at"),
   scheduledAt: timestamp("scheduled_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   thumbnail: text("thumbnail"),
-  images: jsonb("images").$type<string[]>().default([]),
+  thumbnailUrl: text("thumbnail_url"),
 }, (table) => {
   return {
     storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
@@ -634,7 +636,12 @@ export const blogPosts = pgTable("blog_posts", {
 // ブログ投稿のスキーマ定義
 export const blogPostSchema = createInsertSchema(blogPosts)
   .extend({
-    images: z.array(z.string()).optional(),
+    title: z.string().min(1, "タイトルを入力してください"),
+    content: z.string().min(1, "本文を入力してください"),
+    status: z.enum(["draft", "published", "scheduled"]),
+    scheduledAt: z.string().optional(),
+    thumbnail: z.string().optional(),
+    thumbnailUrl: z.string().optional(),
   })
   .omit({
     id: true,
@@ -715,7 +722,7 @@ export type InsertAccessLog = typeof accessLogs.$inferInsert;
 export type AccessStat = typeof accessStats.$inferSelect;
 export type InsertAccessStat = typeof accessStats.$inferInsert;
 
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory, AccessLog, InsertAccessLog, AccessStat, InsertAccessStat, BlogPost, InsertBlogPost};
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory, AccessLog, InsertAccessLog, AccessStat, InsertAccessStat, BlogPost, InsertBlogPost };
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;

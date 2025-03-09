@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -56,39 +56,28 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-// Quillエディターを動的にインポート（SSRの問題を回避）
-const ReactQuill = dynamic(() => import("react-quill"), {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
-});
-
-// Quillツールバーの設定
-const modules = {
+// CKEditor設定
+const editorConfig = {
   toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ color: [] }, { background: [] }],
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: ["", "center", "right", "justify"] }],
-    ["link", "image"],
-    ["clean"]
+    'heading',
+    '|',
+    'bold',
+    'italic',
+    'link',
+    'bulletedList',
+    'numberedList',
+    '|',
+    'outdent',
+    'indent',
+    '|',
+    'imageUpload',
+    'blockQuote',
+    'insertTable',
+    'mediaEmbed',
+    'undo',
+    'redo'
   ]
 };
-
-const formats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "color",
-  "background",
-  "list",
-  "bullet",
-  "align",
-  "link",
-  "image"
-];
 
 interface BlogEditorProps {
   postId?: number;
@@ -98,6 +87,7 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const { toast } = useToast();
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -105,9 +95,47 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
-      images: [],
+      scheduledAt: undefined,
+      thumbnail: "",
+      thumbnailUrl: "",
     },
   });
+
+  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Get presigned URL for upload
+      const presignedUrlResponse = await apiRequest("POST", "/api/upload/presigned", {
+        fileName: file.name,
+        fileType: file.type,
+      });
+
+      // Upload to S3
+      await fetch(presignedUrlResponse.url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      // Update form
+      form.setValue("thumbnailUrl", presignedUrlResponse.publicUrl);
+      setThumbnailFile(file);
+
+      toast({
+        title: "サムネイル画像をアップロードしました",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "サムネイル画像のアップロードに失敗しました",
+      });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: typeof form.getValues) =>
@@ -117,7 +145,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を作成しました",
         description: "ブログ記事の作成が完了しました。",
       });
-      // ブログ一覧を更新
       window.location.href = "/store/dashboard";
     },
     onError: (error) => {
@@ -183,8 +210,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         </CardHeader>
         <CardContent>
           {isPreview ? (
-            <div className="prose prose-sm max-w-none ql-editor">
+            <div className="prose prose-sm max-w-none">
               <h1>{form.watch("title")}</h1>
+              {form.watch("thumbnailUrl") && (
+                <img
+                  src={form.watch("thumbnailUrl")}
+                  alt="サムネイル"
+                  className="w-full max-w-2xl mx-auto rounded-lg shadow-lg mb-8"
+                />
+              )}
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
           ) : (
@@ -206,20 +240,47 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
                 <FormField
                   control={form.control}
+                  name="thumbnailUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormControl>
+                        <div className="space-y-4">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleThumbnailChange}
+                            className="cursor-pointer"
+                          />
+                          {field.value && (
+                            <img
+                              src={field.value}
+                              alt="サムネイルプレビュー"
+                              className="w-40 h-40 object-cover rounded-lg border"
+                            />
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="content"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>本文</FormLabel>
                       <FormControl>
-                        <div className="border rounded-md overflow-hidden">
-                          <ReactQuill
-                            theme="snow"
-                            modules={modules}
-                            formats={formats}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="記事の本文を入力"
-                            className="min-h-[400px]"
+                        <div className="border rounded-md overflow-hidden min-h-[400px]">
+                          <CKEditor
+                            editor={ClassicEditor}
+                            config={editorConfig}
+                            data={field.value}
+                            onChange={(_, editor) => {
+                              field.onChange(editor.getData());
+                            }}
                           />
                         </div>
                       </FormControl>
