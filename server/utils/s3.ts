@@ -28,10 +28,15 @@ interface UploadOptions {
   prefix?: string;
 }
 
+interface UploadResult {
+  key: string;
+  url: string;
+}
+
 export const uploadToS3 = async (
   buffer: Buffer,
   options: UploadOptions
-): Promise<{ key: string }> => {
+): Promise<UploadResult> => {
   try {
     console.log('Starting S3 upload:', {
       contentType: options.contentType,
@@ -62,13 +67,17 @@ export const uploadToS3 = async (
 
     await s3Client.send(command);
 
+    // 署名付きURLを生成
+    const signedUrl = await getSignedS3Url(key);
+
     console.log('S3 upload successful:', {
       key,
+      url: signedUrl,
       contentType: options.contentType,
       timestamp: new Date().toISOString()
     });
 
-    return { key };
+    return { key, url: signedUrl };
   } catch (error) {
     console.error('S3 upload error:', {
       error: error instanceof Error ? {

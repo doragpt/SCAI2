@@ -353,6 +353,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 画像アップロードエンドポイント
+  app.post("/api/blog/upload-image", authenticate, upload.single("image"), async (req: any, res) => {
+    try {
+      console.log('Image upload request received:', {
+        userId: req.user?.id,
+        file: req.file ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        } : 'No file received',
+        timestamp: new Date().toISOString()
+      });
+
+      // 認証チェック
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみアップロード可能です" });
+      }
+
+      // ファイルチェック
+      if (!req.file) {
+        return res.status(400).json({ message: "画像ファイルを選択してください" });
+      }
+
+      // 現在の画像数を取得
+      const currentImagesCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(storeImages)
+        .where(eq(storeImages.storeId, req.user.id))
+        .then(result => result[0]?.count || 0);
+
+      console.log('Current images count:', {
+        userId: req.user.id,
+        count: currentImagesCount
+      });
+
+      // バリデーション
+      const validation = validateImageUpload(req.file, currentImagesCount);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      try {
+        // S3にアップロード
+        const uploadResult = await uploadToS3(req.file.buffer, {
+          contentType: req.file.mimetype,
+          extension: req.file.originalname.split(".").pop() || "",
+          prefix: `blog/${req.user.id}/`
+        });
+
+        // DBに画像情報を保存
+        const [storeImage] = await db
+          .insert(storeImages)
+          .values({
+            storeId: req.user.id,
+            url: uploadResult.url,
+            key: uploadResult.key,
+          })
+          .returning();
+
+        console.log('Image upload successful:', {
+          userId: req.user.id,
+          imageId: storeImage.id,
+          key: uploadResult.key,
+          url: uploadResult.url
+        });
+
+        res.json(uploadResult);
+      } catch (uploadError) {
+        console.error('S3 upload or DB insert error:', {
+          error: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          userId: req.user.id,
+          file: req.file.originalname
+        });
+        throw uploadError;
+      }
+    } catch (error) {
+      console.error('Image upload error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "画像のアップロードに失敗しました",
+        error: process.env.NODE_ENV === "development" ? error : undefined
+      });
+    }
+  });
+
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
