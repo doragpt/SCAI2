@@ -10,7 +10,49 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-// ... (imports remain unchanged)
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Save, Eye, Plus, X, Calendar } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// ReactQuillのダイナミックインポート
+const ReactQuill = dynamic(
+  () => import("react-quill").then((module) => {
+    return React.forwardRef((props: any, ref) => (
+      <module.default {...props} ref={ref} />
+    ));
+  }),
+  {
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+  }
+);
 
 interface BlogEditorProps {
   postId?: string | number | null;
@@ -42,13 +84,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: initialData?.storeId || Number(user.id) || undefined // user.idを使用
+      storeId: initialData?.storeId || Number(user.id) || undefined
     }
   });
 
   // ユーザー情報が変更されたらフォームの storeId を更新
   useEffect(() => {
-    if (user?.id) { // user.idを使用
+    if (user?.id) {
       const parsedId = Number(user.id);
       console.log("Setting storeId:", parsedId, typeof parsedId);
       form.setValue("storeId", parsedId);
@@ -66,7 +108,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      if (!user.id) { // user.idを使用
+      if (!user.id) {
         toast({
           variant: "destructive",
           title: "エラー",
@@ -75,7 +117,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      const parsedStoreId = Number(user.id); // user.idを使用
+      const parsedStoreId = Number(user.id);
       if (isNaN(parsedStoreId)) {
         toast({
           variant: "destructive",
