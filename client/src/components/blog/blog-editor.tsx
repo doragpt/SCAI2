@@ -144,11 +144,23 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (!file) return;
 
     try {
-      console.log('Starting thumbnail upload:', {
+      console.log('サムネイルアップロード開始:', {
         fileName: file.name,
         fileType: file.type,
-        fileSize: file.size
+        fileSize: file.size,
+        timestamp: new Date().toISOString()
       });
+
+      // ファイルサイズチェック（10MB以下）
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('ファイルサイズは10MB以下にしてください');
+      }
+
+      // 許可されるファイル形式チェック
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('JPG、PNG、GIF、WebP形式のみアップロード可能です');
+      }
 
       // 署名付きURLの取得
       const response = await apiRequest("POST", QUERY_KEYS.SIGNED_URL, {
@@ -157,11 +169,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
 
       if (!response || !response.url || !response.key) {
-        throw new Error('Invalid response from signed URL endpoint');
+        throw new Error('署名付きURLの取得に失敗しました');
       }
 
       const { url, key } = response;
-      console.log('Received signed URL:', { url, key });
+      console.log('署名付きURL取得成功:', { key });
 
       // S3へのアップロード
       const uploadResponse = await fetch(url, {
@@ -173,20 +185,29 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+        throw new Error(`アップロードに失敗しました (status: ${uploadResponse.status})`);
       }
 
-      // プレビューの更新
+      // 画像URLの設定
       const imageUrl = `https://${import.meta.env.VITE_AWS_BUCKET_NAME}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
       setThumbnailPreview(imageUrl);
       form.setValue("thumbnail", imageUrl);
 
       toast({
         title: "アップロード完了",
-        description: "サムネイル画像を設定しました。",
+        description: "サムネイル画像を設定しました",
+      });
+
+      console.log('サムネイルアップロード完了:', {
+        imageUrl,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Thumbnail upload error:', error);
+      console.error('サムネイルアップロードエラー:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         variant: "destructive",
         title: "エラー",
