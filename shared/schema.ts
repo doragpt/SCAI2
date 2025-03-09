@@ -3,13 +3,13 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// クエリキーの定義（一箇所にまとめる）
+// クエリキーの定義
 export const QUERY_KEYS = {
   BLOG_POSTS: "/api/blog/posts",
   STOREIMAGES: "/api/store/images",
 } as const;
 
-// ここに既存のenums定義を配置
+// Enum定義
 export const photoTags = [
   "現在の髪色",
   "タトゥー",
@@ -45,7 +45,6 @@ export const idTypes = [
 
 export const allergyTypes = ["犬", "猫", "鳥"] as const;
 export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
-
 export const commonNgOptions = [
   "AF",
   "聖水",
@@ -82,21 +81,18 @@ export const serviceTypes = [
 ] as const;
 
 export const workTypes = ["出稼ぎ", "在籍"] as const;
-export type WorkType = typeof workTypes[number];
 
-
-// bodyMarkSchema定義を更新
+// Schema定義
 export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
 });
 
-// photoSchema定義を更新
 export const photoSchema = z.object({
-  id: z.string().optional(), // 一意の識別子を追加
+  id: z.string().optional(),
   url: z.string(),
   tag: z.enum(photoTags),
-  order: z.number().optional(), // 順序を保持するフィールドを追加
+  order: z.number().optional(),
 });
 
 // テーブル定義
@@ -178,7 +174,6 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Login and registration schemas
-// loginSchemaを修正して店舗用のバリデーションを追加
 export const loginSchema = z.object({
   username: z.string().min(1, "ログインIDを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
@@ -205,8 +200,6 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
-
-// talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -338,27 +331,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).partial();
 
 
-// ブログ関連の型定義とテーブルを追加
-export const blogPosts = pgTable("blog_posts", {
-  id: serial("id").primaryKey(),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
-  publishedAt: timestamp("published_at"),
-  scheduledAt: timestamp("scheduled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  thumbnail: text("thumbnail"),
-  images: jsonb("images").$type<string[]>().default([]),
-}, (table) => {
-  return {
-    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
-    statusIdx: index("blog_posts_status_idx").on(table.status),
-    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
-  };
-});
-
 // ブログ投稿のスキーマ定義
 export const blogPostSchema = z.object({
   title: z.string().min(1, "タイトルを入力してください"),
@@ -386,6 +358,27 @@ export const blogPostSchema = z.object({
       });
     }
   }
+});
+
+// ブログ関連のテーブル定義
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  scheduledAt: timestamp("scheduled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  thumbnail: text("thumbnail"),
+  images: jsonb("images").$type<string[]>().default([]),
+}, (table) => {
+  return {
+    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
+    statusIdx: index("blog_posts_status_idx").on(table.status),
+    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+  };
 });
 
 // リレーションの定義
@@ -554,19 +547,6 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   }),
 }));
 
-export type Prefecture = typeof prefectures[number];
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type PhotoTag = typeof photoTags[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-export type EstheOption = typeof estheOptions[number];
-export type ServiceType = typeof serviceTypes[number];
-
-
 // 型定義のエクスポート（一箇所にまとめる）
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
@@ -662,7 +642,6 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   mseikan: "メンズエステ"
 } as const;
 
-
 export const storeImages = pgTable("store_images", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
@@ -678,7 +657,6 @@ export const storeImages = pgTable("store_images", {
 
 export type StoreImage = typeof storeImages.$inferSelect;
 export type InsertStoreImage = typeof storeImages.$inferInsert;
-
 
 export type SelectUser = {
   id: number;

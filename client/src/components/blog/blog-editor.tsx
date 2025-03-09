@@ -67,7 +67,6 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
   const [isPreview, setIsPreview] = useState(false);
-  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const quillRef = useRef<any>(null);
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
@@ -75,7 +74,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  // Quillエディタの設定を更新
+  // Quillエディタの設定
   const modules = {
     toolbar: {
       container: [
@@ -273,7 +272,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <form className="space-y-6">
+              <div className="space-y-6">
                 <FormField
                   control={form.control}
                   name="title"
@@ -348,7 +347,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   )}
                 />
 
-                <div className="space-y-2 border-none">
+                <div className="space-y-2">
                   <FormLabel>本文</FormLabel>
                   <FormField
                     control={form.control}
@@ -372,7 +371,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     )}
                   />
                 </div>
-              </form>
+              </div>
             </Form>
           )}
         </CardContent>
