@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // リクエストボディのバリデーション
-      if (!req.body.url || !req.body.width || !req.body.height) {
+      if (!req.body.width || !req.body.height) {
         return res.status(400).json({ message: "必要なパラメータが不足しています" });
       }
 
@@ -473,11 +473,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "画像が見つからないか、更新権限がありません" });
       }
 
-      // 画像URLと設定の更新
+      // 画像サイズの更新
       const [updatedImage] = await db
         .update(storeImages)
         .set({
-          url: req.body.url,
           width: req.body.width,
           height: req.body.height,
           updatedAt: new Date()
@@ -485,11 +484,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(storeImages.id, imageId))
         .returning();
 
-      console.log('Image settings updated:', {
+      console.log('Image size updated:', {
         userId: req.user.id,
         imageId,
-        newSettings: {
-          url: req.body.url,
+        newSize: {
           width: req.body.width,
           height: req.body.height
         },
@@ -507,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(500).json({
-        message: "画像設定の更新に失敗しました",
+        message: "画像サイズの更新に失敗しました",
         error: process.env.NODE_ENV === "development" ? error : undefined 
       });
     }

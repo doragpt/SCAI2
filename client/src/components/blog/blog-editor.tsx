@@ -71,18 +71,190 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Quillエディターを動的にインポート
-const ReactQuill = dynamic(async () => {
-  const { default: RQ } = await import("react-quill");
-  return function wrap(props: any) {
-    return <RQ {...props} ref={props.forwardedRef} />;
-  };
-}, {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
-});
+interface StoreImage {
+  id: number;
+  url: string;
+  key: string;
+  width?: number;
+  height?: number;
+  createdAt: string;
+}
 
-// ツールバーの設定
+interface ImageResizeDialogProps {
+  image: StoreImage;
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (url: string) => void;
+}
+
+function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
+  const [width, setWidth] = useState<number>(image.width || 0);
+  const [height, setHeight] = useState<number>(image.height || 0);
+  const [aspectLocked, setAspectLocked] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (image) {
+      const img = document.createElement('img');
+      img.onload = () => {
+        if (!image.width || !image.height) {
+          setWidth(img.naturalWidth);
+          setHeight(img.naturalHeight);
+        }
+      };
+      img.src = image.url;
+    }
+  }, [image]);
+
+  const handleWidthChange = (value: number) => {
+    setWidth(value);
+    if (aspectLocked && image.width && image.height) {
+      const aspectRatio = image.width / image.height;
+      setHeight(Math.round(value / aspectRatio));
+    }
+  };
+
+  const handleHeightChange = (value: number) => {
+    setHeight(value);
+    if (aspectLocked && image.width && image.height) {
+      const aspectRatio = image.width / image.height;
+      setWidth(Math.round(height * aspectRatio));
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      // 画像サイズの設定を更新
+      const response = await apiRequest(
+        "PATCH",
+        `/api/store/images/${image.id}`,
+        {
+          width,
+          height
+        }
+      );
+
+      // キャッシュを更新
+      queryClient.setQueryData<StoreImage[]>(
+        [QUERY_KEYS.STORE_IMAGES],
+        (oldData = []) => {
+          return oldData.map(img =>
+            img.id === image.id ? { ...img, width, height } : img
+          );
+        }
+      );
+
+      toast({
+        title: "成功",
+        description: "画像サイズを保存しました",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Image save error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像サイズの保存に失敗しました",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>画像サイズの調整</DialogTitle>
+          <DialogDescription>
+            元のサイズ: {image.width || "不明"}x{image.height || "不明"}px
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2">
+              <label className="w-16">幅:</label>
+              <Slider
+                value={[width]}
+                onValueChange={([value]) => handleWidthChange(value)}
+                min={50}
+                max={Math.max((image.width || 800) * 2, 1000)}
+                step={1}
+              />
+              <Input
+                type="number"
+                value={width}
+                onChange={(e) => handleWidthChange(Number(e.target.value))}
+                className="w-20"
+              />
+              <span>px</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="w-16">高さ:</label>
+              <Slider
+                value={[height]}
+                onValueChange={([value]) => handleHeightChange(value)}
+                min={50}
+                max={Math.max((image.height || 600) * 2, 1000)}
+                step={1}
+              />
+              <Input
+                type="number"
+                value={height}
+                onChange={(e) => handleHeightChange(Number(e.target.value))}
+                className="w-20"
+              />
+              <span>px</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="aspect-ratio"
+                checked={aspectLocked}
+                onCheckedChange={(checked) => setAspectLocked(checked as boolean)}
+              />
+              <label htmlFor="aspect-ratio">アスペクト比を維持</label>
+            </div>
+          </div>
+
+          <div className="relative aspect-square border rounded-md overflow-hidden">
+            <img
+              src={image.url}
+              alt="プレビュー"
+              style={{ width: `${width}px`, height: `${height}px` }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            キャンセル
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                保存中...
+              </>
+            ) : (
+              'この設定で保存'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ... Rest of the BlogEditor component remains unchanged
 const modules = {
   toolbar: {
     container: [
@@ -112,214 +284,16 @@ const formats = [
   "image"
 ];
 
-interface BlogEditorProps {
-  postId?: number;
-  initialData?: BlogPost;
-}
-
-interface StoreImage {
-  id: number;
-  url: string;
-  key: string;
-  createdAt: string;
-}
-
-interface ImageResizeDialogProps {
-  image: StoreImage;
-  isOpen: boolean;
-  onClose: () => void;
-  onInsert: (url: string) => void;
-}
-
-function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDialogProps) {
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
-  const [aspectLocked, setAspectLocked] = useState(true);
-  const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (image) {
-      const img = document.createElement('img');
-      img.onload = () => {
-        setWidth(img.naturalWidth);
-        setHeight(img.naturalHeight);
-        setOriginalSize({
-          width: img.naturalWidth,
-          height: img.naturalHeight
-        });
-      };
-      img.onerror = () => {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像サイズの取得に失敗しました",
-        });
-      };
-      img.src = image.url;
-    }
-  }, [image, toast]);
-
-  const handleWidthChange = (value: number) => {
-    setWidth(value);
-    if (aspectLocked && originalSize) {
-      const aspectRatio = originalSize.width / originalSize.height;
-      setHeight(Math.round(value / aspectRatio));
-    }
+const ReactQuill = dynamic(async () => {
+  const { default: RQ } = await import("react-quill");
+  return function wrap(props: any) {
+    return <RQ {...props} ref={props.forwardedRef} />;
   };
+}, {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-muted" />
+});
 
-  const handleHeightChange = (value: number) => {
-    setHeight(value);
-    if (aspectLocked && originalSize) {
-      const aspectRatio = originalSize.width / originalSize.height;
-      setWidth(Math.round(value * aspectRatio));
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-
-      // リサイズパラメータを追加したURLを生成
-      const url = new URL(image.url);
-      url.searchParams.set('width', width.toString());
-      url.searchParams.set('height', height.toString());
-
-      // 新しい設定でURLを更新
-      const response = await apiRequest(
-        "PATCH",
-        `/api/store/images/${image.id}`,
-        {
-          url: url.toString(),
-          width: width,
-          height: height
-        }
-      );
-
-      // キャッシュを更新
-      queryClient.setQueryData<StoreImage[]>(
-        [QUERY_KEYS.STORE_IMAGES],
-        (oldData = []) => {
-          return oldData.map(img =>
-            img.id === image.id ? { ...img, url: url.toString() } : img
-          );
-        }
-      );
-
-      toast({
-        title: "成功",
-        description: "画像設定を保存しました",
-      });
-
-      onClose();
-      onInsert(url.toString());
-    } catch (error) {
-      console.error('Image save error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像設定の保存に失敗しました",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (!originalSize) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>画像サイズの取得中...</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>画像サイズの調整</DialogTitle>
-          <DialogDescription>
-            元のサイズ: {originalSize.width}x{originalSize.height}px
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2">
-              <label className="w-16">幅:</label>
-              <Slider
-                value={[width]}
-                onValueChange={([value]) => handleWidthChange(value)}
-                min={50}
-                max={Math.max(originalSize.width * 2, 1000)}
-                step={1}
-              />
-              <Input
-                type="number"
-                value={width}
-                onChange={(e) => handleWidthChange(Number(e.target.value))}
-                className="w-20"
-              />
-              <span>px</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="w-16">高さ:</label>
-              <Slider
-                value={[height]}
-                onValueChange={([value]) => handleHeightChange(value)}
-                min={50}
-                max={Math.max(originalSize.height * 2, 1000)}
-                step={1}
-              />
-              <Input
-                type="number"
-                value={height}
-                onChange={(e) => handleHeightChange(Number(e.target.value))}
-                className="w-20"
-              />
-              <span>px</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="aspect-ratio"
-                checked={aspectLocked}
-                onCheckedChange={(checked) => setAspectLocked(checked as boolean)}
-              />
-              <label htmlFor="aspect-ratio">アスペクト比を維持</label>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            キャンセル
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                保存中...
-              </>
-            ) : (
-              'この設定で画像を保存'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { user } = useAuth();
