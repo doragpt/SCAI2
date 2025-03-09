@@ -253,34 +253,36 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
 
-      const response = await apiRequest<{ url: string; key: string }>(
-        "POST",
-        "/api/blog/upload-image",
-        formData,
-        { rawFormData: true }
-      );
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
 
-      if (!response?.url) {
-        throw new Error("アップロードされた画像のURLが取得できません");
+        const response = await apiRequest<{ url: string }>(
+          "POST",
+          "/api/blog/upload-image",
+          formData,
+          { rawFormData: true }
+        );
+
+        if (response?.url) {
+          setThumbnailPreview(response.url);
+          form.setValue("thumbnail", response.url);
+          toast({
+            title: "成功",
+            description: "サムネイル画像がアップロードされました",
+          });
+        } else {
+          throw new Error("アップロードされた画像のURLが取得できません");
+        }
+      } catch (error: any) {
+        console.error("Thumbnail upload error:", error);
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: error?.message || "サムネイル画像のアップロードに失敗しました",
+        });
       }
-
-      setThumbnailPreview(response.url);
-      form.setValue("thumbnail", response.url);
-
-      toast({
-        title: "成功",
-        description: "サムネイル画像がアップロードされました",
-      });
-    } catch (error) {
-      console.error('Thumbnail upload error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "サムネイル画像のアップロードに失敗しました",
-      });
     } finally {
       setIsUploading(false);
     }
