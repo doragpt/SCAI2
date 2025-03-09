@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -66,6 +66,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const queryClient = useQueryClient();
   const [scheduledDateTime, setScheduledDateTime] = useState<string>("");
 
+  // フォームの初期化を useEffect 内で行う
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
@@ -74,9 +75,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       status: initialData?.status || "draft",
       thumbnail: initialData?.thumbnail || null,
       scheduledAt: initialData?.scheduledAt || null,
-      storeId: user?.userId || 0
-    },
+      storeId: user?.userId || null
+    }
   });
+
+  // ユーザー情報が変更されたらフォームの storeId を更新
+  useEffect(() => {
+    if (user?.userId) {
+      form.setValue("storeId", user.userId);
+    }
+  }, [user, form]);
 
   const handleSubmit = async (data: any, status: "draft" | "published" | "scheduled") => {
     try {
@@ -94,7 +102,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         toast({
           variant: "destructive",
           title: "エラー",
-          description: "店舗IDが取得できません",
+          description: "店舗IDが取得できません。再度ログインしてください。",
         });
         return;
       }
