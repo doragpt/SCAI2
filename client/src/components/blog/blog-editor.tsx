@@ -135,18 +135,16 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
   const [aspectLocked, setAspectLocked] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    if (image && imgRef.current) {
-      const img = imgRef.current;
-      img.onload = () => {
-        setWidth(img.naturalWidth);
-        setHeight(img.naturalHeight);
-        setIsLoading(false);
-      };
-    }
+    // 画像のピクセルサイズを取得
+    const img = new Image();
+    img.onload = () => {
+      setWidth(img.naturalWidth);
+      setHeight(img.naturalHeight);
+    };
+    img.src = image.url;
   }, [image]);
 
   const handleWidthChange = (value: number) => {
@@ -176,31 +174,15 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>画像サイズの調整</DialogTitle>
           <DialogDescription>
-            挿入する画像のサイズを調整できます
+            元のサイズ: {width}x{height}px
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="aspect-video relative overflow-hidden rounded-lg border">
-            {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <img
-                ref={imgRef}
-                src={image.url}
-                alt="リサイズプレビュー"
-                className="object-contain"
-                style={{ width, height }}
-              />
-            )}
-          </div>
-
           <div className="grid gap-2">
             <div className="flex items-center gap-2">
               <label className="w-16">幅:</label>
@@ -208,7 +190,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[width]}
                 onValueChange={([value]) => handleWidthChange(value)}
                 min={50}
-                max={imgRef.current?.naturalWidth || 1000}
+                max={Math.max(width * 2, 1000)}
                 step={1}
               />
               <Input
@@ -226,7 +208,7 @@ function ImageResizeDialog({ image, isOpen, onClose, onInsert }: ImageResizeDial
                 value={[height]}
                 onValueChange={([value]) => handleHeightChange(value)}
                 min={50}
-                max={imgRef.current?.naturalHeight || 1000}
+                max={Math.max(height * 2, 1000)}
                 step={1}
               />
               <Input
