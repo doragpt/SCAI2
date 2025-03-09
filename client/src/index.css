@@ -11,39 +11,3 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
-
-/* Quillエディタのカスタムスタイル */
-.ql-container {
-  height: 400px !important;
-  display: flex;
-  flex-direction: column;
-  border: none !important;
-}
-
-.ql-editor {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 300px;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-}
-
-/* エディタ内の画像スタイル */
-.ql-editor img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1em auto;
-  object-fit: contain;
-}
-
-/* ツールバーのスタイル */
-.ql-toolbar.ql-snow {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: white;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 0.375rem;
-  margin-bottom: 0.5rem;
-}

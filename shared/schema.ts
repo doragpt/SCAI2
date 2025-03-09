@@ -3,13 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// クエリキーの定義
-export const QUERY_KEYS = {
-  BLOG_POSTS: "/api/blog/posts",
-  STOREIMAGES: "/api/store/images",
-} as const;
-
-// Enum定義
+// Enums
 export const photoTags = [
   "現在の髪色",
   "タトゥー",
@@ -19,6 +13,20 @@ export const photoTags = [
   "スタジオ写真（無加工）",
   "スタジオ写真（加工済み）"
 ] as const;
+
+// bodyMarkSchema定義を更新
+export const bodyMarkSchema = z.object({
+  hasBodyMark: z.boolean().default(false),
+  details: z.string().optional(),
+});
+
+// photoSchema定義を更新
+export const photoSchema = z.object({
+  id: z.string().optional(), // 一意の識別子を追加
+  url: z.string(),
+  tag: z.enum(photoTags),
+  order: z.number().optional(), // 順序を保持するフィールドを追加
+});
 
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
@@ -45,6 +53,7 @@ export const idTypes = [
 
 export const allergyTypes = ["犬", "猫", "鳥"] as const;
 export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
+
 export const commonNgOptions = [
   "AF",
   "聖水",
@@ -54,6 +63,7 @@ export const commonNgOptions = [
   "撮影顔無し"
 ] as const;
 
+// エステオプションの配列定義を修正
 export const estheOptions = [
   "ホイップ",
   "マッサージジェル",
@@ -80,22 +90,11 @@ export const serviceTypes = [
   "mseikan"
 ] as const;
 
+// 出稼ぎ/在籍の選択肢
 export const workTypes = ["出稼ぎ", "在籍"] as const;
+export type WorkType = typeof workTypes[number];
 
-// Schema定義
-export const bodyMarkSchema = z.object({
-  hasBodyMark: z.boolean().default(false),
-  details: z.string().optional(),
-});
-
-export const photoSchema = z.object({
-  id: z.string().optional(),
-  url: z.string(),
-  tag: z.enum(photoTags),
-  order: z.number().optional(),
-});
-
-// テーブル定義
+// Database tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -174,6 +173,7 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Login and registration schemas
+// loginSchemaを修正して店舗用のバリデーションを追加
 export const loginSchema = z.object({
   username: z.string().min(1, "ログインIDを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
@@ -200,6 +200,8 @@ export const loginSchema = z.object({
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
+
+// talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -331,88 +333,55 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).partial();
 
 
-// ブログ投稿のスキーマ定義
-export const blogPostSchema = z.object({
-  title: z.string().min(1, "タイトルを入力してください"),
-  content: z.string().min(1, "本文を入力してください"),
-  status: z.enum(["draft", "published", "scheduled"]),
-  thumbnail: z.string().nullable(),
-  scheduledAt: z.string().nullable(),
-  storeId: z.number({
-    required_error: "店舗IDは必須です",
-    invalid_type_error: "店舗IDは数値である必要があります"
-  }).int().positive("店舗IDは正の整数である必要があります")
-}).superRefine((data, ctx) => {
-  if (data.status === "scheduled") {
-    if (!data.scheduledAt) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "予約投稿には公開予定日時の設定が必要です",
-        path: ["scheduledAt"]
-      });
-      return;
-    }
+// 重複している型定義を削除し、一箇所にまとめる
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type KeepList = typeof keepList.$inferSelect;
+export type InsertKeepList = typeof keepList.$inferInsert;
+export type ViewHistory = typeof viewHistory.$inferSelect;
+export type InsertViewHistory = typeof viewHistory.$inferInsert;
 
-    try {
-      const scheduledDate = new Date(data.scheduledAt);
-      if (isNaN(scheduledDate.getTime())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "無効な日時形式です",
-          path: ["scheduledAt"]
-        });
-        return;
-      }
-
-      const now = new Date();
-      if (scheduledDate <= now) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "予約日時は現在より後の日時を指定してください",
-          path: ["scheduledAt"]
-        });
-      }
-    } catch (error) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "日時の形式が正しくありません",
-        path: ["scheduledAt"]
-      });
-    }
-  }
-});
-
-export type BlogPost = typeof blogPosts.$inferSelect;
-export type InsertBlogPost = typeof blogPosts.$inferInsert;
-
-// ブログ関連のテーブル定義
-export const blogPosts = pgTable("blog_posts", {
-  id: serial("id").primaryKey(),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
-  publishedAt: timestamp("published_at"),
-  scheduledAt: timestamp("scheduled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  thumbnail: text("thumbnail"),
-  images: jsonb("images").$type<string[]>().default([]),
-}, (table) => {
-  return {
-    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
-    statusIdx: index("blog_posts_status_idx").on(table.status),
-    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+// APIレスポンスの型定義
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
   };
-});
+}
 
-// リレーションの定義
-export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
-  store: one(users, {
-    fields: [blogPosts.storeId],
-    references: [users.id],
-  }),
-}));
+// 求人詳細レスポンスの型定義
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}
+
+// service types の定義（重複を削除）
+export const serviceTypeLabels: Record<ServiceType, string> = {
+  deriheru: "デリヘル",
+  hoteheru: "ホテヘル",
+  hakoheru: "箱ヘル",
+  esthe: "エステ",
+  onakura: "オナクラ",
+  mseikan: "メンズエステ"
+} as const;
+
+// その他の型定義
+export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
+export type ProfileData = TalentProfileData;
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 // 求人情報関連の新しいenums
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
@@ -572,35 +541,118 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   }),
 }));
 
-// 型定義のエクスポート（一箇所にまとめる）
-export type BlogPost = typeof blogPosts.$inferSelect;
-export type InsertBlogPost = typeof blogPosts.$inferInsert;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type KeepList = typeof keepList.$inferSelect;
-export type InsertKeepList = typeof keepList.$inferInsert;
-export type ViewHistory = typeof viewHistory.$inferSelect;
-export type InsertViewHistory = typeof viewHistory.$inferInsert;
-export type AccessLog = typeof accessLogs.$inferSelect;
-export type InsertAccessLog = typeof accessLogs.$inferInsert;
-export type AccessStat = typeof accessStats.$inferSelect;
-export type InsertAccessStat = typeof accessStats.$inferInsert;
+
+export type Prefecture = typeof prefectures[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type PhotoTag = typeof photoTags[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type ServiceType = typeof serviceTypes[number];
+
+
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+export type SelectUser = {
+  id: number;
+  username: string;
+  role: "talent" | "store";
+  displayName: string;
+  location: string;
+  birthDate: string;
+  birthDateModified: boolean;
+  preferredLocations: string[];
+  createdAt: Date;
+};
+
 export type TalentProfileData = typeof talentProfiles.$inferSelect;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-export type StoreImage = typeof storeImages.$inferSelect;
-export type InsertStoreImage = typeof storeImages.$inferInsert;
 
+export type PreviousStore = {
+  storeName: string;
+};
+
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+// ブログ関連の型定義とテーブルを追加
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  scheduledAt: timestamp("scheduled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  thumbnail: text("thumbnail"),
+  images: jsonb("images").$type<string[]>().default([]),
+}, (table) => {
+  return {
+    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
+    statusIdx: index("blog_posts_status_idx").on(table.status),
+    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+  };
+});
+
+// ブログ投稿のスキーマ定義
+export const blogPostSchema = createInsertSchema(blogPosts)
+  .extend({
+    images: z.array(z.string()).optional(),
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+// 型定義のエクスポート
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+// リレーションの定義
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  store: one(users, {
+    fields: [blogPosts.storeId],
+    references: [users.id],
+  }),
+}));
 
 // APIレスポンスの型定義
 export interface BlogPostListResponse {
@@ -657,32 +709,16 @@ export const accessStatsRelations = relations(accessStats, ({ one }) => ({
   }),
 }));
 
-// service types の定義（重複を削除）
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  deriheru: "デリヘル",
-  hoteheru: "ホテヘル",
-  hakoheru: "箱ヘル",
-  esthe: "エステ",
-  onakura: "オナクラ",
-  mseikan: "メンズエステ"
-} as const;
+// 型定義のエクスポート
+export type AccessLog = typeof accessLogs.$inferSelect;
+export type InsertAccessLog = typeof accessLogs.$inferInsert;
+export type AccessStat = typeof accessStats.$inferSelect;
+export type InsertAccessStat = typeof accessStats.$inferInsert;
 
-export const storeImages = pgTable("store_images", {
-  id: serial("id").primaryKey(),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  url: text("url").notNull(),
-  key: text("key").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => {
-  return {
-    storeIdIdx: index("store_images_store_id_idx").on(table.storeId),
-  };
-});
-
-export type StoreImage = typeof storeImages.$inferSelect;
-export type InsertStoreImage = typeof storeImages.$inferInsert;
-
+export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory, AccessLog, InsertAccessLog, AccessStat, InsertAccessStat, BlogPost, InsertBlogPost};
+export type Photo = z.infer<typeof photoSchema>;
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type SelectUser = {
   id: number;
   username: string;
@@ -704,41 +740,3 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 export type PreviousStore = {
   storeName: string;
 };
-
-export const talentRegisterFormSchema = z.object({
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    ),
-  passwordConfirm: z.string(),
-  displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
-  role: z.literal("talent"),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-});
-
-//Missing type definitions for IdType, CommonNgOption, AllergyType, SmokingType, Prefecture, EstheOption, and ServiceType.  These need to be added based on the context of the original file.
-type IdType = typeof idTypes[number];
-type CommonNgOption = typeof commonNgOptions[number];
-type AllergyType = typeof allergyTypes[number];
-type SmokingType = typeof smokingTypes[number];
-type Prefecture = typeof prefectures[number];
-type EstheOption = typeof estheOptions[number];
-type ServiceType = typeof serviceTypes[number];

@@ -15,32 +15,22 @@ export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown,
-  options: {
-    headers?: Record<string, string>;
-    rawFormData?: boolean;
-  } = {}
 ): Promise<T> {
   try {
     console.log('API Request starting:', {
       method,
       url,
       hasData: !!data,
-      isFormData: data instanceof FormData,
       timestamp: new Date().toISOString()
     });
 
     const token = localStorage.getItem("auth_token");
     const headers: Record<string, string> = {
-      ...options.headers,
+      "Content-Type": "application/json",
     };
 
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動的に設定）
-    if (!(data instanceof FormData) && !options.rawFormData) {
-      headers["Content-Type"] = "application/json";
     }
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -48,7 +38,7 @@ export async function apiRequest<T>(
     const res = await fetch(fullUrl, {
       method,
       headers,
-      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
+      body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
 
@@ -193,7 +183,6 @@ async function uploadPhoto(photo: Photo, headers: Record<string, string>): Promi
 }
 
 
-
 // 求人一覧取得用のクエリ関数
 export const getJobsQuery = async (): Promise<Job[]> => {
   try {
@@ -244,7 +233,7 @@ export const searchJobsQuery = async (params: {
   serviceType?: string;
   page?: number;
   limit?: number;
-}): Promise<JobListingResponse> => {
+}): Promise<JobsSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
     if (params.location) searchParams.set("location", params.location);
@@ -253,7 +242,7 @@ export const searchJobsQuery = async (params: {
     if (params.limit) searchParams.set("limit", params.limit.toString());
 
     const url = `${QUERY_KEYS.JOBS_SEARCH}?${searchParams.toString()}`;
-    return await apiRequest<JobListingResponse>("GET", url);
+    return await apiRequest<JobsSearchResponse>("GET", url);
   } catch (error) {
     console.error("Jobs search error:", {
       error: getErrorMessage(error),
