@@ -30,24 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 // Quillの設定
 Quill.register('modules/imageResize', ImageResize);
@@ -103,7 +86,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  // サムネイル画像アップロード用のMutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
@@ -203,13 +185,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  const onSubmit = async (data: BlogPost) => {
+  const handleSubmit = async (saveDraft: boolean = false) => {
     try {
+      const currentValues = form.getValues();
       const submissionData = {
-        ...data,
-        status: isScheduling ? "scheduled" : data.status,
-        scheduledAt: isScheduling ? new Date(data.scheduledAt as string) : null,
-        publishedAt: data.status === "published" ? new Date() : null,
+        ...currentValues,
+        status: saveDraft ? "draft" : isScheduling ? "scheduled" : "published",
+        scheduledAt: isScheduling ? new Date(currentValues.scheduledAt as string) : null,
+        publishedAt: !saveDraft && !isScheduling ? new Date() : null,
       };
 
       if (postId) {
@@ -271,7 +254,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="title"
@@ -375,10 +358,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         <CardFooter className="flex justify-end gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              form.setValue("status", "draft");
-              form.handleSubmit(onSubmit)();
-            }}
+            onClick={() => handleSubmit(true)}
+            disabled={createMutation.isPending || updateMutation.isPending}
           >
             下書き保存
           </Button>
@@ -392,7 +373,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           </Button>
 
           <Button
-            onClick={() => form.handleSubmit(onSubmit)()}
+            onClick={() => handleSubmit(false)}
+            disabled={createMutation.isPending || updateMutation.isPending}
           >
             {createMutation.isPending || updateMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
