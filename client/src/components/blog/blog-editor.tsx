@@ -190,11 +190,29 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const onSubmit = (data: typeof form.getValues) => {
-    if (postId) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
+  const onSubmit = async (data: typeof form.getValues) => {
+    try {
+      const formData = {
+        ...data,
+        content: form.getValues("content"),
+        status: form.getValues("status"),
+        thumbnail: form.getValues("thumbnail"),
+      };
+
+      if (postId) {
+        // 更新の場合
+        updateMutation.mutate(formData);
+      } else {
+        // 新規作成の場合
+        createMutation.mutate(formData);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "フォームの送信に失敗しました",
+      });
     }
   };
 
@@ -225,6 +243,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を作成しました",
         description: "ブログ記事の作成が完了しました。",
       });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       window.location.href = "/store/dashboard";
     },
     onError: (error) => {

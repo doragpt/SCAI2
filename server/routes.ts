@@ -442,6 +442,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ブログ投稿の作成
+  app.post("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      console.log('Blog post creation request:', {
+        userId: req.user?.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを投稿できます" });
+      }
+
+      // リクエストデータのバリデーション
+      const postData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // ブログ投稿を作成
+      const [post] = await db
+        .insert(blogPosts)
+        .values(postData)
+        .returning();
+
+      console.log('Blog post created:', {
+        userId: req.user.id,
+        postId: post.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Blog post creation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ投稿の作成に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ投稿の更新
+  app.put("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な投稿IDです" });
+      }
+
+      console.log('Blog post update request:', {
+        userId: req.user?.id,
+        postId,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを更新できます" });
+      }
+
+      // 投稿の存在確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "投稿が見つかりません" });
+      }
+
+      // 投稿者本人のみ更新可能
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この投稿の更新権限がありません" });
+      }
+
+      // リクエストデータのバリデーション
+      const updateData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        updatedAt: new Date()
+      });
+
+      // ブログ投稿を更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set(updateData)
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post updated:', {
+        userId: req.user.id,
+        postId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        postId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ投稿の更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   // ヘルスチェックエンドポイント
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -913,6 +1033,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 認証エンドポイント
+  // ブログ投稿の作成
+  app.post("/api/blog/posts", authenticate, async (req: any, res) => {
+    try {
+      console.log('Blog post creation request:', {
+        userId: req.user?.id,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを投稿できます" });
+      }
+
+      // リクエストデータのバリデーション
+      const postData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // ブログ投稿を作成
+      const [post] = await db
+        .insert(blogPosts)
+        .values(postData)
+        .returning();
+
+      console.log('Blog post created:', {
+        userId: req.user.id,
+        postId: post.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Blog post creation error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ投稿の作成に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
+  // ブログ投稿の更新
+  app.put("/api/blog/posts/:id", authenticate, async (req: any, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "無効な投稿IDです" });
+      }
+
+      console.log('Blog post update request:', {
+        userId: req.user?.id,
+        postId,
+        requestBody: req.body,
+        timestamp: new Date().toISOString()
+      });
+
+      // 店舗ユーザーのみ許可
+      if (!req.user?.id || req.user.role !== "store") {
+        return res.status(403).json({ message: "店舗アカウントのみブログを更新できます" });
+      }
+
+      // 投稿の存在確認
+      const [existingPost] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId));
+
+      if (!existingPost) {
+        return res.status(404).json({ message: "投稿が見つかりません" });
+      }
+
+      // 投稿者本人のみ更新可能
+      if (existingPost.storeId !== req.user.id) {
+        return res.status(403).json({ message: "この投稿の更新権限がありません" });
+      }
+
+      // リクエストデータのバリデーション
+      const updateData = blogPostSchema.parse({
+        ...req.body,
+        storeId: req.user.id,
+        updatedAt: new Date()
+      });
+
+      // ブログ投稿を更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set(updateData)
+        .where(eq(blogPosts.id, postId))
+        .returning();
+
+      console.log('Blog post updated:', {
+        userId: req.user.id,
+        postId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json(updatedPost);
+    } catch (error) {
+      console.error('Blog post update error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        postId: req.params.id,
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(500).json({
+        message: "ブログ投稿の更新に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   app.post("/api/register", async (req, res) => {
     try {
       console.log('Registration request received:', req.body);
