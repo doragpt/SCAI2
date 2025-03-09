@@ -4,9 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -63,7 +62,6 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const { toast } = useToast();
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -71,53 +69,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
-      scheduledAt: undefined,
-      thumbnail: "",
-      thumbnailUrl: "",
+      images: [],
     },
   });
-
-  const handleEditorError = (error: Error) => {
-    console.error("CKEditor error:", error);
-    toast({
-      variant: "destructive",
-      title: "エディターエラー",
-      description: "エディターの読み込み中にエラーが発生しました。",
-    });
-  };
-
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const presignedUrlResponse = await apiRequest("POST", "/api/upload/presigned", {
-        fileName: file.name,
-        fileType: file.type,
-      });
-
-      await fetch(presignedUrlResponse.url, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      form.setValue("thumbnailUrl", presignedUrlResponse.publicUrl);
-      setThumbnailFile(file);
-
-      toast({
-        title: "サムネイル画像をアップロードしました",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "サムネイル画像のアップロードに失敗しました",
-      });
-    }
-  };
 
   const createMutation = useMutation({
     mutationFn: (data: typeof form.getValues) =>
@@ -127,6 +81,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: "記事を作成しました",
         description: "ブログ記事の作成が完了しました。",
       });
+      // ブログ一覧を更新
       window.location.href = "/store/dashboard";
     },
     onError: (error) => {
@@ -194,13 +149,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           {isPreview ? (
             <div className="prose prose-sm max-w-none">
               <h1>{form.watch("title")}</h1>
-              {form.watch("thumbnailUrl") && (
-                <img
-                  src={form.watch("thumbnailUrl")}
-                  alt="サムネイル"
-                  className="w-full max-w-2xl mx-auto rounded-lg shadow-lg mb-8"
-                />
-              )}
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
           ) : (
@@ -222,48 +170,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
                 <FormField
                   control={form.control}
-                  name="thumbnailUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
-                      <FormControl>
-                        <div className="space-y-4">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleThumbnailChange}
-                            className="cursor-pointer"
-                          />
-                          {field.value && (
-                            <img
-                              src={field.value}
-                              alt="サムネイルプレビュー"
-                              className="w-40 h-40 object-cover rounded-lg border"
-                            />
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="content"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>本文</FormLabel>
                       <FormControl>
-                        <div className="border rounded-md overflow-hidden min-h-[400px]">
-                          <CKEditor
-                            editor={ClassicEditor}
-                            data={field.value}
-                            onError={handleEditorError}
-                            onChange={(event, editor) => {
-                              const data = editor.getData();
-                              field.onChange(data);
-                            }}
+                        <div className="border rounded-md">
+                          <div className="border-b p-2 flex items-center gap-2 bg-muted/50">
+                            <Button type="button" variant="ghost" size="sm">
+                              <ImageIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <textarea
+                            className="w-full min-h-[400px] p-4 focus:outline-none"
+                            placeholder="記事の本文を入力"
+                            {...field}
                           />
                         </div>
                       </FormControl>
