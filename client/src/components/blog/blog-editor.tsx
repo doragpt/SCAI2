@@ -28,6 +28,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,7 +93,6 @@ interface BlogEditorProps {
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initialData?.thumbnail || null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -95,8 +101,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
-      thumbnail: null,
-      scheduledAt: null,
+      images: [],
     },
   });
 
@@ -138,86 +143,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  // サムネイル画像のアップロード処理
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      console.log('サムネイルアップロード開始:', {
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        timestamp: new Date().toISOString()
-      });
-
-      // ファイルサイズチェック（10MB以下）
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('ファイルサイズは10MB以下にしてください');
-      }
-
-      // 許可されるファイル形式チェック
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('JPG、PNG、GIF、WebP形式のみアップロード可能です');
-      }
-
-      // 署名付きURLの取得
-      const response = await apiRequest("POST", QUERY_KEYS.SIGNED_URL, {
-        fileName: file.name,
-        fileType: file.type,
-      });
-
-      if (!response || !response.url || !response.key) {
-        throw new Error('署名付きURLの取得に失敗しました');
-      }
-
-      const { url, key } = response;
-      console.log('署名付きURL取得成功:', { key });
-
-      // S3へのアップロード
-      const uploadResponse = await fetch(url, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`アップロードに失敗しました (status: ${uploadResponse.status})`);
-      }
-
-      // 画像URLの設定
-      const imageUrl = `https://${import.meta.env.VITE_AWS_BUCKET_NAME}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
-      setThumbnailPreview(imageUrl);
-      form.setValue("thumbnail", imageUrl);
-
-      toast({
-        title: "アップロード完了",
-        description: "サムネイル画像を設定しました",
-      });
-
-      console.log('サムネイルアップロード完了:', {
-        imageUrl,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('サムネイルアップロードエラー:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
-
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error 
-          ? error.message 
-          : "サムネイル画像のアップロードに失敗しました",
-      });
-    }
-  };
-
   const onSubmit = (data: typeof form.getValues) => {
     if (postId) {
       updateMutation.mutate(data);
@@ -255,13 +180,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         <CardContent>
           {isPreview ? (
             <div className="prose prose-sm max-w-none">
-              {thumbnailPreview && (
-                <img
-                  src={thumbnailPreview}
-                  alt="サムネイル"
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
-              )}
               <h1>{form.watch("title")}</h1>
               <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
             </div>
@@ -276,45 +194,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <FormLabel>タイトル</FormLabel>
                       <FormControl>
                         <Input placeholder="記事のタイトルを入力" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
-                      <FormControl>
-                        <div className="space-y-4">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleThumbnailUpload}
-                            className="hidden"
-                            id="thumbnail-upload"
-                          />
-                          <div className="flex items-center gap-4">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => document.getElementById("thumbnail-upload")?.click()}
-                            >
-                              <ImageIcon className="h-4 w-4 mr-2" />
-                              画像を選択
-                            </Button>
-                            {thumbnailPreview && (
-                              <img
-                                src={thumbnailPreview}
-                                alt="サムネイルプレビュー"
-                                className="h-20 w-20 object-cover rounded"
-                              />
-                            )}
-                          </div>
-                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -346,21 +225,51 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
                 <FormField
                   control={form.control}
-                  name="scheduledAt"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>公開予定日時（未設定の場合は即時公開）</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                        />
-                      </FormControl>
+                      <FormLabel>公開設定</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="公開設定を選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">下書き</SelectItem>
+                          <SelectItem value="published">公開</SelectItem>
+                          <SelectItem value="scheduled">予約投稿</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {form.watch("status") === "scheduled" && (
+                  <FormField
+                    control={form.control}
+                    name="scheduledAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>公開予定日時</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="datetime-local"
+                              {...field}
+                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </form>
             </Form>
           )}
@@ -407,16 +316,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>公開の確認</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {form.watch("scheduledAt")
-                    ? `記事を予約投稿します。${format(new Date(form.watch("scheduledAt")), "yyyy年MM月dd日 HH:mm", { locale: ja })}に公開されます。`
-                    : "記事を公開します。公開後は一般に公開され、誰でも閲覧できるようになります。"}
+                  記事を公開します。公開後は一般に公開され、
+                  誰でも閲覧できるようになります。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    form.setValue("status", form.watch("scheduledAt") ? "scheduled" : "published");
+                    form.setValue("status", "published");
                     form.handleSubmit(onSubmit)();
                   }}
                 >
