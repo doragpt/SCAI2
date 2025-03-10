@@ -3,16 +3,14 @@ import { User } from '@shared/schema';
 
 // JWT設定
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const ACCESS_TOKEN_EXPIRE = '2h';  // アクセストークンの有効期限を2時間に設定
-const REFRESH_TOKEN_EXPIRE = '7d';  // リフレッシュトークンの有効期限を7日に設定
+const TOKEN_EXPIRE = '24h';
 
 export interface JwtPayload {
   userId: number;
   role: string;
-  tokenType: 'access' | 'refresh';
 }
 
-export function generateAccessToken(user: User): string {
+export function generateToken(user: User): string {
   try {
     if (!user.id || !user.role) {
       throw new Error('無効なユーザー情報です');
@@ -21,52 +19,22 @@ export function generateAccessToken(user: User): string {
     const payload: JwtPayload = {
       userId: user.id,
       role: user.role,
-      tokenType: 'access'
     };
 
-    console.log('Generating access token:', {
+    console.log('Generating JWT token:', {
       userId: user.id,
       role: user.role,
       timestamp: new Date().toISOString()
     });
 
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRE });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRE });
   } catch (error) {
-    console.error('Access token generation failed:', {
+    console.error('Token generation failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userId: user.id,
       timestamp: new Date().toISOString()
     });
-    throw new Error('アクセストークンの生成に失敗しました');
-  }
-}
-
-export function generateRefreshToken(user: User): string {
-  try {
-    if (!user.id || !user.role) {
-      throw new Error('無効なユーザー情報です');
-    }
-
-    const payload: JwtPayload = {
-      userId: user.id,
-      role: user.role,
-      tokenType: 'refresh'
-    };
-
-    console.log('Generating refresh token:', {
-      userId: user.id,
-      role: user.role,
-      timestamp: new Date().toISOString()
-    });
-
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRE });
-  } catch (error) {
-    console.error('Refresh token generation failed:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: user.id,
-      timestamp: new Date().toISOString()
-    });
-    throw new Error('リフレッシュトークンの生成に失敗しました');
+    throw new Error('トークンの生成に失敗しました');
   }
 }
 
@@ -83,7 +51,7 @@ export function verifyToken(token: string): JwtPayload {
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    if (!decoded || typeof decoded !== 'object' || !decoded.userId || !decoded.role || !decoded.tokenType) {
+    if (!decoded || typeof decoded !== 'object' || !decoded.userId || !decoded.role) {
       throw new Error('トークンの形式が不正です');
     }
 
@@ -94,15 +62,11 @@ export function verifyToken(token: string): JwtPayload {
     console.log('Token verification successful:', {
       userId: decoded.userId,
       role: decoded.role,
-      tokenType: decoded.tokenType,
       timestamp: new Date().toISOString()
     });
 
     return decoded;
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new Error('トークンの有効期限が切れています');
-    }
     console.error('Token verification failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()

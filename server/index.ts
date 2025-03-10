@@ -4,8 +4,6 @@ import { setupVite } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
 import { setupCronJobs } from "./cron";
-import cookieParser from "cookie-parser";
-import csurf from "csurf";
 
 const app = express();
 
@@ -14,11 +12,8 @@ app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
-
-// cookie-parserを追加（csurfの前に必要）
-app.use(cookieParser());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -57,50 +52,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSURFミドルウェアの設定
-const csrfProtection = csurf({
-  cookie: {
-    key: '_csrf',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  }
-});
-
-// CSRFトークン取得用エンドポイント
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
-
-// APIルートのプレフィックスチェックとCSRF保護
+// APIルートのプレフィックスチェック
 app.use("/api/*", (req, res, next) => {
   log('API request received:', {
     method: req.method,
     url: req.url
   });
   res.setHeader("Content-Type", "application/json");
-  // GETリクエスト以外にCSRF保護を適用
-  if (req.method !== 'GET') {
-    csrfProtection(req, res, next);
-  } else {
-    next();
-  }
-});
-
-// CSRF例外エラーハンドラ
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    log('CSRF validation failed:', {
-      path: req.path,
-      method: req.method,
-      timestamp: new Date().toISOString()
-    });
-    return res.status(403).json({
-      error: true,
-      message: 'Invalid CSRF token'
-    });
-  }
-  next(err);
+  next();
 });
 
 // ヘルスチェックエンドポイント

@@ -10,20 +10,6 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-// CSRFトークンを取得する関数
-async function fetchCsrfToken(): Promise<string> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/csrf-token`, {
-      credentials: 'include'
-    });
-    const data = await response.json();
-    return data.csrfToken;
-  } catch (error) {
-    console.error('CSRF token fetch error:', error);
-    throw new Error('Failed to fetch CSRF token');
-  }
-}
-
 // APIリクエスト関数を改善
 export async function apiRequest(
   method: string,
@@ -31,7 +17,6 @@ export async function apiRequest(
   data?: unknown,
   options?: {
     headers?: Record<string, string>;
-    retry?: boolean;
   }
 ): Promise<Response> {
   try {
@@ -42,26 +27,14 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
+    const token = localStorage.getItem("auth_token");
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options?.headers,
     };
 
-    // 認証トークンの追加
-    const token = localStorage.getItem("auth_token");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    // GET以外のリクエストにCSRFトークンを追加
-    if (method !== 'GET') {
-      try {
-        const csrfToken = await fetchCsrfToken();
-        headers['X-CSRF-Token'] = csrfToken;
-      } catch (error) {
-        console.error('Failed to get CSRF token:', error);
-        throw new Error('CSRF token fetch failed');
-      }
     }
 
     // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
@@ -83,15 +56,6 @@ export async function apiRequest(
       statusText: response.statusText,
       timestamp: new Date().toISOString()
     });
-
-    // CSRFトークンエラーの場合、リトライを試みる
-    if (response.status === 403 && options?.retry !== false) {
-      const errorData = await response.json();
-      if (errorData.message === 'Invalid CSRF token') {
-        console.log('Retrying request with new CSRF token');
-        return apiRequest(method, url, data, { ...options, retry: false });
-      }
-    }
 
     return response;
   } catch (error) {
@@ -124,7 +88,7 @@ export const getJobsQuery = async (): Promise<Job[]> => {
   }
 };
 
-// 求人検索用のクエリ関数
+// 求人検索用のクエリ関数を追加
 export const searchJobsQuery = async (params: {
   location?: string;
   serviceType?: string;

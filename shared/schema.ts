@@ -333,50 +333,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).partial();
 
 
-// パスワードバリデーション用の共通スキーマを追加
-const passwordValidationSchema = z.string()
-  .min(8, "パスワードは8文字以上で入力してください")
-  .max(72, "パスワードは72文字以内で入力してください")
-  .regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/,
-    "パスワードには英字の大文字・小文字、数字、特殊文字(!@#$%^&*(),.?\":{}|<>)をそれぞれ1種類以上含める必要があります"
-  );
-
-// 既存のtalentRegisterFormSchemaを更新
-export const talentRegisterFormSchema = z.object({
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: passwordValidationSchema,
-  passwordConfirm: z.string(),
-  displayName: z.string().min(1, "お名前を入力してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-  location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
-  role: z.literal("talent"),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-});
-
-// パスワード更新用のスキーマを追加
-export const passwordUpdateSchema = z.object({
-  currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
-  newPassword: passwordValidationSchema,
-  confirmPassword: z.string()
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "新しいパスワードと確認用パスワードが一致しません",
-  path: ["confirmPassword"],
-});
-
-
 // 重複している型定義を削除し、一箇所にまとめる
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -624,6 +580,35 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 export type PreviousStore = {
   storeName: string;
 };
+
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
 
 // ブログ関連の型定義とテーブルを追加
 export const blogPosts = pgTable("blog_posts", {

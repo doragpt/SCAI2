@@ -15,31 +15,16 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-const SCRYPT_COST = 16384; // N値を16384に設定（2の累乗である必要がある）
-const SCRYPT_BLOCK_SIZE = 8;
-const SCRYPT_PARALLELIZATION = 1;
-const SCRYPT_KEY_LENGTH = 64;
-
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(
-    password,
-    salt,
-    SCRYPT_KEY_LENGTH,
-    { N: SCRYPT_COST, r: SCRYPT_BLOCK_SIZE, p: SCRYPT_PARALLELIZATION }
-  )) as Buffer;
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
 async function comparePasswords(supplied: string, stored: string) {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(
-    supplied,
-    salt,
-    SCRYPT_KEY_LENGTH,
-    { N: SCRYPT_COST, r: SCRYPT_BLOCK_SIZE, p: SCRYPT_PARALLELIZATION }
-  )) as Buffer;
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 

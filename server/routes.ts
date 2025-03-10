@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ログインエンドポイントを更新
+  // ログインエンドポイントのパスを修正
   app.post("/api/auth/login", async (req, res) => {
     try {
       console.log('ログインリクエスト受信:', {
@@ -309,9 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "店舗管理者用のログインページです" });
       }
 
-      // アクセストークンとリフレッシュトークンを生成
-      const accessToken = generateAccessToken(user);
-      const refreshToken = generateRefreshToken(user);
+      // JWTトークンを生成
+      const token = generateToken(user);
 
       console.log('ログイン成功:', {
         userId: user.id,
@@ -325,8 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'application/json');
       res.json({
         user: userWithoutPassword,
-        accessToken,
-        refreshToken
+        token
       });
     } catch (error) {
       console.error('ログインエラー:', {
@@ -337,54 +335,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // エラーレスポンスの形式を統一
       res.status(400).json({
         message: error instanceof Error ? error.message : "ログインに失敗しました"
-      });
-    }
-  });
-
-  // リフレッシュトークンエンドポイントを追加
-  app.post("/api/auth/refresh", async (req, res) => {
-    try {
-      const { refreshToken } = req.body;
-
-      if (!refreshToken) {
-        return res.status(400).json({ message: "リフレッシュトークンが必要です" });
-      }
-
-      // リフレッシュトークンを検証
-      const decoded = verifyToken(refreshToken);
-
-      if (decoded.tokenType !== 'refresh') {
-        return res.status(400).json({ message: "無効なトークンタイプです" });
-      }
-
-      // ユーザー情報を取得
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, decoded.userId));
-
-      if (!user) {
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      // 新しいアクセストークンを生成
-      const newAccessToken = generateAccessToken(user);
-
-      res.json({
-        accessToken: newAccessToken
-      });
-    } catch (error) {
-      console.error('トークン更新エラー:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
-
-      if (error instanceof Error && error.message === 'トークンの有効期限が切れています') {
-        return res.status(401).json({ message: "リフレッシュトークンの有効期限が切れています" });
-      }
-
-      res.status(400).json({
-        message: error instanceof Error ? error.message : "トークンの更新に失敗しました"
       });
     }
   });
@@ -990,7 +940,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Profile created successfully:', { userId: req.user.id, profileId: newProfile.id });
       res.status(201).json(newProfile);
     } catch (error) {
-      ```typescript
       console.error('Profile creation error:', error);
       if (error instanceof Error) {
         res.status(400).json({
@@ -2017,7 +1966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "記事を削除しました" });
     } catch (error) {
-      console.error('Blogpost deletion error:', {
+      console.error('Blog post deletion error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         postId: req.params.id,
@@ -2720,18 +2669,3 @@ async function cleanupOldBlogPosts(): Promise<BlogPost[] | undefined> {
 }
 
 const photoChunksStore = new Map();
-
-// ここにgenerateAccessTokenとgenerateRefreshToken関数を追加する必要があります。
-function generateAccessToken(user: any): string {
-  // アクセストークン生成ロジックをここに記述します。
-  // userオブジェクトから必要な情報(id, roleなど)を取得してトークンを生成します。
-  // 例: jwt.sign({ userId: user.id, role: user.role, tokenType: 'access' }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  throw new Error("Function not implemented.");
-}
-
-function generateRefreshToken(user: any): string {
-  // リフレッシュトークン生成ロジックをここに記述します。
-  // userオブジェクトから必要な情報(id, roleなど)を取得してトークンを生成します。
-  // 例: jwt.sign({ userId: user.id, role: user.role, tokenType: 'refresh' }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
-  throw new Error("Function not implemented.");
-}
