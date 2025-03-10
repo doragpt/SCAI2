@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
+import { setupCleanupCron } from "./cron";
 
 const app = express();
 
@@ -92,6 +93,11 @@ app.get('/health', async (_req, res) => {
       log('Warning: Database connection failed, but continuing application startup');
     }
 
+    // cronジョブのセットアップ
+    log('Setting up cron jobs...');
+    setupCleanupCron();
+    log('Cron jobs setup completed');
+
     log('Registering routes...');
     const server = await registerRoutes(app);
 
@@ -128,6 +134,7 @@ app.get('/health', async (_req, res) => {
       log(`Environment: ${app.get("env")}`);
       log(`CORS: Enabled with full access`);
       log(`Database: Connection attempted`);
+      log(`Cron jobs: Enabled`);
     });
   } catch (error) {
     log("Fatal startup error:", error);
