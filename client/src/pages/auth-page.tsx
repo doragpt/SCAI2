@@ -95,7 +95,6 @@ export default function AuthPage() {
       username: "",
       password: "",
       passwordConfirm: "",
-      displayName: "",
       location: undefined,
       privacyPolicy: false,
     },
@@ -189,11 +188,11 @@ export default function AuthPage() {
                 <TabsContent value="login">
                   <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
                     <div>
-                      <Label htmlFor="username">ニックネーム</Label>
-                      <Input {...loginForm.register("username")} />
-                      {loginForm.formState.errors.username && (
+                      <Label htmlFor="email">メールアドレス</Label>
+                      <Input {...loginForm.register("email")} type="email" />
+                      {loginForm.formState.errors.email && (
                         <p className="text-sm text-destructive mt-1">
-                          {loginForm.formState.errors.username.message}
+                          {loginForm.formState.errors.email.message}
                         </p>
                       )}
                     </div>
@@ -231,6 +230,18 @@ export default function AuthPage() {
 
                 <TabsContent value="register">
                   <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
+                    <div>
+                      <Label htmlFor="email">
+                        メールアドレス <span className="text-destructive">※</span>
+                      </Label>
+                      <Input {...registerForm.register("email")} type="email" />
+                      {registerForm.formState.errors.email && (
+                        <p className="text-sm text-destructive mt-1">
+                          {registerForm.formState.errors.email.message}
+                        </p>
+                      )}
+                    </div>
+
                     <div>
                       <Label htmlFor="username">
                         ニックネーム <span className="text-destructive">※</span>
@@ -359,18 +370,6 @@ export default function AuthPage() {
                       {registerForm.formState.errors.passwordConfirm && (
                         <p className="text-sm text-destructive mt-1">
                           {registerForm.formState.errors.passwordConfirm.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="displayName">
-                        お名前 <span className="text-destructive">※</span>
-                      </Label>
-                      <Input {...registerForm.register("displayName")} />
-                      {registerForm.formState.errors.displayName && (
-                        <p className="text-sm text-destructive mt-1">
-                          {registerForm.formState.errors.displayName.message}
                         </p>
                       )}
                     </div>
@@ -569,10 +568,6 @@ export default function AuthPage() {
               <div>
                 <p className="text-sm font-medium">ニックネーム</p>
                 <p>{formData.username}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">お名前</p>
-                <p>{formData.displayName}</p>
               </div>
               <div>
                 <p className="text-sm font-medium">生年月日</p>

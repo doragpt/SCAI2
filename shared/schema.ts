@@ -117,8 +117,10 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
+// Users table definition
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
   username: text("username").notNull(),
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
@@ -269,13 +271,14 @@ export type Photo = typeof photoSchema._type;
 export type BodyMark = typeof bodyMarkSchema._type;
 
 // Schemas
+// Login schema update
 export const loginSchema = z.object({
-  username: z.string().min(1, "ログインIDを入力してください"),
+  email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).default("talent"),
 });
 
 export const talentRegisterFormSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
   username: z.string()
     .min(1, "ニックネームを入力してください")
     .max(10, "ニックネームは10文字以内で入力してください")
@@ -288,7 +291,6 @@ export const talentRegisterFormSchema = z.object({
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
     ),
   passwordConfirm: z.string(),
-  displayName: z.string().min(1, "お名前を入力してください"),
   birthDate: z.string().min(1, "生年月日を入力してください"),
   location: z.enum(prefectures, {
     errorMap: () => ({ message: "在住地を選択してください" })
@@ -567,6 +569,7 @@ export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
