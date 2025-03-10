@@ -99,21 +99,6 @@ app.use((req, res, next) => {
       });
     });
 
-    // リクエストロギングミドルウェア
-    app.use((req, res, next) => {
-      const start = Date.now();
-      res.on("finish", () => {
-        const duration = Date.now() - start;
-        log('info', 'Response sent', {
-          method: req.method,
-          path: req.path,
-          status: res.statusCode,
-          duration: `${duration}ms`
-        });
-      });
-      next();
-    });
-
     if (process.env.NODE_ENV === "development") {
       // 開発環境: Viteミドルウェアを設定
       log('info', 'Setting up Vite middleware for development');
