@@ -4,10 +4,15 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { baseUserSchema, type SelectUser } from "@shared/schema";
+import {
+  baseUserSchema,
+  type SelectUser,
+  LoginData,
+  RegisterFormData
+} from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -15,23 +20,14 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterFormData>;
 };
-
-type LoginData = {
-  username: string;
-  password: string;
-  role?: "talent" | "store";
-};
-
-type RegisterData = z.infer<typeof baseUserSchema>;
-
-const TOKEN_KEY = "auth_token";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const {
     data: user,
@@ -41,16 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        const token = localStorage.getItem(TOKEN_KEY);
-        if (!token) {
-          console.log('No auth token found');
-          return null;
-        }
-
         const response = await apiRequest("GET", "/api/auth/check");
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem(TOKEN_KEY);
             return null;
           }
           throw new Error('Authentication check failed');
@@ -67,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return userData;
       } catch (error) {
         console.error('Auth check error:', error);
-        localStorage.removeItem(TOKEN_KEY);
         return null;
       }
     },
@@ -90,11 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(result.message || "ログインに失敗しました");
       }
 
-      if (!result.token) {
-        throw new Error("認証トークンが見つかりません");
-      }
-
-      localStorage.setItem(TOKEN_KEY, result.token);
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -111,13 +94,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "ログイン成功",
         description: "ログインしました。",
       });
+
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      }
     },
     onError: (error: Error) => {
       console.error('Login error:', {
         error: error.message,
         timestamp: new Date().toISOString()
       });
-      localStorage.removeItem(TOKEN_KEY);
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -126,37 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/auth/logout");
-      if (!response.ok) {
-        throw new Error("ログアウトに失敗しました");
-      }
-      localStorage.removeItem(TOKEN_KEY);
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.clear(); // すべてのキャッシュをクリア
-      toast({
-        title: "ログアウト完了",
-        description: "ログアウトしました。",
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Logout error:', {
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-      toast({
-        title: "ログアウトエラー",
-        description: error.message || "ログアウトに失敗しました",
-        variant: "destructive",
-      });
-    },
-  });
-
   const registerMutation = useMutation({
-    mutationFn: async (credentials: RegisterData) => {
+    mutationFn: async (credentials: RegisterFormData) => {
       const response = await apiRequest("POST", "/api/auth/register", credentials);
       const result = await response.json();
 
@@ -164,9 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(result.message || "登録に失敗しました");
       }
 
-      if (result.token) {
-        localStorage.setItem(TOKEN_KEY, result.token);
-      }
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -175,6 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
+
+      // 女性（talent）の新規登録後は /talent/mypage にリダイレクト
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      }
     },
     onError: (error: Error) => {
       console.error('Registration error:', {
@@ -189,12 +148,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  console.log('Auth state:', {
-    hasUser: !!user,
-    userId: user?.id,
-    username: user?.username,
-    role: user?.role,
-    timestamp: new Date().toISOString()
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auth/logout");
+      if (!response.ok) {
+        throw new Error("ログアウトに失敗しました");
+      }
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear(); // すべてのキャッシュをクリア
+      toast({
+        title: "ログアウト完了",
+        description: "ログアウトしました。",
+      });
+      setLocation("/");
+    },
+    onError: (error: Error) => {
+      console.error('Logout error:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        title: "ログアウトエラー",
+        description: error.message || "ログアウトに失敗しました",
+        variant: "destructive",
+      });
+    },
   });
 
   return (
