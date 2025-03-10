@@ -154,8 +154,8 @@ export default function AuthPage() {
     if (!formData) return;
 
     try {
-      const { passwordConfirm, privacyPolicy, ...submitData } = formData;
-      registerMutation.mutate(submitData);
+      // Don't remove passwordConfirm and privacyPolicy here
+      registerMutation.mutate(formData);
       setShowConfirmation(false);
     } catch (error) {
       console.error('Registration error:', error);
