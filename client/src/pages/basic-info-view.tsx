@@ -20,7 +20,13 @@ export default function BasicInfoView() {
     error,
   } = useQuery({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.USER_PROFILE),
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.USER_PROFILE);
+      if (!response.ok) {
+        throw new Error("ユーザー情報の取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -66,15 +72,9 @@ export default function BasicInfoView() {
       </div>
 
       <Card className="p-6 space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">ニックネーム</p>
-            <p>{userProfile?.username || "未設定"}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">本名</p>
-            <p>{userProfile?.displayName || "未設定"}</p>
-          </div>
+        <div>
+          <p className="text-sm text-muted-foreground">ニックネーム</p>
+          <p>{userProfile?.username || "未設定"}</p>
         </div>
 
         <div>
@@ -86,6 +86,16 @@ export default function BasicInfoView() {
                 })
               : "未設定"}
           </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-muted-foreground">メールアドレス</p>
+          <p>{userProfile?.email || "未設定"}</p>
+        </div>
+
+        <div>
+          <p className="text-sm text-muted-foreground">在住地</p>
+          <p>{userProfile?.location || "未設定"}</p>
         </div>
 
         <div>

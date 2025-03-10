@@ -26,7 +26,6 @@ import { ja } from "date-fns/locale";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
-  displayName: z.string().min(1, "本名を入力してください"),
   location: z.string().min(1, "居住地を選択してください"),
   preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
   currentPassword: z.string().optional(),
@@ -54,11 +53,11 @@ type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 
 interface UserProfile {
   id: number;
+  email: string;
   username: string;
-  displayName: string | null;
-  birthDate: string | null;
-  location: string | null;
-  preferredLocations: string[] | null;
+  birthDate: string;
+  location: string;
+  preferredLocations: string[];
 }
 
 interface UserUpdateResponse {
@@ -73,7 +72,13 @@ export default function BasicInfoEdit() {
 
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserProfile>({
     queryKey: ["/api/user/profile"],
-    queryFn: () => apiRequest<UserProfile>("GET", "/api/user/profile"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/user/profile");
+      if (!response.ok) {
+        throw new Error("ユーザー情報の取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user,
   });
 
@@ -81,7 +86,6 @@ export default function BasicInfoEdit() {
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       username: "",
-      displayName: "",
       location: "",
       preferredLocations: [],
     },
@@ -91,18 +95,16 @@ export default function BasicInfoEdit() {
     if (userProfile) {
       form.reset({
         username: userProfile.username,
-        displayName: userProfile.displayName || "",
-        location: userProfile.location || "",
-        preferredLocations: userProfile.preferredLocations || [],
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations,
       });
     }
   }, [userProfile, form.reset]);
 
   const updateProfileMutation = useMutation<UserUpdateResponse, Error, BasicInfoFormData>({
     mutationFn: async (updateData) => {
-      const data = await apiRequest<UserUpdateResponse>("PATCH", "/api/user", {
+      const response = await apiRequest("PATCH", "/api/user", {
         username: updateData.username,
-        displayName: updateData.displayName,
         location: updateData.location,
         preferredLocations: updateData.preferredLocations,
         ...(updateData.newPassword && updateData.currentPassword ? {
@@ -110,7 +112,12 @@ export default function BasicInfoEdit() {
           newPassword: updateData.newPassword,
         } : {})
       });
-      return data;
+
+      if (!response.ok) {
+        throw new Error("プロフィールの更新に失敗しました");
+      }
+
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData<UserProfile>(["/api/user/profile"], data.user);
@@ -157,20 +164,6 @@ export default function BasicInfoEdit() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>ニックネーム</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="displayName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>本名</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
