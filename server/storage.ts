@@ -33,7 +33,10 @@ export class DatabaseStorage implements IStorage {
 
       log('info', 'ユーザー取得完了', {
         id,
-        found: !!user
+        found: !!user,
+        role: user?.role,
+        hasDisplayName: !!user?.displayName,
+        hasBirthDate: !!user?.birthDate
       });
       return user;
     } catch (error) {
@@ -55,7 +58,8 @@ export class DatabaseStorage implements IStorage {
 
       log('info', 'ユーザー名での取得完了', {
         username,
-        found: !!user
+        found: !!user,
+        role: user?.role
       });
       return user;
     } catch (error) {
@@ -71,17 +75,25 @@ export class DatabaseStorage implements IStorage {
     try {
       log('info', '新規ユーザー作成開始', {
         username: insertUser.username,
-        role: insertUser.role
+        role: insertUser.role,
+        hasDisplayName: !!insertUser.displayName,
+        hasBirthDate: !!insertUser.birthDate
       });
+
+      // 必須フィールドの確認
+      if (!insertUser.birthDate || !insertUser.displayName || !insertUser.location) {
+        throw new Error('必須フィールドが不足しています');
+      }
 
       const [user] = await db
         .insert(users)
         .values({
           ...insertUser,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          birthDate: new Date(insertUser.birthDate),
           birthDateModified: false,
-          preferredLocations: insertUser.preferredLocations || []
+          preferredLocations: insertUser.preferredLocations || [],
+          createdAt: new Date(),
+          updatedAt: new Date()
         })
         .returning();
 
@@ -92,7 +104,10 @@ export class DatabaseStorage implements IStorage {
       log('info', '新規ユーザー作成完了', {
         id: user.id,
         username: user.username,
-        role: user.role
+        role: user.role,
+        displayName: user.displayName,
+        birthDate: user.birthDate,
+        location: user.location
       });
 
       return user;

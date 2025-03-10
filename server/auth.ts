@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, talentRegisterFormSchema } from "@shared/schema";
 import { log } from "./utils/logger";
 
 declare global {
@@ -17,8 +17,8 @@ declare global {
 const scryptAsync = promisify(scrypt);
 
 // パスワード関連の定数
-const SALT_LENGTH = 32; // 一定のソルト長を使用
-const KEY_LENGTH = 64;  // scryptの出力長
+const SALT_LENGTH = 32;
+const KEY_LENGTH = 64;
 
 // パスワードハッシュ化関数
 async function hashPassword(password: string): Promise<string> {
@@ -30,11 +30,6 @@ async function hashPassword(password: string): Promise<string> {
     const salt = randomBytes(SALT_LENGTH).toString('hex');
     const buf = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
     const hashedPassword = buf.toString('hex');
-
-    log('info', 'パスワードハッシュ化完了', {
-      saltLength: salt.length,
-      hashedLength: hashedPassword.length
-    });
 
     return `${hashedPassword}.${salt}`;
   } catch (error) {
@@ -105,24 +100,17 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('debug', 'ユーザーシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      log('debug', 'ユーザーデシリアライズ', { userId: id });
       const user = await storage.getUser(id);
       if (!user) {
-        log('warn', 'デシリアライズ時にユーザーが見つかりません', { userId: id });
         return done(new Error('ユーザーが見つかりません'));
       }
       done(null, user);
     } catch (error) {
-      log('error', 'デシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        userId: id
-      });
       done(error);
     }
   });
@@ -135,21 +123,11 @@ export function setupAuth(app: Express) {
         role: req.body.role
       });
 
-      // バリデーション
-      if (!req.body.username || !req.body.password) {
-        return res.status(400).json({
-          message: "ユーザー名とパスワードは必須です"
-        });
-      }
-
-      if (req.body.password.length < 8) {
-        return res.status(400).json({
-          message: "パスワードは8文字以上である必要があります"
-        });
-      }
+      // リクエストデータのバリデーション
+      const validatedData = talentRegisterFormSchema.parse(req.body);
 
       // 既存ユーザーチェック
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {
         return res.status(400).json({
           message: "このユーザー名は既に使用されています"
@@ -157,12 +135,21 @@ export function setupAuth(app: Express) {
       }
 
       // パスワードのハッシュ化
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      // birthDateを日付オブジェクトに変換
+      const birthDate = new Date(validatedData.birthDate);
 
       // ユーザー作成
       const user = await storage.createUser({
-        ...req.body,
+        username: validatedData.username,
         password: hashedPassword,
+        role: validatedData.role,
+        displayName: validatedData.displayName,
+        birthDate: birthDate,
+        location: validatedData.location,
+        birthDateModified: false,
+        preferredLocations: validatedData.preferredLocations,
         createdAt: new Date(),
         updatedAt: new Date()
       });
