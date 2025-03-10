@@ -1,31 +1,49 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { authenticate } from '../middleware/auth';
-import { loginSchema } from '@shared/schema';
+import { talentRegisterFormSchema } from '@shared/schema';
+import { NextFunction, Request, Response } from 'express';
+import * as bcrypt from 'bcrypt';
 
 const router = Router();
 
 // 認証エンドポイント
-router.post("/register", async (req, res) => {
+router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const existingUser = await storage.getUserByUsername(req.body.username);
+    // リクエストデータのバリデーション
+    const validatedData = talentRegisterFormSchema.parse(req.body);
+
+    // 既存ユーザーのチェック
+    const existingUser = await storage.getUserByUsername(validatedData.username);
     if (existingUser) {
       return res.status(400).json({ message: "このユーザー名は既に使用されています" });
     }
 
+    // パスワードのハッシュ化
+    const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+
+    // ユーザーの作成
     const user = await storage.createUser({
-      ...req.body,
-      password: await storage.hashPassword(req.body.password),
+      ...validatedData,
+      password: hashedPassword,
+      birthDateModified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
+    // セッションの作成
     req.login(user, (err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('Login error:', err);
+        return next(err);
+      }
       res.status(201).json(user);
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(400).json({
-      message: error instanceof Error ? error.message : "ユーザー登録に失敗しました"
+    res.status(500).json({
+      error: "登録処理中にエラーが発生しました",
+      details: error instanceof Error ? error.message : undefined
     });
   }
 });
