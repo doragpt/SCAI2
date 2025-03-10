@@ -18,31 +18,14 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// 詳細なリクエストロギングミドルウェア
+// 簡略化されたリクエストロギング
 app.use((req, res, next) => {
   const start = Date.now();
-  log('Request received:', {
-    method: req.method,
-    path: req.path,
-    headers: {
-      ...req.headers,
-      authorization: req.headers.authorization ? '[HIDDEN]' : undefined,
-      cookie: req.headers.cookie ? '[HIDDEN]' : undefined
-    },
-    query: req.query,
-    body: req.method !== 'GET' ? req.body : undefined,
-    timestamp: new Date().toISOString()
-  });
+  log('Request:', `${req.method} ${req.path}`);
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    log('Response sent:', {
-      method: req.method,
-      path: req.path,
-      status: res.statusCode,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
-    });
+    log('Response:', `${res.statusCode} ${duration}ms`);
   });
 
   next();
@@ -51,82 +34,67 @@ app.use((req, res, next) => {
 // ヘルスチェックエンドポイント
 app.get('/health', async (_req, res) => {
   try {
-    // 最小限のデータベース接続テスト
     await db.execute(sql`SELECT 1`);
-
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      env: app.get('env'),
-      database: true
-    });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   } catch (error) {
     log('Health check failed:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       status: 'error',
-      timestamp: new Date().toISOString(),
-      env: app.get('env'),
-      database: false,
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      timestamp: new Date().toISOString()
     });
   }
 });
 
 // メインのアプリケーション起動処理
-(async () => {
+async function startServer() {
   try {
-    log('Starting server initialization...');
-
-    // 初期データベース接続テスト
-    try {
-      log('Testing database connection...');
-      await db.execute(sql`SELECT 1`);
-      log('Database connection successful');
-    } catch (error) {
-      log('Database connection failed:', error);
-      // エラーをスローせずに、アプリケーションは続行
-      log('Warning: Database connection failed, but continuing application startup');
-    }
-
-    // cronジョブのセットアップ
-    log('Setting up cron jobs...');
-    setupCronJobs();
-    log('Cron jobs setup completed');
-
-    log('Registering routes...');
+    log('Starting server...');
     const server = await registerRoutes(app);
 
     // エラーハンドリングミドルウェア
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      log("Server error:", {
-        error: err.message,
-        code: err.code,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
-
+      log("Error:", err.message);
       res.status(err.status || 500).json({
         error: true,
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
-        timestamp: new Date().toISOString()
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
       });
     });
 
     if (app.get("env") === "development") {
-      log('Setting up Vite in development mode...');
       await setupVite(app, server);
     }
 
     const port = process.env.PORT || 5000;
     server.listen(port, "0.0.0.0", () => {
       log(`Server started at http://0.0.0.0:${port}`);
-      log(`Environment: ${app.get("env")}`);
-      log(`CORS: Enabled with full access`);
-      log(`Database: Connection attempted`);
-      log(`Cron jobs: Enabled for publishing and cleanup`);
+
+      // サーバー起動後に非同期で初期化処理を実行
+      initializeServices().catch(error => {
+        log("Service initialization error:", error);
+      });
     });
+
+    return server;
   } catch (error) {
     log("Fatal startup error:", error);
     process.exit(1);
   }
-})();
+}
+
+// 非同期の初期化処理
+async function initializeServices() {
+  try {
+    // データベース接続テスト
+    await db.execute(sql`SELECT 1`);
+    log('Database connection successful');
+
+    // cronジョブのセットアップ
+    await setupCronJobs();
+    log('Cron jobs setup completed');
+  } catch (error) {
+    log('Service initialization error:', error);
+    // エラーをスローせず、サービスは継続
+  }
+}
+
+startServer();

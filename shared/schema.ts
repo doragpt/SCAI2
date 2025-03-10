@@ -215,7 +215,6 @@ export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 // Talent profile schema
 
-// talentProfileSchemaからworkType関連のフィールドを削除
 export const talentProfileSchema = z.object({
   // 必須フィールド
   lastName: z.string().min(1, "姓を入力してください"),
@@ -328,8 +327,8 @@ export const talentProfileSchema = z.object({
   ngLocations: z.array(z.enum(prefectures)).default([]),
 });
 
-// スキーマ定義の最後に追加
-export const talentProfileUpdateSchema = talentProfileSchema.extend({
+// talentProfileUpdateSchema の修正
+export const talentProfileUpdateSchema = talentProfileSchema.partial().extend({
   currentPassword: z.string().optional(),
   newPassword: z.string()
     .optional()
@@ -341,13 +340,11 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
       {
         message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
       }
-    ),
-}).omit({
-  userId: true
-}).partial();
+    )
+});
 
 
-// 重複している型定義を削除し、一箇所にまとめる
+// 型の重複を解消し、必要な型のみエクスポート
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
@@ -363,7 +360,6 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
 
 
-// APIレスポンスの型定義
 export interface JobListingResponse {
   jobs: Job[];
   pagination: {
@@ -373,13 +369,11 @@ export interface JobListingResponse {
   };
 }
 
-// 求人詳細レスポンスの型定義
 export interface JobResponse extends Job {
   hasApplied?: boolean;
   applicationStatus?: string;
 }
 
-// service types の定義（重複を削除）
 export const serviceTypeLabels: Record<ServiceType, string> = {
   deriheru: "デリヘル",
   hoteheru: "ホテヘル",
@@ -389,7 +383,6 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   mseikan: "メンズエステ"
 } as const;
 
-// その他の型定義
 
 export type Prefecture = typeof prefectures[number];
 export type BodyType = typeof bodyTypes[number];
@@ -404,11 +397,9 @@ export type EstheOption = typeof estheOptions[number];
 export type ServiceType = typeof serviceTypes[number];
 
 
-// 求人情報関連の新しいenums
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
 export type JobStatus = typeof jobStatusTypes[number];
 
-// 求人条件の型定義
 export const jobRequirementsSchema = z.object({
   ageMin: z.number().min(18).max(99).optional(),
   ageMax: z.number().min(18).max(99).optional(),
@@ -423,7 +414,6 @@ export const jobRequirementsSchema = z.object({
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
-// 求人情報テーブル
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
@@ -454,7 +444,6 @@ export const jobs = pgTable("jobs", {
   };
 });
 
-// 求人情報のZodスキーマ（重複を解消）
 export const jobSchema = createInsertSchema(jobs)
   .extend({
     requirements: jobRequirementsSchema,
@@ -509,14 +498,10 @@ export const viewHistory = pgTable('viewHistory', {
   };
 });
 
-// Application type definitions
-
-// Zod schemas for validation
 export const applicationSchema = createInsertSchema(applications);
 export const keepListSchema = createInsertSchema(keepList);
 export const viewHistorySchema = createInsertSchema(viewHistory);
 
-// リレーションの定義
 export const jobsRelations = relations(jobs, ({ many }) => ({
   applications: many(applications),
   keepList: many(keepList),
@@ -555,7 +540,6 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
@@ -609,7 +593,6 @@ export const talentRegisterFormSchema = z.object({
   path: ["passwordConfirm"],
 });
 
-// ブログ関連の型定義とテーブルを追加
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
@@ -631,7 +614,6 @@ export const blogPosts = pgTable("blog_posts", {
   };
 });
 
-// ブログ投稿のスキーマ定義
 export const blogPostSchema = createInsertSchema(blogPosts)
   .extend({
     images: z.array(z.string()).optional(),
@@ -677,9 +659,6 @@ export const blogPostSchema = createInsertSchema(blogPosts)
     }
   });
 
-// 型定義のエクスポート
-
-// リレーションの定義
 export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
   store: one(users, {
     fields: [blogPosts.storeId],
@@ -687,9 +666,6 @@ export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
   }),
 }));
 
-// 画像関連の型定義
-
-// APIレスポンスの型定義
 export interface BlogPostListResponse {
   posts: BlogPost[];
   pagination: {

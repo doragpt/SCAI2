@@ -1,3 +1,6 @@
+// Add type declaration for quill-image-resize-module-react
+declare module 'quill-image-resize-module-react';
+
 import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,6 +45,12 @@ import {
   Calendar,
   X as CloseIcon
 } from "lucide-react";
+
+// APIレスポンスの型定義を追加
+interface UploadResponse {
+  url: string;
+  metadata?: ImageMetadata;
+}
 
 // Quillの設定
 Quill.register('modules/imageResize', ImageResize);
@@ -99,7 +108,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const uploadMutation = useMutation({
+  const uploadMutation = useMutation<UploadResponse, Error, File>({
     mutationFn: async (file: File) => {
       try {
         // ファイルサイズと形式のチェックを厳密化
@@ -127,7 +136,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           });
         }, 100);
 
-        const response = await apiRequest(
+        const response = await apiRequest<UploadResponse>(
           "POST", 
           "/api/upload", 
           formData,
@@ -145,10 +154,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           setUploadProgress(0);
         }, 1000);
 
-        if (response?.metadata) {
-          setImageMetadata(response.metadata);
-        }
-
         return response;
       } catch (error) {
         setUploadProgress(0);
@@ -158,12 +163,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     onSuccess: (data) => {
       if (data?.url) {
         form.setValue("thumbnail", data.url);
-        toast({
-          title: "サムネイル画像をアップロードしました",
-          description: `画像を最適化しました（${imageMetadata ? `${imageMetadata.width}x${imageMetadata.height}` : '800x600'}）`,
-        });
+        if (data.metadata) {
+          setImageMetadata(data.metadata);
+          toast({
+            title: "サムネイル画像をアップロードしました",
+            description: `画像を最適化しました（${data.metadata.width}x${data.metadata.height}）`,
+          });
+        }
       } else {
-        throw new Error("アップロード結果のURLが見つかりません");
+          toast({
+            variant: "destructive",
+            title: "エラー",
+            description: "アップロード結果のURLが見つかりません"
+          });
       }
     },
     onError: (error) => {
