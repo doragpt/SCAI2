@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { blogPostSchema, type BlogPost } from "@shared/schema";
@@ -70,6 +70,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isScheduling, setIsScheduling] = useState(false);
   const { toast } = useToast();
   const quillRef = useRef<ReactQuill>(null);
+  const queryClient = useQueryClient();
 
   const form = useForm<BlogPost>({
     resolver: zodResolver(blogPostSchema),
@@ -77,6 +78,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       ...initialData,
       scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt) : undefined,
       publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt) : undefined,
+      status: initialData?.status || "draft",
     } || {
       title: "",
       content: "",
@@ -128,12 +130,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     onSuccess: () => {
       toast({
         title: "記事を作成しました",
-        description: "ブログ記事の作成が完了しました。",
       });
-      // ブログ一覧を更新
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       window.history.back();
     },
     onError: (error) => {
+      console.error('Create error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -148,10 +150,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     onSuccess: () => {
       toast({
         title: "記事を更新しました",
-        description: "ブログ記事の更新が完了しました。",
       });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      window.history.back();
     },
     onError: (error) => {
+      console.error('Update error:', error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -185,12 +189,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  const handleSubmit = async (isDraft: boolean = false) => {
+  const handleSubmit = useCallback(async (isDraft: boolean = false) => {
     try {
       const values = form.getValues();
+      console.log('Form values:', values);
 
       // 必須フィールドのチェック
-      if (!values.title || !values.content) {
+      if (!values.title.trim() || !values.content.trim()) {
         toast({
           variant: "destructive",
           title: "エラー",
@@ -199,12 +204,26 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      // 予約投稿時の日時チェック
+      if (isScheduling && (!values.scheduledAt || new Date(values.scheduledAt) <= new Date())) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "予約日時は現在時刻より後に設定してください",
+        });
+        return;
+      }
+
       const submissionData = {
         ...values,
+        title: values.title.trim(),
+        content: values.content.trim(),
         status: isDraft ? "draft" : isScheduling ? "scheduled" : "published",
         scheduledAt: isScheduling && values.scheduledAt ? new Date(values.scheduledAt) : null,
         publishedAt: !isDraft && !isScheduling ? new Date() : null,
       };
+
+      console.log('Submission data:', submissionData);
 
       if (postId) {
         await updateMutation.mutateAsync(submissionData);
@@ -219,7 +238,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         description: error instanceof Error ? error.message : "投稿に失敗しました",
       });
     }
-  };
+  }, [form, isScheduling, postId, createMutation, updateMutation, toast]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -255,8 +274,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   <img 
                     src={form.watch("thumbnail")} 
                     alt="サムネイル画像"
-                    className="w-full h-auto max-h-[400px] object-contain mx-auto"
-                    style={{ objectFit: 'contain' }}
+                    className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
                   />
                 </div>
               )}
@@ -304,7 +322,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               <img
                                 src={field.value}
                                 alt="サムネイル"
-                                className="w-full max-h-[400px] object-contain mx-auto"
+                                className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
                               />
                             </div>
                           )}

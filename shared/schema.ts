@@ -648,12 +648,33 @@ export const blogPostSchema = createInsertSchema(blogPosts)
     status: z.enum(["draft", "published", "scheduled"]),
     title: z.string().min(1, "タイトルは必須です"),
     content: z.string().min(1, "本文は必須です"),
-    thumbnail: z.string().optional(),
+    thumbnail: z.string().nullable().optional(),
   })
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
+  })
+  .superRefine((data, ctx) => {
+    // 予約投稿の場合の追加バリデーション
+    if (data.status === "scheduled") {
+      if (!data.scheduledAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "予約投稿には公開日時の指定が必要です",
+          path: ["scheduledAt"]
+        });
+      } else {
+        const scheduledDate = new Date(data.scheduledAt);
+        if (scheduledDate <= new Date()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "予約日時は現在時刻より後に設定してください",
+            path: ["scheduledAt"]
+          });
+        }
+      }
+    }
   });
 
 // 型定義のエクスポート
