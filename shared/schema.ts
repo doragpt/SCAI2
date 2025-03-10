@@ -151,14 +151,6 @@ export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
   deriheru: "デリヘル",
@@ -299,33 +291,19 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ types: [], others: [] }),
   canProvideResidenceRecord: z.boolean().default(false),
-  height: z.number(),
-  weight: z.number(),
+  height: z.number().min(100).max(200),
+  weight: z.number().min(30).max(150),
   cupSize: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
-  bust: z.union([z.string(), z.number()]).optional().transform(val => {
-    if (val === "" || val === undefined) return null;
-    const num = Number(val);
-    return isNaN(num) ? null : num;
-  }),
-  waist: z.union([z.string(), z.number()]).optional().transform(val => {
-    if (val === "" || val === undefined) return null;
-    const num = Number(val);
-    return isNaN(num) ? null : num;
-  }),
-  hip: z.union([z.string(), z.number()]).optional().transform(val => {
-    if (val === "" || val === undefined) return null;
-    const num = Number(val);
-    return isNaN(num) ? null : num;
-  }),
+  bust: z.number().nullable(),
+  waist: z.number().nullable(),
+  hip: z.number().nullable(),
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
   canPhotoDiary: z.boolean().default(false),
   canHomeDelivery: z.boolean().default(false),
-  hasSnsAccount: z.boolean().default(false),
-  hasEstheExperience: z.boolean().default(false),
   ngOptions: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
@@ -340,6 +318,7 @@ export const talentProfileSchema = z.object({
     types: z.array(z.enum(smokingTypes)).default([]),
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
+  hasSnsAccount: z.boolean().default(false),
   snsUrls: z.array(z.string()).default([]),
   currentStores: z.array(z.object({
     storeName: z.string(),
@@ -349,13 +328,16 @@ export const talentProfileSchema = z.object({
     storeName: z.string(),
   })).default([]),
   photoDiaryUrls: z.array(z.string()).default([]),
-  photos: z.array(photoSchema)
-    .min(1, "少なくとも1枚の写真が必要です")
-    .max(20, "写真は最大20枚までです")
-    .refine(
-      (photos) => photos.some((photo) => photo.tag === "現在の髪色"),
-      "現在の髪色の写真は必須です"
-    ),
+  selfIntroduction: z.string().optional(),
+  notes: z.string().optional(),
+  estheOptions: z.object({
+    available: z.array(z.enum(estheOptions)).default([]),
+    ngOptions: z.array(z.string()).default([]),
+  }).default({ available: [], ngOptions: [] }),
+  hasEstheExperience: z.boolean().default(false),
+  estheExperiencePeriod: z.string().optional(),
+  preferredLocations: z.array(z.enum(prefectures)).default([]),
+  ngLocations: z.array(z.enum(prefectures)).default([]),
   bodyMark: z.object({
     hasBodyMark: z.boolean().default(false),
     details: z.string().optional(),
@@ -365,16 +347,17 @@ export const talentProfileSchema = z.object({
     details: "",
     others: []
   }),
-  selfIntroduction: z.string().optional().default(""),
-  notes: z.string().optional().default(""),
-  estheExperiencePeriod: z.string().optional().default(""),
-  estheOptions: z.object({
-    available: z.array(z.enum(estheOptions)).default([]),
-    ngOptions: z.array(z.string()).default([]),
-  }).default({ available: [], ngOptions: [] }),
-  preferredLocations: z.array(z.enum(prefectures)).default([]),
-  ngLocations: z.array(z.enum(prefectures)).default([]),
+  photos: z.array(photoSchema)
+    .min(1, "少なくとも1枚の写真が必要です")
+    .max(20, "写真は最大20枚までです")
+    .refine(
+      (photos) => photos.some((photo) => photo.tag === "現在の髪色"),
+      "現在の髪色の写真は必須です"
+    ),
 });
+
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
+export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 
 export const talentProfileUpdateSchema = talentProfileSchema.extend({
   currentPassword: z.string().optional(),
@@ -393,21 +376,8 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
   userId: true
 }).partial();
 
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-
-
-export type Photo = z.infer<typeof photoSchema>;
 
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export const talentRegisterFormSchema = z.object({
@@ -543,7 +513,7 @@ export type SelectUser = {
   createdAt: Date;
 };
 
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
+export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
@@ -633,6 +603,7 @@ export type CommonNgOption = typeof commonNgOptions[number];
 export type EstheOption = typeof estheOptions[number];
 
 
+
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -691,10 +662,10 @@ export const talentProfiles = pgTable("talent_profiles", {
   estheExperiencePeriod: text("esthe_experience_period"),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ 
-    hasBodyMark: false, 
-    details: "", 
-    others: [] 
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({
+    hasBodyMark: false,
+    details: "",
+    others: []
   }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
   age: integer("age"),

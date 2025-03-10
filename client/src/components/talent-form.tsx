@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus } from "lucide-react";
-import { Link, Redirect } from "wouter";
+import { Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -21,8 +22,8 @@ import {
 } from "@/components/ui/form";
 
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, QUERY_KEYS } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import {
   allergyTypes,
@@ -40,8 +41,8 @@ import {
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
-import {Textarea} from "@/components/ui/textarea"
-import React from 'react';
+import { Textarea } from "@/components/ui/textarea";
+import { createOrUpdateTalentProfile } from "@/lib/api/talent";
 
 // Store type definitions
 type CurrentStore = {
@@ -540,9 +541,9 @@ const defaultValues: TalentProfileData = {
   height: 150,
   weight: 45,
   cupSize: "D",
-  bust: 80,
-  waist: 60,
-  hip: 85,
+  bust: null,
+  waist: null,
+  hip: null,
   faceVisibility: "全隠し",
   canPhotoDiary: false,
   canHomeDelivery: false,
@@ -574,6 +575,8 @@ const defaultValues: TalentProfileData = {
   },
   hasEstheExperience: false,
   estheExperiencePeriod: "",
+  preferredLocations: [],
+  ngLocations: [],
   bodyMark: {
     hasBodyMark: false,
     details: "",
@@ -585,7 +588,7 @@ const defaultValues: TalentProfileData = {
 export function TalentForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -593,137 +596,44 @@ export function TalentForm() {
     defaultValues,
   });
 
-  // フォームの状態を監視
-  useEffect(() => {
-    const formState = form.formState;
-    const photos = form.getValues().photos || [];
-    console.log('Form validation state:', {
-      isValid: formState.isValid,
-      isDirty: formState.isDirty,
-      errors: formState.errors,
-      photos: photos,
-      hasCurrentHairPhoto: photos.some(photo => photo.tag === "現在の髪色"),
-    });
-  }, [form.formState]);
-
   // プロフィールデータの取得
   const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    enabled: !!user,
+    enabled: !!user?.id,
   });
-
-  // ユーザー基本情報の取得を修正
-  const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
-    queryKey: ["/api/user"],
-    enabled: !!user,
-  });
-
-  console.log('TalentForm user profile:', userProfile);
-
-  // 生年月日から年齢を計算
-  const age = userProfile?.birthDate
-    ? calculateAge(new Date(userProfile.birthDate))
-    : null;
-
-  console.log('Calculated age:', age);
-
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<TalentProfileData | null>(null);
-  const [otherIds, setOtherIds] = useState<string[]>([]);
-  const [otherNgOptions, setOtherNgOptions] = useState<string[]>([]);
-  const [otherAllergies, setOtherAllergies] = useState<string[]>([]);
-  const [otherSmokingTypes, setOtherSmokingTypes] = useState<string[]>([]);
-  const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [bodyMarkDetails, setBodyMarkDetails] = useState("");
-  const [newIdType, setNewIdType] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newNgOption, setNewNgOption] = useState("");
-  const [newAllergy, setNewAllergy] = useState("");
-  const [newSmokingType, setNewSmokingType] = useState("");
-  const [newBodyMark, setNewBodyMark] = useState("");
-  const [bodyMarks, setBodyMarks] = useState<string[]>([]);
-  const [otherEstheNgOptions, setOtherEstheNgOptions] = useState<string[]>([]);
-
 
   // 既存のプロフィールデータが取得された時にフォームを更新
   useEffect(() => {
     if (existingProfile) {
-      console.log('Loading existing profile bodyMark:', existingProfile.bodyMark);
-
-      form.reset({
-        ...existingProfile,
-        bust: existingProfile.bust?.toString() ?? "",
-        waist: existingProfile.waist?.toString() ?? "",
-        hip: existingProfile.hip?.toString() ?? "",
-        photos: existingProfile.photos || [],
-        bodyMark: {
-          hasBodyMark: existingProfile.bodyMark?.hasBodyMark || false,
-          details: existingProfile.bodyMark?.details || "",
-          others: existingProfile.bodyMark?.others || []
-        },
-        estheOptions: {
-          available: existingProfile.estheOptions?.available || [],
-          otherNgOptions: existingProfile.estheOptions?.otherNgOptions || ""
-        }
-      });
-
-      // stateの更新
-      setOtherIds(existingProfile.availableIds?.others || []);
-      setOtherNgOptions(existingProfile.ngOptions?.others || []);
-      setOtherAllergies(existingProfile.allergies?.others || []);
-      setOtherSmokingTypes(existingProfile.smoking?.others || []);
-      setBodyMarks(existingProfile.bodyMark?.others || []);
-      setBodyMarkDetails(existingProfile.bodyMark?.details || "");
-      console.log('Form reset complete, current bodyMark:', form.getValues().bodyMark);
+      form.reset(existingProfile);
     }
   }, [existingProfile, form]);
 
-  const handleConfirm = async () => {
-    if (!formData) return;
-
+  // フォームのsubmit処理
+  const onSubmit = async (data: TalentProfileData) => {
     try {
-      setIsSubmitting(true);
+      await createOrUpdateTalentProfile(data);
 
-      // APIリクエストを実行
-      await apiRequest(
-        existingProfile ? "PUT" : "POST",
-        QUERY_KEYS.TALENT_PROFILE,
-        formData
-      );
+      toast({
+        title: "保存完了",
+        description: "プロフィールを保存しました",
+      });
 
       // キャッシュを更新
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
 
-      toast({
-        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
-        description: "プロフィールの保存が完了しました。",
-      });
-
-      setIsConfirmationOpen(false);
-
     } catch (error) {
-      console.error("送信エラー:", error);
+      console.error('Form submission error:', error);
       toast({
-        title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
         variant: "destructive",
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "プロフィールの保存に失敗しました",
       });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // 身分証追加ハンドラーの修正
-  const handleAddIdType = (value: string) => {
-    if (!otherIds.includes(value)) {
-      const updated = [...otherIds, value];
-      setOtherIds(updated);
-      form.setValue("availableIds.others", updated);
     }
   };
 
   // ローディング中の表示
-  if (isAuthLoading || isUserProfileLoading || isLoadingProfile) {
+  if (isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -803,12 +713,6 @@ export function TalentForm() {
 
   // 写真の更新処理を修正
   const handlePhotoUpload = (newPhotos: Photo[]) => {
-    console.log('Updating photos:', {
-      currentPhotos: form.getValues().photos,
-      newPhotos,
-      hasCurrentHairPhoto: newPhotos.some(photo => photo.tag === "現在の髪色"),
-    });
-
     form.setValue('photos', newPhotos, {
       shouldValidate: true,
       shouldDirty: true,
@@ -819,132 +723,80 @@ export function TalentForm() {
     form.trigger();
   };
 
-  // フォームのsubmit処理を再実装
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    console.log('Form submission started');
-
-    try {
-      const data = form.getValues();
-      console.log('Raw form data:', data);
-
-      // 数値型フィールドの変換
-      const formData = {
-        ...data,
-        height: Number(data.height),
-        weight: Number(data.weight),
-        bust: data.bust === "" ? null : Number(data.bust),
-        waist: data.waist === "" ? null : Number(data.waist),
-        hip: data.hip === "" ? null : Number(data.hip),
-        availableIds: {
-          types: data.availableIds?.types || [],
-          others: otherIds,
-        },
-        ngOptions: {
-          common: data.ngOptions?.common || [],
-          others: otherNgOptions,
-        },
-        allergies: {
-          types: data.allergies?.types || [],
-          others: otherAllergies,
-          hasAllergy: data.allergies?.hasAllergy || false,
-        },
-        smoking: {
-          enabled: data.smoking?.enabled || false,
-          types: data.smoking?.types || [],
-          others: otherSmokingTypes,
-        },
-        bodyMark: {
-          hasBodyMark: data.bodyMark?.hasBodyMark || false,
-          details: data.bodyMark?.details || "",
-          others: bodyMarks // 既存の配列を使用
-        },
-        photos: data.photos || [],
-        estheOptions: {
-          available: data.estheOptions?.available || [],
-          ngOptions: otherEstheNgOptions,
-        }
-      };
-
-      console.log('Processed form data:', formData);
-      setFormData(formData);
-      setIsConfirmationOpen(true);
-
-    } catch (error) {
-      console.error('Form submission error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "フォームの送信に失敗しました",
-      });
-    }
+  const handleAddIdType = (value: string) => {
+    const updated = [...form.getValues().availableIds.others || [], value];
+    form.setValue("availableIds.others", updated);
   };
 
-  // 保存ボタンの状態管理を単純化
-  const photos = form.getValues().photos || [];
-  const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
-  const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
-
-  // アレルギー追加ハンドラー
   const handleAddAllergy = (value: string) => {
-    if (!otherAllergies.includes(value)) {
-      const updated = [...otherAllergies, value];
-      setOtherAllergies(updated);
-      form.setValue("allergies.others", updated);
-    }
+    const updated = [...form.getValues().allergies.others || [], value];
+    form.setValue("allergies.others", updated);
   };
 
-  // 喫煙情報追加ハンドラー
   const handleAddSmokingType = (value: string) => {
-    if (!otherSmokingTypes.includes(value)) {
-      const updated = [...otherSmokingTypes, value];
-      setOtherSmokingTypes(updated);
-      form.setValue("smoking.others", updated);
-    }
+    const updated = [...form.getValues().smoking.others || [], value];
+    form.setValue("smoking.others", updated);
   };
 
-  // 傷・タトゥー・アトピー追加ハンドラー
   const handleAddBodyMark = (value: string) => {
-    if (!bodyMarks.includes(value)) {
-      const updated = [...bodyMarks, value];
-      setBodyMarks(updated);
-
-      form.setValue("bodyMark", {
-        hasBodyMark: true,
-        details: form.getValues().bodyMark?.details || "",
-        others: updated
-      }, {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true
-      });
-    }
-  };
-
-  const handleRemoveBodyMark = (index: number) => {
-    const updated = bodyMarks.filter((_, i) => i !== index);
-    setBodyMarks(updated);
-
-    // フォームの値を更新
-    form.setValue("bodyMark", {
-      hasBodyMark: updated.length > 0,
-      details: form.getValues().bodyMark?.details || "",
-      others: updated
-    }, {
+    const updated = [...form.getValues().bodyMark.others || [], value];
+    form.setValue("bodyMark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
     });
   };
 
-  // エステNGオプション追加ハンドラー
+  const handleRemoveBodyMark = (index: number) => {
+    const updated = [...form.getValues().bodyMark.others || []].filter((_, i) => i !== index);
+    form.setValue("bodyMark.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  };
+
   const handleAddEstheNgOption = (value: string) => {
-    if (!otherEstheNgOptions.includes(value)) {
-      const updated = [...otherEstheNgOptions, value];
-      setOtherEstheNgOptions(updated);
-      form.setValue("estheOptions.ngOptions", updated);
+    const updated = [...form.getValues().estheOptions.ngOptions || [], value];
+    form.setValue("estheOptions.ngOptions", updated);
+  };
+
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<TalentProfileData | null>(null);
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!formData) return;
+
+    try {
+      setIsSubmitting(true);
+
+      await createOrUpdateTalentProfile(formData);
+
+      toast({
+        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
+        description: "プロフィールの保存が完了しました。",
+      });
+
+      setIsConfirmationOpen(false);
+      queryClient.invalidateQueries([QUERY_KEYS.TALENT_PROFILE])
+
+    } catch (error) {
+      console.error("送信エラー:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const photos = form.getValues().photos || [];
+  const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
+  const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
   return (
     <div className="min-h-screen bg-background">
@@ -961,7 +813,7 @@ export function TalentForm() {
             </p>
           </div>
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/talent/dashboard">
+            <Link href="/talent/mypage">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -970,7 +822,7 @@ export function TalentForm() {
 
       <main className="container mx-auto px-4 py-8 pb-32">
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold mb-4">氏名</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -978,22 +830,26 @@ export function TalentForm() {
                   control={form.control}
                   name="lastName"
                   render={({ field }) => (
-                    <FormFieldWrapper label="姓" required>
+                    <FormItem>
+                      <FormLabel>姓</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：中山" />
+                        <Input {...field} placeholder="例：山田" />
                       </FormControl>
-                    </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormFieldWrapper label="名" required>
+                    <FormItem>
+                      <FormLabel>名</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：奈々子" />
+                        <Input {...field} placeholder="例：太郎" />
                       </FormControl>
-                    </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
               </div>
@@ -1006,22 +862,26 @@ export function TalentForm() {
                   control={form.control}
                   name="lastNameKana"
                   render={({ field }) => (
-                    <FormFieldWrapper label="セイ" required>
+                    <FormItem>
+                      <FormLabel>セイ</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：ナカヤマ" />
+                        <Input {...field} placeholder="例：ヤマダ" />
                       </FormControl>
-                    </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
                   name="firstNameKana"
                   render={({ field }) => (
-                    <FormFieldWrapper label="メイ" required>
+                    <FormItem>
+                      <FormLabel>メイ</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：ナナコ" />
+                        <Input {...field} placeholder="例：タロウ" />
                       </FormControl>
-                    </FormFieldWrapper>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
               </div>
@@ -1032,21 +892,21 @@ export function TalentForm() {
                 <div className="space-y-1">
                   <Label>生年月日</Label>
                   <p className="text-lg font-medium">
-                    {userProfile?.birthDate
-                      ? new Date(userProfile.birthDate).toLocaleDateString('ja-JP')
+                    {user?.birthDate
+                      ? new Date(user.birthDate).toLocaleDateString('ja-JP')
                       : '基本情報から設定してください'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <Label>年齢</Label>
                   <p className="text-lg font-medium">
-                    {age ? `${age}歳` : '基本情報から設定してください'}
+                    {user?.birthDate ? `${calculateAge(new Date(user.birthDate))}歳` : '基本情報から設定してください'}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 ※生年月日の設定・修正は基本情報編集ページから行ってください
-                {userProfile?.birthDateModified && '（修正は1回のみ可能です）'}
+                {user?.birthDateModified && '（修正は1回のみ可能です）'}
               </p>
             </div>
 
@@ -1056,7 +916,8 @@ export function TalentForm() {
                 control={form.control}
                 name="location"
                 render={({ field }) => (
-                  <FormFieldWrapper label="都道府県" required>
+                  <FormItem>
+                    <FormLabel>都道府県</FormLabel>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger>
@@ -1071,71 +932,80 @@ export function TalentForm() {
                         </SelectContent>
                       </Select>
                     </FormControl>
-                  </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="nearestStation"
                 render={({ field }) => (
-                  <FormFieldWrapper label="最寄駅" required>
+                  <FormItem>
+                    <FormLabel>最寄駅</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="例：渋谷駅" />
                     </FormControl>
-                  </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </div>
 
             {/* 身分証セクション */}
             <div>
-              <FormFieldWrapper label="持参可能な身分証明書" required>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {idTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={form.watch("availableIds.types")?.includes(type)}
-                          onCheckedChange={(checked) => {
-                            const current = form.watch("availableIds.types") || [];
-                            const updated = checked
-                              ? [...current, type]
-                              : current.filter((t) => t !== type);
-                            form.setValue("availableIds.types", updated);
-                          }}
-                        />
-                        <label className="text-sm">{type}</label>
+              <FormField
+                control={form.control}
+                name="availableIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>持参可能な身分証明書</FormLabel>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        {idTypes.map((type) => (
+                          <div key={type} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={field.value.types.includes(type)}
+                              onCheckedChange={(checked) => {
+                                const updated = checked
+                                  ? [...field.value.types, type]
+                                  : field.value.types.filter((t) => t !== type);
+                                form.setValue("availableIds.types", updated);
+                              }}
+                            />
+                            <label className="text-sm">{type}</label>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      {otherIds.map((id, index) => (
-                        <Badge key={index} variant="outline" className="flex items-center gap-1">
-                          {id}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 hover:bg-transparent"
-                            onClick={() => {
-                              const updated = otherIds.filter((_, i) => i !== index);
-                              setOtherIds(updated);
-                              form.setValue("availableIds.others", updated);
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {field.value.others.map((id, index) => (
+                            <Badge key={index} variant="outline" className="flex items-center gap-1">
+                              {id}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                onClick={() => {
+                                  const updated = field.value.others.filter((_, i) => i !== index);
+                                  form.setValue("availableIds.others", updated);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                        <OtherItemInput
+                          ref={React.createRef()}
+                          onAdd={handleAddIdType}
+                          placeholder="その他の身分証明書を入力"
+                        />
+                      </div>
                     </div>
-                    <OtherItemInput
-                      onAdd={handleAddIdType}
-                      placeholder="その他の身分証明書を入力"
-                    />
-                  </div>
-                </div>
-              </FormFieldWrapper>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField
@@ -1158,11 +1028,10 @@ export function TalentForm() {
                 name="height"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="身長 (cm)" required>
-                      <FormControl>
-                        <Input type="number" {...field} min={100} max={200} />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>身長 (cm)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} min={100} max={200} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1172,11 +1041,10 @@ export function TalentForm() {
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="体重 (kg)" required>
-                      <FormControl>
-                        <Input type="number" {...field} min={30} max={150} />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>体重 (kg)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} min={30} max={150} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1187,22 +1055,21 @@ export function TalentForm() {
               name="cupSize"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldWrapper label="カップサイズ" required>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="選択してください" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cupSizes.map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}カップ
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                  </FormFieldWrapper>
+                  <FormLabel>カップサイズ</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="選択してください" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cupSizes.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}カップ
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1213,24 +1080,23 @@ export function TalentForm() {
                 name="bust"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="バスト (cm) (任意)">
-                      <FormControl>
-                        <Input
-                          type="text"
-                          {...field}
-                          value={field.value === null ? "" : field.value}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "") {
-                              field.onChange(null);
-                            } else if (!isNaN(Number(value))) {
-                              field.onChange(Number(value));
-                            }
-                          }}
-                          placeholder="未入力可"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>バスト (cm) (任意)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value === null ? "" : String(field.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            field.onChange(null);
+                          } else if (!isNaN(Number(value))) {
+                            field.onChange(Number(value));
+                          }
+                        }}
+                        placeholder="未入力可"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1240,24 +1106,23 @@ export function TalentForm() {
                 name="waist"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="ウエスト (cm) (任意)">
-                      <FormControl>
-                        <Input
-                          type="text"
-                          {...field}
-                          value={field.value === null ? "" : field.value}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "") {
-                              field.onChange(null);
-                            } else if (!isNaN(Number(value))) {
-                              field.onChange(Number(value));
-                            }
-                          }}
-                          placeholder="未入力可"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>ウエスト (cm) (任意)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value === null ? "" : String(field.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            field.onChange(null);
+                          } else if (!isNaN(Number(value))) {
+                            field.onChange(Number(value));
+                          }
+                        }}
+                        placeholder="未入力可"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1267,24 +1132,23 @@ export function TalentForm() {
                 name="hip"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="ヒップ (cm) (任意)">
-                      <FormControl>
-                        <Input
-                          type="text"
-                          {...field}
-                          value={field.value === null ? "" : field.value}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "") {
-                              field.onChange(null);
-                            } else if (!isNaN(Number(value))) {
-                              field.onChange(Number(value));
-                            }
-                          }}
-                          placeholder="未入力可"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>ヒップ (cm) (任意)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value === null ? "" : String(field.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            field.onChange(null);
+                          } else if (!isNaN(Number(value))) {
+                            field.onChange(Number(value));
+                          }
+                        }}
+                        placeholder="未入力可"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1297,116 +1161,111 @@ export function TalentForm() {
                 name="faceVisibility"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="パネルの顔出し" required>
-                      <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {faceVisibilityTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>パネルの顔出し</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="選択してください" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {faceVisibilityTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">写メ日記の投稿可否</h3>
-              <FormField
-                control={form.control}
-                name="canPhotoDiary"
-                render={({ field }) => (
-                  <FormItem>
-                    <SwitchField
-                      label="写メ日記の投稿"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      valueLabels={{ checked: "可能", unchecked: "不可" }}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">自宅派遣可否</h3>
-              <FormField
-                control={form.control}
-                name="canHomeDelivery"
-                render={({ field }) => (
-                  <FormItem>
-                    <SwitchField
-                      label="自宅派遣"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      valueLabels={{ checked: "可能", unchecked: "不可" }}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="canPhotoDiary"
+              render={({ field }) => (
+                <FormItem>
+                  <SwitchField
+                    label="写メ日記の投稿"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    valueLabels={{ checked: "可能", unchecked: "不可" }}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="canHomeDelivery"
+              render={({ field }) => (
+                <FormItem>
+                  <SwitchField
+                    label="自宅派遣"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    valueLabels={{ checked: "可能", unchecked: "不可" }}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div>
               <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
-              <FormFieldWrapper label="NGオプション">
-                <div className="grid grid-cols-2 gap-4">
-                  {commonNgOptions.map((option) => (
-                    <div key={option} className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={form.watch("ngOptions.common").includes(option)}
-                        onCheckedChange={(checked) => {
-                          const current = form.watch("ngOptions.common") || [];
-                          const updated = checked
-                            ? [...current, option]
-                            : current.filter((o) => o !== option);
-                          form.setValue("ngOptions.common", updated);
-                        }}
-                      />
-                      <label className="text-sm">{option}</label>
+              <FormField
+                control={form.control}
+                name="ngOptions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>NGオプション</FormLabel>
+                    <div className="grid grid-cols-2 gap-4">
+                      {commonNgOptions.map((option) => (
+                        <div key={option} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={field.value.common.includes(option)}
+                            onCheckedChange={(checked) => {
+                              const updated = checked
+                                ? [...field.value.common, option]
+                                : field.value.common.filter((o) => o !== option);
+                              form.setValue("ngOptions.common", updated);
+                            }}
+                          />
+                          <label className="text-sm">{option}</label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {otherNgOptions.map((option, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        {option}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-4 w-4 p-0 hover:bg-transparent"
-                          onClick={() => {
-                            const updated = otherNgOptions.filter((_, i) => i !== index);
-                            setOtherNgOptions(updated);
-                            form.setValue("ngOptions.others", updated)
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                  <OtherItemInput
-                    onAdd={(value: string) => setOtherNgOptions([...otherNgOptions, value])}
-                    placeholder="その他のNGオプションを入力"
-                  />
-                </div>
-              </FormFieldWrapper>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {field.value.others.map((option, index) => (
+                          <Badge key={index} variant="outline" className="flex items-center gap-1">
+                            {option}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
+                              onClick={() => {
+                                const updated = field.value.others.filter((_, i) => i !== index);
+                                form.setValue("ngOptions.others", updated);
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <OtherItemInput
+                        ref={React.createRef()}
+                        onAdd={(value: string) => form.setValue("ngOptions.others", [...form.getValues().ngOptions.others || [], value])}
+                        placeholder="その他のNGオプションを入力"
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div>
@@ -1441,11 +1300,10 @@ export function TalentForm() {
                       name="estheExperiencePeriod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormFieldWrapper label="経験期間">
-                            <FormControl>
-                              <Input {...field} placeholder="例：2年" />
-                            </FormControl>
-                          </FormFieldWrapper>
+                          <FormLabel>経験期間</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="例：2年" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -1461,7 +1319,7 @@ export function TalentForm() {
                             {estheOptions.map((option) => (
                               <div key={option} className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={field.value?.includes(option)}
+                                  checked={field.value.includes(option)}
                                   onCheckedChange={(checked) => {
                                     const newValue = checked
                                       ? [...(field.value || []), option]
@@ -1486,7 +1344,7 @@ export function TalentForm() {
                           <FormLabel>その他できないプレイやオプション</FormLabel>
                           <div className="space-y-2">
                             <div className="flex flex-wrap gap-2">
-                              {otherEstheNgOptions.map((option, index) => (
+                              {field.value.map((option, index) => (
                                 <Badge key={index} variant="outline" className="flex items-center gap-1">
                                   {option}
                                   <Button
@@ -1494,8 +1352,7 @@ export function TalentForm() {
                                     size="sm"
                                     className="h-4 w-4 p-0 hover:bg-transparent"
                                     onClick={() => {
-                                      const updated = otherEstheNgOptions.filter((_, i) => i !== index);
-                                      setOtherEstheNgOptions(updated);
+                                      const updated = field.value.filter((_, i) => i !== index);
                                       form.setValue("estheOptions.ngOptions", updated);
                                     }}
                                   >
@@ -1505,6 +1362,7 @@ export function TalentForm() {
                               ))}
                             </div>
                             <OtherItemInput
+                              ref={React.createRef()}
                               onAdd={handleAddEstheNgOption}
                               placeholder="できないプレイやオプションを入力"
                             />
@@ -1555,7 +1413,7 @@ export function TalentForm() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {otherAllergies.map((allergy, index) => (
+                      {form.watch("allergies.others").map((allergy, index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
                           {allergy}
                           <Button
@@ -1563,8 +1421,7 @@ export function TalentForm() {
                             size="sm"
                             className="h-4 w-4 p-0 hover:bg-transparent"
                             onClick={() => {
-                              const updated = otherAllergies.filter((_, i) => i !== index);
-                              setOtherAllergies(updated);
+                              const updated = form.getValues().allergies.others.filter((_, i) => i !== index);
                               form.setValue("allergies.others", updated);
                             }}
                           >
@@ -1574,6 +1431,7 @@ export function TalentForm() {
                       ))}
                     </div>
                     <OtherItemInput
+                      ref={React.createRef()}
                       onAdd={handleAddAllergy}
                       placeholder="その他のアレルギーを入力"
                     />
@@ -1620,20 +1478,15 @@ export function TalentForm() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {otherSmokingTypes.map((type, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="flex items-center gap-1"
-                          >
+                        {form.watch("smoking.others").map((type, index) => (
+                          <Badge key={index} variant="outline" className="flex items-center gap-1">
                             {type}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-4 w-4 p-0 hover:bg-transparent"
                               onClick={() => {
-                                const updated = otherSmokingTypes.filter((_, i) => i !== index);
-                                setOtherSmokingTypes(updated);
+                                const updated = form.getValues().smoking.others.filter((_, i) => i !== index);
                                 form.setValue("smoking.others", updated);
                               }}
                             >
@@ -1643,6 +1496,7 @@ export function TalentForm() {
                         ))}
                       </div>
                       <OtherItemInput
+                        ref={React.createRef()}
                         onAdd={handleAddSmokingType}
                         placeholder="その他の喫煙情報を入力"
                       />
@@ -1672,7 +1526,7 @@ export function TalentForm() {
                 <div className="mt-4 space-y-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {bodyMarks.map((mark, index) => (
+                      {form.watch("bodyMark.others").map((mark, index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
                           {mark}
                           <Button
@@ -1687,6 +1541,7 @@ export function TalentForm() {
                       ))}
                     </div>
                     <OtherItemInput
+                      ref={React.createRef()}
                       onAdd={handleAddBodyMark}
                       placeholder="傷・タトゥー・アトピーの情報を入力"
                     />
@@ -1906,15 +1761,14 @@ export function TalentForm() {
                 name="selfIntroduction"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="自己紹介文">
-                      <FormControl>
-                        <textarea
-                          {...field}
-                          className="w-full h-32 p-2 border rounded-md"
-                          placeholder="自己紹介文を入力してください"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>自己紹介文</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="w-full h-32 p-2 border rounded-md"
+                        placeholder="自己紹介文を入力してください"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1928,52 +1782,55 @@ export function TalentForm() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldWrapper label="その他の備考">
-                      <FormControl>
-                        <textarea
-                          {...field}
-                          className="w-full h-32 p-2 border rounded-md"
-                          placeholder="その他の備考を入力してください"
-                        />
-                      </FormControl>
-                    </FormFieldWrapper>
+                    <FormLabel>その他の備考</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="w-full h-32 p-2 border rounded-md"
+                        placeholder="その他の備考を入力してください"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4">
-              <div className="container mx-auto max-w-4xl flex justify-end gap-4">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isButtonDisabled}
-                  className="min-w-[200px]"
-                >
-                  {form.formState.isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                      <span>送信中...</span>
-                    </>
-                  ) : (
-                    "保存"
-                  )}
-                </Button>
-              </div>
+            <div className="mt-8 space-y-4">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={!form.formState.isValid || form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  "プロフィールを保存"
+                )}
+              </Button>
+              {!form.formState.isValid && (
+                <p className="text-sm text-destructive text-center">
+                  入力内容に不備があります
+                </p>
+              )}
             </div>
           </form>
         </Form>
       </main>
+
+      {/* 確認モーダル */}
       <ProfileConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
-          console.log('Modal closing');
           setIsConfirmationOpen(false);
           setFormData(null);
         }}
         onConfirm={handleConfirm}
-        formData={formData}
+        data={formData}
         isSubmitting={isSubmitting}
       />
     </div>
