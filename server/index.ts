@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, log } from "./vite";
+import { setupVite } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
 import { setupCronJobs } from "./cron";
@@ -18,6 +18,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// シンプルなログ関数
+function log(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`, data ? data : '');
+}
+
 // 詳細なリクエストロギングミドルウェア
 app.use((req, res, next) => {
   const start = Date.now();
@@ -30,8 +36,7 @@ app.use((req, res, next) => {
       cookie: req.headers.cookie ? '[HIDDEN]' : undefined
     },
     query: req.query,
-    body: req.method !== 'GET' ? req.body : undefined,
-    timestamp: new Date().toISOString()
+    body: req.method !== 'GET' ? req.body : undefined
   });
 
   res.on("finish", () => {
@@ -40,20 +45,27 @@ app.use((req, res, next) => {
       method: req.method,
       path: req.path,
       status: res.statusCode,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
+      duration: `${duration}ms`
     });
   });
 
   next();
 });
 
+// APIルートのプレフィックスチェック
+app.use("/api/*", (req, res, next) => {
+  log('API request received:', {
+    method: req.method,
+    url: req.url
+  });
+  res.setHeader("Content-Type", "application/json");
+  next();
+});
+
 // ヘルスチェックエンドポイント
 app.get('/health', async (_req, res) => {
   try {
-    // 最小限のデータベース接続テスト
     await db.execute(sql`SELECT 1`);
-
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -84,7 +96,6 @@ app.get('/health', async (_req, res) => {
       log('Database connection successful');
     } catch (error) {
       log('Database connection failed:', error);
-      // エラーをスローせずに、アプリケーションは続行
       log('Warning: Database connection failed, but continuing application startup');
     }
 
@@ -93,7 +104,8 @@ app.get('/health', async (_req, res) => {
     setupCronJobs();
     log('Cron jobs setup completed');
 
-    log('Registering routes...');
+    // APIルートを先に登録
+    log('Registering API routes...');
     const server = await registerRoutes(app);
 
     // エラーハンドリングミドルウェア
@@ -101,24 +113,23 @@ app.get('/health', async (_req, res) => {
       log("Server error:", {
         error: err.message,
         code: err.code,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-        timestamp: new Date().toISOString()
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
       });
 
       res.status(err.status || 500).json({
         error: true,
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
-        timestamp: new Date().toISOString()
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
       });
     });
 
+    // 開発環境の場合のみViteのセットアップ
     if (app.get("env") === "development") {
       log('Setting up Vite in development mode...');
       await setupVite(app, server);
     }
 
     const port = process.env.PORT || 5000;
-    server.listen(port, "0.0.0.0", () => {
+    server.listen(port, () => {
       log(`Server started at http://0.0.0.0:${port}`);
       log(`Environment: ${app.get("env")}`);
       log(`CORS: Enabled with full access`);

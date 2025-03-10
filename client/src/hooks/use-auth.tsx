@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const response = await apiRequest("GET", "/api/auth/check");
+        const userData = await response.json();
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -54,10 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem("auth_token");
             return null;
           }
-          throw new Error('Failed to fetch user data');
+          throw new Error(userData.message || 'Failed to fetch user data');
         }
 
-        const userData = await response.json();
         console.log('User data fetched:', {
           userId: userData?.id,
           username: userData?.username,
@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return userData;
       } catch (error) {
         console.error('Auth check error:', error);
-        //setUser(null); // This line was added in the edited snippet but setUser is not defined.  Leaving it out for now.
         return null;
       }
     },
@@ -84,18 +83,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const response = await apiRequest("POST", "/api/auth/login", credentials);
+      const result = await response.json();
 
       if (!response.ok) {
-        const error = await response.json();
         console.error('Login error response:', {
           status: response.status,
-          message: error.message,
+          message: result.message,
           timestamp: new Date().toISOString()
         });
-        throw new Error(error.message || "ログインに失敗しました");
+        throw new Error(result.message || "ログインに失敗しました");
       }
 
-      const result = await response.json();
       if (!result.token) {
         throw new Error("認証トークンが見つかりません");
       }
@@ -156,13 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
       const response = await apiRequest("POST", "/api/auth/register", credentials);
+      const result = await response.json();
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "登録に失敗しました");
+        throw new Error(result.message || "登録に失敗しました");
       }
 
-      const result = await response.json();
       if (result.token) {
         localStorage.setItem("auth_token", result.token);
       }

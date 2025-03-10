@@ -261,8 +261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 統合ログインエンドポイント
-  app.post("/api/login", async (req, res) => {
+  // ログインエンドポイントのパスを修正
+  app.post("/api/auth/login", async (req, res) => {
     try {
       console.log('ログインリクエスト受信:', {
         username: req.body.username,
@@ -321,12 +321,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // パスワードハッシュを除外して返す
       const { password, ...userWithoutPassword } = user;
-      res.json({ user: userWithoutPassword, token });
+      res.setHeader('Content-Type', 'application/json');
+      res.json({
+        user: userWithoutPassword,
+        token
+      });
     } catch (error) {
       console.error('ログインエラー:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
+
+      // エラーレスポンスの形式を統一
       res.status(400).json({
         message: error instanceof Error ? error.message : "ログインに失敗しました"
       });
@@ -997,8 +1003,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(500).json({
-        message: "プロフィールの更新に失敗しました",
-        error: process.env.NODE_ENV === 'development' ? error : undefined
+        message: "プロフィールの更新に失敗しました",        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });
@@ -1019,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(talentProfiles)
           .where(eq(talentProfiles.userId, userId));
 
-        if(!currentProfile) {
+        if (!currentProfile) {
           throw new Error("プロフィールが見つかりません");
         }
 
@@ -1880,22 +1885,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .update(blogPosts)
         .set({
           status,
-          scheduledAt: status === "scheduled" ? scheduledAt : null,
-          publishedAt: status === "published" ? new Date() : null,
+          scheduledAt: status === "scheduled" ? new Date(scheduledAt) : null,
           updatedAt: new Date()
         })
         .where(eq(blogPosts.id, postId))
         .returning();
 
+      if (!updatedPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
       console.log('Blog post status updated:', {
-        postId,
+        postId: updatedPost.id,
         status: updatedPost.status,
         scheduledAt: updatedPost.scheduledAt,
-        publishedAt: updatedPost.publishedAt,
         timestamp: new Date().toISOString()
       });
 
-      res.json(updatedPost);
+      return res.json(updatedPost);
     } catch (error) {
       console.error('Blog post status update error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -2027,22 +2034,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .update(blogPosts)
         .set({
           status,
-          scheduledAt: status === "scheduled" ? scheduledAt : null,
-          publishedAt: status === "published" ? new Date() : null,
+          scheduledAt: status === "scheduled" ? new Date(scheduledAt) : null,
           updatedAt: new Date()
         })
         .where(eq(blogPosts.id, postId))
         .returning();
 
+      if (!updatedPost) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+
       console.log('Blog post status updated:', {
-        postId,
+        postId: updatedPost.id,
         status: updatedPost.status,
         scheduledAt: updatedPost.scheduledAt,
-        publishedAt: updatedPost.publishedAt,
         timestamp: new Date().toISOString()
       });
 
-      res.json(updatedPost);
+      return res.json(updatedPost);
     } catch (error) {
       console.error('Blog post status update error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -2651,7 +2660,7 @@ async function cleanupOldBlogPosts(): Promise<BlogPost[] | undefined> {
     eq(blogPosts.createdAt, "<", threeMonthsAgo)
   );
 
-  if(oldPosts.length === 0) return undefined;
+  if (oldPosts.length === 0) return undefined;
 
   await db.delete(blogPosts).where(
     eq(blogPosts.createdAt, "<", threeMonthsAgo)
