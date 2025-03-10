@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId: userData?.id,
           username: userData?.username,
           role: userData?.role,
+          displayName: userData?.displayName,
+          birthDate: userData?.birthDate,
           timestamp: new Date().toISOString()
         });
 
@@ -65,12 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      console.log('Login attempt:', {
-        username: credentials.username,
-        role: credentials.role,
-        timestamp: new Date().toISOString()
-      });
-
       const response = await apiRequest("POST", "/api/auth/login", credentials);
       const result = await response.json();
 
@@ -81,15 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
-      console.log('Login successful:', {
-        userId: user.id,
-        username: user.username,
-        role: user.role,
-        timestamp: new Date().toISOString()
-      });
-
       queryClient.setQueryData(["/api/user"], user);
-
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
@@ -125,6 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+
+      // ユーザー情報のキャッシュを更新
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
