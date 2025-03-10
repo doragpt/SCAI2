@@ -88,6 +88,41 @@ export const getJobsQuery = async (): Promise<Job[]> => {
   }
 };
 
+// 求人検索用のクエリ関数を追加
+export const searchJobsQuery = async (params: {
+  location?: string;
+  serviceType?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}> => {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params.location) searchParams.set("location", params.location);
+    if (params.serviceType) searchParams.set("serviceType", params.serviceType);
+    if (params.page) searchParams.set("page", params.page.toString());
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+
+    const url = `${QUERY_KEYS.JOBS_SEARCH}?${searchParams.toString()}`;
+    const response = await apiRequest("GET", url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Jobs search error:', {
+      error: getErrorMessage(error),
+      params,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};
+
 // クエリクライアントの設定を改善
 export const queryClient = new QueryClient({
   defaultOptions: {
