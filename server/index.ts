@@ -9,7 +9,6 @@ import { setupAuth } from "./auth";
 import { createServer } from "http";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,7 +30,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// セキュリティヘッダーの設定（開発環境ではより緩和された設定を使用）
+// セキュリティヘッダーの設定
 app.use((req, res, next) => {
   const cspDirectives = process.env.NODE_ENV === 'development' 
     ? "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
@@ -57,7 +56,10 @@ app.use((req, res, next) => {
         duration: Date.now() - startTime
       });
     } catch (error) {
-      log('error', 'Database connection failed', error);
+      log('error', 'Database connection failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       process.exit(1);
     }
 
