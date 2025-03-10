@@ -5,17 +5,13 @@ import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { type BlogPost } from "@shared/schema";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const THUMBNAIL_ASPECT_RATIO = 4 / 3; // 4:3のアスペクト比を統一
 
 export default function BlogPostView() {
   const { id } = useParams<{ id: string }>();
@@ -51,11 +47,7 @@ export default function BlogPostView() {
                   お探しの記事は存在しないか、削除された可能性があります
                 </p>
               </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.history.back()}
-              >
+              <Button variant="outline" className="w-full" onClick={() => window.history.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 前のページに戻る
               </Button>
@@ -66,24 +58,42 @@ export default function BlogPostView() {
     );
   }
 
+  // サムネイル表示用のスタイル
+  const thumbnailContainerStyle = {
+    position: 'relative' as const,
+    width: '100%',
+    paddingTop: `${(1 / THUMBNAIL_ASPECT_RATIO) * 100}%`,
+    backgroundColor: '#f1f5f9',
+    borderRadius: '0.5rem',
+    overflow: 'hidden'
+  };
+
+  const thumbnailImageStyle = {
+    position: 'absolute' as const,
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {post.thumbnail && (
-        <div
-          className="w-full h-[300px] bg-cover bg-center"
-          style={{ backgroundImage: `url(${post.thumbnail})` }}
-        />
+        <div style={thumbnailContainerStyle}>
+          <img
+            src={post.thumbnail}
+            alt={post.title}
+            style={thumbnailImageStyle}
+          />
+        </div>
       )}
 
       <div className="container mx-auto px-4 py-8">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.history.back()}
-              >
+              <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 戻る
               </Button>
@@ -95,21 +105,13 @@ export default function BlogPostView() {
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
                   <span>
-                    {format(
-                      new Date(post.publishedAt || post.createdAt),
-                      "yyyy年MM月dd日",
-                      { locale: ja }
-                    )}
+                    {format(new Date(post.publishedAt || post.createdAt), "yyyy年MM月dd日", { locale: ja })}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   <span>
-                    {format(
-                      new Date(post.publishedAt || post.createdAt),
-                      "HH:mm",
-                      { locale: ja }
-                    )}
+                    {format(new Date(post.publishedAt || post.createdAt), "HH:mm", { locale: ja })}
                   </span>
                 </div>
               </div>
@@ -126,12 +128,9 @@ export default function BlogPostView() {
                 <Separator className="my-8" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {post.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className="aspect-square rounded-lg overflow-hidden"
-                    >
+                    <div key={index} className="aspect-square rounded-lg overflow-hidden">
                       <img
-                        src={image}
+                        src={image.url || image} // Handle cases where image might be a string URL directly.
                         alt={`ブログ画像 ${index + 1}`}
                         className="w-full h-full object-cover"
                       />

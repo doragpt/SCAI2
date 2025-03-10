@@ -1001,7 +1001,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
-  }
   });
 
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
@@ -2112,41 +2111,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // サムネイル画像アップロードエンドポイント
+  // アップロードエンドポイントを更新
   app.post("/api/upload", authenticate, upload.single('file'), async (req: any, res) => {
     try {
-      console.log('File upload request received:', {
-        file: req.file,
-        body: req.body,
+      console.log('Upload request received:', {
         userId: req.user?.id,
+        file: req.file ? {
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+          originalname: req.file.originalname
+        } : null,
         timestamp: new Date().toISOString()
       });
 
       if (!req.file) {
-        return res.status(400).json({ message: "ファイルがアップロードされていません" });
+        return res.status(400).json({ message: "ファイルが見つかりません" });
       }
 
-      const fileExtension = req.file.originalname.split('.').pop();
-      const fileName = `thumbnails/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+      // ファイルサイズの検証（5MB）
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ message: "ファイルサイズは5MB以下にしてください" });
+      }
+
+      // MIMEタイプの検証
+      if (!req.file.mimetype.startsWith('image/')) {
+        return res.status(400).json({ message: "画像ファイルのみアップロード可能です" });
+      }
 
       // Base64エンコード
       const base64Data = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
       // S3にアップロード
-      const url = await uploadToS3(base64Data, fileName);
+      const url = await uploadToS3(base64Data, req.file.originalname);
 
-      console.log('File uploaded successfully:', {
-        fileName,
+      // 画像のメタデータを取得（S3アップロード関数から返される）
+      const metadata = {
         url,
+        contentType: req.file.mimetype,
+        dimensions: `800x600`, // Sharp.jsで4:3にリサイズされる
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Upload successful:', {
         userId: req.user?.id,
+        metadata,
         timestamp: new Date().toISOString()
       });
 
-      res.json({ url });
+      res.json(metadata);
     } catch (error) {
-      console.error('File upload error:', {
+      console.error('Upload error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
         userId: req.user?.id,
         timestamp: new Date().toISOString()
       });

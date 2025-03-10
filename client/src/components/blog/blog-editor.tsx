@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { blogPostSchema, type BlogPost } from "@shared/schema";
+import { blogPostSchema, type BlogPost, type ImageMetadata } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -12,25 +12,6 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ImageResize from 'quill-image-resize-module-react';
 import Quill from 'quill';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
 // Quillの設定
 Quill.register('modules/imageResize', ImageResize);
@@ -66,6 +47,7 @@ interface BlogEditorProps {
 }
 
 const THUMBNAIL_ASPECT_RATIO = 4 / 3; // 4:3のアスペクト比
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
@@ -81,17 +63,28 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt) : undefined,
       publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt) : undefined,
       status: initialData?.status || "draft",
+      thumbnail: initialData?.thumbnail || "",
+      thumbnailMetadata: initialData?.thumbnailMetadata || null,
     } || {
       title: "",
       content: "",
       status: "draft",
       thumbnail: "",
+      thumbnailMetadata: null,
       images: [],
     },
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error("ファイルサイズは5MB以下にしてください");
+      }
+
+      if (!file.type.startsWith('image/')) {
+        throw new Error("画像ファイルのみアップロード可能です");
+      }
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -108,7 +101,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
     onSuccess: (data) => {
       if (data?.url) {
+        // サムネイルURLとメタデータを更新
         form.setValue("thumbnail", data.url);
+        form.setValue("thumbnailMetadata", {
+          url: data.url,
+          width: data.dimensions ? parseInt(data.dimensions.split('x')[0]) : undefined,
+          height: data.dimensions ? parseInt(data.dimensions.split('x')[1]) : undefined,
+          type: data.contentType,
+          createdAt: data.timestamp,
+        });
+
         toast({
           title: "サムネイル画像をアップロードしました",
         });
@@ -169,24 +171,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは5MB以下にしてください",
-        });
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像ファイルのみアップロード可能です",
-        });
-        return;
-      }
-
       uploadMutation.mutate(file);
     }
   };
@@ -244,7 +228,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   // サムネイル表示用のスタイルを定義
   const thumbnailContainerStyle = {
-    position: 'relative',
+    position: 'relative' as const,
     width: '100%',
     paddingTop: `${(1 / THUMBNAIL_ASPECT_RATIO) * 100}%`, // 4:3のアスペクト比を維持
     backgroundColor: '#f1f5f9', // Tailwind の slate-100 相当
@@ -253,7 +237,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
 
   const thumbnailImageStyle = {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: '0',
     left: '0',
     width: '100%',
@@ -345,6 +329,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                 alt="サムネイル"
                                 style={thumbnailImageStyle}
                               />
+                              {form.watch("thumbnailMetadata") && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  <p>サイズ: {form.watch("thumbnailMetadata")?.width}x{form.watch("thumbnailMetadata")?.height}</p>
+                                  <p>タイプ: {form.watch("thumbnailMetadata")?.type}</p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
