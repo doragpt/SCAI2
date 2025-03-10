@@ -123,12 +123,10 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   username: text("username").notNull(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["talent", "store"] }).notNull(),
-  displayName: text("display_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
   birthDate: date("birth_date").notNull(),
-  birthDateModified: boolean("birth_date_modified").default(false),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
+  location: text("location", { enum: prefectures }).notNull(),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -445,7 +443,6 @@ export const userSchema = createInsertSchema(users, {
   }),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
-
 export const jobSchema = createInsertSchema(jobs, {
   title: z.string().min(1, "タイトルを入力してください"),
   description: z.string().min(1, "詳細を入力してください"),
@@ -464,7 +461,6 @@ export const jobSchema = createInsertSchema(jobs, {
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
-
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
@@ -569,7 +565,6 @@ export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
