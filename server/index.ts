@@ -22,6 +22,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// セキュリティヘッダーの設定
+app.use((req, res, next) => {
+  // Content Security Policyの設定
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:;"
+  );
+  next();
+});
+
 // パフォーマンスメトリクスの追跡
 function trackStartupMetric(phase: string) {
   const timestamp = Date.now();
@@ -56,15 +66,6 @@ function trackStartupMetric(phase: string) {
       duration: Date.now() - authStartTime
     });
 
-    // 開発環境の場合はViteのセットアップを先に行う
-    if (process.env.NODE_ENV === "development") {
-      const viteStartTime = trackStartupMetric('vite_setup');
-      await setupVite(app, server);
-      log('info', 'Vite setup completed', {
-        duration: Date.now() - viteStartTime
-      });
-    }
-
     // APIリクエストの共通ミドルウェア
     app.use("/api/*", (req, res, next) => {
       log('info', 'API request received', {
@@ -84,6 +85,15 @@ function trackStartupMetric(phase: string) {
     log('info', 'Routes registered', {
       duration: Date.now() - routesStartTime
     });
+
+    // 開発環境の場合はViteのセットアップを行う
+    if (process.env.NODE_ENV === "development") {
+      const viteStartTime = trackStartupMetric('vite_setup');
+      await setupVite(app, server);
+      log('info', 'Vite setup completed', {
+        duration: Date.now() - viteStartTime
+      });
+    }
 
     // APIエラーハンドリング
     app.use("/api/*", (err: Error, _req: Request, res: Response, _next: NextFunction) => {
