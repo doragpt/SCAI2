@@ -3,6 +3,20 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// 画像関連の型定義をファイルの先頭に移動
+export interface ImageMetadata {
+  width: number;
+  height: number;
+  format: string;
+  originalSize: number;
+  optimizedSize: number;
+}
+
+export interface ImageUploadResponse {
+  url: string;
+  metadata: ImageMetadata;
+}
+
 // Enums
 export const photoTags = [
   "現在の髪色",
@@ -345,6 +359,9 @@ export type KeepList = typeof keepList.$inferSelect;
 export type InsertKeepList = typeof keepList.$inferInsert;
 export type ViewHistory = typeof viewHistory.$inferSelect;
 export type InsertViewHistory = typeof viewHistory.$inferInsert;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
 
 // APIレスポンスの型定義
 export interface JobListingResponse {
@@ -373,14 +390,18 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
 } as const;
 
 // その他の型定義
-export type Photo = z.infer<typeof photoSchema>;
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-export type ProfileData = TalentProfileData;
-export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
+export type Prefecture = typeof prefectures[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type PhotoTag = typeof photoTags[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type ServiceType = typeof serviceTypes[number];
 
 
 // 求人情報関連の新しいenums
@@ -489,12 +510,6 @@ export const viewHistory = pgTable('viewHistory', {
 });
 
 // Application type definitions
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type KeepList = typeof keepList.$inferSelect;
-export type InsertKeepList = typeof keepList.$inferInsert;
-export type ViewHistory = typeof viewHistory.$inferSelect;
-export type InsertViewHistory = typeof viewHistory.$inferInsert;
 
 // Zod schemas for validation
 export const applicationSchema = createInsertSchema(applications);
@@ -542,20 +557,6 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
 }));
 
 
-export type Prefecture = typeof prefectures[number];
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type PhotoTag = typeof photoTags[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-export type EstheOption = typeof estheOptions[number];
-export type ServiceType = typeof serviceTypes[number];
-
-
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
@@ -571,9 +572,7 @@ export type SelectUser = {
   createdAt: Date;
 };
 
-export type TalentProfileData = typeof talentProfiles.$inferSelect;
-export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
-export type ProfileData = TalentProfileData;
+export type ProfileData = TalentProfile;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
@@ -628,6 +627,7 @@ export const blogPosts = pgTable("blog_posts", {
     storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
     statusIdx: index("blog_posts_status_idx").on(table.status),
     publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+    scheduledAtIdx: index("blog_posts_scheduled_at_idx").on(table.scheduledAt),
   };
 });
 
@@ -656,7 +656,7 @@ export const blogPostSchema = createInsertSchema(blogPosts)
     updatedAt: true,
   })
   .superRefine((data, ctx) => {
-    // 予約投稿の場合の追加バリデーション
+    // 予約投稿時の追加バリデーション
     if (data.status === "scheduled") {
       if (!data.scheduledAt) {
         ctx.addIssue({
@@ -678,8 +678,6 @@ export const blogPostSchema = createInsertSchema(blogPosts)
   });
 
 // 型定義のエクスポート
-export type BlogPost = typeof blogPosts.$inferSelect;
-export type InsertBlogPost = typeof blogPosts.$inferInsert;
 
 // リレーションの定義
 export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
@@ -688,6 +686,8 @@ export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// 画像関連の型定義
 
 // APIレスポンスの型定義
 export interface BlogPostListResponse {

@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
-import { blogPostSchema, type BlogPost } from "@shared/schema";
+import { blogPostSchema, type BlogPost, type ImageMetadata } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -27,10 +26,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Image as ImageIcon, 
+  Loader2, 
+  Save, 
+  Eye, 
+  ArrowLeft, 
+  Calendar,
+  X as CloseIcon
+} from "lucide-react";
 
 // Quillの設定
 Quill.register('modules/imageResize', ImageResize);
@@ -66,23 +77,20 @@ interface BlogEditorProps {
 }
 
 // サムネイル画像のスタイル
-const THUMBNAIL_STYLE = "w-full aspect-[4/3] object-cover rounded-lg";
+const THUMBNAIL_STYLE = "w-full aspect-[4/3] object-cover rounded-lg bg-muted";
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageMetadata, setImageMetadata] = useState<ImageMetadata | null>(null);
   const { toast } = useToast();
   const quillRef = useRef<ReactQuill>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<BlogPost>({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: {
-      ...initialData,
-      scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt) : undefined,
-      publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt) : undefined,
-      status: initialData?.status || "draft",
-    } || {
+    defaultValues: initialData || {
       title: "",
       content: "",
       status: "draft",
@@ -93,36 +101,66 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      // ファイルサイズと形式のチェックを厳密化
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("ファイルサイズは5MB以下にしてください");
-      }
-
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error("JPG、PNG、WebP形式の画像のみアップロード可能です");
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      return apiRequest(
-        "POST", 
-        "/api/upload", 
-        formData,
-        {
-          headers: {
-            Accept: "application/json",
-          },
+      try {
+        // ファイルサイズと形式のチェックを厳密化
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error("ファイルサイズは5MB以下にしてください");
         }
-      );
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          throw new Error("JPG、PNG、WebP形式の画像のみアップロード可能です");
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // アップロード進捗の模擬
+        setUploadProgress(0);
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 10;
+          });
+        }, 100);
+
+        const response = await apiRequest(
+          "POST", 
+          "/api/upload", 
+          formData,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+
+        setTimeout(() => {
+          setUploadProgress(0);
+        }, 1000);
+
+        if (response?.metadata) {
+          setImageMetadata(response.metadata);
+        }
+
+        return response;
+      } catch (error) {
+        setUploadProgress(0);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       if (data?.url) {
         form.setValue("thumbnail", data.url);
         toast({
           title: "サムネイル画像をアップロードしました",
-          description: "画像は自動的に最適なサイズに調整されます",
+          description: `画像を最適化しました（${imageMetadata ? `${imageMetadata.width}x${imageMetadata.height}` : '800x600'}）`,
         });
       } else {
         throw new Error("アップロード結果のURLが見つかりません");
@@ -137,6 +175,39 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       });
     },
   });
+
+  const handleThumbnailUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "ファイルサイズは5MB以下にしてください",
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          variant: "destructive",
+          title: "エラー",
+          description: "画像ファイルのみアップロード可能です",
+        });
+        return;
+      }
+
+      uploadMutation.mutate(file);
+    }
+  }, [uploadMutation, toast]);
+
+  const handleThumbnailRemove = useCallback(() => {
+    form.setValue("thumbnail", "");
+    setImageMetadata(null);
+    toast({
+      title: "サムネイル画像を削除しました",
+    });
+  }, [form, toast]);
 
   const createMutation = useMutation({
     mutationFn: (data: BlogPost) =>
@@ -178,35 +249,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは5MB以下にしてください",
-        });
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像ファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      uploadMutation.mutate(file);
-    }
-  };
-
   const handleSubmit = useCallback(async (isDraft: boolean = false) => {
     try {
       const values = form.getValues();
-      console.log('Form values:', values);
 
       // 必須フィールドのチェック
       if (!values.title.trim() || !values.content.trim()) {
@@ -228,7 +273,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
-      const submissionData = {
+      const submissionData: BlogPost = {
         ...values,
         title: values.title.trim(),
         content: values.content.trim(),
@@ -236,8 +281,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         scheduledAt: isScheduling && values.scheduledAt ? new Date(values.scheduledAt) : null,
         publishedAt: !isDraft && !isScheduling ? new Date() : null,
       };
-
-      console.log('Submission data:', submissionData);
 
       if (postId) {
         await updateMutation.mutateAsync(submissionData);
@@ -317,7 +360,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   name="thumbnail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>サムネイル画像 (4:3)</FormLabel>
+                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormDescription>
+                        4:3の比率で表示されます。推奨サイズ: 800x600ピクセル
+                      </FormDescription>
                       <FormControl>
                         <div className="space-y-4">
                           <div className="flex items-center gap-4">
@@ -326,11 +372,22 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               accept="image/jpeg,image/png,image/webp"
                               onChange={handleThumbnailUpload}
                               className="flex-1"
+                              disabled={uploadMutation.isPending}
                             />
                             {uploadMutation.isPending && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
                           </div>
+
+                          {uploadProgress > 0 && (
+                            <div className="space-y-2">
+                              <Progress value={uploadProgress} />
+                              <p className="text-sm text-muted-foreground">
+                                アップロード中... {uploadProgress}%
+                              </p>
+                            </div>
+                          )}
+
                           {field.value && (
                             <div className="relative w-full">
                               <img
@@ -338,6 +395,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                 alt="サムネイル"
                                 className={THUMBNAIL_STYLE}
                               />
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2"
+                                onClick={handleThumbnailRemove}
+                              >
+                                <CloseIcon className="h-4 w-4" />
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -346,6 +411,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="content"
@@ -369,6 +435,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     </FormItem>
                   )}
                 />
+
                 {isScheduling && (
                   <FormField
                     control={form.control}
