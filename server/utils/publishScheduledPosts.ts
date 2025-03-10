@@ -31,6 +31,7 @@ export async function publishScheduledPosts() {
       .set({
         status: "published",
         publishedAt: now,
+        updatedAt: now
       })
       .where(
         and(
@@ -42,6 +43,12 @@ export async function publishScheduledPosts() {
 
     console.log('Scheduled posts publishing completed:', {
       publishedCount: result.length,
+      posts: result.map(post => ({
+        id: post.id,
+        title: post.title,
+        scheduledAt: post.scheduledAt,
+        publishedAt: post.publishedAt
+      })),
       timestamp: now.toISOString()
     });
 

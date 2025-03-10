@@ -1001,6 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
+  }
   });
 
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
@@ -1224,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 写真アップロード用の新しいエンドポイント
-  app.post("/api/upload-photo", authenticate, async (req: any, res) => {
+  app.post("/api/upload-photo", authenticate, upload.single('file'), async (req: any, res) => {
     try {
       console.log('Photo upload request received:', {
         userId: req.user.id,
@@ -1879,8 +1880,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Blog post status updated:', {
         postId,
-        status,
-        scheduledAt,
+        status: updatedPost.status,
+        scheduledAt: updatedPost.scheduledAt,
+        publishedAt: updatedPost.publishedAt,
         timestamp: new Date().toISOString()
       });
 
@@ -2571,6 +2573,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // クリーンアップエンドポイントを追加
+  app.post("/api/blog/cleanup", authenticate, async (req: any, res) => {
+    try {
+      // 店舗管理者のみアクセス可能
+      if (req.user.role !== "store") {
+        return res.status(403).json({ message: "管理者のみアクセス可能です" });
+      }
+
+      console.log('Manual cleanup requested:', {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+
+      const deletedPosts = await cleanupOldBlogPosts();
+
+      console.log('Manual cleanup completed:', {
+        userId: req.user.id,
+        deletedCount: deletedPosts?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.json({
+        success: true,
+        deletedCount: deletedPosts?.length || 0,
+        message: `${deletedPosts?.length || 0}件の古い記事を削除しました`
+      });
+    } catch (error) {
+      console.error('Manual cleanup error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: "クリーンアップ処理に失敗しました",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -2587,6 +2630,24 @@ async function calculateMatchScore(job: Job, conditions: any): Promise<number> {
     score++;
   }
   return score;
+}
+
+async function cleanupOldBlogPosts(): Promise<BlogPost[] | undefined> {
+  // 古いブログ記事を削除するロジックを実装します。
+  // 例: 3ヶ月以上前の記事を削除
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+  const oldPosts = await db.select().from(blogPosts).where(
+    eq(blogPosts.createdAt, "<", threeMonthsAgo)
+  );
+
+  if(oldPosts.length === 0) return undefined;
+
+  await db.delete(blogPosts).where(
+    eq(blogPosts.createdAt, "<", threeMonthsAgo)
+  );
+  return oldPosts;
 }
 
 const photoChunksStore = new Map();
