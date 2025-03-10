@@ -157,7 +157,7 @@ const formatSalary = (min?: number, max?: number) => {
 };
 
 
-// 求人カードコンポーネント
+// JobCardコンポーネントを修正
 const JobCard = ({ job }: { job: Job }) => {
   return (
     <motion.div
@@ -170,7 +170,7 @@ const JobCard = ({ job }: { job: Job }) => {
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-lg line-clamp-2">
-                {job.businessName}
+                {job.business_name}
               </CardTitle>
               <CardDescription className="flex items-center mt-1">
                 <MapPin className="h-4 w-4 mr-1" />
@@ -180,12 +180,12 @@ const JobCard = ({ job }: { job: Job }) => {
             <HoverCard>
               <HoverCardTrigger>
                 <Badge variant="outline" className="bg-primary/5">
-                  {job.serviceType}
+                  {job.service_type}
                 </Badge>
               </HoverCardTrigger>
               <HoverCardContent>
                 <p className="text-sm">
-                  {serviceTypes.find(t => t.id === job.serviceType)?.label}に関する求人です
+                  {serviceTypes.find(t => t.id === job.service_type)?.label}に関する求人です
                 </p>
               </HoverCardContent>
             </HoverCard>
@@ -195,16 +195,16 @@ const JobCard = ({ job }: { job: Job }) => {
           <div className="space-y-4">
             <div className="flex items-center text-primary font-semibold">
               <Banknote className="h-5 w-5 mr-2" />
-              <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
+              <span>日給 {formatSalary(job.minimum_guarantee, job.maximum_guarantee)}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {job.transportationSupport && (
+              {job.transportation_support && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Check className="h-3.5 w-3.5 mr-1" />
                   交通費支給
                 </Badge>
               )}
-              {job.housingSupport && (
+              {job.housing_support && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   <Building2 className="h-3.5 w-3.5 mr-1" />
                   寮完備
@@ -258,7 +258,7 @@ export default function HomePage() {
       .filter(job => {
         if (!job) return false;
         const areaMatch = !selectedArea || job.location?.includes(selectedArea);
-        const typeMatch = selectedType === "all" || job.serviceType === selectedType;
+        const typeMatch = selectedType === "all" || job.service_type === selectedType;
         return areaMatch && typeMatch;
       })
       .slice(0, 6);
