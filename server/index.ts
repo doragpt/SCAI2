@@ -7,10 +7,20 @@ import { setupCronJobs } from "./cron";
 import { log } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { createServer } from "http";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
-// CORSミドルウェアの設定
+// 基本的なミドルウェアの設定
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// CORSの設定
 app.use(cors({
   origin: true,
   credentials: true,
@@ -18,38 +28,29 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// JSONパーサーを早めに設定
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// セキュリティヘッダーの設定
+// セキュリティヘッダーの設定（開発環境ではより緩和された設定を使用）
 app.use((req, res, next) => {
-  // Content Security Policyの設定
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:;"
-  );
+  const cspDirectives = process.env.NODE_ENV === 'development' 
+    ? "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:;";
+
+  res.setHeader('Content-Security-Policy', cspDirectives);
   next();
 });
-
-// パフォーマンスメトリクスの追跡
-function trackStartupMetric(phase: string) {
-  const timestamp = Date.now();
-  log('info', `Startup phase: ${phase}`, { timestamp });
-  return timestamp;
-}
 
 // メインのアプリケーション起動処理
 (async () => {
   try {
-    const startTime = trackStartupMetric('initialization');
+    const startTime = Date.now();
+    log('info', 'Startup phase: initialization', {
+      timestamp: startTime
+    });
 
     // データベース接続テスト
-    const dbStartTime = trackStartupMetric('database_connection');
     try {
       await db.execute(sql`SELECT 1`);
       log('info', 'Database connection successful', {
-        duration: Date.now() - dbStartTime
+        duration: Date.now() - startTime
       });
     } catch (error) {
       log('error', 'Database connection failed', error);
@@ -60,7 +61,7 @@ function trackStartupMetric(phase: string) {
     const server = createServer(app);
 
     // 認証セットアップ
-    const authStartTime = trackStartupMetric('auth_setup');
+    const authStartTime = Date.now();
     setupAuth(app);
     log('info', 'Auth setup completed', {
       duration: Date.now() - authStartTime
@@ -74,26 +75,16 @@ function trackStartupMetric(phase: string) {
         query: req.query,
         body: req.method !== 'GET' ? req.body : undefined
       });
-
       res.setHeader("Content-Type", "application/json");
       next();
     });
 
     // APIルートを登録
-    const routesStartTime = trackStartupMetric('routes_registration');
+    const routesStartTime = Date.now();
     await registerRoutes(app);
     log('info', 'Routes registered', {
       duration: Date.now() - routesStartTime
     });
-
-    // 開発環境の場合はViteのセットアップを行う
-    if (process.env.NODE_ENV === "development") {
-      const viteStartTime = trackStartupMetric('vite_setup');
-      await setupVite(app, server);
-      log('info', 'Vite setup completed', {
-        duration: Date.now() - viteStartTime
-      });
-    }
 
     // APIエラーハンドリング
     app.use("/api/*", (err: Error, _req: Request, res: Response, _next: NextFunction) => {
@@ -111,7 +102,6 @@ function trackStartupMetric(phase: string) {
     // リクエストロギングミドルウェア
     app.use((req, res, next) => {
       const start = Date.now();
-
       res.on("finish", () => {
         const duration = Date.now() - start;
         log('info', 'Response sent', {
@@ -121,9 +111,51 @@ function trackStartupMetric(phase: string) {
           duration: `${duration}ms`
         });
       });
-
       next();
     });
+
+    if (process.env.NODE_ENV === "development") {
+      // 開発環境: Viteミドルウェアを設定
+      log('info', 'Setting up Vite middleware for development');
+      const viteStartTime = Date.now();
+
+      try {
+        await setupVite(app, server);
+        log('info', 'Vite setup completed', {
+          duration: Date.now() - viteStartTime
+        });
+      } catch (error) {
+        log('error', 'Vite setup failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        throw error;
+      }
+
+      // 開発環境でのフォールバックルート（デバッグ用）
+      app.use('*', (req, res, next) => {
+        log('debug', 'Fallback route hit in development', {
+          path: req.originalUrl,
+          method: req.method
+        });
+        next();
+      });
+    } else {
+      // 本番環境: 静的ファイルの提供
+      const distPath = path.resolve(__dirname, "public");
+      if (!fs.existsSync(distPath)) {
+        throw new Error(
+          `Could not find the build directory: ${distPath}, make sure to build the client first`,
+        );
+      }
+
+      app.use(express.static(distPath));
+
+      // SPAのためのフォールバックルート
+      app.get("*", (_req, res) => {
+        res.sendFile(path.resolve(distPath, "index.html"));
+      });
+    }
 
     const port = process.env.PORT || 5000;
     server.listen(port, () => {
@@ -134,7 +166,7 @@ function trackStartupMetric(phase: string) {
 
       // cronジョブは非同期で遅延セットアップ
       setTimeout(() => {
-        const cronStartTime = trackStartupMetric('cron_setup');
+        const cronStartTime = Date.now();
         setupCronJobs();
         log('info', 'Cron jobs setup completed', {
           duration: Date.now() - cronStartTime
