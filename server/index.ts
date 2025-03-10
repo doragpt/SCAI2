@@ -18,30 +18,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// 簡略化されたリクエストロギング
+// 最小限のリクエストロギング
 app.use((req, res, next) => {
-  const start = Date.now();
-  log('Request:', `${req.method} ${req.path}`);
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    log('Response:', `${res.statusCode} ${duration}ms`);
-  });
-
+  log(`${req.method} ${req.path}`);
   next();
 });
 
-// ヘルスチェックエンドポイント
+// 簡易ヘルスチェック
 app.get('/health', async (_req, res) => {
   try {
     await db.execute(sql`SELECT 1`);
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok' });
   } catch (error) {
-    log('Health check failed:', error);
-    res.status(500).json({ 
-      status: 'error',
-      timestamp: new Date().toISOString()
-    });
+    res.status(500).json({ status: 'error' });
   }
 });
 
@@ -49,51 +38,35 @@ app.get('/health', async (_req, res) => {
 async function startServer() {
   try {
     log('Starting server...');
+
+    // 最小限のデータベース接続テスト
+    try {
+      await db.execute(sql`SELECT 1`);
+      log('Database connection verified');
+    } catch (error) {
+      log('Database connection failed, but continuing startup');
+    }
+
     const server = await registerRoutes(app);
 
     // エラーハンドリングミドルウェア
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       log("Error:", err.message);
-      res.status(err.status || 500).json({
+      res.status(500).json({
         error: true,
         message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
       });
     });
 
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    }
-
-    const port = process.env.PORT || 5000;
-    server.listen(port, "0.0.0.0", () => {
-      log(`Server started at http://0.0.0.0:${port}`);
-
-      // サーバー起動後に非同期で初期化処理を実行
-      initializeServices().catch(error => {
-        log("Service initialization error:", error);
-      });
+    // サーバーをポート5000で起動
+    server.listen(5000, "0.0.0.0", () => {
+      log(`Server started on port 5000`);
     });
 
     return server;
   } catch (error) {
     log("Fatal startup error:", error);
     process.exit(1);
-  }
-}
-
-// 非同期の初期化処理
-async function initializeServices() {
-  try {
-    // データベース接続テスト
-    await db.execute(sql`SELECT 1`);
-    log('Database connection successful');
-
-    // cronジョブのセットアップ
-    await setupCronJobs();
-    log('Cron jobs setup completed');
-  } catch (error) {
-    log('Service initialization error:', error);
-    // エラーをスローせず、サービスは継続
   }
 }
 

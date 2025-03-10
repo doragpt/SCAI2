@@ -40,6 +40,38 @@ const scryptAsync = promisify(scrypt);
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
 
+// パスワードハッシュ化関数
+async function hashPassword(password: string): Promise<string> {
+  try {
+    if (!password) {
+      throw new Error('Invalid password');
+    }
+    const salt = randomBytes(SALT_LENGTH).toString('hex');
+    const buf = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
+    return `${buf.toString('hex')}.${salt}`;
+  } catch (error) {
+    throw new Error('Password hashing failed');
+  }
+}
+
+// パスワード比較関数
+async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
+  try {
+    if (!inputPassword || !storedPassword) {
+      return false;
+    }
+    const [hashedPassword, salt] = storedPassword.split('.');
+    if (!hashedPassword || !salt) {
+      return false;
+    }
+    const buf = (await scryptAsync(inputPassword, salt, KEY_LENGTH)) as Buffer;
+    const hashedInput = buf.toString('hex');
+    return timingSafeEqual(Buffer.from(hashedPassword, 'hex'), Buffer.from(hashedInput, 'hex'));
+  } catch (error) {
+    return false;
+  }
+}
+
 // Multerの設定
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -76,14 +108,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(users)
         .where(eq(users.username, loginData.username));
 
-      if (!user || !(await comparePasswords(loginData.password, user.password))) {
+      if (!user) {
+        return res.status(401).json({ message: "ユーザー名またはパスワードが間違っています" });
+      }
+
+      const isValidPassword = await comparePasswords(loginData.password, user.password);
+
+      if (!isValidPassword) {
         return res.status(401).json({ message: "ユーザー名またはパスワードが間違っています" });
       }
 
       const token = generateToken(user);
       const { password, ...userWithoutPassword } = user;
+
       res.json({ user: userWithoutPassword, token });
     } catch (error) {
+      console.error('Login error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       res.status(400).json({
         message: error instanceof Error ? error.message : "ログインに失敗しました"
       });
@@ -137,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-    // 求人情報取得エンドポイント
+  // 求人情報取得エンドポイント
   app.get("/api/jobs/public", async (req, res) => {
     try {
       const jobListings = await db
@@ -289,6 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
 
 
   // 求人詳細の取得
@@ -559,15 +604,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(talentProfiles)
           .where(eq(talentProfiles.userId, userId));
 
-        if(!currentProfile) {
+        if (!currentProfile) {
           throw new Error("プロフィールが見つかりません");
         }
 
         const updateData = talentProfileUpdateSchema.parse(req.body);
         const immutableFields = ['birthDate', 'createdAt', 'id', 'userId'] as const;
         const processedData = {
-          ...currentProfile,  
-          ...updateData,      
+          ...currentProfile,
+          ...updateData,
           ...immutableFields.reduce((acc, field) => ({
             ...acc,
             [field]: currentProfile[field as keyof typeof currentProfile]
@@ -621,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [currentUser] = await db
         .select()
         .from(users)
-        .where(eq(users.id, userId)); 
+        .where(eq(users.id, userId));
 
       if (!currentUser) {
         return res.status(404).json({ message: "ユーザーが見つかりません" });
@@ -693,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload-photo", authenticate, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
-          return res.status(400).json({ message: "ファイルがアップロードされていません" });
+        return res.status(400).json({ message: "ファイルがアップロードされていません" });
       }
 
       const s3Url = await uploadToS3(
@@ -965,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const [existingPost] = await db
-.select()
+        .select()
         .from(blogPosts)
         .where(eq(blogPosts.id, postId));
 
@@ -1194,7 +1239,7 @@ async function cleanupOldBlogPosts(): Promise<BlogPost[] | undefined> {
     eq(blogPosts.createdAt, "<", threeMonthsAgo)
   );
 
-  if(oldPosts.length === 0) return undefined;
+  if (oldPosts.length === 0) return undefined;
 
   await db.delete(blogPosts).where(
     eq(blogPosts.createdAt, "<", threeMonthsAgo)
