@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Form,
@@ -71,15 +72,16 @@ export default function BasicInfoEdit() {
   const queryClient = useQueryClient();
 
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserProfile>({
-    queryKey: ["/api/user/profile"],
+    queryKey: [QUERY_KEYS.USER_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/user/profile");
+      const response = await apiRequest("GET", QUERY_KEYS.USER_PROFILE);
       if (!response.ok) {
         throw new Error("ユーザー情報の取得に失敗しました");
       }
-      return response.json();
+      const data = await response.json();
+      return data.user;  // レスポンスから.userを取得
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const form = useForm<BasicInfoFormData>({
@@ -120,8 +122,8 @@ export default function BasicInfoEdit() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData<UserProfile>(["/api/user/profile"], data.user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      queryClient.setQueryData<UserProfile>([QUERY_KEYS.USER_PROFILE], data.user);
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_PROFILE] });
       toast({
         title: "プロフィールを更新しました",
         description: data.message,

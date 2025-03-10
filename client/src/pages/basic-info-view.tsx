@@ -3,12 +3,22 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { QUERY_KEYS, apiRequest } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { apiRequest } from "@/lib/queryClient";
 import { Loader2, PenSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+
+interface UserProfile {
+  id: number;
+  email: string;
+  username: string;
+  birthDate: string;
+  location: string;
+  preferredLocations: string[];
+}
 
 export default function BasicInfoView() {
   const { user } = useAuth();
@@ -18,7 +28,7 @@ export default function BasicInfoView() {
     data: userProfile,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<{ user: UserProfile }>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
     queryFn: async () => {
       const response = await apiRequest("GET", QUERY_KEYS.USER_PROFILE);
@@ -59,6 +69,8 @@ export default function BasicInfoView() {
     );
   }
 
+  const profile = userProfile?.user;
+
   return (
     <div className="container max-w-2xl py-8">
       <div className="flex items-center justify-between mb-6">
@@ -74,14 +86,14 @@ export default function BasicInfoView() {
       <Card className="p-6 space-y-6">
         <div>
           <p className="text-sm text-muted-foreground">ニックネーム</p>
-          <p>{userProfile?.username || "未設定"}</p>
+          <p>{profile?.username || "未設定"}</p>
         </div>
 
         <div>
           <p className="text-sm text-muted-foreground">生年月日</p>
           <p>
-            {userProfile?.birthDate
-              ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
+            {profile?.birthDate
+              ? format(new Date(profile.birthDate), "yyyy年MM月dd日", {
                   locale: ja,
                 })
               : "未設定"}
@@ -90,19 +102,19 @@ export default function BasicInfoView() {
 
         <div>
           <p className="text-sm text-muted-foreground">メールアドレス</p>
-          <p>{userProfile?.email || "未設定"}</p>
+          <p>{profile?.email || "未設定"}</p>
         </div>
 
         <div>
           <p className="text-sm text-muted-foreground">在住地</p>
-          <p>{userProfile?.location || "未設定"}</p>
+          <p>{profile?.location || "未設定"}</p>
         </div>
 
         <div>
           <p className="text-sm text-muted-foreground">希望エリア</p>
           <div className="flex flex-wrap gap-2 mt-1">
-            {userProfile?.preferredLocations?.length > 0 ? (
-              userProfile.preferredLocations.map((location) => (
+            {profile?.preferredLocations?.length > 0 ? (
+              profile.preferredLocations.map((location) => (
                 <span
                   key={location}
                   className="px-2 py-1 bg-muted rounded-md text-sm"
