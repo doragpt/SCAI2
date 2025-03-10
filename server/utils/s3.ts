@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from 'sharp';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -8,6 +9,10 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+
+// サムネイルのサイズ設定
+const THUMBNAIL_WIDTH = 800;  // 4:3アスペクト比の幅
+const THUMBNAIL_HEIGHT = 600; // 4:3アスペクト比の高さ
 
 export const uploadToS3 = async (
   base64Data: string,
@@ -30,6 +35,16 @@ export const uploadToS3 = async (
     const base64Content = base64Data.replace(/^data:([^;]+);base64,/, '');
     const buffer = Buffer.from(base64Content, 'base64');
 
+    // Sharp.jsを使用して画像を処理
+    const processedImage = await sharp(buffer)
+      .resize({
+        width: THUMBNAIL_WIDTH,
+        height: THUMBNAIL_HEIGHT,
+        fit: 'cover',    // アスペクト比を維持しながら指定サイズに収める
+        position: 'center' // 中央を基準にトリミング
+      })
+      .toBuffer();
+
     // ファイル名に現在のタイムスタンプを追加して一意にする
     const timestamp = new Date().getTime();
     const uniqueFileName = `${timestamp}-${fileName}`;
@@ -38,12 +53,12 @@ export const uploadToS3 = async (
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uniqueFileName,
-      Body: buffer,
+      Body: processedImage,
       ContentType: contentType,
-      // CORSに関連するメタデータを追加
       Metadata: {
         'x-amz-meta-uploaded-by': 'scai-app',
-        'x-amz-meta-timestamp': new Date().toISOString()
+        'x-amz-meta-timestamp': new Date().toISOString(),
+        'x-amz-meta-dimensions': `${THUMBNAIL_WIDTH}x${THUMBNAIL_HEIGHT}`
       },
       CacheControl: 'max-age=31536000' // 1年間のキャッシュを設定
     });
@@ -52,6 +67,7 @@ export const uploadToS3 = async (
       bucket: process.env.AWS_BUCKET_NAME,
       key: uniqueFileName,
       contentType,
+      dimensions: `${THUMBNAIL_WIDTH}x${THUMBNAIL_HEIGHT}`,
       timestamp: new Date().toISOString()
     });
 
@@ -82,7 +98,7 @@ export const uploadToS3 = async (
   }
 };
 
-// プリサインドURL生成用の関数を追加
+// プリサインドURL生成用の関数
 export const getSignedS3Url = async (key: string): Promise<string> => {
   try {
     const command = new GetObjectCommand({

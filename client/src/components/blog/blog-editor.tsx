@@ -65,6 +65,8 @@ interface BlogEditorProps {
   initialData?: BlogPost;
 }
 
+const THUMBNAIL_ASPECT_RATIO = 4 / 3; // 4:3のアスペクト比
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
@@ -94,8 +96,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       formData.append('file', file);
 
       return apiRequest(
-        "POST", 
-        "/api/upload", 
+        "POST",
+        "/api/upload",
         formData,
         {
           headers: {
@@ -240,6 +242,25 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   }, [form, isScheduling, postId, createMutation, updateMutation, toast]);
 
+  // サムネイル表示用のスタイルを定義
+  const thumbnailContainerStyle = {
+    position: 'relative',
+    width: '100%',
+    paddingTop: `${(1 / THUMBNAIL_ASPECT_RATIO) * 100}%`, // 4:3のアスペクト比を維持
+    backgroundColor: '#f1f5f9', // Tailwind の slate-100 相当
+    borderRadius: '0.5rem',
+    overflow: 'hidden'
+  };
+
+  const thumbnailImageStyle = {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
@@ -270,11 +291,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           {isPreview ? (
             <div className="prose prose-sm max-w-none">
               {form.watch("thumbnail") && (
-                <div className="relative w-full mb-6">
-                  <img 
-                    src={form.watch("thumbnail")} 
+                <div style={thumbnailContainerStyle}>
+                  <img
+                    src={form.watch("thumbnail")}
                     alt="サムネイル画像"
-                    className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
+                    style={thumbnailImageStyle}
                   />
                 </div>
               )}
@@ -303,7 +324,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   name="thumbnail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormLabel>サムネイル画像（4:3）</FormLabel>
                       <FormControl>
                         <div className="space-y-4">
                           <div className="flex items-center gap-4">
@@ -318,11 +339,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             )}
                           </div>
                           {field.value && (
-                            <div className="relative w-full">
+                            <div style={thumbnailContainerStyle}>
                               <img
                                 src={field.value}
                                 alt="サムネイル"
-                                className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
+                                style={thumbnailImageStyle}
                               />
                             </div>
                           )}
@@ -332,7 +353,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="content"
