@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, extractTokenFromHeader } from '../jwt';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -27,21 +26,9 @@ export async function authenticate(
   next: NextFunction
 ) {
   try {
-    log('info', '認証処理を開始', {
-      path: req.path,
-      method: req.method,
-      headers: {
-        ...req.headers,
-        authorization: req.headers.authorization ? '[REDACTED]' : undefined
-      }
-    });
-
-    const token = extractTokenFromHeader(req.headers.authorization);
-    if (!token) {
-      return res.status(401).json({ message: '認証トークンが見つかりません' });
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: '認証が必要です' });
     }
-
-    const payload = verifyToken(token);
 
     // ユーザーの存在確認
     const [user] = await db
@@ -52,10 +39,10 @@ export async function authenticate(
         displayName: users.displayName
       })
       .from(users)
-      .where(eq(users.id, payload.userId));
+      .where(eq(users.id, req.session.userId));
 
     if (!user) {
-      log('warn', 'ユーザーが見つかりません', { userId: payload.userId });
+      log('warn', 'ユーザーが見つかりません', { userId: req.session.userId });
       return res.status(401).json({ message: 'ユーザーが見つかりません' });
     }
 

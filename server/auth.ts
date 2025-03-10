@@ -199,11 +199,7 @@ export function setupAuth(app: Express) {
         role: user.role
       });
 
-      // JWTトークンの生成
-      const token = require('./jwt').generateToken(user);
-
       return res.status(201).json({
-        token,
         user: {
           id: user.id,
           username: user.username,
@@ -271,8 +267,6 @@ export function setupAuth(app: Express) {
           });
         }
 
-        const token = require('./jwt').generateToken(user);
-
         log('info', 'ログイン成功', {
           userId: user.id,
           username: user.username,
@@ -280,7 +274,6 @@ export function setupAuth(app: Express) {
         });
 
         return res.status(200).json({
-          token,
           user: {
             id: user.id,
             username: user.username,

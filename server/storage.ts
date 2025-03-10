@@ -3,6 +3,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { log } from "./utils/logger";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -18,70 +19,88 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+      checkPeriod: 86400000, // 24時間でクリア
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
     try {
-      console.log('Getting user by ID:', id);
+      log('info', 'ユーザー取得開始', { id });
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, id));
 
-      console.log('Found user by ID:', user);
+      log('info', 'ユーザー取得完了', {
+        id,
+        found: !!user
+      });
       return user;
     } catch (error) {
-      console.error('Error getting user by ID:', error);
+      log('error', 'ユーザー取得エラー', {
+        id,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw error;
     }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      console.log('Getting user by username:', username);
+      log('info', 'ユーザー名での取得開始', { username });
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.username, username));
 
-      console.log('Found user by username:', user);
+      log('info', 'ユーザー名での取得完了', {
+        username,
+        found: !!user
+      });
       return user;
     } catch (error) {
-      console.error('Error getting user by username:', error);
+      log('error', 'ユーザー名での取得エラー', {
+        username,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw error;
     }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
-      console.log('Creating user:', insertUser);
-
-      // トランザクションを使用してユーザー作成
-      const [user] = await db.transaction(async (tx) => {
-        const [newUser] = await tx
-          .insert(users)
-          .values({
-            ...insertUser,
-            createdAt: new Date(),
-            age: null,
-            birthDate: insertUser.birthDate || null,
-            preferredLocations: insertUser.preferredLocations || [],
-          })
-          .returning();
-
-        if (!newUser) {
-          throw new Error('ユーザーの作成に失敗しました');
-        }
-
-        return [newUser];
+      log('info', '新規ユーザー作成開始', {
+        username: insertUser.username,
+        role: insertUser.role
       });
 
-      console.log('Created user with ID:', user.id);
+      const [user] = await db
+        .insert(users)
+        .values({
+          ...insertUser,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          birthDateModified: false,
+          preferredLocations: insertUser.preferredLocations || []
+        })
+        .returning();
+
+      if (!user) {
+        throw new Error('ユーザーの作成に失敗しました');
+      }
+
+      log('info', '新規ユーザー作成完了', {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      });
+
       return user;
     } catch (error) {
-      console.error('Error creating user:', error);
+      log('error', '新規ユーザー作成エラー', {
+        username: insertUser.username,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw error;
     }
   }
