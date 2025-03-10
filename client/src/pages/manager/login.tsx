@@ -24,9 +24,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { login, user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { loginMutation, user } = useAuth();
 
+  // ユーザーが既にログインしている場合のリダイレクト
   useEffect(() => {
     if (user?.role === "store") {
       setLocation("/store/dashboard");
@@ -44,17 +44,14 @@ export default function ManagerLogin() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setIsLoading(true);
       console.log('店舗ログイン試行:', {
         username: data.username,
         timestamp: new Date().toISOString()
       });
 
-      const userData = await login(data.username, data.password);
+      await loginMutation.mutateAsync(data);
 
       console.log('店舗ログイン成功:', {
-        userId: userData.id,
-        role: userData.role,
         timestamp: new Date().toISOString()
       });
 
@@ -63,13 +60,9 @@ export default function ManagerLogin() {
         description: "ダッシュボードに移動します",
       });
 
-      // 明示的なページ遷移
-      if (userData.role === "store") {
-        setLocation("/store/dashboard");
-      }
     } catch (error) {
       console.error('店舗ログインエラー:', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
 
@@ -78,8 +71,6 @@ export default function ManagerLogin() {
         title: "エラーが発生しました",
         description: error instanceof Error ? error.message : "ログインに失敗しました",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -124,8 +115,8 @@ export default function ManagerLogin() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 ログイン
               </Button>
             </form>

@@ -46,13 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return null;
         }
 
-        const response = await fetch("/api/user", {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
+        const response = await apiRequest("GET", "/api/auth/check");
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -72,7 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return userData;
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Auth check error:', error);
+        //setUser(null); // This line was added in the edited snippet but setUser is not defined.  Leaving it out for now.
         return null;
       }
     },
@@ -88,22 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString()
       });
 
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-        credentials: "include",
-      });
+      const response = await apiRequest("POST", "/api/auth/login", credentials);
 
       if (!response.ok) {
-        const responseText = await response.text();
+        const error = await response.json();
         console.error('Login error response:', {
           status: response.status,
-          statusText: response.statusText,
-          responseText,
+          message: error.message,
           timestamp: new Date().toISOString()
         });
-        throw new Error("ログインに失敗しました");
+        throw new Error(error.message || "ログインに失敗しました");
       }
 
       const result = await response.json();
@@ -122,7 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString()
       });
 
-      // キャッシュを即座に更新
       queryClient.setQueryData(["/api/user"], user);
 
       toast({
@@ -146,15 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem("auth_token");
-      await fetch("/api/logout", {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: "include",
-      });
+      await apiRequest("POST", "/api/auth/logout");
       localStorage.removeItem("auth_token");
     },
     onSuccess: () => {
@@ -175,12 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-        credentials: "include",
-      });
+      const response = await apiRequest("POST", "/api/auth/register", credentials);
 
       if (!response.ok) {
         const error = await response.json();
@@ -220,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user: user ?? null,
+        user,
         isLoading,
         error,
         loginMutation,
