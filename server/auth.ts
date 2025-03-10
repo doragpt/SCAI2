@@ -77,31 +77,37 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        log('info', 'ログイン試行', { username });
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password',
+      },
+      async (email, password, done) => {
+        try {
+          log('info', 'ログイン試行', { email });
 
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          log('warn', 'ログイン失敗', { username });
-          return done(null, false, { message: "ユーザー名またはパスワードが間違っています" });
+          const user = await storage.getUserByEmail(email);
+          if (!user || !(await comparePasswords(password, user.password))) {
+            log('warn', 'ログイン失敗', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          log('info', 'ログイン成功', {
+            userId: user.id,
+            email: user.email,
+            role: user.role
+          });
+
+          return done(null, user);
+        } catch (error) {
+          log('error', 'ログインエラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
+          return done(error);
         }
-
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          username: user.username,
-          role: user.role
-        });
-
-        return done(null, user);
-      } catch (error) {
-        log('error', 'ログインエラー', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          username
-        });
-        return done(error);
       }
-    })
+    )
   );
 
   passport.serializeUser((user, done) => {
@@ -124,7 +130,7 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/register", async (req, res) => {
     try {
       log('info', '新規登録リクエスト受信', {
-        username: req.body.username,
+        email: req.body.email,
         role: req.body.role
       });
 
@@ -132,10 +138,10 @@ export function setupAuth(app: Express) {
       const validatedData = talentRegisterFormSchema.parse(req.body);
 
       // 既存ユーザーチェック
-      const existingUser = await storage.getUserByUsername(validatedData.username);
+      const existingUser = await storage.getUserByEmail(validatedData.email);
       if (existingUser) {
         return res.status(400).json({
-          message: "このユーザー名は既に使用されています"
+          message: "このメールアドレスは既に使用されています"
         });
       }
 
@@ -147,21 +153,17 @@ export function setupAuth(app: Express) {
 
       // ユーザー作成
       const user = await storage.createUser({
-        username: validatedData.username,
+        ...validatedData,
         password: hashedPassword,
-        role: validatedData.role,
-        displayName: validatedData.displayName,
-        birthDate: birthDate,
-        location: validatedData.location,
+        birthDate,
         birthDateModified: false,
-        preferredLocations: validatedData.preferredLocations,
         createdAt: new Date(),
         updatedAt: new Date()
       });
 
       log('info', 'ユーザー登録成功', {
         userId: user.id,
-        username: user.username,
+        email: user.email,
         role: user.role
       });
 
@@ -200,7 +202,7 @@ export function setupAuth(app: Express) {
   // ログインAPIエンドポイント
   app.post("/api/auth/login", (req, res, next) => {
     log('info', 'ログインリクエスト受信', { 
-      username: req.body.username
+      email: req.body.email
     });
 
     passport.authenticate('local', (err, user, info) => {
@@ -213,11 +215,11 @@ export function setupAuth(app: Express) {
 
       if (!user) {
         log('warn', 'ログイン失敗', {
-          username: req.body.username,
+          email: req.body.email,
           reason: info?.message || "認証失敗"
         });
         return res.status(401).json({
-          message: info?.message || "ユーザー名またはパスワードが間違っています"
+          message: info?.message || "メールアドレスまたはパスワードが間違っています"
         });
       }
 
@@ -231,7 +233,7 @@ export function setupAuth(app: Express) {
 
         log('info', 'ログイン成功', {
           userId: user.id,
-          username: user.username,
+          email: user.email,
           role: user.role
         });
 
@@ -246,9 +248,10 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/logout", (req, res) => {
     try {
       if (req.user) {
+        const user = req.user as SelectUser;
         log('info', 'ログアウトリクエスト受信', {
-          userId: (req.user as SelectUser).id,
-          username: (req.user as SelectUser).username
+          userId: user.id,
+          email: user.email
         });
       }
 
@@ -297,7 +300,7 @@ export function setupAuth(app: Express) {
       const user = req.user as SelectUser;
       log('info', '認証チェック成功', {
         userId: user.id,
-        username: user.username,
+        email: user.email,
         role: user.role
       });
 

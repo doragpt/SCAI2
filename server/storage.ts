@@ -9,7 +9,7 @@ const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   sessionStore: session.Store;
 }
@@ -35,8 +35,7 @@ export class DatabaseStorage implements IStorage {
         id,
         found: !!user,
         role: user?.role,
-        hasDisplayName: !!user?.displayName,
-        hasBirthDate: !!user?.birthDate
+        email: user?.email
       });
       return user;
     } catch (error) {
@@ -48,23 +47,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      log('info', 'ユーザー名での取得開始', { username });
+      log('info', 'メールアドレスでの取得開始', { email });
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username));
+        .where(eq(users.email, email));
 
-      log('info', 'ユーザー名での取得完了', {
-        username,
+      log('info', 'メールアドレスでの取得完了', {
+        email,
         found: !!user,
         role: user?.role
       });
       return user;
     } catch (error) {
-      log('error', 'ユーザー名での取得エラー', {
-        username,
+      log('error', 'メールアドレスでの取得エラー', {
+        email,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
@@ -74,16 +73,10 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     try {
       log('info', '新規ユーザー作成開始', {
+        email: insertUser.email,
         username: insertUser.username,
-        role: insertUser.role,
-        hasDisplayName: !!insertUser.displayName,
-        hasBirthDate: !!insertUser.birthDate
+        role: insertUser.role
       });
-
-      // 必須フィールドの確認
-      if (!insertUser.birthDate || !insertUser.displayName || !insertUser.location) {
-        throw new Error('必須フィールドが不足しています');
-      }
 
       const [user] = await db
         .insert(users)
@@ -103,16 +96,15 @@ export class DatabaseStorage implements IStorage {
 
       log('info', '新規ユーザー作成完了', {
         id: user.id,
+        email: user.email,
         username: user.username,
-        role: user.role,
-        displayName: user.displayName,
-        birthDate: user.birthDate,
-        location: user.location
+        role: user.role
       });
 
       return user;
     } catch (error) {
       log('error', '新規ユーザー作成エラー', {
+        email: insertUser.email,
         username: insertUser.username,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
