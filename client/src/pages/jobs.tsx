@@ -12,11 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  prefectures, 
-  serviceTypes, 
-  type JobsSearchResponse, 
-  type ServiceType, 
+import {
+  prefectures,
+  serviceTypes,
+  type JobsSearchResponse,
+  type ServiceType,
   type Job
 } from "@shared/schema";
 import { useState, useEffect } from "react";
@@ -111,17 +111,6 @@ export default function Jobs() {
     if (pageParam) setPage(parseInt(pageParam));
   }, []);
 
-  // フィルター変更時にURLを更新
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (location !== "all") params.set("location", location);
-    if (serviceType !== "all") params.set("serviceType", serviceType);
-    if (page > 1) params.set("page", page.toString());
-
-    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-    window.history.replaceState(null, "", newUrl);
-  }, [location, serviceType, page]);
-
   const {
     data: response,
     isLoading,
@@ -129,12 +118,12 @@ export default function Jobs() {
   } = useQuery({
     queryKey: [QUERY_KEYS.JOBS_SEARCH, { location, serviceType, page, limit }],
     queryFn: () => searchJobsQuery({ location, serviceType, page, limit }),
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("求人情報取得エラー:", error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+        description: error.message || "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
       });
     }
   });

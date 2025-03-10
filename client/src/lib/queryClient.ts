@@ -115,14 +115,26 @@ export const searchJobsQuery = async (params: {
 }> => {
   try {
     const searchParams = new URLSearchParams();
-    if (params.location) searchParams.set("location", params.location);
-    if (params.serviceType) searchParams.set("serviceType", params.serviceType);
+    if (params.location && params.location !== "all") searchParams.set("location", params.location);
+    if (params.serviceType && params.serviceType !== "all") searchParams.set("serviceType", params.serviceType);
     if (params.page) searchParams.set("page", params.page.toString());
     if (params.limit) searchParams.set("limit", params.limit.toString());
 
-    const url = `${QUERY_KEYS.JOBS_SEARCH}?${searchParams.toString()}`;
+    const url = `/api/jobs/public${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    console.log('Fetching jobs:', { url, params });
+
     const response = await apiRequest("GET", url);
-    return handleApiResponse(response);
+    const data = await handleApiResponse(response);
+
+    // レスポンスをページネーション形式に整形
+    return {
+      jobs: data,
+      pagination: {
+        currentPage: params.page || 1,
+        totalPages: Math.ceil(data.length / (params.limit || 12)),
+        totalItems: data.length
+      }
+    };
   } catch (error) {
     console.error('Jobs search error:', {
       error: getErrorMessage(error),
