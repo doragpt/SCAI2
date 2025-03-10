@@ -73,17 +73,19 @@ router.get("/public", async (_req, res) => {
 
     const jobListings = await query;
 
+    // 結果の詳細をログ出力
     log('info', 'パブリック求人一覧取得成功', {
       count: jobListings.length,
-      firstJob: jobListings[0] // 最初の求人データをサンプルとしてログ出力
+      firstJob: jobListings[0]
     });
 
     return res.json(jobListings);
   } catch (error) {
+    // エラー時の詳細なログ出力
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      sql: db.select().from(jobs).toSQL().sql // エラー時のSQLクエリもログ出力
+      sql: db.select().from(jobs).toSQL().sql
     });
     return res.status(500).json({ message: "求人情報の取得に失敗しました" });
   }
