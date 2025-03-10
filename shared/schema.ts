@@ -119,7 +119,7 @@ export const bodyMarkSchema = z.object({
 // Tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  username: text("username").notNull(),
   password: text("password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
