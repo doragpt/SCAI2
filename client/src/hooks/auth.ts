@@ -20,6 +20,11 @@ export const useAuth = () => {
 
   const login = async (username: string, password: string) => {
     try {
+      console.log('ログイン試行:', {
+        username,
+        timestamp: new Date().toISOString()
+      });
+
       const response = await apiRequest("POST", "/api/auth/login", {
         username,
         password,
@@ -31,6 +36,12 @@ export const useAuth = () => {
       }
 
       const userData = await response.json();
+      console.log('ログイン成功:', {
+        userId: userData.id,
+        role: userData.role,
+        timestamp: new Date().toISOString()
+      });
+
       setUser(userData);
       return userData;
     } catch (error) {
@@ -53,7 +64,7 @@ export const useAuth = () => {
     try {
       setIsLoading(true);
       const response = await apiRequest("GET", "/api/auth/check");
-      
+
       if (!response.ok) {
         setUser(null);
         return null;

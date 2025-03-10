@@ -22,18 +22,16 @@ import { useAuth } from "@/hooks/use-auth";
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function ManagerLogin() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { loginMutation, user } = useAuth();
+  const { login, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // ログイン済みの場合のリダイレクト処理を修正
   useEffect(() => {
-    // ログインページ以外でのみリダイレクトを行う
-    if (user && user.role === "store" && location !== "/manager/login") {
+    if (user?.role === "store") {
       setLocation("/store/dashboard");
     }
-  }, [user, location, setLocation]);
+  }, [user, setLocation]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -52,14 +50,23 @@ export default function ManagerLogin() {
         timestamp: new Date().toISOString()
       });
 
-      await loginMutation.mutateAsync(data);
+      const userData = await login(data.username, data.password);
 
       console.log('店舗ログイン成功:', {
+        userId: userData.id,
+        role: userData.role,
         timestamp: new Date().toISOString()
       });
 
-      // ログイン成功時は店舗ダッシュボードへ
-      setLocation("/store/dashboard");
+      toast({
+        title: "ログイン成功",
+        description: "ダッシュボードに移動します",
+      });
+
+      // 明示的なページ遷移
+      if (userData.role === "store") {
+        setLocation("/store/dashboard");
+      }
     } catch (error) {
       console.error('店舗ログインエラー:', {
         error,
