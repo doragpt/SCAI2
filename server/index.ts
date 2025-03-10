@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite } from "./vite";
+import { setupVite, serveStatic } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
 import { setupCronJobs } from "./cron";
@@ -13,6 +13,9 @@ import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// 開発環境を強制的に設定
+process.env.NODE_ENV = "development";
 
 const app = express();
 
@@ -43,7 +46,8 @@ app.use((req, res, next) => {
   try {
     const startTime = Date.now();
     log('info', 'Startup phase: initialization', {
-      timestamp: startTime
+      timestamp: startTime,
+      environment: process.env.NODE_ENV
     });
 
     // データベース接続テスト
@@ -89,12 +93,11 @@ app.use((req, res, next) => {
     // APIエラーハンドリング
     app.use("/api/*", (err: Error, _req: Request, res: Response, _next: NextFunction) => {
       log('error', 'API error', {
-        error: err.message,
+        error: err instanceof Error ? err.message : 'Unknown error',
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
       });
 
       res.status(500).json({
-        error: true,
         message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
       });
     });
@@ -116,30 +119,9 @@ app.use((req, res, next) => {
         });
         throw error;
       }
-
-      // 開発環境でのフォールバックルート（デバッグ用）
-      app.use('*', (req, res, next) => {
-        log('debug', 'Fallback route hit in development', {
-          path: req.originalUrl,
-          method: req.method
-        });
-        next();
-      });
     } else {
       // 本番環境: 静的ファイルの提供
-      const distPath = path.resolve(__dirname, "public");
-      if (!fs.existsSync(distPath)) {
-        throw new Error(
-          `Could not find the build directory: ${distPath}, make sure to build the client first`,
-        );
-      }
-
-      app.use(express.static(distPath));
-
-      // SPAのためのフォールバックルート
-      app.get("*", (_req, res) => {
-        res.sendFile(path.resolve(distPath, "index.html"));
-      });
+      serveStatic(app);
     }
 
     const port = process.env.PORT || 5000;
