@@ -136,7 +136,7 @@ app.get('/health', async (_req, res) => {
     }
 
     const port = process.env.PORT || 5000;
-    server.listen(port, "0.0.0.0", () => {
+    server.listen(port, () => {
       log('info', `Server started at http://0.0.0.0:${port}`, {
         environment: app.get("env"),
         totalStartupTime: Date.now() - startTime,

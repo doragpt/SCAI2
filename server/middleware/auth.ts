@@ -4,8 +4,12 @@ import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
-// ログ関数をインポート
-import { log } from '../utils/logger';
+// ログ関数の定義
+function log(level: 'info' | 'error' | 'warn', message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  const logData = data ? JSON.stringify(data, null, 2) : '';
+  console.log(`[${timestamp}] [${level.toUpperCase()}] ${message} ${logData}`);
+}
 
 // ユーザー型の拡張を修正
 declare global {
