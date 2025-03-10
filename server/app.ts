@@ -4,6 +4,8 @@ import MemoryStore from 'memorystore';
 import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
+import { registerRoutes } from './routes';
+import { setupAuth } from './auth';
 
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
@@ -29,7 +31,7 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' as const
   }
 };
 
@@ -39,11 +41,7 @@ app.use(session(sessionConfig));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// アップロード用の制限を別途設定
-app.use('/api/upload-photo-chunk', express.json({ limit: '1mb' }));
-app.use('/api/upload-photo', express.json({ limit: '1mb' }));
-
-// APIリクエストのロギング
+// APIリクエストのログ記録とヘッダー設定
 app.use('/api/*', (req, res, next) => {
   log('info', 'APIリクエスト受信', {
     method: req.method,
@@ -51,8 +49,17 @@ app.use('/api/*', (req, res, next) => {
     query: req.query,
     body: req.method !== 'GET' ? req.body : undefined
   });
+
+  // APIリクエストには必ずJSONを返す
+  res.setHeader('Content-Type', 'application/json');
   next();
 });
+
+// 認証セットアップ
+setupAuth(app);
+
+// APIルートの登録（Viteミドルウェアの前に配置）
+registerRoutes(app);
 
 // グローバルエラーハンドラーの設定
 app.use(errorHandler);

@@ -39,6 +39,27 @@ router.get("/store", authenticate, async (req: any, res) => {
   }
 });
 
-// 他の求人関連エンドポイントも同様に実装
+// パブリック求人一覧取得
+router.get("/public", async (_req, res) => {
+  try {
+    const jobListings = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.status, 'published'))
+      .orderBy(desc(jobs.createdAt))
+      .limit(12);
+
+    log('info', 'パブリック求人一覧取得成功', {
+      count: jobListings.length
+    });
+
+    return res.json(jobListings);
+  } catch (error) {
+    log('error', 'パブリック求人一覧取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return res.status(500).json({ message: "求人情報の取得に失敗しました" });
+  }
+});
 
 export default router;

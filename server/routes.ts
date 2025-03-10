@@ -6,28 +6,6 @@ import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
 import { log } from './utils/logger';
 import { storage } from "./storage";
-import {
-  talentProfileSchema,
-  talentProfileUpdateSchema,
-  type TalentProfileData,
-  jobs,
-  applications,
-  type Application,
-  type ViewHistory,
-  type KeepList,
-  applicationSchema,
-  keepListSchema,
-  viewHistorySchema,
-  jobSchema,
-  type Job,
-  type JobRequirements,
-  loginSchema,
-  type LoginData,
-  type SelectUser,
-} from "@shared/schema";
-import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
-import { users, talentProfiles, blogPosts, type BlogPost, type BlogPostListResponse, blogPostSchema } from "@shared/schema";
 import multer from "multer";
 
 // Multerの設定
@@ -79,38 +57,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   return server;
-}
-
-async function calculateMatchScore(job: Job, conditions: any): Promise<number> {
-  let score = 0;
-  if (conditions.preferredLocations.includes(job.location)) {
-    score++;
-  }
-  if (Number(job.minimumGuarantee) >= Number(conditions.desiredGuarantee)) {
-    score++;
-  }
-  if (conditions.workTypes.includes(job.serviceType)) {
-    score++;
-  }
-  return score;
-}
-
-async function cleanupOldBlogPosts(): Promise<BlogPost[] | undefined> {
-  // 古いブログ記事を削除するロジックを実装します。
-  // 例: 3ヶ月以上前の記事を削除
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-  const oldPosts = await db.select().from(blogPosts).where(
-    eq(blogPosts.createdAt, "<", threeMonthsAgo)
-  );
-
-  if (oldPosts.length === 0) return undefined;
-
-  await db.delete(blogPosts).where(
-    eq(blogPosts.createdAt, "<", threeMonthsAgo)
-  );
-  return oldPosts;
 }
 
 const photoChunksStore = new Map();
