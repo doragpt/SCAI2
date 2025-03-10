@@ -123,7 +123,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   username: text("username").notNull(),
   password: text("password").notNull(),
-  birthDate: date("birth_date").notNull(),
+  birthDate: text("birth_date").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
@@ -565,6 +565,7 @@ export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
