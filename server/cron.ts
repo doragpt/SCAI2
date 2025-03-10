@@ -6,7 +6,8 @@ import { publishScheduledPosts } from "./utils/publishScheduledPosts";
 function setupPublishCron() {
   console.log('Setting up scheduled posts publishing cron job');
 
-  cron.schedule('* * * * *', async () => {
+  // 毎分実行されるジョブ
+  const publishJob = cron.schedule('*/1 * * * *', async () => {
     console.log('Running publish scheduled posts cron job:', {
       timestamp: new Date().toISOString()
     });
@@ -24,13 +25,17 @@ function setupPublishCron() {
       });
     }
   });
+
+  // ジョブの開始
+  publishJob.start();
 }
 
 // 毎日午前3時に実行（古い記事の削除）
 function setupCleanupCron() {
   console.log('Setting up blog cleanup cron job');
 
-  cron.schedule('0 3 * * *', async () => {
+  // 毎日午前3時に実行されるジョブ
+  const cleanupJob = cron.schedule('0 3 * * *', async () => {
     console.log('Running blog cleanup cron job:', {
       timestamp: new Date().toISOString()
     });
@@ -48,9 +53,23 @@ function setupCleanupCron() {
       });
     }
   });
+
+  // ジョブの開始
+  cleanupJob.start();
 }
 
+// すべてのcronジョブをセットアップ
 export function setupCronJobs() {
-  setupPublishCron();
-  setupCleanupCron();
+  try {
+    console.log('Starting cron jobs setup...');
+    setupPublishCron();
+    setupCleanupCron();
+    console.log('All cron jobs setup completed');
+  } catch (error) {
+    console.error('Cron jobs setup error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
 }

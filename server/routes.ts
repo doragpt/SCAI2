@@ -1001,7 +1001,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
-  }
   });
 
   app.patch("/api/talent/profile", authenticate, async (req: any, res) => {
@@ -1866,7 +1865,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "この記事の更新権限がありません" });
       }
 
-      // ステータス更新
+      // ステータス値のバリデーション
+      if (!["draft", "published", "scheduled"].includes(status)) {
+        return res.status(400).json({ message: "無効なステータスです" });
+      }
+
+      // 予約投稿の場合、scheduledAtが必要
+      if (status === "scheduled" && !scheduledAt) {
+        return res.status(400).json({ message: "予約投稿には公開日時の指定が必要です" });
+      }
+
+      // 記事のステータスを更新
       const [updatedPost] = await db
         .update(blogPosts)
         .set({
@@ -2004,7 +2013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // ステータス値のバリデーション
-      if (!["draft", "published", "scheduled"].includes(status)) {
+      if (!["draft", "published","scheduled"].includes(status)) {
         return res.status(400).json({ message: "無効なステータスです" });
       }
 
