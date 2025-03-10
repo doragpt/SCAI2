@@ -40,7 +40,15 @@ export const users = pgTable("users", {
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  age: integer("age"),
 });
+
+// テーブルのインデックスと関連付けを追加
+export const usersRelations = relations(users, ({ many }) => ({
+  jobs: many(jobs),
+  applications: many(applications),
+  talentProfiles: many(talentProfiles)
+}));
 
 // Jobs table
 export const jobs = pgTable("jobs", {
