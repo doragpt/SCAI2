@@ -25,7 +25,12 @@ process.env.NODE_ENV = "development";
 
     // データベース接続テスト
     try {
-      log('info', 'データベース接続を試行中...');
+      log('info', 'データベース接続を試行中...', {
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        port: process.env.PGPORT
+      });
+
       await db.execute(sql`SELECT 1`);
       log('info', 'データベース接続成功', {
         duration: Date.now() - startTime
@@ -63,7 +68,7 @@ process.env.NODE_ENV = "development";
       serveStatic(app);
     }
 
-    const port = process.env.PORT || 5000;
+    const port = Number(process.env.PORT) || 5000;
     server.listen(port, '0.0.0.0', () => {
       log('info', `サーバーを起動しました: http://0.0.0.0:${port}`, {
         environment: process.env.NODE_ENV,

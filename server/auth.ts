@@ -67,6 +67,7 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   };
@@ -82,6 +83,7 @@ export function setupAuth(app: Express) {
 
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
+          log('warn', 'ログイン失敗', { username });
           return done(null, false, { message: "ユーザー名またはパスワードが間違っています" });
         }
 
@@ -190,8 +192,7 @@ export function setupAuth(app: Express) {
       }
 
       return res.status(500).json({
-        message: "登録処理中にエラーが発生しました",
-        details: error instanceof Error ? error.message : undefined
+        message: "登録処理中にエラーが発生しました"
       });
     }
   });
@@ -258,8 +259,19 @@ export function setupAuth(app: Express) {
             message: "ログアウト処理中にエラーが発生しました"
           });
         }
-        return res.status(200).json({
-          message: "ログアウトしました"
+
+        req.session.destroy((err) => {
+          if (err) {
+            log('error', 'セッション破棄エラー', { error: err });
+            return res.status(500).json({
+              message: "セッションの破棄に失敗しました"
+            });
+          }
+
+          res.clearCookie('connect.sid');
+          return res.status(200).json({
+            message: "ログアウトしました"
+          });
         });
       });
     } catch (error) {
