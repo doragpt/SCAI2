@@ -611,18 +611,6 @@ export const talentRegisterFormSchema = z.object({
 });
 
 // ブログ関連の型定義とテーブルを追加
-// 画像メタデータの型定義を追加
-export const imageMetadataSchema = z.object({
-  url: z.string(),
-  width: z.number().optional(),
-  height: z.number().optional(),
-  size: z.number().optional(),
-  type: z.string().optional(),
-  createdAt: z.string().optional(),
-});
-
-export type ImageMetadata = z.infer<typeof imageMetadataSchema>;
-
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").notNull().references(() => users.id),
@@ -633,9 +621,8 @@ export const blogPosts = pgTable("blog_posts", {
   scheduledAt: timestamp("scheduled_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  thumbnail: text("thumbnail").nullable(),  // NULLABLEを明示的に指定
-  thumbnailMetadata: jsonb("thumbnail_metadata").$type<ImageMetadata>().nullable(),  // サムネイル用のメタデータを追加
-  images: jsonb("images").$type<ImageMetadata[]>().default([]),  // 画像配列をメタデータ付きに変更
+  thumbnail: text("thumbnail"),
+  images: jsonb("images").$type<string[]>().default([]),
 }, (table) => {
   return {
     storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
@@ -647,7 +634,7 @@ export const blogPosts = pgTable("blog_posts", {
 // ブログ投稿のスキーマ定義
 export const blogPostSchema = createInsertSchema(blogPosts)
   .extend({
-    images: z.array(imageMetadataSchema).optional(),
+    images: z.array(z.string()).optional(),
     scheduledAt: z.union([
       z.date(),
       z.string().transform((val) => new Date(val)),
@@ -662,12 +649,32 @@ export const blogPostSchema = createInsertSchema(blogPosts)
     title: z.string().min(1, "タイトルは必須です"),
     content: z.string().min(1, "本文は必須です"),
     thumbnail: z.string().nullable().optional(),
-    thumbnailMetadata: imageMetadataSchema.nullable().optional(),
   })
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
+  })
+  .superRefine((data, ctx) => {
+    // 予約投稿の場合の追加バリデーション
+    if (data.status === "scheduled") {
+      if (!data.scheduledAt) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "予約投稿には公開日時の指定が必要です",
+          path: ["scheduledAt"]
+        });
+      } else {
+        const scheduledDate = new Date(data.scheduledAt);
+        if (scheduledDate <= new Date()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "予約日時は現在時刻より後に設定してください",
+            path: ["scheduledAt"]
+          });
+        }
+      }
+    }
   });
 
 // 型定義のエクスポート
