@@ -24,13 +24,17 @@ import { prefectures } from "@/lib/constants";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
+// Assuming passwordValidationSchema is defined elsewhere
+const passwordValidationSchema = z.string().min(8, "パスワードは8文字以上で入力してください");
+
+
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
   displayName: z.string().min(1, "本名を入力してください"),
   location: z.string().min(1, "居住地を選択してください"),
   preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "パスワードは8文字以上で入力してください").optional(),
+  newPassword: passwordValidationSchema.optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
   if (data.newPassword && !data.currentPassword) {

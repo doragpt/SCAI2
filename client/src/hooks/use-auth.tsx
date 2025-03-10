@@ -40,31 +40,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         console.log('Fetching user data...');
-        const token = localStorage.getItem("auth_token");
-        if (!token) {
+        const accessToken = localStorage.getItem("auth_token");
+        if (!accessToken) {
           console.log('No auth token found');
           return null;
         }
 
         const response = await apiRequest("GET", "/api/auth/check");
-        const userData = await response.json();
+        const data = await response.json();
 
         if (!response.ok) {
           if (response.status === 401) {
+            // アクセストークンが無効な場合、リフレッシュトークンを使用して更新を試みる
+            const refreshToken = localStorage.getItem("refresh_token");
+            if (refreshToken) {
+              try {
+                const refreshResponse = await apiRequest("POST", "/api/auth/refresh", {
+                  refreshToken
+                });
+                const refreshData = await refreshResponse.json();
+
+                if (refreshResponse.ok) {
+                  localStorage.setItem("auth_token", refreshData.accessToken);
+                  // 新しいアクセストークンで再度ユーザー情報を取得
+                  const newResponse = await apiRequest("GET", "/api/auth/check");
+                  const userData = await newResponse.json();
+                  return userData;
+                }
+              } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("refresh_token");
+                return null;
+              }
+            }
             console.log('Session expired or invalid token');
             localStorage.removeItem("auth_token");
+            localStorage.removeItem("refresh_token");
             return null;
           }
-          throw new Error(userData.message || 'Failed to fetch user data');
+          throw new Error(data.message || 'Failed to fetch user data');
         }
 
         console.log('User data fetched:', {
-          userId: userData?.id,
-          username: userData?.username,
-          role: userData?.role,
+          userId: data?.id,
+          username: data?.username,
+          role: data?.role,
           timestamp: new Date().toISOString()
         });
-        return userData;
+        return data;
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
@@ -94,11 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(result.message || "ログインに失敗しました");
       }
 
-      if (!result.token) {
+      if (!result.accessToken || !result.refreshToken) {
         throw new Error("認証トークンが見つかりません");
       }
 
-      localStorage.setItem("auth_token", result.token);
+      localStorage.setItem("auth_token", result.accessToken);
+      localStorage.setItem("refresh_token", result.refreshToken);
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -122,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString()
       });
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -134,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/logout");
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -160,8 +187,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(result.message || "登録に失敗しました");
       }
 
-      if (result.token) {
-        localStorage.setItem("auth_token", result.token);
+      if (result.accessToken && result.refreshToken) {
+        localStorage.setItem("auth_token", result.accessToken);
+        localStorage.setItem("refresh_token", result.refreshToken);
       }
       return result.user;
     },
