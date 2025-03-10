@@ -14,9 +14,9 @@ export function getServiceTypeLabel(serviceType: ServiceType | "all"): string {
 
 // 給与表示のフォーマット
 export function formatSalary(min?: number | null, max?: number | null): string {
-  if (!min && !max) return "応相談";
-  if (!max) return `${min?.toLocaleString()}円〜`;
-  if (!min) return `〜${max?.toLocaleString()}円`;
+  if (min === null && max === null) return "応相談";
+  if (max === null) return `${min?.toLocaleString()}円〜`;
+  if (min === null) return `〜${max?.toLocaleString()}円`;
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 }
 

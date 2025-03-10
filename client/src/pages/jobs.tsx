@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, MapPin, Banknote } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
 import {
   prefectures,
   serviceTypes,
-  type JobsSearchResponse,
   type ServiceType,
   type Job
 } from "@shared/schema";
@@ -52,37 +51,38 @@ const JobCard = ({ job }: { job: Job }) => {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-lg line-clamp-2">
-                  {job.businessName}
+                  {job.business_name}
                 </CardTitle>
                 <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                  <Search className="h-4 w-4 mr-1" />
+                  <MapPin className="h-4 w-4 mr-1" />
                   {job.location}
                 </div>
               </div>
               <Badge variant="outline" className="bg-primary/5">
-                {getServiceTypeLabel(job.serviceType as ServiceType)}
+                {getServiceTypeLabel(job.service_type as ServiceType)}
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center text-primary font-semibold">
-                日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
+                <Banknote className="h-5 w-5 mr-2" />
+                日給 {formatSalary(job.minimum_guarantee, job.maximum_guarantee)}
               </div>
               <div className="flex flex-wrap gap-2">
-                {job.transportationSupport && (
+                {job.transportation_support && (
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     交通費支給
                   </Badge>
                 )}
-                {job.housingSupport && (
+                {job.housing_support && (
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                     寮完備
                   </Badge>
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
-                {formatDate(job.createdAt)}
+                {formatDate(job.created_at)}
               </div>
             </div>
           </CardContent>
