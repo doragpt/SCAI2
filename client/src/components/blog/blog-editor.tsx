@@ -65,6 +65,9 @@ interface BlogEditorProps {
   initialData?: BlogPost;
 }
 
+// サムネイル画像のスタイル
+const THUMBNAIL_STYLE = "w-full aspect-[4/3] object-cover rounded-lg";
+
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
@@ -90,6 +93,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      // ファイルサイズと形式のチェックを厳密化
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("ファイルサイズは5MB以下にしてください");
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error("JPG、PNG、WebP形式の画像のみアップロード可能です");
+      }
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -109,6 +122,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         form.setValue("thumbnail", data.url);
         toast({
           title: "サムネイル画像をアップロードしました",
+          description: "画像は自動的に最適なサイズに調整されます",
         });
       } else {
         throw new Error("アップロード結果のURLが見つかりません");
@@ -274,7 +288,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   <img 
                     src={form.watch("thumbnail")} 
                     alt="サムネイル画像"
-                    className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
+                    className={THUMBNAIL_STYLE}
                   />
                 </div>
               )}
@@ -303,13 +317,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   name="thumbnail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
+                      <FormLabel>サムネイル画像 (4:3)</FormLabel>
                       <FormControl>
                         <div className="space-y-4">
                           <div className="flex items-center gap-4">
                             <Input
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,image/webp"
                               onChange={handleThumbnailUpload}
                               className="flex-1"
                             />
@@ -322,7 +336,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               <img
                                 src={field.value}
                                 alt="サムネイル"
-                                className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
+                                className={THUMBNAIL_STYLE}
                               />
                             </div>
                           )}
@@ -332,7 +346,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="content"
@@ -356,7 +369,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     </FormItem>
                   )}
                 />
-
                 {isScheduling && (
                   <FormField
                     control={form.control}
