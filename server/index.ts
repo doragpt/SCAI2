@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 開発環境を強制的に設定
+// 開発環境を設定
 process.env.NODE_ENV = "development";
 
 const app = express();
@@ -44,19 +44,20 @@ app.use((req, res, next) => {
 (async () => {
   try {
     const startTime = Date.now();
-    log('info', 'Startup phase: initialization', {
+    log('info', 'アプリケーション起動開始', {
       timestamp: startTime,
       environment: process.env.NODE_ENV
     });
 
     // データベース接続テスト
     try {
+      log('info', 'データベース接続を試行中...');
       await db.execute(sql`SELECT 1`);
-      log('info', 'Database connection successful', {
+      log('info', 'データベース接続成功', {
         duration: Date.now() - startTime
       });
     } catch (error) {
-      log('error', 'Database connection failed', {
+      log('error', 'データベース接続失敗', {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -68,14 +69,15 @@ app.use((req, res, next) => {
 
     // 認証セットアップ
     const authStartTime = Date.now();
+    log('info', '認証システムのセットアップを開始');
     setupAuth(app);
-    log('info', 'Auth setup completed', {
+    log('info', '認証システムのセットアップ完了', {
       duration: Date.now() - authStartTime
     });
 
     // APIリクエストの共通ミドルウェア
     app.use("/api/*", (req, res, next) => {
-      log('info', 'API request received', {
+      log('info', 'APIリクエスト受信', {
         method: req.method,
         path: req.path,
         query: req.query,
@@ -87,8 +89,9 @@ app.use((req, res, next) => {
 
     // APIルートを登録
     const routesStartTime = Date.now();
+    log('info', 'APIルートの登録を開始');
     await registerRoutes(app);
-    log('info', 'Routes registered', {
+    log('info', 'APIルートの登録完了', {
       duration: Date.now() - routesStartTime
     });
 
@@ -106,16 +109,16 @@ app.use((req, res, next) => {
 
     if (process.env.NODE_ENV === "development") {
       // 開発環境: Viteミドルウェアを設定
-      log('info', 'Setting up Vite middleware for development');
+      log('info', 'Viteミドルウェアのセットアップを開始');
       const viteStartTime = Date.now();
 
       try {
         await setupVite(app, server);
-        log('info', 'Vite setup completed', {
+        log('info', 'Viteセットアップ完了', {
           duration: Date.now() - viteStartTime
         });
       } catch (error) {
-        log('error', 'Vite setup failed', {
+        log('error', 'Viteセットアップ失敗', {
           error: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : undefined
         });
@@ -127,8 +130,8 @@ app.use((req, res, next) => {
     }
 
     const port = process.env.PORT || 5000;
-    server.listen(port, () => {
-      log('info', `Server started at http://0.0.0.0:${port}`, {
+    server.listen(port, '0.0.0.0', () => {
+      log('info', `サーバーを起動しました: http://0.0.0.0:${port}`, {
         environment: process.env.NODE_ENV,
         totalStartupTime: Date.now() - startTime
       });
@@ -137,13 +140,13 @@ app.use((req, res, next) => {
       setTimeout(() => {
         const cronStartTime = Date.now();
         setupCronJobs();
-        log('info', 'Cron jobs setup completed', {
+        log('info', 'Cronジョブのセットアップ完了', {
           duration: Date.now() - cronStartTime
         });
       }, 5000);
     });
   } catch (error) {
-    log('error', "Fatal startup error", {
+    log('error', "致命的な起動エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
