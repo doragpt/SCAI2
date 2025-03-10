@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<SelectUser | null>({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/auth/check"],
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/auth/check");
@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: userData?.role,
           displayName: userData?.displayName,
           birthDate: userData?.birthDate,
+          location: userData?.location,
           timestamp: new Date().toISOString()
         });
 

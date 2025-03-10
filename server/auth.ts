@@ -293,9 +293,12 @@ export function setupAuth(app: Express) {
       log('info', '認証チェック成功', {
         userId: user.id,
         username: user.username,
-        role: user.role
+        role: user.role,
+        hasDisplayName: !!user.displayName,
+        hasBirthDate: !!user.birthDate
       });
 
+      // ユーザー情報をすべて返す
       return res.json({
         id: user.id,
         username: user.username,
@@ -303,7 +306,10 @@ export function setupAuth(app: Express) {
         displayName: user.displayName,
         location: user.location,
         birthDate: user.birthDate,
-        preferredLocations: user.preferredLocations
+        birthDateModified: user.birthDateModified,
+        preferredLocations: user.preferredLocations,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       });
     } catch (error) {
       log('error', '認証チェックエラー', {
