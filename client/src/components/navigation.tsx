@@ -1,12 +1,12 @@
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { 
-  Home, 
-  Menu, 
-  User, 
-  X, 
-  Briefcase, 
-  UserCircle, 
+import {
+  Home,
+  Menu,
+  User,
+  X,
+  Briefcase,
+  UserCircle,
   History,
   Heart,
   Settings,
@@ -65,7 +65,6 @@ export function Navigation() {
       'keep-list': 'キープリスト',
       'view-history': '閲覧履歴',
       'ai-matching': 'AIマッチング',
-      'store': '店舗',
     };
     return labels[crumb] || crumb;
   };
@@ -195,11 +194,9 @@ export function Navigation() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  {user.role === 'store' ? '店舗アカウント' : 'アカウント'}
-                </DropdownMenuLabel>
+                <DropdownMenuLabel>アカウント</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
+                <Link href="/talent/mypage">
                   <a>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
                       <UserCircle className="h-4 w-4 mr-2" />
@@ -207,7 +204,7 @@ export function Navigation() {
                     </DropdownMenuItem>
                   </a>
                 </Link>
-                <Link href={user.role === 'store' ? "/store/settings" : "/talent/mypage"}>
+                <Link href="/talent/settings">
                   <a>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
                       <Settings className="h-4 w-4 mr-2" />
