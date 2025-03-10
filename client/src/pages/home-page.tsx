@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type Job, type ServiceType } from "@shared/schema";
+import { type Job, type ServiceType, serviceTypes } from "@shared/schema"; // Import serviceTypes from @shared/schema
 import {
   Loader2,
   MapPin,
@@ -90,14 +90,12 @@ const areaGroups = [
   { label: "九州・沖縄", areas: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"] },
 ];
 
-const serviceTypes = [
-  { id: "deriheru", label: "デリヘル" },
-  { id: "hoteheru", label: "ホテヘル" },
-  { id: "hakoheru", label: "箱ヘル" },
-  { id: "esthe", label: "風俗エステ" },
-  { id: "onakura", label: "オナクラ" },
-  { id: "mseikan", label: "M性感" },
-];
+
+// Define getServiceTypeLabel function
+const getServiceTypeLabel = (serviceType: ServiceType): string => {
+  const type = serviceTypes.find(t => t.id === serviceType.id);
+  return type ? type.label : ""; // Handle cases where serviceType is not found
+};
 
 // データの追加
 const workGuides = [
@@ -180,12 +178,12 @@ const JobCard = ({ job }: { job: Job }) => {
             <HoverCard>
               <HoverCardTrigger>
                 <Badge variant="outline" className="bg-primary/5">
-                  {job.service_type}
+                  {getServiceTypeLabel(job.service_type as ServiceType)}
                 </Badge>
               </HoverCardTrigger>
               <HoverCardContent>
                 <p className="text-sm">
-                  {serviceTypes.find(t => t.id === job.service_type)?.label}に関する求人です
+                  {getServiceTypeLabel(job.service_type as ServiceType)}に関する求人です
                 </p>
               </HoverCardContent>
             </HoverCard>
