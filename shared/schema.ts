@@ -408,13 +408,6 @@ export type TalentProfileData = typeof talentProfiles.$inferSelect;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
-
-export type PreviousStore = {
-  storeName: string;
-};
-
 export const talentRegisterFormSchema = z.object({
   username: z.string()
     .min(1, "ニックネームを入力してください")
@@ -443,6 +436,12 @@ export const talentRegisterFormSchema = z.object({
   message: "パスワードが一致しません",
   path: ["passwordConfirm"],
 });
+
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
+export type PreviousStore = {
+  storeName: string;
+};
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),

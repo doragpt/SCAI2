@@ -22,10 +22,14 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
+    // birthDateを日付オブジェクトに変換
+    const birthDate = new Date(validatedData.birthDate);
+
     // ユーザーの作成
     const user = await storage.createUser({
       ...validatedData,
       password: hashedPassword,
+      birthDate,
       birthDateModified: false,
       createdAt: new Date(),
       updatedAt: new Date(),

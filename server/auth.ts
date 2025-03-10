@@ -46,39 +46,12 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 // パスワード比較関数
-async function comparePasswords(inputPassword: string, storedPassword: string): Promise<boolean> {
+async function comparePasswords(supplied: string, stored: string) {
   try {
-    if (!inputPassword || !storedPassword) {
-      log('error', '無効なパスワード入力', {
-        hasInput: !!inputPassword,
-        hasStored: !!storedPassword
-      });
-      return false;
-    }
-
-    const [hashedPassword, salt] = storedPassword.split('.');
-
-    if (!hashedPassword || !salt || salt.length !== SALT_LENGTH * 2) {
-      log('error', 'パスワード形式が不正', {
-        hasHashedPassword: !!hashedPassword,
-        hasSalt: !!salt,
-        saltLength: salt?.length,
-        expectedLength: SALT_LENGTH * 2
-      });
-      return false;
-    }
-
-    const buf = (await scryptAsync(inputPassword, salt, KEY_LENGTH)) as Buffer;
-    const inputHash = buf.toString('hex');
-
-    const result = timingSafeEqual(
-      Buffer.from(hashedPassword, 'hex'),
-      Buffer.from(inputHash, 'hex')
-    );
-
-    log('info', 'パスワード検証結果', { isValid: result });
-
-    return result;
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, KEY_LENGTH)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -190,7 +163,8 @@ export function setupAuth(app: Express) {
       const user = await storage.createUser({
         ...req.body,
         password: hashedPassword,
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
       log('info', 'ユーザー登録成功', {
@@ -199,24 +173,36 @@ export function setupAuth(app: Express) {
         role: user.role
       });
 
-      return res.status(201).json({
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          displayName: user.displayName,
-          location: user.location,
-          birthDate: user.birthDate,
-          preferredLocations: user.preferredLocations
+      // セッションの作成とレスポンス
+      req.login(user, (err) => {
+        if (err) {
+          log('error', 'ログインセッション作成エラー', { error: err });
+          return res.status(500).json({
+            message: "ログインセッションの作成に失敗しました"
+          });
         }
+
+        return res.status(201).json({
+          user: {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            displayName: user.displayName,
+            location: user.location,
+            birthDate: user.birthDate,
+            preferredLocations: user.preferredLocations
+          }
+        });
       });
     } catch (error) {
       log('error', '新規登録エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
       });
 
       return res.status(500).json({
-        message: "登録処理中にエラーが発生しました"
+        message: "登録処理中にエラーが発生しました",
+        details: error instanceof Error ? error.message : undefined
       });
     }
   });
@@ -228,13 +214,7 @@ export function setupAuth(app: Express) {
       role: req.body.role
     });
 
-    if (!req.body.username || !req.body.password) {
-      return res.status(400).json({
-        message: "ユーザー名とパスワードは必須です"
-      });
-    }
-
-    passport.authenticate('local', (err: any, user: any, info: any) => {
+    passport.authenticate('local', (err, user, info) => {
       if (err) {
         log('error', 'ログインエラー', { error: err });
         return res.status(500).json({
@@ -252,14 +232,7 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // 店舗ユーザーのロールチェック
-      if (req.body.role === "store" && user.role !== "store") {
-        return res.status(403).json({
-          message: "店舗管理者用のログインページです"
-        });
-      }
-
-      req.login(user, async (loginErr) => {
+      req.login(user, (loginErr) => {
         if (loginErr) {
           log('error', 'ログインセッションエラー', { error: loginErr });
           return res.status(500).json({
@@ -273,7 +246,7 @@ export function setupAuth(app: Express) {
           role: user.role
         });
 
-        return res.status(200).json({
+        return res.json({
           user: {
             id: user.id,
             username: user.username,
@@ -336,7 +309,7 @@ export function setupAuth(app: Express) {
         role: user.role
       });
 
-      return res.status(200).json({
+      return res.json({
         id: user.id,
         username: user.username,
         role: user.role,
