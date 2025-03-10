@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { db, sql } from "./db";
 import cors from "cors";
-import { setupCleanupCron } from "./cron";
+import { setupCronJobs } from "./cron";
 
 const app = express();
 
@@ -75,11 +75,6 @@ app.get('/health', async (_req, res) => {
 // メインのアプリケーション起動処理
 (async () => {
   try {
-    // 環境変数のチェック
-    if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URLが設定されていません");
-    }
-
     log('Starting server initialization...');
 
     // 初期データベース接続テスト
@@ -95,7 +90,7 @@ app.get('/health', async (_req, res) => {
 
     // cronジョブのセットアップ
     log('Setting up cron jobs...');
-    setupCleanupCron();
+    setupCronJobs();
     log('Cron jobs setup completed');
 
     log('Registering routes...');
@@ -104,9 +99,7 @@ app.get('/health', async (_req, res) => {
     // エラーハンドリングミドルウェア
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       log("Server error:", {
-        error: err,
-        name: err.name,
-        message: err.message,
+        error: err.message,
         code: err.code,
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
         timestamp: new Date().toISOString()
@@ -124,17 +117,13 @@ app.get('/health', async (_req, res) => {
       await setupVite(app, server);
     }
 
-    // ポート設定の取得とログ出力
     const port = process.env.PORT || 5000;
-    log(`Using port: ${port} (from ${process.env.PORT ? 'environment' : 'default'})`);
-
-    // サーバー起動
     server.listen(port, "0.0.0.0", () => {
       log(`Server started at http://0.0.0.0:${port}`);
       log(`Environment: ${app.get("env")}`);
       log(`CORS: Enabled with full access`);
       log(`Database: Connection attempted`);
-      log(`Cron jobs: Enabled`);
+      log(`Cron jobs: Enabled for publishing and cleanup`);
     });
   } catch (error) {
     log("Fatal startup error:", error);
