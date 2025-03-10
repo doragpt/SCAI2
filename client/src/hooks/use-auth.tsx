@@ -26,6 +26,8 @@ type LoginData = {
 
 type RegisterData = z.infer<typeof baseUserSchema>;
 
+const TOKEN_KEY = "auth_token";
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,34 +41,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Fetching user data...');
-        const token = localStorage.getItem("auth_token");
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
           console.log('No auth token found');
           return null;
         }
 
         const response = await apiRequest("GET", "/api/auth/check");
-        const userData = await response.json();
-
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('Session expired or invalid token');
-            localStorage.removeItem("auth_token");
+            localStorage.removeItem(TOKEN_KEY);
             return null;
           }
-          throw new Error(userData.message || 'Failed to fetch user data');
+          throw new Error('Authentication check failed');
         }
 
+        const userData = await response.json();
         console.log('User data fetched:', {
           userId: userData?.id,
           username: userData?.username,
           role: userData?.role,
           timestamp: new Date().toISOString()
         });
+
         return userData;
       } catch (error) {
         console.error('Auth check error:', error);
+        localStorage.removeItem(TOKEN_KEY);
         return null;
       }
     },
@@ -86,11 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error('Login error response:', {
-          status: response.status,
-          message: result.message,
-          timestamp: new Date().toISOString()
-        });
         throw new Error(result.message || "ログインに失敗しました");
       }
 
@@ -98,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("認証トークンが見つかりません");
       }
 
-      localStorage.setItem("auth_token", result.token);
+      localStorage.setItem(TOKEN_KEY, result.token);
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -121,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: error.message,
         timestamp: new Date().toISOString()
       });
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem(TOKEN_KEY);
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -132,17 +128,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
-      localStorage.removeItem("auth_token");
+      const response = await apiRequest("POST", "/api/auth/logout");
+      if (!response.ok) {
+        throw new Error("ログアウトに失敗しました");
+      }
+      localStorage.removeItem(TOKEN_KEY);
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear(); // すべてのキャッシュをクリア
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
     },
     onError: (error: Error) => {
+      console.error('Logout error:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "ログアウトエラー",
         description: error.message || "ログアウトに失敗しました",
@@ -161,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (result.token) {
-        localStorage.setItem("auth_token", result.token);
+        localStorage.setItem(TOKEN_KEY, result.token);
       }
       return result.user;
     },
@@ -173,6 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error('Registration error:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "登録エラー",
         description: error.message || "アカウントの作成に失敗しました",

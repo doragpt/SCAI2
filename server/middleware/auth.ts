@@ -4,13 +4,19 @@ import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
+// ログ関数をインポート
+import { log } from '../utils/logger';
+
+// ユーザー型の拡張を修正
 declare global {
   namespace Express {
+    interface User {
+      id: number;
+      role: "talent" | "store";
+      username: string;
+    }
     interface Request {
-      user?: {
-        id: number;
-        role: string;
-      };
+      user?: User;
       token?: string;
     }
   }
@@ -22,31 +28,24 @@ export async function authenticate(
   next: NextFunction
 ) {
   try {
-    console.log('認証処理を開始:', {
+    log('info', '認証処理を開始', {
       path: req.path,
       method: req.method,
       headers: {
         ...req.headers,
         authorization: req.headers.authorization ? 'Bearer ...' : undefined
-      },
-      timestamp: new Date().toISOString()
+      }
     });
 
     const token = extractTokenFromHeader(req.headers.authorization);
-    console.log('トークンの抽出結果:', { 
-      hasToken: !!token,
-      timestamp: new Date().toISOString()
-    });
-
     if (!token) {
-      console.log('トークンが見つかりません');
+      log('warn', 'トークンが見つかりません');
       return res.status(401).json({ message: 'Authentication failed: No token provided' });
     }
 
     const payload = verifyToken(token);
-    console.log('トークンの検証結果:', { 
-      userId: payload.userId,
-      timestamp: new Date().toISOString()
+    log('info', 'トークンの検証結果', { 
+      userId: payload.userId
     });
 
     // ユーザーの存在確認
@@ -54,31 +53,29 @@ export async function authenticate(
       .select({
         id: users.id,
         role: users.role,
+        username: users.username,
       })
       .from(users)
       .where(eq(users.id, payload.userId));
 
     if (!user) {
-      console.log('ユーザーが見つかりません:', {
-        userId: payload.userId,
-        timestamp: new Date().toISOString()
+      log('warn', 'ユーザーが見つかりません', {
+        userId: payload.userId
       });
       return res.status(401).json({ message: 'Authentication failed: User not found' });
     }
 
-    console.log('認証成功:', {
+    log('info', '認証成功', {
       userId: user.id,
-      role: user.role,
-      timestamp: new Date().toISOString()
+      role: user.role
     });
 
     req.user = user;
     req.token = token;
     next();
   } catch (error) {
-    console.error('認証エラー:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+    log('error', '認証エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     return res.status(401).json({ 
       message: error instanceof Error ? error.message : 'Authentication failed'
@@ -86,27 +83,25 @@ export async function authenticate(
   }
 }
 
-export function authorize(...roles: string[]) {
+export function authorize(...roles: ("talent" | "store")[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      console.log('認可エラー: ユーザーが認証されていません');
+      log('warn', '認可エラー: ユーザーが認証されていません');
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
     if (!roles.includes(req.user.role)) {
-      console.log('認可エラー: 権限不足', {
+      log('warn', '認可エラー: 権限不足', {
         userRole: req.user.role,
-        requiredRoles: roles,
-        timestamp: new Date().toISOString()
+        requiredRoles: roles
       });
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    console.log('認可成功:', {
+    log('info', '認可成功', {
       userId: req.user.id,
       role: req.user.role,
-      requiredRoles: roles,
-      timestamp: new Date().toISOString()
+      requiredRoles: roles
     });
 
     next();

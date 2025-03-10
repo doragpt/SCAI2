@@ -24,26 +24,42 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { loginMutation, user } = useAuth();
+  const { loginMutation, user, isLoading } = useAuth();
 
-  // ユーザーが既にログインしている場合のリダイレクト
+  // 状態管理の改善
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // フォームの設定
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      role: "store" // 店舗用ログインフォームなのでデフォルトを"store"に設定
+    }
+  });
+
+  // ユーザーが既にログインしている場合のリダイレクト処理を改善
   useEffect(() => {
     if (user?.role === "store") {
       setLocation("/store/dashboard");
     }
   }, [user, setLocation]);
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      role: "store"
-    }
-  });
+  // ローディング中の表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const onSubmit = async (data: LoginFormData) => {
+    if (isSubmitting) return;
+
     try {
+      setIsSubmitting(true);
       console.log('店舗ログイン試行:', {
         username: data.username,
         timestamp: new Date().toISOString()
@@ -71,6 +87,8 @@ export default function ManagerLogin() {
         title: "エラーが発生しました",
         description: error instanceof Error ? error.message : "ログインに失敗しました",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,7 +108,11 @@ export default function ManagerLogin() {
                   <FormItem>
                     <FormLabel>ログインID</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="username" />
+                      <Input 
+                        {...field} 
+                        autoComplete="username"
+                        disabled={isSubmitting} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -108,6 +130,7 @@ export default function ManagerLogin() {
                         {...field}
                         type="password"
                         autoComplete="current-password"
+                        disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -115,8 +138,14 @@ export default function ManagerLogin() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting || loginMutation.isPending}
+              >
+                {(isSubmitting || loginMutation.isPending) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 ログイン
               </Button>
             </form>

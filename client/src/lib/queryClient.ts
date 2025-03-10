@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { Job } from "@shared/schema";
+import type { Job, TalentProfileData, SelectUser } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
@@ -10,8 +10,20 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
+// 共通のエラーハンドリング関数
+async function handleApiResponse<T>(response: Response): Promise<T> {
+  const data = await response.json();
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("auth_token");
+    }
+    throw new Error(data.message || response.statusText);
+  }
+  return data;
+}
+
 // APIリクエスト関数を改善
-export async function apiRequest(
+export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown,
@@ -37,7 +49,7 @@ export async function apiRequest(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+    // FormDataの場合はContent-Typeを設定しない
     if (data instanceof FormData) {
       delete headers["Content-Type"];
     }
@@ -76,9 +88,8 @@ export const getJobsQuery = async (): Promise<Job[]> => {
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest("GET", QUERY_KEYS.JOBS_PUBLIC);
-    const data = await response.json();
-    return data;
+    const response = await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    return handleApiResponse<Job[]>(response);
   } catch (error) {
     console.error('Jobs fetch error:', {
       error: getErrorMessage(error),
@@ -88,7 +99,7 @@ export const getJobsQuery = async (): Promise<Job[]> => {
   }
 };
 
-// 求人検索用のクエリ関数を追加
+// 求人検索用のクエリ関数
 export const searchJobsQuery = async (params: {
   location?: string;
   serviceType?: string;
@@ -111,8 +122,7 @@ export const searchJobsQuery = async (params: {
 
     const url = `${QUERY_KEYS.JOBS_SEARCH}?${searchParams.toString()}`;
     const response = await apiRequest("GET", url);
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response);
   } catch (error) {
     console.error('Jobs search error:', {
       error: getErrorMessage(error),
@@ -122,6 +132,23 @@ export const searchJobsQuery = async (params: {
     throw error;
   }
 };
+
+// プロフィール取得・更新関数
+export async function getTalentProfile(): Promise<TalentProfileData> {
+  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+  return handleApiResponse(response);
+}
+
+export async function updateTalentProfile(data: Partial<TalentProfileData>): Promise<TalentProfileData> {
+  const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
+  return handleApiResponse(response);
+}
+
+// ユーザー情報更新関数
+export async function updateUserProfile(data: Partial<SelectUser>): Promise<SelectUser> {
+  const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
+  return handleApiResponse(response);
+}
 
 // クエリクライアントの設定を改善
 export const queryClient = new QueryClient({
