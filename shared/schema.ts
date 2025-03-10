@@ -45,16 +45,23 @@ export const users = pgTable("users", {
 // Jobs table
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
+  businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  salary: text("salary").notNull(),
-  workingHours: text("working_hours").notNull(),
+  minimumGuarantee: integer("minimum_guarantee"),
+  maximumGuarantee: integer("maximum_guarantee"),
+  transportationSupport: boolean("transportation_support").default(false),
+  housingSupport: boolean("housing_support").default(false),
+  workingHours: text("working_hours"),
+  description: text("description"),
   requirements: text("requirements"),
   benefits: text("benefits"),
+  storeId: integer("store_id").notNull().references(() => users.id),
   status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+  title: text("title").notNull(),
+  catchPhrase: text("catch_phrase"),
+  qualifications: text("qualifications"),
+  workingConditions: text("working_conditions"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -171,10 +178,10 @@ export const bodyMarkSchema = z.object({
 });
 
 export const photoSchema = z.object({
-  id: z.string().optional(), 
+  id: z.string().optional(),
   url: z.string(),
   tag: z.enum(photoTags),
-  order: z.number().optional(), 
+  order: z.number().optional(),
 });
 
 export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
