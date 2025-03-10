@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Prefecture関連の定義
+// Constants
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -14,9 +14,6 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-export type Prefecture = typeof prefectures[number];
-
-// Service Types
 export const serviceTypes = [
   "deriheru",
   "hoteheru",
@@ -26,9 +23,100 @@ export const serviceTypes = [
   "mseikan"
 ] as const;
 
-export type ServiceType = typeof serviceTypes[number];
+export const photoTags = [
+  "現在の髪色",
+  "タトゥー",
+  "傷",
+  "アトピー",
+  "自撮り写真",
+  "スタジオ写真（無加工）",
+  "スタジオ写真（加工済み）"
+] as const;
 
-// Users table
+export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
+export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
+export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
+export const idTypes = [
+  "運転免許証",
+  "マイナンバーカード",
+  "パスポート",
+  "写真付き住民基本台帳カード",
+  "在留カードまたは特別永住者証明書",
+  "健康保険証",
+  "卒業アルバム"
+] as const;
+
+export const allergyTypes = ["犬", "猫", "鳥"] as const;
+export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
+export const commonNgOptions = [
+  "AF",
+  "聖水",
+  "即尺",
+  "即尺(事前に洗い済み)",
+  "撮影顔出し",
+  "撮影顔無し"
+] as const;
+
+export const estheOptions = [
+  "ホイップ",
+  "マッサージジェル",
+  "極液",
+  "ベビードール",
+  "マイクロビキニ",
+  "ブラなしベビードール",
+  "トップレス",
+  "フルヌード",
+  "ノンショーツ",
+  "deepリンパ",
+  "ハンド抜き",
+  "キス",
+  "フェラ",
+  "スキンフェラ"
+] as const;
+
+export const workTypes = ["出稼ぎ", "在籍"] as const;
+export const jobStatusTypes = ["draft", "published", "closed"] as const;
+
+// Type definitions
+export type Prefecture = typeof prefectures[number];
+export type ServiceType = typeof serviceTypes[number];
+export type PhotoTag = typeof photoTags[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type WorkType = typeof workTypes[number];
+export type JobStatus = typeof jobStatusTypes[number];
+
+// Service Type Labels
+export const serviceTypeLabels: Record<ServiceType, string> = {
+  deriheru: "デリヘル",
+  hoteheru: "ホテヘル",
+  hakoheru: "箱ヘル",
+  esthe: "エステ",
+  onakura: "オナクラ",
+  mseikan: "メンズエステ",
+} as const;
+
+// Schema definitions
+export const photoSchema = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  tag: z.enum(photoTags),
+  order: z.number().optional(),
+});
+
+export const bodyMarkSchema = z.object({
+  hasBodyMark: z.boolean().default(false),
+  details: z.string().optional(),
+  others: z.array(z.string()).default([]),
+});
+
+// Tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -43,7 +131,144 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Authentication関連のスキーマ
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  minimumGuarantee: integer("minimum_guarantee"),
+  maximumGuarantee: integer("maximum_guarantee"),
+  transportationSupport: boolean("transportation_support").default(false),
+  housingSupport: boolean("housing_support").default(false),
+  workingHours: text("working_hours"),
+  description: text("description"),
+  requirements: text("requirements"),
+  benefits: text("benefits"),
+  storeId: integer("store_id").notNull().references(() => users.id),
+  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+  title: text("title").notNull(),
+  catchPhrase: text("catch_phrase"),
+  qualifications: text("qualifications"),
+  workingConditions: text("working_conditions"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  locationIdx: index("jobs_location_idx").on(table.location),
+  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+  statusIdx: index("jobs_status_idx").on(table.status),
+}));
+
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
+  jobId: integer("job_id").notNull().references(() => jobs.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  jobIdIdx: index("applications_job_id_idx").on(table.jobId),
+  userIdIdx: index("applications_user_id_idx").on(table.userId),
+  statusIdx: index("applications_status_idx").on(table.status),
+}));
+
+export const talentProfiles = pgTable("talent_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  lastName: text("last_name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastNameKana: text("last_name_kana").notNull(),
+  firstNameKana: text("first_name_kana").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  nearestStation: text("nearest_station").notNull(),
+  availableIds: jsonb("available_ids").$type<{
+    types: IdType[];
+    others: string[];
+  }>().default({ types: [], others: [] }).notNull(),
+  canProvideResidenceRecord: boolean("can_provide_residence_record").default(false),
+  height: integer("height").notNull(),
+  weight: integer("weight").notNull(),
+  cupSize: text("cup_size", { enum: cupSizes }).notNull(),
+  bust: integer("bust"),
+  waist: integer("waist"),
+  hip: integer("hip"),
+  faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
+  canPhotoDiary: boolean("can_photo_diary").default(false),
+  canHomeDelivery: boolean("can_home_delivery").default(false),
+  ngOptions: jsonb("ng_options").$type<{
+    common: CommonNgOption[];
+    others: string[];
+  }>().default({ common: [], others: [] }).notNull(),
+  allergies: jsonb("allergies").$type<{
+    types: AllergyType[];
+    others: string[];
+    hasAllergy: boolean;
+  }>().default({ types: [], others: [], hasAllergy: false }).notNull(),
+  smoking: jsonb("smoking").$type<{
+    enabled: boolean;
+    types: SmokingType[];
+    others: string[];
+  }>().default({ enabled: false, types: [], others: [] }).notNull(),
+  hasSnsAccount: boolean("has_sns_account").default(false),
+  snsUrls: jsonb("sns_urls").$type<string[]>().default([]).notNull(),
+  currentStores: jsonb("current_stores").$type<{
+    storeName: string;
+    stageName: string;
+  }[]>().default([]).notNull(),
+  previousStores: jsonb("previous_stores").$type<{
+    storeName: string;
+  }[]>().default([]).notNull(),
+  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
+  selfIntroduction: text("self_introduction"),
+  notes: text("notes"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  estheOptions: jsonb("esthe_options").$type<{
+    available: EstheOption[];
+    ngOptions: string[];
+  }>().default({ available: [], ngOptions: [] }).notNull(),
+  hasEstheExperience: boolean("has_esthe_experience").default(false),
+  estheExperiencePeriod: text("esthe_experience_period"),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
+  bodyMark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
+    hasBodyMark: false,
+    details: "",
+    others: []
+  }).notNull(),
+  photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
+});
+
+// Relations
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+  store: one(users, {
+    fields: [jobs.storeId],
+    references: [users.id],
+  }),
+  applications: many(applications),
+}));
+
+export const applicationsRelations = relations(applications, ({ one }) => ({
+  job: one(jobs, {
+    fields: [applications.jobId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [applications.userId],
+    references: [users.id],
+  }),
+}));
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Job = typeof jobs.$inferSelect;
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
+export type Photo = typeof photoSchema._type;
+export type BodyMark = typeof bodyMarkSchema._type;
+
+// Schemas
 export const loginSchema = z.object({
   username: z.string().min(1, "ログインIDを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
@@ -79,86 +304,10 @@ export const talentRegisterFormSchema = z.object({
   path: ["passwordConfirm"],
 });
 
-// User types
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 
-// Jobs table
-export const jobs = pgTable("jobs", {
-  id: serial("id").primaryKey(),
-  businessName: text("business_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  minimumGuarantee: integer("minimum_guarantee"),
-  maximumGuarantee: integer("maximum_guarantee"),
-  transportationSupport: boolean("transportation_support").default(false),
-  housingSupport: boolean("housing_support").default(false),
-  workingHours: text("working_hours"),
-  description: text("description"),
-  requirements: text("requirements"),
-  benefits: text("benefits"),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
-  title: text("title").notNull(),
-  catchPhrase: text("catch_phrase"),
-  qualifications: text("qualifications"),
-  workingConditions: text("working_conditions"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  locationIdx: index("jobs_location_idx").on(table.location),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
-  statusIdx: index("jobs_status_idx").on(table.status),
-}));
-
-// Relations
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  store: one(users, {
-    fields: [jobs.storeId],
-    references: [users.id],
-  }),
-  applications: many(applications),
-}));
-
-// Service Type Labels
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  deriheru: "デリヘル",
-  hoteheru: "ホテヘル",
-  hakoheru: "箱ヘル",
-  esthe: "エステ",
-  onakura: "オナクラ",
-  mseikan: "メンズエステ",
-} as const;
-
-// Applications table
-export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(),
-  jobId: integer("job_id").notNull().references(() => jobs.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
-  message: text("message"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  jobIdIdx: index("applications_job_id_idx").on(table.jobId),
-  userIdIdx: index("applications_user_id_idx").on(table.userId),
-  statusIdx: index("applications_status_idx").on(table.status),
-}));
-
-export const applicationsRelations = relations(applications, ({ one }) => ({
-  job: one(jobs, {
-    fields: [applications.jobId],
-    references: [jobs.id],
-  }),
-  user: one(users, {
-    fields: [applications.userId],
-    references: [users.id],
-  }),
-}));
-
-// Talent Profile関連の型定義
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
   firstName: z.string().min(1, "名を入力してください"),
@@ -242,58 +391,25 @@ export const talentProfileSchema = z.object({
     ),
 });
 
-export type TalentProfileData = z.infer<typeof talentProfileSchema>;
-export type ProfileData = TalentProfileData;
+export const talentProfileUpdateSchema = talentProfileSchema.extend({
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        return val.length >= 8 && val.length <= 48 && /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/.test(val);
+      },
+      {
+        message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+      }
+    ),
+}).partial();
 
-// Constants
-export const photoTags = ["現在の髪色", "タトゥー", "傷", "アトピー", "自撮り写真", "スタジオ写真（無加工）", "スタジオ写真（加工済み）"] as const;
-export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
-export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
-export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
-export const idTypes = [
-  "運転免許証",
-  "マイナンバーカード",
-  "パスポート",
-  "写真付き住民基本台帳カード",
-  "在留カードまたは特別永住者証明書",
-  "健康保険証",
-  "卒業アルバム"
-] as const;
+export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
-export const allergyTypes = ["犬", "猫", "鳥"] as const;
-export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
 
-export const commonNgOptions = [
-  "AF",
-  "聖水",
-  "即尺",
-  "即尺(事前に洗い済み)",
-  "撮影顔出し",
-  "撮影顔無し"
-] as const;
-
-export const estheOptions = [
-  "ホイップ",
-  "マッサージジェル",
-  "極液",
-  "ベビードール",
-  "マイクロビキニ",
-  "ブラなしベビードール",
-  "トップレス",
-  "フルヌード",
-  "ノンショーツ",
-  "deepリンパ",
-  "ハンド抜き",
-  "キス",
-  "フェラ",
-  "スキンフェラ"
-] as const;
-
-export const workTypes = ["出稼ぎ", "在籍"] as const;
-export type WorkType = typeof workTypes[number];
-
-export const jobStatusTypes = ["draft", "published", "closed"] as const;
-export type JobStatus = typeof jobStatusTypes[number];
+export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 export const jobRequirementsSchema = z.object({
   ageMin: z.number().min(18).max(99).optional(),
@@ -309,33 +425,44 @@ export const jobRequirementsSchema = z.object({
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
-export const baseUserSchema = createInsertSchema(users).omit({ id: true });
-
-export const talentProfileUpdateSchema = talentProfileSchema.extend({
-  currentPassword: z.string().optional(),
-  newPassword: z.string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        return val.length >= 8 && val.length <= 48 && /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/.test(val);
-      },
-      {
-        message: "パスワードは8文字以上48文字以内で、半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-      }
-    ),
-}).omit({
-  userId: true
-}).partial();
-
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
-export type ProfileData = TalentProfileData;
-export type LoginData = z.infer<typeof loginSchema>;
+export const userSchema = createInsertSchema(users, {
+  username: z.string().min(1, "ユーザー名を入力してください"),
+  password: z.string().min(8, "パスワードは8文字以上で入力してください"),
+  role: z.enum(["talent", "store"], {
+    required_error: "ユーザータイプを選択してください",
+    invalid_type_error: "無効なユーザータイプです",
+  }),
+  displayName: z.string().min(1, "表示名を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "所在地を選択してください",
+    invalid_type_error: "無効な所在地です",
+  }),
+  birthDate: z.date({
+    required_error: "生年月日を入力してください",
+    invalid_type_error: "無効な日付形式です",
+  }),
+}).omit({ id: true, createdAt: true, updatedAt: true });
 
 
-export type PreviousStore = {
-  storeName: string;
-};
+export const jobSchema = createInsertSchema(jobs, {
+  title: z.string().min(1, "タイトルを入力してください"),
+  description: z.string().min(1, "詳細を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "勤務地を選択してください",
+    invalid_type_error: "無効な勤務地です",
+  }),
+  serviceType: z.enum(serviceTypes, {
+    required_error: "サービスタイプを選択してください",
+    invalid_type_error: "無効なサービスタイプです",
+  }),
+  salary: z.string().min(1, "給与を入力してください"),
+  workingHours: z.string().min(1, "勤務時間を入力してください"),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const applicationSchema = createInsertSchema(applications, {
+  message: z.string().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
@@ -441,6 +568,7 @@ export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
+
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType };
 
@@ -514,141 +642,6 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   }),
 }));
 
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type PhotoTag = typeof photoTags[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-export type EstheOption = typeof estheOptions[number];
-
-
-export const talentProfiles = pgTable("talent_profiles", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  lastName: text("last_name").notNull(),
-  firstName: text("first_name").notNull(),
-  lastNameKana: text("last_name_kana").notNull(),
-  firstNameKana: text("first_name_kana").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  nearestStation: text("nearest_station").notNull(),
-  availableIds: jsonb("available_ids").$type<{
-    types: IdType[];
-    others: string[];
-  }>().default({ types: [], others: [] }).notNull(),
-  canProvideResidenceRecord: boolean("can_provide_residence_record").default(false),
-  height: integer("height").notNull(),
-  weight: integer("weight").notNull(),
-  cupSize: text("cup_size", { enum: cupSizes }).notNull(),
-  bust: integer("bust"),
-  waist: integer("waist"),
-  hip: integer("hip"),
-  faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
-  canPhotoDiary: boolean("can_photo_diary").default(false),
-  canHomeDelivery: boolean("can_home_delivery").default(false),
-  ngOptions: jsonb("ng_options").$type<{
-    common: CommonNgOption[];
-    others: string[];
-  }>().default({ common: [], others: [] }).notNull(),
-  allergies: jsonb("allergies").$type<{
-    types: AllergyType[];
-    others: string[];
-    hasAllergy: boolean;
-  }>().default({ types: [], others: [], hasAllergy: false }).notNull(),
-  smoking: jsonb("smoking").$type<{
-    enabled: boolean;
-    types: SmokingType[];
-    others: string[];
-  }>().default({ enabled: false, types: [], others: [] }).notNull(),
-  hasSnsAccount: boolean("has_sns_account").default(false),
-  snsUrls: jsonb("sns_urls").$type<string[]>().default([]).notNull(),
-  currentStores: jsonb("current_stores").$type<{
-    storeName: string;
-    stageName: string;
-  }[]>().default([]).notNull(),
-  previousStores: jsonb("previous_stores").$type<{
-    storeName: string;
-  }[]>().default([]).notNull(),
-  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
-  selfIntroduction: text("self_introduction"),
-  notes: text("notes"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  estheOptions: jsonb("esthe_options").$type<{
-    available: EstheOption[];
-    ngOptions: string[];
-  }>().default({ available: [], ngOptions: [] }).notNull(),
-  hasEstheExperience: boolean("has_esthe_experience").default(false),
-  estheExperiencePeriod: text("esthe_experience_period"),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
-  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({
-    hasBodyMark: false,
-    details: "",
-    others: []
-  }).notNull(),
-  photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
-});
-
-export const userSchema = createInsertSchema(users, {
-  username: z.string().min(1, "ユーザー名を入力してください"),
-  password: z.string().min(8, "パスワードは8文字以上で入力してください"),
-  role: z.enum(["talent", "store"], {
-    required_error: "ユーザータイプを選択してください",
-    invalid_type_error: "無効なユーザータイプです",
-  }),
-  displayName: z.string().min(1, "表示名を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "所在地を選択してください",
-    invalid_type_error: "無効な所在地です",
-  }),
-  birthDate: z.date({
-    required_error: "生年月日を入力してください",
-    invalid_type_error: "無効な日付形式です",
-  }),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
-export type Job = typeof jobs.$inferSelect;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-
-
-export const photoSchema = z.object({
-  id: z.string().optional(),
-  url: z.string(),
-  tag: z.enum(photoTags),
-  order: z.number().optional(),
-});
-
-export const bodyMarkSchema = z.object({
-  hasBodyMark: z.boolean().default(false),
-  details: z.string().optional(),
-  others: z.array(z.string()).default([]),
-});
-
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-
-export const jobSchema = createInsertSchema(jobs, {
-  title: z.string().min(1, "タイトルを入力してください"),
-  description: z.string().min(1, "詳細を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "勤務地を選択してください",
-    invalid_type_error: "無効な勤務地です",
-  }),
-  serviceType: z.enum(serviceTypes, {
-    required_error: "サービスタイプを選択してください",
-    invalid_type_error: "無効なサービスタイプです",
-  }),
-  salary: z.string().min(1, "給与を入力してください"),
-  workingHours: z.string().min(1, "勤務時間を入力してください"),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
-export const applicationSchema = createInsertSchema(applications, {
-  message: z.string().optional(),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
-export type Photo = z.infer<typeof photoSchema>;
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
+export type PreviousStore = {
+  storeName: string;
+};
