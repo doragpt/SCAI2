@@ -183,6 +183,7 @@ export const photoTags = [
 export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
+  others: z.array(z.string()).default([]),
 });
 
 export const photoSchema = z.object({
@@ -392,6 +393,7 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
   userId: true
 }).partial();
 
+export type BodyMark = z.infer<typeof bodyMarkSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
@@ -402,7 +404,7 @@ export type InsertApplication = typeof applications.$inferInsert;
 
 
 export type Photo = z.infer<typeof photoSchema>;
-export type BodyMark = z.infer<typeof bodyMarkSchema>;
+
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type TalentProfileData = typeof talentProfiles.$inferSelect;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
@@ -689,7 +691,11 @@ export const talentProfiles = pgTable("talent_profiles", {
   estheExperiencePeriod: text("esthe_experience_period"),
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ hasBodyMark: false, details: "" }).notNull(),
+  bodyMark: jsonb("body_mark").$type<BodyMark>().default({ 
+    hasBodyMark: false, 
+    details: "", 
+    others: [] 
+  }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
   age: integer("age"),
 });

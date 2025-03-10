@@ -857,7 +857,7 @@ export function TalentForm() {
         bodyMark: {
           hasBodyMark: data.bodyMark?.hasBodyMark || false,
           details: data.bodyMark?.details || "",
-          others: bodyMarks
+          others: bodyMarks // 既存の配列を使用
         },
         photos: data.photos || [],
         estheOptions: {
@@ -909,7 +909,6 @@ export function TalentForm() {
       const updated = [...bodyMarks, value];
       setBodyMarks(updated);
 
-      // フォームの値を更新（他の項目と同じパターンで）
       form.setValue("bodyMark", {
         hasBodyMark: true,
         details: form.getValues().bodyMark?.details || "",
@@ -919,11 +918,6 @@ export function TalentForm() {
         shouldDirty: true,
         shouldTouch: true
       });
-
-      console.log('bodyMark updated:', {
-        value,
-        updated,
-        formValues: form.getValues().bodyMark      });
     }
   };
 
@@ -940,12 +934,6 @@ export function TalentForm() {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
-    });
-
-    console.log('bodyMark removed:', {
-      index,
-      updated,
-      formValues: form.getValues().bodyMark
     });
   };
 
