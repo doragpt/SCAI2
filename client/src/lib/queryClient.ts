@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { Job, TalentProfileData, SelectUser } from "@shared/schema";
+import type { TalentProfileData, SelectUser } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
@@ -10,19 +10,7 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-// 共通のエラーハンドリング関数
-async function handleApiResponse<T>(response: Response): Promise<T> {
-  const data = await response.json();
-  if (!response.ok) {
-    if (response.status === 401) {
-      localStorage.removeItem("auth_token");
-    }
-    throw new Error(data.message || response.statusText);
-  }
-  return data;
-}
-
-// APIリクエスト関数を改善
+// APIリクエスト関数
 export async function apiRequest<T>(
   method: string,
   url: string,
@@ -39,15 +27,10 @@ export async function apiRequest<T>(
       timestamp: new Date().toISOString()
     });
 
-    const token = localStorage.getItem("auth_token");
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options?.headers,
     };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
 
     // FormDataの場合はContent-Typeを設定しない
     if (data instanceof FormData) {
@@ -66,6 +49,7 @@ export async function apiRequest<T>(
     console.log('API Response received:', {
       status: response.status,
       statusText: response.statusText,
+      url: fullUrl,
       timestamp: new Date().toISOString()
     });
 
@@ -81,15 +65,50 @@ export async function apiRequest<T>(
   }
 }
 
+// タレントプロフィール関連の関数
+export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
+  const response = await apiRequest(
+    "POST",
+    QUERY_KEYS.TALENT_PROFILE,
+    data
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの保存に失敗しました");
+  }
+
+  return response.json();
+}
+
+export async function getTalentProfile(): Promise<TalentProfileData> {
+  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの取得に失敗しました");
+  }
+
+  return response.json();
+}
+
+export function invalidateTalentProfileCache() {
+  return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+}
+
 // 求人一覧取得用のクエリ関数
-export const getJobsQuery = async (): Promise<Job[]> => {
+export const getJobsQuery = async (): Promise<import("@shared/schema").Job[]> => {
   try {
     console.log('Fetching public jobs:', {
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest<Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
-    return handleApiResponse<Job[]>(response);
+    const response = await apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の取得に失敗しました");
+    }
+    return response.json();
   } catch (error) {
     console.error('Jobs fetch error:', {
       error: getErrorMessage(error),
@@ -106,7 +125,7 @@ export const searchJobsQuery = async (params: {
   page?: number;
   limit?: number;
 }): Promise<{
-  jobs: Job[];
+  jobs: import("@shared/schema").Job[];
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -124,7 +143,11 @@ export const searchJobsQuery = async (params: {
     console.log('Fetching jobs:', { url, params });
 
     const response = await apiRequest("GET", url);
-    const data = await handleApiResponse(response);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の検索に失敗しました");
+    }
+    const data = await response.json();
 
     // レスポンスをページネーション形式に整形
     return {
@@ -145,24 +168,18 @@ export const searchJobsQuery = async (params: {
   }
 };
 
-// プロフィール取得・更新関数
-export async function getTalentProfile(): Promise<TalentProfileData> {
-  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-  return handleApiResponse(response);
-}
-
-export async function updateTalentProfile(data: Partial<TalentProfileData>): Promise<TalentProfileData> {
-  const response = await apiRequest("PATCH", QUERY_KEYS.TALENT_PROFILE, data);
-  return handleApiResponse(response);
-}
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: Partial<SelectUser>): Promise<SelectUser> {
   const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
-  return handleApiResponse(response);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
+  }
+  return response.json();
 }
 
-// クエリクライアントの設定を改善
+// クエリクライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

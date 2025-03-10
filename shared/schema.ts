@@ -14,18 +14,8 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-export const serviceTypes = [
-  "deriheru",
-  "hoteheru",
-  "hakoheru",
-  "esthe",
-  "onakura",
-  "mseikan"
-] as const;
-
 // Base types
 export type Prefecture = typeof prefectures[number];
-export type ServiceType = typeof serviceTypes[number];
 
 // Users table
 export const users = pgTable("users", {
@@ -40,15 +30,67 @@ export const users = pgTable("users", {
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  age: integer("age"),
 });
 
-// テーブルのインデックスと関連付けを追加
-export const usersRelations = relations(users, ({ many }) => ({
-  jobs: many(jobs),
-  applications: many(applications),
-  talentProfiles: many(talentProfiles)
-}));
+// Schemas for validation
+export const userSchema = createInsertSchema(users, {
+  username: z.string().min(1, "ユーザー名を入力してください"),
+  password: z.string().min(8, "パスワードは8文字以上で入力してください"),
+  role: z.enum(["talent", "store"], {
+    required_error: "ユーザータイプを選択してください",
+    invalid_type_error: "無効なユーザータイプです",
+  }),
+  displayName: z.string().min(1, "表示名を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "所在地を選択してください",
+    invalid_type_error: "無効な所在地です",
+  }),
+  birthDate: z.date({
+    required_error: "生年月日を入力してください",
+    invalid_type_error: "無効な日付形式です",
+  }),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "ログインIDを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).default("talent"),
+});
+
+export const talentRegisterFormSchema = z.object({
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  displayName: z.string().min(1, "お名前を入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 // Jobs table
 export const jobs = pgTable("jobs", {
@@ -114,24 +156,6 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 }));
 
 // Zod Schemas
-export const userSchema = createInsertSchema(users, {
-  username: z.string().min(1, "ユーザー名を入力してください"),
-  password: z.string().min(8, "パスワードは8文字以上で入力してください"),
-  role: z.enum(["talent", "store"], {
-    required_error: "ユーザータイプを選択してください",
-    invalid_type_error: "無効なユーザータイプです",
-  }),
-  displayName: z.string().min(1, "表示名を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "所在地を選択してください",
-    invalid_type_error: "無効な所在地です",
-  }),
-  birthDate: z.date({
-    required_error: "生年月日を入力してください",
-    invalid_type_error: "無効な日付形式です",
-  }),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
 export const jobSchema = createInsertSchema(jobs, {
   title: z.string().min(1, "タイトルを入力してください"),
   description: z.string().min(1, "詳細を入力してください"),
@@ -152,6 +176,16 @@ export const applicationSchema = createInsertSchema(applications, {
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Service Type Labels
+export const serviceTypes = [
+  "deriheru",
+  "hoteheru",
+  "hakoheru",
+  "esthe",
+  "onakura",
+  "mseikan"
+] as const;
+export type ServiceType = typeof serviceTypes[number];
+
 export const serviceTypeLabels: Record<ServiceType, string> = {
   deriheru: "デリヘル",
   hoteheru: "ホテヘル",
@@ -247,29 +281,6 @@ export const jobRequirementsSchema = z.object({
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
-
-export const loginSchema = z.object({
-  username: z.string().min(1, "ログインIDを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).default("store"),
-}).superRefine((data, ctx) => {
-  if (data.role === "store") {
-    if (data.username.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "店舗IDを入力してください",
-        path: ["username"]
-      });
-    }
-    if (data.password.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "パスワードを入力してください",
-        path: ["password"]
-      });
-    }
-  }
-});
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
@@ -375,7 +386,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 }).omit({
   userId: true
 }).partial();
-
 
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type ProfileData = TalentProfileData;
@@ -603,7 +613,6 @@ export type CommonNgOption = typeof commonNgOptions[number];
 export type EstheOption = typeof estheOptions[number];
 
 
-
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -668,5 +677,4 @@ export const talentProfiles = pgTable("talent_profiles", {
     others: []
   }).notNull(),
   photos: jsonb("photos").$type<Photo[]>().default([]).notNull(),
-  age: integer("age"),
 });

@@ -17,5 +17,13 @@ export default function RootPage() {
     return <Redirect to="/auth" />;
   }
 
-  return <Redirect to={user.role === "store" ? "/store" : "/talent/register"} />;
+  // ユーザーの役割に基づいてリダイレクト
+  if (user.role === "talent") {
+    return <Redirect to="/talent/mypage" />;
+  } else if (user.role === "store") {
+    return <Redirect to="/store/dashboard" />;
+  }
+
+  // デフォルトのリダイレクト（通常はここには到達しない）
+  return <Redirect to="/auth" />;
 }

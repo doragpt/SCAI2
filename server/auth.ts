@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, talentRegisterFormSchema } from "@shared/schema";
 import { log } from "./utils/logger";
+import * as z from 'zod';
 
 declare global {
   namespace Express {
@@ -16,11 +17,9 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-// パスワード関連の定数
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
 
-// パスワードハッシュ化関数
 async function hashPassword(password: string): Promise<string> {
   try {
     if (!password || typeof password !== 'string') {
@@ -40,7 +39,6 @@ async function hashPassword(password: string): Promise<string> {
   }
 }
 
-// パスワード比較関数
 async function comparePasswords(supplied: string, stored: string) {
   try {
     const [hashed, salt] = stored.split(".");
@@ -53,6 +51,11 @@ async function comparePasswords(supplied: string, stored: string) {
     });
     return false;
   }
+}
+
+function sanitizeUser(user: SelectUser) {
+  const { password, ...sanitizedUser } = user;
+  return sanitizedUser;
 }
 
 export function setupAuth(app: Express) {
@@ -170,15 +173,7 @@ export function setupAuth(app: Express) {
         }
 
         return res.status(201).json({
-          user: {
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            displayName: user.displayName,
-            location: user.location,
-            birthDate: user.birthDate,
-            preferredLocations: user.preferredLocations
-          }
+          user: sanitizeUser(user)
         });
       });
     } catch (error) {
@@ -186,6 +181,13 @@ export function setupAuth(app: Express) {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "入力内容に誤りがあります",
+          errors: error.errors
+        });
+      }
 
       return res.status(500).json({
         message: "登録処理中にエラーが発生しました",
@@ -196,9 +198,8 @@ export function setupAuth(app: Express) {
 
   // ログインAPIエンドポイント
   app.post("/api/auth/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', {
-      username: req.body.username,
-      role: req.body.role
+    log('info', 'ログインリクエスト受信', { 
+      username: req.body.username
     });
 
     passport.authenticate('local', (err, user, info) => {
@@ -234,15 +235,7 @@ export function setupAuth(app: Express) {
         });
 
         return res.json({
-          user: {
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            displayName: user.displayName,
-            location: user.location,
-            birthDate: user.birthDate,
-            preferredLocations: user.preferredLocations
-          }
+          user: sanitizeUser(user)
         });
       });
     })(req, res, next);
@@ -293,24 +286,10 @@ export function setupAuth(app: Express) {
       log('info', '認証チェック成功', {
         userId: user.id,
         username: user.username,
-        role: user.role,
-        hasDisplayName: !!user.displayName,
-        hasBirthDate: !!user.birthDate
+        role: user.role
       });
 
-      // ユーザー情報をすべて返す
-      return res.json({
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        displayName: user.displayName,
-        location: user.location,
-        birthDate: user.birthDate,
-        birthDateModified: user.birthDateModified,
-        preferredLocations: user.preferredLocations,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      });
+      return res.json(sanitizeUser(user));
     } catch (error) {
       log('error', '認証チェックエラー', {
         error: error instanceof Error ? error.message : 'Unknown error'

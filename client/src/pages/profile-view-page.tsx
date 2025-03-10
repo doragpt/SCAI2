@@ -9,18 +9,9 @@ import { Loader2, PenSquare } from "lucide-react";
 import { Redirect } from "wouter";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import type { TalentProfileData } from "@shared/schema";
+import type { TalentProfileData, User as SelectUser } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
-
-interface UserProfile {
-  id: number;
-  username: string;
-  displayName: string | null;
-  birthDate: string | null;
-  location: string | null;
-  preferredLocations: string[] | null;
-}
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
@@ -29,9 +20,15 @@ export default function ProfileViewPage() {
   const {
     data: userProfile,
     isLoading: isUserProfileLoading,
-  } = useQuery<UserProfile>({
+  } = useQuery<SelectUser>({
     queryKey: [QUERY_KEYS.USER_PROFILE],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.USER_PROFILE),
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.USER_PROFILE);
+      if (!response.ok) {
+        throw new Error("ユーザー情報の取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
@@ -41,7 +38,13 @@ export default function ProfileViewPage() {
     isLoading: isTalentLoading,
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.TALENT_PROFILE),
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+      if (!response.ok) {
+        throw new Error("タレントプロフィールの取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

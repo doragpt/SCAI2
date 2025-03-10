@@ -7,16 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ScoutApplicationView } from "@/components/scout-application-view";
 import { Loader2, LogOut } from "lucide-react";
 
-// ExtendedTalentProfileをTalentProfileDataを継承するように修正
-interface ExtendedTalentProfile extends Omit<TalentProfileData, 'height' | 'weight' | 'bust' | 'waist'> {
+// ExtendedTalentProfileの定義を修正
+interface ExtendedTalentProfile extends Omit<TalentProfileData, 'photos'> {
+  id: number;
   guaranteeAmount: number;
   age: number;
   photos: string[];
   serviceTypes: string[];
-  height?: number;
-  weight?: number;
-  bust?: number;
-  waist?: number;
 }
 
 export default function ScoutDashboard() {
@@ -24,6 +21,13 @@ export default function ScoutDashboard() {
 
   const { data: profiles, isLoading: profilesLoading } = useQuery<ExtendedTalentProfile[]>({
     queryKey: ["/api/talent/profiles"],
+    queryFn: async () => {
+      const response = await fetch("/api/talent/profiles");
+      if (!response.ok) {
+        throw new Error("プロフィール一覧の取得に失敗しました");
+      }
+      return response.json();
+    }
   });
 
   if (profilesLoading) {

@@ -14,7 +14,13 @@ export default function TalentRegistration() {
   // タレントプロフィールデータを取得
   const { data: talentProfile, isLoading } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.TALENT_PROFILE),
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+      if (!response.ok) {
+        throw new Error("タレントプロフィールの取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
@@ -63,7 +69,7 @@ export default function TalentRegistration() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <TalentForm initialData={talentProfile} />
+                <TalentForm />
               )}
             </CardContent>
           </Card>

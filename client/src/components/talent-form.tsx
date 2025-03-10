@@ -42,7 +42,7 @@ import {
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
 import { Textarea } from "@/components/ui/textarea";
-import { createOrUpdateTalentProfile } from "@/lib/api/talent";
+import { createOrUpdateTalentProfile, getTalentProfile } from "@/lib/queryClient";
 
 // Store type definitions
 type CurrentStore = {
@@ -597,8 +597,9 @@ export function TalentForm() {
   });
 
   // プロフィールデータの取得
-  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
+  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryFn: getTalentProfile,
     enabled: !!user?.id,
   });
 
