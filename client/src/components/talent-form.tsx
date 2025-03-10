@@ -833,7 +833,7 @@ export function TalentForm() {
                     <FormItem>
                       <FormLabel>姓</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：山田" />
+                        <Input {...field} placeholder="例：佐藤" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -846,7 +846,7 @@ export function TalentForm() {
                     <FormItem>
                       <FormLabel>名</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：太郎" />
+                        <Input {...field} placeholder="例：美咲" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -865,7 +865,7 @@ export function TalentForm() {
                     <FormItem>
                       <FormLabel>セイ</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：ヤマダ" />
+                        <Input {...field} placeholder="例：サトウ" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -878,7 +878,7 @@ export function TalentForm() {
                     <FormItem>
                       <FormLabel>メイ</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="例：タロウ" />
+                        <Input {...field} placeholder="例：ミサキ" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -960,7 +960,7 @@ export function TalentForm() {
                   <FormItem>
                     <FormLabel>持参可能な身分証明書</FormLabel>
                     <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gridcols-2 gap-4">
                         {idTypes.map((type) => (
                           <div key={type} className="flex items-center space-x-2">
                             <Checkbox
