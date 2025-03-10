@@ -304,7 +304,9 @@ export function setupAuth(app: Express) {
         role: user.role
       });
 
-      return res.json(sanitizeUser(user));
+      return res.json({
+        user: sanitizeUser(user)
+      });
     } catch (error) {
       log('error', '認証チェックエラー', {
         error: error instanceof Error ? error.message : 'Unknown error'

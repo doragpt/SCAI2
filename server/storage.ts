@@ -82,8 +82,7 @@ export class DatabaseStorage implements IStorage {
         .insert(users)
         .values({
           ...insertUser,
-          birthDate: new Date(insertUser.birthDate),
-          birthDateModified: false,
+          role: "talent",
           preferredLocations: insertUser.preferredLocations || [],
           createdAt: new Date(),
           updatedAt: new Date()
