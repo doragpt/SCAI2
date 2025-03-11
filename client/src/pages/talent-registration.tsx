@@ -7,22 +7,43 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
 
   // タレントプロフィールデータを取得
-  const { data: talentProfile, isLoading } = useQuery<TalentProfileData>({
+  const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-      if (!response.ok) {
-        throw new Error("タレントプロフィールの取得に失敗しました");
+      try {
+        console.log("Fetching talent profile...");
+        const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+        if (!response.ok) {
+          console.error("Failed to fetch talent profile:", response.status);
+          throw new Error("タレントプロフィールの取得に失敗しました");
+        }
+        const data = await response.json();
+        console.log("Talent profile fetched successfully:", data);
+        return data;
+      } catch (error) {
+        console.error("Error fetching talent profile:", error);
+        throw error;
       }
-      return response.json();
     },
     enabled: !!user?.id,
+    retry: 1,
   });
+
+  // エラーが発生した場合はトースト表示
+  if (error) {
+    toast({
+      title: "エラーが発生しました",
+      description: error instanceof Error ? error.message : "プロフィールの取得に失敗しました",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,8 +86,26 @@ export default function TalentRegistration() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center justify-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    プロフィール情報を読み込んでいます...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="text-center p-8">
+                  <p className="text-sm text-destructive">
+                    プロフィールの読み込みに失敗しました。
+                    <br />
+                    ページを更新してもう一度お試しください。
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => window.location.reload()}
+                  >
+                    ページを更新
+                  </Button>
                 </div>
               ) : (
                 <TalentForm />
