@@ -26,12 +26,15 @@ export default function TalentRegistration() {
     retry: false,
   });
 
-  // エラー処理（404以外のエラーの場合のみトースト表示）
+  // エラー処理（404と401以外のエラーの場合のみトースト表示）
   React.useEffect(() => {
-    if (error && !(error instanceof Error && error.message === "Profile not found")) {
+    if (error && 
+        !(error instanceof Error && 
+          (error.message === "Profile not found" || 
+           error.message === "認証が必要です"))) {
       toast({
         title: "エラー",
-        description: error instanceof Error ? error.message : "予期せぬエラーが発生しました",
+        description: "予期せぬエラーが発生しました",
         variant: "destructive",
       });
     }
