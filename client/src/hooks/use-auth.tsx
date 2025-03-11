@@ -1,16 +1,9 @@
 import { createContext, ReactNode, useContext } from "react";
-import {
-  useQuery,
-  useMutation,
-  QueryClient
-} from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { SelectUser, LoginData, RegisterFormData } from "@shared/schema";
-
-// クエリクライアントのインスタンスをエクスポート
-export const queryClient = new QueryClient();
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -24,43 +17,30 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function useLoginMutation() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
-      try {
-        console.log('Login attempt:', { email: credentials.email });
-        const response = await apiRequest("POST", "/api/login", credentials);
-        const data = await response.json();
-        console.log('Login response:', data);
-        return data;
-      } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
+      const response = await apiRequest("POST", "/api/login", credentials);
+      return response.json();
     },
     onSuccess: (user: SelectUser) => {
-      console.log('Login successful, attempting navigation:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
 
-      // 直接setLocationを呼び出す代わりにnavigateを使用
+      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
-        console.log('Redirecting to talent page...');
-        navigate("/talent/mypage");
+        window.location.href = "/talent/mypage";
       } else if (user.role === "store") {
-        console.log('Redirecting to store page...');
-        navigate("/store/dashboard");
+        window.location.href = "/store/dashboard";
       }
     },
     onError: (error: Error) => {
-      console.error('Login mutation error:', error);
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -71,32 +51,25 @@ function useLoginMutation() {
 }
 
 function useLogoutMutation() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async () => {
-      try {
-        console.log('Logout attempt');
-        const response = await apiRequest("POST", "/api/logout");
-        await response.json();
-      } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
-      }
+      await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      console.log('Logout successful, clearing data and redirecting...');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
+
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
-      navigate("/auth");
+
+      window.location.href = "/auth";
     },
     onError: (error: Error) => {
-      console.error('Logout mutation error:', error);
       toast({
         title: "ログアウトエラー",
         description: error.message || "ログアウトに失敗しました",
@@ -107,42 +80,31 @@ function useLogoutMutation() {
 }
 
 function useRegisterMutation() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      try {
-        console.log('Registration attempt:', { email: data.email });
-        const response = await apiRequest("POST", "/api/auth/register", data);
-        const result = await response.json();
-        console.log('Registration response:', result);
-        return result.user;
-      } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-      }
+      const response = await apiRequest("POST", "/api/auth/register", data);
+      const result = await response.json();
+      return result.user;
     },
     onSuccess: (user: SelectUser) => {
-      console.log('Registration successful, attempting navigation:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
 
+      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
-        console.log('Redirecting to talent page...');
-        navigate("/talent/mypage");
+        window.location.href = "/talent/mypage";
       } else if (user.role === "store") {
-        console.log('Redirecting to store page...');
-        navigate("/store/dashboard");
+        window.location.href = "/store/dashboard";
       }
     },
     onError: (error: Error) => {
-      console.error('Registration mutation error:', error);
       toast({
         title: "登録エラー",
         description: error.message || "登録に失敗しました",
@@ -163,22 +125,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...');
         const response = await apiRequest("GET", "/api/check");
-
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('User not authenticated');
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
-
-        const data = await response.json();
-        console.log('Auth check successful:', data);
-        return data;
+        return response.json();
       } catch (error) {
-        console.error('Auth check error:', error);
         if (error instanceof Error && error.message === "認証されていません") {
           return null;
         }
@@ -189,19 +144,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: 1,
   });
 
-  const loginMutation = useLoginMutation();
-  const logoutMutation = useLogoutMutation();
-  const registerMutation = useRegisterMutation();
-
   return (
     <AuthContext.Provider
       value={{
         user: user ?? null,
         isLoading,
         error: error as Error | null,
-        loginMutation,
-        logoutMutation,
-        registerMutation,
+        loginMutation: useLoginMutation(),
+        logoutMutation: useLogoutMutation(),
+        registerMutation: useRegisterMutation(),
       }}
     >
       {children}
