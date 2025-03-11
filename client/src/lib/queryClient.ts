@@ -3,21 +3,31 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 
 // APIのベースURL設定
 const API_BASE_URL = (() => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  const port = window.location.port;
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
+  try {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
+  } catch (error) {
+    console.error('API URL construction error:', error);
+    return '/api'; // フォールバックURL
+  }
 })();
 
 // トークンの取得
 function getAuthToken(): string | null {
-  return localStorage.getItem('auth_token');
+  try {
+    return localStorage.getItem('auth_token');
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
 }
 
 // APIリクエスト関数
 export async function apiRequest(
   method: string,
-  url: string,
+  endpoint: string,
   data?: unknown,
   options?: {
     headers?: Record<string, string>;
@@ -26,8 +36,7 @@ export async function apiRequest(
   try {
     console.log('[API Request]:', {
       method,
-      url,
-      data,
+      endpoint,
       timestamp: new Date().toISOString()
     });
 
@@ -42,9 +51,10 @@ export async function apiRequest(
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+    // URLの構築
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-    const response = await fetch(fullUrl, {
+    const response = await fetch(url, {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
@@ -54,7 +64,7 @@ export async function apiRequest(
     console.log('[API Response]:', {
       status: response.status,
       statusText: response.statusText,
-      url: fullUrl,
+      url,
       timestamp: new Date().toISOString()
     });
 
@@ -62,7 +72,7 @@ export async function apiRequest(
   } catch (error) {
     console.error('[API Error]:', {
       method,
-      url,
+      endpoint,
       error: error instanceof Error ? error.message : "Unknown error",
       timestamp: new Date().toISOString()
     });

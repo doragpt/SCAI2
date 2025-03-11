@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from './use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthState {
   user: any | null;
@@ -18,16 +18,21 @@ const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     try {
       set({ isLoading: true, error: null });
-      
+
       const response = await apiRequest('POST', '/auth/login', { email, password });
-      const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'ログインに失敗しました');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'ログインに失敗しました');
       }
 
+      const data = await response.json();
+
       // トークンの保存
-      localStorage.setItem('auth_token', data.token);
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
+
       set({ user: data.user, isLoading: false });
     } catch (error) {
       set({
@@ -38,30 +43,48 @@ const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: async () => {
-    localStorage.removeItem('auth_token');
-    set({ user: null, error: null });
+    try {
+      await apiRequest('POST', '/auth/logout');
+      localStorage.removeItem('auth_token');
+      set({ user: null, error: null });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // エラーが発生しても、ローカルのトークンとユーザー状態はクリアする
+      localStorage.removeItem('auth_token');
+      set({ user: null, error: null });
+    }
   },
   checkAuth: async () => {
     try {
       set({ isLoading: true });
       const token = localStorage.getItem('auth_token');
-      
+
       if (!token) {
         set({ user: null, isLoading: false });
         return;
       }
 
       const response = await apiRequest('GET', '/auth/check');
-      
+
       if (!response.ok) {
         localStorage.removeItem('auth_token');
         set({ user: null, isLoading: false });
         return;
       }
 
-      set({ isLoading: false });
+      // ユーザー情報を取得
+      const userResponse = await apiRequest('GET', '/user');
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        set({ user: userData, isLoading: false });
+      } else {
+        set({ user: null, isLoading: false });
+      }
     } catch (error) {
+      console.error('Auth check error:', error);
+      localStorage.removeItem('auth_token');
       set({
+        user: null,
         error: error instanceof Error ? error.message : '認証チェックに失敗しました',
         isLoading: false
       });
