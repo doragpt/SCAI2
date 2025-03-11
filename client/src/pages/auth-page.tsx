@@ -556,7 +556,7 @@ export default function AuthPage() {
 
       {/* 確認ダイアログ */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>入力内容の確認</DialogTitle>
             <DialogDescription>
@@ -570,6 +570,10 @@ export default function AuthPage() {
                 <p>{formData.username}</p>
               </div>
               <div>
+                <p className="text-sm font-medium">メールアドレス</p>
+                <p>{formData.email}</p>
+              </div>
+              <div>
                 <p className="text-sm font-medium">生年月日</p>
                 <p>{formData.birthDate}</p>
               </div>
@@ -580,6 +584,34 @@ export default function AuthPage() {
               <div>
                 <p className="text-sm font-medium">希望地域</p>
                 <p>{formData.preferredLocations.join(', ')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">姓（カナ）</p>
+                <p>{formData.lastNameKana}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">名（カナ）</p>
+                <p>{formData.firstNameKana}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">最寄り駅</p>
+                <p>{formData.nearestStation}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">身長</p>
+                <p>{formData.height}cm</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">体重</p>
+                <p>{formData.weight}kg</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">カップサイズ</p>
+                <p>{formData.cupSize}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">パネルの顔出し設定</p>
+                <p>{formData.faceVisibility}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">
