@@ -2,9 +2,10 @@ import { SEO } from "@/lib/seo";
 import { AIMatchingChat } from "@/components/ai-matching-chat";
 import { useProfile } from "@/hooks/use-profile";
 import { Loader2 } from "lucide-react";
+import { ProfileConfirmationDialog } from "@/components/profile-confirmation-dialog";
 
 export default function AIMatchingPage() {
-  const { isLoading } = useProfile();
+  const { isLoading, profileData } = useProfile();
 
   if (isLoading) {
     return (
