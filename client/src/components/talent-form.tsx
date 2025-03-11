@@ -762,7 +762,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
     });
   }, [form]);
 
-
   const handleAddEstheNgOption = (value: string) => {
     const updated = [...form.getValues().estheOptions.ngOptions || [], value];
     form.setValue("estheOptions.ngOptions", updated);
@@ -781,16 +780,35 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   // NGオプションのチェックボックス実装
-  const handleNgOptionChange = (option: typeof commonNgOptions[number], checked: boolean) => {
+  const handleNgOptionChange = useCallback((option: typeof commonNgOptions[number], checked: boolean) => {
     const current = form.watch("ngOptions.common") || [];
     const updated = checked
       ? [...current, option]
       : current.filter((o) => o !== option);
     form.setValue("ngOptions.common", updated, {
       shouldValidate: true,
-      shouldDirty: true
+      shouldDirty: true,
+      shouldTouch: true
     });
-  };
+  }, [form]);
+
+  const handleAddNgOption = useCallback((value: string) => {
+    const updated = [...form.getValues().ngOptions.others || [], value];
+    form.setValue("ngOptions.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
+
+  const handleRemoveNgOption = useCallback((index: number) => {
+    const updated = [...form.getValues().ngOptions.others || []].filter((_, i) => i !== index);
+    form.setValue("ngOptions.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
 
   const photos = form.getValues().photos || [];
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
@@ -1240,6 +1258,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                 form.setValue("ngOptions.common", updated, {
                                   shouldValidate: true,
                                   shouldDirty: true,
+                                  shouldTouch: true
                                 });
                               }}
                               className="data-[state=checked]:bg-primary"
@@ -1253,7 +1272,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           </div>
                         ))}
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 mt-4">
                         <div className="flex flex-wrap gap-2">
                           {field.value.others.map((option, index) => (
                             <Badge key={index} variant="outline" className="flex items-center gap-1">
@@ -1262,10 +1281,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                 variant="ghost"
                                 size="sm"
                                 className="h-4 w-4 p-0 hover:bg-transparent"
-                                onClick={() => {
-                                  const updated = field.value.others.filter((_, i) => i !== index);
-                                  form.setValue("ngOptions.others", updated);
-                                }}
+                                onClick={() => handleRemoveNgOption(index)}
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -1274,7 +1290,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         </div>
                         <OtherItemInput
                           ref={React.createRef()}
-                          onAdd={(value: string) => form.setValue("ngOptions.others", [...form.getValues().ngOptions.others || [], value])}
+                          onAdd={handleAddNgOption}
                           placeholder="その他のNGオプションを入力"
                         />
                       </div>
