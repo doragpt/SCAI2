@@ -567,7 +567,6 @@ export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType };
 
@@ -643,4 +642,15 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
 
 export type PreviousStore = {
   storeName: string;
+};
+
+// 共通の型定義を追加
+export type UserResponse = {
+  id: number;
+  email: string;
+  username: string;
+  birthDate: string;
+  location: string;
+  preferredLocations: string[];
+  role: "talent" | "store";
 };

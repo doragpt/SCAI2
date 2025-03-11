@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { talentRegisterFormSchema } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
+import { log } from '../utils/logger';
 
 const router = Router();
 
@@ -12,21 +13,19 @@ router.get("/user", authenticate, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
+      log('warn', 'ユーザー認証なし');
       return res.status(401).json({ message: "認証が必要です" });
     }
-
-    console.log('User from request:', user); // デバッグログ追加
 
     // データベースから最新のユーザー情報を取得
     const userData = await storage.getUser(user.id);
     if (!userData) {
+      log('warn', 'ユーザーが見つかりません', { id: user.id });
       return res.status(404).json({ message: "ユーザーが見つかりません" });
     }
 
-    console.log('User data from storage:', userData); // デバッグログ追加
-
     // 必要なユーザー情報のみを返す
-    const sanitizedUser = {
+    const response = {
       id: userData.id,
       email: userData.email,
       username: userData.username,
@@ -36,14 +35,19 @@ router.get("/user", authenticate, async (req, res) => {
       role: userData.role
     };
 
-    console.log('Sanitized user data:', sanitizedUser); // デバッグログ追加
+    log('info', 'ユーザー情報取得完了', {
+      id: response.id,
+      email: response.email,
+      username: response.username
+    });
 
-    res.json(sanitizedUser);
+    res.json(response);
   } catch (error) {
-    console.error('User fetch error:', error);
+    log('error', 'ユーザー情報取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
     res.status(500).json({
-      message: "ユーザー情報の取得に失敗しました",
-      error: error instanceof Error ? error.message : undefined
+      message: "ユーザー情報の取得に失敗しました"
     });
   }
 });
@@ -53,12 +57,16 @@ router.patch("/user", authenticate, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
+      log('warn', '認証なしでの更新試行');
       return res.status(401).json({ message: "認証が必要です" });
     }
 
-    console.log('Update request body:', req.body); // デバッグログ追加
-
     const { username, location, preferredLocations } = req.body;
+
+    log('info', 'ユーザー情報更新開始', {
+      id: user.id,
+      updates: { username, location, preferredLocations }
+    });
 
     // データベースの更新
     const updatedUser = await storage.updateUser(user.id, {
@@ -67,14 +75,30 @@ router.patch("/user", authenticate, async (req, res) => {
       preferredLocations
     });
 
-    console.log('Updated user:', updatedUser); // デバッグログ追加
+    // レスポンスデータの形式を統一
+    const response = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      birthDate: updatedUser.birthDate,
+      location: updatedUser.location,
+      preferredLocations: updatedUser.preferredLocations || [],
+      role: updatedUser.role
+    };
 
-    res.json(updatedUser);
+    log('info', 'ユーザー情報更新完了', {
+      id: response.id,
+      email: response.email,
+      username: response.username
+    });
+
+    res.json(response);
   } catch (error) {
-    console.error('User update error:', error);
+    log('error', 'ユーザー情報更新エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
     res.status(500).json({
-      message: "ユーザー情報の更新に失敗しました",
-      error: error instanceof Error ? error.message : undefined
+      message: "ユーザー情報の更新に失敗しました"
     });
   }
 });

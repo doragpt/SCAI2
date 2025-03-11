@@ -27,35 +27,37 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       log('info', 'ユーザー取得開始', { id });
-      const [user] = await db
+      const [result] = await db
         .select()
         .from(users)
         .where(eq(users.id, id));
 
-      if (user) {
-        // データベースのスネークケースをキャメルケースに変換
-        const formattedUser = {
-          ...user,
-          birthDate: user.birth_date,
-          preferredLocations: Array.isArray(user.preferred_locations) 
-            ? user.preferred_locations 
-            : [],
-          createdAt: user.created_at,
-          updatedAt: user.updated_at
-        };
-
-        log('info', 'ユーザー取得完了', {
-          id,
-          found: true,
-          role: formattedUser.role,
-          email: formattedUser.email
-        });
-
-        return formattedUser;
+      if (!result) {
+        log('info', 'ユーザー取得完了', { id, found: false });
+        return undefined;
       }
 
-      log('info', 'ユーザー取得完了', { id, found: false });
-      return undefined;
+      // 明示的にUserオブジェクトを構築
+      const user: User = {
+        id: result.id,
+        email: result.email,
+        username: result.username,
+        password: result.password,
+        birthDate: result.birth_date,
+        location: result.location,
+        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        role: result.role,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
+      };
+
+      log('info', 'ユーザー取得完了', {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      });
+
+      return user;
     } catch (error) {
       log('error', 'ユーザー取得エラー', {
         id,
@@ -68,34 +70,37 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
       log('info', 'メールアドレスでの取得開始', { email });
-      const [user] = await db
+      const [result] = await db
         .select()
         .from(users)
         .where(eq(users.email, email));
 
-      if (user) {
-        // データベースのスネークケースをキャメルケースに変換
-        const formattedUser = {
-          ...user,
-          birthDate: user.birth_date,
-          preferredLocations: Array.isArray(user.preferred_locations) 
-            ? user.preferred_locations 
-            : [],
-          createdAt: user.created_at,
-          updatedAt: user.updated_at
-        };
-
-        log('info', 'メールアドレスでの取得完了', {
-          email,
-          found: true,
-          role: formattedUser.role
-        });
-
-        return formattedUser;
+      if (!result) {
+        log('info', 'メールアドレスでの取得完了', { email, found: false });
+        return undefined;
       }
 
-      log('info', 'メールアドレスでの取得完了', { email, found: false });
-      return undefined;
+      // 明示的にUserオブジェクトを構築
+      const user: User = {
+        id: result.id,
+        email: result.email,
+        username: result.username,
+        password: result.password,
+        birthDate: result.birth_date,
+        location: result.location,
+        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        role: result.role,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
+      };
+
+      log('info', 'メールアドレスでの取得完了', {
+        email,
+        found: true,
+        role: user.role
+      });
+
+      return user;
     } catch (error) {
       log('error', 'メールアドレスでの取得エラー', {
         email,
@@ -113,44 +118,48 @@ export class DatabaseStorage implements IStorage {
         role: insertUser.role
       });
 
-      const [user] = await db
+      const [result] = await db
         .insert(users)
         .values({
-          ...insertUser,
-          role: "talent",
-          preferredLocations: insertUser.preferredLocations || [],
-          createdAt: new Date(),
-          updatedAt: new Date()
+          email: insertUser.email,
+          username: insertUser.username,
+          password: insertUser.password,
+          birth_date: insertUser.birthDate,
+          location: insertUser.location,
+          preferred_locations: insertUser.preferredLocations,
+          role: insertUser.role,
+          created_at: new Date(),
+          updated_at: new Date()
         })
         .returning();
 
-      if (!user) {
+      if (!result) {
         throw new Error('ユーザーの作成に失敗しました');
       }
 
-      // データベースのスネークケースをキャメルケースに変換
-      const formattedUser = {
-        ...user,
-        birthDate: user.birth_date,
-        preferredLocations: Array.isArray(user.preferred_locations) 
-          ? user.preferred_locations 
-          : [],
-        createdAt: user.created_at,
-        updatedAt: user.updated_at
+      // 明示的にUserオブジェクトを構築
+      const user: User = {
+        id: result.id,
+        email: result.email,
+        username: result.username,
+        password: result.password,
+        birthDate: result.birth_date,
+        location: result.location,
+        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        role: result.role,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
       };
 
       log('info', '新規ユーザー作成完了', {
-        id: formattedUser.id,
-        email: formattedUser.email,
-        username: formattedUser.username,
-        role: formattedUser.role
+        id: user.id,
+        email: user.email,
+        role: user.role
       });
 
-      return formattedUser;
+      return user;
     } catch (error) {
       log('error', '新規ユーザー作成エラー', {
-        email: insertUser.email,
-        username: insertUser.username,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
@@ -161,37 +170,42 @@ export class DatabaseStorage implements IStorage {
     try {
       log('info', 'ユーザー更新開始', { id, data });
 
-      const [updatedUser] = await db
+      const [result] = await db
         .update(users)
         .set({
           ...data,
-          updatedAt: new Date()
+          preferred_locations: data.preferredLocations,
+          birth_date: data.birthDate,
+          updated_at: new Date()
         })
         .where(eq(users.id, id))
         .returning();
 
-      if (!updatedUser) {
+      if (!result) {
         throw new Error('ユーザーの更新に失敗しました');
       }
 
-      // データベースのスネークケースをキャメルケースに変換
-      const formattedUser = {
-        ...updatedUser,
-        birthDate: updatedUser.birth_date,
-        preferredLocations: Array.isArray(updatedUser.preferred_locations) 
-          ? updatedUser.preferred_locations 
-          : [],
-        createdAt: updatedUser.created_at,
-        updatedAt: updatedUser.updated_at
+      // 明示的にUserオブジェクトを構築
+      const user: User = {
+        id: result.id,
+        email: result.email,
+        username: result.username,
+        password: result.password,
+        birthDate: result.birth_date,
+        location: result.location,
+        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        role: result.role,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
       };
 
       log('info', 'ユーザー更新完了', {
-        id,
-        email: formattedUser.email,
-        username: formattedUser.username
+        id: user.id,
+        email: user.email,
+        role: user.role
       });
 
-      return formattedUser;
+      return user;
     } catch (error) {
       log('error', 'ユーザー更新エラー', {
         id,

@@ -10,31 +10,31 @@ import { format, differenceInYears } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
+import type { UserResponse } from "@shared/schema";
 
 export default function ProfileViewPage() {
   const { user } = useAuth();
 
-  // ユーザー基本情報を取得
-  const {
-    data: userProfile,
-    isLoading: isUserProfileLoading,
-  } = useQuery({
+  const { data: userProfile, isLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/user");
       if (!response.ok) {
-        throw new Error("ユーザー情報の取得に失敗しました");
+        const error = await response.json();
+        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Received user profile:', data); // デバッグ用
+      return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user,
   });
 
   if (!user) {
     return <Redirect to="/auth" />;
   }
 
-  if (isUserProfileLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -61,50 +61,52 @@ export default function ProfileViewPage() {
       </div>
 
       <Card>
-        <ScrollArea className="h-[calc(100vh-16rem)]">
+        <ScrollArea>
           <div className="p-6 space-y-6">
             {/* 基本情報 */}
             <div>
-              <h2 className="text-lg font-medium">基本情報</h2>
-              <Card className="p-6 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">ニックネーム</p>
-                    <p className="mt-1">{userProfile?.username || "未設定"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">生年月日</p>
-                    <p className="mt-1">
-                      {userProfile?.birthDate
-                        ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
-                            locale: ja,
-                          })
-                        : "未設定"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">年齢</p>
-                    <p className="mt-1">
-                      {userProfile?.birthDate
-                        ? `${calculateAge(userProfile.birthDate)}歳`
-                        : "未設定"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">希望エリア</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {userProfile?.preferredLocations?.map((location) => (
+              <h2 className="text-lg font-medium mb-4">基本情報</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">ニックネーム</p>
+                  <p className="mt-1">{userProfile?.username || "未設定"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">生年月日</p>
+                  <p className="mt-1">
+                    {userProfile?.birthDate
+                      ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
+                          locale: ja,
+                        })
+                      : "未設定"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">年齢</p>
+                  <p className="mt-1">
+                    {userProfile?.birthDate
+                      ? `${calculateAge(userProfile.birthDate)}歳`
+                      : "未設定"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">希望エリア</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {userProfile?.preferredLocations?.length > 0 ? (
+                      userProfile.preferredLocations.map((location) => (
                         <span
                           key={location}
                           className="px-2 py-1 bg-muted rounded-md text-sm"
                         >
                           {location}
                         </span>
-                      )) ?? <p>未設定</p>}
-                    </div>
+                      ))
+                    ) : (
+                      <p>未設定</p>
+                    )}
                   </div>
                 </div>
-              </Card>
+              </div>
             </div>
           </div>
         </ScrollArea>
