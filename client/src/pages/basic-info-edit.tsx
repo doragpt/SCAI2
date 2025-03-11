@@ -23,11 +23,39 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@shared/schema";
 import type { UserResponse } from "@shared/schema";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
   location: z.string().min(1, "居住地を選択してください"),
   preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    )
+    .optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  if (data.newPassword && !data.currentPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "現在のパスワードを入力してください",
+  path: ["currentPassword"],
+}).refine((data) => {
+  if (data.newPassword && data.newPassword !== data.confirmPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "新しいパスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
 });
 
 type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
@@ -37,18 +65,17 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // ユーザー情報を取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      console.log('Fetching user data...'); // デバッグログ
+      console.log('Fetching user data...'); 
       const response = await apiRequest("GET", "/api/user");
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('Received user data:', data); // デバッグログ
+      console.log('Received user data:', data); 
       return data;
     },
     enabled: !!user,
@@ -60,10 +87,12 @@ export default function BasicInfoEdit() {
       username: "",
       location: "",
       preferredLocations: [],
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
-  // ユーザー情報をフォームに設定
   useEffect(() => {
     if (userProfile) {
       console.log('Setting form values:', {
@@ -82,19 +111,28 @@ export default function BasicInfoEdit() {
     }
   }, [userProfile, form]);
 
-  // 更新処理
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Sending update data:', data); // デバッグログ
+      console.log('Sending update data:', data); 
 
-      const response = await apiRequest("PATCH", "/api/user", data);
+      const updateData = {
+        username: data.username,
+        location: data.location,
+        preferredLocations: data.preferredLocations,
+        ...(data.currentPassword && data.newPassword ? {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        } : {})
+      };
+
+      const response = await apiRequest("PATCH", "/api/user", updateData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
       }
 
       const result = await response.json();
-      console.log('Update response:', result); // デバッグログ
+      console.log('Update response:', result); 
       return result;
     },
     onSuccess: (data) => {
@@ -114,7 +152,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('Form submission data:', data); // デバッグログ
+    console.log('Form submission data:', data); 
     await updateProfileMutation.mutateAsync(data);
   };
 
@@ -150,6 +188,25 @@ export default function BasicInfoEdit() {
             )}
           />
 
+          {/* メールアドレス（表示のみ） */}
+          <div className="space-y-2">
+            <FormLabel>メールアドレス</FormLabel>
+            <div className="p-3 bg-muted rounded-md">
+              <p>{userProfile?.email || "未設定"}</p>
+            </div>
+          </div>
+
+          {/* 生年月日（表示のみ） */}
+          <div className="space-y-2">
+            <FormLabel>生年月日</FormLabel>
+            <div className="p-3 bg-muted rounded-md">
+              <p>{userProfile?.birthDate 
+                ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", { locale: ja })
+                : "未設定"}
+              </p>
+            </div>
+          </div>
+
           <FormField
             control={form.control}
             name="location"
@@ -179,7 +236,7 @@ export default function BasicInfoEdit() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>希望地域（複数選択可）</FormLabel>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border rounded-lg p-4">
                   {prefectures.map((pref) => (
                     <div key={pref} className="flex items-center space-x-2">
                       <Checkbox
@@ -199,6 +256,50 @@ export default function BasicInfoEdit() {
               </FormItem>
             )}
           />
+
+          {/* パスワード変更セクション */}
+          <div className="space-y-4 border rounded-lg p-4">
+            <h2 className="text-lg font-semibold">パスワード変更</h2>
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>現在のパスワード</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>新しいパスワード</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>新しいパスワード（確認）</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <Button
             type="submit"

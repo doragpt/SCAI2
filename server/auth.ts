@@ -148,16 +148,56 @@ export function setupAuth(app: Express) {
   app.patch("/api/user", async (req, res) => {
     try {
       if (!req.user) {
+        log('warn', '認証なしでの更新試行');
         return res.status(401).json({ message: "認証が必要です" });
       }
 
-      const { username, location, preferredLocations } = req.body;
+      // リクエストデータをログ出力
+      log('info', '更新リクエストデータ', req.body);
 
-      log('info', 'ユーザー情報更新リクエスト', {
-        userId: req.user.id,
-        updates: { username, location, preferredLocations }
-      });
+      const { username, location, preferredLocations, currentPassword, newPassword } = req.body;
 
+      // パスワード変更のリクエストがある場合
+      if (currentPassword && newPassword) {
+        const user = await storage.getUser(req.user.id);
+        if (!user) {
+          return res.status(404).json({ message: "ユーザーが見つかりません" });
+        }
+
+        // 現在のパスワードを確認
+        const isValidPassword = await comparePasswords(currentPassword, user.password);
+        if (!isValidPassword) {
+          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
+        }
+
+        // 新しいパスワードをハッシュ化
+        const hashedPassword = await hashPassword(newPassword);
+
+        // ユーザー情報を更新（パスワードを含む）
+        const updatedUser = await storage.updateUser(req.user.id, {
+          username,
+          location,
+          preferredLocations,
+          password: hashedPassword
+        });
+
+        log('info', 'ユーザー情報更新成功（パスワード変更含む）', {
+          id: updatedUser.id,
+          email: updatedUser.email
+        });
+
+        return res.json({
+          id: updatedUser.id,
+          email: updatedUser.email,
+          username: updatedUser.username,
+          birthDate: updatedUser.birthDate,
+          location: updatedUser.location,
+          preferredLocations: updatedUser.preferredLocations || [],
+          role: updatedUser.role
+        });
+      }
+
+      // 通常の情報更新
       const updatedUser = await storage.updateUser(req.user.id, {
         username,
         location,
@@ -165,22 +205,32 @@ export function setupAuth(app: Express) {
       });
 
       log('info', 'ユーザー情報更新成功', {
-        userId: updatedUser.id,
+        id: updatedUser.id,
         email: updatedUser.email
       });
 
-      res.json(sanitizeUser(updatedUser));
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        birthDate: updatedUser.birthDate,
+        location: updatedUser.location,
+        preferredLocations: updatedUser.preferredLocations || [],
+        role: updatedUser.role
+      });
     } catch (error) {
       log('error', 'ユーザー情報更新エラー', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      res.status(500).json({ message: "ユーザー情報の更新に失敗しました" });
+      res.status(500).json({
+        message: "ユーザー情報の更新に失敗しました"
+      });
     }
   });
 
   // ログインAPI
   app.post("/api/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', { 
+    log('info', 'ログインリクエスト受信', {
       email: req.body.email
     });
     passport.authenticate('local', (err, user, info) => {
@@ -246,8 +296,8 @@ export function setupAuth(app: Express) {
     }
     res.json(sanitizeUser(req.user));
   });
-  
-    // 新規登録APIエンドポイント
+
+  // 新規登録APIエンドポイント
   app.post("/api/auth/register", async (req, res) => {
     try {
       log('info', '新規登録リクエスト受信', {
