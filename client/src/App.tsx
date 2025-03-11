@@ -1,67 +1,20 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./hooks/use-auth";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import TalentRegistration from "@/pages/talent-registration";
-import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
-import JobDetail from "@/pages/job-detail";
-import StoreDashboard from "@/pages/store-dashboard";
-import ManagerLogin from "@/pages/manager/login";
-import MyPage from "@/pages/my-page";
-import Jobs from "@/pages/jobs";
-import KeepListPage from "@/pages/keep-list";
-import ViewHistoryPage from "@/pages/view-history";
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useState, useEffect } from "react";
-import AIMatchingPage from "@/pages/talent/ai-matching";
 import { Navigation } from "@/components/navigation";
-import ProfileViewPage from "@/pages/profile-view-page";
-import BasicInfoView from "@/pages/basic-info-view";
-import BasicInfoEdit from "@/pages/basic-info-edit";
-import NewBlogPost from "@/pages/store/blog/new";
-import EditBlogPost from "@/pages/store/blog/edit/[id]";
-import BlogPostView from "@/pages/blog/[id]";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      <Route path="/jobs" component={Jobs} />
-      <Route path="/jobs/:id" component={JobDetail} />
-      <Route path="/talent">
-        {() => <Redirect to="/talent/mypage" />}
-      </Route>
-      <ProtectedRoute path="/talent/register" component={TalentRegistration} />
-      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
-      <ProtectedRoute path="/talent/mypage" component={MyPage} />
-      <ProtectedRoute path="/talent/profile/view" component={ProfileViewPage} />
-      <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
-      <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
-      <Route path="/manager/login" component={ManagerLogin} />
-      <ProtectedRoute 
-        path="/store/dashboard" 
-        component={StoreDashboard}
-        roleRequired="store"
-      />
-      {/* ブログ関連のルートを追加 */}
-      <ProtectedRoute 
-        path="/store/blog/new" 
-        component={NewBlogPost}
-        roleRequired="store"
-      />
-      <ProtectedRoute 
-        path="/store/blog/edit/:id" 
-        component={EditBlogPost}
-        roleRequired="store"
-      />
-      <Route path="/blog/:id" component={BlogPostView} />
-      <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
-      <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -89,9 +42,8 @@ export default function App() {
     setShowAgeVerification(false);
   };
 
-  // 店舗管理ページでは年齢確認を表示しない
-  const isManagerPath = window.location.pathname.startsWith('/manager');
-  if (!isManagerPath && !isAgeVerified && showAgeVerification) {
+  // 年齢確認モーダルを表示
+  if (!isAgeVerified && showAgeVerification) {
     return (
       <AgeVerificationModal
         open={showAgeVerification}
@@ -105,8 +57,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen bg-background">
-          {/* 店舗管理ページではナビゲーションを表示しない */}
-          {!isManagerPath && <Navigation />}
+          <Navigation />
           <main className="container mx-auto px-4 py-6">
             <Router />
           </main>
