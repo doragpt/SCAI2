@@ -38,7 +38,7 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
+      credentials: "include", // 重要: クッキーを含める
     });
 
     console.log('API Response received:', {
@@ -47,6 +47,11 @@ export async function apiRequest(
       url: fullUrl,
       timestamp: new Date().toISOString()
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API Request Failed: ${response.status} ${response.statusText}`);
+    }
 
     return response;
   } catch (error) {
