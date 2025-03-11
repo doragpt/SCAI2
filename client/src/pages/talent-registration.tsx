@@ -7,22 +7,40 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
 
   // タレントプロフィールデータを取得
-  const { data: talentProfile, isLoading } = useQuery<TalentProfileData>({
+  const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-      if (!response.ok) {
-        throw new Error("タレントプロフィールの取得に失敗しました");
+      try {
+        const response = await apiRequest("GET", "/api/talent/profile");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "プロフィールの取得に失敗しました");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
       }
-      return response.json();
     },
     enabled: !!user?.id,
+    retry: 1,
   });
+
+  // エラーが発生した場合はトースト通知を表示
+  if (error) {
+    toast({
+      title: "エラー",
+      description: "プロフィールの取得に失敗しました。",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,7 +87,7 @@ export default function TalentRegistration() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <TalentForm />
+                <TalentForm initialData={talentProfile} />
               )}
             </CardContent>
           </Card>
