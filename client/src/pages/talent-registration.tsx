@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TalentForm } from "@/components/talent-form";
@@ -18,21 +19,24 @@ export default function TalentRegistration() {
     data: talentProfile,
     isLoading,
     error,
-  } = useQuery<TalentProfileData>({
+  } = useQuery<TalentProfileData | null>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
     enabled: !!user?.id,
-    retry: 1,
-    onError: (error) => {
+    retry: false,
+  });
+
+  // エラー処理
+  React.useEffect(() => {
+    if (error) {
       toast({
         title: "エラー",
         description: error instanceof Error ? error.message : "プロフィールの取得に失敗しました",
         variant: "destructive",
       });
     }
-  });
+  }, [error, toast]);
 
-  // ユーザーが未認証の場合
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -48,7 +52,7 @@ export default function TalentRegistration() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-white sticky top-0 z-50">
+      <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -93,7 +97,7 @@ export default function TalentRegistration() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <TalentForm initialData={talentProfile} />
+                <TalentForm initialData={talentProfile || undefined} />
               )}
             </CardContent>
           </Card>

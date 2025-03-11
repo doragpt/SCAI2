@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,10 +12,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import type { TalentProfileData } from "@shared/schema";
-import { Loader2, User, MapPin, Ruler, Heart, Camera, AlertTriangle, FileText, Building2, History, Instagram, Calendar, FileCheck, Cigarette, Clock, Star, Link as LinkIcon, CheckCircle2, XCircle, Clock4, Banknote, Navigation } from "lucide-react";
+import { Loader2, User, MapPin, Camera, AlertTriangle, FileText, Building2, Instagram, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+
 
 interface ProfileConfirmationModalProps {
   isOpen: boolean;
@@ -23,6 +23,23 @@ interface ProfileConfirmationModalProps {
   formData: TalentProfileData | null;
   isSubmitting?: boolean;
 }
+
+// セクションヘッダーコンポーネント
+const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
+  <div className="flex items-center gap-2 mb-4 bg-primary/5 p-3 rounded-lg">
+    <Icon className="h-5 w-5 text-primary" />
+    <h3 className="text-lg font-medium">{title}</h3>
+  </div>
+);
+
+// 情報項目コンポーネント
+const InfoItem = ({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) => (
+  <div className={cn("space-y-1.5", className)}>
+    <div className="text-sm font-medium text-muted-foreground">{label}</div>
+    <div className="text-sm">{value}</div>
+  </div>
+);
+
 
 export function ProfileConfirmationModal({
   isOpen,
@@ -34,51 +51,6 @@ export function ProfileConfirmationModal({
   if (!isOpen || !formData) {
     return null;
   }
-
-  // セクションヘッダーコンポーネント
-  const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
-    <div className="flex items-center gap-2 mb-4 bg-primary/5 p-3 rounded-lg">
-      <Icon className="h-5 w-5 text-primary" />
-      <h3 className="text-lg font-medium">{title}</h3>
-    </div>
-  );
-
-  // 情報項目コンポーネント
-  const InfoItem = ({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) => (
-    <div className={cn("space-y-1.5", className)}>
-      <div className="text-sm font-medium text-muted-foreground">{label}</div>
-      <div className="text-sm">{value}</div>
-    </div>
-  );
-
-  // リストアイテムコンポーネント
-  const ListItem = ({ icon: Icon, text }: { icon: any; text: string }) => (
-    <div className="flex items-center gap-2">
-      <Icon className="h-4 w-4 text-primary" />
-      <span>{text}</span>
-    </div>
-  );
-
-  // 店舗情報コンポーネント
-  const StoreInfo = ({ stageName, storeName }: { stageName?: string; storeName: string }) => (
-    <div className="flex items-center gap-2">
-      <Building2 className="h-4 w-4 text-primary" />
-      <span>{storeName}{stageName && ` (${stageName})`}</span>
-    </div>
-  );
-
-  // 写メ日記リンクコンポーネント
-  const PhotoDiaryLink = ({ url, index }: { url: string; index: number }) => (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 text-sm text-primary hover:underline"
-    >
-      <LinkIcon className="h-4 w-4" />
-      <span>写メ日記 {index + 1}</span>
-    </a>
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -110,10 +82,10 @@ export function ProfileConfirmationModal({
                 <InfoItem
                   label="在住地"
                   value={
-                    <ListItem
-                      icon={MapPin}
-                      text={`${formData.location} (${formData.nearestStation})`}
-                    />
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <span>{formData.location} ({formData.nearestStation})</span>
+                    </div>
                   }
                 />
                 <InfoItem label="身分証明書" value={<div>身分証明書の情報は省略</div>} />
@@ -134,11 +106,13 @@ export function ProfileConfirmationModal({
                     </div>
                   ))}
                 </div>
-                <InfoItem label="顔出し設定" value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} />
+                <InfoItem 
+                  label="顔出し設定" 
+                  value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} 
+                />
                 <InfoItem label="写メ日記" value={<div>写メ日記の情報は省略</div>} />
               </div>
             </section>
-            {/* 省略されたセクション */}
             <Separator/>
             {/* 勤務情報 */}
             <section>
