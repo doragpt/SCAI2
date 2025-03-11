@@ -38,10 +38,11 @@ const basicInfoSchema = z.object({
       /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
       "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
     )
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
-  // パスワード変更時のみ現在のパスワードを必須とする
+  // 新しいパスワードが入力されている場合のみ、現在のパスワードを必須とする
   if (data.newPassword && !data.currentPassword) {
     return false;
   }
@@ -50,7 +51,7 @@ const basicInfoSchema = z.object({
   message: "現在のパスワードを入力してください",
   path: ["currentPassword"],
 }).refine((data) => {
-  // 新しいパスワードを入力する場合のみ確認用パスワードとの一致をチェック
+  // 新しいパスワードが入力されている場合のみ、確認用パスワードとの一致をチェック
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
     return false;
   }
@@ -159,7 +160,19 @@ export default function BasicInfoEdit() {
 
   const onSubmit = async (data: BasicInfoFormData) => {
     console.log('Form submission data:', data); 
-    await updateProfileMutation.mutateAsync(data);
+
+    // パスワード関連のフィールドが空の場合は送信データから除外
+    const updateData = {
+      username: data.username,
+      location: data.location,
+      preferredLocations: data.preferredLocations,
+      ...(data.currentPassword && data.newPassword ? {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      } : {})
+    };
+
+    await updateProfileMutation.mutateAsync(updateData);
   };
 
   if (!user) {
