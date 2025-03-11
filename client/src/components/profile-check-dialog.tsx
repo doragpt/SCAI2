@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export default function ProfileCheckDialog({
   onConfirm,
 }: ProfileCheckDialogProps) {
   const { profileData, isLoading, isError } = useProfile();
+  const navigate = useNavigate(); // Initialize useNavigate
 
   // フォーマット関数
   const formatProfileValue = (value: unknown): string => {
@@ -415,7 +417,10 @@ export default function ProfileCheckDialog({
           <Button variant="outline" onClick={onClose}>
             プロフィールを修正する
           </Button>
-          <Button onClick={onConfirm}>
+          <Button onClick={() => {
+            onConfirm(); // Call the original onConfirm function
+            navigate("/talent/ai-matching"); // Add the navigation after the original onConfirm
+          }}>
             この内容で続ける
           </Button>
         </DialogFooter>

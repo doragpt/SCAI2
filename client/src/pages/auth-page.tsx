@@ -167,7 +167,7 @@ export default function AuthPage() {
   };
 
   if (user) {
-    return <Redirect to="/talent/dashboard" />;
+    return <Redirect to="/talent/ai-matching" />;
   }
 
   return (
