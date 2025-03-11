@@ -37,7 +37,6 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // ユーザー情報を取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
@@ -47,7 +46,7 @@ export default function BasicInfoEdit() {
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('Received user profile:', data); // デバッグ用
+      console.log('API Response:', data); // デバッグ用
       return data;
     },
     enabled: !!user,
@@ -62,29 +61,36 @@ export default function BasicInfoEdit() {
     },
   });
 
-  // ユーザー情報が取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
-      console.log('Setting form data with:', userProfile); // デバッグ用
+      console.log('Setting form values:', {
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations
+      });
+
       form.reset({
-        username: userProfile.username || "",
-        location: userProfile.location || "",
-        preferredLocations: userProfile.preferredLocations || [],
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: Array.isArray(userProfile.preferredLocations) 
+          ? userProfile.preferredLocations 
+          : [],
       });
     }
   }, [userProfile, form]);
 
-  // 更新処理
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Updating with data:', data); // デバッグ用
+      console.log('Sending update data:', data);
+
       const response = await apiRequest("PATCH", "/api/user", data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
       }
+
       const result = await response.json();
-      console.log('Update response:', result); // デバッグ用
+      console.log('Update response:', result);
       return result;
     },
     onSuccess: (data) => {
@@ -104,6 +110,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
+    console.log('Form submission data:', data);
     await updateProfileMutation.mutateAsync(data);
   };
 

@@ -24,6 +24,16 @@ router.get("/user", authenticate, async (req, res) => {
       return res.status(404).json({ message: "ユーザーが見つかりません" });
     }
 
+    // データベースの値をログ出力
+    log('info', 'データベースから取得したユーザー情報', {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: userData.preferredLocations
+    });
+
     // 必要なユーザー情報のみを返す
     const response = {
       id: userData.id,
@@ -31,15 +41,12 @@ router.get("/user", authenticate, async (req, res) => {
       username: userData.username,
       birthDate: userData.birthDate,
       location: userData.location,
-      preferredLocations: userData.preferredLocations || [],
+      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
       role: userData.role
     };
 
-    log('info', 'ユーザー情報取得完了', {
-      id: response.id,
-      email: response.email,
-      username: response.username
-    });
+    // レスポンスデータをログ出力
+    log('info', 'クライアントに送信するレスポンス', response);
 
     res.json(response);
   } catch (error) {
@@ -61,12 +68,10 @@ router.patch("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
-    const { username, location, preferredLocations } = req.body;
+    // リクエストデータをログ出力
+    log('info', '更新リクエストデータ', req.body);
 
-    log('info', 'ユーザー情報更新開始', {
-      id: user.id,
-      updates: { username, location, preferredLocations }
-    });
+    const { username, location, preferredLocations } = req.body;
 
     // データベースの更新
     const updatedUser = await storage.updateUser(user.id, {
@@ -82,15 +87,12 @@ router.patch("/user", authenticate, async (req, res) => {
       username: updatedUser.username,
       birthDate: updatedUser.birthDate,
       location: updatedUser.location,
-      preferredLocations: updatedUser.preferredLocations || [],
+      preferredLocations: Array.isArray(updatedUser.preferredLocations) ? updatedUser.preferredLocations : [],
       role: updatedUser.role
     };
 
-    log('info', 'ユーザー情報更新完了', {
-      id: response.id,
-      email: response.email,
-      username: response.username
-    });
+    // 更新後のデータをログ出力
+    log('info', '更新後のユーザーデータ', response);
 
     res.json(response);
   } catch (error) {
