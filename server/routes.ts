@@ -1,6 +1,6 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express } from "express";
 import { createServer, type Server } from "http";
-import authRoutes from './routes/auth';
+import { setupAuth } from './auth';
 import jobsRoutes from './routes/jobs';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
@@ -38,19 +38,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // 認証関連のルートをセットアップ（server/auth.tsで定義）
+  setupAuth(app);
+
   // 各ルーターを登録
-  app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
 
-  // APIエラーハンドリング
-  app.use("/api/*", (err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  // 共通のエラーハンドリング
+  app.use((err: Error, req: any, res: any, next: any) => {
     log('error', 'APIエラー', {
       error: err instanceof Error ? err.message : 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      path: req.path,
+      method: req.method
     });
-
     res.status(500).json({
       message: process.env.NODE_ENV === 'development' ? err.message : '内部サーバーエラー'
     });

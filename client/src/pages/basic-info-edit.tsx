@@ -37,16 +37,18 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // ユーザー情報を取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
+      console.log('Fetching user data...'); // デバッグログ
       const response = await apiRequest("GET", "/api/user");
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('API Response:', data); // デバッグ用
+      console.log('Received user data:', data); // デバッグログ
       return data;
     },
     enabled: !!user,
@@ -61,6 +63,7 @@ export default function BasicInfoEdit() {
     },
   });
 
+  // ユーザー情報をフォームに設定
   useEffect(() => {
     if (userProfile) {
       console.log('Setting form values:', {
@@ -79,9 +82,10 @@ export default function BasicInfoEdit() {
     }
   }, [userProfile, form]);
 
+  // 更新処理
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Sending update data:', data);
+      console.log('Sending update data:', data); // デバッグログ
 
       const response = await apiRequest("PATCH", "/api/user", data);
       if (!response.ok) {
@@ -90,7 +94,7 @@ export default function BasicInfoEdit() {
       }
 
       const result = await response.json();
-      console.log('Update response:', result);
+      console.log('Update response:', result); // デバッグログ
       return result;
     },
     onSuccess: (data) => {
@@ -110,7 +114,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('Form submission data:', data);
+    console.log('Form submission data:', data); // デバッグログ
     await updateProfileMutation.mutateAsync(data);
   };
 

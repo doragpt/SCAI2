@@ -27,17 +27,18 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       log('info', 'ユーザー取得開始', { id });
+
       const [result] = await db
         .select()
         .from(users)
         .where(eq(users.id, id));
 
       if (!result) {
-        log('info', 'ユーザー取得完了', { id, found: false });
+        log('info', 'ユーザーが見つかりません', { id });
         return undefined;
       }
 
-      // 明示的にUserオブジェクトを構築
+      // データベースのスネークケースからキャメルケースに変換
       const user: User = {
         id: result.id,
         email: result.email,
@@ -45,13 +46,15 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        preferredLocations: Array.isArray(result.preferred_locations) 
+          ? result.preferred_locations 
+          : [],
         role: result.role,
         createdAt: result.created_at,
         updatedAt: result.updated_at
       };
 
-      log('info', 'ユーザー取得完了', {
+      log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
         role: user.role
@@ -60,7 +63,6 @@ export class DatabaseStorage implements IStorage {
       return user;
     } catch (error) {
       log('error', 'ユーザー取得エラー', {
-        id,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
@@ -69,18 +71,19 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      log('info', 'メールアドレスでの取得開始', { email });
+      log('info', 'メールアドレスでのユーザー取得開始', { email });
+
       const [result] = await db
         .select()
         .from(users)
         .where(eq(users.email, email));
 
       if (!result) {
-        log('info', 'メールアドレスでの取得完了', { email, found: false });
+        log('info', 'ユーザーが見つかりません', { email });
         return undefined;
       }
 
-      // 明示的にUserオブジェクトを構築
+      // データベースのスネークケースからキャメルケースに変換
       const user: User = {
         id: result.id,
         email: result.email,
@@ -88,22 +91,23 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        preferredLocations: Array.isArray(result.preferred_locations) 
+          ? result.preferred_locations 
+          : [],
         role: result.role,
         createdAt: result.created_at,
         updatedAt: result.updated_at
       };
 
-      log('info', 'メールアドレスでの取得完了', {
-        email,
-        found: true,
+      log('info', 'ユーザー取得成功', {
+        id: user.id,
+        email: user.email,
         role: user.role
       });
 
       return user;
     } catch (error) {
-      log('error', 'メールアドレスでの取得エラー', {
-        email,
+      log('error', 'メールアドレスでのユーザー取得エラー', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
@@ -170,14 +174,20 @@ export class DatabaseStorage implements IStorage {
     try {
       log('info', 'ユーザー更新開始', { id, data });
 
+      // キャメルケースからスネークケースに変換
+      const updateData = {
+        username: data.username,
+        birth_date: data.birthDate,
+        location: data.location,
+        preferred_locations: data.preferredLocations,
+        updated_at: new Date()
+      };
+
+      log('info', '更新データ', updateData);
+
       const [result] = await db
         .update(users)
-        .set({
-          ...data,
-          preferred_locations: data.preferredLocations,
-          birth_date: data.birthDate,
-          updated_at: new Date()
-        })
+        .set(updateData)
         .where(eq(users.id, id))
         .returning();
 
@@ -185,7 +195,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('ユーザーの更新に失敗しました');
       }
 
-      // 明示的にUserオブジェクトを構築
+      // データベースのスネークケースからキャメルケースに変換
       const user: User = {
         id: result.id,
         email: result.email,
@@ -193,13 +203,15 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferred_locations) ? result.preferred_locations : [],
+        preferredLocations: Array.isArray(result.preferred_locations) 
+          ? result.preferred_locations 
+          : [],
         role: result.role,
         createdAt: result.created_at,
         updatedAt: result.updated_at
       };
 
-      log('info', 'ユーザー更新完了', {
+      log('info', 'ユーザー更新成功', {
         id: user.id,
         email: user.email,
         role: user.role
@@ -208,7 +220,6 @@ export class DatabaseStorage implements IStorage {
       return user;
     } catch (error) {
       log('error', 'ユーザー更新エラー', {
-        id,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
