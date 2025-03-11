@@ -24,17 +24,19 @@ export default function TalentRegistration() {
     queryFn: getTalentProfile,
     enabled: !!user?.id,
     retry: false,
+    // エラーを投げない、nullを返す
+    staleTime: 0,
+    // 認証エラーの場合のみエラーとして扱う
+    useErrorBoundary: (error) => 
+      error instanceof Error && error.message === "認証が必要です",
   });
 
-  // エラー処理（404と401以外のエラーの場合のみトースト表示）
+  // 認証エラーのみ処理
   React.useEffect(() => {
-    if (error && 
-        !(error instanceof Error && 
-          (error.message === "Profile not found" || 
-           error.message === "認証が必要です"))) {
+    if (error instanceof Error && error.message === "認証が必要です") {
       toast({
         title: "エラー",
-        description: "予期せぬエラーが発生しました",
+        description: "認証が必要です",
         variant: "destructive",
       });
     }
