@@ -1,0 +1,45 @@
+Auth check response: 
+Response {type: "basic", url: "https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/api/check", redirected: false, status: 200, ok: true, …}
+Auth check data: 
+Object {id: 25, email: "admin@x.com", username: "テスト", birthDate: "2003-06-07T00:00:00.000+00:00", location: "栃木県", …}
+Fetching talent profile...
+API Request starting: 
+Object {method: "GET", url: "/api/talent/profile", data: undefined, timestamp: "2025-03-11T08:21:06.778Z"}
+API Response received: 
+Object {status: 401, statusText: "Unauthorized", url: "https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/api/talent/profile", timestamp: "2025-03-11T08:21:07.019Z"}
+API Request Error: 
+Object {method: "GET", url: "/api/talent/profile", error: "認証が必要です", timestamp: "2025-03-11T08:21:07.020Z"}
+error: "認証が必要です"
+method: "GET"
+timestamp: "2025-03-11T08:21:07.020Z"
+url: "/api/talent/profile"
+[[Prototype]]: Object
+
+Talent profile fetch error: 
+Error {}
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Fetching talent profile...
+API Request starting: 
+Object {method: "GET", url: "/api/talent/profile", data: undefined, timestamp: "2025-03-11T08:21:08.025Z"}
+API Response received: 
+Object {status: 401, statusText: "Unauthorized", url: "https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/api/talent/profile", timestamp: "2025-03-11T08:21:08.257Z"}
+API Request Error: 
+Object {method: "GET", url: "/api/talent/profile", error: "認証が必要です", timestamp: "2025-03-11T08:21:08.261Z"}
+error: "認証が必要です"
+method: "GET"
+timestamp: "2025-03-11T08:21:08.261Z"
+url: "/api/talent/profile"
+[[Prototype]]: Object
+
+Talent profile fetch error: 
+Error {}
+message: "認証が必要です"
+stack: "Error: 認証が必要です↵ at apiRequest (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/lib/queryClient.ts:37:13)↵ at async queryFn (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/talent-registration.tsx:45:26)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+

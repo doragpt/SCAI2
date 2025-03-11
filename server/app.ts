@@ -28,12 +28,18 @@ const sessionConfig = {
     checkPeriod: 86400000 // 24時間でクリア
   }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // 開発環境ではfalse
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' as const
-  }
+    sameSite: 'lax' // 開発環境では'lax'
+  },
+  name: 'scai.sid' // セッションクッキーの名前を明示的に設定
 };
+
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.secure = true;
+  sessionConfig.cookie.sameSite = 'strict';
+}
 
 app.use(session(sessionConfig));
 
@@ -47,7 +53,9 @@ app.use('/api/*', (req, res, next) => {
     method: req.method,
     path: req.path,
     query: req.query,
-    body: req.method !== 'GET' ? req.body : undefined
+    body: req.method !== 'GET' ? req.body : undefined,
+    sessionId: req.sessionID, // セッションIDをログに追加
+    hasSession: !!req.session
   });
 
   // APIリクエストには必ずJSONを返す
