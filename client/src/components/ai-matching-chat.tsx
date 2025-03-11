@@ -86,7 +86,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
 
 
 // メッセージの型定義
@@ -119,6 +118,7 @@ interface MatchedJob {
   workingHours?: string; // Added for pickup mode
 
 }
+
 
 
 export const AIMatchingChat = () => {
@@ -863,68 +863,112 @@ ${index + 1}. ${result.businessName}
                           </Select>
                         </div>
                       </div>
-
-                      {/* 希望地域の選択 */}
-                      <div className="space-y-2">
-                        <Label>希望地域</Label>
-                        <Select
-                          onValueChange={(value) =>
-                            setConditions({
-                              ...conditions,
-                              preferredLocations: [...conditions.preferredLocations, value],
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="都道府県を選択（複数選択可）" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {prefectures.map((pref) => (
-                              <SelectItem key={pref} value={pref}>
-                                {pref}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {conditions.preferredLocations.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {conditions.preferredLocations.map((loc) => (
-                              <Button
-                                key={loc}
-                                variant="secondary"
-                                size="sm"
-                                onClick={() =>
-                                  setConditions({
-                                    ...conditions,
-                                    preferredLocations: conditions.preferredLocations.filter(
-                                      (l) => l !== loc
-                                    ),
-                                  })
-                                }
-                              >
-                                {loc} ×
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 備考欄 */}
-                      <div className="space-y-2">
-                        <Label>備考</Label>
-                        <Textarea
-                          placeholder="その他の希望条件等があればご記入ください"
-                          onChange={(e) =>
-                            setConditions({
-                              ...conditions,
-                              notes: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
                     </div>
                   </>
                 )}
+
+                {/* 希望地域の選択 */}
+                <div className="space-y-2">
+                  <Label>希望地域</Label>
+                  <Select
+                    onValueChange={(value) =>
+                      setConditions({
+                        ...conditions,
+                        preferredLocations: [...conditions.preferredLocations, value],
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {prefectures.map((pref) => (
+                        <SelectItem key={pref} value={pref}>
+                          {pref}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {conditions.preferredLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {conditions.preferredLocations.map((loc) => (
+                        <Button
+                          key={loc}
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setConditions({
+                              ...conditions,
+                              preferredLocations: conditions.preferredLocations.filter(
+                                (l) => l !== loc
+                              ),
+                            })
+                          }
+                        >
+                          {loc} ×
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* NG地域の選択 */}
+                <div className="space-y-2">
+                  <Label>NG地域</Label>
+                  <Select
+                    onValueChange={(value) =>
+                      setConditions({
+                        ...conditions,
+                        ngLocations: [...conditions.ngLocations, value],
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {prefectures.map((pref) => (
+                        <SelectItem key={pref} value={pref}>
+                          {pref}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {conditions.ngLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {conditions.ngLocations.map((loc) => (
+                        <Button
+                          key={loc}
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setConditions({
+                              ...conditions,
+                              ngLocations: conditions.ngLocations.filter(
+                                (l) => l !== loc
+                              ),
+                            })
+                          }
+                        >
+                          {loc} ×
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>その他備考</Label>
+                  <Input
+                    placeholder="その他の希望条件があればご記入ください"
+                    onChange={(e) =>
+                      setConditions({
+                        ...conditions,
+                        notes: e.target.value,
+                      })
+                    }
+                  />
+                </div>
 
                 <Button
                   className="w-full mt-6"
@@ -999,8 +1043,9 @@ ${index + 1}. ${result.businessName}
                   {/* 基本情報 */}
                   <div className="space-y-4">
                     <h4 className="font-medium text-sm text-muted-foreground">
-                      基本情報                    </h4>
-                    <div className="grid gridcols-2 gap-4">
+                      基本情報
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>氏名</Label>
                         <p className="text-sm font-medium">
@@ -1470,8 +1515,36 @@ ${index + 1}. ${result.businessName}
                     </div>
 
                     {/* NG地域 */}
-                    {/* This section is removed as per the intention */}
-
+                    <div className="col-span-2 space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                        NG地域
+                      </Label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {conditions.ngLocations.length > 0 ? (
+                          conditions.ngLocations.map((loc) => (
+                            <motion.span
+                              key={loc}
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className="inline-flex items-center gap-1 text-sm bg-red-100 text-red-700 px-3 py-1.5 rounded-full"
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                              {loc}
+                            </motion.span>
+                          ))
+                        ) : (
+                          <motion.span
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="inline-flex items-center gap-1 text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            NGなし
+                          </motion.span>
+                        )}
+                      </div>
+                    </div>
                     {conditions.notes && (
                       <div className="col-span-2 space-y-2">
                         <Label className="flex items-center gap-2">
