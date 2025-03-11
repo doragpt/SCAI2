@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
+import { setupVite } from './vite';
 
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
@@ -60,6 +61,9 @@ setupAuth(app);
 
 // APIルートの登録（Viteミドルウェアの前に配置）
 registerRoutes(app);
+
+// Viteミドルウェアのセットアップ（APIルートの後に配置）
+setupVite(app);
 
 // グローバルエラーハンドラーの設定
 app.use(errorHandler);
