@@ -44,21 +44,22 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate,
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
           : [],
         role: result.role,
         createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        updatedAt: result.updatedAt,
+        displayName: result.username // displayName を username から設定
       };
 
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
         role: user.role,
-        birthDate: user.birthDate // デバッグ用に追加
+        birthDate: user.birthDate
       });
 
       return user;
@@ -90,14 +91,15 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate,
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
           : [],
         role: result.role,
         createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        updatedAt: result.updatedAt,
+        displayName: result.username // displayName を username から設定
       };
 
       log('info', 'ユーザー取得成功', {
@@ -128,10 +130,11 @@ export class DatabaseStorage implements IStorage {
           email: insertUser.email,
           username: insertUser.username,
           password: insertUser.password,
-          birthDate: insertUser.birthDate, // ここを修正
+          birthDate: insertUser.birthDate,
           location: insertUser.location,
           preferredLocations: insertUser.preferredLocations,
           role: insertUser.role,
+          displayName: insertUser.username, // displayName を username として設定
           createdAt: new Date(),
           updatedAt: new Date()
         })
@@ -147,14 +150,15 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate,
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
           : [],
         role: result.role,
         createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        updatedAt: result.updatedAt,
+        displayName: result.username // displayName を username から設定
       };
 
       log('info', '新規ユーザー作成完了', {
@@ -178,10 +182,11 @@ export class DatabaseStorage implements IStorage {
 
       const updateData = {
         username: data.username,
-        birthDate: data.birthDate, // ここを修正
+        birthDate: data.birthDate,
         location: data.location,
         preferredLocations: data.preferredLocations,
-        password: data.password, // パスワード更新対応
+        password: data.password,
+        displayName: data.username, // displayName を username と同期
         updatedAt: new Date()
       };
 
@@ -203,14 +208,15 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate,
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
           : [],
         role: result.role,
         createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        updatedAt: result.updatedAt,
+        displayName: result.username // displayName を username から設定
       };
 
       log('info', 'ユーザー更新成功', {

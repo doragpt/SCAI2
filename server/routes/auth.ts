@@ -5,6 +5,14 @@ import { talentRegisterFormSchema } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { log } from '../utils/logger';
+import passport from 'passport';
+import { z } from 'zod';
+
+// ログインスキーマの定義
+const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(8, "パスワードは8文字以上である必要があります"),
+});
 
 const router = Router();
 
@@ -42,7 +50,8 @@ router.get("/user", authenticate, async (req, res) => {
       birthDate: userData.birthDate,
       location: userData.location,
       preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
-      role: userData.role
+      role: userData.role,
+      displayName: userData.username // displayName を username から設定
     };
 
     // レスポンスデータをログ出力
@@ -68,16 +77,14 @@ router.patch("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
-    // リクエストデータをログ出力
-    log('info', '更新リクエストデータ', req.body);
-
     const { username, location, preferredLocations } = req.body;
 
     // データベースの更新
     const updatedUser = await storage.updateUser(user.id, {
       username,
       location,
-      preferredLocations
+      preferredLocations,
+      displayName: username // displayName を username と同期
     });
 
     // レスポンスデータの形式を統一
@@ -88,11 +95,9 @@ router.patch("/user", authenticate, async (req, res) => {
       birthDate: updatedUser.birthDate,
       location: updatedUser.location,
       preferredLocations: Array.isArray(updatedUser.preferredLocations) ? updatedUser.preferredLocations : [],
-      role: updatedUser.role
+      role: updatedUser.role,
+      displayName: updatedUser.username
     };
-
-    // 更新後のデータをログ出力
-    log('info', '更新後のユーザーデータ', response);
 
     res.json(response);
   } catch (error) {
@@ -116,13 +121,9 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 
     // ユーザーの作成
     const user = await storage.createUser({
-      email: validatedData.email,
-      username: validatedData.username,
+      ...validatedData,
       password: hashedPassword,
-      birthDate: validatedData.birthDate,
-      location: validatedData.location,
-      preferredLocations: validatedData.preferredLocations,
-      role: "talent"
+      displayName: validatedData.username // displayName を username として設定
     });
 
     // セッションの作成
@@ -147,7 +148,7 @@ router.post("/login", async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
     // 認証処理は auth.ts で実装済み
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
