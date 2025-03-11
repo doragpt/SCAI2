@@ -2,20 +2,30 @@ import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
-export async function getTalentProfile(): Promise<TalentProfileData> {
-  const response = await apiRequest("GET", "/api/talent/profile");
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "プロフィールの取得に失敗しました");
+export async function getTalentProfile(): Promise<TalentProfileData | null> {
+  try {
+    const response = await apiRequest("GET", "/api/talent/profile");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "プロフィールの取得に失敗しました");
+    }
+    return response.json();
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    throw error;
   }
-  return response.json();
 }
 
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<void> {
-  const response = await apiRequest("POST", "/api/talent/profile", data);
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "プロフィールの保存に失敗しました");
+  try {
+    const response = await apiRequest("POST", "/api/talent/profile", data);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "プロフィールの保存に失敗しました");
+    }
+  } catch (error) {
+    console.error("Profile update error:", error);
+    throw error;
   }
 }
 

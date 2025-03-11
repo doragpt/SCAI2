@@ -19,23 +19,22 @@ export default function TalentRegistration() {
     data: talentProfile,
     isLoading,
     error,
+    isError
   } = useQuery<TalentProfileData | null>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
     enabled: !!user?.id,
-    retry: false,
-  });
-
-  // エラー処理
-  React.useEffect(() => {
-    if (error) {
+    retry: 1,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error("Profile fetch error:", error);
       toast({
         title: "エラー",
         description: error instanceof Error ? error.message : "プロフィールの取得に失敗しました",
         variant: "destructive",
       });
     }
-  }, [error, toast]);
+  });
 
   if (!user) {
     return (
@@ -95,6 +94,17 @@ export default function TalentRegistration() {
               {isLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : isError ? (
+                <div className="text-center py-8">
+                  <p className="text-destructive">データの読み込みに失敗しました</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => window.location.reload()}
+                  >
+                    再読み込み
+                  </Button>
                 </div>
               ) : (
                 <TalentForm initialData={talentProfile || undefined} />
