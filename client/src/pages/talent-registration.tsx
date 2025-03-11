@@ -9,10 +9,16 @@ import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { Redirect } from "wouter";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+
+  // 未認証の場合は /auth にリダイレクト
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
 
   // タレントプロフィールデータを取得
   const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
@@ -33,7 +39,7 @@ export default function TalentRegistration() {
         throw error;
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id, // ユーザーIDが存在する場合のみクエリを実行
     retry: 1, // リトライを1回に制限
   });
 
