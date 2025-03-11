@@ -12,9 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import type { TalentProfileData } from "@shared/schema";
-import { Loader2, User, MapPin, Camera, AlertTriangle, FileText, Building2, Instagram, Star } from "lucide-react";
+import { Loader2, User, MapPin, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 
 interface ProfileConfirmationModalProps {
   isOpen: boolean;
@@ -40,7 +39,6 @@ const InfoItem = ({ label, value, className }: { label: string; value: React.Rea
   </div>
 );
 
-
 export function ProfileConfirmationModal({
   isOpen,
   onClose,
@@ -54,7 +52,7 @@ export function ProfileConfirmationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>登録内容の確認</DialogTitle>
           <DialogDescription>
@@ -62,7 +60,7 @@ export function ProfileConfirmationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[70vh] pr-4">
+        <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
             {/* 基本情報 */}
             <section>
@@ -88,7 +86,14 @@ export function ProfileConfirmationModal({
                     </div>
                   }
                 />
-                <InfoItem label="身分証明書" value={<div>身分証明書の情報は省略</div>} />
+                <InfoItem
+                  label="身長"
+                  value={`${formData.height}cm`}
+                />
+                <InfoItem
+                  label="体重"
+                  value={`${formData.weight}kg`}
+                />
               </div>
             </section>
 
@@ -102,7 +107,6 @@ export function ProfileConfirmationModal({
                   {formData.photos && formData.photos.map((photo, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <Badge variant="outline">{photo.tag}</Badge>
-                      <span className="text-sm text-muted-foreground">登録済み</span>
                     </div>
                   ))}
                 </div>
@@ -110,64 +114,7 @@ export function ProfileConfirmationModal({
                   label="顔出し設定" 
                   value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} 
                 />
-                <InfoItem label="写メ日記" value={<div>写メ日記の情報は省略</div>} />
               </div>
-            </section>
-            <Separator/>
-            {/* 勤務情報 */}
-            <section>
-              <SectionHeader icon={Building2} title="勤務情報" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                <div>勤務情報は省略</div>
-              </div>
-            </section>
-            <Separator/>
-            {/* SNS情報 */}
-            <section>
-                <SectionHeader icon={Instagram} title="SNS情報" />
-                <div className="space-y-4 bg-card p-4 rounded-lg">
-                    <div>SNS情報は省略</div>
-                </div>
-            </section>
-            <Separator/>
-            {/* 傷・タトゥー・アトピーセクション */}
-            <section>
-                <SectionHeader icon={AlertTriangle} title="傷・タトゥー・アトピー" />
-                <div className="space-y-4 bg-card p-4 rounded-lg">
-                    <div>傷・タトゥー・アトピーの情報は省略</div>
-                </div>
-            </section>
-            <Separator/>
-            {/* エステ関連セクション */}
-            <section>
-                <SectionHeader icon={Star} title="エステ関連" />
-                <div className="space-y-4 bg-card p-4 rounded-lg">
-                  <div>エステ関連の情報は省略</div>
-                </div>
-            </section>
-            <Separator/>
-            {/* 制限事項・その他 */}
-            <section>
-                <SectionHeader icon={AlertTriangle} title="制限事項・その他" />
-                <div className="space-y-4 bg-card p-4 rounded-lg">
-                    <div>制限事項・その他の情報は省略</div>
-                </div>
-            </section>
-            <Separator/>
-            {/* 自己PR */}
-            <section>
-                <SectionHeader icon={Star} title="自己PR" />
-                <div className="bg-card p-4 rounded-lg">
-                  <p className="text-sm whitespace-pre-wrap">{formData.selfIntroduction || "未入力"}</p>
-                </div>
-            </section>
-            <Separator/>
-            {/* その他情報 */}
-            <section>
-                <SectionHeader icon={FileText} title="その他情報" />
-                <div className="space-y-4 bg-card p-4 rounded-lg">
-                  <div>その他情報は省略</div>
-                </div>
             </section>
           </div>
         </ScrollArea>

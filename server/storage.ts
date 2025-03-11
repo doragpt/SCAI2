@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, type TalentProfileData } from "@shared/schema";
+import { users, talentProfiles, type User, type InsertUser, type TalentProfileData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -33,8 +33,8 @@ export class DatabaseStorage implements IStorage {
       // プロフィールテーブルからデータを取得
       const [result] = await db
         .select()
-        .from('talent_profiles')
-        .where(eq('user_id', userId));
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, userId));
 
       if (!result) {
         log('info', 'タレントプロフィールが見つかりません', { userId });
@@ -59,22 +59,31 @@ export class DatabaseStorage implements IStorage {
       // プロフィールの存在確認
       const [existingProfile] = await db
         .select()
-        .from('talent_profiles')
-        .where(eq('user_id', userId));
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, userId));
 
       let result;
+      const profileData = {
+        ...data,
+        userId,
+        updatedAt: new Date(),
+      };
+
       if (existingProfile) {
         // 更新
         [result] = await db
-          .update('talent_profiles')
-          .set({ ...data, updatedAt: new Date() })
-          .where(eq('user_id', userId))
+          .update(talentProfiles)
+          .set(profileData)
+          .where(eq(talentProfiles.userId, userId))
           .returning();
       } else {
         // 新規作成
         [result] = await db
-          .insert('talent_profiles')
-          .values({ ...data, userId, createdAt: new Date(), updatedAt: new Date() })
+          .insert(talentProfiles)
+          .values({
+            ...profileData,
+            createdAt: new Date(),
+          })
           .returning();
       }
 
