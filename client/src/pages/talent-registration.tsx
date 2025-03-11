@@ -5,41 +5,46 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { apiRequest } from "@/lib/queryClient";
+import { getTalentProfile } from "@/lib/api/talent";
 import type { TalentProfileData } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
 
-  // タレントプロフィールデータを取得
-  const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
+  const {
+    data: talentProfile,
+    isLoading,
+    error,
+    isError
+  } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", "/api/talent/profile");
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "プロフィールの取得に失敗しました");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
-      }
-    },
+    queryFn: getTalentProfile,
     enabled: !!user?.id,
     retry: 1,
+    onError: (error) => {
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "プロフィールの取得に失敗しました",
+        variant: "destructive",
+      });
+    }
   });
 
-  // エラーが発生した場合はトースト通知を表示
-  if (error) {
-    toast({
-      title: "エラー",
-      description: "プロフィールの取得に失敗しました。",
-      variant: "destructive",
-    });
+  // ユーザーが未認証の場合
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-muted-foreground">認証が必要です</p>
+          <Button asChild>
+            <Link href="/auth">ログイン</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

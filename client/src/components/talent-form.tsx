@@ -585,7 +585,11 @@ const defaultValues: TalentProfileData = {
 };
 
 
-export function TalentForm() {
+interface TalentFormProps {
+  initialData?: TalentProfileData;
+}
+
+export function TalentForm({ initialData }: TalentFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -593,22 +597,15 @@ export function TalentForm() {
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
     mode: "onChange",
-    defaultValues,
+    defaultValues: initialData || defaultValues,
   });
 
-  // プロフィールデータの取得
-  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfile,
-    enabled: !!user?.id,
-  });
-
-  // 既存のプロフィールデータが取得された時にフォームを更新
+  // 既存のプロフィールデータが更新された時にフォームを更新
   useEffect(() => {
-    if (existingProfile) {
-      form.reset(existingProfile);
+    if (initialData) {
+      form.reset(initialData);
     }
-  }, [existingProfile, form]);
+  }, [initialData, form]);
 
   // フォームのsubmit処理
   const onSubmit = async (data: TalentProfileData) => {
@@ -655,6 +652,18 @@ export function TalentForm() {
       </div>
     );
   }
+
+  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    queryFn: getTalentProfile,
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (existingProfile) {
+      form.reset(existingProfile);
+    }
+  }, [existingProfile, form]);
 
   const handleUpdateSnsUrl = (index: number, value: string) => {
     const updatedUrls = [...form.watch("snsUrls") || []];
