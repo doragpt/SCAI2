@@ -754,12 +754,25 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.setValue("estheOptions.ngOptions", updated);
   };
 
-  const handleIdTypeChange = (type: string, checked: boolean) => {
+  // handleIdTypeChangeの修正
+  const handleIdTypeChange = (type: typeof idTypes[number], checked: boolean) => {
     const current = form.watch("availableIds.types") || [];
     const updated = checked
       ? [...current, type]
       : current.filter((t) => t !== type);
     form.setValue("availableIds.types", updated, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  };
+
+  // NGオプションのチェックボックス実装
+  const handleNgOptionChange = (option: typeof commonNgOptions[number], checked: boolean) => {
+    const current = form.watch("ngOptions.common") || [];
+    const updated = checked
+      ? [...current, option]
+      : current.filter((o) => o !== option);
+    form.setValue("ngOptions.common", updated, {
       shouldValidate: true,
       shouldDirty: true
     });
@@ -1191,49 +1204,48 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 name="ngOptions"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>NGオプション</FormLabel>
-                    <div className="grid grid-cols-2 gap-4">
-                      {commonNgOptions.map((option) => (
-                        <div key={option} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={field.value.common.includes(option)}
-                            onCheckedChange={(checked) => {
-                              const updated = checked
-                                ? [...field.value.common, option]
-                                : field.value.common.filter((o) => o !== option);
-                              form.setValue("ngOptions.common", updated);
-                            }}
-                          />
-                          <label className="text-sm">{option}</label>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {field.value.others.map((option, index) => (
-                          <Badge key={index} variant="outline" className="flex items-center gap-1">
-                            {option}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-transparent"
-                              onClick={() => {
-                                const updated = field.value.others.filter((_, i) => i !== index);
-                                form.setValue("ngOptions.others", updated);
+                    <div>
+                      <FormLabel>NGオプション</FormLabel>
+                      <div className="grid grid-cols-2 gap-4">
+                        {commonNgOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={form.watch("ngOptions.common")?.includes(option)}
+                              onCheckedChange={(checked) => {
+                                handleNgOptionChange(option, checked === true);
                               }}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
+                            />
+                            <label className="text-sm">{option}</label>
+                          </div>
                         ))}
                       </div>
-                      <OtherItemInput
-                        ref={React.createRef()}
-                        onAdd={(value: string) => form.setValue("ngOptions.others", [...form.getValues().ngOptions.others || [], value])}
-                        placeholder="その他のNGオプションを入力"
-                      />
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {field.value.others.map((option, index) => (
+                            <Badge key={index} variant="outline" className="flex items-center gap-1">
+                              {option}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                onClick={() => {
+                                  const updated = field.value.others.filter((_, i) => i !== index);
+                                  form.setValue("ngOptions.others", updated);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                        <OtherItemInput
+                          ref={React.createRef()}
+                          onAdd={(value: string) => form.setValue("ngOptions.others", [...form.getValues().ngOptions.others || [], value])}
+                          placeholder="その他のNGオプションを入力"
+                        />
+                      </div>
+                      <FormMessage />
                     </div>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
