@@ -3,17 +3,33 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
-import {
-  type SelectUser,
-  type LoginData,
-  type RegisterFormData
-} from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
+interface User {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+  displayName?: string;
+  location?: string;
+  phone?: string;
+}
+
+type LoginData = {
+  email: string;
+  password: string;
+};
+
+type RegisterData = {
+  email: string;
+  username: string;
+  password: string;
+};
+
 type AuthContextType = {
-  user: SelectUser | null;
+  user: User | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: ReturnType<typeof useLoginMutation>;
@@ -31,26 +47,18 @@ function useLoginMutation() {
     mutationFn: async (credentials: LoginData) => {
       const response = await apiRequest("POST", "/api/login", credentials);
       const data = await response.json();
-      // JWTトークンを保存
       if (data.token) {
         localStorage.setItem('auth_token', data.token);
       }
       return data.user;
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
-
-      if (user.role === "talent") {
-        setLocation("/talent/mypage");
-      } else if (user.role === "store") {
-        setLocation("/store/dashboard");
-      }
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
@@ -68,7 +76,6 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      // JWTトークンを削除
       localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
@@ -95,29 +102,21 @@ function useRegisterMutation() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: RegisterFormData) => {
+    mutationFn: async (data: RegisterData) => {
       const response = await apiRequest("POST", "/api/register", data);
       const result = await response.json();
-      // JWTトークンを保存
       if (result.token) {
         localStorage.setItem('auth_token', result.token);
       }
       return result.user;
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
-
-      if (user.role === "talent") {
-        setLocation("/talent/mypage");
-      } else if (user.role === "store") {
-        setLocation("/store/dashboard");
-      }
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
@@ -130,13 +129,11 @@ function useRegisterMutation() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | null>({
+  } = useQuery<User | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
@@ -147,8 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           throw new Error('認証確認に失敗しました');
         }
-        const data = await response.json();
-        return data;
+        return await response.json();
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
