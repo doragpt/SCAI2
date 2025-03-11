@@ -1,33 +1,60 @@
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 
 export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
-    console.log('Fetching talent profile:', {
-      timestamp: new Date().toISOString()
-    });
+    console.log('[Talent API] Fetching profile, starting request');
 
+    // APIリクエストを実行
     const response = await apiRequest("GET", "/api/talent/profile");
 
-    console.log('Talent profile response:', {
+    console.log('[Talent API] Response received:', {
       status: response.status,
-      ok: response.ok,
+      statusText: response.statusText,
       timestamp: new Date().toISOString()
     });
 
-    if (!response.ok) {
-      // レスポンスがJSONでない場合のエラーハンドリング
-      const errorData = await response.json().catch(() => ({
-        message: `Server error: ${response.status} ${response.statusText}`
-      }));
-      throw new Error(errorData.message || "プロフィールの取得に失敗しました");
+    // 404の場合は新規ユーザーとして扱い、nullを返す
+    if (response.status === 404) {
+      console.log('[Talent API] New user detected (404 response)');
+      return null;
     }
 
-    return response.json();
+    // エラーレスポンスの処理
+    if (!response.ok) {
+      let errorMessage = "プロフィールの取得に失敗しました";
+      let responseText;
+
+      try {
+        responseText = await response.text();
+        console.log('[Talent API] Error response text:', responseText);
+
+        if (responseText) {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (parseError) {
+        console.error('[Talent API] Error parsing response:', {
+          parseError,
+          responseText,
+          status: response.status,
+          statusText: response.statusText
+        });
+        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    // 正常なレスポンスの処理
+    const data = await response.json();
+    console.log('[Talent API] Profile data received successfully');
+    return data;
+
   } catch (error) {
-    console.error("Profile fetch error:", {
+    console.error('[Talent API] Fetch error:', {
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     throw error;
@@ -36,27 +63,46 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<void> {
   try {
-    console.log('Updating talent profile:', {
-      timestamp: new Date().toISOString()
-    });
+    console.log('[Talent API] Starting profile update');
 
     const response = await apiRequest("POST", "/api/talent/profile", data);
 
-    console.log('Update profile response:', {
+    console.log('[Talent API] Update response received:', {
       status: response.status,
-      ok: response.ok,
+      statusText: response.statusText,
       timestamp: new Date().toISOString()
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: `Server error: ${response.status} ${response.statusText}`
-      }));
-      throw new Error(errorData.message || "プロフィールの保存に失敗しました");
+      let errorMessage = "プロフィールの保存に失敗しました";
+      let responseText;
+
+      try {
+        responseText = await response.text();
+        console.log('[Talent API] Error response text:', responseText);
+
+        if (responseText) {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch (parseError) {
+        console.error('[Talent API] Error parsing response:', {
+          parseError,
+          responseText,
+          status: response.status,
+          statusText: response.statusText
+        });
+        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      }
+
+      throw new Error(errorMessage);
     }
+
+    console.log('[Talent API] Profile updated successfully');
   } catch (error) {
-    console.error("Profile update error:", {
+    console.error('[Talent API] Update error:', {
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     throw error;

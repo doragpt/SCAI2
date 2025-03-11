@@ -31,7 +31,7 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' as const
+    sameSite: 'lax'
   }
 };
 
