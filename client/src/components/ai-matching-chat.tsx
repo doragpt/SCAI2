@@ -863,65 +863,65 @@ ${index + 1}. ${result.businessName}
                           </Select>
                         </div>
                       </div>
-                    </div>
 
-                    {/* 希望地域の選択 */}
-                    <div className="space-y-2">
-                      <Label>希望地域</Label>
-                      <Select
-                        onValueChange={(value) =>
-                          setConditions({
-                            ...conditions,
-                            preferredLocations: [...conditions.preferredLocations, value],
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="都道府県を選択（複数選択可）" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {prefectures.map((pref) => (
-                            <SelectItem key={pref} value={pref}>
-                              {pref}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {conditions.preferredLocations.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {conditions.preferredLocations.map((loc) => (
-                            <Button
-                              key={loc}
-                              variant="secondary"
-                              size="sm"
-                              onClick={() =>
-                                setConditions({
-                                  ...conditions,
-                                  preferredLocations: conditions.preferredLocations.filter(
-                                    (l) => l !== loc
-                                  ),
-                                })
-                              }
-                            >
-                              {loc} ×
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      {/* 希望地域の選択 */}
+                      <div className="space-y-2">
+                        <Label>希望地域</Label>
+                        <Select
+                          onValueChange={(value) =>
+                            setConditions({
+                              ...conditions,
+                              preferredLocations: [...conditions.preferredLocations, value],
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="都道府県を選択（複数選択可）" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {prefectures.map((pref) => (
+                              <SelectItem key={pref} value={pref}>
+                                {pref}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {conditions.preferredLocations.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {conditions.preferredLocations.map((loc) => (
+                              <Button
+                                key={loc}
+                                variant="secondary"
+                                size="sm"
+                                onClick={() =>
+                                  setConditions({
+                                    ...conditions,
+                                    preferredLocations: conditions.preferredLocations.filter(
+                                      (l) => l !== loc
+                                    ),
+                                  })
+                                }
+                              >
+                                {loc} ×
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* 備考欄 */}
-                    <div className="space-y-2">
-                      <Label>備考</Label>
-                      <Textarea
-                        placeholder="その他の希望条件等があればご記入ください"
-                        onChange={(e) =>
-                          setConditions({
-                            ...conditions,
-                            notes: e.target.value,
-                          })
-                        }
-                      />
+                      {/* 備考欄 */}
+                      <div className="space-y-2">
+                        <Label>備考</Label>
+                        <Textarea
+                          placeholder="その他の希望条件等があればご記入ください"
+                          onChange={(e) =>
+                            setConditions({
+                              ...conditions,
+                              notes: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
                     </div>
                   </>
                 )}
@@ -999,8 +999,7 @@ ${index + 1}. ${result.businessName}
                   {/* 基本情報 */}
                   <div className="space-y-4">
                     <h4 className="font-medium text-sm text-muted-foreground">
-                      基本情報
-                    </h4>
+                      基本情報                    </h4>
                     <div className="grid gridcols-2 gap-4">
                       <div>
                         <Label>氏名</Label>
