@@ -762,7 +762,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
     });
   }, [form]);
 
-
   const handleAddEstheNgOption = (value: string) => {
     const updated = [...form.getValues().estheOptions.ngOptions || [], value];
     form.setValue("estheOptions.ngOptions", updated);
@@ -792,9 +791,30 @@ export function TalentForm({ initialData }: TalentFormProps) {
     });
   };
 
+  const handleAddNgOption = useCallback((value: string) => {
+    const updated = [...form.getValues().ngOptions.others || [], value];
+    form.setValue("ngOptions.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
+
+  const handleRemoveNgOption = useCallback((index: number) => {
+    const updated = [...form.getValues().ngOptions.others || []].filter((_, i) => i !== index);
+    form.setValue("ngOptions.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
+
+
   const photos = form.getValues().photos || [];
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
+
+  const ngOptionInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -918,9 +938,8 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     <FormLabel>都道府県</FormLabel>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="選択してください" />
-                        </SelectTrigger>
+                        <SelectTrigger>                        <SelectValue placeholder="選択してください" />
+                                            </SelectTrigger>
                         <SelectContent>
                           {prefectures.map((prefecture) => (
                             <SelectItem key={prefecture} value={prefecture}>
@@ -1218,72 +1237,60 @@ export function TalentForm({ initialData }: TalentFormProps) {
               )}
             />
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">NGオプション</h3>
-              <FormField
-                control={form.control}
-                name="ngOptions"
-                render={({ field }) => (
-                  <FormItem>
-                    <div>
-                      <FormLabel>NGオプション</FormLabel>
-                      <div className="grid grid-cols-2 gap-4">
-                        {commonNgOptions.map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`ng-${option}`}
-                              checked={field.value.common.includes(option)}
-                              onCheckedChange={(checked) => {
-                                const updated = checked
-                                  ? [...field.value.common, option]
-                                  : field.value.common.filter((o) => o !== option);
-                                form.setValue("ngOptions.common", updated, {
-                                  shouldValidate: true,
-                                  shouldDirty: true,
-                                });
-                              }}
-                              className="data-[state=checked]:bg-primary"
-                            />
-                            <label
-                              htmlFor={`ng-${option}`}
-                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            <FormField
+              control={form.control}
+              name="ngOptions"
+              render={({ field }) => (
+                <FormItem>
+                  <div>
+                    <FormLabel>NGオプション</FormLabel>
+                    <div className="grid grid-cols-2 gap-4">
+                      {commonNgOptions.map((option) => (
+                        <div key={option} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`ng-${option}`}
+                            checked={field.value.common.includes(option)}
+                            onCheckedChange={(checked) => {
+                              handleNgOptionChange(option, checked === true);
+                            }}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                          <label
+                            htmlFor={`ng-${option}`}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {option}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2 mt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {field.value.others.map((option, index) => (
+                          <Badge key={index} variant="outline" className="flex items-center gap-1">
+                            {option}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
+                              onClick={() => handleRemoveNgOption(index)}
                             >
-                              {option}
-                            </label>
-                          </div>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
                         ))}
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap gap-2">
-                          {field.value.others.map((option, index) => (
-                            <Badge key={index} variant="outline" className="flex items-center gap-1">
-                              {option}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                onClick={() => {
-                                  const updated = field.value.others.filter((_, i) => i !== index);
-                                  form.setValue("ngOptions.others", updated);
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <OtherItemInput
-                          ref={React.createRef()}
-                          onAdd={(value: string) => form.setValue("ngOptions.others", [...form.getValues().ngOptions.others || [], value])}
-                          placeholder="その他のNGオプションを入力"
-                        />
-                      </div>
-                      <FormMessage />
+                      <OtherItemInput
+                        ref={ngOptionInputRef}
+                        onAdd={handleAddNgOption}
+                        placeholder="その他のNGオプションを入力"
+                      />
                     </div>
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
 
             <div>
               <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
