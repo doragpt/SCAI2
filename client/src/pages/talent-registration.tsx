@@ -8,6 +8,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
@@ -36,14 +37,16 @@ export default function TalentRegistration() {
     retry: 1, // リトライを1回に制限
   });
 
-  // エラーが発生した場合はトースト表示
-  if (error) {
-    toast({
-      title: "エラー",
-      description: error instanceof Error ? error.message : "データの取得に失敗しました",
-      variant: "destructive",
-    });
-  }
+  // エラーハンドリングを useEffect 内で行う
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "データの取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   return (
     <div className="min-h-screen bg-background">
