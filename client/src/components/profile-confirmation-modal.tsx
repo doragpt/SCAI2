@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import type { TalentProfileData } from "@shared/schema";
-import { Loader2, User, MapPin, Camera } from "lucide-react";
+import { Loader2, User, MapPin, Camera, Building2, AlertTriangle, Star, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileConfirmationModalProps {
@@ -52,7 +52,7 @@ export function ProfileConfirmationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>登録内容の確認</DialogTitle>
           <DialogDescription>
@@ -60,12 +60,12 @@ export function ProfileConfirmationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[70vh] pr-4">
           <div className="space-y-6">
             {/* 基本情報 */}
             <section>
               <SectionHeader icon={User} title="基本情報" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-card p-4 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="氏名"
                   value={
@@ -94,6 +94,46 @@ export function ProfileConfirmationModal({
                   label="体重"
                   value={`${formData.weight}kg`}
                 />
+                <InfoItem
+                  label="カップサイズ"
+                  value={formData.cupSize}
+                />
+                {formData.bust && (
+                  <InfoItem
+                    label="バスト"
+                    value={`${formData.bust}cm`}
+                  />
+                )}
+                {formData.waist && (
+                  <InfoItem
+                    label="ウエスト"
+                    value={`${formData.waist}cm`}
+                  />
+                )}
+                {formData.hip && (
+                  <InfoItem
+                    label="ヒップ"
+                    value={`${formData.hip}cm`}
+                  />
+                )}
+                <InfoItem
+                  label="身分証明書"
+                  value={
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.availableIds.types.map((type, index) => (
+                          <Badge key={index} variant="outline">{type}</Badge>
+                        ))}
+                        {formData.availableIds.others.map((other, index) => (
+                          <Badge key={index} variant="outline">{other}</Badge>
+                        ))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        住民票提出: {formData.canProvideResidenceRecord ? "可能" : "不可"}
+                      </div>
+                    </div>
+                  }
+                />
               </div>
             </section>
 
@@ -113,6 +153,227 @@ export function ProfileConfirmationModal({
                 <InfoItem 
                   label="顔出し設定" 
                   value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} 
+                />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* 勤務情報 */}
+            <section>
+              <SectionHeader icon={Building2} title="勤務情報" />
+              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="写メ日記"
+                  value={formData.canPhotoDiary ? "可能" : "不可"}
+                />
+                <InfoItem
+                  label="自宅派遣"
+                  value={formData.canHomeDelivery ? "可能" : "不可"}
+                />
+                <InfoItem
+                  label="現在の在籍店舗"
+                  value={
+                    <div className="space-y-2">
+                      {formData.currentStores.map((store, index) => (
+                        <div key={index} className="text-sm">
+                          {store.storeName} ({store.stageName})
+                        </div>
+                      ))}
+                    </div>
+                  }
+                />
+                <InfoItem
+                  label="過去の在籍店舗"
+                  value={
+                    <div className="space-y-2">
+                      {formData.previousStores.map((store, index) => (
+                        <div key={index} className="text-sm">
+                          {store.storeName}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                />
+                {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
+                  <InfoItem
+                    label="写メ日記URL"
+                    value={
+                      <div className="space-y-2">
+                        {formData.photoDiaryUrls.map((url, index) => (
+                          <div key={index} className="text-sm break-all">
+                            {url}
+                          </div>
+                        ))}
+                      </div>
+                    }
+                  />
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* 制限事項 */}
+            <section>
+              <SectionHeader icon={AlertTriangle} title="制限事項" />
+              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="NGオプション"
+                  value={
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.ngOptions.common.map((option, index) => (
+                          <Badge key={index} variant="outline">{option}</Badge>
+                        ))}
+                        {formData.ngOptions.others.map((other, index) => (
+                          <Badge key={index} variant="outline">{other}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  }
+                />
+                <InfoItem
+                  label="アレルギー"
+                  value={
+                    formData.allergies.hasAllergy ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {formData.allergies.types.map((type, index) => (
+                            <Badge key={index} variant="outline">{type}</Badge>
+                          ))}
+                          {formData.allergies.others.map((other, index) => (
+                            <Badge key={index} variant="outline">{other}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : "なし"
+                  }
+                />
+                <InfoItem
+                  label="喫煙"
+                  value={
+                    formData.smoking.enabled ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {formData.smoking.types.map((type, index) => (
+                            <Badge key={index} variant="outline">{type}</Badge>
+                          ))}
+                          {formData.smoking.others.map((other, index) => (
+                            <Badge key={index} variant="outline">{other}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : "なし"
+                  }
+                />
+                {formData.bodyMark.hasBodyMark && (
+                  <InfoItem
+                    label="ボディマーク"
+                    value={
+                      <div className="space-y-2">
+                        <div className="text-sm">{formData.bodyMark.details}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.bodyMark.others.map((mark, index) => (
+                            <Badge key={index} variant="outline">{mark}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    }
+                  />
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* エステ情報 */}
+            <section>
+              <SectionHeader icon={Star} title="エステ情報" />
+              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="エステ経験"
+                  value={formData.hasEstheExperience ? "あり" : "なし"}
+                />
+                {formData.hasEstheExperience && (
+                  <InfoItem
+                    label="経験期間"
+                    value={formData.estheExperiencePeriod}
+                  />
+                )}
+                <InfoItem
+                  label="対応可能なエステ"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.estheOptions.available.map((option, index) => (
+                        <Badge key={index} variant="outline">{option}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+                <InfoItem
+                  label="エステNG項目"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.estheOptions.ngOptions.map((option, index) => (
+                        <Badge key={index} variant="outline">{option}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* エリア情報 */}
+            <section>
+              <SectionHeader icon={MapPin} title="エリア情報" />
+              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="希望エリア"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.preferredLocations.map((location, index) => (
+                        <Badge key={index} variant="outline">{location}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+                <InfoItem
+                  label="NGエリア"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.ngLocations.map((location, index) => (
+                        <Badge key={index} variant="outline">{location}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* その他 */}
+            <section>
+              <SectionHeader icon={FileText} title="その他" />
+              <div className="space-y-4 bg-card p-4 rounded-lg">
+                <InfoItem
+                  label="自己紹介"
+                  value={
+                    <p className="text-sm whitespace-pre-wrap">
+                      {formData.selfIntroduction || "未入力"}
+                    </p>
+                  }
+                />
+                <InfoItem
+                  label="備考"
+                  value={
+                    <p className="text-sm whitespace-pre-wrap">
+                      {formData.notes || "未入力"}
+                    </p>
+                  }
                 />
               </div>
             </section>
