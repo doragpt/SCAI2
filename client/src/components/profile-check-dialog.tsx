@@ -52,7 +52,7 @@ const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
 const InfoItem = ({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) => (
   <div className={cn("space-y-1", className)}>
     <Label className="text-sm text-muted-foreground">{label}</Label>
-    <div className="text-sm font-medium">{value}</div>
+    <div className="text-sm font-medium">{value || "未入力"}</div>
   </div>
 );
 
@@ -96,6 +96,15 @@ export function ProfileCheckDialog({
     );
   }
 
+  const formatDate = (dateString: string | undefined | null): string => {
+    if (!dateString) return "未入力";
+    try {
+      return format(new Date(dateString), 'yyyy年MM月dd日', { locale: ja });
+    } catch (e) {
+      return "未入力";
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -112,14 +121,22 @@ export function ProfileCheckDialog({
             <section>
               <SectionHeader icon={User} title="基本情報" />
               <div className="grid grid-cols-2 gap-4">
-                <InfoItem label="氏名" value={`${profileData.lastName} ${profileData.firstName}`} />
-                <InfoItem label="フリガナ" value={`${profileData.lastNameKana} ${profileData.firstNameKana}`} />
+                <InfoItem 
+                  label="氏名" 
+                  value={profileData.lastName && profileData.firstName ? 
+                    `${profileData.lastName} ${profileData.firstName}` : "未入力"} 
+                />
+                <InfoItem 
+                  label="フリガナ" 
+                  value={profileData.lastNameKana && profileData.firstNameKana ? 
+                    `${profileData.lastNameKana} ${profileData.firstNameKana}` : "未入力"} 
+                />
                 <InfoItem
                   label="生年月日"
-                  value={user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : "未入力"}
+                  value={formatDate(user?.birthDate)}
                 />
-                <InfoItem label="在住地" value={profileData.location} />
-                <InfoItem label="最寄り駅" value={profileData.nearestStation} />
+                <InfoItem label="在住地" value={formatValue(profileData.location)} />
+                <InfoItem label="最寄り駅" value={formatValue(profileData.nearestStation)} />
               </div>
             </section>
 
@@ -129,9 +146,9 @@ export function ProfileCheckDialog({
             <section>
               <SectionHeader icon={Heart} title="身体的特徴" />
               <div className="grid grid-cols-2 gap-4">
-                <InfoItem label="身長" value={`${profileData.height}cm`} />
-                <InfoItem label="体重" value={`${profileData.weight}kg`} />
-                <InfoItem label="カップサイズ" value={`${profileData.cupSize}カップ`} />
+                <InfoItem label="身長" value={profileData.height ? `${profileData.height}cm` : "未入力"} />
+                <InfoItem label="体重" value={profileData.weight ? `${profileData.weight}kg` : "未入力"} />
+                <InfoItem label="カップサイズ" value={profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"} />
                 <InfoItem
                   label="スリーサイズ"
                   value={`B${profileData.bust || '未入力'} W${profileData.waist || '未入力'} H${profileData.hip || '未入力'}`}
@@ -153,7 +170,7 @@ export function ProfileCheckDialog({
                     </Badge>
                   }
                 />
-                <InfoItem label="顔出し設定" value={profileData.faceVisibility} />
+                <InfoItem label="顔出し設定" value={formatValue(profileData.faceVisibility)} />
               </div>
             </section>
 
@@ -191,20 +208,22 @@ export function ProfileCheckDialog({
             <Separator />
 
             {/* NGオプション */}
-            <section>
-              <SectionHeader icon={XCircle} title="NGオプション" />
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ...(profileData.ngOptions?.common || []),
-                  ...(profileData.ngOptions?.others || [])
-                ].map((option, index) => (
-                  <Badge key={index} variant="destructive">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    {option}
-                  </Badge>
-                ))}
-              </div>
-            </section>
+            {(profileData.ngOptions?.common?.length > 0 || profileData.ngOptions?.others?.length > 0) && (
+              <section>
+                <SectionHeader icon={XCircle} title="NGオプション" />
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ...(profileData.ngOptions?.common || []),
+                    ...(profileData.ngOptions?.others || [])
+                  ].map((option, index) => (
+                    <Badge key={index} variant="destructive">
+                      <XCircle className="h-3 w-3 mr-1" />
+                      {option}
+                    </Badge>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <Separator />
 
