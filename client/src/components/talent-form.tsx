@@ -946,17 +946,27 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     <div className="space-y-4">
                       <div className="grid gridcols-2 gap-4">
                         {idTypes.map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
+                          <div key={type} className="flex itemscenter space-x-2">
                             <Checkbox
+                              id={`id-${type}`}
                               checked={field.value.types.includes(type)}
                               onCheckedChange={(checked) => {
                                 const updated = checked
                                   ? [...field.value.types, type]
                                   : field.value.types.filter((t) => t !== type);
-                                form.setValue("availableIds.types", updated);
+                                form.setValue("availableIds.types", updated, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
                               }}
+                              className="data-[state=checked]:bg-primary"
                             />
-                            <label className="text-sm">{type}</label>
+                            <label
+                              htmlFor={`id-${type}`}
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {type}
+                            </label>
                           </div>
                         ))}
                       </div>
@@ -1210,12 +1220,25 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         {commonNgOptions.map((option) => (
                           <div key={option} className="flex items-center space-x-2">
                             <Checkbox
-                              checked={form.watch("ngOptions.common")?.includes(option)}
+                              id={`ng-${option}`}
+                              checked={field.value.common.includes(option)}
                               onCheckedChange={(checked) => {
-                                handleNgOptionChange(option, checked === true);
+                                const updated = checked
+                                  ? [...field.value.common, option]
+                                  : field.value.common.filter((o) => o !== option);
+                                form.setValue("ngOptions.common", updated, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
                               }}
+                              className="data-[state=checked]:bg-primary"
                             />
-                            <label className="text-sm">{option}</label>
+                            <label
+                              htmlFor={`ng-${option}`}
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {option}
+                            </label>
                           </div>
                         ))}
                       </div>
