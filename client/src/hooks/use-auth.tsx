@@ -30,12 +30,12 @@ function useLoginMutation() {
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
       const response = await apiRequest("POST", "/api/login", credentials);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
-      }
       const data = await response.json();
-      return data;
+      // JWTトークンを保存
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
+      return data.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -68,14 +68,12 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
-      if (!response.ok) {
-        throw new Error("ログアウトに失敗しました");
-      }
-    },
-    onSuccess: () => {
+      // JWTトークンを削除
+      localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
+    },
+    onSuccess: () => {
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
@@ -98,12 +96,12 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const response = await apiRequest("POST", "/api/auth/register", data);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "登録に失敗しました");
-      }
+      const response = await apiRequest("POST", "/api/register", data);
       const result = await response.json();
+      // JWTトークンを保存
+      if (result.token) {
+        localStorage.setItem('auth_token', result.token);
+      }
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
@@ -143,14 +141,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/check");
-
         if (!response.ok) {
           if (response.status === 401) {
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
-
         const data = await response.json();
         return data;
       } catch (error) {

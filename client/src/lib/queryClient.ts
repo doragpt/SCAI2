@@ -16,6 +16,7 @@ export async function apiRequest(
     ...options?.headers,
   };
 
+  // JWTトークンをローカルストレージから取得
   const token = localStorage.getItem('auth_token');
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -23,30 +24,20 @@ export async function apiRequest(
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: `Server error: ${response.status} ${response.statusText}`
-      }));
-      throw new Error(errorData.message || "APIリクエストに失敗しました");
-    }
-
-    return response;
-  } catch (error) {
-    console.error('API Request Error:', {
-      method,
-      endpoint,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({
+      message: `Server error: ${response.status} ${response.statusText}`
+    }));
+    throw new Error(errorData.message || "APIリクエストに失敗しました");
   }
+
+  return response;
 }
 
 // クエリキー定数
