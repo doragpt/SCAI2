@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TalentForm } from "@/components/talent-form";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2, AlertCircle } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { getTalentProfile } from "@/lib/api/talent";
@@ -15,32 +15,18 @@ export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
 
-  console.log('[TalentRegistration] Current auth state:', {
-    hasUser: !!user,
-    userId: user?.id,
-    timestamp: new Date().toISOString()
-  });
-
   const {
     data: talentProfile,
     isLoading,
     error,
-    isError,
-    refetch
-  } = useQuery({
+  } = useQuery<TalentProfileData | null>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
     enabled: !!user?.id,
-    retry: 3,
-    retryDelay: 1000,
-    onError: (error) => {
-      console.error("[TalentRegistration] Profile fetch error:", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString()
-      });
-    },
+    retry: false,
   });
 
+  // エラー処理
   React.useEffect(() => {
     if (error) {
       toast({
@@ -80,7 +66,7 @@ export default function TalentRegistration() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              ログイン中: {user.username}
+              ログイン中: {user?.username}
             </span>
             <Button
               variant="outline"
@@ -107,28 +93,8 @@ export default function TalentRegistration() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-8 space-y-4">
-                  <div className="flex items-center justify-center">
-                    <AlertCircle className="h-8 w-8 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-destructive font-medium">データの読み込みに失敗しました</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {error instanceof Error ? error.message : "エラーが発生しました"}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => refetch()}
-                    className="mt-4"
-                  >
-                    再読み込み
-                  </Button>
                 </div>
               ) : (
                 <TalentForm initialData={talentProfile || undefined} />

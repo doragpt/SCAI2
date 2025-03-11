@@ -3,33 +3,17 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
+import {
+  type SelectUser,
+  type LoginData,
+  type RegisterFormData
+} from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  role: string;
-  displayName?: string;
-  location?: string;
-  phone?: string;
-}
-
-type LoginData = {
-  email: string;
-  password: string;
-};
-
-type RegisterData = {
-  email: string;
-  username: string;
-  password: string;
-};
-
 type AuthContextType = {
-  user: User | null;
+  user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: ReturnType<typeof useLoginMutation>;
@@ -46,19 +30,28 @@ function useLoginMutation() {
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
       const response = await apiRequest("POST", "/api/login", credentials);
-      const data = await response.json();
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ログインに失敗しました");
       }
-      return data.user;
+      const data = await response.json();
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (user: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
-      setLocation("/");
+
+      // ユーザーの役割に基づいてリダイレクト
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      } else if (user.role === "store") {
+        setLocation("/store/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -76,11 +69,14 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      localStorage.removeItem('auth_token');
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.clear();
+      const response = await apiRequest("POST", "/api/logout");
+      if (!response.ok) {
+        throw new Error("ログアウトに失敗しました");
+      }
     },
     onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
@@ -102,21 +98,30 @@ function useRegisterMutation() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: RegisterData) => {
-      const response = await apiRequest("POST", "/api/register", data);
-      const result = await response.json();
-      if (result.token) {
-        localStorage.setItem('auth_token', result.token);
+    mutationFn: async (data: RegisterFormData) => {
+      const response = await apiRequest("POST", "/api/auth/register", data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "登録に失敗しました");
       }
+      const result = await response.json();
       return result.user;
     },
-    onSuccess: () => {
+    onSuccess: (user: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
-      setLocation("/");
+
+      // ユーザーの役割に基づいてリダイレクト
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      } else if (user.role === "store") {
+        setLocation("/store/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -129,22 +134,30 @@ function useRegisterMutation() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast();
+
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | null>({
+  } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
+        console.log('Checking auth status...'); // デバッグログ
         const response = await apiRequest("GET", "/api/check");
+        console.log('Auth check response:', response); // デバッグログ
+
         if (!response.ok) {
           if (response.status === 401) {
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
-        return await response.json();
+
+        const data = await response.json();
+        console.log('Auth check data:', data); // デバッグログ
+        return data;
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
