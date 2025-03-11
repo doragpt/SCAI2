@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, X, ChevronDown, Camera, Plus } from "lucide-react";
+import { ArrowLeft, X, ChevronDown, Camera, Loader2, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/form";
 
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import {
@@ -42,7 +41,7 @@ import {
 import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
 import { Textarea } from "@/components/ui/textarea";
-import { createOrUpdateTalentProfile, getTalentProfile } from "@/lib/queryClient";
+import { createOrUpdateTalentProfile } from "@/lib/api/talent";
 
 // Store type definitions
 type CurrentStore = {
@@ -101,11 +100,11 @@ const PhotoUpload = ({
   photos: Photo[];
   onChange: (photos: Photo[]) => void;
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [selectedTag, setSelectedTag] = useState<typeof photoTags[number]>("現在の髪色");
   const [showBulkTagging, setShowBulkTagging] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const hasHairColorPhoto = photos.some((photo) => photo.tag === "現在の髪色");
@@ -584,7 +583,6 @@ const defaultValues: TalentProfileData = {
   },
 };
 
-
 interface TalentFormProps {
   initialData?: TalentProfileData;
 }
@@ -593,6 +591,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<TalentProfileData | null>(null);
+  const [isEstheOpen, setIsEstheOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TalentProfileData>({
     resolver: zodResolver(talentProfileSchema),
@@ -600,26 +602,16 @@ export function TalentForm({ initialData }: TalentFormProps) {
     defaultValues: initialData || defaultValues,
   });
 
-  // 既存のプロフィールデータが更新された時にフォームを更新
   useEffect(() => {
     if (initialData) {
       form.reset(initialData);
     }
   }, [initialData, form]);
 
-  // フォームのsubmit処理
   const onSubmit = async (data: TalentProfileData) => {
     try {
-      await createOrUpdateTalentProfile(data);
-
-      toast({
-        title: "保存完了",
-        description: "プロフィールを保存しました",
-      });
-
-      // キャッシュを更新
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-
+      setFormData(data);
+      setIsConfirmationOpen(true);
     } catch (error) {
       console.error('Form submission error:', error);
       toast({
@@ -630,16 +622,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
     }
   };
 
-  // ローディング中の表示
-  if (isLoadingProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // 未認証時の表示
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -652,18 +634,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
       </div>
     );
   }
-
-  const { data: existingProfile, isLoading: isLoadingProfile } = useQuery({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfile,
-    enabled: !!user?.id,
-  });
-
-  useEffect(() => {
-    if (existingProfile) {
-      form.reset(existingProfile);
-    }
-  }, [existingProfile, form]);
 
   const handleUpdateSnsUrl = (index: number, value: string) => {
     const updatedUrls = [...form.watch("snsUrls") || []];
@@ -682,7 +652,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
   const handleUpdateCurrentStore = (index: number, key: keyof CurrentStore, value: string) => {
     const updatedStores = [...form.watch("currentStores") || []];
-    updatedStores[index][key] = value;
+    updatedStores[index] = { ...updatedStores[index], [key]: value };
     form.setValue("currentStores", updatedStores);
   };
 
@@ -710,15 +680,28 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "" }]);
   };
 
-  const handleIdTypeChange = (type: string, checked: boolean) => {
-    const current = form.watch("availableIds.types") || [];
-    const updated = checked
-      ? [...current, type]
-      : current.filter((t) => t !== type);
-    form.setValue("availableIds.types", updated, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
+  const handleConfirm = async () => {
+    if (!formData) return;
+
+    try {
+      setIsSubmitting(true);
+      await createOrUpdateTalentProfile(formData);
+      toast({
+        title: "保存完了",
+        description: "プロフィールを保存しました",
+      });
+      setIsConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+    } catch (error) {
+      console.error("送信エラー:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 写真の更新処理を修正
@@ -771,37 +754,15 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.setValue("estheOptions.ngOptions", updated);
   };
 
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<TalentProfileData | null>(null);
-  const [isEstheOpen, setIsEstheOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleConfirm = async () => {
-    if (!formData) return;
-
-    try {
-      setIsSubmitting(true);
-
-      await createOrUpdateTalentProfile(formData);
-
-      toast({
-        title: existingProfile ? "プロフィールを更新しました" : "プロフィールを作成しました",
-        description: "プロフィールの保存が完了しました。",
-      });
-
-      setIsConfirmationOpen(false);
-      queryClient.invalidateQueries([QUERY_KEYS.TALENT_PROFILE])
-
-    } catch (error) {
-      console.error("送信エラー:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "プロフィールの更新に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleIdTypeChange = (type: string, checked: boolean) => {
+    const current = form.watch("availableIds.types") || [];
+    const updated = checked
+      ? [...current, type]
+      : current.filter((t) => t !== type);
+    form.setValue("availableIds.types", updated, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
   };
 
   const photos = form.getValues().photos || [];
@@ -814,10 +775,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              {existingProfile ? "プロフィール編集" : "プロフィール作成"}
+              {initialData ? "プロフィール編集" : "プロフィール作成"}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {existingProfile
+              {initialData
                 ? "プロフィール情報を編集できます"
                 : "安全に働くための詳細情報を登録してください"}
             </p>
@@ -1811,9 +1772,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={!form.formState.isValid || form.formState.isSubmitting}
+                disabled={!form.formState.isValid || form.formState.isSubmitting || isSubmitting}
               >
-                {form.formState.isSubmitting ? (
+                {form.formState.isSubmitting || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     保存中...
@@ -1829,20 +1790,15 @@ export function TalentForm({ initialData }: TalentFormProps) {
               )}
             </div>
           </form>
+          <ProfileConfirmationModal
+            isOpen={isConfirmationOpen}
+            onClose={() => setIsConfirmationOpen(false)}
+            onConfirm={handleConfirm}
+            formData={formData}
+            isSubmitting={isSubmitting}
+          />
         </Form>
       </main>
-
-      {/* 確認モーダル */}
-      <ProfileConfirmationModal
-        isOpen={isConfirmationOpen}
-        onClose={() => {
-          setIsConfirmationOpen(false);
-          setFormData(null);
-        }}
-        onConfirm={handleConfirm}
-        data={formData}
-        isSubmitting={isSubmitting}
-      />
     </div>
   );
 }

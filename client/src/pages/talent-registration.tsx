@@ -18,7 +18,6 @@ export default function TalentRegistration() {
     data: talentProfile,
     isLoading,
     error,
-    isError
   } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
@@ -53,10 +52,12 @@ export default function TalentRegistration() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              SCAI 女性登録
+              {talentProfile ? "プロフィール編集" : "プロフィール作成"}
             </h1>
             <p className="text-sm text-muted-foreground">
-              安全に働くための詳細情報を登録してください
+              {talentProfile
+                ? "プロフィール情報を編集できます"
+                : "安全に働くための詳細情報を登録してください"}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -88,7 +89,7 @@ export default function TalentRegistration() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex justify-center">
+                <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (

@@ -10,31 +10,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { ProfileData } from "@shared/types/profile";
-import {
-  Loader2,
-  User,
-  MapPin,
-  Ruler,
-  Heart,
-  Camera,
-  AlertTriangle,
-  FileText,
-  Building2,
-  History,
-  Instagram,
-  Calendar,
-  FileCheck,
-  Cigarette,
-  Clock,
-  Star,
-  Link as LinkIcon,
-  CheckCircle2,
-  XCircle,
-  Clock4,
-  Banknote,
-  Navigation,
-} from "lucide-react";
+import type { TalentProfileData } from "@shared/schema";
+import { Loader2, User, MapPin, Ruler, Heart, Camera, AlertTriangle, FileText, Building2, History, Instagram, Calendar, FileCheck, Cigarette, Clock, Star, Link as LinkIcon, CheckCircle2, XCircle, Clock4, Banknote, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -43,7 +20,7 @@ interface ProfileConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  formData: ProfileData | null;
+  formData: TalentProfileData | null;
   isSubmitting?: boolean;
 }
 
@@ -52,7 +29,7 @@ export function ProfileConfirmationModal({
   onClose,
   onConfirm,
   formData,
-  isSubmitting,
+  isSubmitting = false,
 }: ProfileConfirmationModalProps) {
   if (!isOpen || !formData) {
     return null;
@@ -107,7 +84,7 @@ export function ProfileConfirmationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">ウェブ履歴書の確認</DialogTitle>
+          <DialogTitle>登録内容の確認</DialogTitle>
           <DialogDescription>
             入力内容を確認してください。この内容でよろしいですか？
           </DialogDescription>
@@ -139,73 +116,7 @@ export function ProfileConfirmationModal({
                     />
                   }
                 />
-                <InfoItem
-                  label="身分証明書"
-                  value={
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {formData.availableIds?.types?.map((id) => (
-                          <Badge key={id} variant="outline" className="flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-green-500" />
-                            {id}
-                          </Badge>
-                        ))}
-                        {formData.availableIds?.others?.map((id) => (
-                          <Badge key={id} variant="outline" className="flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-green-500" />
-                            {id}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Badge variant={formData.canProvideResidenceRecord ? "default" : "secondary"}>
-                        {formData.canProvideResidenceRecord ? (
-                          <div className="flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" />
-                            <span>本籍地記載の住民票提出可能</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <XCircle className="h-3 w-3" />
-                            <span>本籍地記載の住民票提出不可</span>
-                          </div>
-                        )}
-                      </Badge>
-                    </div>
-                  }
-                />
-              </div>
-            </section>
-
-            <Separator />
-
-            {/* 身体情報 */}
-            <section>
-              <SectionHeader icon={Ruler} title="身体情報" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-card p-4 rounded-lg">
-                <InfoItem
-                  label="身長・体重"
-                  value={
-                    <ListItem
-                      icon={Ruler}
-                      text={`${formData.height}cm / ${formData.weight}kg`}
-                    />
-                  }
-                />
-                <InfoItem
-                  label="スリーサイズ"
-                  value={
-                    <ListItem
-                      icon={Heart}
-                      text={`B${formData.bust} W${formData.waist} H${formData.hip}`}
-                    />
-                  }
-                />
-                {formData.cupSize && (
-                  <InfoItem
-                    label="カップサイズ"
-                    value={`${formData.cupSize}カップ`}
-                  />
-                )}
+                <InfoItem label="身分証明書" value={<div>身分証明書の情報は省略</div>} />
               </div>
             </section>
 
@@ -223,401 +134,66 @@ export function ProfileConfirmationModal({
                     </div>
                   ))}
                 </div>
-                <InfoItem
-                  label="顔出し設定"
-                  value={
-                    <Badge variant="secondary">
-                      {formData.faceVisibility}
-                    </Badge>
-                  }
-                />
-                <InfoItem
-                  label="写メ日記"
-                  value={
-                    <div className="space-y-2">
-                      <Badge variant={formData.canPhotoDiary ? "default" : "secondary"}>
-                        {formData.canPhotoDiary ? "投稿可能" : "投稿不可"}
-                      </Badge>
-                      {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
-                        <div className="space-y-2">
-                          {formData.photoDiaryUrls.map((url, index) => (
-                            <PhotoDiaryLink key={index} url={url} index={index + 1} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  }
-                />
+                <InfoItem label="顔出し設定" value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} />
+                <InfoItem label="写メ日記" value={<div>写メ日記の情報は省略</div>} />
               </div>
             </section>
-
-            <Separator />
-
+            {/* 省略されたセクション */}
+            <Separator/>
             {/* 勤務情報 */}
             <section>
               <SectionHeader icon={Building2} title="勤務情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
-                {/* 勤務店舗情報 */}
-                {formData.currentStores && formData.currentStores.length > 0 && (
-                  <InfoItem
-                    label="現在の在籍店舗"
-                    value={
-                      <div className="space-y-2">
-                        {formData.currentStores.map((store, index) => (
-                          <StoreInfo key={index} {...store} />
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-                {formData.previousStores && formData.previousStores.length > 0 && (
-                  <InfoItem
-                    label="過去の在籍店舗"
-                    value={
-                      <div className="space-y-2">
-                        {formData.previousStores.map((store, index) => (
-                          <StoreInfo key={index} {...store} />
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-
-                {/* 勤務形態と期間 */}
-                {formData.workType && (
-                  <InfoItem
-                    label="希望勤務形態"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <span>{formData.workType}</span>
-                      </div>
-                    }
-                  />
-                )}
-                {(formData.workPeriodStart || formData.workPeriodEnd) && (
-                  <InfoItem
-                    label="希望勤務期間"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span>
-                          {formData.workPeriodStart && format(new Date(formData.workPeriodStart), 'yyyy年MM月dd日', { locale: ja })}
-                          {formData.workPeriodEnd && ` 〜 ${format(new Date(formData.workPeriodEnd), 'yyyy年MM月dd日', { locale: ja })}`}
-                        </span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {/* 勤務条件 */}
-                <InfoItem
-                  label="前日到着可否"
-                  value={
-                    <Badge variant={formData.canArrivePreviousDay ? "default" : "secondary"}>
-                      {formData.canArrivePreviousDay ? "可能" : "不可"}
-                    </Badge>
-                  }
-                />
-
-                {formData.desiredGuarantee && (
-                  <InfoItem
-                    label="希望給与・保証額"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Banknote className="h-4 w-4 text-primary" />
-                        <span>{formData.desiredGuarantee}円</span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.desiredRate && (
-                  <InfoItem
-                    label="希望バック率"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Banknote className="h-4 w-4 text-primary" />
-                        <span>{formData.desiredRate}%</span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.waitingHours && (
-                  <InfoItem
-                    label="待機時間"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Clock4 className="h-4 w-4 text-primary" />
-                        <span>{formData.waitingHours}時間</span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {/* 出発・戻り地点 */}
-                {formData.departureLocation && (
-                  <InfoItem
-                    label="出発地点"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Navigation className="h-4 w-4 text-primary" />
-                        <span>{formData.departureLocation}</span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.returnLocation && (
-                  <InfoItem
-                    label="戻り地点"
-                    value={
-                      <div className="flex items-center gap-2">
-                        <Navigation className="h-4 w-4 text-primary" />
-                        <span>{formData.returnLocation}</span>
-                      </div>
-                    }
-                  />
-                )}
-
-                {/* 希望エリアとNGエリア */}
-                {formData.preferredLocations && formData.preferredLocations.length > 0 && (
-                  <InfoItem
-                    label="希望エリア"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        {formData.preferredLocations.map((location, index) => (
-                          <Badge key={index} variant="outline">
-                            <MapPin className="h-3 w-3 text-green-500 mr-1" />
-                            {location}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.ngLocations && formData.ngLocations.length > 0 && (
-                  <InfoItem
-                    label="NGエリア"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        {formData.ngLocations.map((location, index) => (
-                          <Badge key={index} variant="destructive">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            {location}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
+                <div>勤務情報は省略</div>
               </div>
             </section>
-
-            <Separator />
-
+            <Separator/>
             {/* SNS情報 */}
-            {formData.hasSnsAccount && (
-              <>
-                <section>
-                  <SectionHeader icon={Instagram} title="SNS情報" />
-                  <div className="space-y-4 bg-card p-4 rounded-lg">
-                    {formData.snsUrls && formData.snsUrls.length > 0 && (
-                      <div className="space-y-2">
-                        {formData.snsUrls.map((url, index) => (
-                          <a
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-primary hover:underline"
-                          >
-                            <Instagram className="h-4 w-4" />
-                            <span className="text-sm">SNSアカウント {index + 1}</span>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </section>
-                <Separator />
-              </>
-            )}
-
+            <section>
+                <SectionHeader icon={Instagram} title="SNS情報" />
+                <div className="space-y-4 bg-card p-4 rounded-lg">
+                    <div>SNS情報は省略</div>
+                </div>
+            </section>
+            <Separator/>
             {/* 傷・タトゥー・アトピーセクション */}
-            {(formData.bodyMark?.hasBodyMark || (formData.bodyMark?.others && formData.bodyMark.others.length > 0)) && (
-              <section>
+            <section>
                 <SectionHeader icon={AlertTriangle} title="傷・タトゥー・アトピー" />
                 <div className="space-y-4 bg-card p-4 rounded-lg">
-                  <div className="flex flex-wrap gap-2">
-                    {formData.bodyMark?.others?.map((mark, index) => (
-                      <Badge key={index} variant="outline" className="flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3 text-yellow-500 mr-1" />
-                        {mark}
-                      </Badge>
-                    ))}
-                  </div>
-                  {formData.bodyMark?.details && (
-                    <InfoItem
-                      label="詳細"
-                      value={
-                        <p className="text-sm whitespace-pre-wrap">
-                          {formData.bodyMark.details}
-                        </p>
-                      }
-                    />
-                  )}
+                    <div>傷・タトゥー・アトピーの情報は省略</div>
                 </div>
-              </section>
-            )}
-
+            </section>
+            <Separator/>
             {/* エステ関連セクション */}
             <section>
-              <SectionHeader icon={Star} title="エステ関連" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                <InfoItem
-                  label="エステ経験"
-                  value={
-                    formData.hasEstheExperience ? (
-                      <div className="flex flex-col space-y-2">
-                        <Badge variant="default">あり</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          経験期間: {formData.estheExperiencePeriod}
-                        </span>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary">なし</Badge>
-                    )
-                  }
-                />
-                {formData.hasEstheExperience && formData.estheOptions && (
-                  <>
-                    <InfoItem
-                      label="可能オプション"
-                      value={
-                        <div className="flex flex-wrap gap-2">
-                          {formData.estheOptions.available?.map((option) => (
-                            <Badge key={option} variant="outline">
-                              <CheckCircle2 className="h-3 w-3 text-green-500 mr-1" />
-                              {option}
-                            </Badge>
-                          ))}
-                        </div>
-                      }
-                    />
-                    {formData.estheOptions.otherNgOptions && (
-                      <InfoItem
-                        label="その他できないプレイやオプション"
-                        value={
-                          <div className="flex flex-wrap gap-2">
-                            {formData.estheOptions.otherNgOptions.split('\n').filter(Boolean).map((option, index) => (
-                              <Badge key={index} variant="destructive">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                {option}
-                              </Badge>
-                            ))}
-                          </div>
-                        }
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+                <SectionHeader icon={Star} title="エステ関連" />
+                <div className="space-y-4 bg-card p-4 rounded-lg">
+                  <div>エステ関連の情報は省略</div>
+                </div>
             </section>
-
+            <Separator/>
             {/* 制限事項・その他 */}
             <section>
-              <SectionHeader icon={AlertTriangle} title="制限事項・その他" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                {formData.ngOptions && (
-                  <InfoItem
-                    label="NGオプション"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          ...(formData.ngOptions.common || []),
-                          ...(formData.ngOptions.others || [])
-                        ].map((option, index) => (
-                          <Badge key={index} variant="destructive">
-                            {option}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.allergies && formData.allergies.hasAllergy && (
-                  <InfoItem
-                    label="アレルギー"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          ...(formData.allergies.types || []),
-                          ...(formData.allergies.others || [])
-                        ].map((allergy, index) => (
-                          <Badge key={index} variant="outline">
-                            {allergy}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-
-                {formData.smoking && (
-                  <InfoItem
-                    label="喫煙"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant={formData.smoking.enabled ? "default" : "secondary"}>
-                          <Cigarette className="h-4 w-4 mr-1" />
-                          {formData.smoking.enabled ? "喫煙あり" : "喫煙なし"}
-                        </Badge>
-                        {formData.smoking.enabled && [
-                          ...(formData.smoking.types || []),
-                          ...(formData.smoking.others || [])
-                        ].map((type, index) => (
-                          <Badge key={index} variant="outline">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                )}
-              </div>
+                <SectionHeader icon={AlertTriangle} title="制限事項・その他" />
+                <div className="space-y-4 bg-card p-4 rounded-lg">
+                    <div>制限事項・その他の情報は省略</div>
+                </div>
             </section>
-
+            <Separator/>
             {/* 自己PR */}
             <section>
-              <SectionHeader icon={Star} title="自己PR" />
-              <div className="bg-card p-4 rounded-lg">
-                <p className="text-sm whitespace-pre-wrap">
-                  {formData.selfIntroduction || "未入力"}
-                </p>
-              </div>
+                <SectionHeader icon={Star} title="自己PR" />
+                <div className="bg-card p-4 rounded-lg">
+                  <p className="text-sm whitespace-pre-wrap">{formData.selfIntroduction || "未入力"}</p>
+                </div>
             </section>
-
+            <Separator/>
             {/* その他情報 */}
             <section>
-              <SectionHeader icon={FileText} title="その他情報" />
-              <div className="space-y-4 bg-card p-4 rounded-lg">
-                {formData.notes && (
-                  <InfoItem
-                    label="備考"
-                    value={
-                      <div className="bg-muted/10 p-3 rounded-lg">
-                        <p className="text-sm whitespace-pre-wrap">
-                          {formData.notes}
-                        </p>
-                      </div>
-                    }
-                  />
-                )}
-              </div>
+                <SectionHeader icon={FileText} title="その他情報" />
+                <div className="space-y-4 bg-card p-4 rounded-lg">
+                  <div>その他情報は省略</div>
+                </div>
             </section>
           </div>
         </ScrollArea>
