@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'wouter'; // Import from wouter instead of react-router-dom
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;
@@ -46,7 +46,7 @@ export default function ProfileCheckDialog({
   onConfirm,
 }: ProfileCheckDialogProps) {
   const { profileData, isLoading, isError } = useProfile();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [, navigate] = useNavigate(); // Use wouter's useNavigate
 
   // フォーマット関数
   const formatProfileValue = (value: unknown): string => {
@@ -233,6 +233,12 @@ export default function ProfileCheckDialog({
                         {id}
                       </Badge>
                     ))}
+                    {profileData.availableIds?.others?.map((id) => (
+                      <Badge key={id} variant="outline">
+                        <Check className="mr-1 h-3 w-3 text-green-500" />
+                        {id}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
                 <InfoItem
@@ -250,38 +256,31 @@ export default function ProfileCheckDialog({
               <div className="space-y-4">
                 <InfoItem
                   label="写メ日記の投稿"
-                  value={<StatusBadge value={profileData.photoDiaryAllowed} positive={profileData.photoDiaryAllowed} />}
+                  value={<StatusBadge value={profileData.canPhotoDiary} positive={profileData.canPhotoDiary} />}
                 />
                 <InfoItem label="顔出し設定" value={formatProfileValue(profileData.faceVisibility)} />
-              </div>
-            </section>
-
-            <Separator />
-
-            {/* 自宅派遣 */}
-            <section>
-              <SectionHeader icon={Home} title="自宅派遣" />
-              <InfoItem
-                label="自宅派遣"
-                value={<StatusBadge value={profileData.canHomeDelivery} positive={profileData.canHomeDelivery} />}
-              />
-            </section>
-
-            <Separator />
-
-            {/* NGオプション */}
-            <section>
-              <SectionHeader icon={AlertTriangle} title="NGオプション" />
-              <div className="flex flex-wrap gap-2">
-                {profileData.ngOptions && [
-                  ...(profileData.ngOptions.common || []),
-                  ...(profileData.ngOptions.others || [])
-                ].map((option) => (
-                  <Badge key={option} variant="destructive">
-                    <X className="mr-1 h-3 w-3" />
-                    {option}
-                  </Badge>
-                ))}
+                {profileData.photos && (
+                  <div>
+                    <Label>登録済み写真</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                      {profileData.photos.map((photo, index) => (
+                        <div key={index} className="relative aspect-[3/4]">
+                          <img
+                            src={photo.url}
+                            alt={`プロフィール写真 ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          <Badge
+                            className="absolute top-2 right-2 bg-black/75"
+                            variant="outline"
+                          >
+                            {photo.tag}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -322,6 +321,48 @@ export default function ProfileCheckDialog({
                     </div>
                   </div>
                 )}
+                {profileData.estheOptions?.ngOptions && profileData.estheOptions.ngOptions.length > 0 && (
+                  <div>
+                    <Label>NGメニュー</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {profileData.estheOptions.ngOptions.map((option) => (
+                        <Badge key={option} variant="destructive">
+                          <X className="mr-1 h-3 w-3" />
+                          {option}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* 自宅派遣 */}
+            <section>
+              <SectionHeader icon={Home} title="自宅派遣" />
+              <InfoItem
+                label="自宅派遣"
+                value={<StatusBadge value={profileData.canHomeDelivery} positive={profileData.canHomeDelivery} />}
+              />
+            </section>
+
+            <Separator />
+
+            {/* NGオプション */}
+            <section>
+              <SectionHeader icon={AlertTriangle} title="NGオプション" />
+              <div className="flex flex-wrap gap-2">
+                {profileData.ngOptions && [
+                  ...(profileData.ngOptions.common || []),
+                  ...(profileData.ngOptions.others || [])
+                ].map((option) => (
+                  <Badge key={option} variant="destructive">
+                    <X className="mr-1 h-3 w-3" />
+                    {option}
+                  </Badge>
+                ))}
               </div>
             </section>
 
@@ -335,7 +376,7 @@ export default function ProfileCheckDialog({
                   label="アレルギーの有無"
                   value={
                     <div className="flex items-center gap-2">
-                      {profileData.hasAllergies ? (
+                      {profileData.allergies?.hasAllergy ? (
                         <Badge variant="destructive">あり</Badge>
                       ) : (
                         <Badge variant="outline">無し</Badge>
@@ -343,7 +384,7 @@ export default function ProfileCheckDialog({
                     </div>
                   }
                 />
-                {profileData.hasAllergies && (
+                {profileData.allergies?.hasAllergy && (
                   <div className="flex flex-wrap gap-2">
                     {[
                       ...(profileData.allergies?.types || []),
@@ -368,7 +409,7 @@ export default function ProfileCheckDialog({
                   label="喫煙の有無"
                   value={
                     <div className="flex items-center gap-2">
-                      {profileData.isSmoker ? (
+                      {profileData.smoking?.enabled ? (
                         <Badge variant="destructive">あり</Badge>
                       ) : (
                         <Badge variant="outline">無し</Badge>
@@ -376,7 +417,7 @@ export default function ProfileCheckDialog({
                     </div>
                   }
                 />
-                {profileData.isSmoker && profileData.smoking && (
+                {profileData.smoking?.enabled && profileData.smoking && (
                   <div className="flex flex-wrap gap-2">
                     {[
                       ...(profileData.smoking.types || []),
