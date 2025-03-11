@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -485,30 +485,29 @@ const OtherItemInput = React.forwardRef<
   }
 >((props, ref) => {
   const { onAdd, placeholder } = props;
+  const [inputValue, setInputValue] = React.useState('');
 
-  const handleAdd = () => {
-    const inputEl = ref as React.RefObject<HTMLInputElement>;
-    const value = inputEl.current?.value.trim();
+  const handleAdd = React.useCallback(() => {
+    const value = inputValue.trim();
     if (value) {
       onAdd(value);
-      if (inputEl.current) {
-        inputEl.current.value = '';
-        inputEl.current.focus();
-      }
+      setInputValue('');
     }
-  };
+  }, [inputValue, onAdd]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAdd();
     }
-  };
+  }, [handleAdd]);
 
   return (
     <div className="flex items-center gap-2">
       <Input
         ref={ref}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
       />
@@ -516,6 +515,7 @@ const OtherItemInput = React.forwardRef<
         type="button"
         size="sm"
         onClick={handleAdd}
+        disabled={!inputValue.trim()}
       >
         追加
       </Button>
@@ -716,10 +716,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.trigger();
   };
 
-  const handleAddIdType = (value: string) => {
+  const handleAddIdType = useCallback((value: string) => {
     const updated = [...form.getValues().availableIds.others || [], value];
-    form.setValue("availableIds.others", updated);
-  };
+    form.setValue("availableIds.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
 
   const handleAddAllergy = (value: string) => {
     const updated = [...form.getValues().allergies.others || [], value];
@@ -731,14 +735,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.setValue("smoking.others", updated);
   };
 
-  const handleAddBodyMark = (value: string) => {
+  const handleAddBodyMark = useCallback((value: string) => {
     const updated = [...form.getValues().bodyMark.others || [], value];
     form.setValue("bodyMark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
     });
-  };
+  }, [form]);
 
   const handleRemoveBodyMark = (index: number) => {
     const updated = [...form.getValues().bodyMark.others || []].filter((_, i) => i !== index);
@@ -748,6 +752,16 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldTouch: true
     });
   };
+
+  const handleRemoveIdType = useCallback((index: number) => {
+    const updated = [...form.getValues().availableIds.others || []].filter((_, i) => i !== index);
+    form.setValue("availableIds.others", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [form]);
+
 
   const handleAddEstheNgOption = (value: string) => {
     const updated = [...form.getValues().estheOptions.ngOptions || [], value];
@@ -979,10 +993,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                 variant="ghost"
                                 size="sm"
                                 className="h-4 w-4 p-0 hover:bg-transparent"
-                                onClick={() => {
-                                  const updated = field.value.others.filter((_, i) => i !== index);
-                                  form.setValue("availableIds.others", updated);
-                                }}
+                                onClick={() => handleRemoveIdType(index)}
                               >
                                 <X className="h-3 w-3" />
                               </Button>
