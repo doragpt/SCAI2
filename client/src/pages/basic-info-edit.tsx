@@ -41,6 +41,7 @@ const basicInfoSchema = z.object({
     .optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
+  // パスワード変更時のみ現在のパスワードを必須とする
   if (data.newPassword && !data.currentPassword) {
     return false;
   }
@@ -49,6 +50,7 @@ const basicInfoSchema = z.object({
   message: "現在のパスワードを入力してください",
   path: ["currentPassword"],
 }).refine((data) => {
+  // 新しいパスワードを入力する場合のみ確認用パスワードとの一致をチェック
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
     return false;
   }
