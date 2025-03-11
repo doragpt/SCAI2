@@ -8,7 +8,7 @@ import {
   type LoginData,
   type RegisterFormData
 } from "@shared/schema";
-import { apiRequest, queryClient, QUERY_KEYS } from "../lib/queryClient";
+import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
@@ -29,17 +29,17 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const response = await apiRequest("POST", QUERY_KEYS.AUTH_LOGIN, credentials);
+      const response = await apiRequest("POST", "/api/login", credentials);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
       }
       const data = await response.json();
-      return data.user;
+      return data;
     },
     onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], user);
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_CHECK] });
+      queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "ログイン成功",
@@ -69,13 +69,13 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", QUERY_KEYS.AUTH_LOGOUT);
+      const response = await apiRequest("POST", "/api/logout");
       if (!response.ok) {
         throw new Error("ログアウトに失敗しました");
       }
     },
     onSuccess: () => {
-      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], null);
+      queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
       toast({
         title: "ログアウト完了",
@@ -99,7 +99,7 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const response = await apiRequest("POST", QUERY_KEYS.AUTH_REGISTER, data);
+      const response = await apiRequest("POST", "/api/auth/register", data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "登録に失敗しました");
@@ -108,8 +108,8 @@ function useRegisterMutation() {
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], user);
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_CHECK] });
+      queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "登録完了",
@@ -141,17 +141,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<SelectUser | null>({
-    queryKey: [QUERY_KEYS.AUTH_CHECK],
+    queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+        console.log('Checking auth status...'); // デバッグログ
+        const response = await apiRequest("GET", "/api/check");
+        console.log('Auth check response:', response); // デバッグログ
+
         if (!response.ok) {
           if (response.status === 401) {
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
-        return await response.json();
+
+        const data = await response.json();
+        console.log('Auth check data:', data); // デバッグログ
+        return data;
       } catch (error) {
         console.error('Auth check error:', error);
         return null;

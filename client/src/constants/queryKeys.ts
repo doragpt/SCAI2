@@ -1,13 +1,13 @@
 export const QUERY_KEYS = {
-  // 認証関連
-  AUTH_CHECK: "/api/auth/check",
-  AUTH_LOGIN: "/api/auth/login",
-  AUTH_LOGOUT: "/api/auth/logout",
-  AUTH_REGISTER: "/api/auth/register",
-
   // ユーザー関連
   USER: "/api/user",
   USER_PROFILE: "/api/user/profile",
+
+  // 認証関連
+  AUTH_CHECK: "/api/check",
+  AUTH_LOGIN: "/api/login",
+  AUTH_LOGOUT: "/api/logout",
+  AUTH_REGISTER: "/api/auth/register",
 
   // タレント関連
   TALENT_PROFILE: "/api/talent/profile",
