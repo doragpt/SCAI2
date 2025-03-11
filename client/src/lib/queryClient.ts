@@ -9,6 +9,11 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
 })();
 
+// トークンの取得
+function getAuthToken(): string | null {
+  return localStorage.getItem('auth_token');
+}
+
 // APIリクエスト関数
 export async function apiRequest(
   method: string,
@@ -30,6 +35,12 @@ export async function apiRequest(
       'Content-Type': 'application/json',
       ...options?.headers,
     };
+
+    // 認証トークンの追加
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 

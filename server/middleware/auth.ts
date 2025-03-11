@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from '../db';
-import { users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { verifyToken } from '../jwt';
+import { storage } from '../storage';
 import { log } from '../utils/logger';
 
 // ユーザーロールの型定義
@@ -26,23 +25,23 @@ export async function authenticate(
   next: NextFunction
 ) {
   try {
-    if (!req.session || !req.session.userId) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      log('warn', '認証トークンがありません');
       return res.status(401).json({ message: '認証が必要です' });
     }
 
-    // ユーザーの存在確認
-    const [user] = await db
-      .select({
-        id: users.id,
-        role: users.role,
-        username: users.username,
-        displayName: users.displayName
-      })
-      .from(users)
-      .where(eq(users.id, req.session.userId));
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      log('warn', '無効な認証トークン形式');
+      return res.status(401).json({ message: '無効な認証トークンです' });
+    }
+
+    const decoded = verifyToken(token);
+    const user = await storage.getUser(decoded.userId);
 
     if (!user) {
-      log('warn', 'ユーザーが見つかりません', { userId: req.session.userId });
+      log('warn', 'ユーザーが見つかりません', { userId: decoded.userId });
       return res.status(401).json({ message: 'ユーザーが見つかりません' });
     }
 
@@ -51,7 +50,13 @@ export async function authenticate(
       role: user.role
     });
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      role: user.role,
+      username: user.username,
+      displayName: user.displayName || null
+    };
+
     next();
   } catch (error) {
     log('error', '認証エラー', {

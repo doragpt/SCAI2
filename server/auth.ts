@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { User as SelectUser, talentRegisterFormSchema } from "@shared/schema";
 import { log } from "./utils/logger";
 import * as z from 'zod';
+import { generateToken } from './jwt';
 
 declare global {
   namespace Express {
@@ -52,7 +53,14 @@ function sanitizeUser(user: SelectUser) {
   return sanitizedUser;
 }
 
+// ログインスキーマの定義
+const loginSchema = z.object({
+  email: z.string().email('有効なメールアドレスを入力してください'),
+  password: z.string().min(8, 'パスワードは8文字以上必要です')
+});
+
 export function setupAuth(app: Express) {
+  // セッション設定
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
@@ -70,50 +78,116 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password',
-      },
-      async (email, password, done) => {
-        try {
-          log('info', 'ログイン試行', { email });
-          const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            log('warn', 'ログイン失敗', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-          log('info', 'ログイン成功', {
-            userId: user.id,
-            email: user.email,
-            role: user.role
-          });
-          return done(null, user);
-        } catch (error) {
-          log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error',
-            email
-          });
-          return done(error);
-        }
-      }
-    )
-  );
+  // ログインAPI
+  app.post("/api/login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(validatedData.email);
 
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
+      if (!user || !(await comparePasswords(validatedData.password, user.password))) {
+        return res.status(401).json({ message: "メールアドレスまたはパスワードが間違っています" });
+      }
+
+      // JWTトークンの生成
+      const token = generateToken(user);
+
+      // レスポンスの送信
+      res.json({
+        token,
+        user: sanitizeUser(user)
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "入力内容に誤りがあります",
+          errors: error.errors
+        });
+      }
+
+      log('error', 'ログインエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({
+        message: "ログイン処理中にエラーが発生しました"
+      });
+    }
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  // 新規登録API
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const user = await storage.getUser(id);
-      if (!user) {
-        return done(null, false);
+      const validatedData = talentRegisterFormSchema.parse(req.body);
+
+      // 既存ユーザーチェック
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(400).json({
+          message: "このメールアドレスは既に使用されています"
+        });
       }
-      done(null, user);
+
+      // パスワードのハッシュ化
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      // ユーザー作成
+      const user = await storage.createUser({
+        ...validatedData,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // JWTトークンの生成
+      const token = generateToken(user);
+
+      log('info', 'ユーザー登録成功', {
+        userId: user.id,
+        email: user.email,
+        role: user.role
+      });
+
+      // レスポンスの送信
+      res.status(201).json({
+        token,
+        user: sanitizeUser(user)
+      });
     } catch (error) {
-      done(error);
+      log('error', '新規登録エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "入力内容に誤りがあります",
+          errors: error.errors
+        });
+      }
+
+      res.status(500).json({
+        message: "登録処理中にエラーが発生しました"
+      });
+    }
+  });
+
+  // セッションチェックAPI
+  app.get("/api/auth/check", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      const token = authHeader.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ message: "無効な認証トークンです" });
+      }
+
+      res.json({ authenticated: true });
+    } catch (error) {
+      log('error', '認証チェックエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(401).json({ message: "認証に失敗しました" });
     }
   });
 
@@ -228,31 +302,54 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // ログインAPI
-  app.post("/api/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', {
-      email: req.body.email
-    });
-    passport.authenticate('local', (err, user, info) => {
-      if (err) return next(err);
-      if (!user) {
-        log('warn', 'ログイン失敗', {
-          email: req.body.email,
-          reason: info?.message || "認証失敗"
-        });
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
+
+  passport.use(
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password',
+      },
+      async (email, password, done) => {
+        try {
+          log('info', 'ログイン試行', { email });
+          const user = await storage.getUserByEmail(email);
+          if (!user || !(await comparePasswords(password, user.password))) {
+            log('warn', 'ログイン失敗', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+          log('info', 'ログイン成功', {
+            userId: user.id,
+            email: user.email,
+            role: user.role
+          });
+          return done(null, user);
+        } catch (error) {
+          log('error', 'ログインエラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
+          return done(error);
+        }
       }
-      req.login(user, (err) => {
-        if (err) return next(err);
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        });
-        res.json(sanitizeUser(user));
-      });
-    })(req, res, next);
+    )
+  );
+
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
   });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
+  });
+
 
   // ログアウトAPI
   app.post("/api/logout", (req, res, next) => {
@@ -289,86 +386,14 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // セッションチェックAPI
-  app.get("/api/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-    res.json(sanitizeUser(req.user));
-  });
+  // セッションチェックAPI (This is already defined above, this line is redundant and should be removed)
+  //app.get("/api/check", (req, res) => {
+  //  if (!req.isAuthenticated()) {
+  //    return res.status(401).json({ message: "認証されていません" });
+  //  }
+  //  res.json(sanitizeUser(req.user));
+  //});
 
-  // 新規登録APIエンドポイント
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      log('info', '新規登録リクエスト受信', {
-        email: req.body.email,
-        role: req.body.role
-      });
-
-      // リクエストデータのバリデーション
-      const validatedData = talentRegisterFormSchema.parse(req.body);
-
-      // 既存ユーザーチェック
-      const existingUser = await storage.getUserByEmail(validatedData.email);
-      if (existingUser) {
-        return res.status(400).json({
-          message: "このメールアドレスは既に使用されています"
-        });
-      }
-
-      // パスワードのハッシュ化
-      const hashedPassword = await hashPassword(validatedData.password);
-
-      // birthDateを日付オブジェクトに変換
-      const birthDate = new Date(validatedData.birthDate);
-
-      // ユーザー作成
-      const user = await storage.createUser({
-        ...validatedData,
-        password: hashedPassword,
-        birthDate,
-        birthDateModified: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      log('info', 'ユーザー登録成功', {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      });
-
-      // セッションの作成とレスポンス
-      req.login(user, (err) => {
-        if (err) {
-          log('error', 'ログインセッション作成エラー', { error: err });
-          return res.status(500).json({
-            message: "ログインセッションの作成に失敗しました"
-          });
-        }
-
-        return res.status(201).json({
-          user: sanitizeUser(user)
-        });
-      });
-    } catch (error) {
-      log('error', '新規登録エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "入力内容に誤りがあります",
-          errors: error.errors
-        });
-      }
-
-      return res.status(500).json({
-        message: "登録処理中にエラーが発生しました"
-      });
-    }
-  });
 }
 
 export { hashPassword, comparePasswords };
