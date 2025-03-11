@@ -12,22 +12,28 @@ export function FooterNavigation({ onMenuClick }: FooterNavigationProps) {
       <div className="container mx-auto">
         <div className="grid grid-cols-4 gap-1">
           <Link href="/jobs">
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
-              <Search className="h-5 w-5 mb-1" />
-              <span className="text-xs">お仕事検索</span>
-            </Button>
+            <a className="block">
+              <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
+                <Search className="h-5 w-5 mb-1" />
+                <span className="text-xs">お仕事検索</span>
+              </Button>
+            </a>
           </Link>
           <Link href="/talent/ai-matching">
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
-              <Bot className="h-5 w-5 mb-1" />
-              <span className="text-xs">SCAIマッチング</span>
-            </Button>
+            <a className="block">
+              <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
+                <Bot className="h-5 w-5 mb-1" />
+                <span className="text-xs">SCAIマッチング</span>
+              </Button>
+            </a>
           </Link>
           <Link href="/talent/mypage/keep-list">
-            <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
-              <Heart className="h-5 w-5 mb-1" />
-              <span className="text-xs">キープ</span>
-            </Button>
+            <a className="block">
+              <Button variant="ghost" className="flex flex-col items-center py-2 h-16 w-full">
+                <Heart className="h-5 w-5 mb-1" />
+                <span className="text-xs">キープ</span>
+              </Button>
+            </a>
           </Link>
           <Button
             variant="ghost"

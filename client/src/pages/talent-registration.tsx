@@ -7,52 +7,22 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
-import { Redirect } from "wouter";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
-  const { toast } = useToast();
-
-  // 未認証の場合は /auth にリダイレクト
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
 
   // タレントプロフィールデータを取得
-  const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
+  const { data: talentProfile, isLoading } = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
-      try {
-        console.log('Fetching talent profile...'); // デバッグログ
-        const response = await apiRequest("GET", "/api/talent/profile");
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "タレントプロフィールの取得に失敗しました");
-        }
-        const data = await response.json();
-        console.log('Received talent profile:', data); // デバッグログ
-        return data;
-      } catch (error) {
-        console.error('Talent profile fetch error:', error);
-        throw error;
+      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+      if (!response.ok) {
+        throw new Error("タレントプロフィールの取得に失敗しました");
       }
+      return response.json();
     },
-    enabled: !!user?.id, // ユーザーIDが存在する場合のみクエリを実行
-    retry: 1, // リトライを1回に制限
+    enabled: !!user?.id,
   });
-
-  // エラーハンドリングを useEffect 内で行う
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "エラー",
-        description: error instanceof Error ? error.message : "データの取得に失敗しました",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,23 +65,11 @@ export default function TalentRegistration() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex justify-center items-center min-h-[200px]">
+                <div className="flex justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : error ? (
-                <div className="text-center text-destructive">
-                  <p>データの取得に失敗しました</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => window.location.reload()}
-                  >
-                    再読み込み
-                  </Button>
-                </div>
               ) : (
-                <TalentForm initialData={talentProfile} />
+                <TalentForm />
               )}
             </CardContent>
           </Card>

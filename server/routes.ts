@@ -4,7 +4,6 @@ import { setupAuth } from './auth';
 import jobsRoutes from './routes/jobs';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
-import talentRoutes from './routes/talent';
 import { log } from './utils/logger';
 import { storage } from "./storage";
 import multer from "multer";
@@ -46,7 +45,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
-  app.use('/api/talent', talentRoutes);
 
   // 共通のエラーハンドリング
   app.use((err: Error, req: any, res: any, next: any) => {
