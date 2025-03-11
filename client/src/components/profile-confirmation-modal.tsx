@@ -87,6 +87,26 @@ export function ProfileConfirmationModal({
                   }
                 />
                 <InfoItem
+                  label="希望エリア"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.preferredLocations.map((location, index) => (
+                        <Badge key={index} variant="outline">{location}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+                <InfoItem
+                  label="NGエリア"
+                  value={
+                    <div className="flex flex-wrap gap-2">
+                      {formData.ngLocations.map((location, index) => (
+                        <Badge key={index} variant="outline">{location}</Badge>
+                      ))}
+                    </div>
+                  }
+                />
+                <InfoItem
                   label="身長"
                   value={`${formData.height}cm`}
                 />
@@ -317,35 +337,6 @@ export function ProfileConfirmationModal({
                     <div className="flex flex-wrap gap-2">
                       {formData.estheOptions.ngOptions.map((option, index) => (
                         <Badge key={index} variant="outline">{option}</Badge>
-                      ))}
-                    </div>
-                  }
-                />
-              </div>
-            </section>
-
-            <Separator />
-
-            {/* エリア情報 */}
-            <section>
-              <SectionHeader icon={MapPin} title="エリア情報" />
-              <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
-                <InfoItem
-                  label="希望エリア"
-                  value={
-                    <div className="flex flex-wrap gap-2">
-                      {formData.preferredLocations.map((location, index) => (
-                        <Badge key={index} variant="outline">{location}</Badge>
-                      ))}
-                    </div>
-                  }
-                />
-                <InfoItem
-                  label="NGエリア"
-                  value={
-                    <div className="flex flex-wrap gap-2">
-                      {formData.ngLocations.map((location, index) => (
-                        <Badge key={index} variant="outline">{location}</Badge>
                       ))}
                     </div>
                   }
