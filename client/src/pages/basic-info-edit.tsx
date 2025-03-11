@@ -98,22 +98,24 @@ export default function BasicInfoEdit() {
       console.log('Setting form values:', {
         username: userProfile.username,
         location: userProfile.location,
-        preferredLocations: userProfile.preferredLocations
+        preferredLocations: userProfile.preferredLocations,
+        birthDate: userProfile.birthDate 
       });
 
       form.reset({
         username: userProfile.username,
         location: userProfile.location,
-        preferredLocations: Array.isArray(userProfile.preferredLocations) 
-          ? userProfile.preferredLocations 
-          : [],
+        preferredLocations: userProfile.preferredLocations || [],
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       });
     }
   }, [userProfile, form]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Sending update data:', data); 
+      console.log('Sending update data:', data);
 
       const updateData = {
         username: data.username,
@@ -125,6 +127,8 @@ export default function BasicInfoEdit() {
         } : {})
       };
 
+      console.log('Update payload:', updateData); 
+
       const response = await apiRequest("PATCH", "/api/user", updateData);
       if (!response.ok) {
         const error = await response.json();
@@ -132,7 +136,7 @@ export default function BasicInfoEdit() {
       }
 
       const result = await response.json();
-      console.log('Update response:', result); 
+      console.log('Update response:', result);
       return result;
     },
     onSuccess: (data) => {
