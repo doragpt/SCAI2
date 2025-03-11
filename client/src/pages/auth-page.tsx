@@ -104,6 +104,12 @@ export default function AuthPage() {
     try {
       // フォームのバリデーションチェック
       const isValid = await registerForm.trigger();
+      console.log('Form validation state:', {
+        isValid,
+        errors: registerForm.formState.errors,
+        values: registerForm.getValues()
+      });
+
       if (!isValid) {
         const errors = registerForm.formState.errors;
         if (Object.keys(errors).length > 0) {
@@ -520,12 +526,13 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={registerMutation.isPending}
+                      disabled={registerMutation.isPending || !registerForm.formState.isValid}
+                      onClick={() => console.log('Submit button clicked')}
                     >
                       {registerMutation.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      AIマッチングを利用する（無料登録）
+                      入力内容を確認する
                     </Button>
                   </form>
                 </TabsContent>
