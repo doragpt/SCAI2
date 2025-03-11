@@ -2,11 +2,15 @@ import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
+  QueryClient
 } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { SelectUser, LoginData, RegisterFormData } from "@shared/schema";
+
+// クエリクライアントのインスタンスをエクスポート
+export const queryClient = new QueryClient();
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -29,6 +33,7 @@ function useLoginMutation() {
         console.log('Login attempt:', { email: credentials.email });
         const response = await apiRequest("POST", "/api/login", credentials);
         const data = await response.json();
+        console.log('Login response:', data);
         return data;
       } catch (error) {
         console.error('Login error:', error);
@@ -45,7 +50,6 @@ function useLoginMutation() {
         description: "ログインしました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -55,7 +59,7 @@ function useLoginMutation() {
     onError: (error: Error) => {
       toast({
         title: "ログインエラー",
-        description: error.message,
+        description: error.message || "ログインに失敗しました",
         variant: "destructive",
       });
     },
@@ -90,7 +94,7 @@ function useLogoutMutation() {
     onError: (error: Error) => {
       toast({
         title: "ログアウトエラー",
-        description: error.message,
+        description: error.message || "ログアウトに失敗しました",
         variant: "destructive",
       });
     },
@@ -107,6 +111,7 @@ function useRegisterMutation() {
         console.log('Registration attempt:', { email: data.email });
         const response = await apiRequest("POST", "/api/auth/register", data);
         const result = await response.json();
+        console.log('Registration response:', result);
         return result.user;
       } catch (error) {
         console.error('Registration error:', error);
@@ -132,7 +137,7 @@ function useRegisterMutation() {
     onError: (error: Error) => {
       toast({
         title: "登録エラー",
-        description: error.message,
+        description: error.message || "登録に失敗しました",
         variant: "destructive",
       });
     },
@@ -150,9 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...'); 
+        console.log('Checking auth status...');
         const response = await apiRequest("GET", "/api/check");
-        console.log('Auth check response:', response); 
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -163,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await response.json();
-        console.log('Auth check data:', data); 
+        console.log('Auth check successful:', data);
         return data;
       } catch (error) {
         console.error('Auth check error:', error);

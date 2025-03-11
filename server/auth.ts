@@ -53,23 +53,7 @@ function sanitizeUser(user: SelectUser) {
 }
 
 export function setupAuth(app: Express) {
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  };
-
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
-
+  // Passportの設定
   passport.use(
     new LocalStrategy(
       {
@@ -128,22 +112,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // セッションチェックAPI
-  app.get("/api/check", (req, res) => {
-    log('info', 'セッションチェック', {
-      isAuthenticated: req.isAuthenticated(),
-      sessionID: req.sessionID,
-      session: req.session ? 'exists' : 'none',
-      user: req.user ? 'exists' : 'none'
-    });
-
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-
-    res.json(sanitizeUser(req.user));
-  });
-
   // ログインAPI
   app.post("/api/login", (req, res, next) => {
     log('info', 'ログインリクエスト受信', {
@@ -188,6 +156,40 @@ export function setupAuth(app: Express) {
         res.json(sanitizeUser(user));
       });
     })(req, res, next);
+  });
+
+  const sessionSettings: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  };
+
+  app.use(session(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+
+  // セッションチェックAPI
+  app.get("/api/check", (req, res) => {
+    log('info', 'セッションチェック', {
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      session: req.session ? 'exists' : 'none',
+      user: req.user ? 'exists' : 'none'
+    });
+
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "認証されていません" });
+    }
+
+    res.json(sanitizeUser(req.user));
   });
 
   // ログアウトAPI
@@ -239,6 +241,7 @@ export function setupAuth(app: Express) {
       });
     }
   });
+
   // ユーザー情報取得API
   app.get("/api/user", async (req, res) => {
     try {
@@ -350,7 +353,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // 新規登録APIエンドポイント
+  // 新規登録API
   app.post("/api/auth/register", async (req, res) => {
     try {
       log('info', '新規登録リクエスト受信', {
@@ -372,15 +375,11 @@ export function setupAuth(app: Express) {
       // パスワードのハッシュ化
       const hashedPassword = await hashPassword(validatedData.password);
 
-      // birthDateを日付オブジェクトに変換
-      const birthDate = new Date(validatedData.birthDate);
-
       // ユーザー作成
       const user = await storage.createUser({
         ...validatedData,
         password: hashedPassword,
-        birthDate,
-        birthDateModified: false,
+        birthDate: new Date(validatedData.birthDate),
         createdAt: new Date(),
         updatedAt: new Date()
       });
