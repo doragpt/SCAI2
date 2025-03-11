@@ -24,7 +24,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function useLoginMutation() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
@@ -41,7 +41,7 @@ function useLoginMutation() {
       }
     },
     onSuccess: (user: SelectUser) => {
-      console.log('Login successful:', { userId: user.id, role: user.role });
+      console.log('Login successful, attempting navigation:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -50,13 +50,17 @@ function useLoginMutation() {
         description: "ログインしました。",
       });
 
+      // 直接setLocationを呼び出す代わりにnavigateを使用
       if (user.role === "talent") {
-        setLocation("/talent/mypage");
+        console.log('Redirecting to talent page...');
+        navigate("/talent/mypage");
       } else if (user.role === "store") {
-        setLocation("/store/dashboard");
+        console.log('Redirecting to store page...');
+        navigate("/store/dashboard");
       }
     },
     onError: (error: Error) => {
+      console.error('Login mutation error:', error);
       toast({
         title: "ログインエラー",
         description: error.message || "ログインに失敗しました",
@@ -67,7 +71,7 @@ function useLoginMutation() {
 }
 
 function useLogoutMutation() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
@@ -82,16 +86,17 @@ function useLogoutMutation() {
       }
     },
     onSuccess: () => {
-      console.log('Logout successful');
+      console.log('Logout successful, clearing data and redirecting...');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
-      setLocation("/auth");
+      navigate("/auth");
     },
     onError: (error: Error) => {
+      console.error('Logout mutation error:', error);
       toast({
         title: "ログアウトエラー",
         description: error.message || "ログアウトに失敗しました",
@@ -102,7 +107,7 @@ function useLogoutMutation() {
 }
 
 function useRegisterMutation() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
@@ -119,7 +124,7 @@ function useRegisterMutation() {
       }
     },
     onSuccess: (user: SelectUser) => {
-      console.log('Registration successful:', { userId: user.id, role: user.role });
+      console.log('Registration successful, attempting navigation:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -129,12 +134,15 @@ function useRegisterMutation() {
       });
 
       if (user.role === "talent") {
-        setLocation("/talent/mypage");
+        console.log('Redirecting to talent page...');
+        navigate("/talent/mypage");
       } else if (user.role === "store") {
-        setLocation("/store/dashboard");
+        console.log('Redirecting to store page...');
+        navigate("/store/dashboard");
       }
     },
     onError: (error: Error) => {
+      console.error('Registration mutation error:', error);
       toast({
         title: "登録エラー",
         description: error.message || "登録に失敗しました",
