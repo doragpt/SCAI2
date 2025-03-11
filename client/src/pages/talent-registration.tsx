@@ -9,32 +9,26 @@ import { apiRequest } from "@/lib/queryClient";
 import type { TalentProfileData } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  // ユーザーが未ログインの場合はリダイレクト
+  if (!user) {
+    setLocation("/auth");
+    return null;
+  }
 
   // タレントプロフィールデータを取得
-  const { data: talentProfile, isLoading, error } = useQuery<TalentProfileData>({
+  const { data: talentProfile, isLoading, error } = useQuery({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: async () => {
-      try {
-        console.log("Fetching talent profile...");
-        const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-        if (!response.ok) {
-          console.error("Failed to fetch talent profile:", response.status);
-          throw new Error("タレントプロフィールの取得に失敗しました");
-        }
-        const data = await response.json();
-        console.log("Talent profile fetched successfully:", data);
-        return data;
-      } catch (error) {
-        console.error("Error fetching talent profile:", error);
-        throw error;
-      }
-    },
+    queryFn: () => apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE),
     enabled: !!user?.id,
     retry: 1,
+    staleTime: 30000, // 30秒間はキャッシュを使用
   });
 
   // エラーが発生した場合はuseEffectでトースト表示
@@ -111,7 +105,7 @@ export default function TalentRegistration() {
                   </Button>
                 </div>
               ) : (
-                <TalentForm />
+                <TalentForm initialData={talentProfile} />
               )}
             </CardContent>
           </Card>

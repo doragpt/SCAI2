@@ -4,6 +4,7 @@ import authRoutes from './auth';
 import jobsRoutes from './jobs';
 import applicationsRoutes from './applications';
 import blogRoutes from './blog';
+import talentRoutes from './talent';
 import { log } from '../utils/logger';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -26,6 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
+  app.use('/api/talent', talentRoutes);
 
   // 共通のエラーハンドリング
   app.use((err: Error, req: any, res: any, next: any) => {
