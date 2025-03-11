@@ -11,7 +11,7 @@ const API_BASE_URL = (() => {
 })();
 
 // APIリクエスト関数
-export async function apiRequest<T>(
+export async function apiRequest(
   method: string,
   url: string,
   data?: unknown,
@@ -23,7 +23,7 @@ export async function apiRequest<T>(
     console.log('API Request starting:', {
       method,
       url,
-      hasData: !!data,
+      data,
       timestamp: new Date().toISOString()
     });
 
@@ -32,17 +32,12 @@ export async function apiRequest<T>(
       ...options?.headers,
     };
 
-    // FormDataの場合はContent-Typeを設定しない
-    if (data instanceof FormData) {
-      delete headers["Content-Type"];
-    }
-
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
     const response = await fetch(fullUrl, {
       method,
       headers,
-      body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
 
@@ -170,12 +165,14 @@ export const searchJobsQuery = async (params: {
 
 
 // ユーザー情報更新関数
-export async function updateUserProfile(data: Partial<SelectUser>): Promise<SelectUser> {
-  const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
+export async function updateUserProfile(data: any): Promise<any> {
+  const response = await apiRequest("PATCH", "/api/user", data);
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "ユーザー情報の更新に失敗しました");
   }
+
   return response.json();
 }
 
@@ -184,13 +181,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-      retry: (failureCount, error) => {
-        // 認証エラーの場合はリトライしない
-        if (error instanceof Error && error.message.includes("401")) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: 1,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     },

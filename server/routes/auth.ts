@@ -15,15 +15,21 @@ router.get("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
+    // データベースから最新のユーザー情報を取得
+    const userData = await storage.getUser(user.id);
+    if (!userData) {
+      return res.status(404).json({ message: "ユーザーが見つかりません" });
+    }
+
     // 必要なユーザー情報のみを返す
     const sanitizedUser = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      birthDate: user.birth_date, // スネークケースからキャメルケースに変換
-      location: user.location,
-      preferredLocations: user.preferred_locations || [], // スネークケースからキャメルケースに変換
-      role: user.role
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: userData.preferredLocations || [],
+      role: userData.role
     };
 
     console.log('Sending user data:', sanitizedUser); // デバッグ用ログ
@@ -37,32 +43,59 @@ router.get("/user", authenticate, async (req, res) => {
   }
 });
 
+// ユーザー情報更新エンドポイント
+router.patch("/user", authenticate, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+
+    const { username, location, preferredLocations } = req.body;
+
+    // データベースの更新
+    const updatedUser = await storage.updateUser(user.id, {
+      username,
+      location,
+      preferredLocations
+    });
+
+    res.json({
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      birthDate: updatedUser.birthDate,
+      location: updatedUser.location,
+      preferredLocations: updatedUser.preferredLocations || [],
+      role: updatedUser.role
+    });
+  } catch (error) {
+    console.error('User update error:', error);
+    res.status(500).json({
+      message: "ユーザー情報の更新に失敗しました",
+      error: error instanceof Error ? error.message : undefined
+    });
+  }
+});
+
 // 認証エンドポイント
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {
     // リクエストデータのバリデーション
     const validatedData = talentRegisterFormSchema.parse(req.body);
 
-    // 既存ユーザーのチェック
-    const existingUser = await storage.getUserByUsername(validatedData.username);
-    if (existingUser) {
-      return res.status(400).json({ message: "このユーザー名は既に使用されています" });
-    }
-
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-    // birthDateを日付オブジェクトに変換
-    const birthDate = new Date(validatedData.birthDate);
-
     // ユーザーの作成
     const user = await storage.createUser({
-      ...validatedData,
+      email: validatedData.email,
+      username: validatedData.username,
       password: hashedPassword,
-      birthDate,
-      birthDateModified: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      birthDate: validatedData.birthDate,
+      location: validatedData.location,
+      preferredLocations: validatedData.preferredLocations,
+      role: "talent"
     });
 
     // セッションの作成
@@ -76,7 +109,7 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
-      error: "登録処理中にエラーが発生しました",
+      message: "登録処理中にエラーが発生しました",
       details: error instanceof Error ? error.message : undefined
     });
   }

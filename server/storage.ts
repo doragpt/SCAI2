@@ -11,6 +11,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, data: Partial<User>): Promise<User>;
   sessionStore: session.Store;
 }
 
@@ -31,13 +32,30 @@ export class DatabaseStorage implements IStorage {
         .from(users)
         .where(eq(users.id, id));
 
-      log('info', 'ユーザー取得完了', {
-        id,
-        found: !!user,
-        role: user?.role,
-        email: user?.email
-      });
-      return user;
+      if (user) {
+        // データベースのスネークケースをキャメルケースに変換
+        const formattedUser = {
+          ...user,
+          birthDate: user.birth_date,
+          preferredLocations: Array.isArray(user.preferred_locations) 
+            ? user.preferred_locations 
+            : [],
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        };
+
+        log('info', 'ユーザー取得完了', {
+          id,
+          found: true,
+          role: formattedUser.role,
+          email: formattedUser.email
+        });
+
+        return formattedUser;
+      }
+
+      log('info', 'ユーザー取得完了', { id, found: false });
+      return undefined;
     } catch (error) {
       log('error', 'ユーザー取得エラー', {
         id,
@@ -55,12 +73,29 @@ export class DatabaseStorage implements IStorage {
         .from(users)
         .where(eq(users.email, email));
 
-      log('info', 'メールアドレスでの取得完了', {
-        email,
-        found: !!user,
-        role: user?.role
-      });
-      return user;
+      if (user) {
+        // データベースのスネークケースをキャメルケースに変換
+        const formattedUser = {
+          ...user,
+          birthDate: user.birth_date,
+          preferredLocations: Array.isArray(user.preferred_locations) 
+            ? user.preferred_locations 
+            : [],
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        };
+
+        log('info', 'メールアドレスでの取得完了', {
+          email,
+          found: true,
+          role: formattedUser.role
+        });
+
+        return formattedUser;
+      }
+
+      log('info', 'メールアドレスでの取得完了', { email, found: false });
+      return undefined;
     } catch (error) {
       log('error', 'メールアドレスでの取得エラー', {
         email,
@@ -93,18 +128,73 @@ export class DatabaseStorage implements IStorage {
         throw new Error('ユーザーの作成に失敗しました');
       }
 
+      // データベースのスネークケースをキャメルケースに変換
+      const formattedUser = {
+        ...user,
+        birthDate: user.birth_date,
+        preferredLocations: Array.isArray(user.preferred_locations) 
+          ? user.preferred_locations 
+          : [],
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      };
+
       log('info', '新規ユーザー作成完了', {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role
+        id: formattedUser.id,
+        email: formattedUser.email,
+        username: formattedUser.username,
+        role: formattedUser.role
       });
 
-      return user;
+      return formattedUser;
     } catch (error) {
       log('error', '新規ユーザー作成エラー', {
         email: insertUser.email,
         username: insertUser.username,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
+  }
+
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    try {
+      log('info', 'ユーザー更新開始', { id, data });
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          ...data,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!updatedUser) {
+        throw new Error('ユーザーの更新に失敗しました');
+      }
+
+      // データベースのスネークケースをキャメルケースに変換
+      const formattedUser = {
+        ...updatedUser,
+        birthDate: updatedUser.birth_date,
+        preferredLocations: Array.isArray(updatedUser.preferred_locations) 
+          ? updatedUser.preferred_locations 
+          : [],
+        createdAt: updatedUser.created_at,
+        updatedAt: updatedUser.updated_at
+      };
+
+      log('info', 'ユーザー更新完了', {
+        id,
+        email: formattedUser.email,
+        username: formattedUser.username
+      });
+
+      return formattedUser;
+    } catch (error) {
+      log('error', 'ユーザー更新エラー', {
+        id,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
