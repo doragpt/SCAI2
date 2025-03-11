@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
-import { useNavigate } from 'wouter'; // Import from wouter instead of react-router-dom
+import { useNavigate } from 'wouter';
 
 interface ProfileCheckDialogProps {
   isOpen: boolean;
@@ -46,7 +46,7 @@ export default function ProfileCheckDialog({
   onConfirm,
 }: ProfileCheckDialogProps) {
   const { profileData, isLoading, isError } = useProfile();
-  const [, navigate] = useNavigate(); // Use wouter's useNavigate
+  const [, navigate] = useNavigate();
 
   // フォーマット関数
   const formatProfileValue = (value: unknown): string => {
@@ -128,7 +128,7 @@ export default function ProfileCheckDialog({
         <DialogHeader>
           <DialogTitle>プロフィール確認</DialogTitle>
           <DialogDescription>
-            マッチングを開始する前に、以下の内容を確認してください
+            AIマッチングを開始する前に、以下の内容を確認してください
           </DialogDescription>
         </DialogHeader>
 
@@ -138,13 +138,11 @@ export default function ProfileCheckDialog({
             <section>
               <SectionHeader icon={User} title="基本情報" />
               <div className="grid grid-cols-2 gap-4">
-                <InfoItem label="性" value={formatProfileValue(profileData.lastName)} />
-                <InfoItem label="名" value={formatProfileValue(profileData.firstName)} />
-                <InfoItem label="性 (カナ)" value={formatProfileValue(profileData.lastNameKana)} />
-                <InfoItem label="名 (カナ)" value={formatProfileValue(profileData.firstNameKana)} />
+                <InfoItem label="氏名" value={`${profileData.lastName} ${profileData.firstName}`} />
+                <InfoItem label="フリガナ" value={`${profileData.lastNameKana} ${profileData.firstNameKana}`} />
                 <InfoItem
                   label="生年月日"
-                  value={`${formatProfileValue(profileData.birthDate)} (${profileData.age}歳)`}
+                  value={profileData.birthDate}
                   className="col-span-2"
                 />
                 <InfoItem
@@ -186,30 +184,15 @@ export default function ProfileCheckDialog({
               <div className="grid grid-cols-2 gap-4">
                 <InfoItem
                   label="身長"
-                  value={
-                    <div className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4 text-muted-foreground" />
-                      {formatMeasurement(profileData.height, "cm")}
-                    </div>
-                  }
+                  value={formatMeasurement(profileData.height, "cm")}
                 />
                 <InfoItem
                   label="体重"
-                  value={
-                    <div className="flex items-center gap-2">
-                      <Weight className="h-4 w-4 text-muted-foreground" />
-                      {formatMeasurement(profileData.weight, "kg")}
-                    </div>
-                  }
+                  value={formatMeasurement(profileData.weight, "kg")}
                 />
                 <InfoItem
                   label="カップサイズ"
-                  value={
-                    <div className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-muted-foreground" />
-                      {profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}
-                    </div>
-                  }
+                  value={profileData.cupSize ? `${profileData.cupSize}カップ` : "未入力"}
                 />
                 <InfoItem
                   label="スリーサイズ"
@@ -254,11 +237,6 @@ export default function ProfileCheckDialog({
             <section>
               <SectionHeader icon={Camera} title="写真関連" />
               <div className="space-y-4">
-                <InfoItem
-                  label="写メ日記の投稿"
-                  value={<StatusBadge value={profileData.canPhotoDiary} positive={profileData.canPhotoDiary} />}
-                />
-                <InfoItem label="顔出し設定" value={formatProfileValue(profileData.faceVisibility)} />
                 {profileData.photos && (
                   <div>
                     <Label>登録済み写真</Label>
@@ -281,6 +259,11 @@ export default function ProfileCheckDialog({
                     </div>
                   </div>
                 )}
+                <InfoItem label="顔出し設定" value={formatProfileValue(profileData.faceVisibility)} />
+                <InfoItem
+                  label="写メ日記の投稿"
+                  value={<StatusBadge value={profileData.canPhotoDiary} positive={profileData.canPhotoDiary} />}
+                />
               </div>
             </section>
 
@@ -459,8 +442,8 @@ export default function ProfileCheckDialog({
             プロフィールを修正する
           </Button>
           <Button onClick={() => {
-            onConfirm(); // Call the original onConfirm function
-            navigate("/talent/ai-matching"); // Add the navigation after the original onConfirm
+            onConfirm();
+            navigate("/talent/ai-matching"); 
           }}>
             この内容で続ける
           </Button>
