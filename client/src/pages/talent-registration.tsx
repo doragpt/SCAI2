@@ -19,12 +19,13 @@ export default function TalentRegistration() {
     data: talentProfile,
     isLoading,
     error,
-    isError
+    isError,
+    refetch
   } = useQuery<TalentProfileData | null>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
     enabled: !!user?.id,
-    retry: 1,
+    retry: 2,
     retryDelay: 1000,
     onError: (error) => {
       console.error("Profile fetch error:", error);
@@ -101,7 +102,7 @@ export default function TalentRegistration() {
                   <Button
                     variant="outline"
                     className="mt-4"
-                    onClick={() => window.location.reload()}
+                    onClick={() => refetch()}
                   >
                     再読み込み
                   </Button>
