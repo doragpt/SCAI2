@@ -3,14 +3,7 @@ import type { TalentProfileData, SelectUser } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
-// APIのベースURL設定
-const API_BASE_URL = (() => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  return `${protocol}//${hostname}`;
-})();
-
-// APIリクエスト関数
+// APIリクエスト関数の強化
 export async function apiRequest(
   method: string,
   url: string,
@@ -32,7 +25,7 @@ export async function apiRequest(
       ...options?.headers,
     };
 
-    const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+    const fullUrl = url.startsWith("http") ? url : url;
 
     const response = await fetch(fullUrl, {
       method,
@@ -48,6 +41,7 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
+    // エラーレスポンスの処理
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `API Request Failed: ${response.status} ${response.statusText}`);
