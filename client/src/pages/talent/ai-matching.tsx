@@ -2,12 +2,9 @@ import { SEO } from "@/lib/seo";
 import { AIMatchingChat } from "@/components/ai-matching-chat";
 import { useProfile } from "@/hooks/use-profile";
 import { Loader2 } from "lucide-react";
-import { ProfileConfirmationDialog } from "@/components/profile-confirmation-dialog";
-import { useState } from "react";
 
 export default function AIMatchingPage() {
-  const { profileData, isLoading } = useProfile();
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const { isLoading } = useProfile();
 
   if (isLoading) {
     return (
@@ -36,19 +33,7 @@ export default function AIMatchingPage() {
           </div>
         </header>
         <main className="container mx-auto py-8">
-          <AIMatchingChat onStartMatching={() => setShowConfirmation(true)} />
-          {profileData && (
-            <ProfileConfirmationDialog
-              isOpen={showConfirmation}
-              onClose={() => setShowConfirmation(false)}
-              onConfirm={() => {
-                // AIマッチング開始のロジック
-                setShowConfirmation(false);
-              }}
-              profileData={profileData}
-              isLoading={false}
-            />
-          )}
+          <AIMatchingChat />
         </main>
       </div>
     </>
