@@ -3,14 +3,10 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
-import {
-  type SelectUser,
-  type LoginData,
-  type RegisterFormData
-} from "@shared/schema";
-import { apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import type { SelectUser, LoginData, RegisterFormData } from "@shared/schema";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -29,15 +25,18 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const response = await apiRequest("POST", "/api/login", credentials);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+      try {
+        console.log('Login attempt:', { email: credentials.email });
+        const response = await apiRequest("POST", "/api/login", credentials);
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Login error:', error);
+        throw error;
       }
-      const data = await response.json();
-      return data;
     },
     onSuccess: (user: SelectUser) => {
+      console.log('Login successful:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -69,12 +68,17 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
-      if (!response.ok) {
-        throw new Error("ログアウトに失敗しました");
+      try {
+        console.log('Logout attempt');
+        const response = await apiRequest("POST", "/api/logout");
+        await response.json();
+      } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
       }
     },
     onSuccess: () => {
+      console.log('Logout successful');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
       toast({
@@ -99,15 +103,18 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const response = await apiRequest("POST", "/api/auth/register", data);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "登録に失敗しました");
+      try {
+        console.log('Registration attempt:', { email: data.email });
+        const response = await apiRequest("POST", "/api/auth/register", data);
+        const result = await response.json();
+        return result.user;
+      } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
       }
-      const result = await response.json();
-      return result.user;
     },
     onSuccess: (user: SelectUser) => {
+      console.log('Registration successful:', { userId: user.id, role: user.role });
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
@@ -116,7 +123,6 @@ function useRegisterMutation() {
         description: "アカウントが正常に作成されました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -144,23 +150,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...'); // デバッグログ
+        console.log('Checking auth status...'); 
         const response = await apiRequest("GET", "/api/check");
-        console.log('Auth check response:', response); // デバッグログ
+        console.log('Auth check response:', response); 
 
         if (!response.ok) {
           if (response.status === 401) {
+            console.log('User not authenticated');
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
 
         const data = await response.json();
-        console.log('Auth check data:', data); // デバッグログ
+        console.log('Auth check data:', data); 
         return data;
       } catch (error) {
         console.error('Auth check error:', error);
-        return null;
+        if (error instanceof Error && error.message === "認証されていません") {
+          return null;
+        }
+        throw error;
       }
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持

@@ -102,21 +102,143 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
+    if (!user) {
+      return done(new Error('ユーザーが見つかりません'), null);
+    }
+    log('info', 'ユーザーシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
+      log('info', 'ユーザーデシリアライズ開始', { userId: id });
       const user = await storage.getUser(id);
       if (!user) {
+        log('warn', 'デシリアライズ失敗：ユーザー未検出', { userId: id });
         return done(null, false);
       }
+      log('info', 'ユーザーデシリアライズ成功', { userId: id });
       done(null, user);
     } catch (error) {
+      log('error', 'デシリアライズエラー', {
+        userId: id,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       done(error);
     }
   });
 
+  // セッションチェックAPI
+  app.get("/api/check", (req, res) => {
+    log('info', 'セッションチェック', {
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      session: req.session ? 'exists' : 'none',
+      user: req.user ? 'exists' : 'none'
+    });
+
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "認証されていません" });
+    }
+
+    res.json(sanitizeUser(req.user));
+  });
+
+  // ログインAPI
+  app.post("/api/login", (req, res, next) => {
+    log('info', 'ログインリクエスト受信', {
+      email: req.body.email,
+      sessionID: req.sessionID
+    });
+
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        log('error', 'ログイン認証エラー', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+          sessionID: req.sessionID
+        });
+        return next(err);
+      }
+
+      if (!user) {
+        log('warn', 'ログイン失敗', {
+          email: req.body.email,
+          reason: info?.message || "認証失敗",
+          sessionID: req.sessionID
+        });
+        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
+      }
+
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          log('error', 'セッション作成エラー', {
+            error: loginErr instanceof Error ? loginErr.message : 'Unknown error',
+            sessionID: req.sessionID
+          });
+          return next(loginErr);
+        }
+
+        log('info', 'ログイン成功', {
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          sessionID: req.sessionID
+        });
+
+        res.json(sanitizeUser(user));
+      });
+    })(req, res, next);
+  });
+
+  // ログアウトAPI
+  app.post("/api/logout", (req, res, next) => {
+    try {
+      if (req.user) {
+        const user = req.user as SelectUser;
+        log('info', 'ログアウトリクエスト受信', {
+          userId: user.id,
+          email: user.email,
+          sessionID: req.sessionID
+        });
+      }
+
+      req.logout((err) => {
+        if (err) {
+          log('error', 'ログアウトエラー', {
+            error: err instanceof Error ? err.message : 'Unknown error',
+            sessionID: req.sessionID
+          });
+          return next(err);
+        }
+
+        req.session.destroy((err) => {
+          if (err) {
+            log('error', 'セッション破棄エラー', {
+              error: err instanceof Error ? err.message : 'Unknown error',
+              sessionID: req.sessionID
+            });
+            return res.status(500).json({
+              message: "セッションの破棄に失敗しました"
+            });
+          }
+
+          res.clearCookie('scai.sid');
+          log('info', 'ログアウト成功', { sessionID: req.sessionID });
+          return res.status(200).json({
+            message: "ログアウトしました"
+          });
+        });
+      });
+    } catch (error) {
+      log('error', 'ログアウト処理エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        sessionID: req.sessionID
+      });
+      return res.status(500).json({
+        message: "ログアウト処理中にエラーが発生しました"
+      });
+    }
+  });
   // ユーザー情報取得API
   app.get("/api/user", async (req, res) => {
     try {
@@ -226,75 +348,6 @@ export function setupAuth(app: Express) {
         message: "ユーザー情報の更新に失敗しました"
       });
     }
-  });
-
-  // ログインAPI
-  app.post("/api/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', {
-      email: req.body.email
-    });
-    passport.authenticate('local', (err, user, info) => {
-      if (err) return next(err);
-      if (!user) {
-        log('warn', 'ログイン失敗', {
-          email: req.body.email,
-          reason: info?.message || "認証失敗"
-        });
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
-      }
-      req.login(user, (err) => {
-        if (err) return next(err);
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        });
-        res.json(sanitizeUser(user));
-      });
-    })(req, res, next);
-  });
-
-  // ログアウトAPI
-  app.post("/api/logout", (req, res, next) => {
-    try {
-      if (req.user) {
-        const user = req.user as SelectUser;
-        log('info', 'ログアウトリクエスト受信', {
-          userId: user.id,
-          email: user.email
-        });
-      }
-      req.logout((err) => {
-        if (err) return next(err);
-        req.session.destroy((err) => {
-          if (err) {
-            log('error', 'セッション破棄エラー', { error: err });
-            return res.status(500).json({
-              message: "セッションの破棄に失敗しました"
-            });
-          }
-          res.clearCookie('connect.sid');
-          return res.status(200).json({
-            message: "ログアウトしました"
-          });
-        });
-      });
-    } catch (error) {
-      log('error', 'ログアウトエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      return res.status(500).json({
-        message: "ログアウト処理中にエラーが発生しました"
-      });
-    }
-  });
-
-  // セッションチェックAPI
-  app.get("/api/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-    res.json(sanitizeUser(req.user));
   });
 
   // 新規登録APIエンドポイント
