@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser } from "@shared/schema";
+import { users, type User, type InsertUser, talentProfiles, type TalentProfile, type TalentProfileData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -12,6 +12,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
+  getTalentProfile(userId: number): Promise<TalentProfileData | undefined>;
+  createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData>;
   sessionStore: session.Store;
 }
 
@@ -44,7 +46,7 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate, 
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
@@ -58,7 +60,7 @@ export class DatabaseStorage implements IStorage {
         id: user.id,
         email: user.email,
         role: user.role,
-        birthDate: user.birthDate // デバッグ用に追加
+        birthDate: user.birthDate 
       });
 
       return user;
@@ -90,7 +92,7 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate, 
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
@@ -128,7 +130,7 @@ export class DatabaseStorage implements IStorage {
           email: insertUser.email,
           username: insertUser.username,
           password: insertUser.password,
-          birthDate: insertUser.birthDate, // ここを修正
+          birthDate: insertUser.birthDate, 
           location: insertUser.location,
           preferredLocations: insertUser.preferredLocations,
           role: insertUser.role,
@@ -147,7 +149,7 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate, 
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
@@ -178,10 +180,10 @@ export class DatabaseStorage implements IStorage {
 
       const updateData = {
         username: data.username,
-        birthDate: data.birthDate, // ここを修正
+        birthDate: data.birthDate, 
         location: data.location,
         preferredLocations: data.preferredLocations,
-        password: data.password, // パスワード更新対応
+        password: data.password, 
         updatedAt: new Date()
       };
 
@@ -203,7 +205,7 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate, // ここを修正
+        birthDate: result.birthDate, 
         location: result.location,
         preferredLocations: Array.isArray(result.preferredLocations) 
           ? result.preferredLocations 
@@ -222,6 +224,157 @@ export class DatabaseStorage implements IStorage {
       return user;
     } catch (error) {
       log('error', 'ユーザー更新エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
+  }
+
+  async getTalentProfile(userId: number): Promise<TalentProfileData | undefined> {
+    try {
+      log('info', 'タレントプロフィール取得開始', { userId });
+
+      const [result] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, userId));
+
+      if (!result) {
+        log('info', 'タレントプロフィールが見つかりません', { userId });
+        return undefined;
+      }
+
+      // データベースのレコードをTalentProfileData型に変換
+      const profile: TalentProfileData = {
+        lastName: result.lastName,
+        firstName: result.firstName,
+        lastNameKana: result.lastNameKana,
+        firstNameKana: result.firstNameKana,
+        location: result.location,
+        nearestStation: result.nearestStation,
+        availableIds: result.availableIds,
+        canProvideResidenceRecord: result.canProvideResidenceRecord,
+        height: result.height,
+        weight: result.weight,
+        cupSize: result.cupSize,
+        bust: result.bust,
+        waist: result.waist,
+        hip: result.hip,
+        faceVisibility: result.faceVisibility,
+        canPhotoDiary: result.canPhotoDiary,
+        canHomeDelivery: result.canHomeDelivery,
+        ngOptions: result.ngOptions,
+        allergies: result.allergies,
+        smoking: result.smoking,
+        hasSnsAccount: result.hasSnsAccount,
+        snsUrls: result.snsUrls,
+        currentStores: result.currentStores,
+        previousStores: result.previousStores,
+        photoDiaryUrls: result.photoDiaryUrls,
+        selfIntroduction: result.selfIntroduction,
+        notes: result.notes,
+        estheOptions: result.estheOptions,
+        hasEstheExperience: result.hasEstheExperience,
+        estheExperiencePeriod: result.estheExperiencePeriod,
+        preferredLocations: result.preferredLocations,
+        ngLocations: result.ngLocations,
+        bodyMark: result.bodyMark,
+        photos: result.photos
+      };
+
+      log('info', 'タレントプロフィール取得成功', { userId });
+      return profile;
+
+    } catch (error) {
+      log('error', 'タレントプロフィール取得エラー', {
+        userId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
+  }
+
+  async createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData> {
+    try {
+      log('info', 'タレントプロフィール作成/更新開始', { userId });
+
+      // 既存のプロフィールを確認
+      const [existingProfile] = await db
+        .select()
+        .from(talentProfiles)
+        .where(eq(talentProfiles.userId, userId));
+
+      let result;
+      if (existingProfile) {
+        // 更新
+        [result] = await db
+          .update(talentProfiles)
+          .set({
+            ...data,
+            updatedAt: new Date()
+          })
+          .where(eq(talentProfiles.userId, userId))
+          .returning();
+      } else {
+        // 新規作成
+        [result] = await db
+          .insert(talentProfiles)
+          .values({
+            userId,
+            ...data,
+            updatedAt: new Date()
+          })
+          .returning();
+      }
+
+      if (!result) {
+        throw new Error('タレントプロフィールの保存に失敗しました');
+      }
+
+      // 保存したデータをTalentProfileData型に変換して返す
+      const profile: TalentProfileData = {
+        lastName: result.lastName,
+        firstName: result.firstName,
+        lastNameKana: result.lastNameKana,
+        firstNameKana: result.firstNameKana,
+        location: result.location,
+        nearestStation: result.nearestStation,
+        availableIds: result.availableIds,
+        canProvideResidenceRecord: result.canProvideResidenceRecord,
+        height: result.height,
+        weight: result.weight,
+        cupSize: result.cupSize,
+        bust: result.bust,
+        waist: result.waist,
+        hip: result.hip,
+        faceVisibility: result.faceVisibility,
+        canPhotoDiary: result.canPhotoDiary,
+        canHomeDelivery: result.canHomeDelivery,
+        ngOptions: result.ngOptions,
+        allergies: result.allergies,
+        smoking: result.smoking,
+        hasSnsAccount: result.hasSnsAccount,
+        snsUrls: result.snsUrls,
+        currentStores: result.currentStores,
+        previousStores: result.previousStores,
+        photoDiaryUrls: result.photoDiaryUrls,
+        selfIntroduction: result.selfIntroduction,
+        notes: result.notes,
+        estheOptions: result.estheOptions,
+        hasEstheExperience: result.hasEstheExperience,
+        estheExperiencePeriod: result.estheExperiencePeriod,
+        preferredLocations: result.preferredLocations,
+        ngLocations: result.ngLocations,
+        bodyMark: result.bodyMark,
+        photos: result.photos
+      };
+
+      log('info', 'タレントプロフィール保存成功', { userId });
+      return profile;
+
+    } catch (error) {
+      log('error', 'タレントプロフィール保存エラー', {
+        userId,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
