@@ -7,6 +7,36 @@ import * as bcrypt from 'bcrypt';
 
 const router = Router();
 
+// ユーザー情報取得エンドポイント
+router.get("/user", authenticate, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+
+    // 必要なユーザー情報のみを返す
+    const sanitizedUser = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      birthDate: user.birth_date, // スネークケースからキャメルケースに変換
+      location: user.location,
+      preferredLocations: user.preferred_locations || [], // スネークケースからキャメルケースに変換
+      role: user.role
+    };
+
+    console.log('Sending user data:', sanitizedUser); // デバッグ用ログ
+    res.json(sanitizedUser);
+  } catch (error) {
+    console.error('User fetch error:', error);
+    res.status(500).json({
+      message: "ユーザー情報の取得に失敗しました",
+      error: error instanceof Error ? error.message : undefined
+    });
+  }
+});
+
 // 認証エンドポイント
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {

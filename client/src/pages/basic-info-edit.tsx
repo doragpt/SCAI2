@@ -62,7 +62,8 @@ export default function BasicInfoEdit() {
     queryFn: async () => {
       const response = await apiRequest("GET", QUERY_KEYS.USER);
       if (!response.ok) {
-        throw new Error("ユーザー情報の取得に失敗しました");
+        const error = await response.json();
+        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       return response.json();
     },
@@ -80,18 +81,19 @@ export default function BasicInfoEdit() {
 
   useEffect(() => {
     if (userProfile) {
-      console.log("Received user profile:", userProfile); // デバッグ用
+      console.log('Setting form data with:', userProfile); 
       form.reset({
         username: userProfile.username,
         location: userProfile.location,
-        preferredLocations: userProfile.preferredLocations || [],
+        preferredLocations: Array.isArray(userProfile.preferredLocations) 
+          ? userProfile.preferredLocations 
+          : [],
       });
     }
   }, [userProfile, form]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log("Updating profile with:", data); // デバッグ用
       const response = await apiRequest("PATCH", QUERY_KEYS.USER, {
         username: data.username,
         location: data.location,
