@@ -3,7 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type Job, type ServiceType, serviceTypes } from "@shared/schema"; // Import serviceTypes from @shared/schema
+import { QUERY_KEYS, getJobsQuery } from "@/lib/queryClient";
+
+// ServiceTypeの型定義
+type ServiceType = {
+  id: string;
+  label: string;
+};
+
+// サービスタイプの定義
+const serviceTypes: ServiceType[] = [
+  { id: "deriheru", label: "デリヘル" },
+  { id: "hoteheru", label: "ホテヘル" },
+  { id: "hakoheru", label: "箱ヘル" },
+  { id: "esthe", label: "エステ" },
+  { id: "onakura", label: "オナクラ" },
+  { id: "mseikan", label: "M性感" },
+];
+
 import {
   Loader2,
   MapPin,
@@ -51,7 +68,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import React from 'react';
-import { QUERY_KEYS, getJobsQuery } from "@/lib/queryClient";
+
 
 // アニメーション設定
 const container = {
@@ -91,10 +108,9 @@ const areaGroups = [
 ];
 
 
-// Define getServiceTypeLabel function
+// getServiceTypeLabelの修正
 const getServiceTypeLabel = (serviceType: ServiceType): string => {
-  const type = serviceTypes.find(t => t.id === serviceType.id);
-  return type ? type.label : ""; // Handle cases where serviceType is not found
+  return serviceType.label || "";
 };
 
 // データの追加
@@ -154,6 +170,17 @@ const formatSalary = (min?: number, max?: number) => {
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 };
 
+// ジョブデータの型定義
+interface Job {
+  id: number;
+  business_name: string;
+  location: string;
+  service_type: ServiceType;
+  minimum_guarantee: number | null;
+  maximum_guarantee: number | null;
+  transportation_support: boolean;
+  housing_support: boolean;
+}
 
 // JobCardコンポーネントを修正
 const JobCard = ({ job }: { job: Job }) => {
@@ -178,12 +205,12 @@ const JobCard = ({ job }: { job: Job }) => {
             <HoverCard>
               <HoverCardTrigger>
                 <Badge variant="outline" className="bg-primary/5">
-                  {getServiceTypeLabel(job.service_type as ServiceType)}
+                  {getServiceTypeLabel(job.service_type)}
                 </Badge>
               </HoverCardTrigger>
               <HoverCardContent>
                 <p className="text-sm">
-                  {getServiceTypeLabel(job.service_type as ServiceType)}に関する求人です
+                  {getServiceTypeLabel(job.service_type)}に関する求人です
                 </p>
               </HoverCardContent>
             </HoverCard>
@@ -234,7 +261,7 @@ export default function HomePage() {
   const { toast } = useToast();
 
   // 求人データの取得処理を改善
-  const { data: jobListings = [], isLoading: jobsLoading, error, refetch } = useQuery({
+  const { data: jobListings = [], isLoading: jobsLoading, error, refetch } = useQuery<Job[]>({
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: getJobsQuery,
     retry: 2,
@@ -256,7 +283,7 @@ export default function HomePage() {
       .filter(job => {
         if (!job) return false;
         const areaMatch = !selectedArea || job.location?.includes(selectedArea);
-        const typeMatch = selectedType === "all" || job.service_type === selectedType;
+        const typeMatch = selectedType === "all" || job.service_type?.id === selectedType; 
         return areaMatch && typeMatch;
       })
       .slice(0, 6);

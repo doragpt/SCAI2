@@ -1,28 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 
 // APIのベースURL設定
-const API_BASE_URL = (() => {
-  try {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
-  } catch (error) {
-    console.error('API URL construction error:', error);
-    return '/api'; // フォールバックURL
-  }
-})();
-
-// トークンの取得
-function getAuthToken(): string | null {
-  try {
-    return localStorage.getItem('auth_token');
-  } catch (error) {
-    console.error('Error getting auth token:', error);
-    return null;
-  }
-}
+const API_BASE_URL = '/api';
 
 // APIリクエスト関数
 export async function apiRequest(
@@ -33,27 +12,19 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers,
+  };
+
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+
   try {
-    console.log('[API Request]:', {
-      method,
-      endpoint,
-      timestamp: new Date().toISOString()
-    });
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    };
-
-    // 認証トークンの追加
-    const token = getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // URLの構築
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-
     const response = await fetch(url, {
       method,
       headers,
@@ -61,48 +32,36 @@ export async function apiRequest(
       credentials: "include",
     });
 
-    console.log('[API Response]:', {
-      status: response.status,
-      statusText: response.statusText,
-      url,
-      timestamp: new Date().toISOString()
-    });
-
-    return response;
-  } catch (error) {
-    console.error('[API Error]:', {
-      method,
-      endpoint,
-      error: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
-    });
-    throw error;
-  }
-}
-
-// タレントプロフィール関連の関数
-export async function getTalentProfile(): Promise<any | null> {
-  try {
-    const response = await apiRequest("GET", "/talent/profile");
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
         message: `Server error: ${response.status} ${response.statusText}`
       }));
-      throw new Error(errorData.message || "プロフィールの取得に失敗しました");
+      throw new Error(errorData.message || "APIリクエストに失敗しました");
     }
 
-    const data = await response.json();
-    return data;
+    return response;
   } catch (error) {
-    console.error("Profile fetch error:", {
+    console.error('API Request Error:', {
+      method,
+      endpoint,
       error: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
     });
     throw error;
   }
 }
 
+// クエリキー定数
+export const QUERY_KEYS = {
+  JOBS_PUBLIC: 'jobs/public',
+  TALENT_PROFILE: 'talent/profile',
+  USER: 'user',
+} as const;
+
+// ジョブ取得クエリ関数
+export async function getJobsQuery() {
+  const response = await apiRequest('GET', QUERY_KEYS.JOBS_PUBLIC);
+  return response.json();
+}
 
 // クエリクライアントの設定
 export const queryClient = new QueryClient({
@@ -116,5 +75,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-export { QUERY_KEYS };
