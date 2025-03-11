@@ -1,10 +1,13 @@
 import { SEO } from "@/lib/seo";
 import { AIMatchingChat } from "@/components/ai-matching-chat";
 import { useProfile } from "@/hooks/use-profile";
+import { ProfileConfirmationDialog } from "@/components/profile-confirmation-dialog";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 export default function AIMatchingPage() {
-  const { isLoading } = useProfile();
+  const { profileData, isLoading } = useProfile();
+  const [showDialog, setShowDialog] = useState(true);
 
   if (isLoading) {
     return (
@@ -36,6 +39,13 @@ export default function AIMatchingPage() {
           <AIMatchingChat />
         </main>
       </div>
+      <ProfileConfirmationDialog
+        isOpen={showDialog}
+        onClose={() => setShowDialog(false)}
+        onConfirm={() => setShowDialog(false)}
+        profileData={profileData}
+        isLoading={isLoading}
+      />
     </>
   );
 }
