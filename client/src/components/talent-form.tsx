@@ -941,17 +941,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         <SelectTrigger>                        <SelectValue placeholder="選択してください" />
                                             </SelectTrigger>
                         <SelectContent>
-                          {prefectures.map((prefecture) => (
-                            <SelectItem key={prefecture} value={prefecture}>
-                              {prefecture}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                        {prefectures.map((prefecture) => (
+                          <SelectItem key={prefecture} value={prefecture}>
+                            {prefecture}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
               />
               <FormField
                 control={form.control}
@@ -1054,7 +1054,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   <FormItem>
                     <FormLabel>身長 (cm)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} min={100} max={200} />
+                      <Input
+                        type="number"
+                        min="100"
+                        max="200"
+                        step="1"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value, 10) : "";
+                          field.onChange(value);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1067,7 +1077,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   <FormItem>
                     <FormLabel>体重 (kg)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} min={30} max={150} />
+                      <Input
+                        type="number"
+                        min="30"
+                        max="150"
+                        step="1"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value, 10) : "";
+                          field.onChange(value);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
