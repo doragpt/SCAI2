@@ -16,37 +16,35 @@ export const profileSchema = z.object({
   firstName: z.string().min(1, "名を入力してください"),
   lastNameKana: z.string().min(1, "姓（カナ）を入力してください"),
   firstNameKana: z.string().min(1, "名（カナ）を入力してください"),
-  birthDate: z.string().optional(), // 生年月日は基本情報から取得
   location: PrefectureSchema,
   nearestStation: z.string().min(1, "最寄り駅を入力してください"),
 
   // 身体的特徴（必須）
   height: z.number().min(140).max(200),
   weight: z.number().min(30).max(120),
-  bust: z.number().min(50).max(150).nullable(),
-  waist: z.number().min(50).max(150).nullable(),
-  hip: z.number().min(50).max(150).nullable(),
+  bust: z.number().min(50).max(150),
+  waist: z.number().min(50).max(150),
+  hip: z.number().min(50).max(150),
   cupSize: z.string(),
 
   // 身分証明書
   availableIds: z.object({
-    types: z.array(z.string()),
-    others: z.array(z.string()),
+    types: z.array(z.string()).optional(),
+    others: z.array(z.string()).optional(),
   }),
   canProvideResidenceRecord: z.boolean(),
 
   // 写真関連
   faceVisibility: z.string(),
   canPhotoDiary: z.boolean(),
-  photoDiaryUrls: z.array(z.string()),
+  photoDiaryUrls: z.array(z.string()).optional(),
   photos: z.array(z.object({
     url: z.string(),
     tag: z.string(),
   })),
 
-  // 各種対応可否
+  // 自宅派遣関連
   canHomeDelivery: z.boolean(),
-  canArrivePreviousDay: z.boolean().optional(),
 
   // NGオプション
   ngOptions: z.object({
@@ -85,20 +83,6 @@ export const profileSchema = z.object({
   hasEstheExperience: z.boolean(),
   estheExperiencePeriod: z.string().optional(),
   estheOptions: EstheOptionSchema,
-
-  // 希望エリア
-  preferredLocations: z.array(z.string()).optional(),
-  ngLocations: z.array(z.string()).optional(),
-
-  // 勤務情報
-  workType: z.string().optional(),
-  workPeriodStart: z.string().optional(),
-  workPeriodEnd: z.string().optional(),
-  waitingHours: z.number().optional(),
-  departureLocation: z.string().optional(),
-  returnLocation: z.string().optional(),
-  desiredGuarantee: z.number().optional(),
-  desiredRate: z.number().optional(),
 
   // 身体的特徴（追加）
   bodyMark: z.object({

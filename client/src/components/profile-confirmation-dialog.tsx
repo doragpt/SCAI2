@@ -29,8 +29,10 @@ import {
   Building2,
   Banknote,
   CreditCard,
+  Share2,
+  FileCheck
 } from "lucide-react";
-import { ProfileData } from "@shared/types/profile";
+import { TalentProfileData } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -39,7 +41,7 @@ interface ProfileConfirmationDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   isLoading?: boolean;
-  profileData: ProfileData | null;
+  profileData: TalentProfileData;
 }
 
 // InfoItem コンポーネント
@@ -76,7 +78,6 @@ export function ProfileConfirmationDialog({
 
   // 年齢計算
   const calculateAge = (birthDate: string) => {
-    if (!birthDate) return null;
     const today = new Date();
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
@@ -93,7 +94,7 @@ export function ProfileConfirmationDialog({
         <DialogHeader>
           <DialogTitle>プロフィール確認</DialogTitle>
           <DialogDescription>
-            以下の内容でプロフィールを更新します。内容をご確認ください。
+            以下の内容でAIマッチングを開始します。内容をご確認ください。
           </DialogDescription>
         </DialogHeader>
 
@@ -104,20 +105,12 @@ export function ProfileConfirmationDialog({
               <SectionHeader icon={FileText} title="基本情報" />
               <Card className="p-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <InfoItem 
-                    label="氏名" 
-                    value={`${profileData.lastName} ${profileData.firstName}`} 
+                  <InfoItem label="氏名" value={`${profileData.lastName} ${profileData.firstName}`} />
+                  <InfoItem label="フリガナ" value={`${profileData.lastNameKana} ${profileData.firstNameKana}`} />
+                  <InfoItem
+                    label="生年月日"
+                    value={`${formatValue(profileData.birthDate)} (${calculateAge(profileData.birthDate)}歳)`}
                   />
-                  <InfoItem 
-                    label="フリガナ" 
-                    value={`${profileData.lastNameKana} ${profileData.firstNameKana}`} 
-                  />
-                  {profileData.birthDate && (
-                    <InfoItem
-                      label="生年月日"
-                      value={`${format(new Date(profileData.birthDate), "yyyy年MM月dd日", { locale: ja })} (${calculateAge(profileData.birthDate)}歳)`}
-                    />
-                  )}
                   <InfoItem
                     label="在住地"
                     value={
@@ -128,6 +121,42 @@ export function ProfileConfirmationDialog({
                     }
                   />
                   <InfoItem label="最寄り駅" value={formatValue(profileData.nearestStation)} />
+                </div>
+              </Card>
+            </section>
+
+            {/* 身分証明書 */}
+            <section>
+              <SectionHeader icon={FileCheck} title="身分証明書" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="提示可能な身分証明書"
+                    value={
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.availableIds?.types?.map((id, index) => (
+                          <Badge key={index} variant="outline">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {id}
+                          </Badge>
+                        ))}
+                        {profileData.availableIds?.others?.map((id, index) => (
+                          <Badge key={`other-${index}`} variant="outline">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {id}
+                          </Badge>
+                        ))}
+                      </div>
+                    }
+                  />
+                  <InfoItem
+                    label="本籍地記載の住民票"
+                    value={
+                      <Badge variant={profileData.canProvideResidenceRecord ? "default" : "secondary"}>
+                        {profileData.canProvideResidenceRecord ? "提出可能" : "提出不可"}
+                      </Badge>
+                    }
+                  />
                 </div>
               </Card>
             </section>
@@ -148,105 +177,6 @@ export function ProfileConfirmationDialog({
               </Card>
             </section>
 
-            {/* 写真関連 */}
-            <section>
-              <SectionHeader icon={Camera} title="写真関連" />
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <InfoItem
-                    label="写メ日記"
-                    value={
-                      <Badge variant={profileData.canPhotoDiary ? "default" : "secondary"}>
-                        {profileData.canPhotoDiary ? "投稿可" : "投稿不可"}
-                      </Badge>
-                    }
-                  />
-                  <InfoItem label="顔出し設定" value={formatValue(profileData.faceVisibility)} />
-                </div>
-              </Card>
-            </section>
-
-            {/* 写真一覧 */}
-            {profileData.photos && profileData.photos.length > 0 && (
-              <section>
-                <SectionHeader icon={Camera} title="登録写真" />
-                <Card className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {profileData.photos.map((photo, index) => (
-                      <div key={index} className="relative aspect-[3/4]">
-                        <img
-                          src={photo.url}
-                          alt={`プロフィール写真 ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <Badge
-                          className="absolute top-2 right-2 bg-black/75"
-                          variant="outline"
-                        >
-                          {photo.tag}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </section>
-            )}
-
-            {/* 身分証明書 */}
-            <section>
-              <SectionHeader icon={FileText} title="身分証明書" />
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <InfoItem
-                    label="提示可能な身分証明書"
-                    value={
-                      <div className="flex flex-wrap gap-2">
-                        {profileData.availableIds?.types?.map((id, index) => (
-                          <Badge key={index} variant="outline">
-                            <CreditCard className="h-3 w-3 mr-1" />
-                            {id}
-                          </Badge>
-                        ))}
-                      </div>
-                    }
-                  />
-                  <InfoItem
-                    label="本籍地記載の住民票"
-                    value={
-                      <Badge variant={profileData.canProvideResidenceRecord ? "default" : "secondary"}>
-                        {profileData.canProvideResidenceRecord ? "提出可能" : "提出不可"}
-                      </Badge>
-                    }
-                  />
-                </div>
-              </Card>
-            </section>
-
-            {/* PR・備考 */}
-            <section>
-              <SectionHeader icon={FileText} title="PR・備考" />
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <InfoItem
-                    label="自己PR"
-                    value={
-                      <p className="whitespace-pre-wrap text-sm">
-                        {formatValue(profileData.selfIntroduction)}
-                      </p>
-                    }
-                  />
-                  <Separator />
-                  <InfoItem
-                    label="備考"
-                    value={
-                      <p className="whitespace-pre-wrap text-sm">
-                        {formatValue(profileData.notes)}
-                      </p>
-                    }
-                  />
-                </div>
-              </Card>
-            </section>
             {/* 傷・タトゥー・アトピー */}
             {(profileData.bodyMark?.hasBodyMark || (profileData.bodyMark?.others && profileData.bodyMark.others.length > 0)) && (
               <section>
@@ -462,6 +392,24 @@ export function ProfileConfirmationDialog({
             )}
 
 
+            {/* 写真関連 */}
+            <section>
+              <SectionHeader icon={Camera} title="写真関連" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="写メ日記"
+                    value={
+                      <Badge variant={profileData.canPhotoDiary ? "default" : "secondary"}>
+                        {profileData.canPhotoDiary ? "投稿可" : "投稿不可"}
+                      </Badge>
+                    }
+                  />
+                  <InfoItem label="顔出し設定" value={formatValue(profileData.faceVisibility)} />
+                </div>
+              </Card>
+            </section>
+
             {/* 勤務情報 */}
             <section>
               <SectionHeader icon={Building2} title="勤務情報" />
@@ -611,6 +559,58 @@ export function ProfileConfirmationDialog({
                 </Card>
               </section>
             )}
+
+            {/* 写真一覧 */}
+            {profileData.photos && profileData.photos.length > 0 && (
+              <section>
+                <SectionHeader icon={Camera} title="登録写真" />
+                <Card className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {profileData.photos.map((photo, index) => (
+                      <div key={index} className="relative aspect-[3/4]">
+                        <img
+                          src={photo.url}
+                          alt={`プロフィール写真 ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <Badge
+                          className="absolute top-2 right-2 bg-black/75"
+                          variant="outline"
+                        >
+                          {photo.tag}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </section>
+            )}
+
+            {/* 自己PR・備考 */}
+            <section>
+              <SectionHeader icon={FileText} title="自己PR・備考" />
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <InfoItem
+                    label="自己PR"
+                    value={
+                      <p className="whitespace-pre-wrap text-sm">
+                        {formatValue(profileData.selfIntroduction)}
+                      </p>
+                    }
+                  />
+                  <Separator />
+                  <InfoItem
+                    label="備考"
+                    value={
+                      <p className="whitespace-pre-wrap text-sm">
+                        {formatValue(profileData.notes)}
+                      </p>
+                    }
+                  />
+                </div>
+              </Card>
+            </section>
           </div>
         </ScrollArea>
 
@@ -620,7 +620,7 @@ export function ProfileConfirmationDialog({
           </Button>
           <Button onClick={onConfirm} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            この内容で更新する
+            この内容で開始する
           </Button>
         </DialogFooter>
       </DialogContent>

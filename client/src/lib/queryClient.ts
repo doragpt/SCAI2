@@ -11,14 +11,14 @@ const API_BASE_URL = (() => {
 })();
 
 // APIリクエスト関数
-export async function apiRequest<T>(
+export async function apiRequest(
   method: string,
   url: string,
   data?: unknown,
   options?: {
     headers?: Record<string, string>;
   }
-): Promise<T> {
+): Promise<Response> {
   try {
     console.log('API Request starting:', {
       method,
@@ -48,20 +48,7 @@ export async function apiRequest<T>(
       timestamp: new Date().toISOString()
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: response.statusText
-      }));
-      throw new Error(errorData.message || "APIリクエストに失敗しました");
-    }
-
-    try {
-      const jsonData = await response.json();
-      return jsonData as T;
-    } catch (error) {
-      console.error('JSON parse error:', error);
-      throw new Error("レスポンスの解析に失敗しました");
-    }
+    return response;
   } catch (error) {
     console.error('API Request Error:', {
       method,
@@ -75,11 +62,29 @@ export async function apiRequest<T>(
 
 // タレントプロフィール関連の関数
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
-  return apiRequest<TalentProfileData>("POST", QUERY_KEYS.TALENT_PROFILE, data);
+  const response = await apiRequest(
+    "POST",
+    QUERY_KEYS.TALENT_PROFILE,
+    data
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの保存に失敗しました");
+  }
+
+  return response.json();
 }
 
 export async function getTalentProfile(): Promise<TalentProfileData> {
-  return apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの取得に失敗しました");
+  }
+
+  return response.json();
 }
 
 export function invalidateTalentProfileCache() {
@@ -93,7 +98,12 @@ export const getJobsQuery = async (): Promise<import("@shared/schema").Job[]> =>
       timestamp: new Date().toISOString()
     });
 
-    return apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    const response = await apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の取得に失敗しました");
+    }
+    return response.json();
   } catch (error) {
     console.error('Jobs fetch error:', {
       error: getErrorMessage(error),
@@ -127,10 +137,22 @@ export const searchJobsQuery = async (params: {
     const url = `/api/jobs/public${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
     console.log('Fetching jobs:', { url, params });
 
-    const response = await apiRequest<{ jobs: import("@shared/schema").Job[]; pagination: { currentPage: number; totalPages: number; totalItems: number; } }>("GET", url);
+    const response = await apiRequest("GET", url);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の検索に失敗しました");
+    }
+    const data = await response.json();
 
     // レスポンスをページネーション形式に整形
-    return response;
+    return {
+      jobs: data,
+      pagination: {
+        currentPage: params.page || 1,
+        totalPages: Math.ceil(data.length / (params.limit || 12)),
+        totalItems: data.length
+      }
+    };
   } catch (error) {
     console.error('Jobs search error:', {
       error: getErrorMessage(error),
@@ -144,7 +166,14 @@ export const searchJobsQuery = async (params: {
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: any): Promise<any> {
-  return apiRequest("PATCH", "/api/user", data);
+  const response = await apiRequest("PATCH", "/api/user", data);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
+  }
+
+  return response.json();
 }
 
 // クエリクライアントの設定
