@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser } from "@shared/schema";
+import { users, type User, type InsertUser, type TalentProfileData } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -12,6 +12,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
+  getTalentProfile(userId: number): Promise<TalentProfileData | null>;
+  createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData>;
   sessionStore: session.Store;
 }
 
@@ -22,6 +24,73 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24時間でクリア
     });
+  }
+
+  async getTalentProfile(userId: number): Promise<TalentProfileData | null> {
+    try {
+      log('info', 'タレントプロフィール取得開始', { userId });
+
+      // プロフィールテーブルからデータを取得
+      const [result] = await db
+        .select()
+        .from('talent_profiles')
+        .where(eq('user_id', userId));
+
+      if (!result) {
+        log('info', 'タレントプロフィールが見つかりません', { userId });
+        return null;
+      }
+
+      log('info', 'タレントプロフィール取得成功', { userId });
+      return result as TalentProfileData;
+    } catch (error) {
+      log('error', 'タレントプロフィール取得エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
+  }
+
+  async createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData> {
+    try {
+      log('info', 'タレントプロフィール作成/更新開始', { userId });
+
+      // プロフィールの存在確認
+      const [existingProfile] = await db
+        .select()
+        .from('talent_profiles')
+        .where(eq('user_id', userId));
+
+      let result;
+      if (existingProfile) {
+        // 更新
+        [result] = await db
+          .update('talent_profiles')
+          .set({ ...data, updatedAt: new Date() })
+          .where(eq('user_id', userId))
+          .returning();
+      } else {
+        // 新規作成
+        [result] = await db
+          .insert('talent_profiles')
+          .values({ ...data, userId, createdAt: new Date(), updatedAt: new Date() })
+          .returning();
+      }
+
+      if (!result) {
+        throw new Error('プロフィールの保存に失敗しました');
+      }
+
+      log('info', 'タレントプロフィール作成/更新成功', { userId });
+      return result as TalentProfileData;
+    } catch (error) {
+      log('error', 'タレントプロフィール作成/更新エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -46,8 +115,8 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations) 
-          ? result.preferredLocations 
+        preferredLocations: Array.isArray(result.preferredLocations)
+          ? result.preferredLocations
           : [],
         role: result.role,
         createdAt: result.createdAt,
@@ -93,8 +162,8 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations) 
-          ? result.preferredLocations 
+        preferredLocations: Array.isArray(result.preferredLocations)
+          ? result.preferredLocations
           : [],
         role: result.role,
         createdAt: result.createdAt,
@@ -152,8 +221,8 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations) 
-          ? result.preferredLocations 
+        preferredLocations: Array.isArray(result.preferredLocations)
+          ? result.preferredLocations
           : [],
         role: result.role,
         createdAt: result.createdAt,
@@ -210,8 +279,8 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations) 
-          ? result.preferredLocations 
+        preferredLocations: Array.isArray(result.preferredLocations)
+          ? result.preferredLocations
           : [],
         role: result.role,
         createdAt: result.createdAt,

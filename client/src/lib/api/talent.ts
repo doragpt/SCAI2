@@ -7,9 +7,14 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
     console.log('Fetching talent profile...');
     const response = await apiRequest("GET", "/api/talent/profile");
 
+    if (response.status === 404) {
+      console.log('Profile not found, this is normal for new users');
+      return null;
+    }
+
     if (response.status === 401) {
       console.log('Unauthorized access to talent profile');
-      return null;
+      throw new Error("認証が必要です");
     }
 
     if (!response.ok) {
@@ -30,6 +35,10 @@ export async function createOrUpdateTalentProfile(data: TalentProfileData): Prom
   try {
     console.log('Updating talent profile with data:', data);
     const response = await apiRequest("POST", "/api/talent/profile", data);
+
+    if (response.status === 401) {
+      throw new Error("認証が必要です");
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
