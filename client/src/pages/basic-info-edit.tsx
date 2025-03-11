@@ -22,8 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { prefectures } from "@shared/schema";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import type { UserResponse } from "@shared/schema";
 
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
@@ -38,7 +37,8 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userProfile, isLoading: isUserLoading } = useQuery({
+  // ユーザー情報を取得
+  const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/user");
@@ -46,7 +46,9 @@ export default function BasicInfoEdit() {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Received user profile:', data); // デバッグ用
+      return data;
     },
     enabled: !!user,
   });
@@ -60,27 +62,30 @@ export default function BasicInfoEdit() {
     },
   });
 
+  // ユーザー情報が取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
-      console.log('Setting form data with:', userProfile);
+      console.log('Setting form data with:', userProfile); // デバッグ用
       form.reset({
         username: userProfile.username || "",
         location: userProfile.location || "",
-        preferredLocations: Array.isArray(userProfile.preferredLocations) 
-          ? userProfile.preferredLocations 
-          : [],
+        preferredLocations: userProfile.preferredLocations || [],
       });
     }
   }, [userProfile, form]);
 
+  // 更新処理
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
+      console.log('Updating with data:', data); // デバッグ用
       const response = await apiRequest("PATCH", "/api/user", data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
       }
-      return response.json();
+      const result = await response.json();
+      console.log('Update response:', result); // デバッグ用
+      return result;
     },
     onSuccess: (data) => {
       queryClient.setQueryData([QUERY_KEYS.USER], data);
@@ -133,13 +138,6 @@ export default function BasicInfoEdit() {
               </FormItem>
             )}
           />
-
-          <div className="space-y-2">
-            <FormLabel>生年月日</FormLabel>
-            <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.birthDate ? format(new Date(userProfile.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未設定'}</p>
-            </div>
-          </div>
 
           <FormField
             control={form.control}
