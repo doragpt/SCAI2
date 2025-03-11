@@ -3,13 +3,11 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, PenSquare } from "lucide-react";
 import { Redirect } from "wouter";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { ja } from "date-fns/locale";
-import type { TalentProfileData, User as SelectUser } from "@shared/schema";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -20,28 +18,12 @@ export default function ProfileViewPage() {
   const {
     data: userProfile,
     isLoading: isUserProfileLoading,
-  } = useQuery<SelectUser>({
-    queryKey: [QUERY_KEYS.USER_PROFILE],
+  } = useQuery({
+    queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.USER_PROFILE);
+      const response = await apiRequest("GET", "/api/user");
       if (!response.ok) {
         throw new Error("ユーザー情報の取得に失敗しました");
-      }
-      return response.json();
-    },
-    enabled: !!user?.id,
-  });
-
-  // タレントプロフィールを取得
-  const {
-    data: talentProfile,
-    isLoading: isTalentLoading,
-  } = useQuery<TalentProfileData>({
-    queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-      if (!response.ok) {
-        throw new Error("タレントプロフィールの取得に失敗しました");
       }
       return response.json();
     },
@@ -52,13 +34,17 @@ export default function ProfileViewPage() {
     return <Redirect to="/auth" />;
   }
 
-  if (isUserProfileLoading || isTalentLoading) {
+  if (isUserProfileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  const calculateAge = (birthDate: string) => {
+    return differenceInYears(new Date(), new Date(birthDate));
+  };
 
   return (
     <div className="container max-w-2xl py-8">
@@ -71,14 +57,6 @@ export default function ProfileViewPage() {
               基本情報を編集
             </Button>
           </Link>
-          {!talentProfile && (
-            <Link href="/talent/register">
-              <Button variant="default" className="flex items-center gap-2">
-                <PenSquare className="h-4 w-4" />
-                ウェブ履歴書を作成
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
 
@@ -95,16 +73,20 @@ export default function ProfileViewPage() {
                     <p className="mt-1">{userProfile?.username || "未設定"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">本名</p>
-                    <p className="mt-1">{userProfile?.displayName || "未設定"}</p>
-                  </div>
-                  <div>
                     <p className="text-sm text-muted-foreground">生年月日</p>
                     <p className="mt-1">
                       {userProfile?.birthDate
                         ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
                             locale: ja,
                           })
+                        : "未設定"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">年齢</p>
+                    <p className="mt-1">
+                      {userProfile?.birthDate
+                        ? `${calculateAge(userProfile.birthDate)}歳`
                         : "未設定"}
                     </p>
                   </div>
@@ -124,128 +106,6 @@ export default function ProfileViewPage() {
                 </div>
               </Card>
             </div>
-
-            {/* タレントプロフィール情報 */}
-            {talentProfile ? (
-              <>
-                <Separator />
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-medium">ウェブ履歴書</h2>
-                    <Link href="/talent/register">
-                      <Button variant="outline" size="sm">
-                        <PenSquare className="h-4 w-4 mr-2" />
-                        編集する
-                      </Button>
-                    </Link>
-                  </div>
-
-                  <Card className="p-6 mt-4">
-                    <div className="space-y-6">
-                      {/* 基本情報 */}
-                      <div className="space-y-4">
-                        <h3 className="font-medium">基本情報</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">氏名</p>
-                            <p className="mt-1">
-                              {talentProfile.lastName} {talentProfile.firstName}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">フリガナ</p>
-                            <p className="mt-1">
-                              {talentProfile.lastNameKana} {talentProfile.firstNameKana}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">在住地</p>
-                            <p className="mt-1">{talentProfile.location}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">最寄り駅</p>
-                            <p className="mt-1">{talentProfile.nearestStation}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 身体的特徴 */}
-                      <div className="space-y-4">
-                        <h3 className="font-medium">身体的特徴</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">身長</p>
-                            <p className="mt-1">{talentProfile.height}cm</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">体重</p>
-                            <p className="mt-1">{talentProfile.weight}kg</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">カップサイズ</p>
-                            <p className="mt-1">{talentProfile.cupSize}カップ</p>
-                          </div>
-                          {talentProfile.bust && (
-                            <div>
-                              <p className="text-sm text-muted-foreground">バスト</p>
-                              <p className="mt-1">{talentProfile.bust}cm</p>
-                            </div>
-                          )}
-                          {talentProfile.waist && (
-                            <div>
-                              <p className="text-sm text-muted-foreground">ウエスト</p>
-                              <p className="mt-1">{talentProfile.waist}cm</p>
-                            </div>
-                          )}
-                          {talentProfile.hip && (
-                            <div>
-                              <p className="text-sm text-muted-foreground">ヒップ</p>
-                              <p className="mt-1">{talentProfile.hip}cm</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* パネル設定 */}
-                      <div className="space-y-4">
-                        <h3 className="font-medium">パネル設定</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">顔出し</p>
-                            <p className="mt-1">{talentProfile.faceVisibility}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">写メ日記</p>
-                            <p className="mt-1">
-                              {talentProfile.canPhotoDiary ? "可能" : "不可"}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 自己PR */}
-                      {talentProfile.selfIntroduction && (
-                        <div className="space-y-4">
-                          <h3 className="font-medium">自己PR</h3>
-                          <p className="whitespace-pre-wrap">
-                            {talentProfile.selfIntroduction}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">ウェブ履歴書が未作成です</p>
-                <Link href="/talent/register">
-                  <Button variant="default" className="mt-4">
-                    ウェブ履歴書を作成する
-                  </Button>
-                </Link>
-              </div>
-            )}
           </div>
         </ScrollArea>
       </Card>

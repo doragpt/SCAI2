@@ -15,11 +15,15 @@ router.get("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
+    console.log('User from request:', user); // デバッグログ追加
+
     // データベースから最新のユーザー情報を取得
     const userData = await storage.getUser(user.id);
     if (!userData) {
       return res.status(404).json({ message: "ユーザーが見つかりません" });
     }
+
+    console.log('User data from storage:', userData); // デバッグログ追加
 
     // 必要なユーザー情報のみを返す
     const sanitizedUser = {
@@ -32,7 +36,8 @@ router.get("/user", authenticate, async (req, res) => {
       role: userData.role
     };
 
-    console.log('Sending user data:', sanitizedUser); // デバッグ用ログ
+    console.log('Sanitized user data:', sanitizedUser); // デバッグログ追加
+
     res.json(sanitizedUser);
   } catch (error) {
     console.error('User fetch error:', error);
@@ -51,6 +56,8 @@ router.patch("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
+    console.log('Update request body:', req.body); // デバッグログ追加
+
     const { username, location, preferredLocations } = req.body;
 
     // データベースの更新
@@ -60,15 +67,9 @@ router.patch("/user", authenticate, async (req, res) => {
       preferredLocations
     });
 
-    res.json({
-      id: updatedUser.id,
-      email: updatedUser.email,
-      username: updatedUser.username,
-      birthDate: updatedUser.birthDate,
-      location: updatedUser.location,
-      preferredLocations: updatedUser.preferredLocations || [],
-      role: updatedUser.role
-    });
+    console.log('Updated user:', updatedUser); // デバッグログ追加
+
+    res.json(updatedUser);
   } catch (error) {
     console.error('User update error:', error);
     res.status(500).json({
