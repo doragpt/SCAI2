@@ -3,24 +3,17 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
-import { type SelectUser } from "@shared/schema";
+import type { UserResponse, LoginCredentials } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
 type AuthContextType = {
-  user: SelectUser | null;
+  user: UserResponse | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: ReturnType<typeof useLoginMutation>;
   logoutMutation: ReturnType<typeof useLogoutMutation>;
-  registerMutation: ReturnType<typeof useRegisterMutation>;
-};
-
-type LoginCredentials = {
-  email: string;
-  password: string;
-  role: "talent" | "store";
 };
 
 function useLoginMutation() {
@@ -29,24 +22,17 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      try {
-        const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
-          email: credentials.email,
-          password: credentials.password
-        });
+      const response = await apiRequest("POST", "/api/auth/login", credentials);
 
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "ログインに失敗しました");
-        }
-
-        return data;
-      } catch (error) {
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ログインに失敗しました");
       }
+
+      return response.json();
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (user: UserResponse) => {
+      queryClient.setQueryData(["/api/auth/session"], user);
 
       toast({
         title: "ログイン成功",
@@ -81,7 +67,7 @@ function useLogoutMutation() {
       }
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/api/auth/session"], null);
       queryClient.clear();
 
       toast({
@@ -101,60 +87,23 @@ function useLogoutMutation() {
   });
 }
 
-function useRegisterMutation() {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/auth/register", data);
-      const responseData = await response.json();
-      if (!response.ok) {
-        throw new Error(responseData.message || "登録に失敗しました");
-      }
-      return responseData;
-    },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
-
-      toast({
-        title: "登録完了",
-        description: "アカウントが正常に作成されました。",
-      });
-
-      if (user.role === "talent") {
-        setLocation("/talent/mypage");
-      } else if (user.role === "store") {
-        setLocation("/store/dashboard");
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "登録エラー",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | null>({
-    queryKey: ["/api/user"],
+  } = useQuery<UserResponse | null>({
+    queryKey: ["/api/auth/session"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/auth/check");
+        const response = await apiRequest("GET", "/api/auth/session");
         if (response.status === 401) {
           return null;
         }
         if (!response.ok) {
           throw new Error('認証確認に失敗しました');
         }
-        return await response.json();
+        return response.json();
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
@@ -165,7 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
-  const registerMutation = useRegisterMutation();
 
   return (
     <AuthContext.Provider
@@ -175,7 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: error as Error | null,
         loginMutation,
         logoutMutation,
-        registerMutation,
       }}
     >
       {children}

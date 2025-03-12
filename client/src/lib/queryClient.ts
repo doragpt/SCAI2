@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import type { Job, JobListingResponse } from "@shared/schema";
 
 const API_BASE_URL = (() => {
   const protocol = window.location.protocol;
@@ -34,7 +35,7 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include", // CORSリクエストでクッキーを送信
+      credentials: "include",
     });
 
     console.log('API Response received:', {
@@ -43,13 +44,6 @@ export async function apiRequest(
       url: fullUrl,
       timestamp: new Date().toISOString()
     });
-
-    // レスポンスヘッダーのログ出力
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      responseHeaders[key] = value;
-    });
-    console.log('Response headers:', responseHeaders);
 
     return response;
   } catch (error) {
@@ -63,10 +57,30 @@ export async function apiRequest(
   }
 }
 
+// Jobs関連の関数
+export async function getJobsQuery(params?: {
+  page?: number;
+  limit?: number;
+  location?: string;
+  serviceType?: string;
+}): Promise<JobListingResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.set('page', params.page.toString());
+  if (params?.limit) searchParams.set('limit', params.limit.toString());
+  if (params?.location) searchParams.set('location', params.location);
+  if (params?.serviceType) searchParams.set('serviceType', params.serviceType);
+
+  const response = await apiRequest("GET", `/api/jobs${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
+  if (!response.ok) {
+    throw new Error("求人情報の取得に失敗しました");
+  }
+  return response.json();
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+      staleTime: 1000 * 60 * 5, // 5分間キャッシュ
       retry: false,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
