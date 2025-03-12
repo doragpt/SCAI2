@@ -7,10 +7,15 @@ export function useProfile() {
   const profileQuery = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
-      console.log('Fetching profile data...');
-      const data = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
-      console.log('Profile data received:', data);
-      return data;
+      console.log('Fetching profile data from API...');
+      try {
+        const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+        console.log('Profile data received from API:', response);
+        return response;
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+        throw error;
+      }
     },
     refetchOnWindowFocus: false,
     retry: 1,
@@ -24,9 +29,14 @@ export function useProfile() {
         data: newData,
         timestamp: new Date().toISOString()
       });
-      const response = await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
-      console.log('Profile update response:', response);
-      return response;
+      try {
+        const response = await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
+        console.log('Profile update response:', response);
+        return response;
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       // キャッシュを更新
@@ -42,6 +52,7 @@ export function useProfile() {
     isError: profileQuery.isError,
     error: profileQuery.error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isPending
+    isUpdating: updateProfileMutation.isPending,
+    refetch: profileQuery.refetch
   } as const;
 }

@@ -119,7 +119,7 @@ interface MatchedJob {
 export const AIMatchingChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const { profileData, isLoading: isProfileLoading } = useProfile();
+  const { profileData, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile();
   const [selectedType, setSelectedType] = useState<"出稼ぎ" | "在籍" | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -165,6 +165,11 @@ export const AIMatchingChat = () => {
   const [matchingMethod, setMatchingMethod] = useState<MatchingMethod>(null);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
 
+
+  // コンポーネントマウント時にプロフィールデータを再取得
+  useEffect(() => {
+    refetchProfile();
+  }, []);
 
   if (isProfileLoading) {
     return (
@@ -269,12 +274,15 @@ export const AIMatchingChat = () => {
     setShowConfirmDialog(false);
   };
 
-  // handleConfirmConditionsの部分を修正
+  // handleConfirmConditionsの実装を修正
   const handleConfirmConditions = async () => {
     try {
       setIsLoading(true);
       setShowConfirmDialog(false);
       setShowForm(false);
+
+      // プロフィールデータを再取得
+      await refetchProfile();
 
       if (!profileData) {
         toast({
@@ -284,6 +292,8 @@ export const AIMatchingChat = () => {
         });
         return;
       }
+
+      console.log('Displaying profile data:', profileData);
 
       // 条件の確認メッセージを追加
       setMessages(prev => [...prev, {
@@ -311,24 +321,13 @@ export const AIMatchingChat = () => {
 
 記入したものの情報に間違いはないか確認してね！
 間違いが無ければマッチングをはじめるよ！`
-      }, {
-        type: "ai",
-        content: `それでは、マッチング方法を選択してください。
-
-【選択肢】
-1. AIが自動で確認：
-   あなたの条件に合う店舗に自動で確認メッセージを送ります。
-
-2. AIがピックアップして確認：
-   あなたに合いそうな店舗をリストアップし、
-   確認したい店舗を選んでから確認メッセージを送ります。`
       }]);
 
     } catch (error) {
-      console.error("送信エラー:", error);
+      console.error("確認処理エラー:", error);
       toast({
         title: "エラー",
-        description: "マッチング処理中にエラーが発生しました",
+        description: "プロフィール情報の取得中にエラーが発生しました",
         variant: "destructive",
       });
     } finally {
@@ -490,11 +489,8 @@ ${index + 1}. ${result.businessName}
 
   // プロフィールデータの変更を監視
   useEffect(() => {
-    if (profileData) {
-      console.log('Profile data updated:', profileData);
-    }
+    console.log('Current profile data in AIMatchingChat:', profileData);
   }, [profileData]);
-
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -1014,7 +1010,8 @@ ${index + 1}. ${result.businessName}
                 disabled={
                   conditions.workTypes.length === 0 ||
                   (selectedType === "出稼ぎ" &&
-                    (!conditions.workPeriodStart ||                      !conditions.workPeriodEnd ||
+                    (!conditions.workPeriodStart ||
+                      !conditions.workPeriodEnd ||
                       !conditions.departureLocation ||
                       !conditions.returnLocation ||
                       !conditions.waitingHours))
@@ -1071,7 +1068,7 @@ ${index + 1}. ${result.businessName}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5}}
+              transition={{ duration: 0.5 }}
               className="space-y-6"
             >
               <div className="p-6 space-y-6">
