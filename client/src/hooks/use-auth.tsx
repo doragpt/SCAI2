@@ -45,8 +45,7 @@ function useLoginMutation() {
         throw new Error(error.message || "ログインに失敗しました");
       }
 
-      const data = await response.json();
-      return data;
+      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -57,6 +56,12 @@ function useLoginMutation() {
         description: "ログインしました。",
       });
 
+      console.log('Login successful, redirecting:', {
+        role: user.role,
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+
       // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
@@ -65,6 +70,7 @@ function useLoginMutation() {
       }
     },
     onError: (error: Error) => {
+      console.error('Login error:', error);
       toast({
         title: "ログインエラー",
         description: error.message,
@@ -163,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await response.json();
+        console.log('Auth check data:', data);
         return data;
       } catch (error) {
         console.error('Auth check error:', error);
