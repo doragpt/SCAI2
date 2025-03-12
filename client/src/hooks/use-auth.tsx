@@ -34,23 +34,20 @@ function useLoginMutation() {
         password: credentials.password
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
-      }
-
-      return await response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: (user: SelectUser) => {
+      // ユーザーデータをキャッシュに保存
       queryClient.setQueryData(["/api/user"], user);
 
-      // トースト表示
+      // 成功メッセージを表示
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
 
-      // ロールに応じてリダイレクト
+      // リダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -73,19 +70,21 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/auth/logout");
-      if (!response.ok) {
-        throw new Error("ログアウトに失敗しました");
-      }
+      await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
+      // キャッシュをクリア
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
-      setLocation("/auth");
+
+      // ログアウト成功メッセージ
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
+
+      // ログインページへリダイレクト
+      setLocation("/auth");
     },
     onError: (error: Error) => {
       toast({
@@ -104,10 +103,6 @@ function useRegisterMutation() {
   return useMutation({
     mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/auth/register", data);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "登録に失敗しました");
-      }
       return await response.json();
     },
     onSuccess: (user: SelectUser) => {
@@ -141,14 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/auth/check");
-      if (!response.ok) {
-        if (response.status === 401) {
-          return null;
+      try {
+        const response = await apiRequest("GET", "/api/auth/check");
+        if (!response.ok) {
+          if (response.status === 401) {
+            return null;
+          }
+          throw new Error('認証確認に失敗しました');
         }
-        throw new Error('認証確認に失敗しました');
+        return await response.json();
+      } catch (error) {
+        return null;
       }
-      return await response.json();
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュ
   });

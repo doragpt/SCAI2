@@ -12,10 +12,6 @@ declare global {
   }
 }
 
-async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
 async function comparePasswords(supplied: string, stored: string) {
   try {
     return await bcrypt.compare(supplied, stored);
@@ -28,66 +24,69 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Passportの初期化
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // 認証ストラテジーの設定
-  passport.use("talent", new LocalStrategy(
-    { usernameField: "email", passwordField: "password" },
-    async (email, password, done) => {
-      try {
-        const user = await storage.getUserByEmail(email);
+  // タレント用の認証戦略
+  passport.use(
+    "talent",
+    new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+      },
+      async (email, password, done) => {
+        try {
+          const user = await storage.getUserByEmail(email);
 
-        if (!user) {
-          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          if (!user || user.role !== "talent") {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          const isValid = await comparePasswords(password, user.password);
+          if (!isValid) {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          const { password: _, ...userWithoutPassword } = user;
+          return done(null, userWithoutPassword);
+        } catch (error) {
+          return done(error);
         }
-
-        if (user.role !== "talent") {
-          return done(null, false, { message: "タレントアカウントでログインしてください" });
-        }
-
-        const isValid = await comparePasswords(password, user.password);
-        if (!isValid) {
-          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-        }
-
-        const { password: _, ...userWithoutPassword } = user;
-        return done(null, userWithoutPassword);
-      } catch (error) {
-        return done(error);
       }
-    }
-  ));
+    )
+  );
 
-  passport.use("store", new LocalStrategy(
-    { usernameField: "email", passwordField: "password" },
-    async (email, password, done) => {
-      try {
-        const user = await storage.getUserByEmail(email);
+  // 店舗用の認証戦略
+  passport.use(
+    "store",
+    new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+      },
+      async (email, password, done) => {
+        try {
+          const user = await storage.getUserByEmail(email);
 
-        if (!user) {
-          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          if (!user || user.role !== "store") {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          const isValid = await comparePasswords(password, user.password);
+          if (!isValid) {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          const { password: _, ...userWithoutPassword } = user;
+          return done(null, userWithoutPassword);
+        } catch (error) {
+          return done(error);
         }
-
-        if (user.role !== "store") {
-          return done(null, false, { message: "店舗アカウントでログインしてください" });
-        }
-
-        const isValid = await comparePasswords(password, user.password);
-        if (!isValid) {
-          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-        }
-
-        const { password: _, ...userWithoutPassword } = user;
-        return done(null, userWithoutPassword);
-      } catch (error) {
-        return done(error);
       }
-    }
-  ));
+    )
+  );
 
-  // セッション管理
   passport.serializeUser((user, done) => {
     done(null, { id: user.id, role: user.role });
   });
@@ -105,7 +104,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // 認証エンドポイント
   app.post("/api/auth/login/:role", (req, res, next) => {
     const role = req.params.role as "talent" | "store";
     if (!["talent", "store"].includes(role)) {
@@ -113,24 +111,44 @@ export function setupAuth(app: Express) {
     }
 
     passport.authenticate(role, (err: any, user: any, info: any) => {
-      if (err) return next(err);
+      if (err) {
+        log('error', 'ログイン処理エラー', { error: err });
+        return next(err);
+      }
+
       if (!user) {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
 
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          log('error', 'セッション作成エラー', { error: err });
+          return next(err);
+        }
+
+        log('info', 'ログイン成功', { 
+          userId: user.id,
+          role: user.role,
+          sessionID: req.sessionID
+        });
+
         res.json(user);
       });
     })(req, res, next);
   });
 
   app.post("/api/auth/logout", (req, res, next) => {
+    const sessionID = req.sessionID;
+    const userId = req.user?.id;
+
     req.logout((err) => {
       if (err) return next(err);
+
       req.session.destroy((err) => {
         if (err) return next(err);
-        res.clearCookie('connect.sid');
+
+        res.clearCookie('sessionId');
+        log('info', 'ログアウト完了', { userId, sessionID });
         res.sendStatus(200);
       });
     });

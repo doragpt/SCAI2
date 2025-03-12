@@ -23,7 +23,6 @@ export async function apiRequest(
     console.log('API Request starting:', {
       method,
       url,
-      data,
       timestamp: new Date().toISOString()
     });
 
@@ -38,7 +37,7 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
+      credentials: "include", // 重要: CORSリクエストでクッキーを送信
     });
 
     console.log('API Response received:', {
@@ -47,6 +46,11 @@ export async function apiRequest(
       url: fullUrl,
       timestamp: new Date().toISOString()
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
 
     return response;
   } catch (error) {
@@ -181,7 +185,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-      retry: 1,
+      retry: false, // エラー時の再試行を無効化
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     },
