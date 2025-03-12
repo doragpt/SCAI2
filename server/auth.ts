@@ -1,7 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
-import session from "express-session";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
@@ -20,6 +19,10 @@ async function hashPassword(password: string) {
 async function comparePasswords(supplied: string, stored: string) {
   try {
     const isValid = await bcrypt.compare(supplied, stored);
+    log('info', 'パスワード比較結果', {
+      isValid,
+      timestamp: new Date().toISOString()
+    });
     return isValid;
   } catch (error) {
     log('error', 'パスワード比較エラー', {
@@ -29,22 +32,12 @@ async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
-export function setupAuth(app: Express) {
-  // セッション設定
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "your-secret-key",
-      resave: false,
-      saveUninitialized: false,
-      store: storage.sessionStore,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      },
-    })
-  );
+function sanitizeUser(user: SelectUser) {
+  const { password, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+}
 
+export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -58,23 +51,43 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          log('info', 'タレントログイン試行', {
+            email,
+            timestamp: new Date().toISOString()
+          });
+
           const user = await storage.getUserByEmail(email);
 
           if (!user) {
+            log('warn', 'タレントログイン失敗 - ユーザー不在', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           if (user.role !== "talent") {
+            log('warn', 'タレントログイン失敗 - ロール不正', { 
+              email,
+              actualRole: user.role 
+            });
             return done(null, false, { message: "タレントアカウントでログインしてください" });
           }
 
           const isValid = await comparePasswords(password, user.password);
           if (!isValid) {
+            log('warn', 'タレントログイン失敗 - パスワード不正', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          return done(null, user);
+          log('info', 'タレントログイン成功', {
+            userId: user.id,
+            email: user.email
+          });
+
+          return done(null, sanitizeUser(user));
         } catch (error) {
+          log('error', 'タレントログイン処理エラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
           return done(error);
         }
       }
@@ -91,32 +104,52 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          log('info', '店舗ログイン試行', {
+            email,
+            timestamp: new Date().toISOString()
+          });
+
           const user = await storage.getUserByEmail(email);
 
           if (!user) {
+            log('warn', '店舗ログイン失敗 - ユーザー不在', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           if (user.role !== "store") {
+            log('warn', '店舗ログイン失敗 - ロール不正', { 
+              email,
+              actualRole: user.role 
+            });
             return done(null, false, { message: "店舗アカウントでログインしてください" });
           }
 
           const isValid = await comparePasswords(password, user.password);
           if (!isValid) {
+            log('warn', '店舗ログイン失敗 - パスワード不正', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          return done(null, user);
+          log('info', '店舗ログイン成功', {
+            userId: user.id,
+            email: user.email
+          });
+
+          return done(null, sanitizeUser(user));
         } catch (error) {
+          log('error', '店舗ログイン処理エラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
           return done(error);
         }
       }
     )
   );
 
-  // セッション管理
   passport.serializeUser((user, done) => {
-    done(null, { id: user.id, role: user.role });
+    const { id, role } = user;
+    done(null, { id, role });
   });
 
   passport.deserializeUser(async (data: { id: number; role: string }, done) => {
@@ -125,7 +158,7 @@ export function setupAuth(app: Express) {
       if (!user || user.role !== data.role) {
         return done(null, false);
       }
-      done(null, user);
+      done(null, sanitizeUser(user));
     } catch (error) {
       done(error);
     }
@@ -140,6 +173,11 @@ export function setupAuth(app: Express) {
 
     passport.authenticate(role, (err: any, user: any, info: any) => {
       if (err) {
+        log('error', 'ログインエラー', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+          role,
+          timestamp: new Date().toISOString()
+        });
         return next(err);
       }
 
@@ -149,14 +187,20 @@ export function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return next(err);
-        const { password, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+        res.json(user); // すでにsanitize済み
       });
     })(req, res, next);
   });
 
   // ログアウトエンドポイント
   app.post("/api/auth/logout", (req, res, next) => {
+    if (req.user) {
+      log('info', 'ログアウト処理', {
+        userId: req.user.id,
+        role: req.user.role
+      });
+    }
+
     req.logout((err) => {
       if (err) return next(err);
       req.session.destroy((err) => {
@@ -172,8 +216,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "認証されていません" });
     }
-    const { password, ...userWithoutPassword } = req.user;
-    res.json(userWithoutPassword);
+    res.json(req.user); // すでにsanitize済み
   });
 }
 
