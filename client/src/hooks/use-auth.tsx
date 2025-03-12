@@ -48,25 +48,26 @@ function useLoginMutation() {
       return await response.json();
     },
     onSuccess: (user: SelectUser) => {
+      // クエリキャッシュを更新
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
+      console.log('Login successful:', {
+        userId: user.id,
+        role: user.role,
+        timestamp: new Date().toISOString()
+      });
 
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
 
-      console.log('Login successful, redirecting:', {
-        role: user.role,
-        userId: user.id,
-        timestamp: new Date().toISOString()
-      });
-
       // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
-        setLocation("/talent/mypage");
+        setTimeout(() => setLocation("/talent/mypage"), 100);
       } else if (user.role === "store") {
-        setLocation("/store/dashboard");
+        setTimeout(() => setLocation("/store/dashboard"), 100);
       }
     },
     onError: (error: Error) => {
@@ -121,8 +122,7 @@ function useRegisterMutation() {
         const error = await response.json();
         throw new Error(error.message || "登録に失敗しました");
       }
-      const result = await response.json();
-      return result.user;
+      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
