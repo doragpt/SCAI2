@@ -25,22 +25,28 @@ export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { loginMutation, user, isLoading } = useAuth();
+
+  // 状態管理の改善
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // フォームの設定
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
+      role: "store" // 店舗用ログインフォームなのでデフォルトを"store"に設定
     }
   });
 
+  // ユーザーが既にログインしている場合のリダイレクト処理を改善
   useEffect(() => {
     if (user?.role === "store") {
       setLocation("/store/dashboard");
     }
   }, [user, setLocation]);
 
+  // ローディング中の表示
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -55,7 +61,7 @@ export default function ManagerLogin() {
     try {
       setIsSubmitting(true);
       console.log('店舗ログイン試行:', {
-        email: data.email,
+        username: data.username,
         timestamp: new Date().toISOString()
       });
 
@@ -97,15 +103,14 @@ export default function ManagerLogin() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>メールアドレス</FormLabel>
+                    <FormLabel>ログインID</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
-                        type="email"
-                        autoComplete="email"
+                        autoComplete="username"
                         disabled={isSubmitting} 
                       />
                     </FormControl>
@@ -136,7 +141,7 @@ export default function ManagerLogin() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting || !form.formState.isValid || loginMutation.isPending}
+                disabled={isSubmitting || loginMutation.isPending}
               >
                 {(isSubmitting || loginMutation.isPending) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
