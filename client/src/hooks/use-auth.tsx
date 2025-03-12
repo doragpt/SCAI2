@@ -29,21 +29,27 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
-        email: credentials.email,
-        password: credentials.password
-      });
+      try {
+        const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
+          email: credentials.email,
+          password: credentials.password
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "ログインに失敗しました");
+        }
+
+        const userData = await response.json();
+        return userData;
+      } catch (error) {
+        throw error;
       }
-
-      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
 
+      // ロールに応じたリダイレクト
       if (user.role === "store") {
         setLocation("/store/dashboard");
       } else if (user.role === "talent") {
@@ -116,6 +122,7 @@ function useRegisterMutation() {
         description: "アカウントが正常に作成されました。",
       });
 
+      // ロールに応じたリダイレクト
       if (user.role === "store") {
         setLocation("/store/dashboard");
       } else if (user.role === "talent") {
