@@ -11,14 +11,14 @@ const API_BASE_URL = (() => {
 })();
 
 // APIリクエスト関数
-export async function apiRequest(
+export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown,
   options?: {
     headers?: Record<string, string>;
   }
-): Promise<Response> {
+): Promise<T> {
   try {
     console.log('API Request starting:', {
       method,
@@ -48,7 +48,14 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
-    return response;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log('API Response data:', responseData);
+    return responseData as T;
   } catch (error) {
     console.error('API Request Error:', {
       method,
@@ -62,29 +69,21 @@ export async function apiRequest(
 
 // タレントプロフィール関連の関数
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
-  const response = await apiRequest(
+  console.log('Creating/Updating talent profile:', data);
+  const response = await apiRequest<TalentProfileData>(
     "POST",
     QUERY_KEYS.TALENT_PROFILE,
     data
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "プロフィールの保存に失敗しました");
-  }
-
-  return response.json();
+  console.log('Profile update response:', response);
+  return response;
 }
 
 export async function getTalentProfile(): Promise<TalentProfileData> {
-  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "プロフィールの取得に失敗しました");
-  }
-
-  return response.json();
+  console.log('Getting talent profile');
+  const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+  console.log('Got talent profile:', response);
+  return response;
 }
 
 export function invalidateTalentProfileCache() {
@@ -99,11 +98,7 @@ export const getJobsQuery = async (): Promise<import("@shared/schema").Job[]> =>
     });
 
     const response = await apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "求人の取得に失敗しました");
-    }
-    return response.json();
+    return response;
   } catch (error) {
     console.error('Jobs fetch error:', {
       error: getErrorMessage(error),
@@ -137,22 +132,8 @@ export const searchJobsQuery = async (params: {
     const url = `/api/jobs/public${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
     console.log('Fetching jobs:', { url, params });
 
-    const response = await apiRequest("GET", url);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "求人の検索に失敗しました");
-    }
-    const data = await response.json();
-
-    // レスポンスをページネーション形式に整形
-    return {
-      jobs: data,
-      pagination: {
-        currentPage: params.page || 1,
-        totalPages: Math.ceil(data.length / (params.limit || 12)),
-        totalItems: data.length
-      }
-    };
+    const response = await apiRequest<{ jobs: import("@shared/schema").Job[]; pagination: { currentPage: number; totalPages: number; totalItems: number; } }>("GET", url);
+    return response;
   } catch (error) {
     console.error('Jobs search error:', {
       error: getErrorMessage(error),
@@ -166,23 +147,17 @@ export const searchJobsQuery = async (params: {
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: any): Promise<any> {
-  const response = await apiRequest("PATCH", "/api/user", data);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
-  }
-
-  return response.json();
+  const response = await apiRequest<any>("PATCH", "/api/user", data);
+  return response;
 }
 
 // クエリクライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+      staleTime: 0, // キャッシュを無効化して常に最新データを取得
       retry: 1,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       refetchOnMount: true,
     },
   },

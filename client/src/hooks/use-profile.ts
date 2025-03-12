@@ -11,6 +11,9 @@ export function useProfile() {
       try {
         const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
         console.log('Profile data received from API:', response);
+        if (!response) {
+          throw new Error('Profile data is empty');
+        }
         return response;
       } catch (error) {
         console.error('Error fetching profile data:', error);
@@ -19,7 +22,7 @@ export function useProfile() {
     },
     refetchOnWindowFocus: false,
     retry: 1,
-    staleTime: 30000, // 30秒間はキャッシュを使用
+    staleTime: 0, // キャッシュを無効化して常に最新データを取得
   });
 
   // プロフィール更新用のミューテーション
