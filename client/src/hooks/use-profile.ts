@@ -6,7 +6,12 @@ export function useProfile() {
   // プロフィールデータを取得
   const profileQuery = useQuery<TalentProfileData>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: () => apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE),
+    queryFn: async () => {
+      console.log('Fetching profile data...');
+      const data = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
+      console.log('Profile data received:', data);
+      return data;
+    },
     refetchOnWindowFocus: false,
     retry: 1,
     staleTime: 30000, // 30秒間はキャッシュを使用
@@ -19,7 +24,9 @@ export function useProfile() {
         data: newData,
         timestamp: new Date().toISOString()
       });
-      return await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
+      const response = await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
+      console.log('Profile update response:', response);
+      return response;
     },
     onSuccess: (data) => {
       // キャッシュを更新

@@ -86,36 +86,32 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { TalentProfileData } from "@shared/schema";
 
-
-// メッセージの型定義
 interface Message {
   type: "ai" | "user";
   content: string;
 }
 
-// 勤務時間の定数を修正（10時間から24時間まで、1時間単位）
 const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
   value: String(i + 10),
   label: `${i + 10}時間`,
 }));
 
-// マッチング方法の型定義を追加
 type MatchingMethod = "auto" | "pickup" | null;
 
-// マッチング結果の型定義 (仮)
 interface MatchedJob {
   businessName: string;
   matchScore: number;
   location: string;
   matches: string[];
-  description?: string; // Added for pickup mode
-  features?: string[]; // Added for pickup mode
-  minimumGuarantee?: number; // Added for pickup mode
-  maximumGuarantee?: number; // Added for pickup mode
-  transportationSupport?: boolean; // Added for pickup mode
-  housingSupport?: boolean; // Added for pickup mode
-  workingHours?: string; // Added for pickup mode
+  description?: string;
+  features?: string[];
+  minimumGuarantee?: number;
+  maximumGuarantee?: number;
+  transportationSupport?: boolean;
+  housingSupport?: boolean;
+  workingHours?: string;
 
 }
 
@@ -280,6 +276,15 @@ export const AIMatchingChat = () => {
       setShowConfirmDialog(false);
       setShowForm(false);
 
+      if (!profileData) {
+        toast({
+          title: "エラー",
+          description: "プロフィール情報が取得できません",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // 条件の確認メッセージを追加
       setMessages(prev => [...prev, {
         type: "user",
@@ -290,9 +295,19 @@ export const AIMatchingChat = () => {
       }, {
         type: "ai",
         content: `【現在のプロフィール】
-• お名前: ${profileData?.lastName} ${profileData?.firstName}
-• フリガナ: ${profileData?.lastNameKana} ${profileData?.firstNameKana}
+• お名前: ${profileData.lastName} ${profileData.firstName}
+• フリガナ: ${profileData.lastNameKana} ${profileData.firstNameKana}
 • 生年月日: ${user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
+• 在住地: ${profileData.location || '未入力'}
+• 最寄り駅: ${profileData.nearestStation || '未入力'}
+• 身長: ${profileData.height ? `${profileData.height}cm` : '未入力'}
+• 体重: ${profileData.weight ? `${profileData.weight}kg` : '未入力'}
+• カップサイズ: ${profileData.cupSize || '未入力'}
+• スリーサイズ: ${
+          profileData.bust && profileData.waist && profileData.hip
+            ? `B${profileData.bust} W${profileData.waist} H${profileData.hip}`
+            : '未入力'
+        }
 
 記入したものの情報に間違いはないか確認してね！
 間違いが無ければマッチングをはじめるよ！`
@@ -387,9 +402,9 @@ ${index + 1}. ${result.businessName}
   • 勤務地: ${result.location}
   • 待遇: ${result.minimumGuarantee}円～${result.maximumGuarantee}円
   • サポート: ${[
-    result.transportationSupport ? '交通費あり' : null,
-    result.housingSupport ? '宿泊費あり' : null
-  ].filter(Boolean).join('、') || 'なし'}
+        result.transportationSupport ? '交通費あり' : null,
+        result.housingSupport ? '宿泊費あり' : null
+      ].filter(Boolean).join('、') || 'なし'}
   • 勤務時間: ${result.workingHours}
   • ${result.description || ''}
 `).join('\n')}
@@ -419,9 +434,9 @@ ${index + 1}. ${result.businessName}
   • 勤務地: ${result.location}
   • 待遇: ${result.minimumGuarantee}円～${result.maximumGuarantee}円
   • サポート: ${[
-    result.transportationSupport ? '交通費あり' : null,
-    result.housingSupport ? '宿泊費あり' : null
-  ].filter(Boolean).join('、') || 'なし'}
+        result.transportationSupport ? '交通費あり' : null,
+        result.housingSupport ? '宿泊費あり' : null
+      ].filter(Boolean).join('、') || 'なし'}
   • 勤務時間: ${result.workingHours}
   • ${result.description || ''}
 `).join('\n')}
@@ -472,6 +487,14 @@ ${index + 1}. ${result.businessName}
       return null;
     }
   };
+
+  // プロフィールデータの変更を監視
+  useEffect(() => {
+    if (profileData) {
+      console.log('Profile data updated:', profileData);
+    }
+  }, [profileData]);
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -991,8 +1014,7 @@ ${index + 1}. ${result.businessName}
                 disabled={
                   conditions.workTypes.length === 0 ||
                   (selectedType === "出稼ぎ" &&
-                    (!conditions.workPeriodStart ||
-                      !conditions.workPeriodEnd ||
+                    (!conditions.workPeriodStart ||                      !conditions.workPeriodEnd ||
                       !conditions.departureLocation ||
                       !conditions.returnLocation ||
                       !conditions.waitingHours))
@@ -1003,9 +1025,7 @@ ${index + 1}. ${result.businessName}
             </div>
           </Card>
         </div>
-      )}
-
-      {/* マッチング方法選択部分を追加 */}
+      )}      {/* マッチング方法選択部分を追加 */}
       {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("確認したい店舗を選んでから確認メッセージを送ります。") && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
           <div className="container max-w-screen-2xl mx-auto">
@@ -1032,7 +1052,6 @@ ${index + 1}. ${result.businessName}
           </div>
         </div>
       )}
-
 
 
       {/* 確認ダイアログ */}
