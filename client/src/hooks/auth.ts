@@ -29,6 +29,7 @@ export const useAuth = () => {
       const response = await apiRequest("POST", `/api/login/${role}`, {
         email,
         password,
+        role
       });
 
       if (!response.ok) {

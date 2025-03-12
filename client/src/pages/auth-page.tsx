@@ -30,7 +30,11 @@ import * as z from 'zod';
 import { getTalentProfile } from "@/lib/api/talent";
 
 type TalentRegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  email: string;
+  password: string;
+  role: "talent" | "store";
+};
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -83,7 +87,7 @@ export default function AuthPage() {
     defaultValues: {
       email: "",
       password: "",
-      role: "talent" // デフォルトのロールを設定
+      role: "talent"
     },
   });
 
@@ -149,7 +153,13 @@ export default function AuthPage() {
 
   const handleLoginSubmit = async (data: LoginFormData) => {
     try {
-      await loginMutation.mutate({
+      console.log('Login attempt:', {
+        email: data.email,
+        role: data.role,
+        timestamp: new Date().toISOString()
+      });
+
+      await loginMutation.mutateAsync({
         email: data.email,
         password: data.password,
         role: data.role
@@ -243,7 +253,11 @@ export default function AuthPage() {
                         </p>
                       )}
                     </div>
-                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={loginMutation.isPending || !loginForm.formState.isValid}
+                    >
                       {loginMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       ログイン
                     </Button>
