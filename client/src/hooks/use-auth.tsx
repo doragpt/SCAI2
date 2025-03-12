@@ -55,20 +55,22 @@ function useLoginMutation() {
         timestamp: new Date().toISOString()
       });
 
-      // ログイン成功のトースト表示を先に行う
+      // トースト表示とリダイレクトの順序を調整
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
 
-      // リダイレクトを少し遅延させる
+      // リダイレクトを遅延させる
       setTimeout(() => {
         if (user.role === "talent") {
+          console.log('Redirecting to talent mypage');
           setLocation("/talent/mypage");
         } else if (user.role === "store") {
+          console.log('Redirecting to store dashboard');
           setLocation("/store/dashboard");
         }
-      }, 500);
+      }, 1000);
     },
     onError: (error: Error) => {
       console.error('Login error:', error);

@@ -25,14 +25,20 @@ async function comparePasswords(supplied: string, stored: string) {
   try {
     // bcryptハッシュの場合
     if (stored.startsWith('$2b$')) {
-      return await bcrypt.compare(supplied, stored);
+      console.log('Using bcrypt comparison');
+      const isValid = await bcrypt.compare(supplied, stored);
+      console.log('Bcrypt comparison result:', isValid);
+      return isValid;
     }
 
     // 古い形式（scrypt）の場合
+    console.log('Using scrypt comparison');
     const [hashed, salt] = stored.split(".");
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
+    const isValid = timingSafeEqual(hashedBuf, suppliedBuf);
+    console.log('Scrypt comparison result:', isValid);
+    return isValid;
   } catch (error) {
     console.error('Password comparison error:', error);
     log('error', 'パスワード比較エラー', {
@@ -125,20 +131,36 @@ export function setupAuth(app: Express) {
           });
 
           const user = await storage.getUserByEmail(email);
+
+          // ユーザー情報のログ出力
+          console.log('Store login attempt - user data:', {
+            exists: !!user,
+            role: user?.role,
+            hashedPassword: user?.password
+          });
+
           if (!user) {
             log('warn', '店舗ログイン失敗 - ユーザー不在:', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           if (user.role !== "store") {
-            log('warn', '店舗ログイン失敗 - 不正なロール:', { 
+            log('warn', '店舗ログイン失敗 - 不正なロール:', {
               email,
-              actualRole: user.role 
+              actualRole: user.role
             });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
+          // パスワード比較の詳細をログ出力
+          console.log('Store login - password comparison:', {
+            suppliedPassword: password,
+            storedHash: user.password
+          });
+
           const isValid = await comparePasswords(password, user.password);
+          console.log('Store login - password validation result:', isValid);
+
           if (!isValid) {
             log('warn', '店舗ログイン失敗 - パスワード不正:', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
