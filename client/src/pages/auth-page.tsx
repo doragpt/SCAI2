@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import * as z from 'zod';
 import { getTalentProfile } from "@/lib/queryClient";
 
-
 type TalentRegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -127,13 +126,15 @@ export default function AuthPage() {
 
       // プロフィールデータを取得
       const profileData = await getTalentProfile();
+      console.log('Fetched profile data:', profileData);
 
       // フォームデータとプロフィールデータをマージ
       const mergedData = {
-        ...data,
-        ...profileData,
+        ...profileData, // 既存のプロフィールデータを先に展開
+        ...data, // フォームデータで上書き
       };
 
+      console.log('Merged data:', mergedData);
       setFormData(mergedData);
       setShowAgeVerification(true);
     } catch (error) {
