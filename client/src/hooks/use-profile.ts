@@ -19,7 +19,7 @@ export function useProfile() {
     },
     refetchOnWindowFocus: false,
     retry: 1,
-    staleTime: 30000, // 30秒間はキャッシュを使用
+    staleTime: 0, // キャッシュを無効化して常に最新のデータを取得
   });
 
   // プロフィール更新用のミューテーション
@@ -41,7 +41,7 @@ export function useProfile() {
     onSuccess: (data) => {
       // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], data);
-      // キャッシュを無効化して再取得
+      // キャッシュを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
     },
   });

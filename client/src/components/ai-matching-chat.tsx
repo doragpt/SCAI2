@@ -284,7 +284,11 @@ export const AIMatchingChat = () => {
       // プロフィールデータを再取得
       await refetchProfile();
 
+      // プロフィールデータをログ出力
+      console.log('Current profile data before confirmation:', profileData);
+
       if (!profileData) {
+        console.error('Profile data is null or undefined');
         toast({
           title: "エラー",
           description: "プロフィール情報が取得できません",
@@ -292,8 +296,6 @@ export const AIMatchingChat = () => {
         });
         return;
       }
-
-      console.log('Displaying profile data:', profileData);
 
       // 条件の確認メッセージを追加
       setMessages(prev => [...prev, {
@@ -305,8 +307,8 @@ export const AIMatchingChat = () => {
       }, {
         type: "ai",
         content: `【現在のプロフィール】
-• お名前: ${profileData.lastName} ${profileData.firstName}
-• フリガナ: ${profileData.lastNameKana} ${profileData.firstNameKana}
+• お名前: ${profileData.lastName || '未入力'} ${profileData.firstName || '未入力'}
+• フリガナ: ${profileData.lastNameKana || '未入力'} ${profileData.firstNameKana || '未入力'}
 • 生年月日: ${user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
 • 在住地: ${profileData.location || '未入力'}
 • 最寄り駅: ${profileData.nearestStation || '未入力'}
@@ -1022,8 +1024,7 @@ ${index + 1}. ${result.businessName}
             </div>
           </Card>
         </div>
-      )}      {/* マッチング方法選択部分を追加 */}
-      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("確認したい店舗を選んでから確認メッセージを送ります。") && (
+      )}      {/* マッチング方法選択部分を追加 */}      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("確認したい店舗を選んでから確認メッセージを送ります。") && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
           <div className="container max-w-screen-2xl mx-auto">
             <div className="flex flex-col gap-4">
