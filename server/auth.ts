@@ -2,6 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
@@ -13,20 +15,38 @@ declare global {
   }
 }
 
+const scryptAsync = promisify(scrypt);
+
 async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    const isValid = await bcrypt.compare(supplied, stored);
-    console.log('Password comparison result:', {
-      isValid,
+    log('info', 'パスワード比較開始', {
+      hashedType: stored.startsWith('$2b$') ? 'bcrypt' : 'scrypt',
       timestamp: new Date().toISOString()
     });
+
+    // bcryptハッシュの場合
+    if (stored.startsWith('$2b$')) {
+      const isValid = await bcrypt.compare(supplied, stored);
+      log('info', 'bcrypt比較結果', { isValid });
+      return isValid;
+    }
+
+    // scrypt形式の場合
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const isValid = timingSafeEqual(hashedBuf, suppliedBuf);
+    log('info', 'scrypt比較結果', { isValid });
     return isValid;
+
   } catch (error) {
-    console.error('Password comparison error:', error);
+    log('error', 'パスワード比較エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
     return false;
   }
 }
@@ -54,65 +74,7 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.use(
-    "store",
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password",
-      },
-      async (email, password, done) => {
-        try {
-          log('info', '店舗ログイン試行:', {
-            email,
-            timestamp: new Date().toISOString()
-          });
-
-          const user = await storage.getUserByEmail(email);
-
-          console.log('Store login attempt:', {
-            email,
-            hasUser: !!user,
-            role: user?.role,
-            timestamp: new Date().toISOString()
-          });
-
-          if (!user || user.role !== "store") {
-            log('warn', '店舗ログイン失敗:', {
-              email,
-              reason: 'ユーザー不在またはロール不正'
-            });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          const isValid = await comparePasswords(password, user.password);
-
-          if (!isValid) {
-            log('warn', '店舗ログイン失敗:', {
-              email,
-              reason: 'パスワード不一致'
-            });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          log('info', '店舗ログイン成功:', {
-            userId: user.id,
-            email: user.email
-          });
-
-          return done(null, user);
-        } catch (error) {
-          log('error', '店舗ログインエラー:', {
-            error: error instanceof Error ? error.message : 'Unknown error',
-            email
-          });
-          return done(error);
-        }
-      }
-    )
-  );
-
-  // タレント用のストラテジー
+  // タレント用の認証戦略
   passport.use(
     "talent",
     new LocalStrategy(
@@ -122,31 +84,95 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
-          log('info', 'タレントログイン試行:', {
+          log('info', 'タレントログイン試行', {
             email,
             timestamp: new Date().toISOString()
           });
 
           const user = await storage.getUserByEmail(email);
-          if (!user || user.role !== "talent") {
-            log('warn', 'タレントログイン失敗 - ユーザー不正:', { email });
+
+          if (!user) {
+            log('warn', 'タレントログイン失敗 - ユーザー不在', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          if (user.role !== "talent") {
+            log('warn', 'タレントログイン失敗 - ロール不正', { 
+              email,
+              actualRole: user.role 
+            });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           const isValid = await comparePasswords(password, user.password);
+
           if (!isValid) {
-            log('warn', 'タレントログイン失敗 - パスワード不正:', { email });
+            log('warn', 'タレントログイン失敗 - パスワード不正', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          log('info', 'タレントログイン成功:', {
+          log('info', 'タレントログイン成功', {
             userId: user.id,
             email: user.email
           });
 
           return done(null, user);
         } catch (error) {
-          log('error', 'タレントログインエラー:', {
+          log('error', 'タレントログイン処理エラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
+          return done(error);
+        }
+      }
+    )
+  );
+
+  // 店舗用の認証戦略
+  passport.use(
+    "store",
+    new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+      },
+      async (email, password, done) => {
+        try {
+          log('info', '店舗ログイン試行', {
+            email,
+            timestamp: new Date().toISOString()
+          });
+
+          const user = await storage.getUserByEmail(email);
+
+          if (!user) {
+            log('warn', '店舗ログイン失敗 - ユーザー不在', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          if (user.role !== "store") {
+            log('warn', '店舗ログイン失敗 - ロール不正', { 
+              email,
+              actualRole: user.role 
+            });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          const isValid = await comparePasswords(password, user.password);
+
+          if (!isValid) {
+            log('warn', '店舗ログイン失敗 - パスワード不正', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          log('info', '店舗ログイン成功', {
+            userId: user.id,
+            email: user.email
+          });
+
+          return done(null, user);
+        } catch (error) {
+          log('error', '店舗ログイン処理エラー', {
             error: error instanceof Error ? error.message : 'Unknown error',
             email
           });
