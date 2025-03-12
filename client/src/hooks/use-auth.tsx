@@ -4,7 +4,7 @@ import {
   useMutation,
 } from "@tanstack/react-query";
 import { type SelectUser } from "@shared/schema";
-import { apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
@@ -29,37 +29,33 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      try {
-        const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
-          email: credentials.email,
-          password: credentials.password
-        });
+      const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
+        email: credentials.email,
+        password: credentials.password
+      });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "ログインに失敗しました");
-        }
-
-        const userData = await response.json();
-        return userData;
-      } catch (error) {
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ログインに失敗しました");
       }
+
+      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
 
-      // ロールに応じたリダイレクト
-      if (user.role === "store") {
-        setLocation("/store/dashboard");
-      } else if (user.role === "talent") {
-        setLocation("/talent/mypage");
-      }
-
+      // トースト表示
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
+
+      // ロールに応じてリダイレクト
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      } else if (user.role === "store") {
+        setLocation("/store/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -116,17 +112,15 @@ function useRegisterMutation() {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
 
-      // ロールに応じたリダイレクト
-      if (user.role === "store") {
-        setLocation("/store/dashboard");
-      } else if (user.role === "talent") {
+      if (user.role === "talent") {
         setLocation("/talent/mypage");
+      } else if (user.role === "store") {
+        setLocation("/store/dashboard");
       }
     },
     onError: (error: Error) => {
@@ -147,21 +141,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", "/api/auth/check");
-        if (!response.ok) {
-          if (response.status === 401) {
-            return null;
-          }
-          throw new Error('認証確認に失敗しました');
+      const response = await apiRequest("GET", "/api/auth/check");
+      if (!response.ok) {
+        if (response.status === 401) {
+          return null;
         }
-        return await response.json();
-      } catch (error) {
-        return null;
+        throw new Error('認証確認に失敗しました');
       }
+      return await response.json();
     },
-    staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-    retry: false,
+    staleTime: 1000 * 60 * 5, // 5分間キャッシュ
   });
 
   const loginMutation = useLoginMutation();
