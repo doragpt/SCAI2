@@ -48,27 +48,27 @@ function useLoginMutation() {
       return await response.json();
     },
     onSuccess: (user: SelectUser) => {
-      // クエリキャッシュを更新
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
       console.log('Login successful:', {
         userId: user.id,
         role: user.role,
         timestamp: new Date().toISOString()
       });
 
+      // ログイン成功のトースト表示を先に行う
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
-      if (user.role === "talent") {
-        setTimeout(() => setLocation("/talent/mypage"), 100);
-      } else if (user.role === "store") {
-        setTimeout(() => setLocation("/store/dashboard"), 100);
-      }
+      // リダイレクトを少し遅延させる
+      setTimeout(() => {
+        if (user.role === "talent") {
+          setLocation("/talent/mypage");
+        } else if (user.role === "store") {
+          setLocation("/store/dashboard");
+        }
+      }, 500);
     },
     onError: (error: Error) => {
       console.error('Login error:', error);
