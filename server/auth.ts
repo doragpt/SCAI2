@@ -2,12 +2,10 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import * as bcrypt from "bcrypt";
 import { storage } from "./storage";
-import { User as SelectUser, talentRegisterFormSchema } from "@shared/schema";
+import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
-import * as z from 'zod';
 
 declare global {
   namespace Express {
@@ -15,16 +13,10 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
-
 async function hashPassword(password: string): Promise<string> {
   try {
-    if (!password || typeof password !== 'string') {
-      throw new Error('無効なパスワードです');
-    }
-    const salt = randomBytes(32).toString('hex');
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-    return `${buf.toString('hex')}.${salt}`;
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
   } catch (error) {
     log('error', 'パスワードハッシュ化エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -33,23 +25,15 @@ async function hashPassword(password: string): Promise<string> {
   }
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
-    const [hashed, salt] = stored.split(".");
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
+    return await bcrypt.compare(supplied, stored);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
     return false;
   }
-}
-
-function sanitizeUser(user: SelectUser) {
-  const { password, ...sanitizedUser } = user;
-  return sanitizedUser;
 }
 
 export function setupAuth(app: Express) {
@@ -79,16 +63,25 @@ export function setupAuth(app: Express) {
       async (email, password, done) => {
         try {
           log('info', 'ログイン試行', { email });
+
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            log('warn', 'ログイン失敗', { email });
+          if (!user) {
+            log('warn', 'ユーザーが見つかりません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
+
+          const isValidPassword = await comparePasswords(password, user.password);
+          if (!isValidPassword) {
+            log('warn', 'パスワードが一致しません', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
           log('info', 'ログイン成功', {
             userId: user.id,
             email: user.email,
             role: user.role
           });
+
           return done(null, user);
         } catch (error) {
           log('error', 'ログインエラー', {
@@ -116,7 +109,6 @@ export function setupAuth(app: Express) {
       done(error);
     }
   });
-
   // ユーザー情報取得API
   app.get("/api/user", async (req, res) => {
     try {
@@ -369,6 +361,11 @@ export function setupAuth(app: Express) {
       });
     }
   });
+}
+
+function sanitizeUser(user: SelectUser) {
+  const { password, ...sanitizedUser } = user;
+  return sanitizedUser;
 }
 
 export { hashPassword, comparePasswords };
