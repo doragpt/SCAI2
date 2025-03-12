@@ -29,7 +29,7 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const response = await apiRequest("POST", "/api/login", credentials);
+      const response = await apiRequest("POST", "/api/auth/login", credentials);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
@@ -69,7 +69,7 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
+      const response = await apiRequest("POST", "/api/auth/logout");
       if (!response.ok) {
         throw new Error("ログアウトに失敗しました");
       }
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         console.log('Checking auth status...'); // デバッグログ
-        const response = await apiRequest("GET", "/api/check");
+        const response = await apiRequest("GET", "/api/auth/check");
         console.log('Auth check response:', response); // デバッグログ
 
         if (!response.ok) {
