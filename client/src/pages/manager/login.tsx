@@ -25,28 +25,22 @@ export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { loginMutation, user, isLoading } = useAuth();
-
-  // 状態管理の改善
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // フォームの設定
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
-      role: "store" // 店舗用ログインフォームなのでデフォルトを"store"に設定
     }
   });
 
-  // ユーザーが既にログインしている場合のリダイレクト処理を改善
   useEffect(() => {
     if (user?.role === "store") {
       setLocation("/store/dashboard");
     }
   }, [user, setLocation]);
 
-  // ローディング中の表示
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -61,7 +55,7 @@ export default function ManagerLogin() {
     try {
       setIsSubmitting(true);
       console.log('店舗ログイン試行:', {
-        username: data.username,
+        email: data.email,
         timestamp: new Date().toISOString()
       });
 
@@ -103,14 +97,15 @@ export default function ManagerLogin() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ログインID</FormLabel>
+                    <FormLabel>メールアドレス</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
-                        autoComplete="username"
+                        type="email"
+                        autoComplete="email"
                         disabled={isSubmitting} 
                       />
                     </FormControl>
