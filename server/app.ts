@@ -11,38 +11,44 @@ import talentRouter from './routes/talent';
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
 
-// CORSの設定
+// 開発環境用のCORS設定
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? false : true,
+  origin: 'http://localhost:3000', // 開発環境のフロントエンドURL
   credentials: true,
-  exposedHeaders: ['set-cookie']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
-// リクエストボディのパース設定（セッションの前に配置）
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// リクエストボディのパース設定
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// セッションの設定
+// セッションストアの設定
+const sessionStore = new MemoryStoreSession({
+  checkPeriod: 86400000 // 24時間でクリア
+});
+
+// セッション設定
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
+  name: 'sessionId',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000 // 24時間でクリア
-  }),
-  name: 'sessionId',
+  store: sessionStore,
   cookie: {
+    path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // 開発環境ではfalse
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24時間
   }
 }));
 
-// Passportの初期化とセッション管理
+// Passportの初期化
 setupAuth(app);
 
-// APIリクエストのログ記録とヘッダー設定
+// APIリクエストのログ記録
 app.use('/api/*', (req, res, next) => {
   log('info', 'APIリクエスト受信', {
     method: req.method,
@@ -51,21 +57,22 @@ app.use('/api/*', (req, res, next) => {
     body: req.method !== 'GET' ? req.body : undefined,
     userId: req.user?.id,
     isAuthenticated: req.isAuthenticated(),
-    sessionID: req.sessionID
+    sessionID: req.sessionID,
+    cookies: req.cookies
   });
 
   res.setHeader('Content-Type', 'application/json');
   next();
 });
 
-// APIルートの登録
+// ルート設定
 app.use('/api/talent', talentRouter);
 registerRoutes(app);
 
-// グローバルエラーハンドラー
+// エラーハンドリング
 app.use(errorHandler);
 
-// 認証エラー時のJSONレスポンス
+// 認証エラーハンドラ
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err.name === 'UnauthorizedError' || err.status === 401) {
     log('warn', '認証エラー', {
