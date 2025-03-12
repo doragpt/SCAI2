@@ -12,6 +12,7 @@ import { z } from 'zod';
 const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(8, "パスワードは8文字以上である必要があります"),
+  role: z.enum(["talent", "store"])
 });
 
 const router = Router();
@@ -144,11 +145,19 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 });
 
 // ログインエンドポイント
-router.post("/login", async (req, res, next) => {
+router.post("/login/:role", async (req, res, next) => {
   try {
-    const validatedData = loginSchema.parse(req.body);
-    // 認証処理は auth.ts で実装済み
-    passport.authenticate('local', (err: any, user: any, info: any) => {
+    const role = req.params.role as 'talent' | 'store';
+    if (!['talent', 'store'].includes(role)) {
+      return res.status(400).json({ message: "無効なロールです" });
+    }
+
+    const validatedData = loginSchema.parse({
+      ...req.body,
+      role
+    });
+
+    passport.authenticate(role, (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
@@ -169,7 +178,11 @@ router.post("/login", async (req, res, next) => {
 router.post("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
-    res.sendStatus(200);
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      res.clearCookie('connect.sid');
+      res.sendStatus(200);
+    });
   });
 });
 

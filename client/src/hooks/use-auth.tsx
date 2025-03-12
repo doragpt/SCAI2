@@ -3,11 +3,7 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
-import {
-  type SelectUser,
-  type LoginData,
-  type RegisterFormData
-} from "@shared/schema";
+import { type SelectUser } from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -21,19 +17,34 @@ type AuthContextType = {
   registerMutation: ReturnType<typeof useRegisterMutation>;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+type LoginCredentials = {
+  email: string;
+  password: string;
+  role: "talent" | "store";
+};
 
 function useLoginMutation() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (credentials: LoginData) => {
-      const response = await apiRequest("POST", "/api/login", credentials);
+    mutationFn: async (credentials: LoginCredentials) => {
+      console.log('Login attempt:', {
+        email: credentials.email,
+        role: credentials.role,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
+        email: credentials.email,
+        password: credentials.password
+      });
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
       }
+
       const data = await response.json();
       return data;
     },
@@ -69,7 +80,7 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
+      const response = await apiRequest("POST", "/api/auth/logout");
       if (!response.ok) {
         throw new Error("ログアウトに失敗しました");
       }
@@ -98,7 +109,7 @@ function useRegisterMutation() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: RegisterFormData) => {
+    mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/auth/register", data);
       if (!response.ok) {
         const error = await response.json();
@@ -116,7 +127,6 @@ function useRegisterMutation() {
         description: "アカウントが正常に作成されました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -134,8 +144,6 @@ function useRegisterMutation() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-
   const {
     data: user,
     error,
@@ -144,9 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...'); // デバッグログ
-        const response = await apiRequest("GET", "/api/check");
-        console.log('Auth check response:', response); // デバッグログ
+        const response = await apiRequest("GET", "/api/auth/check");
+        console.log('Auth check response:', response);
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -156,7 +163,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await response.json();
-        console.log('Auth check data:', data); // デバッグログ
         return data;
       } catch (error) {
         console.error('Auth check error:', error);
@@ -186,6 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
   const context = useContext(AuthContext);

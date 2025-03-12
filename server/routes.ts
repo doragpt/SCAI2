@@ -6,7 +6,6 @@ import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
 import talentRoutes from './routes/talent';
 import { log } from './utils/logger';
-import { setupAuth } from './auth';
 import multer from "multer";
 
 // Multerの設定
@@ -26,9 +25,6 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
-
-  // 認証のセットアップを最初に行う
-  setupAuth(app);
 
   // APIリクエストの共通ミドルウェア
   app.use("/api/*", (req, res, next) => {
