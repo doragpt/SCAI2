@@ -44,7 +44,7 @@ export class DatabaseStorage implements IStorage {
 
       // 明示的に型を指定してデータを変換
       const profileData: TalentProfileData = {
-        userId: result.userId,
+        userId: result.userId || '',
         lastName: result.lastName || '',
         firstName: result.firstName || '',
         lastNameKana: result.lastNameKana || '',
@@ -60,8 +60,23 @@ export class DatabaseStorage implements IStorage {
         waist: result.waist || 0,
         hip: result.hip || 0,
         bodyMark: result.bodyMark || '',
-        smoking: !!result.smoking,
-        faceVisibility: !!result.faceVisibility,
+        smoking: typeof result.smoking === 'boolean' ? {
+          enabled: result.smoking,
+          types: [],
+          others: []
+        } : result.smoking || {
+          enabled: false,
+          types: [],
+          others: []
+        },
+        // 顔出しの値を適切に変換
+        faceVisibility: typeof result.faceVisibility === 'string'
+          ? result.faceVisibility
+          : result.faceVisibility === true
+            ? "全出し"
+            : result.faceVisibility === false
+              ? "全隠し"
+              : "全隠し",
         hasEstheExperience: !!result.hasEstheExperience,
         estheExperiencePeriod: result.estheExperiencePeriod || '',
         estheOptions: result.estheOptions || [],
@@ -81,7 +96,7 @@ export class DatabaseStorage implements IStorage {
         photos: result.photos || []
       };
 
-      log('info', 'タレントプロフィール取得成功', { 
+      log('info', 'タレントプロフィール取得成功', {
         userId,
         profileData: {
           lastName: profileData.lastName,
@@ -89,7 +104,8 @@ export class DatabaseStorage implements IStorage {
           lastNameKana: profileData.lastNameKana,
           firstNameKana: profileData.firstNameKana,
           location: profileData.location,
-          nearestStation: profileData.nearestStation
+          nearestStation: profileData.nearestStation,
+          faceVisibility: profileData.faceVisibility // 追加
         }
       });
 
@@ -105,7 +121,7 @@ export class DatabaseStorage implements IStorage {
 
   async createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData> {
     try {
-      log('info', 'タレントプロフィール作成/更新開始', { 
+      log('info', 'タレントプロフィール作成/更新開始', {
         userId,
         inputData: {
           lastName: data.lastName,
@@ -153,7 +169,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('プロフィールの保存に失敗しました');
       }
 
-      log('info', 'タレントプロフィール作成/更新成功', { 
+      log('info', 'タレントプロフィール作成/更新成功', {
         userId,
         savedProfile: {
           lastName: result.lastName,
