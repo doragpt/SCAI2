@@ -129,7 +129,15 @@ export const AIMatchingChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "ai",
-      content: `SCAIマッチングへようこそ！\nあなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。\n\n【SCAIマッチングの特徴】\n• AIが希望条件を分析し、最適な店舗をご紹介\n• 豊富な求人データベースから、あなたに合った職場を探索\n• 店舗からの返信状況をリアルタイムに確認可能\n\nまずは、希望する働き方を選択してください。`
+      content: `SCAIマッチングへようこそ！
+あなたの希望に合った最適な職場を見つけるお手伝いをさせていただきます。
+
+【SCAIマッチングの特徴】
+• AIが希望条件を分析し、最適な店舗をご紹介
+• 豊富な求人データベースから、あなたに合った職場を探索
+• 店舗からの返信状況をリアルタイムに確認可能
+
+まずは、希望する働き方を選択してください。`
     },
   ]);
   const [conditions, setConditions] = useState({
@@ -160,15 +168,7 @@ export const AIMatchingChat = () => {
 
   // コンポーネントマウント時にプロフィールデータを再取得
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        await refetchProfile();
-        console.log('Profile data after refetch:', profileData);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      }
-    };
-    fetchProfile();
+    refetchProfile();
   }, []);
 
   if (isProfileLoading) {
@@ -283,7 +283,6 @@ export const AIMatchingChat = () => {
 
       // プロフィールデータを再取得
       await refetchProfile();
-      console.log('Updated profile data:', profileData);
 
       if (!profileData) {
         toast({
@@ -293,6 +292,8 @@ export const AIMatchingChat = () => {
         });
         return;
       }
+
+      console.log('Displaying profile data:', profileData);
 
       // 条件の確認メッセージを追加
       setMessages(prev => [...prev, {
@@ -304,10 +305,9 @@ export const AIMatchingChat = () => {
       }, {
         type: "ai",
         content: `【現在のプロフィール】
-• お名前: ${profileData.lastName || '未入力'} ${profileData.firstName || '未入力'}
-• フリガナ: ${profileData.lastNameKana || '未入力'} ${profileData.firstNameKana || '未入力'}
+• お名前: ${profileData.lastName} ${profileData.firstName}
+• フリガナ: ${profileData.lastNameKana} ${profileData.firstNameKana}
 • 生年月日: ${user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
-• 年齢: ${calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
 • 在住地: ${profileData.location || '未入力'}
 • 最寄り駅: ${profileData.nearestStation || '未入力'}
 • 身長: ${profileData.height ? `${profileData.height}cm` : '未入力'}
@@ -489,9 +489,7 @@ ${index + 1}. ${result.businessName}
 
   // プロフィールデータの変更を監視
   useEffect(() => {
-    if (profileData) {
-      console.log('Profile data updated in AIMatchingChat:', profileData);
-    }
+    console.log('Current profile data in AIMatchingChat:', profileData);
   }, [profileData]);
 
   return (
@@ -1003,7 +1001,8 @@ ${index + 1}. ${result.businessName}
                       notes: e.target.value,
                     })
                   }
-                /></div>
+                />
+              </div>
 
               <Button
                 className="w-full mt-6"
