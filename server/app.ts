@@ -82,7 +82,7 @@ registerRoutes(app);
 // エラーハンドリング
 app.use(errorHandler);
 
-// 認証エラーハンドラ (from original code, kept unchanged)
+// 認証エラーハンドラ
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err.name === 'UnauthorizedError' || err.status === 401) {
     log('warn', '認証エラー', {

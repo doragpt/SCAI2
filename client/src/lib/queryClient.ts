@@ -2,12 +2,10 @@ import { QueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import type { Job, JobListingResponse } from "@shared/schema";
 
-const API_BASE_URL = (() => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  const port = process.env.NODE_ENV === 'development' ? ':3000' : '';
-  return `${protocol}//${hostname}${port}`;
-})();
+// 開発環境では3000番ポートを使用
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5000'  // バックエンドのポート
+  : '';
 
 export async function apiRequest(
   method: string,
@@ -30,6 +28,8 @@ export async function apiRequest(
     };
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+    console.log('Making request to:', fullUrl);
 
     const response = await fetch(fullUrl, {
       method,
