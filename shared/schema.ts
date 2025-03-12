@@ -1,8 +1,9 @@
-import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
-// 基本的な定数の定義
+// Constants
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -12,67 +13,6 @@ export const prefectures = [
   "香川県", "徳島県", "高知県", "愛媛県", "福岡県", "長崎県", "大分県",
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
-
-// ユーザーテーブルの定義
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  hashedPassword: text("hashed_password").notNull(),
-  role: text("role", { enum: ["talent", "store"] }).notNull(),
-  displayName: text("display_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  preferredLocations: jsonb("preferred_locations").$type<string[]>().default([]).notNull(),
-  birthDate: text("birth_date").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// ユーザー関連の型定義
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type UserRole = "talent" | "store";
-
-// 認証関連のスキーマ
-export const loginSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"])
-});
-
-export const registerSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(72, "パスワードは72文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!@#$%^&*(),.?":{}|<>]*$/,
-      "パスワードには英小文字と数字を含める必要があります"
-    ),
-  role: z.enum(["talent", "store"]),
-  displayName: z.string().min(1, "表示名を入力してください"),
-  location: z.enum(prefectures),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "希望地域を1つ以上選択してください"),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
-});
-
-// 認証関連の型定義
-export type LoginCredentials = z.infer<typeof loginSchema>;
-export type RegisterData = z.infer<typeof registerSchema>;
-
-// セッション関連の型定義
-export interface Session {
-  id: string;
-  userId: number;
-  role: UserRole;
-  createdAt: Date;
-  expiresAt: Date;
-}
-
-// APIレスポンスの型定義
-export type AuthResponse = {
-  user: Omit<User, "hashedPassword">;
-  token?: string;
-};
 
 export const serviceTypes = [
   "deriheru",
@@ -176,9 +116,22 @@ export const bodyMarkSchema = z.object({
   others: z.array(z.string()).default([]),
 });
 
-
 // Tables
-// Jobs table definition
+// Users table definition
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  birthDate: text("birth_date").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
+  displayName: text("display_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -307,6 +260,8 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 }));
 
 // Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
@@ -316,7 +271,43 @@ export type BodyMark = typeof bodyMarkSchema._type;
 
 // Schemas
 // Login schema update
+export const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+});
 
+export const talentRegisterFormSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  username: z.string()
+    .min(1, "ニックネームを入力してください")
+    .max(10, "ニックネームは10文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string(),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    errorMap: () => ({ message: "在住地を選択してください" })
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
+  role: z.literal("talent"),
+  privacyPolicy: z.boolean()
+}).refine((data) => data.privacyPolicy === true, {
+  message: "個人情報の取り扱いについて同意が必要です",
+  path: ["privacyPolicy"],
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
@@ -665,5 +656,3 @@ export type UserResponse = {
   preferredLocations: string[];
   role: "talent" | "store";
 };
-import { integer, boolean, index } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";

@@ -1,51 +1,143 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { authenticate } from '../middleware/auth';
-import { registerSchema, loginSchema } from '@shared/schema';
+import { talentRegisterFormSchema } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { log } from '../utils/logger';
 import passport from 'passport';
+import { z } from 'zod';
+
+// ログインスキーマの定義
+const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(8, "パスワードは8文字以上である必要があります"),
+});
 
 const router = Router();
 
-// セッション確認エンドポイント
-router.get("/session", authenticate, async (req, res) => {
+// ユーザー情報取得エンドポイント
+router.get("/user", authenticate, async (req, res) => {
   try {
-    if (!req.user) {
+    const user = req.user;
+    if (!user) {
+      log('warn', 'ユーザー認証なし');
       return res.status(401).json({ message: "認証が必要です" });
     }
-    res.json(req.user);
+
+    // データベースから最新のユーザー情報を取得
+    const userData = await storage.getUser(user.id);
+    if (!userData) {
+      log('warn', 'ユーザーが見つかりません', { id: user.id });
+      return res.status(404).json({ message: "ユーザーが見つかりません" });
+    }
+
+    // データベースの値をログ出力
+    log('info', 'データベースから取得したユーザー情報', {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: userData.preferredLocations
+    });
+
+    // 必要なユーザー情報のみを返す
+    const response = {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
+      role: userData.role,
+      displayName: userData.username // displayName を username から設定
+    };
+
+    // レスポンスデータをログ出力
+    log('info', 'クライアントに送信するレスポンス', response);
+
+    res.json(response);
   } catch (error) {
-    log('error', 'セッション確認エラー', { error });
-    res.status(500).json({ message: "セッション確認に失敗しました" });
+    log('error', 'ユーザー情報取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    res.status(500).json({
+      message: "ユーザー情報の取得に失敗しました"
+    });
   }
 });
 
-// 登録エンドポイント
+// ユーザー情報更新エンドポイント
+router.patch("/user", authenticate, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      log('warn', '認証なしでの更新試行');
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+
+    const { username, location, preferredLocations } = req.body;
+
+    // データベースの更新
+    const updatedUser = await storage.updateUser(user.id, {
+      username,
+      location,
+      preferredLocations,
+      displayName: username // displayName を username と同期
+    });
+
+    // レスポンスデータの形式を統一
+    const response = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      birthDate: updatedUser.birthDate,
+      location: updatedUser.location,
+      preferredLocations: Array.isArray(updatedUser.preferredLocations) ? updatedUser.preferredLocations : [],
+      role: updatedUser.role,
+      displayName: updatedUser.username
+    };
+
+    res.json(response);
+  } catch (error) {
+    log('error', 'ユーザー情報更新エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    res.status(500).json({
+      message: "ユーザー情報の更新に失敗しました"
+    });
+  }
+});
+
+// 認証エンドポイント
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validatedData = registerSchema.parse(req.body);
+    // リクエストデータのバリデーション
+    const validatedData = talentRegisterFormSchema.parse(req.body);
+
+    // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
+    // ユーザーの作成
     const user = await storage.createUser({
       ...validatedData,
-      hashedPassword,
+      password: hashedPassword,
+      displayName: validatedData.username // displayName を username として設定
     });
 
+    // セッションの作成
     req.login(user, (err) => {
       if (err) {
-        log('error', '登録後のログインエラー', { error: err });
+        console.error('Login error:', err);
         return next(err);
       }
-
-      const { hashedPassword, ...userResponse } = user;
-      res.status(201).json(userResponse);
+      res.status(201).json(user);
     });
   } catch (error) {
-    log('error', '登録エラー', { error });
-    res.status(400).json({
-      message: "登録に失敗しました",
+    console.error('Registration error:', error);
+    res.status(500).json({
+      message: "登録処理中にエラーが発生しました",
       details: error instanceof Error ? error.message : undefined
     });
   }
@@ -55,28 +147,18 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 router.post("/login", async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
-
+    // 認証処理は auth.ts で実装済み
     passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        log('error', 'ログインエラー', { error: err });
-        return next(err);
-      }
-
+      if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
-
       req.login(user, (err) => {
-        if (err) {
-          log('error', 'セッション作成エラー', { error: err });
-          return next(err);
-        }
-
+        if (err) return next(err);
         res.json(user);
       });
     })(req, res, next);
   } catch (error) {
-    log('error', 'ログインバリデーションエラー', { error });
     res.status(400).json({
       message: error instanceof Error ? error.message : "ログインに失敗しました"
     });
@@ -85,26 +167,15 @@ router.post("/login", async (req, res, next) => {
 
 // ログアウトエンドポイント
 router.post("/logout", (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "既にログアウトしています" });
-  }
-
   req.logout((err) => {
-    if (err) {
-      log('error', 'ログアウトエラー', { error: err });
-      return next(err);
-    }
-
-    req.session.destroy((err) => {
-      if (err) {
-        log('error', 'セッション削除エラー', { error: err });
-        return next(err);
-      }
-
-      res.clearCookie('sessionId');
-      res.sendStatus(200);
-    });
+    if (err) return next(err);
+    res.sendStatus(200);
   });
+});
+
+// セッションチェックエンドポイント
+router.get("/check", authenticate, (req, res) => {
+  res.json(req.user);
 });
 
 export default router;

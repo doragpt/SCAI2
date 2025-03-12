@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import authRoutes from './routes/auth';
+import { setupAuth } from './auth';
 import jobsRoutes from './routes/jobs';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
-import talentRoutes from './routes/talent';
 import { log } from './utils/logger';
+import { storage } from "./storage";
 import multer from "multer";
 
 // Multerの設定
@@ -38,12 +38,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // 認証関連のルートをセットアップ（server/auth.tsで定義）
+  setupAuth(app);
+
   // 各ルーターを登録
-  app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
-  app.use('/api/talent', talentRoutes);
 
   // 共通のエラーハンドリング
   app.use((err: Error, req: any, res: any, next: any) => {

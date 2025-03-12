@@ -1,12 +1,16 @@
 import { QueryClient } from "@tanstack/react-query";
+import type { TalentProfileData, SelectUser } from "@shared/schema";
+import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import type { Job, JobListingResponse } from "@shared/schema";
 
-// 開発環境では3000番ポートを使用
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:5000'  // バックエンドのポート
-  : '';
+// APIのベースURL設定
+const API_BASE_URL = (() => {
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}`;
+})();
 
+// APIリクエスト関数
 export async function apiRequest(
   method: string,
   url: string,
@@ -19,6 +23,7 @@ export async function apiRequest(
     console.log('API Request starting:', {
       method,
       url,
+      data,
       timestamp: new Date().toISOString()
     });
 
@@ -28,8 +33,6 @@ export async function apiRequest(
     };
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-    console.log('Making request to:', fullUrl);
 
     const response = await fetch(fullUrl, {
       method,
@@ -57,34 +60,128 @@ export async function apiRequest(
   }
 }
 
-// Jobs関連の関数
-export async function getJobsQuery(params?: {
-  page?: number;
-  limit?: number;
-  location?: string;
-  serviceType?: string;
-}): Promise<JobListingResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.page) searchParams.set('page', params.page.toString());
-  if (params?.limit) searchParams.set('limit', params.limit.toString());
-  if (params?.location) searchParams.set('location', params.location);
-  if (params?.serviceType) searchParams.set('serviceType', params.serviceType);
+// タレントプロフィール関連の関数
+export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
+  const response = await apiRequest(
+    "POST",
+    QUERY_KEYS.TALENT_PROFILE,
+    data
+  );
 
-  const response = await apiRequest("GET", `/api/jobs${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
   if (!response.ok) {
-    throw new Error("求人情報の取得に失敗しました");
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの保存に失敗しました");
   }
+
   return response.json();
 }
 
-// searchJobsQueryをgetJobsQueryのエイリアスとしてエクスポート
-export const searchJobsQuery = getJobsQuery;
+export async function getTalentProfile(): Promise<TalentProfileData> {
+  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
 
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "プロフィールの取得に失敗しました");
+  }
+
+  return response.json();
+}
+
+export function invalidateTalentProfileCache() {
+  return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+}
+
+// 求人一覧取得用のクエリ関数
+export const getJobsQuery = async (): Promise<import("@shared/schema").Job[]> => {
+  try {
+    console.log('Fetching public jobs:', {
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の取得に失敗しました");
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Jobs fetch error:', {
+      error: getErrorMessage(error),
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};
+
+// 求人検索用のクエリ関数
+export const searchJobsQuery = async (params: {
+  location?: string;
+  serviceType?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  jobs: import("@shared/schema").Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}> => {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params.location && params.location !== "all") searchParams.set("location", params.location);
+    if (params.serviceType && params.serviceType !== "all") searchParams.set("serviceType", params.serviceType);
+    if (params.page) searchParams.set("page", params.page.toString());
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+
+    const url = `/api/jobs/public${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    console.log('Fetching jobs:', { url, params });
+
+    const response = await apiRequest("GET", url);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "求人の検索に失敗しました");
+    }
+    const data = await response.json();
+
+    // レスポンスをページネーション形式に整形
+    return {
+      jobs: data,
+      pagination: {
+        currentPage: params.page || 1,
+        totalPages: Math.ceil(data.length / (params.limit || 12)),
+        totalItems: data.length
+      }
+    };
+  } catch (error) {
+    console.error('Jobs search error:', {
+      error: getErrorMessage(error),
+      params,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+};
+
+
+// ユーザー情報更新関数
+export async function updateUserProfile(data: any): Promise<any> {
+  const response = await apiRequest("PATCH", "/api/user", data);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
+  }
+
+  return response.json();
+}
+
+// クエリクライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5分間キャッシュ
-      retry: false,
+      staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+      retry: 1,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     },
