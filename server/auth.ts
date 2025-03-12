@@ -70,6 +70,12 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
+          // パスワードの検証を行う前にログを出力
+          log('info', 'パスワード検証開始', { 
+            email,
+            userRole: user.role,
+          });
+
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
             log('warn', 'パスワードが一致しません', { email });
@@ -82,7 +88,7 @@ export function setupAuth(app: Express) {
             role: user.role
           });
 
-          return done(null, user);
+          return done(null, sanitizeUser(user));
         } catch (error) {
           log('error', 'ログインエラー', {
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -95,6 +101,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
+    log('info', 'セッションシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -102,41 +109,84 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
+        log('warn', 'セッションデシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
-      done(null, user);
+      log('info', 'セッションデシリアライズ成功', { userId: user.id });
+      done(null, sanitizeUser(user));
     } catch (error) {
+      log('error', 'セッションデシリアライズエラー', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        id 
+      });
       done(error);
     }
   });
+
   // ユーザー情報取得API
   app.get("/api/user", async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "認証が必要です" });
-      }
-
-      const userData = await storage.getUser(req.user.id);
-      if (!userData) {
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      log('info', 'ユーザー情報取得', {
-        id: userData.id,
-        email: userData.email,
-        role: userData.role
-      });
-
-      res.json(sanitizeUser(userData));
-    } catch (error) {
-      log('error', 'ユーザー情報取得エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      res.status(500).json({ message: "ユーザー情報の取得に失敗しました" });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "認証が必要です" });
     }
+    res.json(req.user);
   });
 
-  // ユーザー情報更新API
+  // ログインAPI
+  app.post("/api/login", (req, res, next) => {
+    log('info', 'ログインリクエスト受信', {
+      email: req.body.email
+    });
+
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        log('error', 'ログイン認証エラー', { error: err });
+        return next(err);
+      }
+      if (!user) {
+        log('warn', 'ログイン失敗', {
+          email: req.body.email,
+          reason: info?.message || "認証失敗"
+        });
+        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          log('error', 'セッション作成エラー', { error: err });
+          return next(err);
+        }
+        log('info', 'ログイン成功', {
+          userId: user.id,
+          email: user.email,
+          role: user.role
+        });
+        res.json(user);
+      });
+    })(req, res, next);
+  });
+
+  // ログアウトAPI
+  app.post("/api/logout", (req, res, next) => {
+    if (req.user) {
+      const user = req.user as SelectUser;
+      log('info', 'ログアウトリクエスト受信', {
+        userId: user.id,
+        email: user.email
+      });
+    }
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
+  // セッションチェックAPI
+  app.get("/api/check", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "認証されていません" });
+    }
+    res.json(req.user);
+  });
+    // ユーザー情報更新API
   app.patch("/api/user", async (req, res) => {
     try {
       if (!req.user) {
@@ -218,75 +268,6 @@ export function setupAuth(app: Express) {
         message: "ユーザー情報の更新に失敗しました"
       });
     }
-  });
-
-  // ログインAPI
-  app.post("/api/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', {
-      email: req.body.email
-    });
-    passport.authenticate('local', (err, user, info) => {
-      if (err) return next(err);
-      if (!user) {
-        log('warn', 'ログイン失敗', {
-          email: req.body.email,
-          reason: info?.message || "認証失敗"
-        });
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
-      }
-      req.login(user, (err) => {
-        if (err) return next(err);
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        });
-        res.json(sanitizeUser(user));
-      });
-    })(req, res, next);
-  });
-
-  // ログアウトAPI
-  app.post("/api/logout", (req, res, next) => {
-    try {
-      if (req.user) {
-        const user = req.user as SelectUser;
-        log('info', 'ログアウトリクエスト受信', {
-          userId: user.id,
-          email: user.email
-        });
-      }
-      req.logout((err) => {
-        if (err) return next(err);
-        req.session.destroy((err) => {
-          if (err) {
-            log('error', 'セッション破棄エラー', { error: err });
-            return res.status(500).json({
-              message: "セッションの破棄に失敗しました"
-            });
-          }
-          res.clearCookie('connect.sid');
-          return res.status(200).json({
-            message: "ログアウトしました"
-          });
-        });
-      });
-    } catch (error) {
-      log('error', 'ログアウトエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      return res.status(500).json({
-        message: "ログアウト処理中にエラーが発生しました"
-      });
-    }
-  });
-
-  // セッションチェックAPI
-  app.get("/api/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-    res.json(sanitizeUser(req.user));
   });
 
   // 新規登録APIエンドポイント
