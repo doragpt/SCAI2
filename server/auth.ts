@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
+import * as bcrypt from 'bcrypt';
 
 declare global {
   namespace Express {
@@ -17,17 +18,12 @@ declare global {
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return bcrypt.hash(password, 10);
 }
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    const [hashed, salt] = stored.split(".");
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
+    return await bcrypt.compare(supplied, stored);
   } catch (error) {
     console.error('Password comparison error:', error);
     return false;
@@ -56,7 +52,6 @@ export function setupAuth(app: Express) {
 
   app.use(passport.initialize());
   app.use(passport.session());
-
 
   passport.use(
     "talent",
@@ -94,18 +89,44 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          log('info', 'Store login attempt:', {
+            email,
+            timestamp: new Date().toISOString()
+          });
+
           const user = await storage.getUserByEmail(email);
-          if (!user || user.role !== "store") {
+
+          if (!user) {
+            log('warn', 'Store login failed - user not found:', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
+          if (user.role !== "store") {
+            log('warn', 'Store login failed - invalid role:', { 
+              email,
+              actualRole: user.role 
+            });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           const isValid = await comparePasswords(password, user.password);
+
           if (!isValid) {
+            log('warn', 'Store login failed - invalid password:', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
+          log('info', 'Store login successful:', {
+            userId: user.id,
+            email: user.email
+          });
+
           return done(null, user);
         } catch (error) {
+          log('error', 'Store login error:', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
           return done(error);
         }
       }
