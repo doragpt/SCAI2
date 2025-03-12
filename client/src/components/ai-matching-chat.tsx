@@ -173,7 +173,14 @@ export const AIMatchingChat = () => {
 
   // コンポーネントマウント時にプロフィールデータを再取得
   useEffect(() => {
-    refetchProfile();
+    const fetchProfile = async () => {
+      try {
+        await refetchProfile();
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+    fetchProfile();
   }, []);
 
   if (isProfileLoading) {
@@ -290,7 +297,7 @@ export const AIMatchingChat = () => {
       await refetchProfile();
 
       // プロフィールデータをログ出力
-      console.log('Current profile data before confirmation:', profileData);
+      console.log('Profile data before confirmation:', profileData);
 
       if (!profileData) {
         console.error('Profile data is null or undefined');
@@ -493,11 +500,6 @@ ${index + 1}. ${result.businessName}
       return null;
     }
   };
-
-  // プロフィールデータの変更を監視
-  useEffect(() => {
-    console.log('Current profile data in AIMatchingChat:', profileData);
-  }, [profileData]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] bg-gradient-to-b from-background to-muted/20">
@@ -1015,7 +1017,7 @@ ${index + 1}. ${result.businessName}
                 className="w-full mt-6"
                 onClick={handleConditionSubmit}
                 disabled={
-                  conditions.workTypes.length ===0 ||
+                  conditions.workTypes.length === 0 ||
                   (selectedType === "出稼ぎ" &&
                     (!conditions.workPeriodStart ||
                       !conditions.workPeriodEnd ||

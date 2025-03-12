@@ -26,6 +26,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // プロフィールデータを取得
   async getTalentProfile(userId: number): Promise<TalentProfileData | null> {
     try {
       log('info', 'タレントプロフィール取得開始', { userId });
@@ -41,42 +42,43 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
 
+      // 明示的に型を指定してデータを変換
       const profileData: TalentProfileData = {
         userId: result.userId,
-        lastName: result.lastName,
-        firstName: result.firstName,
-        lastNameKana: result.lastNameKana,
-        firstNameKana: result.firstNameKana,
-        location: result.location,
-        nearestStation: result.nearestStation,
-        availableIds: result.availableIds,
-        canProvideResidenceRecord: result.canProvideResidenceRecord,
-        height: result.height,
-        weight: result.weight,
-        cupSize: result.cupSize,
-        bust: result.bust,
-        waist: result.waist,
-        hip: result.hip,
-        bodyMark: result.bodyMark,
-        smoking: result.smoking,
-        faceVisibility: result.faceVisibility,
-        hasEstheExperience: result.hasEstheExperience,
-        estheExperiencePeriod: result.estheExperiencePeriod,
-        estheOptions: result.estheOptions,
-        currentStores: result.currentStores,
-        previousStores: result.previousStores,
-        selfIntroduction: result.selfIntroduction,
-        notes: result.notes,
-        preferredLocations: result.preferredLocations,
-        ngLocations: result.ngLocations,
-        canPhotoDiary: result.canPhotoDiary,
-        canHomeDelivery: result.canHomeDelivery,
-        ngOptions: result.ngOptions,
-        allergies: result.allergies,
-        hasSnsAccount: result.hasSnsAccount,
-        snsUrls: result.snsUrls,
-        photoDiaryUrls: result.photoDiaryUrls,
-        photos: result.photos
+        lastName: result.lastName || '',
+        firstName: result.firstName || '',
+        lastNameKana: result.lastNameKana || '',
+        firstNameKana: result.firstNameKana || '',
+        location: result.location || '',
+        nearestStation: result.nearestStation || '',
+        availableIds: result.availableIds || [],
+        canProvideResidenceRecord: !!result.canProvideResidenceRecord,
+        height: result.height || 0,
+        weight: result.weight || 0,
+        cupSize: result.cupSize || '',
+        bust: result.bust || 0,
+        waist: result.waist || 0,
+        hip: result.hip || 0,
+        bodyMark: result.bodyMark || '',
+        smoking: !!result.smoking,
+        faceVisibility: !!result.faceVisibility,
+        hasEstheExperience: !!result.hasEstheExperience,
+        estheExperiencePeriod: result.estheExperiencePeriod || '',
+        estheOptions: result.estheOptions || [],
+        currentStores: result.currentStores || [],
+        previousStores: result.previousStores || [],
+        selfIntroduction: result.selfIntroduction || '',
+        notes: result.notes || '',
+        preferredLocations: result.preferredLocations || [],
+        ngLocations: result.ngLocations || [],
+        canPhotoDiary: !!result.canPhotoDiary,
+        canHomeDelivery: !!result.canHomeDelivery,
+        ngOptions: result.ngOptions || [],
+        allergies: result.allergies || [],
+        hasSnsAccount: !!result.hasSnsAccount,
+        snsUrls: result.snsUrls || [],
+        photoDiaryUrls: result.photoDiaryUrls || [],
+        photos: result.photos || []
       };
 
       log('info', 'タレントプロフィール取得成功', { 
@@ -87,11 +89,7 @@ export class DatabaseStorage implements IStorage {
           lastNameKana: profileData.lastNameKana,
           firstNameKana: profileData.firstNameKana,
           location: profileData.location,
-          nearestStation: profileData.nearestStation,
-          height: profileData.height,
-          weight: profileData.weight,
-          cupSize: profileData.cupSize,
-          faceVisibility: profileData.faceVisibility,
+          nearestStation: profileData.nearestStation
         }
       });
 

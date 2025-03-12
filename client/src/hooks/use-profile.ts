@@ -1,17 +1,18 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { type TalentProfileData } from "@shared/schema";
-import { queryClient, QUERY_KEYS, apiRequest } from "@/lib/queryClient";
+import { queryClient, QUERY_KEYS } from "@/lib/queryClient";
+import { getTalentProfile, createOrUpdateTalentProfile, invalidateTalentProfileCache } from "@/lib/api/talent";
 
 export function useProfile() {
   // プロフィールデータを取得
-  const profileQuery = useQuery<TalentProfileData>({
+  const profileQuery = useQuery<TalentProfileData | null>({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: async () => {
       console.log('Fetching profile data from API...');
       try {
-        const response = await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
-        console.log('Profile data received from API:', response);
-        return response;
+        const data = await getTalentProfile();
+        console.log('Profile data received:', data);
+        return data;
       } catch (error) {
         console.error('Error fetching profile data:', error);
         throw error;
@@ -30,9 +31,8 @@ export function useProfile() {
         timestamp: new Date().toISOString()
       });
       try {
-        const response = await apiRequest<TalentProfileData>("PATCH", QUERY_KEYS.TALENT_PROFILE, newData);
-        console.log('Profile update response:', response);
-        return response;
+        await createOrUpdateTalentProfile(newData as TalentProfileData);
+        return newData;
       } catch (error) {
         console.error('Error updating profile:', error);
         throw error;
@@ -42,7 +42,7 @@ export function useProfile() {
       // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.TALENT_PROFILE], data);
       // キャッシュを無効化して再取得を強制
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+      invalidateTalentProfileCache(queryClient);
     },
   });
 

@@ -56,3 +56,5 @@ export function invalidateTalentProfileCache(queryClient: any) {
   console.log('Invalidating talent profile cache');
   return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
 }
+
+export { apiRequest };
