@@ -20,6 +20,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// リクエストボディのパース設定（認証の前に配置）
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // セッションの設定
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -32,17 +36,14 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+    sameSite: 'lax' as const
   }
 };
 
+app.set('trust proxy', 1);
 app.use(session(sessionConfig));
 
-// リクエストボディのパース設定
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// 認証セットアップ
+// 認証セットアップ（ボディパーサーの後に配置）
 setupAuth(app);
 
 // APIリクエストのログ記録とヘッダー設定
@@ -51,7 +52,8 @@ app.use('/api/*', (req, res, next) => {
     method: req.method,
     path: req.path,
     query: req.query,
-    body: req.method !== 'GET' ? req.body : undefined
+    body: req.method !== 'GET' ? req.body : undefined,
+    session: req.session.id
   });
 
   // APIリクエストには必ずJSONを返す
@@ -59,7 +61,7 @@ app.use('/api/*', (req, res, next) => {
   next();
 });
 
-// APIルートの登録（Viteミドルウェアの前に配置）
+// APIルートの登録
 app.use('/api/talent', talentRouter);
 registerRoutes(app);
 

@@ -54,50 +54,48 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password',
-      },
-      async (email, password, done) => {
-        try {
-          log('info', 'ログイン試行', { email });
+  passport.use(new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      try {
+        log('info', 'ログイン試行', { email });
 
-          const user = await storage.getUserByEmail(email);
-          if (!user) {
-            log('warn', 'ユーザーが見つかりません', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          log('info', 'パスワード検証開始', { 
-            email,
-            userRole: user.role,
-          });
-
-          const isValidPassword = await comparePasswords(password, user.password);
-          if (!isValidPassword) {
-            log('warn', 'パスワードが一致しません', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          log('info', 'ログイン成功', {
-            userId: user.id,
-            email: user.email,
-            role: user.role
-          });
-
-          return done(null, sanitizeUser(user));
-        } catch (error) {
-          log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error',
-            email
-          });
-          return done(error);
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          log('warn', 'ユーザーが見つかりません', { email });
+          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
         }
+
+        log('info', 'パスワード検証開始', { 
+          email,
+          userRole: user.role,
+        });
+
+        const isValidPassword = await comparePasswords(password, user.password);
+        if (!isValidPassword) {
+          log('warn', 'パスワードが一致しません', { email });
+          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+        }
+
+        log('info', 'ログイン成功', {
+          userId: user.id,
+          email: user.email,
+          role: user.role
+        });
+
+        return done(null, sanitizeUser(user));
+      } catch (error) {
+        log('error', 'ログイン認証エラー', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          email
+        });
+        return done(error);
       }
-    )
-  );
+    }
+  ));
 
   passport.serializeUser((user, done) => {
     log('info', 'セッションシリアライズ', { userId: user.id });
@@ -122,8 +120,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // APIエンドポイント
-  app.get("/api/user", async (req, res) => {
+  app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "認証が必要です" });
     }
@@ -132,8 +129,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     log('info', 'ログインリクエスト受信', {
-      email: req.body.email,
-      role: req.body.role
+      email: req.body.email
     });
 
     passport.authenticate('local', (err: any, user: any, info: any) => {
