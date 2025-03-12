@@ -166,6 +166,11 @@ export const AIMatchingChat = () => {
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
 
 
+  // プロフィールデータの変更を監視
+  useEffect(() => {
+    console.log('Current profile data in AIMatchingChat:', profileData);
+  }, [profileData]);
+
   // コンポーネントマウント時にプロフィールデータを再取得
   useEffect(() => {
     refetchProfile();
@@ -1010,7 +1015,7 @@ ${index + 1}. ${result.businessName}
                 className="w-full mt-6"
                 onClick={handleConditionSubmit}
                 disabled={
-                  conditions.workTypes.length === 0 ||
+                  conditions.workTypes.length ===0 ||
                   (selectedType === "出稼ぎ" &&
                     (!conditions.workPeriodStart ||
                       !conditions.workPeriodEnd ||
@@ -1050,8 +1055,6 @@ ${index + 1}. ${result.businessName}
           </div>
         </div>
       )}
-
-
       {/* 確認ダイアログ */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent className="max-w-4xl">

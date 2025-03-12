@@ -24,7 +24,7 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 
     const data = await response.json();
     console.log('Talent profile fetched successfully:', data);
-    return data;
+    return data as TalentProfileData;
   } catch (error) {
     console.error('Error fetching talent profile:', error);
     throw error;

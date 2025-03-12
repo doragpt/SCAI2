@@ -41,23 +41,61 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
 
+      const profileData: TalentProfileData = {
+        userId: result.userId,
+        lastName: result.lastName,
+        firstName: result.firstName,
+        lastNameKana: result.lastNameKana,
+        firstNameKana: result.firstNameKana,
+        location: result.location,
+        nearestStation: result.nearestStation,
+        availableIds: result.availableIds,
+        canProvideResidenceRecord: result.canProvideResidenceRecord,
+        height: result.height,
+        weight: result.weight,
+        cupSize: result.cupSize,
+        bust: result.bust,
+        waist: result.waist,
+        hip: result.hip,
+        bodyMark: result.bodyMark,
+        smoking: result.smoking,
+        faceVisibility: result.faceVisibility,
+        hasEstheExperience: result.hasEstheExperience,
+        estheExperiencePeriod: result.estheExperiencePeriod,
+        estheOptions: result.estheOptions,
+        currentStores: result.currentStores,
+        previousStores: result.previousStores,
+        selfIntroduction: result.selfIntroduction,
+        notes: result.notes,
+        preferredLocations: result.preferredLocations,
+        ngLocations: result.ngLocations,
+        canPhotoDiary: result.canPhotoDiary,
+        canHomeDelivery: result.canHomeDelivery,
+        ngOptions: result.ngOptions,
+        allergies: result.allergies,
+        hasSnsAccount: result.hasSnsAccount,
+        snsUrls: result.snsUrls,
+        photoDiaryUrls: result.photoDiaryUrls,
+        photos: result.photos
+      };
+
       log('info', 'タレントプロフィール取得成功', { 
         userId,
         profileData: {
-          lastName: result.lastName,
-          firstName: result.firstName,
-          lastNameKana: result.lastNameKana,
-          firstNameKana: result.firstNameKana,
-          location: result.location,
-          nearestStation: result.nearestStation,
-          height: result.height,
-          weight: result.weight,
-          cupSize: result.cupSize,
-          faceVisibility: result.faceVisibility,
+          lastName: profileData.lastName,
+          firstName: profileData.firstName,
+          lastNameKana: profileData.lastNameKana,
+          firstNameKana: profileData.firstNameKana,
+          location: profileData.location,
+          nearestStation: profileData.nearestStation,
+          height: profileData.height,
+          weight: profileData.weight,
+          cupSize: profileData.cupSize,
+          faceVisibility: profileData.faceVisibility,
         }
       });
 
-      return result as TalentProfileData;
+      return profileData;
     } catch (error) {
       log('error', 'タレントプロフィール取得エラー', {
         error: error instanceof Error ? error.message : 'Unknown error',
