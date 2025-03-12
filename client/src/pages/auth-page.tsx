@@ -27,6 +27,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useToast } from "@/hooks/use-toast";
 import * as z from 'zod';
+import { getTalentProfile } from "@/lib/queryClient";
+
 
 type TalentRegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -123,7 +125,16 @@ export default function AuthPage() {
         return;
       }
 
-      setFormData(data);
+      // プロフィールデータを取得
+      const profileData = await getTalentProfile();
+
+      // フォームデータとプロフィールデータをマージ
+      const mergedData = {
+        ...data,
+        ...profileData,
+      };
+
+      setFormData(mergedData);
       setShowAgeVerification(true);
     } catch (error) {
       console.error('Form submission error:', error);
