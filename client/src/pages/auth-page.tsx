@@ -81,9 +81,9 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      role: "talent",
-      username: "",
+      email: "",
       password: "",
+      role: "talent" // デフォルトのロールを設定
     },
   });
 
@@ -149,7 +149,11 @@ export default function AuthPage() {
 
   const handleLoginSubmit = async (data: LoginFormData) => {
     try {
-      loginMutation.mutate(data);
+      await loginMutation.mutate({
+        email: data.email,
+        password: data.password,
+        role: data.role
+      });
     } catch (error) {
       console.error('Login error:', error);
       toast({
