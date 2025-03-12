@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -477,17 +477,16 @@ const SwitchField = ({
 );
 
 
-const OtherItemInput = React.forwardRef<
+const OtherItemInput = forwardRef<
   HTMLInputElement,
   {
     onAdd: (value: string) => void;
     placeholder: string;
   }
->((props, ref) => {
-  const { onAdd, placeholder } = props;
-  const [inputValue, setInputValue] = React.useState('');
+>(({ onAdd, placeholder }, ref) => {
+  const [inputValue, setInputValue] = useState('');
 
-  const handleAdd = React.useCallback(() => {
+  const handleAdd = useCallback(() => {
     const value = inputValue.trim();
     if (value) {
       onAdd(value);
@@ -495,7 +494,7 @@ const OtherItemInput = React.forwardRef<
     }
   }, [inputValue, onAdd]);
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAdd();
@@ -809,7 +808,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
     });
   }, [form]);
 
-
   const photos = form.getValues().photos || [];
   const hasCurrentHairPhoto = photos.some(photo => photo.tag === "現在の髪色");
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
@@ -938,20 +936,21 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     <FormLabel>都道府県</FormLabel>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>                        <SelectValue placeholder="選択してください" />
-                                            </SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue placeholder="選択してください" />
+                        </SelectTrigger>
                         <SelectContent>
-                        {prefectures.map((prefecture) => (
-                          <SelectItem key={prefecture} value={prefecture}>
-                            {prefecture}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                          {prefectures.map((prefecture) => (
+                            <SelectItem key<prefecture} value={prefecture}>
+                              {prefecture}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={form.control}
