@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AgeVerificationModal } from "@/components/age-verification-modal";
 import { useToast } from "@/hooks/use-toast";
 import * as z from 'zod';
-import { getTalentProfile } from "@/lib/queryClient";
+import { getTalentProfile } from "@/lib/api/talent";
 
 type TalentRegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -38,7 +38,7 @@ export default function AuthPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
-  const [formData, setFormData] = useState<TalentRegisterFormData | null>(null);
+  const [formData, setFormData] = useState<any>(null);
   const { toast } = useToast();
 
   // 生年月日用のドロップダウンの選択肢を生成

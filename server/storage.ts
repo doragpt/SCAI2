@@ -41,7 +41,22 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
 
-      log('info', 'タレントプロフィール取得成功', { userId });
+      log('info', 'タレントプロフィール取得成功', { 
+        userId,
+        profileData: {
+          lastName: result.lastName,
+          firstName: result.firstName,
+          lastNameKana: result.lastNameKana,
+          firstNameKana: result.firstNameKana,
+          location: result.location,
+          nearestStation: result.nearestStation,
+          height: result.height,
+          weight: result.weight,
+          cupSize: result.cupSize,
+          faceVisibility: result.faceVisibility,
+        }
+      });
+
       return result as TalentProfileData;
     } catch (error) {
       log('error', 'タレントプロフィール取得エラー', {
@@ -54,7 +69,21 @@ export class DatabaseStorage implements IStorage {
 
   async createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData> {
     try {
-      log('info', 'タレントプロフィール作成/更新開始', { userId });
+      log('info', 'タレントプロフィール作成/更新開始', { 
+        userId,
+        inputData: {
+          lastName: data.lastName,
+          firstName: data.firstName,
+          lastNameKana: data.lastNameKana,
+          firstNameKana: data.firstNameKana,
+          location: data.location,
+          nearestStation: data.nearestStation,
+          height: data.height,
+          weight: data.weight,
+          cupSize: data.cupSize,
+          faceVisibility: data.faceVisibility,
+        }
+      });
 
       // プロフィールの存在確認
       const [existingProfile] = await db
@@ -80,10 +109,7 @@ export class DatabaseStorage implements IStorage {
         // 新規作成
         [result] = await db
           .insert(talentProfiles)
-          .values({
-            ...profileData,
-            createdAt: new Date(),
-          })
+          .values(profileData)
           .returning();
       }
 
@@ -91,7 +117,22 @@ export class DatabaseStorage implements IStorage {
         throw new Error('プロフィールの保存に失敗しました');
       }
 
-      log('info', 'タレントプロフィール作成/更新成功', { userId });
+      log('info', 'タレントプロフィール作成/更新成功', { 
+        userId,
+        savedProfile: {
+          lastName: result.lastName,
+          firstName: result.firstName,
+          lastNameKana: result.lastNameKana,
+          firstNameKana: result.firstNameKana,
+          location: result.location,
+          nearestStation: result.nearestStation,
+          height: result.height,
+          weight: result.weight,
+          cupSize: result.cupSize,
+          faceVisibility: result.faceVisibility,
+        }
+      });
+
       return result as TalentProfileData;
     } catch (error) {
       log('error', 'タレントプロフィール作成/更新エラー', {

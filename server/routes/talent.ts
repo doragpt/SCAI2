@@ -19,7 +19,11 @@ const requireAuth = (req: any, res: any, next: any) => {
 // タレントプロフィールの取得
 router.get('/profile', requireAuth, async (req, res) => {
   try {
-    log('info', 'タレントプロフィール取得リクエスト', { userId: req.user?.id });
+    log('info', 'タレントプロフィール取得リクエスト', { 
+      userId: req.user?.id,
+      session: req.session,
+      isAuthenticated: req.isAuthenticated()
+    });
 
     if (!req.user?.id) {
       return res.status(401).json({ 
@@ -29,6 +33,11 @@ router.get('/profile', requireAuth, async (req, res) => {
     }
 
     const profile = await storage.getTalentProfile(req.user.id);
+    log('info', 'タレントプロフィール取得結果', { 
+      userId: req.user?.id,
+      hasProfile: !!profile,
+      profileData: profile 
+    });
 
     if (!profile) {
       return res.status(404).json({ 
@@ -59,15 +68,23 @@ router.post('/profile', requireAuth, async (req, res) => {
 
     log('info', 'タレントプロフィール更新リクエスト', {
       userId: req.user.id,
-      data: req.body
+      requestBody: req.body
     });
 
     const validatedData = talentProfileSchema.parse(req.body);
     const profile = await storage.createOrUpdateTalentProfile(req.user.id, validatedData);
 
+    log('info', 'タレントプロフィール更新成功', {
+      userId: req.user.id,
+      updatedProfile: profile
+    });
+
     res.json(profile);
   } catch (error) {
-    log('error', 'タレントプロフィール更新エラー', { error });
+    log('error', 'タレントプロフィール更新エラー', { 
+      error,
+      requestBody: req.body 
+    });
     if (error instanceof Error) {
       res.status(400).json({ 
         error: 'ValidationError',
