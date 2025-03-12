@@ -70,45 +70,68 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password',
-      },
-      async (email, password, done) => {
-        try {
-          log('info', 'ログイン試行', { email });
-          const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            log('warn', 'ログイン失敗', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-          log('info', 'ログイン成功', {
-            userId: user.id,
-            email: user.email,
-            role: user.role
-          });
-          return done(null, user);
-        } catch (error) {
-          log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error',
-            email
-          });
-          return done(error);
-        }
+  // Roleに基づいたユーザー取得メソッド
+  async function getUserByEmail(email: string, role: 'talent' | 'store') {
+    try {
+      const user = await storage.getUserByEmail(email);
+      if (!user || user.role !== role) {
+        return null;
       }
-    )
-  );
+      return user;
+    } catch (error) {
+      log('error', 'ユーザー取得エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        email,
+        role
+      });
+      return null;
+    }
+  }
+
+  passport.use('talent', new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      try {
+        const user = await getUserByEmail(email, 'talent');
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+        }
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  ));
+
+  passport.use('store', new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      try {
+        const user = await getUserByEmail(email, 'store');
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+        }
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  ));
 
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, { id: user.id, role: user.role });
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (data: { id: number, role: string }, done) => {
     try {
-      const user = await storage.getUser(id);
-      if (!user) {
+      const user = await storage.getUser(data.id);
+      if (!user || user.role !== data.role) {
         return done(null, false);
       }
       done(null, user);
@@ -117,127 +140,24 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // ユーザー情報取得API
-  app.get("/api/user", async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "認証が必要です" });
-      }
-
-      const userData = await storage.getUser(req.user.id);
-      if (!userData) {
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      log('info', 'ユーザー情報取得', {
-        id: userData.id,
-        email: userData.email,
-        role: userData.role
-      });
-
-      res.json(sanitizeUser(userData));
-    } catch (error) {
-      log('error', 'ユーザー情報取得エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      res.status(500).json({ message: "ユーザー情報の取得に失敗しました" });
-    }
-  });
-
-  // ユーザー情報更新API
-  app.patch("/api/user", async (req, res) => {
-    try {
-      if (!req.user) {
-        log('warn', '認証なしでの更新試行');
-        return res.status(401).json({ message: "認証が必要です" });
-      }
-
-      // リクエストデータをログ出力
-      log('info', '更新リクエストデータ', req.body);
-
-      const { username, location, preferredLocations, currentPassword, newPassword } = req.body;
-
-      // パスワード変更のリクエストがある場合
-      if (currentPassword && newPassword) {
-        const user = await storage.getUser(req.user.id);
-        if (!user) {
-          return res.status(404).json({ message: "ユーザーが見つかりません" });
-        }
-
-        // 現在のパスワードを確認
-        const isValidPassword = await comparePasswords(currentPassword, user.password);
-        if (!isValidPassword) {
-          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
-        }
-
-        // 新しいパスワードをハッシュ化
-        const hashedPassword = await hashPassword(newPassword);
-
-        // ユーザー情報を更新（パスワードを含む）
-        const updatedUser = await storage.updateUser(req.user.id, {
-          username,
-          location,
-          preferredLocations,
-          password: hashedPassword
-        });
-
-        log('info', 'ユーザー情報更新成功（パスワード変更含む）', {
-          id: updatedUser.id,
-          email: updatedUser.email
-        });
-
-        return res.json({
-          id: updatedUser.id,
-          email: updatedUser.email,
-          username: updatedUser.username,
-          birthDate: updatedUser.birthDate,
-          location: updatedUser.location,
-          preferredLocations: updatedUser.preferredLocations || [],
-          role: updatedUser.role
-        });
-      }
-
-      // 通常の情報更新
-      const updatedUser = await storage.updateUser(req.user.id, {
-        username,
-        location,
-        preferredLocations
-      });
-
-      log('info', 'ユーザー情報更新成功', {
-        id: updatedUser.id,
-        email: updatedUser.email
-      });
-
-      res.json({
-        id: updatedUser.id,
-        email: updatedUser.email,
-        username: updatedUser.username,
-        birthDate: updatedUser.birthDate,
-        location: updatedUser.location,
-        preferredLocations: updatedUser.preferredLocations || [],
-        role: updatedUser.role
-      });
-    } catch (error) {
-      log('error', 'ユーザー情報更新エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      res.status(500).json({
-        message: "ユーザー情報の更新に失敗しました"
-      });
-    }
-  });
-
   // ログインAPI
-  app.post("/api/login", (req, res, next) => {
+  app.post("/api/login/:role", (req, res, next) => {
+    const role = req.params.role as 'talent' | 'store';
+    if (!['talent', 'store'].includes(role)) {
+      return res.status(400).json({ message: "無効なロールです" });
+    }
+
     log('info', 'ログインリクエスト受信', {
-      email: req.body.email
+      email: req.body.email,
+      role: role
     });
-    passport.authenticate('local', (err, user, info) => {
+
+    passport.authenticate(role, (err, user, info) => {
       if (err) return next(err);
       if (!user) {
         log('warn', 'ログイン失敗', {
           email: req.body.email,
+          role: role,
           reason: info?.message || "認証失敗"
         });
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
@@ -261,7 +181,8 @@ export function setupAuth(app: Express) {
         const user = req.user as SelectUser;
         log('info', 'ログアウトリクエスト受信', {
           userId: user.id,
-          email: user.email
+          email: user.email,
+          role: user.role
         });
       }
       req.logout((err) => {
@@ -297,7 +218,7 @@ export function setupAuth(app: Express) {
     res.json(sanitizeUser(req.user));
   });
 
-  // 新規登録APIエンドポイント
+  // 新規登録API
   app.post("/api/auth/register", async (req, res) => {
     try {
       log('info', '新規登録リクエスト受信', {
@@ -305,10 +226,8 @@ export function setupAuth(app: Express) {
         role: req.body.role
       });
 
-      // リクエストデータのバリデーション
       const validatedData = talentRegisterFormSchema.parse(req.body);
 
-      // 既存ユーザーチェック
       const existingUser = await storage.getUserByEmail(validatedData.email);
       if (existingUser) {
         return res.status(400).json({
@@ -316,13 +235,9 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // パスワードのハッシュ化
       const hashedPassword = await hashPassword(validatedData.password);
-
-      // birthDateを日付オブジェクトに変換
       const birthDate = new Date(validatedData.birthDate);
 
-      // ユーザー作成
       const user = await storage.createUser({
         ...validatedData,
         password: hashedPassword,
@@ -338,7 +253,6 @@ export function setupAuth(app: Express) {
         role: user.role
       });
 
-      // セッションの作成とレスポンス
       req.login(user, (err) => {
         if (err) {
           log('error', 'ログインセッション作成エラー', { error: err });

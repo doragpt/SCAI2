@@ -18,15 +18,16 @@ const useAuthStore = create<AuthState>((set) => ({
 export const useAuth = () => {
   const { user, setUser, isLoading, setIsLoading } = useAuthStore();
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string, role: 'talent' | 'store' = 'talent') => {
     try {
       console.log('ログイン試行:', {
         username,
+        role,
         timestamp: new Date().toISOString()
       });
 
-      const response = await apiRequest("POST", "/api/auth/login", {
-        username,
+      const response = await apiRequest("POST", `/api/login/${role}`, {
+        email: username,
         password,
       });
 
@@ -52,7 +53,7 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await apiRequest("POST", "/api/auth/logout");
+      await apiRequest("POST", "/api/logout");
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
