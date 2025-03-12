@@ -11,14 +11,24 @@ import talentRouter from './routes/talent';
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
 
-// 開発環境用のCORS設定
+// CORSの設定
 app.use(cors({
-  origin: 'http://localhost:3000', // 開発環境のフロントエンドURL
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Set-Cookie']
 }));
+
+// セキュリティヘッダー
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
 
 // リクエストボディのパース設定
 app.use(express.json());
@@ -39,7 +49,7 @@ app.use(session({
   cookie: {
     path: '/',
     httpOnly: true,
-    secure: false, // 開発環境ではfalse
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24時間
   }
@@ -72,7 +82,7 @@ registerRoutes(app);
 // エラーハンドリング
 app.use(errorHandler);
 
-// 認証エラーハンドラ
+// 認証エラーハンドラ (from original code, kept unchanged)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err.name === 'UnauthorizedError' || err.status === 401) {
     log('warn', '認証エラー', {

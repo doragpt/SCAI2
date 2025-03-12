@@ -6,6 +6,7 @@ import { UserRole } from "@shared/schema";
 import { log } from "./utils/logger";
 import * as bcrypt from 'bcrypt';
 
+// Expressのユーザー型定義
 declare global {
   namespace Express {
     interface User {
@@ -13,23 +14,26 @@ declare global {
       email: string;
       role: UserRole;
       displayName: string;
-      location: string;
-      preferredLocations: string[];
-      birthDate: string;
     }
   }
 }
 
+// パスワード比較関数
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
     return await bcrypt.compare(supplied, stored);
   } catch (error) {
-    log('error', 'Password comparison error', { error });
+    log('error', 'パスワード比較エラー', { error });
     return false;
   }
 }
 
 export function setupAuth(app: Express) {
+  // Passportの初期化
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // ローカル認証戦略の設定
   passport.use(new LocalStrategy(
     {
       usernameField: 'email',
@@ -45,53 +49,47 @@ export function setupAuth(app: Express) {
 
         const user = await storage.getUserByEmail(email);
         if (!user) {
-          log('warn', 'User not found', { email });
           return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
         }
 
         if (user.role !== role) {
-          log('warn', 'Invalid role', { email, expectedRole: role, actualRole: user.role });
           return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
         }
 
-        const isValid = await comparePasswords(password, user.password);
+        const isValid = await comparePasswords(password, user.hashedPassword);
         if (!isValid) {
-          log('warn', 'Invalid password', { email });
           return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
         }
 
-        const { password: _, ...userWithoutPassword } = user;
+        // パスワードを除外したユーザー情報を返す
+        const { hashedPassword, ...userWithoutPassword } = user;
         return done(null, userWithoutPassword);
       } catch (error) {
-        log('error', 'Authentication error', { error, email });
+        log('error', '認証エラー', { error, email });
         return done(error);
       }
     }
   ));
 
+  // セッションのシリアライズ
   passport.serializeUser((user, done) => {
-    log('debug', 'Serializing user', { userId: user.id });
     done(null, { id: user.id, role: user.role });
   });
 
+  // セッションのデシリアライズ
   passport.deserializeUser(async (data: { id: number; role: UserRole }, done) => {
     try {
       const user = await storage.getUser(data.id);
       if (!user || user.role !== data.role) {
-        log('warn', 'Session deserialization failed', { id: data.id, role: data.role });
         return done(null, false);
       }
-
-      const { password: _, ...userWithoutPassword } = user;
+      const { hashedPassword, ...userWithoutPassword } = user;
       done(null, userWithoutPassword);
     } catch (error) {
-      log('error', 'Session deserialization error', { error });
       done(error);
     }
   });
 
-  app.use(passport.initialize());
-  app.use(passport.session());
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
       if (err) {

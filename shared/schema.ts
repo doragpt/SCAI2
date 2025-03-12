@@ -1,9 +1,8 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
 
-// Constants
+// 基本的な定数の定義
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -14,11 +13,11 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// Base user types and schemas
+// ユーザーテーブルの定義
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  hashedPassword: text("hashed_password").notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull(),
   displayName: text("display_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
@@ -28,19 +27,19 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User type definitions
+// ユーザー関連の型定義
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type UserRole = "talent" | "store";
 
-// Authentication schemas
+// 認証関連のスキーマ
 export const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
   role: z.enum(["talent", "store"])
 });
 
-export const registrationSchema = z.object({
+export const registerSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string()
     .min(8, "パスワードは8文字以上で入力してください")
@@ -56,18 +55,9 @@ export const registrationSchema = z.object({
   birthDate: z.string().min(1, "生年月日を入力してください"),
 });
 
-// Authentication types
+// 認証関連の型定義
 export type LoginCredentials = z.infer<typeof loginSchema>;
-export type RegistrationData = z.infer<typeof registrationSchema>;
-
-// User response type (excludes sensitive data)
-export type UserResponse = Omit<User, "password">;
-
-export const relations = {
-  users: relations(users, ({ many }) => ({
-    // 必要に応じて関連を追加
-  }))
-};
+export type RegisterData = z.infer<typeof registerSchema>;
 
 // セッション関連の型定義
 export interface Session {
@@ -77,6 +67,12 @@ export interface Session {
   createdAt: Date;
   expiresAt: Date;
 }
+
+// APIレスポンスの型定義
+export type AuthResponse = {
+  user: Omit<User, "hashedPassword">;
+  token?: string;
+};
 
 export const serviceTypes = [
   "deriheru",
@@ -179,6 +175,7 @@ export const bodyMarkSchema = z.object({
   details: z.string().optional(),
   others: z.array(z.string()).default([]),
 });
+
 
 // Tables
 // Jobs table definition
@@ -580,6 +577,7 @@ export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
+
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType };
 
@@ -667,3 +665,5 @@ export type UserResponse = {
   preferredLocations: string[];
   role: "talent" | "store";
 };
+import { integer, boolean, index } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";

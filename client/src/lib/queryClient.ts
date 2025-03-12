@@ -77,6 +77,9 @@ export async function getJobsQuery(params?: {
   return response.json();
 }
 
+// searchJobsQueryをgetJobsQueryのエイリアスとしてエクスポート
+export const searchJobsQuery = getJobsQuery;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
