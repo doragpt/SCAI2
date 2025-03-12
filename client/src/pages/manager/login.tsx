@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type z } from "zod";
 import { loginSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,60 +14,46 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  email: string;
+  password: string;
+};
 
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { loginMutation, user, isLoading } = useAuth();
+  const { loginMutation, user } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
-  // 状態管理の改善
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // フォームの設定
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
-      role: "store" // 店舗用ログインフォームなのでデフォルトを"store"に設定
-    }
+    },
   });
 
-  // ユーザーが既にログインしている場合のリダイレクト処理を改善
-  useEffect(() => {
-    if (user?.role === "store") {
-      setLocation("/store/dashboard");
-    }
-  }, [user, setLocation]);
-
-  // ローディング中の表示
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  // ユーザーが既にログインしている場合のリダイレクト
+  if (user?.role === "store") {
+    setLocation("/store/dashboard");
+    return null;
   }
 
   const onSubmit = async (data: LoginFormData) => {
-    if (isSubmitting) return;
-
     try {
-      setIsSubmitting(true);
       console.log('店舗ログイン試行:', {
-        username: data.username,
+        email: data.email,
         timestamp: new Date().toISOString()
       });
 
-      await loginMutation.mutateAsync(data);
-
-      console.log('店舗ログイン成功:', {
-        timestamp: new Date().toISOString()
+      await loginMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+        role: "store"
       });
 
       toast({
@@ -87,8 +72,6 @@ export default function ManagerLogin() {
         title: "エラーが発生しました",
         description: error instanceof Error ? error.message : "ログインに失敗しました",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -103,15 +86,16 @@ export default function ManagerLogin() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ログインID</FormLabel>
+                    <FormLabel>メールアドレス</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
-                        autoComplete="username"
-                        disabled={isSubmitting} 
+                        type="email"
+                        autoComplete="email"
+                        disabled={loginMutation.isPending} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -126,12 +110,25 @@ export default function ManagerLogin() {
                   <FormItem>
                     <FormLabel>パスワード</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="password"
-                        autoComplete="current-password"
-                        disabled={isSubmitting}
-                      />
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="current-password"
+                          disabled={loginMutation.isPending}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,9 +138,9 @@ export default function ManagerLogin() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting || loginMutation.isPending}
+                disabled={loginMutation.isPending}
               >
-                {(isSubmitting || loginMutation.isPending) && (
+                {loginMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 ログイン
