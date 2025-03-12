@@ -29,51 +29,64 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      console.log('Login attempt:', {
-        email: credentials.email,
-        role: credentials.role,
-        timestamp: new Date().toISOString()
-      });
+      try {
+        console.log('ログイン試行:', {
+          email: credentials.email,
+          role: credentials.role,
+          timestamp: new Date().toISOString()
+        });
 
-      const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
-        email: credentials.email,
-        password: credentials.password
-      });
+        const response = await apiRequest("POST", `/api/auth/login/${credentials.role}`, {
+          email: credentials.email,
+          password: credentials.password
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('ログインエラーレスポンス:', {
+            status: response.status,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+          throw new Error(error.message || "ログインに失敗しました");
+        }
+
+        const userData = await response.json();
+        return userData;
+      } catch (error) {
+        console.error('ログインエラー:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        throw error;
       }
-
-      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      console.log('Login successful:', {
+      console.log('ログイン成功:', {
         userId: user.id,
         role: user.role,
         timestamp: new Date().toISOString()
       });
 
-      // トースト表示とリダイレクトの順序を調整
+      if (user.role === "store") {
+        console.log('店舗ダッシュボードへリダイレクト');
+        setLocation("/store/dashboard");
+      } else if (user.role === "talent") {
+        console.log('タレントマイページへリダイレクト');
+        setLocation("/talent/mypage");
+      }
+
       toast({
         title: "ログイン成功",
         description: "ログインしました。",
       });
-
-      // リダイレクトを遅延させる
-      setTimeout(() => {
-        if (user.role === "talent") {
-          console.log('Redirecting to talent mypage');
-          setLocation("/talent/mypage");
-        } else if (user.role === "store") {
-          console.log('Redirecting to store dashboard');
-          setLocation("/store/dashboard");
-        }
-      }, 1000);
     },
     onError: (error: Error) => {
-      console.error('Login error:', error);
+      console.error('ログインエラー:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "ログインエラー",
         description: error.message,
@@ -104,6 +117,10 @@ function useLogoutMutation() {
       setLocation("/auth");
     },
     onError: (error: Error) => {
+      console.error('ログアウトエラー:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "ログアウトエラー",
         description: error.message,
@@ -119,29 +136,48 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: any) => {
+      console.log('新規登録試行:', {
+        email: data.email,
+        role: data.role,
+        timestamp: new Date().toISOString()
+      });
+
       const response = await apiRequest("POST", "/api/auth/register", data);
       if (!response.ok) {
         const error = await response.json();
+        console.error('新規登録エラー:', {
+          status: response.status,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
         throw new Error(error.message || "登録に失敗しました");
       }
       return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      console.log('新規登録成功:', {
+        userId: user.id,
+        role: user.role,
+        timestamp: new Date().toISOString()
+      });
 
       toast({
         title: "登録完了",
         description: "アカウントが正常に作成されました。",
       });
 
-      if (user.role === "talent") {
-        setLocation("/talent/mypage");
-      } else if (user.role === "store") {
+      if (user.role === "store") {
         setLocation("/store/dashboard");
+      } else if (user.role === "talent") {
+        setLocation("/talent/mypage");
       }
     },
     onError: (error: Error) => {
+      console.error('新規登録エラー:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "登録エラー",
         description: error.message,
@@ -161,7 +197,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/auth/check");
-        console.log('Auth check response:', response);
+        console.log('認証チェックレスポンス:', {
+          status: response.status,
+          ok: response.ok,
+          timestamp: new Date().toISOString()
+        });
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -171,15 +211,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const data = await response.json();
-        console.log('Auth check data:', data);
+        console.log('認証チェックデータ:', {
+          userId: data?.id,
+          role: data?.role,
+          timestamp: new Date().toISOString()
+        });
         return data;
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('認証チェックエラー:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
         return null;
       }
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
-    retry: 1,
+    retry: false,
   });
 
   const loginMutation = useLoginMutation();

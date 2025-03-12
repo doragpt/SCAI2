@@ -56,10 +56,8 @@ export default function ManagerLogin() {
         role: "store"
       });
 
-      toast({
-        title: "ログイン成功",
-        description: "ダッシュボードに移動します",
-      });
+      console.log('店舗ログイン成功');
+      setLocation("/store/dashboard");
 
     } catch (error) {
       console.error('店舗ログインエラー:', {
