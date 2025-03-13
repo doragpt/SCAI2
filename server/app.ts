@@ -6,7 +6,6 @@ import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
-import talentRouter from './routes/talent';
 
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
@@ -32,7 +31,7 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+    sameSite: 'lax' as const
   }
 };
 
@@ -59,8 +58,7 @@ app.use('/api/*', (req, res, next) => {
   next();
 });
 
-// APIルートの登録（Viteミドルウェアの前に配置）
-app.use('/api/talent', talentRouter);
+// APIルートの登録
 registerRoutes(app);
 
 // グローバルエラーハンドラーの設定
