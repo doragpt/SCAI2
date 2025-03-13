@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { apiRequest } from '@/lib/queryClient';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthState {
   user: any | null;
@@ -17,45 +19,38 @@ const useAuthStore = create<AuthState>((set) => ({
 
 export const useAuth = () => {
   const { user, setUser, isLoading, setIsLoading } = useAuthStore();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const login = async (email: string, password: string, role?: string) => {
-    try {
-      console.log('ログイン試行:', {
-        email,
-        role,
-        timestamp: new Date().toISOString()
-      });
-
-      const response = await apiRequest("POST", "/api/login", {
-        email,
-        password,
-        role
-      });
+  const loginMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string; role?: string }) => {
+      const response = await apiRequest("POST", "/api/login", data);
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
       }
 
-      const userData = await response.json();
-      console.log('ログイン成功:', {
-        userId: userData.id,
-        role: userData.role,
-        timestamp: new Date().toISOString()
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setUser(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/check'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "ログインエラー",
+        description: error.message,
       });
-
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
     }
-  };
+  });
 
   const logout = async () => {
     try {
       await apiRequest("POST", "/api/logout");
       setUser(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/check'] });
     } catch (error) {
       console.error("Logout error:", error);
       throw error;
@@ -86,7 +81,7 @@ export const useAuth = () => {
 
   return {
     user,
-    login,
+    loginMutation,
     logout,
     checkAuth,
     isLoading,

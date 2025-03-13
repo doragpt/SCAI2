@@ -24,7 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { login, user, isLoading } = useAuth();
+  const { loginMutation, user, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -61,7 +61,7 @@ export default function ManagerLogin() {
         timestamp: new Date().toISOString()
       });
 
-      await login(data.email, data.password, data.role);
+      await loginMutation.mutateAsync(data);
 
       toast({
         title: "ログイン成功",
@@ -133,9 +133,9 @@ export default function ManagerLogin() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting}
+                disabled={isSubmitting || loginMutation.isPending}
               >
-                {isSubmitting && (
+                {(isSubmitting || loginMutation.isPending) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 ログイン
