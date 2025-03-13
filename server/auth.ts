@@ -80,10 +80,18 @@ export function setupAuth(app: Express) {
         try {
           log('info', 'ログイン試行', { email });
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            log('warn', 'ログイン失敗', { email });
+
+          if (!user) {
+            log('warn', 'ユーザーが見つかりません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
+
+          const isValidPassword = await comparePasswords(password, user.password);
+          if (!isValidPassword) {
+            log('warn', 'パスワードが一致しません', { email });
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+
           log('info', 'ログイン成功', {
             userId: user.id,
             email: user.email,
@@ -144,86 +152,69 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // ユーザー情報更新API
-  app.patch("/api/user", async (req, res) => {
+  // 新規登録APIエンドポイント
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      if (!req.user) {
-        log('warn', '認証なしでの更新試行');
-        return res.status(401).json({ message: "認証が必要です" });
-      }
+      log('info', '新規登録リクエスト受信', {
+        email: req.body.email,
+        role: req.body.role
+      });
 
-      // リクエストデータをログ出力
-      log('info', '更新リクエストデータ', req.body);
+      // リクエストデータのバリデーション
+      const validatedData = talentRegisterFormSchema.parse(req.body);
 
-      const { username, location, preferredLocations, currentPassword, newPassword } = req.body;
-
-      // パスワード変更のリクエストがある場合
-      if (currentPassword && newPassword) {
-        const user = await storage.getUser(req.user.id);
-        if (!user) {
-          return res.status(404).json({ message: "ユーザーが見つかりません" });
-        }
-
-        // 現在のパスワードを確認
-        const isValidPassword = await comparePasswords(currentPassword, user.password);
-        if (!isValidPassword) {
-          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
-        }
-
-        // 新しいパスワードをハッシュ化
-        const hashedPassword = await hashPassword(newPassword);
-
-        // ユーザー情報を更新（パスワードを含む）
-        const updatedUser = await storage.updateUser(req.user.id, {
-          username,
-          location,
-          preferredLocations,
-          password: hashedPassword
-        });
-
-        log('info', 'ユーザー情報更新成功（パスワード変更含む）', {
-          id: updatedUser.id,
-          email: updatedUser.email
-        });
-
-        return res.json({
-          id: updatedUser.id,
-          email: updatedUser.email,
-          username: updatedUser.username,
-          birthDate: updatedUser.birthDate,
-          location: updatedUser.location,
-          preferredLocations: updatedUser.preferredLocations || [],
-          role: updatedUser.role
+      // 既存ユーザーチェック
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(400).json({
+          message: "このメールアドレスは既に使用されています"
         });
       }
 
-      // 通常の情報更新
-      const updatedUser = await storage.updateUser(req.user.id, {
-        username,
-        location,
-        preferredLocations
+      // パスワードのハッシュ化
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      // ユーザー作成
+      const user = await storage.createUser({
+        ...validatedData,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
-      log('info', 'ユーザー情報更新成功', {
-        id: updatedUser.id,
-        email: updatedUser.email
+      log('info', 'ユーザー登録成功', {
+        userId: user.id,
+        email: user.email,
+        role: user.role
       });
 
-      res.json({
-        id: updatedUser.id,
-        email: updatedUser.email,
-        username: updatedUser.username,
-        birthDate: updatedUser.birthDate,
-        location: updatedUser.location,
-        preferredLocations: updatedUser.preferredLocations || [],
-        role: updatedUser.role
+      // セッションの作成とレスポンス
+      req.login(user, (err) => {
+        if (err) {
+          log('error', 'ログインセッション作成エラー', { error: err });
+          return res.status(500).json({
+            message: "ログインセッションの作成に失敗しました"
+          });
+        }
+
+        return res.status(201).json({
+          user: sanitizeUser(user)
+        });
       });
     } catch (error) {
-      log('error', 'ユーザー情報更新エラー', {
+      log('error', '新規登録エラー', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      res.status(500).json({
-        message: "ユーザー情報の更新に失敗しました"
+
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "入力内容に誤りがあります",
+          errors: error.errors
+        });
+      }
+
+      return res.status(500).json({
+        message: "登録処理中にエラーが発生しました"
       });
     }
   });
@@ -233,7 +224,8 @@ export function setupAuth(app: Express) {
     log('info', 'ログインリクエスト受信', {
       email: req.body.email
     });
-    passport.authenticate('local', (err, user, info) => {
+
+    passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
         log('warn', 'ログイン失敗', {
@@ -258,10 +250,8 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     try {
       if (req.user) {
-        const user = req.user as SelectUser;
         log('info', 'ログアウトリクエスト受信', {
-          userId: user.id,
-          email: user.email
+          userId: req.user.id
         });
       }
       req.logout((err) => {
@@ -295,79 +285,6 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "認証されていません" });
     }
     res.json(sanitizeUser(req.user));
-  });
-
-  // 新規登録APIエンドポイント
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      log('info', '新規登録リクエスト受信', {
-        email: req.body.email,
-        role: req.body.role
-      });
-
-      // リクエストデータのバリデーション
-      const validatedData = talentRegisterFormSchema.parse(req.body);
-
-      // 既存ユーザーチェック
-      const existingUser = await storage.getUserByEmail(validatedData.email);
-      if (existingUser) {
-        return res.status(400).json({
-          message: "このメールアドレスは既に使用されています"
-        });
-      }
-
-      // パスワードのハッシュ化
-      const hashedPassword = await hashPassword(validatedData.password);
-
-      // birthDateを日付オブジェクトに変換
-      const birthDate = new Date(validatedData.birthDate);
-
-      // ユーザー作成
-      const user = await storage.createUser({
-        ...validatedData,
-        password: hashedPassword,
-        birthDate,
-        birthDateModified: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      log('info', 'ユーザー登録成功', {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      });
-
-      // セッションの作成とレスポンス
-      req.login(user, (err) => {
-        if (err) {
-          log('error', 'ログインセッション作成エラー', { error: err });
-          return res.status(500).json({
-            message: "ログインセッションの作成に失敗しました"
-          });
-        }
-
-        return res.status(201).json({
-          user: sanitizeUser(user)
-        });
-      });
-    } catch (error) {
-      log('error', '新規登録エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "入力内容に誤りがあります",
-          errors: error.errors
-        });
-      }
-
-      return res.status(500).json({
-        message: "登録処理中にエラーが発生しました"
-      });
-    }
   });
 }
 
