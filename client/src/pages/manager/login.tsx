@@ -55,8 +55,13 @@ export default function ManagerLogin() {
 
     try {
       setIsSubmitting(true);
+      console.log('店舗ログイン試行:', {
+        email: data.email,
+        role: data.role,
+        timestamp: new Date().toISOString()
+      });
 
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.role);
 
       toast({
         title: "ログイン成功",

@@ -18,16 +18,18 @@ const useAuthStore = create<AuthState>((set) => ({
 export const useAuth = () => {
   const { user, setUser, isLoading, setIsLoading } = useAuthStore();
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, role?: string) => {
     try {
       console.log('ログイン試行:', {
         email,
+        role,
         timestamp: new Date().toISOString()
       });
 
       const response = await apiRequest("POST", "/api/login", {
         email,
         password,
+        role
       });
 
       if (!response.ok) {
