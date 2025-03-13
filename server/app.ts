@@ -19,6 +19,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// リクエストボディのパース設定
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // セッションの設定
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -37,15 +41,12 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 
-// リクエストボディのパース設定
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// 認証セットアップ
+// 認証セットアップ（APIルートの前に配置）
 setupAuth(app);
 
 // APIリクエストのログ記録とヘッダー設定
 app.use('/api/*', (req, res, next) => {
+  // APIリクエストのみログを記録
   log('info', 'APIリクエスト受信', {
     method: req.method,
     path: req.path,

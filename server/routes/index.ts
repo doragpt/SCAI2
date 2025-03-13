@@ -9,7 +9,7 @@ import { log } from '../utils/logger';
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
 
-  // 各ルーターを登録
+  // 各ルーターを登録（認証ルートを最初に）
   app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
