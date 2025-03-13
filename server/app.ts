@@ -41,12 +41,8 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 
-// 認証セットアップ（APIルートの前に配置）
-setupAuth(app);
-
 // APIリクエストのログ記録とヘッダー設定
 app.use('/api/*', (req, res, next) => {
-  // APIリクエストのみログを記録
   log('info', 'APIリクエスト受信', {
     method: req.method,
     path: req.path,
@@ -58,6 +54,9 @@ app.use('/api/*', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
 });
+
+// 認証セットアップ（APIルートの前に配置）
+setupAuth(app);
 
 // APIルートの登録
 registerRoutes(app);

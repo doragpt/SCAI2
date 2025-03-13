@@ -1,0 +1,64 @@
+以下のログからいくつかの問題が見受けられます。特にログイン時に発生しているエラーについては、次の点を重点的に確認・修正してください。
+
+---
+
+### 1. 認証チェックAPIのレスポンスがHTMLになっている
+
+**問題点:**  
+ログに「Failed to parse auth check response: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON」というエラーが出ています。これは、`/api/auth/check` エンドポイントが期待するJSONではなく、HTML（たとえばエラーページやログインページのHTML）を返しているためです。
+
+**確認・対策:**  
+- `/api/auth/check` ルートの実装を確認し、**正しくJSONレスポンス**（例えば、`{ success: true, user: { ... } }`）を返すようにしてください。  
+- 認証ミドルウェアが正しく動作しているか、ログイン状態がエラーになっていないか確認してください。  
+- APIがリダイレクト（HTMLページを返す）している場合、ルーティングやミドルウェアの設定に問題がないか見直してください。
+
+---
+
+### 2. validateDOMNesting の警告
+
+**問題点:**  
+「Warning: validateDOMNesting(...): <a> cannot appear as a descendant of <a>.」という警告が出ています。これは、リンク（`<a>`）が他のリンクの中にネストされているためです。
+
+**確認・対策:**  
+- 該当コンポーネント（おそらく`Navigation`や`select.tsx`など）のDOM構造を確認し、**不要なリンクの入れ子**になっていないか修正してください。  
+- ネストを避けるため、リンクをラップする他の要素（例えば`<div>`や`<span>`など）に変更するとよいでしょう。
+
+---
+
+### 3. リストの子要素に一意なキーが設定されていない
+
+**問題点:**  
+「Warning: Each child in a list should have a unique "key" prop.」という警告は、Reactでリストをレンダリングする際に各要素に一意な`key`が設定されていないことを示しています。
+
+**確認・対策:**  
+- `HomePage` コンポーネントやその他リストをレンダリングしている箇所を見直し、**各子要素に一意な`key`プロパティ**を設定してください。  
+  例:
+  ```jsx
+  {items.map(item => (
+    <div key={item.id}>{item.name}</div>
+  ))}
+  ```
+
+---
+
+### 4. 関数コンポーネントに対して `ref` を渡している
+
+**問題点:**  
+「Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?」という警告が出ています。これは、関数コンポーネントに直接`ref`を渡しているためです。
+
+**確認・対策:**  
+- もし、関数コンポーネントに参照が必要な場合は、**`React.forwardRef` を使用してラップ**する必要があります。  
+  例:
+  ```jsx
+  const MyComponent = React.forwardRef((props, ref) => {
+    return <div ref={ref}>Hello</div>;
+  });
+  ```
+
+---
+
+### 総括
+
+ログインに失敗する主な原因は、**/api/auth/check がHTMLを返している**点にあり、これが認証状態の検証に失敗している可能性が高いです。また、UI側のエラー（DOMのネストやリストのキー、refの扱い）もあり、これらは直接ログインエラーには繋がらないものの、最終的な動作に影響する可能性があります。まずは認証APIの実装を重点的に見直し、正しいJSONレスポンスを返すように修正してください。その上で、上記の各警告に対しても順次対応し、全体の整合性を確保してください。
+
+これらの修正を実施すれば、女性ログインと店舗ログインの問題も解消される可能性が高いです。具体的なコードの該当箇所やルート定義などの情報があれば、さらに詳細なアドバイスが可能です。
