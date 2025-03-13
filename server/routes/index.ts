@@ -9,7 +9,19 @@ import { log } from '../utils/logger';
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
 
-  // 各ルーターを登録（認証ルートを最初に）
+  // APIリクエストの共通ミドルウェア
+  app.use("/api/*", (req, res, next) => {
+    log('info', 'APIリクエスト受信', {
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      body: req.method !== 'GET' ? req.body : undefined
+    });
+    res.setHeader("Content-Type", "application/json");
+    next();
+  });
+
+  // 各ルーターを登録
   app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);

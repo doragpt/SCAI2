@@ -5,6 +5,7 @@ import jobsRoutes from './routes/jobs';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
 import { log } from './utils/logger';
+import { storage } from "./storage";
 import multer from "multer";
 
 // Multerの設定
@@ -37,6 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // 認証関連のルートをセットアップ（server/auth.tsで定義）
+  setupAuth(app);
+
   // 各ルーターを登録
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
@@ -56,3 +60,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   return server;
 }
+
+const photoChunksStore = new Map();

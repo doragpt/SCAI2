@@ -53,7 +53,7 @@ function sanitizeUser(user: SelectUser) {
 }
 
 export function setupAuth(app: Express) {
-  app.use(session({
+  const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
@@ -64,8 +64,9 @@ export function setupAuth(app: Express) {
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
-  }));
+  };
 
+  app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -83,8 +84,12 @@ export function setupAuth(app: Express) {
             log('warn', 'ログイン失敗', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
-          log('info', 'ログイン成功', { userId: user.id, email: user.email });
-          return done(null, sanitizeUser(user));
+          log('info', 'ログイン成功', {
+            userId: user.id,
+            email: user.email,
+            role: user.role
+          });
+          return done(null, user);
         } catch (error) {
           log('error', 'ログインエラー', {
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -106,97 +111,262 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(null, false);
       }
-      done(null, sanitizeUser(user));
+      done(null, user);
     } catch (error) {
       done(error);
     }
   });
 
-  // 認証ステータスチェックAPI
-  app.get("/api/auth/check", (req, res) => {
+  // ユーザー情報取得API
+  app.get("/api/user", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      const userData = await storage.getUser(req.user.id);
+      if (!userData) {
+        return res.status(404).json({ message: "ユーザーが見つかりません" });
+      }
+
+      log('info', 'ユーザー情報取得', {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role
+      });
+
+      res.json(sanitizeUser(userData));
+    } catch (error) {
+      log('error', 'ユーザー情報取得エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({ message: "ユーザー情報の取得に失敗しました" });
+    }
+  });
+
+  // ユーザー情報更新API
+  app.patch("/api/user", async (req, res) => {
+    try {
+      if (!req.user) {
+        log('warn', '認証なしでの更新試行');
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      // リクエストデータをログ出力
+      log('info', '更新リクエストデータ', req.body);
+
+      const { username, location, preferredLocations, currentPassword, newPassword } = req.body;
+
+      // パスワード変更のリクエストがある場合
+      if (currentPassword && newPassword) {
+        const user = await storage.getUser(req.user.id);
+        if (!user) {
+          return res.status(404).json({ message: "ユーザーが見つかりません" });
+        }
+
+        // 現在のパスワードを確認
+        const isValidPassword = await comparePasswords(currentPassword, user.password);
+        if (!isValidPassword) {
+          return res.status(400).json({ message: "現在のパスワードが正しくありません" });
+        }
+
+        // 新しいパスワードをハッシュ化
+        const hashedPassword = await hashPassword(newPassword);
+
+        // ユーザー情報を更新（パスワードを含む）
+        const updatedUser = await storage.updateUser(req.user.id, {
+          username,
+          location,
+          preferredLocations,
+          password: hashedPassword
+        });
+
+        log('info', 'ユーザー情報更新成功（パスワード変更含む）', {
+          id: updatedUser.id,
+          email: updatedUser.email
+        });
+
+        return res.json({
+          id: updatedUser.id,
+          email: updatedUser.email,
+          username: updatedUser.username,
+          birthDate: updatedUser.birthDate,
+          location: updatedUser.location,
+          preferredLocations: updatedUser.preferredLocations || [],
+          role: updatedUser.role
+        });
+      }
+
+      // 通常の情報更新
+      const updatedUser = await storage.updateUser(req.user.id, {
+        username,
+        location,
+        preferredLocations
+      });
+
+      log('info', 'ユーザー情報更新成功', {
+        id: updatedUser.id,
+        email: updatedUser.email
+      });
+
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        birthDate: updatedUser.birthDate,
+        location: updatedUser.location,
+        preferredLocations: updatedUser.preferredLocations || [],
+        role: updatedUser.role
+      });
+    } catch (error) {
+      log('error', 'ユーザー情報更新エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({
+        message: "ユーザー情報の更新に失敗しました"
+      });
+    }
+  });
+
+  // ログインAPI
+  app.post("/api/login", (req, res, next) => {
+    log('info', 'ログインリクエスト受信', {
+      email: req.body.email
+    });
+    passport.authenticate('local', (err, user, info) => {
+      if (err) return next(err);
+      if (!user) {
+        log('warn', 'ログイン失敗', {
+          email: req.body.email,
+          reason: info?.message || "認証失敗"
+        });
+        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
+      }
+      req.login(user, (err) => {
+        if (err) return next(err);
+        log('info', 'ログイン成功', {
+          userId: user.id,
+          email: user.email,
+          role: user.role
+        });
+        res.json(sanitizeUser(user));
+      });
+    })(req, res, next);
+  });
+
+  // ログアウトAPI
+  app.post("/api/logout", (req, res, next) => {
+    try {
+      if (req.user) {
+        const user = req.user as SelectUser;
+        log('info', 'ログアウトリクエスト受信', {
+          userId: user.id,
+          email: user.email
+        });
+      }
+      req.logout((err) => {
+        if (err) return next(err);
+        req.session.destroy((err) => {
+          if (err) {
+            log('error', 'セッション破棄エラー', { error: err });
+            return res.status(500).json({
+              message: "セッションの破棄に失敗しました"
+            });
+          }
+          res.clearCookie('connect.sid');
+          return res.status(200).json({
+            message: "ログアウトしました"
+          });
+        });
+      });
+    } catch (error) {
+      log('error', 'ログアウトエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      return res.status(500).json({
+        message: "ログアウト処理中にエラーが発生しました"
+      });
+    }
+  });
+
+  // セッションチェックAPI
+  app.get("/api/check", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "認証されていません" });
     }
     res.json(sanitizeUser(req.user));
   });
 
-  // ログインAPI
-  app.post("/api/auth/login", (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-      if (err) {
-        log('error', 'ログインエラー', { error: err });
-        return res.status(500).json({ message: "ログイン処理中にエラーが発生しました" });
-      }
-      if (!user) {
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
-      }
-      req.login(user, (err) => {
-        if (err) {
-          log('error', 'セッション作成エラー', { error: err });
-          return res.status(500).json({ message: "セッションの作成に失敗しました" });
-        }
-        log('info', 'ログイン成功', { userId: user.id });
-        res.json(user);
-      });
-    })(req, res, next);
-  });
-
-  // ログアウトAPI
-  app.post("/api/auth/logout", (req, res) => {
-    if (req.user) {
-      log('info', 'ログアウト', { userId: (req.user as SelectUser).id });
-    }
-    req.logout((err) => {
-      if (err) {
-        log('error', 'ログアウトエラー', { error: err });
-        return res.status(500).json({ message: "ログアウト処理中にエラーが発生しました" });
-      }
-      req.session.destroy((err) => {
-        if (err) {
-          log('error', 'セッション破棄エラー', { error: err });
-          return res.status(500).json({ message: "セッションの破棄に失敗しました" });
-        }
-        res.clearCookie('connect.sid');
-        res.json({ message: "ログアウトしました" });
-      });
-    });
-  });
-
-  // 新規登録API
+  // 新規登録APIエンドポイント
   app.post("/api/auth/register", async (req, res) => {
     try {
+      log('info', '新規登録リクエスト受信', {
+        email: req.body.email,
+        role: req.body.role
+      });
+
+      // リクエストデータのバリデーション
       const validatedData = talentRegisterFormSchema.parse(req.body);
 
+      // 既存ユーザーチェック
       const existingUser = await storage.getUserByEmail(validatedData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "このメールアドレスは既に使用されています" });
+        return res.status(400).json({
+          message: "このメールアドレスは既に使用されています"
+        });
       }
 
+      // パスワードのハッシュ化
       const hashedPassword = await hashPassword(validatedData.password);
+
+      // birthDateを日付オブジェクトに変換
+      const birthDate = new Date(validatedData.birthDate);
+
+      // ユーザー作成
       const user = await storage.createUser({
         ...validatedData,
         password: hashedPassword,
+        birthDate,
+        birthDateModified: false,
         createdAt: new Date(),
         updatedAt: new Date()
       });
 
-      req.login(sanitizeUser(user), (err) => {
+      log('info', 'ユーザー登録成功', {
+        userId: user.id,
+        email: user.email,
+        role: user.role
+      });
+
+      // セッションの作成とレスポンス
+      req.login(user, (err) => {
         if (err) {
-          log('error', 'セッション作成エラー', { error: err });
-          return res.status(500).json({ message: "ログインセッションの作成に失敗しました" });
+          log('error', 'ログインセッション作成エラー', { error: err });
+          return res.status(500).json({
+            message: "ログインセッションの作成に失敗しました"
+          });
         }
-        log('info', '新規登録成功', { userId: user.id });
-        res.status(201).json({ user: sanitizeUser(user) });
+
+        return res.status(201).json({
+          user: sanitizeUser(user)
+        });
       });
     } catch (error) {
+      log('error', '新規登録エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "入力内容に誤りがあります",
           errors: error.errors
         });
       }
-      log('error', '新規登録エラー', { error });
-      res.status(500).json({ message: "登録処理中にエラーが発生しました" });
+
+      return res.status(500).json({
+        message: "登録処理中にエラーが発生しました"
+      });
     }
   });
 }

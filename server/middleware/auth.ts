@@ -7,13 +7,6 @@ import { log } from '../utils/logger';
 // ユーザーロールの型定義
 export type UserRole = "talent" | "store";
 
-// セッション型の拡張
-declare module 'express-session' {
-  interface SessionData {
-    userId: number;
-  }
-}
-
 // ユーザー型の拡張
 declare global {
   namespace Express {
@@ -50,7 +43,6 @@ export async function authenticate(
 
     if (!user) {
       log('warn', 'ユーザーが見つかりません', { userId: req.session.userId });
-      req.session.destroy(() => {});
       return res.status(401).json({ message: 'ユーザーが見つかりません' });
     }
 

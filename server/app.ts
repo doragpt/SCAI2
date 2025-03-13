@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
+import talentRouter from './routes/talent';
 
 const app = express();
 const MemoryStoreSession = MemoryStore(session);
@@ -19,10 +20,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// リクエストボディのパース設定
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
 // セッションの設定
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -35,11 +32,18 @@ const sessionConfig = {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 86400000, // 24時間
     httpOnly: true,
-    sameSite: 'lax' as const
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
   }
 };
 
 app.use(session(sessionConfig));
+
+// リクエストボディのパース設定
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 認証セットアップ
+setupAuth(app);
 
 // APIリクエストのログ記録とヘッダー設定
 app.use('/api/*', (req, res, next) => {
@@ -55,10 +59,8 @@ app.use('/api/*', (req, res, next) => {
   next();
 });
 
-// 認証セットアップ（APIルートの前に配置）
-setupAuth(app);
-
-// APIルートの登録
+// APIルートの登録（Viteミドルウェアの前に配置）
+app.use('/api/talent', talentRouter);
 registerRoutes(app);
 
 // グローバルエラーハンドラーの設定

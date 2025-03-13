@@ -29,32 +29,17 @@ function useLoginMutation() {
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
-      try {
-        console.log('Login attempt:', credentials);
-        const response = await apiRequest("POST", "/api/auth/login", credentials);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Login error response:', errorText);
-          let errorMessage;
-          try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message;
-          } catch (e) {
-            errorMessage = 'ログインに失敗しました';
-          }
-          throw new Error(errorMessage);
-        }
-        const data = await response.json();
-        console.log('Login success:', data);
-        return data;
-      } catch (error) {
-        console.error('Login error:', error);
-        throw error;
+      const response = await apiRequest("POST", "/api/login", credentials);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ログインに失敗しました");
       }
+      const data = await response.json();
+      return data;
     },
     onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "ログイン成功",
@@ -84,19 +69,13 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      try {
-        console.log('Logout attempt');
-        const response = await apiRequest("POST", "/api/auth/logout");
-        if (!response.ok) {
-          throw new Error("ログアウトに失敗しました");
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
+      const response = await apiRequest("POST", "/api/logout");
+      if (!response.ok) {
+        throw new Error("ログアウトに失敗しました");
       }
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
       toast({
         title: "ログアウト完了",
@@ -120,32 +99,17 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      try {
-        console.log('Register attempt:', data);
-        const response = await apiRequest("POST", "/api/auth/register", data);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Register error response:', errorText);
-          let errorMessage;
-          try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message;
-          } catch (e) {
-            errorMessage = '登録に失敗しました';
-          }
-          throw new Error(errorMessage);
-        }
-        const result = await response.json();
-        console.log('Register success:', result);
-        return result.user;
-      } catch (error) {
-        console.error('Register error:', error);
-        throw error;
+      const response = await apiRequest("POST", "/api/auth/register", data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "登録に失敗しました");
       }
+      const result = await response.json();
+      return result.user;
     },
     onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "登録完了",
@@ -170,35 +134,30 @@ function useRegisterMutation() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast();
+
   const {
     data: user,
     error,
     isLoading,
   } = useQuery<SelectUser | null>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...'); 
-        const response = await apiRequest("GET", "/api/auth/check");
+        console.log('Checking auth status...'); // デバッグログ
+        const response = await apiRequest("GET", "/api/check");
+        console.log('Auth check response:', response); // デバッグログ
 
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('Not authenticated');
             return null;
           }
-          const errorText = await response.text();
-          console.error('Auth check error response:', errorText);
           throw new Error('認証確認に失敗しました');
         }
 
-        try {
-          const data = await response.json();
-          console.log('Auth check success:', data);
-          return data;
-        } catch (e) {
-          console.error('Failed to parse auth check response:', e);
-          return null;
-        }
+        const data = await response.json();
+        console.log('Auth check data:', data); // デバッグログ
+        return data;
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
