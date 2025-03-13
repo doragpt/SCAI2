@@ -43,6 +43,11 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   }
 }
 
+function sanitizeUser(user: SelectUser) {
+  const { password, ...sanitizedUser } = user;
+  return sanitizedUser;
+}
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -116,18 +121,11 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // 認証チェックAPI
-  app.get("/api/auth/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-    res.json(req.user);
-  });
-
   // ログインAPI
-  app.post("/api/auth/login", (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
     log('info', 'ログインリクエスト受信', {
-      email: req.body.email
+      email: req.body.email,
+      role: req.body.role
     });
 
     passport.authenticate('local', (err: any, user: any, info: any) => {
@@ -146,13 +144,13 @@ export function setupAuth(app: Express) {
           email: user.email,
           role: user.role
         });
-        res.json(user);
+        res.json(sanitizeUser(user));
       });
     })(req, res, next);
   });
 
   // ログアウトAPI
-  app.post("/api/auth/logout", (req, res, next) => {
+  app.post("/api/logout", (req, res, next) => {
     try {
       if (req.user) {
         log('info', 'ログアウトリクエスト受信', {
@@ -183,100 +181,6 @@ export function setupAuth(app: Express) {
       });
     }
   });
-  // ユーザー情報取得API
-  app.get("/api/user", async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "認証が必要です" });
-      }
-
-      const userData = await storage.getUser(req.user.id);
-      if (!userData) {
-        return res.status(404).json({ message: "ユーザーが見つかりません" });
-      }
-
-      log('info', 'ユーザー情報取得', {
-        id: userData.id,
-        email: userData.email,
-        role: userData.role
-      });
-
-      res.json(sanitizeUser(userData));
-    } catch (error) {
-      log('error', 'ユーザー情報取得エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      res.status(500).json({ message: "ユーザー情報の取得に失敗しました" });
-    }
-  });
-
-  // 新規登録APIエンドポイント
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      log('info', '新規登録リクエスト受信', {
-        email: req.body.email,
-        role: req.body.role
-      });
-
-      // リクエストデータのバリデーション
-      const validatedData = talentRegisterFormSchema.parse(req.body);
-
-      // 既存ユーザーチェック
-      const existingUser = await storage.getUserByEmail(validatedData.email);
-      if (existingUser) {
-        return res.status(400).json({
-          message: "このメールアドレスは既に使用されています"
-        });
-      }
-
-      // パスワードのハッシュ化
-      const hashedPassword = await hashPassword(validatedData.password);
-
-      // ユーザー作成
-      const user = await storage.createUser({
-        ...validatedData,
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      log('info', 'ユーザー登録成功', {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      });
-
-      // セッションの作成とレスポンス
-      req.login(user, (err) => {
-        if (err) {
-          log('error', 'ログインセッション作成エラー', { error: err });
-          return res.status(500).json({
-            message: "ログインセッションの作成に失敗しました"
-          });
-        }
-
-        return res.status(201).json({
-          user: sanitizeUser(user)
-        });
-      });
-    } catch (error) {
-      log('error', '新規登録エラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "入力内容に誤りがあります",
-          errors: error.errors
-        });
-      }
-
-      return res.status(500).json({
-        message: "登録処理中にエラーが発生しました"
-      });
-    }
-  });
-
 
   // セッションチェックAPI
   app.get("/api/check", (req, res) => {

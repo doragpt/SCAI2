@@ -25,7 +25,7 @@ export const useAuth = () => {
         timestamp: new Date().toISOString()
       });
 
-      const response = await apiRequest("POST", "/api/auth/login", {
+      const response = await apiRequest("POST", "/api/login", {
         email,
         password,
       });
@@ -52,7 +52,7 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await apiRequest("POST", "/api/auth/logout");
+      await apiRequest("POST", "/api/logout");
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
@@ -63,7 +63,7 @@ export const useAuth = () => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("GET", "/api/auth/check");
+      const response = await apiRequest("GET", "/api/check");
 
       if (!response.ok) {
         setUser(null);

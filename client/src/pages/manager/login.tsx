@@ -24,8 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function ManagerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { loginMutation, user, isLoading } = useAuth();
-
+  const { login, user, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -33,7 +32,7 @@ export default function ManagerLogin() {
     defaultValues: {
       email: "",
       password: "",
-      role: "store" // 店舗用ログインフォームなのでデフォルトを"store"に設定
+      role: "store"
     }
   });
 
@@ -56,16 +55,8 @@ export default function ManagerLogin() {
 
     try {
       setIsSubmitting(true);
-      console.log('店舗ログイン試行:', {
-        email: data.email,
-        timestamp: new Date().toISOString()
-      });
 
-      await loginMutation.mutateAsync(data);
-
-      console.log('店舗ログイン成功:', {
-        timestamp: new Date().toISOString()
-      });
+      await login(data.email, data.password);
 
       toast({
         title: "ログイン成功",
@@ -137,9 +128,9 @@ export default function ManagerLogin() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting || loginMutation.isPending}
+                disabled={isSubmitting}
               >
-                {(isSubmitting || loginMutation.isPending) && (
+                {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 ログイン
