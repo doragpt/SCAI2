@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Bell
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Sheet,
@@ -60,6 +60,12 @@ export function Navigation() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // コンポーネントがマウントされたことを確認
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // ユーザーの種類に基づいてルートを選択
   const userRoutes = user?.role === 'store' ? storeRoutes : talentRoutes;
@@ -93,6 +99,9 @@ export function Navigation() {
   };
 
   const breadcrumbs = getDisplayBreadcrumbs(location);
+
+  // コンポーネントがマウントされていない場合は何も表示しない
+  if (!mounted) return null;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

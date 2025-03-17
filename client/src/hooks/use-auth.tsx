@@ -38,7 +38,9 @@ function useLoginMutation() {
       return data;
     },
     onSuccess: (user: SelectUser) => {
+      // ユーザーデータをキャッシュに設定
       queryClient.setQueryData(["/api/user"], user);
+      // キャッシュの即時更新を強制
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
