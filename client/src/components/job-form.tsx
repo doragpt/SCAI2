@@ -67,9 +67,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       phoneNumber3: "",
       phoneNumber4: "",
       contactEmail: "",
-      contactLine: "",
-      contactSns: "", // Added
-      contactSnsUrl: "" // Added
+      contactSns: "",
+      contactSnsUrl: ""
     }
   });
 
@@ -251,7 +250,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardHeader>
             <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             <FormField
               control={form.control}
               name="selectedBenefits"
@@ -392,20 +391,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormLabel className="font-medium">メールアドレス（任意）</FormLabel>
                   <FormControl>
                     <Input {...field} type="email" placeholder="例：recruit@example.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="contactLine"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium">LINE ID（任意）</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="例：shop_recruit" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
