@@ -35,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// ナビゲーションの構造を定義
 const commonRoutes = [
   { path: "/", label: "ホーム", icon: Home },
   { path: "/jobs", label: "求人情報", icon: Briefcase },
@@ -62,15 +61,12 @@ export function Navigation() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // コンポーネントがマウントされたことを確認
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ユーザーの種類に基づいてルートを選択
   const userRoutes = user?.role === 'store' ? storeRoutes : talentRoutes;
 
-  // パンくずリストのラベルを日本語化
   const getBreadcrumbLabel = (crumb: string) => {
     const labels: Record<string, string> = {
       'jobs': '求人情報',
@@ -88,7 +84,6 @@ export function Navigation() {
     return labels[crumb] || crumb;
   };
 
-  // パスセグメントから表示用のパンくずを生成
   const getDisplayBreadcrumbs = (path: string) => {
     return path.split("/")
       .filter(Boolean)
@@ -100,7 +95,6 @@ export function Navigation() {
 
   const breadcrumbs = getDisplayBreadcrumbs(location);
 
-  // コンポーネントがマウントされていない場合は何も表示しない
   if (!mounted) return null;
 
   return (
@@ -110,29 +104,27 @@ export function Navigation() {
         <div className="mr-4 hidden md:flex items-center space-x-4">
           {commonRoutes.map((route) => (
             <Link key={route.path} href={route.path}>
-              <a className="cursor-pointer">
-                <Button
-                  variant={location === route.path ? "default" : "ghost"}
-                  size="sm"
-                >
-                  <route.icon className="h-4 w-4 mr-2" />
-                  {route.label}
-                </Button>
-              </a>
+              <Button
+                variant={location === route.path ? "default" : "ghost"}
+                size="sm"
+                className="cursor-pointer"
+              >
+                <route.icon className="h-4 w-4 mr-2" />
+                {route.label}
+              </Button>
             </Link>
           ))}
 
           {user && userRoutes.map((route) => (
             <Link key={route.path} href={route.path}>
-              <a className="cursor-pointer">
-                <Button
-                  variant={location === route.path ? "default" : "ghost"}
-                  size="sm"
-                >
-                  <route.icon className="h-4 w-4 mr-2" />
-                  {route.label}
-                </Button>
-              </a>
+              <Button
+                variant={location === route.path ? "default" : "ghost"}
+                size="sm"
+                className="cursor-pointer"
+              >
+                <route.icon className="h-4 w-4 mr-2" />
+                {route.label}
+              </Button>
             </Link>
           ))}
         </div>
@@ -151,55 +143,47 @@ export function Navigation() {
             <div className="mt-4 space-y-2">
               {commonRoutes.map((route) => (
                 <Link key={route.path} href={route.path}>
-                  <a className="cursor-pointer block">
-                    <Button
-                      variant={location === route.path ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <route.icon className="h-4 w-4 mr-2" />
-                      {route.label}
-                    </Button>
-                  </a>
+                  <Button
+                    variant={location === route.path ? "default" : "ghost"}
+                    className="w-full justify-start cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <route.icon className="h-4 w-4 mr-2" />
+                    {route.label}
+                  </Button>
                 </Link>
               ))}
 
               {user && userRoutes.map((route) => (
                 <Link key={route.path} href={route.path}>
-                  <a className="cursor-pointer block">
-                    <Button
-                      variant={location === route.path ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <route.icon className="h-4 w-4 mr-2" />
-                      {route.label}
-                    </Button>
-                  </a>
+                  <Button
+                    variant={location === route.path ? "default" : "ghost"}
+                    className="w-full justify-start cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <route.icon className="h-4 w-4 mr-2" />
+                    {route.label}
+                  </Button>
                 </Link>
               ))}
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* パンくずリスト（モバイルでは非表示） */}
+        {/* パンくずリスト */}
         <div className="hidden md:flex items-center text-sm">
           <Link href="/">
-            <a className="cursor-pointer">
-              <Button variant="link" size="sm">
-                ホーム
-              </Button>
-            </a>
+            <Button variant="link" size="sm" className="cursor-pointer">
+              ホーム
+            </Button>
           </Link>
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center">
               <span className="mx-2 text-muted-foreground">/</span>
               <Link href={crumb.path}>
-                <a className="cursor-pointer">
-                  <Button variant="link" size="sm">
-                    {crumb.label}
-                  </Button>
-                </a>
+                <Button variant="link" size="sm" className="cursor-pointer">
+                  {crumb.label}
+                </Button>
               </Link>
             </div>
           ))}
@@ -218,20 +202,16 @@ export function Navigation() {
                 <DropdownMenuLabel>アカウント</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
-                  <a>
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
-                      <UserCircle className="h-4 w-4 mr-2" />
-                      {user.role === 'store' ? 'ダッシュボード' : 'マイページ'}
-                    </DropdownMenuItem>
-                  </a>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                    <UserCircle className="h-4 w-4 mr-2" />
+                    {user.role === 'store' ? 'ダッシュボード' : 'マイページ'}
+                  </DropdownMenuItem>
                 </Link>
                 <Link href={user.role === 'store' ? "/store/settings" : "/talent/settings"}>
-                  <a>
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      設定
-                    </DropdownMenuItem>
-                  </a>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    設定
+                  </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -248,11 +228,9 @@ export function Navigation() {
             </DropdownMenu>
           ) : (
             <Link href="/auth">
-              <a className="cursor-pointer">
-                <Button size="sm">
-                  ログイン
-                </Button>
-              </a>
+              <Button size="sm" className="cursor-pointer">
+                ログイン
+              </Button>
             </Link>
           )}
         </div>
