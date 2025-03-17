@@ -466,6 +466,59 @@ export const userSchema = createInsertSchema(users, {
   }),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
+// New schemas for store and job information
+export const storeBasicInfoSchema = z.object({
+  businessName: z.string().min(1, "店舗名を入力してください"),
+  serviceTypeSearch: z.string().min(1, "検索用業種を入力してください"),
+  serviceTypeDisplay: z.string().min(1, "表示用業種を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "都道府県を選択してください"
+  }),
+  address: z.string().max(300, "住所は300文字以内で入力してください"),
+  nearestStation: z.string().max(150, "地区・最寄りは150文字以内で入力してください"),
+  interviewAddress: z.string().max(300, "面接場所住所は300文字以内で入力してください"),
+  snsId: z.string().max(20, "SNSIDは20文字以内で入力してください"),
+  snsText: z.string().max(20, "SNSテキストは20文字以内で入力してください"),
+  snsUrl: z.string().url("有効なURLを入力してください").max(250, "URLは250文字以内で入力してください"),
+  officialSiteUrl: z.string().url("有効なURLを入力してください").max(250, "URLは250文字以内で入力してください"),
+  receptionTime: z.string().max(75, "受付時間は75文字以内で入力してください"),
+  contactPerson: z.string().max(75, "担当者氏名は75文字以内で入力してください"),
+});
+
+export const jobBasicInfoSchema = z.object({
+  mainCatch: z.string()
+    .min(1, "キャッチコピーを入力してください")
+    .max(300, "キャッチコピーは300文字以内で入力してください"),
+  mainDescription: z.string()
+    .min(1, "仕事内容を入力してください")
+    .max(9000, "仕事内容は9000文字以内で入力してください"),
+  imageDescription: z.string()
+    .max(900, "画像横の説明文は900文字以内で入力してください"),
+  selectedBenefits: z.array(z.enum(benefitTypes))
+    .min(1, "待遇を1つ以上選択してください"),
+});
+
+export const contactInfoSchema = z.object({
+  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+  phoneNumber2: z.string().optional(),
+  phoneNumber3: z.string().optional(),
+  phoneNumber4: z.string().optional(),
+  email1: z.string().email("有効なメールアドレスを入力してください").max(150, "メールアドレスは150文字以内で入力してください"),
+  email1Note: z.string().max(75, "但し書きは75文字以内で入力してください").optional(),
+  email2: z.string().email("有効なメールアドレスを入力してください").max(150, "メールアドレスは150文字以内で入力してください").optional(),
+  email2Note: z.string().max(75, "但し書きは75文字以内で入力してください").optional(),
+  email3: z.string().email("有効なメールアドレスを入力してください").max(150, "メールアドレスは150文字以内で入力してください").optional(),
+  email3Note: z.string().max(75, "但し書きは75文字以内で入力してください").optional(),
+});
+
+export const storeJobFormSchema = z.object({
+  ...storeBasicInfoSchema.shape,
+  ...jobBasicInfoSchema.shape,
+  ...contactInfoSchema.shape,
+});
+
+export type StoreJobFormData = z.infer<typeof storeJobFormSchema>;
+
 export const jobSchema = createInsertSchema(jobs, {
   title: z.string().min(1, "タイトルを入力してください"),
   description: z.string().min(1, "詳細を入力してください"),
@@ -481,19 +534,9 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "公開状態を選択してください",
     invalid_type_error: "無効な公開状態です",
   }),
-  mainCatch: z.string().min(1, "キャッチコピーを入力してください")
-    .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string().min(1, "仕事内容を入力してください")
-    .max(9000, "仕事内容は9000文字以内で入力してください"),
-  imageDescription: z.string().max(900, "画像横の説明文は900文字以内で入力してください"),
-  selectedBenefits: z.array(z.enum(benefitTypes))
-    .min(1, "待遇を1つ以上選択してください"),
-  businessName: z.string().min(1, "店舗名を入力してください"),
-  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
-  phoneNumber2: z.string().optional(),
-  phoneNumber3: z.string().optional(),
-  phoneNumber4: z.string().optional(),
+  // Removed redundant fields, now handled by storeJobFormSchema
 }).omit({ id: true, createdAt: true, updatedAt: true });
+
 
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
@@ -606,7 +649,7 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, StoreJobFormData };
 
 export interface JobListingResponse {
   jobs: Job[];

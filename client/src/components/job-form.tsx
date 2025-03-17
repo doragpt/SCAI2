@@ -1,11 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
-  jobSchema, 
+  storeJobFormSchema,
   prefectures, 
-  serviceTypes, 
   benefitTypes,
-  type Job 
+  type StoreJobFormData
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,10 +32,8 @@ import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
 
-type JobFormData = z.infer<typeof jobSchema>;
-
 type JobFormProps = {
-  initialData?: Job;
+  initialData?: Partial<StoreJobFormData>;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -45,28 +42,47 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<JobFormData>({
-    resolver: zodResolver(jobSchema),
+  const form = useForm<StoreJobFormData>({
+    resolver: zodResolver(storeJobFormSchema),
     defaultValues: initialData || {
-      title: "",
-      status: "draft",
+      // 店舗基本情報
+      businessName: "",
+      serviceTypeSearch: "",
+      serviceTypeDisplay: "",
+      location: "東京都",
+      address: "",
+      nearestStation: "",
+      interviewAddress: "",
+      snsId: "",
+      snsText: "",
+      snsUrl: "",
+      officialSiteUrl: "",
+      receptionTime: "",
+      contactPerson: "",
+
+      // 求人情報
       mainCatch: "",
       mainDescription: "",
       imageDescription: "",
-      businessName: "",
-      location: "",
-      serviceType: "",
       selectedBenefits: [],
+
+      // 連絡先情報
       phoneNumber1: "",
       phoneNumber2: "",
       phoneNumber3: "",
       phoneNumber4: "",
+      email1: "",
+      email1Note: "",
+      email2: "",
+      email2Note: "",
+      email3: "",
+      email3Note: "",
     }
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: JobFormData) => {
-      const response = await fetch("/api/jobs/basic-info", {
+    mutationFn: async (data: StoreJobFormData) => {
+      const response = await fetch("/api/stores/basic-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -80,7 +96,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_INFO] });
       toast({
         title: "基本情報を保存しました",
         description: "変更内容が保存されました。",
@@ -96,7 +112,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = (data: JobFormData) => {
+  const onSubmit = (data: StoreJobFormData) => {
     mutate(data);
   };
 
@@ -114,7 +130,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="businessName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>店舗名</FormLabel>
+                  <FormLabel>店名</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="店舗名を入力してください" />
                   </FormControl>
@@ -123,41 +139,46 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="serviceType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>業種</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="serviceTypeSearch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>業種（検索用）</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="業種を選択してください" />
-                      </SelectTrigger>
+                      <Input {...field} placeholder="例：デリヘル" />
                     </FormControl>
-                    <SelectContent>
-                      {serviceTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="serviceTypeDisplay"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>業種（表示用）</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="例：デリバリーヘルス" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>勤務地</FormLabel>
+                  <FormLabel>エリア</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="勤務地を選択してください" />
+                        <SelectValue placeholder="エリアを選択してください" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -172,6 +193,139 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>住所</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="住所を入力してください" />
+                  </FormControl>
+                  <FormDescription>300文字以内</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nearestStation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>地区・最寄り</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="例：西船橋駅周辺" />
+                  </FormControl>
+                  <FormDescription>150文字以内</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="interviewAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>面接場所住所</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="面接場所の住所を入力してください" />
+                  </FormControl>
+                  <FormDescription>300文字以内</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="snsId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SNSID</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="SNSのIDを入力" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="snsText"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SNSテキスト</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="例：ラインで24時間受付中" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="snsUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>SNS友達追加URL</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="SNSのURLを入力" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="officialSiteUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>オフィシャルサイトURL</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="公式サイトのURLを入力" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="receptionTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>受付時間</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="例：12:00〜翌4:00" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="contactPerson"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>担当者氏名</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="例：店長：山田" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -190,9 +344,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormControl>
                     <Input {...field} placeholder="魅力的なキャッチコピーを入力してください" />
                   </FormControl>
-                  <FormDescription>
-                    300文字以内で入力してください
-                  </FormDescription>
+                  <FormDescription>300文字以内</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -211,6 +363,26 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[200px]"
                     />
                   </FormControl>
+                  <FormDescription>全角3000文字・半角9000文字以内</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="imageDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>画像横文言</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="画像の横に表示する説明文を入力してください"
+                      className="min-h-[100px]"
+                    />
+                  </FormControl>
+                  <FormDescription>900文字以内</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -291,7 +463,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               )}
             />
 
-            {/* 追加の電話番号フィールド（オプション） */}
             {['phoneNumber2', 'phoneNumber3', 'phoneNumber4'].map((name, index) => (
               <FormField
                 key={name}
@@ -307,6 +478,38 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   </FormItem>
                 )}
               />
+            ))}
+
+            {[1, 2, 3].map((num) => (
+              <div key={num} className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name={`email${num}` as "email1" | "email2" | "email3"}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>メールアドレス{num}{num === 1 ? "（必須）" : "（任意）"}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="例：example@example.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`email${num}Note` as "email1Note" | "email2Note" | "email3Note"}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>メールアドレス{num}但し書き</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="メールアドレスの補足情報" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             ))}
           </CardContent>
         </Card>
