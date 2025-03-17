@@ -15,14 +15,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       method: req.method,
       path: req.path,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined
+      body: req.method !== 'GET' ? req.body : undefined,
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      user: req.user ? { id: req.user.id, role: req.user.role } : null,
+      timestamp: new Date().toISOString()
     });
     res.setHeader("Content-Type", "application/json");
     next();
   });
 
-  // 各ルーターを登録
+  // 認証関連のルートを最初に登録
   app.use('/api/auth', authRoutes);
+
+  // 認証が必要なルートを登録
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
@@ -32,7 +38,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     log('error', 'APIエラー', {
       error: err instanceof Error ? err.message : 'Unknown error',
       path: req.path,
-      method: req.method
+      method: req.method,
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      timestamp: new Date().toISOString()
     });
     res.status(500).json({
       message: process.env.NODE_ENV === 'development' ? err.message : '内部サーバーエラー'

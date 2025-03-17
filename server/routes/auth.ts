@@ -25,39 +25,14 @@ router.get("/user", authenticate, async (req, res) => {
       return res.status(401).json({ message: "認証が必要です" });
     }
 
-    // データベースから最新のユーザー情報を取得
-    const userData = await storage.getUser(user.id);
-    if (!userData) {
-      log('warn', 'ユーザーが見つかりません', { id: user.id });
-      return res.status(404).json({ message: "ユーザーが見つかりません" });
-    }
-
-    // データベースの値をログ出力
-    log('info', 'データベースから取得したユーザー情報', {
-      id: userData.id,
-      email: userData.email,
-      username: userData.username,
-      birthDate: userData.birthDate,
-      location: userData.location,
-      preferredLocations: userData.preferredLocations
+    log('info', 'ユーザー情報取得成功', {
+      userId: user.id,
+      role: user.role,
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID
     });
 
-    // 必要なユーザー情報のみを返す
-    const response = {
-      id: userData.id,
-      email: userData.email,
-      username: userData.username,
-      birthDate: userData.birthDate,
-      location: userData.location,
-      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
-      role: userData.role,
-      displayName: userData.username // displayName を username から設定
-    };
-
-    // レスポンスデータをログ出力
-    log('info', 'クライアントに送信するレスポンス', response);
-
-    res.json(response);
+    res.json(user);
   } catch (error) {
     log('error', 'ユーザー情報取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -147,7 +122,6 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 router.post("/login", async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
-    // 認証処理は auth.ts で実装済み
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
@@ -155,6 +129,13 @@ router.post("/login", async (req, res, next) => {
       }
       req.login(user, (err) => {
         if (err) return next(err);
+
+        log('info', 'ログイン成功とセッション作成', {
+          userId: user.id,
+          sessionID: req.sessionID,
+          isAuthenticated: req.isAuthenticated()
+        });
+
         res.json(user);
       });
     })(req, res, next);
@@ -169,13 +150,26 @@ router.post("/login", async (req, res, next) => {
 router.post("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
-    res.sendStatus(200);
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
   });
 });
 
-// セッションチェックエンドポイント
-router.get("/check", authenticate, (req, res) => {
-  res.json(req.user);
+// セッション状態確認エンドポイント
+router.get("/check-session", (req, res) => {
+  log('info', 'セッション状態確認', {
+    isAuthenticated: req.isAuthenticated(),
+    sessionID: req.sessionID,
+    hasUser: !!req.user,
+    userId: req.user?.id
+  });
+
+  res.json({
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user || null
+  });
 });
 
 export default router;
