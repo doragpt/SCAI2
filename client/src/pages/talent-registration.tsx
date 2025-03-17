@@ -19,28 +19,23 @@ export default function TalentRegistration() {
     data: talentProfile,
     isLoading,
     error,
-  } = useQuery<TalentProfileData | null>({
+  } = useQuery({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
     queryFn: getTalentProfile,
     enabled: !!user?.id,
     retry: false,
-    // エラーを投げない、nullを返す
-    staleTime: 0,
-    // 認証エラーの場合のみエラーとして扱う
-    useErrorBoundary: (error) => 
-      error instanceof Error && error.message === "認証が必要です",
-  });
-
-  // 認証エラーのみ処理
-  React.useEffect(() => {
-    if (error instanceof Error && error.message === "認証が必要です") {
-      toast({
-        title: "エラー",
-        description: "認証が必要です",
-        variant: "destructive",
-      });
+    // Return null on error
+    onError: (error: Error) => {
+      if (error.message === "認証が必要です") {
+        toast({
+          title: "エラー",
+          description: "認証が必要です",
+          variant: "destructive",
+        });
+      }
+      return null;
     }
-  }, [error, toast]);
+  });
 
   if (!user) {
     return (

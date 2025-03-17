@@ -13,7 +13,7 @@ import {
   UserCircle,
   FileText
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter"; 
 import {
   type TalentProfile,
   type Application
@@ -44,6 +44,7 @@ const item = {
 
 export default function MyPage() {
   const { user } = useAuth();
+  const [_, setLocation] = useLocation(); 
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery<TalentProfile>({
     queryKey: ["/api/talent/profile"],
@@ -54,7 +55,8 @@ export default function MyPage() {
   });
 
   if (!user) {
-    return <Redirect to="/auth" />;
+    setLocation("/auth"); 
+    return null;
   }
 
   if (isLoadingProfile || isLoadingApplications) {
