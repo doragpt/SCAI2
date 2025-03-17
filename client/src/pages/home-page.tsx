@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type Job, type ServiceType, serviceTypes } from "@shared/schema";
+import { type JobResponse, type ServiceType, serviceTypes } from "@shared/schema";
 import {
   Loader2,
   MapPin,
   Banknote,
   Star,
   ChevronRight,
-  Search,
   Building2,
   Check,
   AlertCircle,
@@ -26,7 +25,8 @@ import { useState } from "react";
 import { SEO } from "@/lib/seo";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { QUERY_KEYS, getJobsQuery } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useToast } from "@/hooks/use-toast";
 
 // アニメーション設定
 const container = {
@@ -44,14 +44,16 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-// Define getServiceTypeLabel function
-const getServiceTypeLabel = (serviceType: ServiceType): string => {
-  const type = serviceTypes.find(t => t.id === serviceType.id);
-  return type ? type.label : "";
+// 給与表示のフォーマット
+const formatSalary = (min?: number | null, max?: number | null): string => {
+  if (!min && !max) return "応相談";
+  if (!max) return `${min?.toLocaleString()}円〜`;
+  if (!min) return `〜${max?.toLocaleString()}円`;
+  return `${min.toLocaleString()}円〜${max?.toLocaleString()}円`;
 };
 
 // JobCardコンポーネント
-const JobCard = ({ job }: { job: Job }) => {
+const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div
       variants={item}
@@ -71,7 +73,7 @@ const JobCard = ({ job }: { job: Job }) => {
               </CardDescription>
             </div>
             <Badge variant="outline" className="bg-primary/5">
-              {getServiceTypeLabel(job.serviceType as ServiceType)}
+              {job.displayServiceType}
             </Badge>
           </div>
         </CardHeader>
@@ -79,16 +81,16 @@ const JobCard = ({ job }: { job: Job }) => {
           <div className="space-y-4">
             <div className="flex items-center text-primary font-semibold">
               <Banknote className="h-5 w-5 mr-2" />
-              <span>日給 {job.minimumGuarantee?.toLocaleString()}円〜</span>
+              <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {job.transportationSupport && (
+              {job.selectedBenefits.includes("交通費支給") && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Check className="h-3.5 w-3.5 mr-1" />
                   交通費支給
                 </Badge>
               )}
-              {job.housingSupport && (
+              {job.selectedBenefits.includes("寮完備") && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   <Building2 className="h-3.5 w-3.5 mr-1" />
                   寮完備
@@ -115,16 +117,37 @@ const JobCard = ({ job }: { job: Job }) => {
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [selectedType, setSelectedType] = useState<string>("all");
+  const { toast } = useToast();
 
-  const { data: jobListings = [], isLoading: jobsLoading, error } = useQuery({
+  const { data: jobListings = [], isLoading: jobsLoading, error } = useQuery<JobResponse[]>({
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
-    queryFn: getJobsQuery,
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/jobs");
+        if (!response.ok) {
+          throw new Error("求人情報の取得に失敗しました");
+        }
+        const data = await response.json();
+        return data.jobs;
+      } catch (error) {
+        console.error("求人情報取得エラー:", error);
+        toast({
+          variant: "destructive",
+          title: "エラーが発生しました",
+          description: error instanceof Error ? error.message : "求人情報の取得に失敗しました"
+        });
+        return [];
+      }
+    }
   });
 
   if (authLoading || jobsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center space-y-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">読み込み中...</p>
+        </div>
       </div>
     );
   }
@@ -144,10 +167,15 @@ export default function HomePage() {
         <main className="container mx-auto px-4 py-8">
           <section>
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Star className="h-6 w-6 text-primary" />
-                新着求人
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Star className="h-6 w-6 text-primary" />
+                  新着求人
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  最新の高収入求人をチェック
+                </p>
+              </div>
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="業種を選択" />
@@ -155,8 +183,8 @@ export default function HomePage() {
                 <SelectContent>
                   <SelectItem value="all">全ての業種</SelectItem>
                   {serviceTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.label}
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -167,7 +195,23 @@ export default function HomePage() {
               <Card className="p-6 text-center">
                 <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <p className="text-destructive">データの取得に失敗しました</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {error instanceof Error ? error.message : "エラーが発生しました"}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  再読み込み
+                </Button>
               </Card>
+            ) : filteredListings.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  条件に合う求人が見つかりませんでした
+                </p>
+              </div>
             ) : (
               <motion.div
                 variants={container}
