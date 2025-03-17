@@ -137,6 +137,7 @@ const testimonials = [
   },
 ];
 
+// JobCardコンポーネントの型定義を修正
 const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div
@@ -177,13 +178,13 @@ const JobCard = ({ job }: { job: JobResponse }) => {
               <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {job.selectedBenefits.includes("交通費支給") && (
+              {job.selectedBenefits?.includes("交通費支給") && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Check className="h-3.5 w-3.5 mr-1" />
                   交通費支給
                 </Badge>
               )}
-              {job.selectedBenefits.includes("寮完備") && (
+              {job.selectedBenefits?.includes("寮完備") && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   <Building2 className="h-3.5 w-3.5 mr-1" />
                   寮完備

@@ -14,7 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// ServiceType関連の定義を更新
+// ServiceType関連の定義
 export const serviceTypes = [
   "デリヘル",
   "ホテヘル",
@@ -213,7 +213,10 @@ export const jobs = pgTable("jobs", {
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
   displayServiceType: text("display_service_type", { enum: serviceTypes }).notNull(),
-  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
+  minimumGuarantee: integer("minimum_guarantee"),
+  maximumGuarantee: integer("maximum_guarantee"),
+  selectedBenefits: jsonb("selected_benefits").$type<string[]>().default([]).notNull(),
+  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
   title: text("title").notNull(),
   mainCatch: text("main_catch"),
   mainDescription: text("main_description"),
@@ -224,9 +227,8 @@ export const jobs = pgTable("jobs", {
   phoneNumber3: text("phone_number_3"),
   phoneNumber4: text("phone_number_4"),
   contactEmail: text("contact_email"),
-  contactSns: text("contact_sns"), // Changed from contactLine
-  contactSnsUrl: text("contact_sns_url"), // Added new field
-  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
+  contactSns: text("contact_sns"), 
+  contactSnsUrl: text("contact_sns_url"), 
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
   serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
@@ -356,7 +358,6 @@ export type JobResponse = Job & {
   applicationStatus?: string;
 };
 
-
 // Schemas
 export const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -393,8 +394,10 @@ export const jobSchema = createInsertSchema(jobs, {
   phoneNumber3: z.string().optional(),
   phoneNumber4: z.string().optional(),
   contactEmail: z.string().email("有効なメールアドレスを入力してください").optional(),
-  contactSns: z.string().optional(), // Changed from contactLine
-  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(), // Added new field with URL validation
+  contactSns: z.string().optional(), 
+  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(), 
+  minimumGuarantee: z.number().optional(),
+  maximumGuarantee: z.number().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -659,6 +662,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };
