@@ -14,7 +14,8 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-export const serviceTypes = [
+// Service Type definitions
+export const serviceTypeSearch = [
   "deriheru",
   "hoteheru",
   "hakoheru",
@@ -22,6 +23,28 @@ export const serviceTypes = [
   "onakura",
   "mseikan"
 ] as const;
+
+export const serviceTypeDisplay = [
+  "デリバリーヘルス",
+  "ホテヘル",
+  "箱ヘル",
+  "エステ",
+  "オナクラ",
+  "メンズエステ"
+] as const;
+
+// Service Type Labels mapping
+export const serviceTypeLabels: Record<typeof serviceTypeSearch[number], typeof serviceTypeDisplay[number]> = {
+  deriheru: "デリバリーヘルス",
+  hoteheru: "ホテヘル",
+  hakoheru: "箱ヘル",
+  esthe: "エステ",
+  onakura: "オナクラ",
+  mseikan: "メンズエステ",
+} as const;
+
+export type ServiceType = typeof serviceTypeSearch[number];
+
 
 export const photoTags = [
   "現在の髪色",
@@ -99,7 +122,7 @@ export const benefitTypes = [
 
 // Type definitions
 export type Prefecture = typeof prefectures[number];
-export type ServiceType = typeof serviceTypes[number];
+
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
 export type CupSize = typeof cupSizes[number];
@@ -113,16 +136,6 @@ export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof benefitTypes[number];
 
-
-// Service Type Labels
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  deriheru: "デリヘル",
-  hoteheru: "ホテヘル",
-  hakoheru: "箱ヘル",
-  esthe: "エステ",
-  onakura: "オナクラ",
-  mseikan: "メンズエステ",
-} as const;
 
 // Schema definitions
 export const photoSchema = z.object({
@@ -158,7 +171,7 @@ export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
-  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  serviceType: text("service_type", { enum: serviceTypeSearch }).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
@@ -469,8 +482,12 @@ export const userSchema = createInsertSchema(users, {
 // New schemas for store and job information
 export const storeBasicInfoSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
-  serviceTypeSearch: z.string().min(1, "検索用業種を入力してください"),
-  serviceTypeDisplay: z.string().min(1, "表示用業種を入力してください"),
+  serviceTypeSearch: z.enum(serviceTypeSearch, {
+    required_error: "検索用業種を選択してください"
+  }),
+  serviceTypeDisplay: z.enum(serviceTypeDisplay, {
+    required_error: "表示用業種を選択してください"
+  }),
   location: z.enum(prefectures, {
     required_error: "都道府県を選択してください"
   }),
@@ -526,7 +543,7 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "勤務地を選択してください",
     invalid_type_error: "無効な勤務地です",
   }),
-  serviceType: z.enum(serviceTypes, {
+  serviceType: z.enum(serviceTypeSearch, {
     required_error: "サービスタイプを選択してください",
     invalid_type_error: "無効なサービスタイプです",
   }),
@@ -534,7 +551,6 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "公開状態を選択してください",
     invalid_type_error: "無効な公開状態です",
   }),
-  // Removed redundant fields, now handled by storeJobFormSchema
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 
@@ -714,8 +730,7 @@ export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   job: one(jobs, {
     fields: [viewHistory.jobId],
     references: [jobs.id],
-  }),
-  user: one(users, {
+  }),  user: one(users, {
     fields: [viewHistory.userId],
     references: [users.id],
   }),

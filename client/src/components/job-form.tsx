@@ -4,6 +4,9 @@ import {
   storeJobFormSchema,
   prefectures, 
   benefitTypes,
+  serviceTypeSearch,
+  serviceTypeDisplay,
+  serviceTypeLabels,
   type StoreJobFormData
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -47,8 +50,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     defaultValues: initialData || {
       // 店舗基本情報
       businessName: "",
-      serviceTypeSearch: "",
-      serviceTypeDisplay: "",
+      serviceTypeSearch: "deriheru", 
+      serviceTypeDisplay: "デリバリーヘルス", 
       location: "東京都",
       address: "",
       nearestStation: "",
@@ -146,9 +149,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>業種（検索用）</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="例：デリヘル" />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="業種を選択" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceTypeSearch.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {serviceTypeLabels[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -160,9 +174,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>業種（表示用）</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="例：デリバリーヘルス" />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="表示名を選択" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceTypeDisplay.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
