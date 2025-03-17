@@ -10,8 +10,11 @@ const router = Router();
 // パブリック求人一覧取得（認証不要）
 router.get("/", async (_req, res) => {
   try {
-    log('info', 'パブリック求人一覧の取得を開始');
+    log('info', 'パブリック求人一覧の取得を開始', {
+      timestamp: new Date().toISOString()
+    });
 
+    // データベースクエリの実行
     const jobListings = await db
       .select({
         id: jobs.id,
@@ -40,10 +43,12 @@ router.get("/", async (_req, res) => {
 
     log('info', 'パブリック求人一覧取得成功', {
       count: jobListings.length,
-      firstJob: jobListings[0]
+      firstJobId: jobListings[0]?.id,
+      timestamp: new Date().toISOString()
     });
 
-    return res.json({ 
+    // レスポンスの送信
+    res.status(200).json({ 
       jobs: jobListings,
       pagination: {
         currentPage: 1,
@@ -54,7 +59,8 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     });
     return res.status(500).json({ message: "求人情報の取得に失敗しました" });
   }

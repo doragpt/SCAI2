@@ -24,8 +24,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 認証セットアップ（セッション設定含む）
 setupAuth(app);
 
-// APIリクエストのログ記録とヘッダー設定
-app.use('/api/*', (req, res, next) => {
+// APIリクエストの処理を最優先で設定
+app.use('/api', (req, res, next) => {
   log('info', 'APIリクエスト受信', {
     method: req.method,
     path: req.path,
@@ -33,13 +33,16 @@ app.use('/api/*', (req, res, next) => {
     body: req.method !== 'GET' ? req.body : undefined
   });
 
-  // APIリクエストには必ずJSONを返す
-  res.type('application/json');
+  // APIリクエストには必ずJSONを返すように設定
+  res.set('Content-Type', 'application/json');
   next();
 });
 
-// APIルートの登録（最初に配置）
+// APIルートを先に登録
 app.use('/api/talent', talentRouter);
+
+// その他のAPIルートを登録
+log('info', 'APIルートの登録を開始');
 registerRoutes(app).catch(error => {
   log('error', 'ルート登録エラー', {
     error: error instanceof Error ? error.message : 'Unknown error'
@@ -47,7 +50,7 @@ registerRoutes(app).catch(error => {
   process.exit(1);
 });
 
-// グローバルエラーハンドラーの設定
+// エラーハンドリングの設定
 app.use(errorHandler);
 
 // 認証エラー時のJSONレスポンス
@@ -59,6 +62,18 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     });
   }
   next(err);
+});
+
+// キャッチオールミドルウェア（APIルートにマッチしなかった場合）
+app.use('/api/*', (req, res) => {
+  log('warn', 'APIルートが見つかりません', {
+    method: req.method,
+    path: req.path
+  });
+  res.status(404).json({
+    error: 'NotFound',
+    message: '指定されたAPIエンドポイントが見つかりません'
+  });
 });
 
 export default app;
