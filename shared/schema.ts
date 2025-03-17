@@ -30,25 +30,63 @@ export const phoneTypes = [
   "フリーコール"
 ] as const;
 
-// 業態（待遇）の選択肢を定義
-export const benefitTypes = [
-  "交通費支給",
-  "寮完備",
-  "未経験者歓迎",
-  "講習費無料",
-  "託児所完備",
-  "制服貸与",
-  "自由出勤",
-  "日払い可能",
-  "送迎あり",
-  "個室待機",
-  "短期可能",
-  "長期休暇可能",
-  "昇給あり",
-  "ボーナスあり",
-  "保証制度あり",
-  "体験入店あり"
+// 待遇のカテゴリー定義
+export const benefitCategories = {
+  salary: "給与・待遇",
+  workStyle: "勤務スタイル",
+  facility: "施設・サポート"
+} as const;
+
+// 待遇項目の定義（カテゴリー別）
+export const benefitTypes = {
+  salary: [
+    "日払い可能",
+    "体験入店あり",
+    "保証制度あり",
+    "ボーナスあり",
+    "昇給あり",
+  ],
+  workStyle: [
+    "自由出勤",
+    "短期可能",
+    "長期休暇可能",
+    "未経験者歓迎",
+  ],
+  facility: [
+    "寮完備",
+    "託児所完備",
+    "制服貸与",
+    "送迎あり",
+    "個室待機",
+    "交通費支給",
+  ],
+} as const;
+
+// フラットな待遇リストの生成（型定義用）
+export const allBenefitTypes = [
+  ...benefitTypes.salary,
+  ...benefitTypes.workStyle,
+  ...benefitTypes.facility,
 ] as const;
+
+// Type definitions
+export type Prefecture = typeof prefectures[number];
+export type ServiceType = typeof serviceTypes[number];
+export type PhotoTag = typeof photoTags[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type WorkType = typeof workTypes[number];
+export type JobStatus = typeof jobStatusTypes[number];
+export type BenefitType = typeof allBenefitTypes[number];
+export type PhoneType = typeof phoneTypes[number];
+export type BenefitCategory = keyof typeof benefitTypes;
+
 
 export const photoTags = [
   "現在の髪色",
@@ -103,24 +141,6 @@ export const estheOptions = [
 
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
-
-
-// Type definitions
-export type Prefecture = typeof prefectures[number];
-export type ServiceType = typeof serviceTypes[number];
-export type PhotoTag = typeof photoTags[number];
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-export type EstheOption = typeof estheOptions[number];
-export type WorkType = typeof workTypes[number];
-export type JobStatus = typeof jobStatusTypes[number];
-export type BenefitType = typeof benefitTypes[number];
-export type PhoneType = typeof phoneTypes[number];
 
 
 // Service Type Labels
@@ -512,7 +532,7 @@ export const jobSchema = createInsertSchema(jobs, {
   mainDescription: z.string().min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   imageDescription: z.string().max(900, "画像横の説明文は900文字以内で入力してください"),
-  selectedBenefits: z.array(z.enum(benefitTypes))
+  selectedBenefits: z.array(z.enum(allBenefitTypes))
     .min(1, "待遇を1つ以上選択してください"),
   phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
   phoneType1: z.enum(phoneTypes, {
@@ -635,9 +655,8 @@ export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, PhoneType };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, PhoneType, BenefitCategory };
 
 export interface JobListingResponse {
   jobs: Job[];

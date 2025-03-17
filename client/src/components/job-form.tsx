@@ -6,6 +6,7 @@ import {
   serviceTypes,
   phoneTypes,
   benefitTypes,
+  benefitCategories,
   type Job 
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -290,7 +291,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardHeader>
             <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <FormField
               control={form.control}
               name="selectedBenefits"
@@ -299,40 +300,132 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormLabel className="font-medium mb-4">
                     <span className="text-red-500">必須</span> 業態（待遇）
                   </FormLabel>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {benefitTypes.map((benefit) => (
-                      <FormField
-                        key={benefit}
-                        control={form.control}
-                        name="selectedBenefits"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={benefit}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(benefit)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, benefit])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== benefit
-                                          )
-                                        )
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {benefit}
-                              </FormLabel>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
+                  <div className="space-y-6">
+                    {/* 給与・待遇 */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">
+                        {benefitCategories.salary}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {benefitTypes.salary.map((benefit) => (
+                          <FormField
+                            key={benefit}
+                            control={form.control}
+                            name="selectedBenefits"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={benefit}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(benefit)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, benefit])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== benefit
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {benefit}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 勤務スタイル */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">
+                        {benefitCategories.workStyle}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {benefitTypes.workStyle.map((benefit) => (
+                          <FormField
+                            key={benefit}
+                            control={form.control}
+                            name="selectedBenefits"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={benefit}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(benefit)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, benefit])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== benefit
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {benefit}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 施設・サポート */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">
+                        {benefitCategories.facility}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {benefitTypes.facility.map((benefit) => (
+                          <FormField
+                            key={benefit}
+                            control={form.control}
+                            name="selectedBenefits"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={benefit}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(benefit)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, benefit])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== benefit
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {benefit}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   <FormMessage />
                 </FormItem>
