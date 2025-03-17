@@ -15,12 +15,12 @@ export const prefectures = [
 ] as const;
 
 export const serviceTypes = [
-  "deriheru",
-  "hoteheru",
-  "hakoheru",
-  "esthe",
-  "onakura",
-  "mseikan"
+  "デリヘル",
+  "ホテヘル",
+  "箱ヘル",
+  "エステ",
+  "オナクラ",
+  "メンズエステ"
 ] as const;
 
 export const photoTags = [
@@ -116,12 +116,12 @@ export type BenefitType = typeof benefitTypes[number];
 
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
-  deriheru: "デリヘル",
-  hoteheru: "ホテヘル",
-  hakoheru: "箱ヘル",
-  esthe: "エステ",
-  onakura: "オナクラ",
-  mseikan: "メンズエステ",
+  "デリヘル": "デリヘル",
+  "ホテヘル": "ホテヘル",
+  "箱ヘル": "箱ヘル",
+  "エステ": "エステ",
+  "オナクラ": "オナクラ",
+  "メンズエステ": "メンズエステ",
 } as const;
 
 // Schema definitions

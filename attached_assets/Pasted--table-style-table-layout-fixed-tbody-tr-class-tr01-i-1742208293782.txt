@@ -1,0 +1,113 @@
+<table style="table-layout: fixed;">
+                <tbody>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">店名</th>
+                    <td class="td02" style="word-break: break-all;"><dl>シーパラダイス</dl></td>
+                    </tr>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">業種（検索用）</th>
+                    <td class="td02"><dl>デリヘル</dl></td>
+                    </tr>
+                    <tr class="tr01 infoBasicJob">
+                    <th class="th01 tdTittleJob">業種（表示用）</th>
+                    <td class="td02"><dl>デリヘル</dl></td>
+                    </tr>
+
+                    
+                    
+                    
+                    
+                                        
+                    <tr class="tr01 infoBasicTime">
+                    
+                    
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>キャッチコピー</th>
+                                        
+                        <td class="td02"><input name="main_catch" type="text" value="🌈🫧西船橋素人清楚系デリヘル〜西船橋シーパラダイス〜 🐬女性店長のお店で安心安全女性第一をモットーにしっかりサポート🌟トップクラスのバック率で1日4万円保証付き🐬完全個室待機🫧🌈" data-length="300" size="80" label="#caution_main_catch" data-check="required max300" data-name="キャッチコピー" placeholder="ここにキャッチコピーを入力してください(300文字以内)"><br>
+                            <span id="caution_main_catch" class="cautionTextLine" style="display: inline;">あと204文字</span><div class="infotext">(300文字)</div>
+                        </td>
+                    
+                                        
+                    </tr>
+                    <tr class="tr01 infoBasicTreatment">
+                    
+                    
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>仕事情報</th>
+                                        
+                        <td class="td02">
+                            <div style="padding: 0px 10px 0px;clear:both;">
+                                
+                                
+                                
+                                
+                                <textarea name="main_setumei" id="MpMainSetumei" cols="100" rows="20" label="#caution_main_setumei" placeholder="ここに仕事情報を入力してください(全角3000文字・半角9000文字)" data-check="required maxbytes9000:3000" data-byteslength="9000:3000" data-escape="1" data-name="仕事情報">🐬🫧急遽の当日面接、体験入店でも、
+迅速な対応☆迅速な在籍作成が可能！！🦭💘
+そのため当日急な入店でも最低5万円以上稼いで頂く自信がございます！💰🫧🐬
+
+❤️‍🔥エリアTOPの高額バック率7割+ボーナスあり！❤️‍🔥🥰
+
+🐬女性店長在籍❣👩
+🍍皆様を全力でサポートいたします！☀️🥹
+
+🐟男性講習一切なし！🙅‍♀️
+
+🐟真面目に頑張る女の子は、とことん優遇される各種制度あり！🥹💗
+
+🐟広範囲無料でお送りします！🚗💨✨
+
+🐟クリーンな法人営業なので各種手続きがスムーズ！🏄💨✨
+
+🐟完全自由出勤なので、合間時間に働けます！🔆🎀
+
+🐟集客率が良いので短時間で稼げます！⛵️✨💰
+
+🐟完全個室待機！🧚🏻‍♀🏖
+🌴待機時間もゆったり自分の時間を過ごせます！🦭🍹
+
+🐟綺麗と評判の個人寮も完備💗お店がお金を負担します❣🍭
+🌴お部屋の中にお風呂やお手洗いございます✨🛀
+
+🐟もちろん罰金なんて一切ございません❣🙅‍♀️
+
+💁‍♀🫶ご質問等はお気軽にお問い合わせください❣🫶✉📱📞🙋‍♀️
+
+雑費は一律５％！
+働く女の子によっては雑費カットしちゃいます！✂💰💰🥺</textarea>
+                                
+                                
+                            </div>
+                            <span id="caution_main_setumei" class="cautionTextLine" style="display: inline;">あと全角2479文字(半角7438文字)</span><div class="infotext">(全角3000文字・半角9000文字)</div>
+                        </td>
+                    
+                                        
+                    </tr>
+                    
+                    
+                                        
+
+                    
+                    
+                                        
+                    <tr class="tr01 infoBasicWelcome">
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>画像横文言</th>
+                    <td class="td02">
+                        <div style="padding: 0px 10px 0px;clear:both;">
+                        
+                        
+                        <textarea name="pic_main_comment" id="MpPicMainComment" cols="100" rows="20" label="#caution_pic_main_comment" placeholder="ここに画像横文言を入力してください(900文字以内)" data-check="required  maxomitbr900" data-name="画像横文言">よろしくお願いいたします！
+まずはお問い合わせだけでも構いません！
+いつでもどこでもお待ちしております！</textarea>
+                        
+                        </div>
+                        <span id="caution_pic_main_comment" class="cautionTextLine"></span><div class="infotext">(900文字)</div>
+                    </td>
+                    </tr>
+                                        <tr class="tr01 infoBasicPoint">
+                    <th class="th01 tdTittleJob"><span class="span02">必須</span>電話番号1</th>
+                    <td class="td02">
+                        <select name="tel_type_1" data-check="required" data-name="電話番号1" label="#caution_tel_1">
+                        <option value="0" selected="">通常電話</option>
+                        <option value="1">フリーダイヤル</option>
+                        <option value="2">フリーコール</option>
+                        </select>
+        ...

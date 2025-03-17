@@ -28,10 +28,12 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
+import { useState } from "react";
 
 type JobFormData = z.infer<typeof jobSchema>;
 
@@ -44,6 +46,11 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // 文字数カウント用のstate
+  const [mainCatchLength, setMainCatchLength] = useState(0);
+  const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
+  const [imageDescriptionLength, setImageDescriptionLength] = useState(0);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -106,7 +113,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         {/* 店舗基本情報 */}
         <Card>
           <CardHeader>
-            <CardTitle>店舗基本情報</CardTitle>
+            <CardTitle className="text-lg font-bold">店舗基本情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -114,7 +121,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="businessName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>店舗名</FormLabel>
+                  <FormLabel className="font-medium">店名</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="店舗名を入力してください" />
                   </FormControl>
@@ -128,7 +135,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="serviceType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>業種</FormLabel>
+                  <FormLabel className="font-medium">業種（検索用）</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -147,38 +154,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>勤務地</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="勤務地を選択してください" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {prefectures.map((pref) => (
-                        <SelectItem key={pref} value={pref}>
-                          {pref}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </CardContent>
         </Card>
 
         {/* 求人情報 */}
         <Card>
           <CardHeader>
-            <CardTitle>求人情報</CardTitle>
+            <CardTitle className="text-lg font-bold">求人情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -186,13 +168,23 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="mainCatch"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>キャッチコピー</FormLabel>
+                  <FormLabel className="font-medium">
+                    <span className="text-red-500">必須</span> キャッチコピー
+                  </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="魅力的なキャッチコピーを入力してください" />
+                    <Textarea
+                      {...field}
+                      placeholder="ここにキャッチコピーを入力してください(300文字以内)"
+                      className="min-h-[100px]"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setMainCatchLength(e.target.value.length);
+                      }}
+                    />
                   </FormControl>
-                  <FormDescription>
-                    300文字以内で入力してください
-                  </FormDescription>
+                  <div className="text-sm text-muted-foreground">
+                    あと{300 - mainCatchLength}文字
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -203,14 +195,58 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="mainDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>仕事内容</FormLabel>
+                  <FormLabel className="font-medium">
+                    <span className="text-red-500">必須</span> 仕事内容
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="仕事内容の詳細を入力してください"
+                      placeholder="ここに仕事内容を入力してください(全角3000文字・半角9000文字)"
                       className="min-h-[200px]"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setMainDescriptionLength(e.target.value.length);
+                      }}
                     />
                   </FormControl>
+                  <div className="text-sm text-muted-foreground">
+                    あと{9000 - mainDescriptionLength}文字
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 画像設定 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-bold">画像設定</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="imageDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">
+                    <span className="text-red-500">必須</span> 画像横の説明文
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="ここに画像横の説明文を入力してください(900文字以内)"
+                      className="min-h-[150px]"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setImageDescriptionLength(e.target.value.length);
+                      }}
+                    />
+                  </FormControl>
+                  <div className="text-sm text-muted-foreground">
+                    あと{900 - imageDescriptionLength}文字
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -221,7 +257,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         {/* 待遇情報 */}
         <Card>
           <CardHeader>
-            <CardTitle>待遇情報</CardTitle>
+            <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
           </CardHeader>
           <CardContent>
             <FormField
@@ -229,6 +265,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="selectedBenefits"
               render={() => (
                 <FormItem>
+                  <FormLabel className="font-medium mb-4">
+                    <span className="text-red-500">必須</span> 業態（待遇）
+                  </FormLabel>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {benefitTypes.map((benefit) => (
                       <FormField
@@ -274,7 +313,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         {/* 連絡先情報 */}
         <Card>
           <CardHeader>
-            <CardTitle>連絡先情報</CardTitle>
+            <CardTitle className="text-lg font-bold">連絡先情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -282,7 +321,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               name="phoneNumber1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>電話番号1（必須）</FormLabel>
+                  <FormLabel className="font-medium">
+                    <span className="text-red-500">必須</span> 電話番号1
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} type="tel" placeholder="例：03-1234-5678" />
                   </FormControl>
@@ -291,7 +332,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               )}
             />
 
-            {/* 追加の電話番号フィールド（オプション） */}
             {['phoneNumber2', 'phoneNumber3', 'phoneNumber4'].map((name, index) => (
               <FormField
                 key={name}
@@ -299,7 +339,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 name={name as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>電話番号{index + 2}（任意）</FormLabel>
+                    <FormLabel className="font-medium">電話番号{index + 2}（任意）</FormLabel>
                     <FormControl>
                       <Input {...field} type="tel" placeholder="例：03-1234-5678" />
                     </FormControl>
