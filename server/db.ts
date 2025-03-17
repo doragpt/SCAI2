@@ -12,6 +12,22 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// プールの設定をエクスポート
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// DrizzleORMの設定
 export const db = drizzle(pool, { schema });
+
+// connect-pg-simpleで使用するための設定
+export const config = {
+  pool,
+  schema: 'public',
+  table: 'session'
+};
+
 export { sql };

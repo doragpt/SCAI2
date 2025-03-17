@@ -1,11 +1,11 @@
 import { users, talentProfiles, type User, type InsertUser, type TalentProfileData } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
 import { log } from "./utils/logger";
 
-const MemoryStore = createMemoryStore(session);
+const PgSession = connectPgSimple(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -21,8 +21,11 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24時間でクリア
+    // PostgreSQLセッションストアの設定
+    this.sessionStore = new PgSession({
+      pool,
+      tableName: 'session',
+      createTableIfMissing: true
     });
   }
 
@@ -230,12 +233,10 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // プロフィールデータを取得
   async getTalentProfile(userId: number): Promise<TalentProfileData | null> {
     try {
       log('info', 'タレントプロフィール取得開始', { userId });
 
-      // プロフィールテーブルからデータを取得
       const [result] = await db
         .select()
         .from(talentProfiles)
@@ -246,7 +247,6 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
 
-      // 明示的に型を指定してデータを変換
       const profileData: TalentProfileData = {
         userId: result.userId || '',
         lastName: result.lastName || '',
@@ -273,7 +273,6 @@ export class DatabaseStorage implements IStorage {
           types: [],
           others: []
         },
-        // 顔出しの値を適切に変換
         faceVisibility: typeof result.faceVisibility === 'string'
           ? result.faceVisibility
           : result.faceVisibility === true
@@ -309,7 +308,7 @@ export class DatabaseStorage implements IStorage {
           firstNameKana: profileData.firstNameKana,
           location: profileData.location,
           nearestStation: profileData.nearestStation,
-          faceVisibility: profileData.faceVisibility // 追加
+          faceVisibility: profileData.faceVisibility
         }
       });
 
@@ -341,7 +340,6 @@ export class DatabaseStorage implements IStorage {
         }
       });
 
-      // プロフィールの存在確認
       const [existingProfile] = await db
         .select()
         .from(talentProfiles)
@@ -355,14 +353,12 @@ export class DatabaseStorage implements IStorage {
       };
 
       if (existingProfile) {
-        // 更新
         [result] = await db
           .update(talentProfiles)
           .set(profileData)
           .where(eq(talentProfiles.userId, userId))
           .returning();
       } else {
-        // 新規作成
         [result] = await db
           .insert(talentProfiles)
           .values(profileData)

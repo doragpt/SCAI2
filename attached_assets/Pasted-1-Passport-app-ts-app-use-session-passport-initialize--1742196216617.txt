@@ -1,0 +1,100 @@
+1. Passport の初期化とミドルウェアの重複について
+現状の問題:
+
+app.ts で既に app.use(session(...)) と passport.initialize() を呼び出している一方、setupAuth 関数内でも同様の初期化処理が実行されています。
+この重複により、認証ミドルウェアの競合や予期せぬ挙動（たとえばセッションの二重保存など）が発生する可能性があります。
+修正案:
+
+セッションとPassportの初期化処理は一箇所に統一してください。
+具体的には、setupAuth 内の app.use(session(...))、passport.initialize()、および passport.session() の呼び出しを削除し、app.ts でのみこれらを実行するように統一してください。
+2. セッション管理の改善（connect-pg-simple の導入）
+現状の問題:
+
+現在、express-session の MemoryStore が使用されており、サーバー再起動時にセッション情報が失われる恐れがあります。
+本番環境で複数インスタンスを運用する場合、セッションが共有されず認証状態が維持されない可能性もあります。
+修正案:
+
+connect-pg-simple を正しく設定し、セッション情報をPostgreSQLに永続化するように変更してください。
+
+例として、以下の実装を参考にしてください:
+
+js
+コピーする
+const PgSession = require('connect-pg-simple')(session);
+app.use(session({
+  store: new PgSession({ pool: dbPool }), // PostgreSQLの接続プールを指定
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+  }
+}));
+3. クライアント側の loginMutation 呼び出し方法の修正
+現状の問題:
+
+現在、login is not a function というエラーが発生しています。
+Authコンテキストでは useMutation の戻り値（loginMutationオブジェクト）を直接扱っており、直接 login() として呼び出せない状態です。
+修正案:
+
+クライアント側では、直接 login() を呼び出すのではなく、loginMutation.mutate() または loginMutation.mutateAsync() を利用するようにしてください。
+
+もし、コンポーネント側から login() として扱いたい場合は、Authコンテキストでラッパー関数を定義し、以下のように実装することを検討してください:
+
+js
+コピーする
+// AuthContext での例
+const loginMutation = useLoginMutation();
+const login = (credentials) => loginMutation.mutateAsync(credentials);
+
+// コンポーネント側では
+const { login } = useAuth();
+// これで login(credentials) として呼び出せる
+4. APIリクエスト時の credentials オプションの確認
+現状の問題:
+
+APIリクエスト送信時に、Fetch APIのcredentialsオプションが正しく設定されていない場合、クッキー（セッション情報）が送受信されず認証が失敗する可能性があります。
+修正案:
+
+apiRequest関数内でFetchを利用する際、必ずcredentials: 'include'を設定してください。
+
+例:
+
+js
+コピーする
+fetch('http://<server>/api/login', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: '<メールアドレス>', password: '<パスワード>' })
+});
+5. API レスポンスの整合性とエラーハンドリング
+現状の問題:
+
+認証APIは原則としてJSONレスポンスを返す実装になっていますが、未定義のAPIパスにアクセスした場合にHTMLが返される可能性があるため、クライアント側で混乱が生じる恐れがあります。
+修正案:
+
+未定義のAPIパス（例: /api/*）に対しては、JSON形式のエラーレスポンス（例: { error: "Not Found" }）を返すミドルウェアを追加してください。
+グローバルエラーハンドラでエラーレスポンスのContent-Typeが必ずapplication/jsonとなるよう設定し、認証APIからHTMLレスポンスが返らないようにしてください。
+6. ユーザーの役割（role）に基づく認証フローの検討
+現状の確認:
+
+現在、メールアドレスとパスワードが一致すれば talent（女性ユーザー）でも store（店舗ユーザー）でも認証が成功しています。
+UI上でログイン画面が分かれている意図を踏まえると、役割に応じたログイン制御を行う必要があるかもしれません。
+提案:
+
+今後、ユーザーの役割に応じた認証処理を検討する場合、サーバー側で役割が一致しない場合はエラーを返す、もしくはログイン後のリダイレクト処理をフロントエンド側で分岐させるなど、より厳格な制御方法を導入してください。
+まとめ
+
+Passportの初期化の統一: app.ts でのみ初期化処理を行い、重複処理を排除する。
+セッション管理の改善: connect-pg-simple を導入し、セッションをPostgreSQLに永続化する。
+loginMutationの呼び出し修正: クライアント側で .mutate() または .mutateAsync() を正しく呼び出すか、ラッパー関数を用意する。
+APIリクエストの設定: Fetch API に credentials: 'include' を必ず設定する。
+APIレスポンスの整合性: 未定義のエンドポイントではJSONでエラーを返すようにする。
+役割に基づく認証フローの検討: 必要に応じてユーザーの役割に合わせた認証制御を実装する。
+以上の点について、順次修正対応およびコードレビューを実施いただければと思います。何か不明点や追加の相談があればお知らせください。
+
+よろしくお願いいたします。

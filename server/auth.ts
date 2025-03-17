@@ -8,6 +8,12 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
 
+declare global {
+  namespace Express {
+    interface User extends SelectUser {}
+  }
+}
+
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string): Promise<string> {
@@ -43,24 +49,26 @@ function sanitizeUser(user: SelectUser) {
 }
 
 export function setupAuth(app: Express) {
+  // セッション設定
   const sessionSettings: session.SessionOptions = {
+    store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000 // 24時間
     }
   };
 
-  app.set("trust proxy", 1);
+  // セッションミドルウェアの初期化
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Passportの設定
   passport.use(
     new LocalStrategy(
       {
@@ -150,7 +158,7 @@ export function setupAuth(app: Express) {
   });
 
   // ログアウトAPI
-  app.post("/api/logout", (req, res, next) => {
+  app.post("/api/logout", (req, res) => {
     try {
       if (req.user) {
         log('info', 'ログアウトリクエスト受信', {
@@ -160,38 +168,35 @@ export function setupAuth(app: Express) {
       req.logout((err) => {
         if (err) {
           log('error', 'ログアウトエラー', { error: err });
-          return next(err);
+          return res.status(500).json({ message: "ログアウト処理中にエラーが発生しました" });
         }
         req.session.destroy((err) => {
           if (err) {
             log('error', 'セッション破棄エラー', { error: err });
-            return res.status(500).json({
-              message: "セッションの破棄に失敗しました"
-            });
+            return res.status(500).json({ message: "セッションの破棄に失敗しました" });
           }
           res.clearCookie('connect.sid');
-          return res.status(200).json({
-            message: "ログアウトしました"
-          });
+          return res.status(200).json({ message: "ログアウトしました" });
         });
       });
     } catch (error) {
       log('error', 'ログアウトエラー', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      return res.status(500).json({
-        message: "ログアウト処理中にエラーが発生しました"
-      });
+      return res.status(500).json({ message: "ログアウト処理中にエラーが発生しました" });
     }
   });
 
-  // セッションチェックAPI
+  // 認証チェックAPI
   app.get("/api/check", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "認証されていません" });
     }
     res.json(sanitizeUser(req.user));
   });
+
+  app.set("trust proxy", 1);
+  return app;
 }
 
 export { hashPassword, comparePasswords };

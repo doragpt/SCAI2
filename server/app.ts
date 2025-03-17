@@ -1,6 +1,4 @@
 import express from 'express';
-import session from 'express-session';
-import MemoryStore from 'memorystore';
 import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
@@ -9,7 +7,6 @@ import { setupAuth } from './auth';
 import talentRouter from './routes/talent';
 
 const app = express();
-const MemoryStoreSession = MemoryStore(session);
 
 // CORSの設定
 app.use(cors({
@@ -20,29 +17,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// セッションの設定
-const sessionConfig = {
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000 // 24時間でクリア
-  }),
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 86400000, // 24時間
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
-  }
-};
-
-app.use(session(sessionConfig));
-
 // リクエストボディのパース設定
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 認証セットアップ
+// 認証セットアップ（セッション設定含む）
 setupAuth(app);
 
 // APIリクエストのログ記録とヘッダー設定

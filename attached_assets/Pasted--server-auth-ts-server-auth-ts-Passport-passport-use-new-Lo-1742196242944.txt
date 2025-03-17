@@ -1,0 +1,124 @@
+パスポート設定とエラーハンドリング (server/auth.ts)
+server/auth.tsではPassportのローカル認証戦略が正しく設定されています。passport.use(new LocalStrategy({ usernameField: 'email', ... }, ...))により、デフォルトのusernameではなくemailを認証に使用しています​
+GITHUB.COM
+。また、認証処理ではカスタムコールバックを使い、ユーザーが見つからない場合はHTTP 401でJSONエラーメッセージを返すなど適切にハンドリングしています​
+GITHUB.COM
+​
+GITHUB.COM
+。成功時にはreq.loginでセッションにユーザーを保存し、パスワード除去済みのユーザーデータをJSONで返しています​
+GITHUB.COM
+​
+GITHUB.COM
+。 問題点: パスポートの初期化とセッションミドルウェアの設定が二重に行われている点です。app.ts内で既にapp.use(session(...))とsetupAuth(app)を呼んでおり​
+GITHUB.COM
+​
+GITHUB.COM
+、setupAuth関数内でも再度app.use(session(...))とpassport.initialize()を実行しています​
+GITHUB.COM
+​
+GITHUB.COM
+。この二重登録は不要で、設定ミスにつながる可能性があります。修正案: セッションとPassportの初期化は一箇所で行い、setupAuth内の重複するapp.use(session(...))呼び出しを削除します。また、エラー時はnext(err)で渡していますが、グローバルエラーハンドラ(errorHandler)がJSONレスポンスを返すよう設定されているため、スタックトレースHTMLではなくJSONが返る状態です​
+GITHUB.COM
+。この点は適切ですが、存在しないAPIパスへのリクエストに対しては現在404を返す処理がないため、場合によってはフロントエンド開発サーバ（Vite）からHTMLが返る恐れがあります。修正案: 未定義の/api/*ルートに対してJSONで404を返すミドルウェアを追加し、認証APIが期待外のHTMLを返さないようにします。
+express-sessionとconnect-pg-simpleのセッション設定
+セッション管理はexpress-sessionで実装されていますが、現状ではメモリストア (memorystore) を使用しています​
+GITHUB.COM
+。connect-pg-simpleはパッケージ依存関係に含まれているものの​
+GITHUB.COM
+、実際のコードではPostgreSQLストアが利用されていません。問題点: メモリストアを使うと、サーバ再起動時にセッション情報が失われ、また本番環境で複数インスタンスを動かす場合にセッションが共有されない問題があります。修正案: connect-pg-simpleを正しく設定し、セッションをPostgreSQLに保存するようにします。例えば:
+js
+コピーする
+const PgSession = require('connect-pg-simple')(session);
+app.use(session({
+    store: new PgSession({ pool: dbPool }),  // PostgreSQLの接続プールを指定
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: (process.env.NODE_ENV==='production'), ... }
+}));
+こうすることでセッションがデータベースに永続化され、再起動後もログイン状態が保持されます。現在のコードでもMemoryStoreを24時間でクリアするよう設定していますが​
+GITHUB.COM
+​
+GITHUB.COM
+、本番運用ではPGストアを使うのが望ましいでしょう。 また、cookieオプションも適切に設定されています。開発環境ではsecure: falseかつsameSite: 'lax'、本番ではsecure: trueかつsameSite: 'strict'としており問題ありません​
+GITHUB.COM
+。
+クライアント側のloginMutation実装とAPIリクエスト
+フロントエンドではReact Query（@tanstack/react-query）のuseMutationを使ってログインAPIを呼び出しています。useAuthフック内でuseLoginMutation()を定義し、apiRequest("POST", "/api/login", credentials)によってメールアドレスとパスワードを/api/loginに送信しています​
+GITHUB.COM
+​
+GITHUB.COM
+。この実装自体は正しく、バックエンドのエンドポイントにPOSTリクエストを送るようになっています。 確認ポイント: リクエスト送信時に認証情報付きでクッキーが送受信されているかです。サーバ側でcors({ origin: true, credentials: true })となっているため、クライアント側でもFetch APIでcredentials: 'include'を指定する必要があります​
+GITHUB.COM
+​
+GITHUB.COM
+。現在のapiRequest内部実装が不明ですが、適切に設定されていると推測されます。念のためFetchの例を挙げると以下のようになります​
+COMMUNITY.UIBAKERY.IO
+:
+js
+コピーする
+fetch('http://<server>/api/login', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: '<入力されたメール>', password: '<入力されたPW>' })
+});
+このようにcredentials: 'include'を付与し、JSONボディを送信することで、サーバとの間でセッションクッキーがやり取りされます​
+COMMUNITY.UIBAKERY.IO
+。修正案: apiRequest関数内で上記のようにcredentials: 'include'と適切なヘッダー設定を行い、リクエストが正しく送信されているか確認します。これにより、ログイン成功時にブラウザにセッションクッキー(connect.sid)が保存され、後続のAPI呼び出しで認証情報が付与されます。
+「login is not a function」エラーの原因
+このエラーはクライアント側でloginメソッドを関数として呼び出そうとした際に発生するものです。コードを確認したところ、useAuth()で提供しているのはloginMutationオブジェクトであり、直接loginという関数を提供していません​
+GITHUB.COM
+（AuthContextの値としてloginMutationを渡している​
+GITHUB.COM
+）。そのため、もしコンポーネント側でconst { login } = useAuth();のように誤って取り出し、login(...)を呼ぶとloginが存在しないためエラーになります。実際、Stack OverflowでもuseMutationの戻り値を直接呼び出して「… is not a function」エラーが起きることが報告されています​
+STACKOVERFLOW.COM
+。 現在の実装では、AuthコンテキストからloginMutationオブジェクトを取得し、そのメソッドを呼ぶよう修正されています。例えば店舗ログイン画面ではconst { loginMutation } = useAuth()の上で、フォーム送信時にloginMutation.mutateAsync(data)を呼び出しています​
+GITHUB.COM
+。また、一般ユーザー（女性側）のログインもloginMutation.mutate(data)で実行しています​
+GITHUB.COM
+。このように**.mutate()または.mutateAsync()メソッド経由**で呼び出すのが正しい使い方です。 原因: おそらく当初useMutationの使い方を誤解し、戻り値そのものを関数のように扱っていたか、あるいはAuthコンテキストにloginMutationではなくlogin関数を直接渡す実装とコンポーネント側実装に齟齬があった可能性があります。修正案: コンテキストにそのままloginMutationオブジェクトを渡すのではなく、必要ならラッパー関数を提供することも検討できます。例えばlogin: (email, pass) => loginMutation.mutateAsync({email, pass})のようにコンテキストに関数を用意すれば、コンポーネント側ではlogin()を直接呼び出せます。いずれにせよ、現行コードではloginMutation.mutateを使う形に統一されているため、このエラーは解消できるはずです。
+認証時のサーバーレスポンス (HTMLが返っていないか)
+調査したところ、サーバーの認証APIは常にJSONレスポンスを返すよう実装されています。Passport認証の結果は成功・失敗ともres.jsonまたはres.status(...).jsonで返しており​
+GITHUB.COM
+​
+GITHUB.COM
+、エラー時もグローバルエラーハンドラでJSONを返す設計です​
+GITHUB.COM
+。さらにapp.tsで全/api/*リクエストに対しContent-Type: application/jsonヘッダをセットしているため​
+GITHUB.COM
+、ブラウザがHTMLと解釈することはありません。実際、errorHandlerミドルウェアでは内部エラー時にエラーメッセージをJSONで返すようになっており​
+GITHUB.COM
+、認証失敗時も401ステータス＋メッセージ(JSON)が返されます​
+GITHUB.COM
+。 検証: 仮に認証情報が間違っている場合、サーバーは{ message: "認証に失敗しました" }というJSONを401ステータスで返すようになっています​
+GITHUB.COM
+。このときクライアント側のloginMutation.onErrorハンドラでエラーメッセージを表示する実装になっており、適切に機能しています​
+GITHUB.COM
+。 従って「サーバーからHTMLが返されるのではないか」という懸念は杞憂であり、現在の実装では認証APIがHTMLを返すケースは基本的にありません。先述の通り、未定義のAPIパスにアクセスした場合のみ開発サーバーのHTMLが返る可能性がありますが、/api/loginや/api/logoutといった既知のエンドポイントでは常にJSON応答となります。
+データベース連携の確認（ユーザー情報の取得など）
+バックエンドはDrizzle ORMを用いてPostgreSQLと連携しています。storage.getUserByEmail(email)でユーザーテーブルからメールアドレスに該当するユーザーを取得し​
+GITHUB.COM
+、存在しなければfalseを返してPassportに「メールアドレスまたはパスワードが間違っています」というメッセージを渡しています​
+GITHUB.COM
+​
+GITHUB.COM
+。パスワード検証にはcomparePasswordsでハッシュ照合を行い、これも非同期で正しく実装されています​
+GITHUB.COM
+。ユーザーが見つかりパスワードも一致すれば、そのユーザーオブジェクトを返しています​
+GITHUB.COM
+​
+GITHUB.COM
+。 問題点: 特別大きな不備は見当たりませんが、いくつか確認すべき点があります。まず、ユーザーの役割（role）による扱いです。現状、メールアドレスとパスワードさえ合致すればtalent（女性ユーザー）でもstore（店舗ユーザー）でもログイン成功としています。コード上はuser.roleをログに記録しているだけで、認証自体に役割チェックはありません​
+GITHUB.COM
+。したがって、たとえば店舗ユーザーが誤って女性側のログイン画面からログインしてもサーバー的には成功し、クライアント側でroleを見てダッシュボードに飛ばす挙動になります​
+GITHUB.COM
+。これは仕様上許容するのであれば問題ありませんが、UI上でログイン画面を分けている意図を踏まえるとサーバー側でもエンドポイントを分け、役割不一致の場合はエラーにする選択肢もあります。 次に、データベースのハッシュパスワードについては、ユーザー登録時にhashPassword関数でハッシュ化しています（コード上createUserで利用していると推測）ので、ログイン時に平文パスワードと比較する処理は適切です。万一ログイン時に常に失敗する場合は、登録時と比較時でハッシュアルゴリズムやソルトが一致しているか確認するとよいでしょう（現状bcryptを使用し問題ないと思われます）。 最後に、セッションに保存するユーザーデータはserializeUserでuser.idのみを保存し​
+GITHUB.COM
+、deserializeUserでIDからユーザー情報を再取得しています​
+GITHUB.COM
+​
+GITHUB.COM
+。この流れも正しく、セッションストアからIDを取り出して都度最新のユーザーデータを参照する設計です。 提案: 現状でも認証とDB連携はおおむね良好ですが、将来的に**ユーザー情報を取得するAPI (GET /api/user)**で必要な項目だけ返すなどの調整が考えられます。sanitizeUser関数でパスワードを除外しているのはその一環であり安全です​
+GITHUB.COM
+。さらに必要であれば、ユーザーの機密情報（例えばメールアドレス等）も不要なら除外し、クライアントには本当に必要な情報（表示名やID、役割など）だけ渡すようにするとセキュリティと転送効率が向上します。 以上の調査から、主な認証エラーの原因は**クライアント側のミス（login関数呼び出しの誤り）**でした。バックエンド側ではセッションストアの設定漏れ（connect-pg-simple未使用）など改善点はあるものの、大きなバグは確認されませんでした。修正まとめ: 上記の提案に従い、クライアントではloginMutationの正しい呼び出しを徹底し（必要ならコンテキストにラッパー関数を提供）、バックエンドではセッションストアをPostgreSQLに変更、不要な二重ミドルウェアを整理することで問題は解決する見込みです。これらを適用すれば、女性ログイン・店舗ログイン双方で正常に認証が行われるようになるでしょう。
