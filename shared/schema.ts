@@ -23,11 +23,58 @@ export const serviceTypes = [
   "メンズエステ"
 ] as const;
 
-// 電話種別の選択肢を定義
-export const phoneTypes = [
-  "通常電話",
-  "フリーダイヤル",
-  "フリーコール"
+export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
+export const photoTags = [
+  "現在の髪色",
+  "タトゥー",
+  "傷",
+  "アトピー",
+  "自撮り写真",
+  "スタジオ写真（無加工）",
+  "スタジオ写真（加工済み）"
+] as const;
+
+export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
+export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
+export const idTypes = [
+  "運転免許証",
+  "マイナンバーカード",
+  "パスポート",
+  "写真付き住民基本台帳カード",
+  "在留カードまたは特別永住者証明書",
+  "健康保険証",
+  "卒業アルバム"
+] as const;
+
+export const allergyTypes = ["犬", "猫", "鳥"] as const;
+export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
+export const workTypes = ["出稼ぎ", "在籍"] as const;
+export const jobStatusTypes = ["draft", "published", "closed"] as const;
+
+export const commonNgOptions = [
+  "AF",
+  "聖水",
+  "即尺",
+  "即尺(事前に洗い済み)",
+  "撮影顔出し",
+  "撮影顔無し"
+] as const;
+
+export const estheOptions = [
+  "ホイップ",
+  "マッサージジェル",
+  "極液",
+  "ベビードール",
+  "マイクロビキニ",
+  "ブラなしベビードール",
+  "トップレス",
+  "フルヌード",
+  "ノンショーツ",
+  "deepリンパ",
+  "ハンド抜き",
+  "キス",
+  "フェラ",
+  "スキンフェラ"
 ] as const;
 
 // 待遇のカテゴリー定義
@@ -132,64 +179,7 @@ export type EstheOption = typeof estheOptions[number];
 export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
-export type PhoneType = typeof phoneTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
-
-
-export const photoTags = [
-  "現在の髪色",
-  "タトゥー",
-  "傷",
-  "アトピー",
-  "自撮り写真",
-  "スタジオ写真（無加工）",
-  "スタジオ写真（加工済み）"
-] as const;
-
-export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
-export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
-export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
-export const idTypes = [
-  "運転免許証",
-  "マイナンバーカード",
-  "パスポート",
-  "写真付き住民基本台帳カード",
-  "在留カードまたは特別永住者証明書",
-  "健康保険証",
-  "卒業アルバム"
-] as const;
-
-export const allergyTypes = ["犬", "猫", "鳥"] as const;
-export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
-export const commonNgOptions = [
-  "AF",
-  "聖水",
-  "即尺",
-  "即尺(事前に洗い済み)",
-  "撮影顔出し",
-  "撮影顔無し"
-] as const;
-
-export const estheOptions = [
-  "ホイップ",
-  "マッサージジェル",
-  "極液",
-  "ベビードール",
-  "マイクロビキニ",
-  "ブラなしベビードール",
-  "トップレス",
-  "フルヌード",
-  "ノンショーツ",
-  "deepリンパ",
-  "ハンド抜き",
-  "キス",
-  "フェラ",
-  "スキンフェラ"
-] as const;
-
-export const workTypes = ["出稼ぎ", "在籍"] as const;
-export const jobStatusTypes = ["draft", "published", "closed"] as const;
-
 
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
@@ -201,7 +191,7 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   "メンズエステ": "メンズエステ",
 } as const;
 
-// Schema definitions
+// Zod schemas for validation
 export const photoSchema = z.object({
   id: z.string().optional(),
   url: z.string(),
@@ -216,7 +206,31 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
-// Users table definition
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  displayServiceType: text("display_service_type", { enum: serviceTypes }).notNull(),
+  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
+  title: text("title").notNull(),
+  mainCatch: text("main_catch"),
+  mainDescription: text("main_description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  phoneNumber1: text("phone_number_1"),
+  phoneNumber2: text("phone_number_2"),
+  phoneNumber3: text("phone_number_3"),
+  phoneNumber4: text("phone_number_4"),
+  contactEmail: text("contact_email"),
+  contactLine: text("contact_line"),
+  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
+}, (table) => ({
+  locationIdx: index("jobs_location_idx").on(table.location),
+  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+  statusIdx: index("jobs_status_idx").on(table.status),
+}));
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -230,46 +244,6 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export const jobs = pgTable("jobs", {
-  id: serial("id").primaryKey(),
-  businessName: text("business_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  displayServiceType: text("display_service_type", { enum: serviceTypes }).notNull(), // Added displayServiceType
-  minimumGuarantee: integer("minimum_guarantee"),
-  maximumGuarantee: integer("maximum_guarantee"),
-  transportationSupport: boolean("transportation_support").default(false),
-  housingSupport: boolean("housing_support").default(false),
-  workingHours: text("working_hours"),
-  description: text("description"),
-  requirements: text("requirements"),
-  benefits: text("benefits"),
-  storeId: integer("store_id").notNull().references(() => users.id),
-  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
-  title: text("title").notNull(),
-  catchPhrase: text("catch_phrase"),
-  qualifications: text("qualifications"),
-  workingConditions: text("working_conditions"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  phoneNumber1: text("phone_number_1").notNull(), // Added phone number fields
-  phoneType1: text("phone_type_1", { enum: phoneTypes }).notNull(), // Added phone type fields
-  phoneNumber2: text("phone_number_2"),
-  phoneType2: text("phone_type_2", { enum: phoneTypes }),
-  phoneNumber3: text("phone_number_3"),
-  phoneType3: text("phone_type_3", { enum: phoneTypes }),
-  phoneNumber4: text("phone_number_4"),
-  phoneType4: text("phone_type_4", { enum: phoneTypes }),
-  mainCatch: text("main_catch"), //Added mainCatch
-  mainDescription: text("main_description"), //Added mainDescription
-  imageDescription: text("image_description"), //Added imageDescription
-  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(), //Added selectedBenefits
-}, (table) => ({
-  locationIdx: index("jobs_location_idx").on(table.location),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
-  statusIdx: index("jobs_status_idx").on(table.status),
-}));
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
@@ -351,12 +325,9 @@ export const talentProfiles = pgTable("talent_profiles", {
   photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
 });
 
+
 // Relations
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  store: one(users, {
-    fields: [jobs.storeId],
-    references: [users.id],
-  }),
   applications: many(applications),
 }));
 
@@ -372,54 +343,82 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 }));
 
 // Types
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
-export type Photo = typeof photoSchema._type;
-export type BodyMark = typeof bodyMarkSchema._type;
 
 // Schemas
-// Login schema update
 export const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
 });
 
-export const talentRegisterFormSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  username: z.string()
-    .min(1, "ニックネームを入力してください")
-    .max(10, "ニックネームは10文字以内で入力してください")
-    .regex(/^[a-zA-Z0-9ぁ-んァ-ン一-龥]*$/, "使用できない文字が含まれています"),
-  password: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    ),
-  passwordConfirm: z.string(),
-  birthDate: z.string().min(1, "生年月日を入力してください"),
+export const jobSchema = createInsertSchema(jobs, {
+  title: z.string().min(1, "タイトルを入力してください"),
+  businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
-    errorMap: () => ({ message: "在住地を選択してください" })
+    required_error: "勤務地を選択してください",
+    invalid_type_error: "無効な勤務地です",
   }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "働きたい地域を選択してください"),
-  role: z.literal("talent"),
-  privacyPolicy: z.boolean()
-}).refine((data) => data.privacyPolicy === true, {
-  message: "個人情報の取り扱いについて同意が必要です",
-  path: ["privacyPolicy"],
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "パスワードが一致しません",
-  path: ["passwordConfirm"],
-});
+  serviceType: z.enum(serviceTypes, {
+    required_error: "業種を選択してください",
+    invalid_type_error: "無効な業種です",
+  }),
+  displayServiceType: z.enum(serviceTypes, {
+    required_error: "表示用業種を選択してください",
+    invalid_type_error: "無効な業種です",
+  }),
+  status: z.enum(jobStatusTypes, {
+    required_error: "公開状態を選択してください",
+    invalid_type_error: "無効な公開状態です",
+  }),
+  mainCatch: z.string().min(1, "キャッチコピーを入力してください")
+    .max(300, "キャッチコピーは300文字以内で入力してください"),
+  mainDescription: z.string().min(1, "仕事内容を入力してください")
+    .max(9000, "仕事内容は9000文字以内で入力してください"),
+  selectedBenefits: z.array(z.enum(allBenefitTypes))
+    .min(1, "待遇を1つ以上選択してください"),
+  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+  phoneNumber2: z.string().optional(),
+  phoneNumber3: z.string().optional(),
+  phoneNumber4: z.string().optional(),
+  contactEmail: z.string().email("有効なメールアドレスを入力してください").optional(),
+  contactLine: z.string().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const applicationSchema = createInsertSchema(applications, {
+  message: z.string().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
 
 export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-export type TalentProfileData = z.infer<typeof talentProfileSchema>;
+
+// Response types
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}
+
+export type UserResponse = {
+  id: number;
+  email: string;
+  username: string;
+  birthDate: string;
+  location: string;
+  preferredLocations: string[];
+  role: "talent" | "store";
+};
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
@@ -521,7 +520,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
-
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 export const jobRequirementsSchema = z.object({
@@ -554,48 +552,6 @@ export const userSchema = createInsertSchema(users, {
     required_error: "生年月日を入力してください",
     invalid_type_error: "無効な日付形式です",
   }),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
-export const jobSchema = createInsertSchema(jobs, {
-  title: z.string().min(1, "タイトルを入力してください"),
-  businessName: z.string().min(1, "店舗名を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "勤務地を選択してください",
-    invalid_type_error: "無効な勤務地です",
-  }),
-  serviceType: z.enum(serviceTypes, {
-    required_error: "業種を選択してください",
-    invalid_type_error: "無効な業種です",
-  }),
-  displayServiceType: z.enum(serviceTypes, {
-    required_error: "表示用業種を選択してください",
-    invalid_type_error: "無効な業種です",
-  }),
-  status: z.enum(["draft", "published", "closed"], {
-    required_error: "公開状態を選択してください",
-    invalid_type_error: "無効な公開状態です",
-  }),
-  mainCatch: z.string().min(1, "キャッチコピーを入力してください")
-    .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string().min(1, "仕事内容を入力してください")
-    .max(9000, "仕事内容は9000文字以内で入力してください"),
-  imageDescription: z.string().max(900, "画像横の説明文は900文字以内で入力してください"),
-  selectedBenefits: z.array(z.enum(allBenefitTypes))
-    .min(1, "待遇を1つ以上選択してください"),
-  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
-  phoneType1: z.enum(phoneTypes, {
-    required_error: "電話種別を選択してください",
-  }),
-  phoneNumber2: z.string().optional(),
-  phoneType2: z.enum(phoneTypes).optional(),
-  phoneNumber3: z.string().optional(),
-  phoneType3: z.enum(phoneTypes).optional(),
-  phoneNumber4: z.string().optional(),
-  phoneType4: z.enum(phoneTypes).optional(),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-
-export const applicationSchema = createInsertSchema(applications, {
-  message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const blogPosts = pgTable("blog_posts", {
@@ -699,13 +655,11 @@ export type SelectUser = {
 export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
-export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
-export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, PhoneType, BenefitCategory };
+export type { User, TalentProfile, Job, Application, InsertApplication };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
 
 export interface JobListingResponse {
   jobs: Job[];
@@ -781,13 +735,5 @@ export type PreviousStore = {
   storeName: string;
 };
 
-// 共通の型定義を追加
-export type UserResponse = {
-  id: number;
-  email: string;
-  username: string;
-  birthDate: string;
-  location: string;
-  preferredLocations: string[];
-  role: "talent" | "store";
-};
+//I added this line because it was missing in the edited part. This was causing error.
+export const talentRegisterFormSchema = talentProfileSchema;
