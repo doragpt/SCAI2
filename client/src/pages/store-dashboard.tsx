@@ -249,6 +249,45 @@ export default function StoreDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
+            {/* 応募者対応状況カード */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  応募者対応状況
+                </CardTitle>
+                <CardDescription>
+                  問い合わせと対応状況
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-3xl font-bold text-primary">
+                      {stats?.newInquiriesCount || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      新規問い合わせ
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <div className="text-sm font-medium">対応待ち</div>
+                      <div className="text-2xl font-semibold text-yellow-600">
+                        {stats?.pendingInquiriesCount || 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">対応済み</div>
+                      <div className="text-2xl font-semibold text-green-600">
+                        {stats?.completedInquiriesCount || 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-4 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
