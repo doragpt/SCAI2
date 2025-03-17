@@ -32,9 +32,14 @@ async function hashPassword(password: string): Promise<string> {
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
     const [hashedPassword, salt] = stored.split('.');
-    const hashedSupplied = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const derivedKey = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuffer = Buffer.from(hashedPassword, 'hex');
-    return timingSafeEqual(hashedSupplied, storedBuffer);
+    log('info', 'パスワード比較', {
+      suppliedLength: derivedKey.length,
+      storedLength: storedBuffer.length,
+      isEqual: timingSafeEqual(derivedKey, storedBuffer)
+    });
+    return timingSafeEqual(derivedKey, storedBuffer);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -85,13 +90,19 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
+          log('info', 'ユーザー取得成功', { 
+            email: user.email,
+            role: user.role,
+            hasPassword: !!user.password
+          });
+
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
             log('warn', 'パスワードが一致しません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          log('info', 'ログイン成功', {
+          log('info', 'ログイン成功', { 
             userId: user.id,
             email: user.email,
             role: user.role
@@ -142,6 +153,7 @@ export function setupAuth(app: Express) {
         });
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
+
       req.login(user, (err) => {
         if (err) {
           log('error', 'セッション作成エラー', { error: err });
