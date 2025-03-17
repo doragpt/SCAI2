@@ -73,12 +73,6 @@ export default function ManagerLogin() {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
-
-      toast({
-        variant: "destructive",
-        title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "ログインに失敗しました",
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +97,7 @@ export default function ManagerLogin() {
                       <Input 
                         {...field} 
                         autoComplete="email"
-                        disabled={isSubmitting} 
+                        disabled={isSubmitting || loginMutation.isPending} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -122,7 +116,7 @@ export default function ManagerLogin() {
                         {...field}
                         type="password"
                         autoComplete="current-password"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || loginMutation.isPending}
                       />
                     </FormControl>
                     <FormMessage />

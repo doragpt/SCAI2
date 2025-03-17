@@ -8,12 +8,6 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
 
-declare global {
-  namespace Express {
-    interface User extends SelectUser {}
-  }
-}
-
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string): Promise<string> {
@@ -129,7 +123,10 @@ export function setupAuth(app: Express) {
     });
 
     passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) return next(err);
+      if (err) {
+        log('error', 'ログイン処理エラー', { error: err });
+        return res.status(500).json({ message: "ログイン処理中にエラーが発生しました" });
+      }
       if (!user) {
         log('warn', 'ログイン失敗', {
           email: req.body.email,
@@ -138,7 +135,10 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          log('error', 'セッション作成エラー', { error: err });
+          return res.status(500).json({ message: "セッションの作成に失敗しました" });
+        }
         log('info', 'ログイン成功', {
           userId: user.id,
           email: user.email,
@@ -158,7 +158,10 @@ export function setupAuth(app: Express) {
         });
       }
       req.logout((err) => {
-        if (err) return next(err);
+        if (err) {
+          log('error', 'ログアウトエラー', { error: err });
+          return next(err);
+        }
         req.session.destroy((err) => {
           if (err) {
             log('error', 'セッション破棄エラー', { error: err });

@@ -38,6 +38,7 @@ export const useAuth = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/check'] });
     },
     onError: (error: Error) => {
+      console.error('ログインエラー:', error);
       toast({
         variant: "destructive",
         title: "ログインエラー",
@@ -52,7 +53,7 @@ export const useAuth = () => {
       setUser(null);
       queryClient.invalidateQueries({ queryKey: ['/api/check'] });
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("ログアウトエラー:", error);
       throw error;
     }
   };
@@ -71,7 +72,7 @@ export const useAuth = () => {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error("Auth check error:", error);
+      console.error("認証チェックエラー:", error);
       setUser(null);
       return null;
     } finally {
