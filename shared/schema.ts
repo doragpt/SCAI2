@@ -223,7 +223,8 @@ export const jobs = pgTable("jobs", {
   phoneNumber3: text("phone_number_3"),
   phoneNumber4: text("phone_number_4"),
   contactEmail: text("contact_email"),
-  contactLine: text("contact_line"),
+  contactSns: text("contact_sns"), // Changed from contactLine
+  contactSnsUrl: text("contact_sns_url"), // Added new field
   selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
@@ -386,7 +387,8 @@ export const jobSchema = createInsertSchema(jobs, {
   phoneNumber3: z.string().optional(),
   phoneNumber4: z.string().optional(),
   contactEmail: z.string().email("有効なメールアドレスを入力してください").optional(),
-  contactLine: z.string().optional(),
+  contactSns: z.string().optional(), // Changed from contactLine
+  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(), // Added new field with URL validation
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -658,6 +660,7 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
+
 export type { User, TalentProfile, Job, Application, InsertApplication };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
 
@@ -735,5 +738,4 @@ export type PreviousStore = {
   storeName: string;
 };
 
-//I added this line because it was missing in the edited part. This was causing error.
 export const talentRegisterFormSchema = talentProfileSchema;

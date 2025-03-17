@@ -68,6 +68,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       phoneNumber4: "",
       contactEmail: "",
       contactLine: "",
+      contactSns: "", // Added
+      contactSnsUrl: "" // Added
     }
   });
 
@@ -318,6 +320,37 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <CardTitle className="text-lg font-bold">応募用連絡先</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="contactSns"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">SNS ID（任意）</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="例：@shop_recruit" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contactSnsUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">SNS友達追加URL（任意）</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="url" placeholder="例：https://line.me/ti/p/xxxxx" />
+                  </FormControl>
+                  <FormDescription>
+                    LINEやTwitterなどのSNSプロフィールURLを入力してください
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="phoneNumber1"
