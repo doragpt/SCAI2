@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { setupVite, serveStatic } from "./vite";
-import { db, sql, testConnection } from "./db";
+import { db, sql } from "./db";
 import cors from "cors";
 import { setupCronJobs } from "./cron";
 import { log } from "./utils/logger";
@@ -31,11 +31,7 @@ process.env.NODE_ENV = "development";
         port: process.env.PGPORT
       });
 
-      const dbConnected = await testConnection();
-      if (!dbConnected) {
-        throw new Error('Database connection test failed');
-      }
-
+      await db.execute(sql`SELECT 1`);
       log('info', 'データベース接続成功', {
         duration: Date.now() - startTime
       });
@@ -73,14 +69,10 @@ process.env.NODE_ENV = "development";
     }
 
     const port = Number(process.env.PORT) || 5000;
-
-    // Explicitly bind to 0.0.0.0 for Replit compatibility
     server.listen(port, '0.0.0.0', () => {
       log('info', `サーバーを起動しました: http://0.0.0.0:${port}`, {
         environment: process.env.NODE_ENV,
-        totalStartupTime: Date.now() - startTime,
-        port: port,
-        host: '0.0.0.0'
+        totalStartupTime: Date.now() - startTime
       });
 
       // cronジョブは非同期で遅延セットアップ
@@ -92,22 +84,6 @@ process.env.NODE_ENV = "development";
         });
       }, 5000);
     });
-
-    // エラーイベントのハンドリングを追加
-    server.on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
-        log('error', `Port ${port} is already in use`, {
-          error: error.message
-        });
-      } else {
-        log('error', 'Server error occurred', {
-          error: error.message,
-          code: error.code
-        });
-      }
-      process.exit(1);
-    });
-
   } catch (error) {
     log('error', "致命的な起動エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
