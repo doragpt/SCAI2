@@ -25,7 +25,8 @@ import {
   Pencil,
   Clock,
   MoreVertical,
-  Trash
+  Trash,
+  Building2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -71,6 +72,17 @@ const blogStatusLabels = {
   scheduled: "予約投稿"
 } as const;
 
+// ダッシュボードの統計情報の型定義
+interface DashboardStats {
+  activeJobsCount: number;
+  totalApplicationsCount: number;
+  // 将来的な拡張のためのフィールド
+  // pageViews?: number;
+  // uniqueVisitors?: number;
+  // interviewCount?: number;
+  // hireCount?: number;
+}
+
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const [selectedTab, setSelectedTab] = useState("jobs");
@@ -79,6 +91,13 @@ export default function StoreDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  // 統計情報を取得するクエリ
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: [QUERY_KEYS.DASHBOARD_STATS],
+    queryFn: () => apiRequest("GET", "/api/store/dashboard/stats"),
+    refetchInterval: 300000, // 5分ごとに更新
+  });
 
   // 求人情報の取得
   const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
@@ -162,7 +181,7 @@ export default function StoreDashboard() {
     },
   });
 
-  if (jobsLoading || blogsLoading) {
+  if (statsLoading || jobsLoading || blogsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -210,84 +229,45 @@ export default function StoreDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-12 gap-6">
-          {/* 左サイドバー - 重要な統計情報 */}
-          <div className="col-span-3 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LineChart className="h-5 w-5" />
-                  アクセス状況
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Card>
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Card>
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-3">
-                          <div className="text-2xl font-bold">-</div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  スケジュール
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">予約面接</span>
-                    <Badge variant="outline">0件</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">未対応応募</span>
-                    <Badge variant="outline">0件</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">未読メッセージ</span>
-                    <Badge variant="outline">0件</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* メインコンテンツ */}
-          <div className="col-span-6">
+          <div className="col-span-12 lg:col-span-8">
+            {/* 統計情報カード */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileEdit className="h-5 w-5 text-primary" />
+                    求人数
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">
+                    {stats?.activeJobsCount || 0}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    公開中の求人
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    応募者数
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">
+                    {stats?.totalApplicationsCount || 0}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    総応募数
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-5 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
@@ -350,7 +330,7 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold">{job.title}</h3>
                                     <Badge variant={
                                       job.status === "published" ? "default" :
-                                      job.status === "draft" ? "secondary" : "destructive"
+                                        job.status === "draft" ? "secondary" : "destructive"
                                     }>
                                       {jobStatusLabels[job.status]}
                                     </Badge>
@@ -460,7 +440,7 @@ export default function StoreDashboard() {
                                     <h3 className="font-semibold">{post.title}</h3>
                                     <Badge variant={
                                       post.status === "published" ? "default" :
-                                      post.status === "scheduled" ? "secondary" : "outline"
+                                        post.status === "scheduled" ? "secondary" : "outline"
                                     }>
                                       {blogStatusLabels[post.status]}
                                     </Badge>
@@ -601,28 +581,14 @@ export default function StoreDashboard() {
             </Tabs>
           </div>
 
-          {/* 右サイドバー - クイックアクション */}
-          <div className="col-span-3 space-y-6">
+          {/* サイドバー */}
+          <div className="col-span-12 lg:col-span-4 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Image className="h-5 w-5" />
-                  画像管理
+                  <Building2 className="h-5 w-5" />
+                  店舗情報
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Button variant="outline" className="w-full">
-                    <Image className="h-4 w-4 mr-2" />
-                    画像を管理
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>店舗情報</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -634,28 +600,10 @@ export default function StoreDashboard() {
                     <p className="font-medium">所在地</p>
                     <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
                   </div>
-                  <div>
-                    <p className="font-medium">連絡先</p>
-                    <p className="text-sm text-muted-foreground">{user?.phone || "未設定"}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>お知らせ</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border-l-4 border-primary pl-4">
-                    <p className="font-medium">システムメンテナンスのお知らせ</p>
-                    <p className="text-sm text-muted-foreground">2024/03/15</p>
-                  </div>
-                  <div className="border-l-4 border-primary pl-4">
-                    <p className="font-medium">新機能追加のお知らせ</p>
-                    <p className="text-sm text-muted-foreground">2024/03/10</p>
-                  </div>
+                  <Button variant="outline" className="w-full" onClick={() => window.open('/store/settings', '_blank')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    店舗情報を編集
+                  </Button>
                 </div>
               </CardContent>
             </Card>
