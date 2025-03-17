@@ -40,11 +40,12 @@ if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
     log('debug', 'セッション状態', {
       sessionID: req.sessionID,
-      isAuthenticated: req.isAuthenticated(),
+      isAuthenticated: req.isAuthenticated && req.isAuthenticated(),
       hasUser: !!req.user,
       user: req.user ? { id: req.user.id, role: req.user.role } : null,
       path: req.path,
       method: req.method,
+      cookies: req.headers.cookie,
       timestamp: new Date().toISOString()
     });
     next();
@@ -61,8 +62,9 @@ app.use('/api', (req, res, next) => {
     path: req.path,
     query: req.query,
     body: req.method !== 'GET' ? req.body : undefined,
-    isAuthenticated: req.isAuthenticated(),
+    isAuthenticated: req.isAuthenticated && req.isAuthenticated(),
     sessionID: req.sessionID,
+    cookies: req.headers.cookie,
     timestamp: new Date().toISOString()
   });
   next();
@@ -84,7 +86,7 @@ app.use('/api/*', (req, res) => {
   log('warn', 'APIルートが見つかりません', {
     method: req.method,
     path: req.path,
-    isAuthenticated: req.isAuthenticated(),
+    isAuthenticated: req.isAuthenticated && req.isAuthenticated(),
     sessionID: req.sessionID
   });
   res.status(404).json({
