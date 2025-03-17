@@ -58,8 +58,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       mainCatch: "",
       mainDescription: "",
       businessName: "",
-      location: "東京都" as const, // 初期値を有効な都道府県に設定
-      serviceType: "デリヘル" as const, // 初期値を有効なサービスタイプに設定
+      location: "東京都" as const,
+      serviceType: "デリヘル" as const,
       displayServiceType: "デリヘル" as const,
       selectedBenefits: [],
       phoneNumber1: "",
@@ -77,7 +77,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: typeof form.getValues) => {
+    mutationFn: async (data: any) => {
       const response = await fetch("/api/jobs/basic-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,7 +108,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = (data: typeof form.getValues) => {
+  const onSubmit = (data: any) => {
+    console.log("Form data:", data); // デバッグ用
     mutate(data);
   };
 
@@ -166,7 +167,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">業種（表示用）</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="表示する業種を選択してください" />
@@ -283,11 +284,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                                         checked={field.value?.includes(benefit)}
                                         onCheckedChange={(checked) => {
                                           return checked
-                                            ? field.onChange([...field.value, benefit])
+                                            ? field.onChange([...field.value || [], benefit])
                                             : field.onChange(
                                                 field.value?.filter(
                                                   (value) => value !== benefit
-                                                )
+                                                ) || []
                                               )
                                         }}
                                       />
