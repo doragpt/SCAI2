@@ -50,8 +50,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     defaultValues: initialData || {
       // 店舗基本情報
       businessName: "",
-      serviceTypeSearch: "deriheru", 
-      serviceTypeDisplay: "デリバリーヘルス", 
+      serviceTypeSearch: "deriheru",
+      serviceTypeDisplay: "デリバリーヘルス",
       location: "東京都",
       address: "",
       nearestStation: "",
@@ -149,7 +149,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>業種（検索用）</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // 検索用業種が変更されたら、対応する表示用業種も自動的に更新
+                        form.setValue("serviceTypeDisplay", serviceTypeLabels[value]);
+                      }}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="業種を選択" />
@@ -174,7 +181,19 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>業種（表示用）</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // 表示用業種に対応する検索用業種を見つけて設定
+                        const searchType = Object.entries(serviceTypeLabels).find(
+                          ([_, displayType]) => displayType === value
+                        )?.[0];
+                        if (searchType) {
+                          form.setValue("serviceTypeSearch", searchType);
+                        }
+                      }}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="表示名を選択" />
