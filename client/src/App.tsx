@@ -101,8 +101,8 @@ function AppContent() {
   }
 
   // ナビゲーションの表示判定
-  const shouldShowNavigation = !window.location.pathname.startsWith('/manager/login') && 
-    !(user?.role === 'store' && window.location.pathname.startsWith('/store/'));
+  // ログインページ以外では常にナビゲーションを表示
+  const shouldShowNavigation = !window.location.pathname.startsWith('/manager/login');
 
   return (
     <div className="min-h-screen bg-background">
