@@ -378,45 +378,45 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-export const jobSchema = createInsertSchema(jobs, {
-  title: z.string().min(1, "タイトルを入力してください"),
-  businessName: z.string().min(1, "店舗名を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "勤務地を選択してください",
-    invalid_type_error: "無効な勤務地です",
-  }),
-  serviceType: z.enum(serviceTypes, {
-    required_error: "業種を選択してください",
-    invalid_type_error: "無効な業種です",
-  }),
-  displayServiceType: z.enum(serviceTypes, {
-    required_error: "表示する業種を選択してください",
-    invalid_type_error: "無効な業種です",
-  }).optional(),
-  status: z.enum(jobStatusTypes, {
-    required_error: "公開状態を選択してください",
-    invalid_type_error: "無効な公開状態です",
-  }),
-  mainCatch: z.string()
-    .min(1, "キャッチコピーを入力してください")
-    .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string()
-    .min(1, "仕事内容を入力してください")
-    .max(9000, "仕事内容は9000文字以内で入力してください"),
-  selectedBenefits: z.array(z.enum(allBenefitTypes))
-    .min(1, "待遇を1つ以上選択してください"),
-  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
-  phoneNumber2: z.string().optional(),
-  phoneNumber3: z.string().optional(),
-  phoneNumber4: z.string().optional(),
-  contactEmail: z.string().email("有効なメールアドレスを入力してください").optional(),
-  contactSns: z.string().optional(),
-  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(),
-  minimumGuarantee: z.number().optional(),
-  maximumGuarantee: z.number().optional(),
-  transportationSupport: z.boolean().default(false),
-  housingSupport: z.boolean().default(false),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+  export const jobSchema = createInsertSchema(jobs, {
+    title: z.string().min(1, "タイトルを入力してください"),
+    businessName: z.string().min(1, "店舗名を入力してください"),
+    location: z.enum(prefectures, {
+      required_error: "勤務地を選択してください",
+      invalid_type_error: "無効な勤務地です",
+    }),
+    serviceType: z.enum(serviceTypes, {
+      required_error: "業種を選択してください",
+      invalid_type_error: "無効な業種です",
+    }),
+    displayServiceType: z.enum(serviceTypes, {
+      required_error: "表示する業種を選択してください",
+      invalid_type_error: "無効な業種です",
+    }).optional(),
+    status: z.enum(jobStatusTypes, {
+      required_error: "公開状態を選択してください",
+      invalid_type_error: "無効な公開状態です",
+    }),
+    mainCatch: z.string()
+      .min(1, "キャッチコピーを入力してください")
+      .max(300, "キャッチコピーは300文字以内で入力してください"),
+    mainDescription: z.string()
+      .min(1, "仕事内容を入力してください")
+      .max(9000, "仕事内容は9000文字以内で入力してください"),
+    selectedBenefits: z.array(z.enum(allBenefitTypes))
+      .min(1, "待遇を1つ以上選択してください"),
+    phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+    phoneNumber2: z.string().optional(),
+    phoneNumber3: z.string().optional(),
+    phoneNumber4: z.string().optional(),
+    contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
+    contactSns: z.string().optional(),
+    contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
+    minimumGuarantee: z.number().optional(),
+    maximumGuarantee: z.number().optional(),
+    transportationSupport: z.boolean().default(false),
+    housingSupport: z.boolean().default(false),
+  }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
