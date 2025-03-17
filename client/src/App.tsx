@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { AuthProvider } from "./hooks/use-auth";
+import { AuthProvider, useAuth } from "./hooks/use-auth";
 import { Switch, Route, Redirect } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
@@ -48,7 +48,6 @@ function Router() {
         component={StoreDashboard}
         roleRequired="store"
       />
-      {/* ブログ関連のルートを追加 */}
       <ProtectedRoute 
         path="/store/blog/new" 
         component={NewBlogPost}
@@ -67,9 +66,10 @@ function Router() {
   );
 }
 
-export default function App() {
+function AppContent() {
   const [showAgeVerification, setShowAgeVerification] = useState(true);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const verified = localStorage.getItem("ageVerified");
@@ -89,9 +89,8 @@ export default function App() {
     setShowAgeVerification(false);
   };
 
-  // 店舗管理ページでは年齢確認を表示しない
-  const isManagerPath = window.location.pathname.startsWith('/manager');
-  if (!isManagerPath && !isAgeVerified && showAgeVerification) {
+  // 年齢確認モーダルの表示条件
+  if (!isAgeVerified && showAgeVerification) {
     return (
       <AgeVerificationModal
         open={showAgeVerification}
@@ -101,17 +100,26 @@ export default function App() {
     );
   }
 
+  // ナビゲーションの表示判定
+  const shouldShowNavigation = !window.location.pathname.startsWith('/manager/login') && 
+    !(user?.role === 'store' && window.location.pathname.startsWith('/store/'));
+
+  return (
+    <div className="min-h-screen bg-background">
+      {shouldShowNavigation && <Navigation />}
+      <main className="container mx-auto px-4 py-6">
+        <Router />
+      </main>
+      <Toaster />
+    </div>
+  );
+}
+
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen bg-background">
-          {/* 店舗管理ページではナビゲーションを表示しない */}
-          {!isManagerPath && <Navigation />}
-          <main className="container mx-auto px-4 py-6">
-            <Router />
-          </main>
-          <Toaster />
-        </div>
+        <AppContent />
       </AuthProvider>
     </QueryClientProvider>
   );
