@@ -1,0 +1,40 @@
+Checking auth status...
+API Request starting: 
+Object {method: "GET", url: "/api/check", data: undefined, timestamp: "2025-03-17T14:27:14.396Z"}
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of &lt;a&gt;.
+    at a
+    at a
+    at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=656758f9:352:18
+    at div
+    at div
+    at nav
+    at Navigation (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/navigation.tsx:72:31)
+    at div
+    at AuthProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/hooks/use-auth.tsx:142:32)
+    at QueryClientProvider (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=656758f9:2805:3)
+    at App (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/App.tsx?v=8esRVFF_8cyLcH5EuQzrm:194:57)
+API Response received: 
+Object {status: 200, statusText: "OK", url: "https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/api/check", timestamp: "2025-03-17T14:27:14.682Z"}
+Auth check response: 
+Response {type: "basic", url: "https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/api/check", redirected: false, status: 200, ok: true, …}
+Auth check data: 
+Object {id: 25, email: "admin@x.com", username: "テスト", birthDate: "2003-06-07T00:00:00.000+00:00", location: "栃木県", …}
+求人情報取得エラー: 
+Error {}
+message: "求人情報の取得に失敗しました"
+stack: "Error: 求人情報の取得に失敗しました↵ at queryFn (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/home-page.tsx:330:17)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+求人情報取得エラー: 
+Error {}
+message: "求人情報の取得に失敗しました"
+stack: "Error: 求人情報の取得に失敗しました↵ at queryFn (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/pages/home-page.tsx:330:17)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object

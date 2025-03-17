@@ -16,20 +16,7 @@ router.get("/", async (_req, res) => {
 
     // データベースクエリの実行
     const jobListings = await db
-      .select({
-        id: jobs.id,
-        businessName: jobs.businessName,
-        location: jobs.location,
-        serviceType: jobs.serviceType,
-        displayServiceType: jobs.serviceType,
-        title: jobs.title,
-        minimumGuarantee: jobs.minimumGuarantee,
-        maximumGuarantee: jobs.maximumGuarantee,
-        selectedBenefits: jobs.selectedBenefits,
-        status: jobs.status,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt
-      })
+      .select()
       .from(jobs)
       .where(
         and(
@@ -48,7 +35,7 @@ router.get("/", async (_req, res) => {
     });
 
     // レスポンスの送信
-    res.status(200).json({ 
+    return res.status(200).json({ 
       jobs: jobListings,
       pagination: {
         currentPage: 1,
