@@ -24,7 +24,8 @@ router.get("/", async (_req, res) => {
         title: jobs.title,
         minimumGuarantee: jobs.minimumGuarantee,
         maximumGuarantee: jobs.maximumGuarantee,
-        selectedBenefits: jobs.selectedBenefits,
+        transportationSupport: jobs.transportationSupport,
+        housingSupport: jobs.housingSupport,
         status: jobs.status,
         createdAt: jobs.createdAt,
         updatedAt: jobs.updatedAt
@@ -57,16 +58,11 @@ router.get("/", async (_req, res) => {
       }
     };
 
-    // レスポンスの内容をログに出力（デバッグ用）
-    console.log('Jobs Response:', response);
-
     return res.json(response);
   } catch (error) {
-    // エラー情報の詳細なログ出力
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      query: 'SELECT FROM jobs WHERE status = published',
       timestamp: new Date().toISOString()
     });
 

@@ -212,23 +212,14 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  displayServiceType: text("display_service_type", { enum: serviceTypes }).notNull(),
+  title: text("title").notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
-  selectedBenefits: jsonb("selected_benefits").$type<string[]>().default([]).notNull(),
+  transportationSupport: boolean("transportation_support").default(false),
+  housingSupport: boolean("housing_support").default(false),
   status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
-  title: text("title").notNull(),
-  mainCatch: text("main_catch"),
-  mainDescription: text("main_description"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  phoneNumber1: text("phone_number_1"),
-  phoneNumber2: text("phone_number_2"),
-  phoneNumber3: text("phone_number_3"),
-  phoneNumber4: text("phone_number_4"),
-  contactEmail: text("contact_email"),
-  contactSns: text("contact_sns"), 
-  contactSnsUrl: text("contact_sns_url"), 
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
   serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
@@ -353,9 +344,19 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
-export type JobResponse = Job & {
-  hasApplied?: boolean;
-  applicationStatus?: string;
+export type JobResponse = {
+  id: number;
+  businessName: string;
+  location: Prefecture;
+  serviceType: ServiceType;
+  title: string;
+  minimumGuarantee?: number;
+  maximumGuarantee?: number;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+  status: "draft" | "published" | "closed";
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 // Schemas
@@ -375,10 +376,6 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "業種を選択してください",
     invalid_type_error: "無効な業種です",
   }),
-  displayServiceType: z.enum(serviceTypes, {
-    required_error: "表示用業種を選択してください",
-    invalid_type_error: "無効な業種です",
-  }),
   status: z.enum(jobStatusTypes, {
     required_error: "公開状態を選択してください",
     invalid_type_error: "無効な公開状態です",
@@ -394,10 +391,12 @@ export const jobSchema = createInsertSchema(jobs, {
   phoneNumber3: z.string().optional(),
   phoneNumber4: z.string().optional(),
   contactEmail: z.string().email("有効なメールアドレスを入力してください").optional(),
-  contactSns: z.string().optional(), 
-  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(), 
+  contactSns: z.string().optional(),
+  contactSnsUrl: z.string().url("有効なURLを入力してください").optional(),
   minimumGuarantee: z.number().optional(),
   maximumGuarantee: z.number().optional(),
+  transportationSupport: z.boolean().default(false),
+  housingSupport: z.boolean().default(false),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -662,6 +661,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 
