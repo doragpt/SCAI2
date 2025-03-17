@@ -85,12 +85,15 @@ export function Navigation() {
   };
 
   const getDisplayBreadcrumbs = (path: string) => {
-    return path.split("/")
-      .filter(Boolean)
-      .map(segment => ({
+    const segments = path.split("/").filter(Boolean);
+    let currentPath = "";
+    return segments.map(segment => {
+      currentPath = currentPath + "/" + segment;
+      return {
         label: getBreadcrumbLabel(segment),
-        path: `/${path.split("/").slice(0, path.split("/").indexOf(segment) + 1).join("/")}`
-      }));
+        path: currentPath
+      };
+    });
   };
 
   const breadcrumbs = getDisplayBreadcrumbs(location);
