@@ -72,24 +72,33 @@ const blogStatusLabels = {
   scheduled: "予約投稿"
 } as const;
 
-// ダッシュボードの統計情報の型定義
+// 統計情報の型定義を更新
 interface DashboardStats {
+  // 掲載情報
+  storePlan: 'free' | 'premium';
+  storeArea: string;
+  displayRank: number;
+
+  // 応募者対応状況
+  newInquiriesCount: number;
+  pendingInquiriesCount: number;
+  completedInquiriesCount: number;
   activeJobsCount: number;
   totalApplicationsCount: number;
   draftJobsCount?: number;
   closedJobsCount?: number;
-  pendingApplicationsCount?: number;
-  completedApplicationsCount?: number;
-  // 将来的な拡張のためのフィールド
-  // pageViews?: number;
-  // uniqueVisitors?: number;
-  // interviewCount?: number;
-  // hireCount?: number;
+  
 }
+
+// プランのラベル
+const planLabels = {
+  free: "無料プラン",
+  premium: "有料プラン"
+} as const;
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
-  const [selectedTab, setSelectedTab] = useState("jobs");
+  const [selectedTab, setSelectedTab] = useState("dashboard");
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -235,40 +244,33 @@ export default function StoreDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
-            {/* 統計情報カード */}
+            {/* 掲載状況カード */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <FileEdit className="h-5 w-5 text-primary" />
-                    求人管理状況
+                    <Building2 className="h-5 w-5 text-primary" />
+                    掲載状況
                   </CardTitle>
                   <CardDescription>
-                    公開中の求人と作成した求人の総数
+                    現在の掲載プランと表示状況
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <div className="text-3xl font-bold text-primary">
-                        {stats?.activeJobsCount || 0}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        現在公開中の求人数
-                      </p>
+                      <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
+                        {planLabels[stats?.storePlan || 'free']}
+                      </Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                      <div>
-                        <div className="text-sm font-medium">下書き</div>
-                        <div className="text-2xl font-semibold text-muted-foreground">
-                          {stats?.draftJobsCount || 0}
-                        </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">掲載エリア</span>
+                        <span className="font-medium">{stats?.storeArea || '未設定'}</span>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium">締切済</div>
-                        <div className="text-2xl font-semibold text-muted-foreground">
-                          {stats?.closedJobsCount || 0}
-                        </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">表示順位</span>
+                        <span className="font-medium">{stats?.displayRank || '-'}位</span>
                       </div>
                     </div>
                   </div>
@@ -279,33 +281,33 @@ export default function StoreDashboard() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
-                    応募状況
+                    応募者対応状況
                   </CardTitle>
                   <CardDescription>
-                    求人への応募状況と対応状況
+                    問い合わせと対応状況
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
                       <div className="text-3xl font-bold text-primary">
-                        {stats?.totalApplicationsCount || 0}
+                        {stats?.newInquiriesCount || 0}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        これまでの総応募数
+                        新規問い合わせ
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                       <div>
-                        <div className="text-sm font-medium">未対応</div>
+                        <div className="text-sm font-medium">対応待ち</div>
                         <div className="text-2xl font-semibold text-yellow-600">
-                          {stats?.pendingApplicationsCount || 0}
+                          {stats?.pendingInquiriesCount || 0}
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm font-medium">対応済</div>
+                        <div className="text-sm font-medium">対応済み</div>
                         <div className="text-2xl font-semibold text-green-600">
-                          {stats?.completedApplicationsCount || 0}
+                          {stats?.completedInquiriesCount || 0}
                         </div>
                       </div>
                     </div>
@@ -316,6 +318,10 @@ export default function StoreDashboard() {
 
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-5 h-auto">
+                <TabsTrigger value="dashboard" className="py-2">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  ダッシュボード
+                </TabsTrigger>
                 <TabsTrigger value="jobs" className="py-2">
                   <FileEdit className="h-4 w-4 mr-2" />
                   求人管理

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { jobs, applications } from '@shared/schema';
 import { log } from '../utils/logger';
 
 const router = Router();
@@ -13,47 +12,24 @@ router.get('/stats', async (req, res) => {
       return res.status(403).json({ message: '権限がありません' });
     }
 
-    // 求人状態ごとの数を取得
-    const jobStats = await db
-      .select({
-        status: jobs.status,
-        count: sql<number>`count(*)`
-      })
-      .from(jobs)
-      .where(sql`"storeId" = ${req.user.id}`)
-      .groupBy(jobs.status)
-      .execute();
+    // 店舗の掲載情報を取得
+    const storeStats = {
+      storePlan: 'free', // デフォルトは無料プラン
+      storeArea: req.user.location || '未設定',
+      displayRank: 1, // 表示順位（実装時に適切なロジックを追加）
 
-    // 応募状態ごとの数を取得
-    const applicationStats = await db
-      .select({
-        status: applications.status,
-        count: sql<number>`count(*)`
-      })
-      .from(applications)
-      .where(sql`"storeId" = ${req.user.id}`)
-      .groupBy(applications.status)
-      .execute();
-
-    // 統計を集計
-    const stats = {
-      // 求人関連の統計
-      activeJobsCount: jobStats.find(stat => stat.status === 'published')?.count || 0,
-      draftJobsCount: jobStats.find(stat => stat.status === 'draft')?.count || 0,
-      closedJobsCount: jobStats.find(stat => stat.status === 'closed')?.count || 0,
-
-      // 応募関連の統計
-      totalApplicationsCount: applicationStats.reduce((sum, stat) => sum + stat.count, 0),
-      pendingApplicationsCount: applicationStats.find(stat => stat.status === 'pending')?.count || 0,
-      completedApplicationsCount: applicationStats.find(stat => ['accepted', 'rejected'].includes(stat.status))?.count || 0
+      // 応募者対応状況（仮の実装）
+      newInquiriesCount: 0,
+      pendingInquiriesCount: 0,
+      completedInquiriesCount: 0
     };
 
     log('info', '店舗ダッシュボード統計取得', {
       storeId: req.user.id,
-      stats
+      stats: storeStats
     });
 
-    res.json(stats);
+    res.json(storeStats);
   } catch (error) {
     log('error', '店舗ダッシュボード統計取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
