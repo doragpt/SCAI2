@@ -249,129 +249,6 @@ export default function StoreDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
-            {/* 掲載状況とアクセス状況のカード */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    掲載状況
-                  </CardTitle>
-                  <CardDescription>
-                    現在の掲載プランと表示状況
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
-                        {planLabels[stats?.storePlan || 'free']}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">掲載エリア</span>
-                        <span className="font-medium">{stats?.storeArea || '未設定'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">表示順位</span>
-                        <span className="font-medium">{stats?.displayRank || '-'}位</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <LineChart className="h-5 w-5 text-primary" />
-                    アクセス状況
-                  </CardTitle>
-                  <CardDescription>
-                    店舗ページへのアクセス数
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <div className="text-2xl font-bold text-primary">
-                            {stats?.todayPageViews || 0}
-                          </div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-primary">
-                            {stats?.todayUniqueVisitors || 0}
-                          </div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <div className="text-2xl font-bold text-primary">
-                            {stats?.monthlyPageViews || 0}
-                          </div>
-                          <div className="text-xs text-muted-foreground">総アクセス</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-primary">
-                            {stats?.monthlyUniqueVisitors || 0}
-                          </div>
-                          <div className="text-xs text-muted-foreground">ユニーク</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 応募者対応状況カード */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  応募者対応状況
-                </CardTitle>
-                <CardDescription>
-                  問い合わせと対応状況
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-3xl font-bold text-primary">
-                      {stats?.newInquiriesCount || 0}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      新規問い合わせ
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <div className="text-sm font-medium">対応待ち</div>
-                      <div className="text-2xl font-semibold text-yellow-600">
-                        {stats?.pendingInquiriesCount || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">対応済み</div>
-                      <div className="text-2xl font-semibold text-green-600">
-                        {stats?.completedInquiriesCount || 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-4 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
@@ -708,6 +585,89 @@ export default function StoreDashboard() {
                     <Settings className="h-4 w-4 mr-2" />
                     店舗情報を編集
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* アクセス状況 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-primary" />
+                  アクセス状況
+                </CardTitle>
+                <CardDescription>
+                  店舗ページへのアクセス数
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.todayPageViews || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.todayUniqueVisitors || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.monthlyPageViews || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.monthlyUniqueVisitors || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 掲載状況 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  掲載状況
+                </CardTitle>
+                <CardDescription>
+                  現在の掲載プランと表示状況
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
+                      {planLabels[stats?.storePlan || 'free']}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">掲載エリア</span>
+                      <span className="font-medium">{stats?.storeArea || '未設定'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">表示順位</span>
+                      <span className="font-medium">{stats?.displayRank || '-'}位</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
