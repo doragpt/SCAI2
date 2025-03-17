@@ -34,7 +34,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { z } from "zod";
+
+type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
   initialData?: Job;
@@ -45,39 +48,48 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // 文字数カウント用のstate
   const [mainCatchLength, setMainCatchLength] = useState(0);
   const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
 
-  const form = useForm({
+  const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: initialData || {
-      title: "",
-      status: "draft" as const,
-      mainCatch: "",
-      mainDescription: "",
-      businessName: "",
-      location: "東京都" as const,
-      serviceType: "デリヘル" as const,
-      displayServiceType: "デリヘル" as const,
-      selectedBenefits: [],
-      phoneNumber1: "",
-      phoneNumber2: "",
-      phoneNumber3: "",
-      phoneNumber4: "",
-      contactEmail: "",
-      contactSns: "",
-      contactSnsUrl: "",
-      minimumGuarantee: undefined,
-      maximumGuarantee: undefined,
-      transportationSupport: false,
-      housingSupport: false
+    defaultValues: {
+      title: initialData?.title || "",
+      status: initialData?.status || "draft",
+      mainCatch: initialData?.mainCatch || "",
+      mainDescription: initialData?.mainDescription || "",
+      businessName: initialData?.businessName || "",
+      location: initialData?.location || "東京都",
+      serviceType: initialData?.serviceType || "デリヘル",
+      displayServiceType: initialData?.displayServiceType,
+      selectedBenefits: initialData?.selectedBenefits || [],
+      phoneNumber1: initialData?.phoneNumber1 || "",
+      phoneNumber2: initialData?.phoneNumber2 || "",
+      phoneNumber3: initialData?.phoneNumber3 || "",
+      phoneNumber4: initialData?.phoneNumber4 || "",
+      contactEmail: initialData?.contactEmail || "",
+      contactSns: initialData?.contactSns || "",
+      contactSnsUrl: initialData?.contactSnsUrl || "",
+      minimumGuarantee: initialData?.minimumGuarantee || undefined,
+      maximumGuarantee: initialData?.maximumGuarantee || undefined,
+      transportationSupport: initialData?.transportationSupport || false,
+      housingSupport: initialData?.housingSupport || false
     }
   });
 
+  // デバッグ用: フォームの状態変更を監視
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log('Form field updated:', { name, type, value });
+      console.log('Current form state:', form.getValues());
+      console.log('Form errors:', form.formState.errors);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: JobFormData) => {
+      console.log('Submitting data:', data);
       const response = await fetch("/api/jobs/basic-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +98,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "基本情報の保存に失敗しました");
+        throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
 
       return response.json();
@@ -94,7 +106,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
       toast({
-        title: "基本情報を保存しました",
+        title: "求人情報を保存しました",
         description: "変更内容が保存されました。",
       });
       onSuccess?.();
@@ -103,15 +115,22 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "基本情報の保存に失敗しました",
+        description: error instanceof Error ? error.message : "求人情報の保存に失敗しました",
       });
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Form data:", data); // デバッグ用
+  const onSubmit = (data: JobFormData) => {
+    console.log("Form submission data:", data);
+    console.log("Form validation state:", form.formState);
     mutate(data);
   };
+
+  // フォームの状態をコンソールに出力
+  console.log("Form errors:", form.formState.errors);
+  console.log("Form is valid:", form.formState.isValid);
+  console.log("Form is submitting:", form.formState.isSubmitting);
+  console.log("Form is dirty:", form.formState.isDirty);
 
   return (
     <Form {...form}>
@@ -413,7 +432,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           >
             キャンセル
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button 
+            type="submit" 
+            disabled={isPending || !form.formState.isDirty}
+          >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
           </Button>
