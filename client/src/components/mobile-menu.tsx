@@ -10,7 +10,7 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -18,7 +18,6 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-  // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -36,7 +35,6 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
       <div className="fixed inset-0 z-50">
         <div className="bg-white h-full">
-          {/* メニューヘッダー */}
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-lg font-semibold">メニュー</h2>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -44,9 +42,8 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </Button>
           </div>
 
-          {/* メニュー項目 */}
           <div className="p-4 space-y-4">
-            <Card asChild>
+            <Card className="hover:bg-accent/50 transition-colors">
               <Link href="/talent/profile/edit" onClick={onClose}>
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center">
@@ -58,7 +55,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </Link>
             </Card>
 
-            <Card asChild>
+            <Card className="hover:bg-accent/50 transition-colors">
               <Link href="/talent/resume/edit" onClick={onClose}>
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center">
@@ -70,7 +67,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </Link>
             </Card>
 
-            <Card asChild>
+            <Card className="hover:bg-accent/50 transition-colors">
               <Link href="/talent/mypage/applications" onClick={onClose}>
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center">
@@ -82,7 +79,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </Link>
             </Card>
 
-            <Card asChild>
+            <Card className="hover:bg-accent/50 transition-colors">
               <Link href="/talent/mypage/keep-list" onClick={onClose}>
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center">
@@ -94,7 +91,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </Link>
             </Card>
 
-            <Card asChild>
+            <Card className="hover:bg-accent/50 transition-colors">
               <Link href="/talent/mypage/view-history" onClick={onClose}>
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center">
