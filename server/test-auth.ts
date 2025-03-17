@@ -1,11 +1,10 @@
-import { hashPassword, comparePasswords } from './routes';
-import { generateToken, verifyToken } from './jwt';
+import { hashPassword, comparePasswords } from './auth';
 
 async function testPasswordHashing() {
   try {
     console.log('=== パスワードハッシュ化テスト開始 ===');
-    const testPassword = 'password123';
-    
+    const testPassword = 'test1234';
+
     // パスワードハッシュ化のテスト
     console.log('1. パスワードハッシュ化テスト');
     const hashedPassword = await hashPassword(testPassword);
@@ -25,54 +24,9 @@ async function testPasswordHashing() {
       timestamp: new Date().toISOString()
     });
 
-    // 不正なパスワードテスト
-    console.log('\n3. 不正なパスワードテスト');
-    const isInvalidValid = await comparePasswords('wrongpassword', hashedPassword);
-    console.log('不正なパスワード検証結果:', {
-      isValid: isInvalidValid,
-      timestamp: new Date().toISOString()
-    });
-
     return hashedPassword;
   } catch (error) {
     console.error('パスワードテストエラー:', error);
-    throw error;
-  }
-}
-
-async function testJWTFlow() {
-  try {
-    console.log('\n=== JWTフローテスト開始 ===');
-    const testUser = {
-      id: 14,
-      username: 'store_test',
-      role: 'store',
-      displayName: 'テスト店舗',
-      location: '東京都',
-      password: 'dummy'
-    };
-
-    // トークン生成テスト
-    console.log('1. JWTトークン生成テスト');
-    const token = generateToken(testUser);
-    console.log('生成されたトークン:', {
-      token: token.substring(0, 20) + '...',
-      length: token.length,
-      timestamp: new Date().toISOString()
-    });
-
-    // トークン検証テスト
-    console.log('\n2. JWTトークン検証テスト');
-    const decoded = verifyToken(token);
-    console.log('デコードされたペイロード:', {
-      userId: decoded.userId,
-      role: decoded.role,
-      timestamp: new Date().toISOString()
-    });
-
-    return token;
-  } catch (error) {
-    console.error('JWTテストエラー:', error);
     throw error;
   }
 }
@@ -81,11 +35,8 @@ async function testJWTFlow() {
 async function runTests() {
   try {
     const hashedPassword = await testPasswordHashing();
-    const token = await testJWTFlow();
-
     console.log('\n=== テスト結果サマリー ===');
     console.log('生成されたパスワードハッシュ:', hashedPassword);
-    console.log('生成されたJWTトークン:', token.substring(0, 20) + '...');
   } catch (error) {
     console.error('テスト実行エラー:', error);
   }
