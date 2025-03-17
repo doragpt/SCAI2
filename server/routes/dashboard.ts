@@ -18,6 +18,12 @@ router.get('/stats', async (req, res) => {
       storeArea: req.user.location || '未設定',
       displayRank: 1, // 表示順位（実装時に適切なロジックを追加）
 
+      // アクセス状況（仮の実装）
+      todayPageViews: 0,
+      todayUniqueVisitors: 0,
+      monthlyPageViews: 0,
+      monthlyUniqueVisitors: 0,
+
       // 応募者対応状況（仮の実装）
       newInquiriesCount: 0,
       pendingInquiriesCount: 0,

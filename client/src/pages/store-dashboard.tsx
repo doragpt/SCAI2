@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,7 +55,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 
 // 求人ステータスのラベル
@@ -79,6 +78,12 @@ interface DashboardStats {
   storeArea: string;
   displayRank: number;
 
+  // アクセス状況
+  todayPageViews: number;
+  todayUniqueVisitors: number;
+  monthlyPageViews: number;
+  monthlyUniqueVisitors: number;
+
   // 応募者対応状況
   newInquiriesCount: number;
   pendingInquiriesCount: number;
@@ -87,7 +92,7 @@ interface DashboardStats {
   totalApplicationsCount: number;
   draftJobsCount?: number;
   closedJobsCount?: number;
-  
+
 }
 
 // プランのラベル
@@ -98,7 +103,7 @@ const planLabels = {
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
-  const [selectedTab, setSelectedTab] = useState("dashboard");
+  const [selectedTab, setSelectedTab] = useState("jobs");
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -244,7 +249,7 @@ export default function StoreDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
-            {/* 掲載状況カード */}
+            {/* 掲載状況とアクセス状況のカード */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <Card>
                 <CardHeader>
@@ -280,34 +285,46 @@ export default function StoreDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    応募者対応状況
+                    <LineChart className="h-5 w-5 text-primary" />
+                    アクセス状況
                   </CardTitle>
                   <CardDescription>
-                    問い合わせと対応状況
+                    店舗ページへのアクセス数
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <div className="text-3xl font-bold text-primary">
-                        {stats?.newInquiriesCount || 0}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        新規問い合わせ
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                      <div>
-                        <div className="text-sm font-medium">対応待ち</div>
-                        <div className="text-2xl font-semibold text-yellow-600">
-                          {stats?.pendingInquiriesCount || 0}
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-2xl font-bold text-primary">
+                            {stats?.todayPageViews || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">総アクセス</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-primary">
+                            {stats?.todayUniqueVisitors || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">ユニーク</div>
                         </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium">対応済み</div>
-                        <div className="text-2xl font-semibold text-green-600">
-                          {stats?.completedInquiriesCount || 0}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-2xl font-bold text-primary">
+                            {stats?.monthlyPageViews || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">総アクセス</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-primary">
+                            {stats?.monthlyUniqueVisitors || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">ユニーク</div>
                         </div>
                       </div>
                     </div>
@@ -316,12 +333,47 @@ export default function StoreDashboard() {
               </Card>
             </div>
 
+            {/* 応募者対応状況カード */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  応募者対応状況
+                </CardTitle>
+                <CardDescription>
+                  問い合わせと対応状況
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-3xl font-bold text-primary">
+                      {stats?.newInquiriesCount || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      新規問い合わせ
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <div className="text-sm font-medium">対応待ち</div>
+                      <div className="text-2xl font-semibold text-yellow-600">
+                        {stats?.pendingInquiriesCount || 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">対応済み</div>
+                      <div className="text-2xl font-semibold text-green-600">
+                        {stats?.completedInquiriesCount || 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="grid grid-cols-5 h-auto">
-                <TabsTrigger value="dashboard" className="py-2">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  ダッシュボード
-                </TabsTrigger>
+              <TabsList className="grid grid-cols-4 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
                   <FileEdit className="h-4 w-4 mr-2" />
                   求人管理
