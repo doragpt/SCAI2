@@ -73,6 +73,12 @@ export default function ManagerLogin() {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
+
+      toast({
+        variant: "destructive",
+        title: "ログインエラー",
+        description: "メールアドレスまたはパスワードが正しくありません",
+      });
     } finally {
       setIsSubmitting(false);
     }

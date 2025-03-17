@@ -360,9 +360,11 @@ export type JobResponse = {
 };
 
 // Schemas
+// 既存のloginSchemaを更新
 export const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).optional(),
 });
 
 export const jobSchema = createInsertSchema(jobs, {
@@ -661,7 +663,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 
