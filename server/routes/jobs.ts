@@ -10,12 +10,11 @@ const router = Router();
 router.get("/", async (_req, res) => {
   try {
     log('info', 'パブリック求人一覧の取得を開始', {
-      timestamp: new Date().toISOString(),
       path: _req.path,
-      method: _req.method
+      method: _req.method,
+      timestamp: new Date().toISOString()
     });
 
-    // データベースクエリの実行
     const jobListings = await db
       .select({
         id: jobs.id,
@@ -43,13 +42,12 @@ router.get("/", async (_req, res) => {
     log('info', 'データベースクエリ実行結果', {
       count: jobListings.length,
       timestamp: new Date().toISOString(),
-      firstJob: jobListings[0] ? { 
+      firstJob: jobListings[0] ? {
         id: jobListings[0].id,
         businessName: jobListings[0].businessName
       } : null
     });
 
-    // レスポンスを返す前に内容を確認
     const response = {
       jobs: jobListings,
       pagination: {
@@ -59,20 +57,20 @@ router.get("/", async (_req, res) => {
       }
     };
 
-    log('info', 'レスポンス送信準備完了', {
-      timestamp: new Date().toISOString(),
-      responseSize: JSON.stringify(response).length
-    });
+    // レスポンスの内容をログに出力（デバッグ用）
+    console.log('Jobs Response:', response);
 
-    return res.status(200).json(response);
+    return res.json(response);
   } catch (error) {
+    // エラー情報の詳細なログ出力
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
+      query: 'SELECT FROM jobs WHERE status = published',
       timestamp: new Date().toISOString()
     });
 
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'InternalServerError',
       message: "求人情報の取得に失敗しました",
       details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
