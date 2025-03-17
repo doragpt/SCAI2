@@ -390,7 +390,7 @@ export const jobSchema = z.object({
     required_error: "業種を選択してください",
     invalid_type_error: "無効な業種です",
   }),
-  displayServiceType: z.enum(serviceTypes).optional(),
+  displayServiceType: z.enum(serviceTypes).default("デリヘル"),
   status: z.enum(jobStatusTypes).default("draft"),
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
@@ -403,11 +403,11 @@ export const jobSchema = z.object({
   phoneNumber2: z.string().optional(),
   phoneNumber3: z.string().optional(),
   phoneNumber4: z.string().optional(),
-  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
-  contactSns: z.string().optional(),
-  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
-  minimumGuarantee: z.number().optional().nullable(),
-  maximumGuarantee: z.number().optional().nullable(),
+  contactEmail: z.string().optional().or(z.literal("")).transform(val => val || ""),
+  contactSns: z.string().optional().or(z.literal("")).transform(val => val || ""),
+  contactSnsUrl: z.string().optional().or(z.literal("")).transform(val => val || ""),
+  minimumGuarantee: z.number().nullable().optional(),
+  maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
 });
