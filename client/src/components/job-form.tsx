@@ -54,14 +54,19 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('Checking session...');
         const response = await fetch('/api/auth/check-session', {
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         });
         const data = await response.json();
-        console.log('Session check:', {
-          sessionData: data,
-          isAuthenticated: data.isAuthenticated,
-          user: data.user
+        console.log('Session check response:', {
+          status: response.status,
+          data,
+          headers: Object.fromEntries(response.headers.entries())
         });
 
         if (!data.isAuthenticated) {
@@ -124,6 +129,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         method: initialData ? "PUT" : "POST",
         headers: { 
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -137,7 +143,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorData
+          error: errorData,
+          headers: Object.fromEntries(response.headers.entries())
         });
         throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }

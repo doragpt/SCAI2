@@ -9,7 +9,7 @@ import { db } from './db';
 
 const app = express();
 
-// CORSの設定
+// CORSの設定（セッション管理のために重要）
 app.use(cors({
   origin: true,
   credentials: true,
