@@ -390,6 +390,7 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   displayServiceType: z.enum(serviceTypes).default("デリヘル"),
+  title: z.string().default(""),
   status: z.enum(jobStatusTypes).default("draft"),
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")

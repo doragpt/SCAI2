@@ -58,6 +58,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       displayServiceType: initialData?.displayServiceType || "デリヘル",
+      title: "", // 空文字列をデフォルト値として設定
       status: initialData?.status || "draft",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
@@ -85,7 +86,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   }, [initialData]);
 
-  // フォームの状態変更を監視
+  // フォームの状態変更を監視（デバッグ用）
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
       console.log('Form field updated:', { name, type, value });
@@ -101,7 +102,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       const response = await fetch("/api/jobs/basic-info", {
         method: initialData ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          title: data.mainCatch.substring(0, 50) // mainCatchの最初の50文字をtitleとして使用
+        }),
       });
 
       if (!response.ok) {
