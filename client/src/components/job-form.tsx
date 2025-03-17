@@ -1,6 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, prefectures, serviceTypes, type Job } from "@shared/schema";
+import { 
+  jobSchema, 
+  prefectures, 
+  serviceTypes, 
+  benefitTypes,
+  type Job 
+} from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,29 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
-import { type z } from "zod";
 
 type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
-  jobId: number | null;
   initialData?: Job;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-// 求人ステータスのオプション
-const statusOptions = [
-  { value: "draft", label: "下書き" },
-  { value: "published", label: "公開" },
-  { value: "closed", label: "締切" }
-] as const;
-
-export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProps) {
+export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -51,63 +50,48 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
     defaultValues: initialData || {
       title: "",
       status: "draft",
-      description: "",
+      mainCatch: "",
+      mainDescription: "",
+      imageDescription: "",
       businessName: "",
       location: "",
       serviceType: "",
-      workingHours: "",
-      minimumGuarantee: 0,
-      maximumGuarantee: 0,
-      transportationSupport: false,
-      housingSupport: false,
-      requirements: "",
-      qualifications: "",
-      benefits: "",
-      workingConditions: "",
+      selectedBenefits: [],
+      phoneNumber1: "",
+      phoneNumber2: "",
+      phoneNumber3: "",
+      phoneNumber4: "",
     }
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      console.log('Submitting job form:', {
-        jobId,
-        isUpdate: !!jobId,
-        data,
-        timestamp: new Date().toISOString()
-      });
-
-      const response = await fetch(jobId ? `/api/jobs/${jobId}` : "/api/jobs", {
-        method: jobId ? "PUT" : "POST",
+      const response = await fetch("/api/jobs/basic-info", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "求人情報の保存に失敗しました");
+        throw new Error(errorData.message || "基本情報の保存に失敗しました");
       }
 
-      return response.json() as Promise<Job>;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
       toast({
-        title: `求人情報を${jobId ? "更新" : "作成"}しました`,
+        title: "基本情報を保存しました",
         description: "変更内容が保存されました。",
       });
       onSuccess?.();
     },
     onError: (error) => {
-      console.error('Job form submission error:', {
-        error,
-        jobId,
-        timestamp: new Date().toISOString()
-      });
-
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "求人情報の保存に失敗しました",
+        description: error instanceof Error ? error.message : "基本情報の保存に失敗しました",
       });
     },
   });
@@ -118,236 +102,214 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>公開状態</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="公開状態を選択" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                下書き：保存のみ / 公開：求職者に表示 / 締切：非表示
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>求人タイトル</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="例：経験者優遇！高収入求人" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>仕事内容</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="仕事内容の詳細を入力してください"
-                  className="min-h-[120px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>勤務地</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* 店舗基本情報 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>店舗基本情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>店舗名</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="勤務地を選択" />
-                    </SelectTrigger>
+                    <Input {...field} placeholder="店舗名を入力してください" />
                   </FormControl>
-                  <SelectContent>
-                    {prefectures.map((pref) => (
-                      <SelectItem key={pref} value={pref}>
-                        {pref}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="serviceType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>業種</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+            <FormField
+              control={form.control}
+              name="serviceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>業種</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="業種を選択してください" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {serviceTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>勤務地</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="勤務地を選択してください" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {prefectures.map((pref) => (
+                        <SelectItem key={pref} value={pref}>
+                          {pref}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 求人情報 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>求人情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="mainCatch"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>キャッチコピー</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="業種を選択" />
-                    </SelectTrigger>
+                    <Input {...field} placeholder="魅力的なキャッチコピーを入力してください" />
                   </FormControl>
-                  <SelectContent>
-                    {serviceTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
+                  <FormDescription>
+                    300文字以内で入力してください
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mainDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>仕事内容</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="仕事内容の詳細を入力してください"
+                      className="min-h-[200px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 待遇情報 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>待遇情報</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="selectedBenefits"
+              render={() => (
+                <FormItem>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {benefitTypes.map((benefit) => (
+                      <FormField
+                        key={benefit}
+                        control={form.control}
+                        name="selectedBenefits"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={benefit}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(benefit)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, benefit])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== benefit
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {benefit}
+                              </FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
                     ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-        <FormField
-          control={form.control}
-          name="workingHours"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>勤務時間</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="例：10:00～翌5:00" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* 連絡先情報 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>連絡先情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="phoneNumber1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>電話番号1（必須）</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="tel" placeholder="例：03-1234-5678" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="minimumGuarantee"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>最低保証</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="例：30000"
-                    onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-                  />
-                </FormControl>
-                <FormDescription>1日の最低保証額を入力してください</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="maximumGuarantee"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>最高保証</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="例：50000"
-                    onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-                  />
-                </FormControl>
-                <FormDescription>1日の最高保証額を入力してください</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="requirements"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>応募資格</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="応募に必要な資格や条件を入力してください"
-                  className="min-h-[80px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="benefits"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>待遇・福利厚生</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="待遇や福利厚生の内容を入力してください"
-                  className="min-h-[80px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="workingConditions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>勤務条件</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="勤務条件の詳細を入力してください"
-                  className="min-h-[80px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            {/* 追加の電話番号フィールド（オプション） */}
+            {['phoneNumber2', 'phoneNumber3', 'phoneNumber4'].map((name, index) => (
+              <FormField
+                key={name}
+                control={form.control}
+                name={name as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>電話番号{index + 2}（任意）</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="tel" placeholder="例：03-1234-5678" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+          </CardContent>
+        </Card>
 
         <div className="flex justify-end gap-4">
           <Button
@@ -360,7 +322,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
           </Button>
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {jobId ? "更新する" : "作成する"}
+            保存する
           </Button>
         </div>
       </form>

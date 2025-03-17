@@ -77,6 +77,26 @@ export const estheOptions = [
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
 
+// 業態（待遇）の選択肢を定義
+export const benefitTypes = [
+  "交通費支給",
+  "寮完備",
+  "未経験者歓迎",
+  "講習費無料",
+  "託児所完備",
+  "制服貸与",
+  "自由出勤",
+  "日払い可能",
+  "送迎あり",
+  "個室待機",
+  "短期可能",
+  "長期休暇可能",
+  "昇給あり",
+  "ボーナスあり",
+  "保証制度あり",
+  "体験入店あり"
+] as const;
+
 // Type definitions
 export type Prefecture = typeof prefectures[number];
 export type ServiceType = typeof serviceTypes[number];
@@ -91,6 +111,8 @@ export type CommonNgOption = typeof commonNgOptions[number];
 export type EstheOption = typeof estheOptions[number];
 export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
+export type BenefitType = typeof benefitTypes[number];
+
 
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
@@ -459,12 +481,18 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "公開状態を選択してください",
     invalid_type_error: "無効な公開状態です",
   }),
-  workingHours: z.string().min(1, "勤務時間を入力してください"),
-  minimumGuarantee: z.number().min(0, "最低保証額を入力してください"),
-  maximumGuarantee: z.number().min(0, "最高保証額を入力してください"),
-  requirements: z.string().min(1, "応募資格を入力してください"),
-  benefits: z.string().min(1, "待遇・福利厚生を入力してください"),
-  workingConditions: z.string().min(1, "勤務条件を入力してください"),
+  mainCatch: z.string().min(1, "キャッチコピーを入力してください")
+    .max(300, "キャッチコピーは300文字以内で入力してください"),
+  mainDescription: z.string().min(1, "仕事内容を入力してください")
+    .max(9000, "仕事内容は9000文字以内で入力してください"),
+  imageDescription: z.string().max(900, "画像横の説明文は900文字以内で入力してください"),
+  selectedBenefits: z.array(z.enum(benefitTypes))
+    .min(1, "待遇を1つ以上選択してください"),
+  businessName: z.string().min(1, "店舗名を入力してください"),
+  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+  phoneNumber2: z.string().optional(),
+  phoneNumber3: z.string().optional(),
+  phoneNumber4: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -578,7 +606,7 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType };
 
 export interface JobListingResponse {
   jobs: Job[];
