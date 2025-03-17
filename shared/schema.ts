@@ -14,6 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
+// ServiceType関連の定義を更新
 export const serviceTypes = [
   "デリヘル",
   "ホテヘル",
@@ -350,6 +351,11 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+export type JobResponse = Job & {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+};
+
 
 // Schemas
 export const loginSchema = z.object({
@@ -405,11 +411,6 @@ export interface JobListingResponse {
     totalPages: number;
     totalItems: number;
   };
-}
-
-export interface JobResponse extends Job {
-  hasApplied?: boolean;
-  applicationStatus?: string;
 }
 
 export type UserResponse = {
@@ -658,7 +659,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };

@@ -40,7 +40,7 @@ import { useState } from "react";
 import { SEO } from "@/lib/seo";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BlockQuote } from "@/components/ui/blockquote";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -105,7 +105,7 @@ const formatSalary = (min?: number | null, max?: number | null): string => {
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 };
 
-// データの追加
+// お仕事ガイド
 const workGuides = [
   {
     title: "はじめての方へ",
@@ -129,13 +129,11 @@ const testimonials = [
     name: "Aさん (26歳)",
     role: "エステ",
     content: "未経験でも丁寧に教えていただき、今では安定した収入を得られています。",
-    image: "/testimonials/1.jpg",
   },
   {
     name: "Bさん (31歳)",
     role: "セラピスト",
     content: "子育て中でも柔軟なシフトで働けて助かっています。",
-    image: "/testimonials/2.jpg",
   },
 ];
 
@@ -211,7 +209,7 @@ const JobCard = ({ job }: { job: JobResponse }) => {
 
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<ServiceType | "all">("all");
   const { toast } = useToast();
 
   const { data: jobListings = [], isLoading: jobsLoading, error, refetch } = useQuery<JobResponse[]>({
@@ -236,6 +234,11 @@ export default function HomePage() {
     }
   });
 
+  const filteredListings = jobListings.filter(job => {
+    if (!job) return false;
+    return selectedType === "all" || job.serviceType === selectedType;
+  }).slice(0, 6);
+
   if (authLoading || jobsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -246,11 +249,6 @@ export default function HomePage() {
       </div>
     );
   }
-
-  const filteredListings = jobListings.filter(job => {
-    if (!job) return false;
-    return selectedType === "all" || job.serviceType === selectedType;
-  }).slice(0, 6);
 
   return (
     <>
@@ -348,7 +346,6 @@ export default function HomePage() {
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={testimonial.image} />
                           <AvatarFallback>
                             {testimonial.name.charAt(0)}
                           </AvatarFallback>
@@ -433,7 +430,7 @@ export default function HomePage() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Select value={selectedType} onValueChange={setSelectedType}>
+                      <Select value={selectedType} onValueChange={(value) => setSelectedType(value as ServiceType | "all")}>
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="業種を選択" />
                         </SelectTrigger>
