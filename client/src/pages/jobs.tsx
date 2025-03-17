@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, MapPin, Banknote } from "lucide-react";
+import { Loader2, Search, MapPin, Banknote, Check, Building2 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +16,12 @@ import {
   prefectures,
   serviceTypes,
   type ServiceType,
-  type Job
+  type JobResponse
 } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
-import { QUERY_KEYS, searchJobsQuery } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 
 // Animation variants
@@ -42,7 +41,7 @@ const item = {
 };
 
 // 求人カードコンポーネント
-const JobCard = ({ job }: { job: Job }) => {
+const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div variants={item}>
       <Link href={`/jobs/${job.id}`}>
@@ -51,7 +50,7 @@ const JobCard = ({ job }: { job: Job }) => {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-lg line-clamp-2">
-                  {job.business_name}
+                  {job.businessName}
                 </CardTitle>
                 <div className="flex items-center mt-1 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 mr-1" />
@@ -59,7 +58,7 @@ const JobCard = ({ job }: { job: Job }) => {
                 </div>
               </div>
               <Badge variant="outline" className="bg-primary/5">
-                {getServiceTypeLabel(job.service_type as ServiceType)}
+                {job.serviceType}
               </Badge>
             </div>
           </CardHeader>
@@ -67,22 +66,24 @@ const JobCard = ({ job }: { job: Job }) => {
             <div className="space-y-4">
               <div className="flex items-center text-primary font-semibold">
                 <Banknote className="h-5 w-5 mr-2" />
-                日給 {formatSalary(job.minimum_guarantee, job.maximum_guarantee)}
+                日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
               </div>
               <div className="flex flex-wrap gap-2">
-                {job.transportation_support && (
+                {job.transportationSupport && (
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Check className="h-3.5 w-3.5 mr-1" />
                     交通費支給
                   </Badge>
                 )}
-                {job.housing_support && (
+                {job.housingSupport && (
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Building2 className="h-3.5 w-3.5 mr-1" />
                     寮完備
                   </Badge>
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
-                {formatDate(job.created_at)}
+                {formatDate(job.createdAt)}
               </div>
             </div>
           </CardContent>
@@ -97,29 +98,48 @@ export default function Jobs() {
   const [location, setLocation] = useState<string>("all");
   const [serviceType, setServiceType] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const limit = 12; // 1ページあたりの表示件数
+  const limit = 12;
 
-  // URLパラメータからフィルター状態を復元
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const locationParam = params.get("location") || "all";
     const serviceTypeParam = params.get("serviceType") || "all";
-    const pageParam = params.get("page");
+    const pageParam = parseInt(params.get("page") || "1");
 
     setLocation(locationParam);
     setServiceType(serviceTypeParam);
-    if (pageParam) setPage(parseInt(pageParam));
+    setPage(pageParam);
   }, []);
 
-  const {
-    data: response,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: [QUERY_KEYS.JOBS_SEARCH, { location, serviceType, page, limit }],
-    queryFn: () => searchJobsQuery({ location, serviceType, page, limit }),
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["jobs", { page, limit, location, serviceType }],
+    queryFn: async () => {
+      try {
+        console.log('Fetching jobs data...', { page, limit, location, serviceType });
+        const url = new URL("/api/jobs/public", window.location.origin);
+        url.searchParams.append("page", page.toString());
+        url.searchParams.append("limit", limit.toString());
+        if (location !== "all") url.searchParams.append("location", location);
+        if (serviceType !== "all") url.searchParams.append("serviceType", serviceType);
+
+        const response = await fetch(url);
+        console.log('API Response:', response);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          throw new Error("求人情報の取得に失敗しました");
+        }
+
+        const result = await response.json();
+        console.log('Jobs API Response:', result);
+        return result;
+      } catch (error) {
+        console.error("求人情報取得エラー:", error);
+        throw error;
+      }
+    },
     onError: (error: Error) => {
-      console.error("求人情報取得エラー:", error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -127,11 +147,6 @@ export default function Jobs() {
       });
     }
   });
-
-  // フィルター変更時にページをリセット
-  useEffect(() => {
-    setPage(1);
-  }, [location, serviceType]);
 
   return (
     <div className="space-y-8">
@@ -173,7 +188,7 @@ export default function Jobs() {
             <SelectItem value="all">全ての業種</SelectItem>
             {serviceTypes.map((type) => (
               <SelectItem key={type} value={type}>
-                {getServiceTypeLabel(type as ServiceType)}
+                {type}
               </SelectItem>
             ))}
           </SelectContent>
@@ -185,7 +200,7 @@ export default function Jobs() {
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : !response?.jobs.length ? (
+      ) : !response?.jobs?.length ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
             条件に合う求人が見つかりませんでした
@@ -203,12 +218,11 @@ export default function Jobs() {
             animate="show"
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
-            {response.jobs.map((job) => (
+            {response.jobs.map((job: JobResponse) => (
               <JobCard key={job.id} job={job} />
             ))}
           </motion.div>
 
-          {/* ページネーション */}
           {response.pagination.totalPages > 1 && (
             <div className="mt-8 flex justify-center">
               <Pagination
