@@ -32,41 +32,89 @@ export const phoneTypes = [
 
 // 待遇のカテゴリー定義
 export const benefitCategories = {
-  salary: "給与・待遇",
-  workStyle: "勤務スタイル",
-  facility: "施設・サポート"
+  interview: "面接・入店前",
+  workStyle: "働き方自由",
+  salary: "お給料目安",
+  bonus: "お給料+α",
+  facility: "お店の環境",
+  requirements: "採用について"
 } as const;
 
 // 待遇項目の定義（カテゴリー別）
 export const benefitTypes = {
-  salary: [
-    "日払い可能",
-    "体験入店あり",
-    "保証制度あり",
-    "ボーナスあり",
-    "昇給あり",
+  interview: [
+    "見学だけでもOK",
+    "体験入店OK",
+    "店外面接OK",
+    "面接交通費支給",
+    "友達と面接OK",
+    "オンライン面接OK",
+    "写メ面接OK",
+    "即日勤務OK",
+    "入店特典あり"
   ],
   workStyle: [
-    "自由出勤",
-    "短期可能",
-    "長期休暇可能",
-    "未経験者歓迎",
+    "自由出勤OK",
+    "週1日〜OK",
+    "週3日以上歓迎",
+    "週5日以上歓迎",
+    "土日だけOK",
+    "1日3時間〜OK",
+    "短期OK",
+    "長期休暇OK",
+    "掛け持ちOK"
+  ],
+  salary: [
+    "日給2万円以上",
+    "日給3万円以上",
+    "日給4万円以上",
+    "日給5万円以上",
+    "日給6万円以上",
+    "日給7万円以上",
+  ],
+  bonus: [
+    "バック率50%以上",
+    "バック率60%以上",
+    "バック率70%以上",
+    "完全日払いOK",
+    "保証制度あり",
+    "指名バックあり",
+    "オプションバックあり",
+    "ボーナスあり"
   ],
   facility: [
-    "寮完備",
-    "託児所完備",
-    "制服貸与",
     "送迎あり",
+    "駅チカ",
+    "駐車場完備",
     "個室待機",
-    "交通費支給",
+    "アリバイ対策OK",
+    "寮完備",
+    "託児所あり",
+    "制服貸与",
+    "食事支給"
   ],
+  requirements: [
+    "未経験大歓迎",
+    "経験者優遇",
+    "主婦・人妻歓迎",
+    "学生さん歓迎",
+    "20代活躍中",
+    "30代活躍中",
+    "40代以上歓迎",
+    "スリム体型",
+    "グラマー体型",
+    "tattoo(小)OK"
+  ]
 } as const;
 
 // フラットな待遇リストの生成（型定義用）
 export const allBenefitTypes = [
-  ...benefitTypes.salary,
+  ...benefitTypes.interview,
   ...benefitTypes.workStyle,
+  ...benefitTypes.salary,
+  ...benefitTypes.bonus,
   ...benefitTypes.facility,
+  ...benefitTypes.requirements,
 ] as const;
 
 // Type definitions
@@ -653,6 +701,7 @@ export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
