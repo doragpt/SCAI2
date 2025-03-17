@@ -217,12 +217,18 @@ export default function HomePage() {
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: async () => {
       try {
+        console.log('Fetching jobs data...'); // デバッグログ追加
         const response = await fetch("/api/jobs");
+        console.log('API Response:', response); // デバッグログ追加
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText); // デバッグログ追加
           throw new Error("求人情報の取得に失敗しました");
         }
+
         const result = await response.json();
-        console.log("Jobs API Response:", result);
+        console.log('Jobs API Response:', result);
         return result;
       } catch (error) {
         console.error("求人情報取得エラー:", error);
