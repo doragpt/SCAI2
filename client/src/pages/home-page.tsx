@@ -213,7 +213,7 @@ export default function HomePage() {
   const [selectedType, setSelectedType] = useState<ServiceType | "all">("all");
   const { toast } = useToast();
 
-  const { data: jobListings = [], isLoading: jobsLoading, error, refetch } = useQuery<JobResponse[]>({
+  const { data, isLoading: jobsLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: async () => {
       try {
@@ -221,19 +221,17 @@ export default function HomePage() {
         if (!response.ok) {
           throw new Error("求人情報の取得に失敗しました");
         }
-        const data = await response.json();
-        return data.jobs;
+        const result = await response.json();
+        console.log("Jobs API Response:", result); // デバッグ用ログ
+        return result;
       } catch (error) {
         console.error("求人情報取得エラー:", error);
-        toast({
-          variant: "destructive",
-          title: "エラーが発生しました",
-          description: error instanceof Error ? error.message : "求人情報の取得に失敗しました"
-        });
-        return [];
+        throw error;
       }
     }
   });
+
+  const jobListings = data?.jobs || [];
 
   const filteredListings = jobListings.filter(job => {
     if (!job) return false;
