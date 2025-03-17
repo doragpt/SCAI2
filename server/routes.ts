@@ -6,6 +6,7 @@ import blogRoutes from './routes/blog';
 import dashboardRoutes from './routes/dashboard';
 import { log } from './utils/logger';
 import multer from "multer";
+import { errorHandler } from './middleware/errorHandler';
 
 // Multerの設定
 const upload = multer({
@@ -33,7 +34,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       query: req.query,
       body: req.method !== 'GET' ? req.body : undefined
     });
-    res.setHeader("Content-Type", "application/json");
     next();
   });
 
@@ -43,17 +43,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/blog', blogRoutes);
   app.use('/api/store/dashboard', dashboardRoutes);
 
-  // 共通のエラーハンドリング
-  app.use((err: Error, req: any, res: any, next: any) => {
-    log('error', 'APIエラー', {
-      error: err instanceof Error ? err.message : 'Unknown error',
-      path: req.path,
-      method: req.method
-    });
-    res.status(500).json({
-      message: process.env.NODE_ENV === 'development' ? err.message : '内部サーバーエラー'
-    });
-  });
+  // エラーハンドリングミドルウェアを最後に登録
+  app.use(errorHandler);
 
   return server;
 }

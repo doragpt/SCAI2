@@ -222,7 +222,7 @@ export default function HomePage() {
           throw new Error("求人情報の取得に失敗しました");
         }
         const result = await response.json();
-        console.log("Jobs API Response:", result); // デバッグ用ログ
+        console.log("Jobs API Response:", result);
         return result;
       } catch (error) {
         console.error("求人情報取得エラー:", error);

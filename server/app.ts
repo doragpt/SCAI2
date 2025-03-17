@@ -34,13 +34,18 @@ app.use('/api/*', (req, res, next) => {
   });
 
   // APIリクエストには必ずJSONを返す
-  res.setHeader('Content-Type', 'application/json');
+  res.type('application/json');
   next();
 });
 
-// APIルートの登録（Viteミドルウェアの前に配置）
+// APIルートの登録（最初に配置）
 app.use('/api/talent', talentRouter);
-registerRoutes(app);
+registerRoutes(app).catch(error => {
+  log('error', 'ルート登録エラー', {
+    error: error instanceof Error ? error.message : 'Unknown error'
+  });
+  process.exit(1);
+});
 
 // グローバルエラーハンドラーの設定
 app.use(errorHandler);

@@ -46,25 +46,20 @@ process.env.NODE_ENV = "development";
     // HTTPサーバーの作成
     const server = createServer(app);
 
+    // 開発環境の場合のみViteミドルウェアを設定
     if (process.env.NODE_ENV === "development") {
-      // 開発環境: Viteミドルウェアを設定（APIルートの後に配置）
       log('info', 'Viteミドルウェアのセットアップを開始');
-      const viteStartTime = Date.now();
-
       try {
         await setupVite(app, server);
-        log('info', 'Viteセットアップ完了', {
-          duration: Date.now() - viteStartTime
-        });
+        log('info', 'Viteセットアップ完了');
       } catch (error) {
         log('error', 'Viteセットアップ失敗', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
         throw error;
       }
     } else {
-      // 本番環境: 静的ファイルの提供
+      // 本番環境では静的ファイルを提供
       serveStatic(app);
     }
 
@@ -75,14 +70,8 @@ process.env.NODE_ENV = "development";
         totalStartupTime: Date.now() - startTime
       });
 
-      // cronジョブは非同期で遅延セットアップ
-      setTimeout(() => {
-        const cronStartTime = Date.now();
-        setupCronJobs();
-        log('info', 'Cronジョブのセットアップ完了', {
-          duration: Date.now() - cronStartTime
-        });
-      }, 5000);
+      // cronジョブのセットアップ
+      setupCronJobs();
     });
   } catch (error) {
     log('error', "致命的な起動エラー", {
