@@ -76,6 +76,10 @@ const blogStatusLabels = {
 interface DashboardStats {
   activeJobsCount: number;
   totalApplicationsCount: number;
+  draftJobsCount?: number;
+  closedJobsCount?: number;
+  pendingApplicationsCount?: number;
+  completedApplicationsCount?: number;
   // 将来的な拡張のためのフィールド
   // pageViews?: number;
   // uniqueVisitors?: number;
@@ -237,16 +241,37 @@ export default function StoreDashboard() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileEdit className="h-5 w-5 text-primary" />
-                    求人数
+                    求人管理状況
                   </CardTitle>
+                  <CardDescription>
+                    公開中の求人と作成した求人の総数
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">
-                    {stats?.activeJobsCount || 0}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-bold text-primary">
+                        {stats?.activeJobsCount || 0}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        現在公開中の求人数
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                      <div>
+                        <div className="text-sm font-medium">下書き</div>
+                        <div className="text-2xl font-semibold text-muted-foreground">
+                          {stats?.draftJobsCount || 0}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">締切済</div>
+                        <div className="text-2xl font-semibold text-muted-foreground">
+                          {stats?.closedJobsCount || 0}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    公開中の求人
-                  </p>
                 </CardContent>
               </Card>
 
@@ -254,16 +279,37 @@ export default function StoreDashboard() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
-                    応募者数
+                    応募状況
                   </CardTitle>
+                  <CardDescription>
+                    求人への応募状況と対応状況
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">
-                    {stats?.totalApplicationsCount || 0}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-bold text-primary">
+                        {stats?.totalApplicationsCount || 0}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        これまでの総応募数
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                      <div>
+                        <div className="text-sm font-medium">未対応</div>
+                        <div className="text-2xl font-semibold text-yellow-600">
+                          {stats?.pendingApplicationsCount || 0}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">対応済</div>
+                        <div className="text-2xl font-semibold text-green-600">
+                          {stats?.completedApplicationsCount || 0}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    総応募数
-                  </p>
                 </CardContent>
               </Card>
             </div>
