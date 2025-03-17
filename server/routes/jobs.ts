@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth';
 import { db } from '../db';
 import { jobs } from '@shared/schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
@@ -30,12 +29,13 @@ router.get("/", async (_req, res) => {
 
     log('info', 'パブリック求人一覧取得成功', {
       count: jobListings.length,
-      firstJobId: jobListings[0]?.id,
       timestamp: new Date().toISOString()
     });
 
-    // レスポンスの送信
-    return res.status(200).json({ 
+    // クエリ結果をログに出力（デバッグ用）
+    console.log('Jobs Query Result:', jobListings);
+
+    return res.json({
       jobs: jobListings,
       pagination: {
         currentPage: 1,
@@ -48,36 +48,6 @@ router.get("/", async (_req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
-    });
-    return res.status(500).json({ message: "求人情報の取得に失敗しました" });
-  }
-});
-
-// 店舗の求人一覧取得（認証必要）
-router.get("/store", authenticate, async (req: any, res) => {
-  try {
-    if (!req.user?.id || req.user.role !== "store") {
-      return res.status(403).json({ message: "店舗アカウントのみアクセス可能です" });
-    }
-
-    const jobListings = await db
-      .select()
-      .from(jobs)
-      .where(eq(jobs.storeId, req.user.id))
-      .orderBy(desc(jobs.createdAt));
-
-    return res.json({
-      jobs: jobListings,
-      pagination: {
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: jobListings.length
-      }
-    });
-  } catch (error) {
-    log('error', '店舗求人情報取得エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id
     });
     return res.status(500).json({ message: "求人情報の取得に失敗しました" });
   }

@@ -21,10 +21,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 認証セットアップ（セッション設定含む）
+// 認証セットアップ
 setupAuth(app);
 
-// APIリクエストの処理を最優先で設定
+// APIミドルウェア
 app.use('/api', (req, res, next) => {
   log('info', 'APIリクエスト受信', {
     method: req.method,
@@ -32,13 +32,10 @@ app.use('/api', (req, res, next) => {
     query: req.query,
     body: req.method !== 'GET' ? req.body : undefined
   });
-
-  // APIリクエストには必ずJSONを返すように設定
-  res.set('Content-Type', 'application/json');
   next();
 });
 
-// APIルートを先に登録
+// APIルートの登録
 app.use('/api/talent', talentRouter);
 
 // その他のAPIルートを登録
@@ -50,21 +47,10 @@ registerRoutes(app).catch(error => {
   process.exit(1);
 });
 
-// エラーハンドリングの設定
+// エラーハンドリング
 app.use(errorHandler);
 
-// 認証エラー時のJSONレスポンス
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (err.name === 'UnauthorizedError' || err.status === 401) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: '認証が必要です'
-    });
-  }
-  next(err);
-});
-
-// キャッチオールミドルウェア（APIルートにマッチしなかった場合）
+// APIルートが見つからない場合のハンドラー
 app.use('/api/*', (req, res) => {
   log('warn', 'APIルートが見つかりません', {
     method: req.method,
