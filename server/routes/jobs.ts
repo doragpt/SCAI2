@@ -17,7 +17,19 @@ router.get("/", async (_req, res) => {
 
     // データベースクエリの実行
     const jobListings = await db
-      .select()
+      .select({
+        id: jobs.id,
+        businessName: jobs.businessName,
+        location: jobs.location,
+        serviceType: jobs.serviceType,
+        title: jobs.title,
+        minimumGuarantee: jobs.minimumGuarantee,
+        maximumGuarantee: jobs.maximumGuarantee,
+        selectedBenefits: jobs.selectedBenefits,
+        status: jobs.status,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt
+      })
       .from(jobs)
       .where(
         and(

@@ -137,7 +137,7 @@ const testimonials = [
   },
 ];
 
-// JobCardコンポーネントの型定義を修正
+// JobCardコンポーネントの修正
 const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div
@@ -160,12 +160,12 @@ const JobCard = ({ job }: { job: JobResponse }) => {
             <HoverCard>
               <HoverCardTrigger>
                 <Badge variant="outline" className="bg-primary/5">
-                  {job.displayServiceType}
+                  {job.serviceType}
                 </Badge>
               </HoverCardTrigger>
               <HoverCardContent>
                 <p className="text-sm">
-                  {job.displayServiceType}に関する求人です
+                  {job.serviceType}に関する求人です
                 </p>
               </HoverCardContent>
             </HoverCard>
