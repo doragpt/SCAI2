@@ -380,7 +380,6 @@ export const loginSchema = z.object({
 
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
-  title: z.string().min(1, "タイトルを入力してください"),
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
     required_error: "勤務地を選択してください",

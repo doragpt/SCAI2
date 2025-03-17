@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  jobSchema, 
-  prefectures, 
+import {
+  jobSchema,
+  prefectures,
   serviceTypes,
   benefitTypes,
   benefitCategories,
-  type Job 
+  type Job
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,14 +54,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
-      title: initialData?.title || "",
-      status: initialData?.status || "draft",
-      mainCatch: initialData?.mainCatch || "",
-      mainDescription: initialData?.mainDescription || "",
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       displayServiceType: initialData?.displayServiceType || "デリヘル",
+      status: initialData?.status || "draft",
+      mainCatch: initialData?.mainCatch || "",
+      mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
       phoneNumber1: initialData?.phoneNumber1 || "",
       phoneNumber2: initialData?.phoneNumber2 || "",
@@ -130,7 +129,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* 基本情報 */}
+        {/* 店舗基本情報 */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-bold">店舗基本情報</CardTitle>
@@ -138,24 +137,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium">求人タイトル</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="求人タイトルを入力してください" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="businessName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">店名</FormLabel>
+                  <FormLabel className="font-medium">店舗名</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="店舗名を入力してください" />
                   </FormControl>
@@ -429,10 +414,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           >
             キャンセル
           </Button>
-          <Button 
-            type="submit" 
-            disabled={isPending}
-          >
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
           </Button>
