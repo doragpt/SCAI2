@@ -455,8 +455,16 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "サービスタイプを選択してください",
     invalid_type_error: "無効なサービスタイプです",
   }),
-  salary: z.string().min(1, "給与を入力してください"),
+  status: z.enum(["draft", "published", "closed"], {
+    required_error: "公開状態を選択してください",
+    invalid_type_error: "無効な公開状態です",
+  }),
   workingHours: z.string().min(1, "勤務時間を入力してください"),
+  minimumGuarantee: z.number().min(0, "最低保証額を入力してください"),
+  maximumGuarantee: z.number().min(0, "最高保証額を入力してください"),
+  requirements: z.string().min(1, "応募資格を入力してください"),
+  benefits: z.string().min(1, "待遇・福利厚生を入力してください"),
+  workingConditions: z.string().min(1, "勤務条件を入力してください"),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {

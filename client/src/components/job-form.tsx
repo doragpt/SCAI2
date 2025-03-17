@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, prefectures, serviceTypes, type Job, type InsertJob } from "@shared/schema";
+import { jobSchema, prefectures, serviceTypes, type Job } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +35,13 @@ type JobFormProps = {
   onCancel?: () => void;
 };
 
+// 求人ステータスのオプション
+const statusOptions = [
+  { value: "draft", label: "下書き" },
+  { value: "published", label: "公開" },
+  { value: "closed", label: "締切" }
+] as const;
+
 export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,8 +50,9 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
     resolver: zodResolver(jobSchema),
     defaultValues: initialData || {
       title: "",
-      catchPhrase: "",
+      status: "draft",
       description: "",
+      businessName: "",
       location: "",
       serviceType: "",
       workingHours: "",
@@ -53,13 +60,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
       maximumGuarantee: 0,
       transportationSupport: false,
       housingSupport: false,
-      requirements: {
-        ageMin: 18,
-        ageMax: 99,
-        specMin: undefined,
-        specMax: undefined,
-        otherConditions: [],
-      },
+      requirements: "",
       qualifications: "",
       benefits: "",
       workingConditions: "",
@@ -71,6 +72,7 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
       console.log('Submitting job form:', {
         jobId,
         isUpdate: !!jobId,
+        data,
         timestamp: new Date().toISOString()
       });
 
@@ -119,6 +121,37 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>公開状態</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="公開状態を選択" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                下書き：保存のみ / 公開：求職者に表示 / 締切：非表示
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -130,21 +163,6 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="catchPhrase"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>キャッチフレーズ</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="例：未経験者も安心！充実した研修制度あり" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="description"
@@ -277,53 +295,9 @@ export function JobForm({ jobId, initialData, onSuccess, onCancel }: JobFormProp
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="transportationSupport"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>交通費支給</FormLabel>
-                  <FormDescription>
-                    交通費の支給がある場合はオンにしてください
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="housingSupport"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>寮完備</FormLabel>
-                  <FormDescription>
-                    寮の完備がある場合はオンにしてください
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
         <FormField
           control={form.control}
-          name="qualifications"
+          name="requirements"
           render={({ field }) => (
             <FormItem>
               <FormLabel>応募資格</FormLabel>
