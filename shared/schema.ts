@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -212,11 +212,22 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  displayServiceType: text("display_service_type", { enum: serviceTypes }),
   title: text("title").notNull(),
+  mainCatch: text("main_catch").notNull(),
+  mainDescription: text("main_description").notNull(),
+  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
+  phoneNumber1: text("phone_number_1").notNull(),
+  phoneNumber2: text("phone_number_2"),
+  phoneNumber3: text("phone_number_3"),
+  phoneNumber4: text("phone_number_4"),
+  contactEmail: text("contact_email"),
+  contactSns: text("contact_sns"),
+  contactSnsUrl: text("contact_sns_url"),
   status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -378,13 +389,19 @@ export const jobSchema = createInsertSchema(jobs, {
     required_error: "業種を選択してください",
     invalid_type_error: "無効な業種です",
   }),
+  displayServiceType: z.enum(serviceTypes, {
+    required_error: "表示する業種を選択してください",
+    invalid_type_error: "無効な業種です",
+  }).optional(),
   status: z.enum(jobStatusTypes, {
     required_error: "公開状態を選択してください",
     invalid_type_error: "無効な公開状態です",
   }),
-  mainCatch: z.string().min(1, "キャッチコピーを入力してください")
+  mainCatch: z.string()
+    .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string().min(1, "仕事内容を入力してください")
+  mainDescription: z.string()
+    .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes))
     .min(1, "待遇を1つ以上選択してください"),

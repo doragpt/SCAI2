@@ -54,13 +54,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     resolver: zodResolver(jobSchema),
     defaultValues: initialData || {
       title: "",
-      status: "draft",
+      status: "draft" as const,
       mainCatch: "",
       mainDescription: "",
       businessName: "",
-      location: "",
-      serviceType: "",
-      displayServiceType: "",
+      location: "東京都" as const, // 初期値を有効な都道府県に設定
+      serviceType: "デリヘル" as const, // 初期値を有効なサービスタイプに設定
+      displayServiceType: "デリヘル" as const,
       selectedBenefits: [],
       phoneNumber1: "",
       phoneNumber2: "",
@@ -68,12 +68,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       phoneNumber4: "",
       contactEmail: "",
       contactSns: "",
-      contactSnsUrl: ""
+      contactSnsUrl: "",
+      minimumGuarantee: undefined,
+      maximumGuarantee: undefined,
+      transportationSupport: false,
+      housingSupport: false
     }
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: typeof form.getValues) => {
       const response = await fetch("/api/jobs/basic-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,7 +108,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = (data: typeof form.getValues) => {
     mutate(data);
   };
 
@@ -137,7 +141,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">業種（検索用）</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="業種を選択してください" />
@@ -162,7 +166,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">業種（表示用）</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="表示する業種を選択してください" />
