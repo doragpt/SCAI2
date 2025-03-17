@@ -66,6 +66,7 @@ function useLoginMutation() {
 function useLogoutMutation() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth(); // 現在のユーザー情報を取得
 
   return useMutation({
     mutationFn: async () => {
@@ -75,13 +76,22 @@ function useLogoutMutation() {
       }
     },
     onSuccess: () => {
+      // ログアウト前のユーザーロールに基づいてリダイレクト
+      const role = user?.role;
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
+
       toast({
         title: "ログアウト完了",
         description: "ログアウトしました。",
       });
-      setLocation("/auth");
+
+      // ユーザーの種類に応じてリダイレクト先を変更
+      if (role === "store") {
+        setLocation("/manager/login");
+      } else {
+        setLocation("/auth");
+      }
     },
     onError: (error: Error) => {
       toast({
