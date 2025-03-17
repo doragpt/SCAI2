@@ -172,11 +172,15 @@ export function setupAuth(app: Express) {
   // ログアウトAPI
   app.post("/api/logout", (req, res) => {
     try {
+      const userRole = req.user?.role; // ログアウト前にロールを保存
+
       if (req.user) {
         log('info', 'ログアウトリクエスト受信', {
-          userId: req.user.id
+          userId: req.user.id,
+          role: userRole
         });
       }
+
       req.logout((err) => {
         if (err) {
           log('error', 'ログアウトエラー', { error: err });
@@ -188,7 +192,10 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "セッションの破棄に失敗しました" });
           }
           res.clearCookie('connect.sid');
-          return res.status(200).json({ message: "ログアウトしました" });
+          return res.status(200).json({ 
+            message: "ログアウトしました",
+            role: userRole // ログアウト前のロールを返す
+          });
         });
       });
     } catch (error) {
