@@ -76,7 +76,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   });
 
-  // デバッグ用: フォームの状態変更を監視
+  useEffect(() => {
+    if (initialData?.mainCatch) {
+      setMainCatchLength(initialData.mainCatch.length);
+    }
+    if (initialData?.mainDescription) {
+      setMainDescriptionLength(initialData.mainDescription.length);
+    }
+  }, [initialData]);
+
+  // フォームの状態変更を監視
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
       console.log('Form field updated:', { name, type, value });
@@ -90,7 +99,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mutationFn: async (data: JobFormData) => {
       console.log('Submitting data:', data);
       const response = await fetch("/api/jobs/basic-info", {
-        method: "POST",
+        method: initialData ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -264,7 +273,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardHeader>
             <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent>
             <FormField
               control={form.control}
               name="selectedBenefits"
