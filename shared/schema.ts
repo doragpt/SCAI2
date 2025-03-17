@@ -23,6 +23,33 @@ export const serviceTypes = [
   "メンズエステ"
 ] as const;
 
+// 電話種別の選択肢を定義
+export const phoneTypes = [
+  "通常電話",
+  "フリーダイヤル",
+  "フリーコール"
+] as const;
+
+// 業態（待遇）の選択肢を定義
+export const benefitTypes = [
+  "交通費支給",
+  "寮完備",
+  "未経験者歓迎",
+  "講習費無料",
+  "託児所完備",
+  "制服貸与",
+  "自由出勤",
+  "日払い可能",
+  "送迎あり",
+  "個室待機",
+  "短期可能",
+  "長期休暇可能",
+  "昇給あり",
+  "ボーナスあり",
+  "保証制度あり",
+  "体験入店あり"
+] as const;
+
 export const photoTags = [
   "現在の髪色",
   "タトゥー",
@@ -77,25 +104,6 @@ export const estheOptions = [
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
 
-// 業態（待遇）の選択肢を定義
-export const benefitTypes = [
-  "交通費支給",
-  "寮完備",
-  "未経験者歓迎",
-  "講習費無料",
-  "託児所完備",
-  "制服貸与",
-  "自由出勤",
-  "日払い可能",
-  "送迎あり",
-  "個室待機",
-  "短期可能",
-  "長期休暇可能",
-  "昇給あり",
-  "ボーナスあり",
-  "保証制度あり",
-  "体験入店あり"
-] as const;
 
 // Type definitions
 export type Prefecture = typeof prefectures[number];
@@ -112,6 +120,7 @@ export type EstheOption = typeof estheOptions[number];
 export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof benefitTypes[number];
+export type PhoneType = typeof phoneTypes[number];
 
 
 // Service Type Labels
@@ -159,6 +168,7 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
+  displayServiceType: text("display_service_type", { enum: serviceTypes }).notNull(), // Added displayServiceType
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
@@ -175,6 +185,18 @@ export const jobs = pgTable("jobs", {
   workingConditions: text("working_conditions"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  phoneNumber1: text("phone_number_1").notNull(), // Added phone number fields
+  phoneType1: text("phone_type_1", { enum: phoneTypes }).notNull(), // Added phone type fields
+  phoneNumber2: text("phone_number_2"),
+  phoneType2: text("phone_type_2", { enum: phoneTypes }),
+  phoneNumber3: text("phone_number_3"),
+  phoneType3: text("phone_type_3", { enum: phoneTypes }),
+  phoneNumber4: text("phone_number_4"),
+  phoneType4: text("phone_type_4", { enum: phoneTypes }),
+  mainCatch: text("main_catch"), //Added mainCatch
+  mainDescription: text("main_description"), //Added mainDescription
+  imageDescription: text("image_description"), //Added imageDescription
+  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(), //Added selectedBenefits
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
   serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
@@ -468,14 +490,18 @@ export const userSchema = createInsertSchema(users, {
 
 export const jobSchema = createInsertSchema(jobs, {
   title: z.string().min(1, "タイトルを入力してください"),
-  description: z.string().min(1, "詳細を入力してください"),
+  businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
     required_error: "勤務地を選択してください",
     invalid_type_error: "無効な勤務地です",
   }),
   serviceType: z.enum(serviceTypes, {
-    required_error: "サービスタイプを選択してください",
-    invalid_type_error: "無効なサービスタイプです",
+    required_error: "業種を選択してください",
+    invalid_type_error: "無効な業種です",
+  }),
+  displayServiceType: z.enum(serviceTypes, {
+    required_error: "表示用業種を選択してください",
+    invalid_type_error: "無効な業種です",
   }),
   status: z.enum(["draft", "published", "closed"], {
     required_error: "公開状態を選択してください",
@@ -488,11 +514,16 @@ export const jobSchema = createInsertSchema(jobs, {
   imageDescription: z.string().max(900, "画像横の説明文は900文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(benefitTypes))
     .min(1, "待遇を1つ以上選択してください"),
-  businessName: z.string().min(1, "店舗名を入力してください"),
   phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+  phoneType1: z.enum(phoneTypes, {
+    required_error: "電話種別を選択してください",
+  }),
   phoneNumber2: z.string().optional(),
+  phoneType2: z.enum(phoneTypes).optional(),
   phoneNumber3: z.string().optional(),
+  phoneType3: z.enum(phoneTypes).optional(),
   phoneNumber4: z.string().optional(),
+  phoneType4: z.enum(phoneTypes).optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -606,7 +637,7 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication, KeepList, InsertKeepList, ViewHistory, InsertViewHistory };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, PhoneType };
 
 export interface JobListingResponse {
   jobs: Job[];

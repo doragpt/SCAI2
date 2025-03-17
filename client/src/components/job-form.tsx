@@ -3,7 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   jobSchema, 
   prefectures, 
-  serviceTypes, 
+  serviceTypes,
+  phoneTypes,
   benefitTypes,
   type Job 
 } from "@shared/schema";
@@ -63,11 +64,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       businessName: "",
       location: "",
       serviceType: "",
+      displayServiceType: "",
       selectedBenefits: [],
       phoneNumber1: "",
+      phoneType1: "通常電話",
       phoneNumber2: "",
+      phoneType2: undefined,
       phoneNumber3: "",
+      phoneType3: undefined,
       phoneNumber4: "",
+      phoneType4: undefined,
     }
   });
 
@@ -154,6 +160,31 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="displayServiceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">業種（表示用）</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="表示する業種を選択してください" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {serviceTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
@@ -196,12 +227,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">
-                    <span className="text-red-500">必須</span> 仕事内容
+                    <span className="text-red-500">必須</span> 仕事情報
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="ここに仕事内容を入力してください(全角3000文字・半角9000文字)"
+                      placeholder="ここに仕事情報を入力してください(全角3000文字・半角9000文字)"
                       className="min-h-[200px]"
                       onChange={(e) => {
                         field.onChange(e);
@@ -231,12 +262,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">
-                    <span className="text-red-500">必須</span> 画像横の説明文
+                    <span className="text-red-500">必須</span> 画像横文言
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="ここに画像横の説明文を入力してください(900文字以内)"
+                      placeholder="ここに画像横文言を入力してください(900文字以内)"
                       className="min-h-[150px]"
                       onChange={(e) => {
                         field.onChange(e);
@@ -316,30 +347,39 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <CardTitle className="text-lg font-bold">連絡先情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="phoneNumber1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium">
-                    <span className="text-red-500">必須</span> 電話番号1
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} type="tel" placeholder="例：03-1234-5678" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {['phoneNumber2', 'phoneNumber3', 'phoneNumber4'].map((name, index) => (
+            <div className="flex gap-4">
               <FormField
-                key={name}
                 control={form.control}
-                name={name as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
+                name="phoneType1"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-medium">電話番号{index + 2}（任意）</FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel className="font-medium">
+                      <span className="text-red-500">必須</span> 電話種別1
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="電話種別を選択" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {phoneTypes.map((type) => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phoneNumber1"
+                render={({ field }) => (
+                  <FormItem className="flex-[2]">
+                    <FormLabel className="font-medium">
+                      <span className="text-red-500">必須</span> 電話番号1
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} type="tel" placeholder="例：03-1234-5678" />
                     </FormControl>
@@ -347,6 +387,46 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   </FormItem>
                 )}
               />
+            </div>
+
+            {[2, 3, 4].map((num) => (
+              <div key={num} className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name={`phoneType${num}` as "phoneType2" | "phoneType3" | "phoneType4"}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="font-medium">電話種別{num}（任意）</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="電話種別を選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {phoneTypes.map((type) => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`phoneNumber${num}` as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
+                  render={({ field }) => (
+                    <FormItem className="flex-[2]">
+                      <FormLabel className="font-medium">電話番号{num}（任意）</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="tel" placeholder="例：03-1234-5678" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             ))}
           </CardContent>
         </Card>
