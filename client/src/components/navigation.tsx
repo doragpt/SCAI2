@@ -11,7 +11,11 @@ import {
   Heart,
   Settings,
   LogOut,
-  Bot
+  Bot,
+  Building2,
+  Users,
+  MessageSquare,
+  Bell
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -45,7 +49,10 @@ const talentRoutes = [
 ];
 
 const storeRoutes = [
-  { path: "/store/dashboard", label: "店舗ダッシュボード", icon: Briefcase },
+  { path: "/store/dashboard", label: "ダッシュボード", icon: Building2 },
+  { path: "/store/talent-list", label: "タレント一覧", icon: Users },
+  { path: "/store/messages", label: "メッセージ", icon: MessageSquare },
+  { path: "/store/notifications", label: "お知らせ", icon: Bell },
 ];
 
 export function Navigation() {
@@ -65,6 +72,12 @@ export function Navigation() {
       'keep-list': 'キープリスト',
       'view-history': '閲覧履歴',
       'ai-matching': 'AIマッチング',
+      'dashboard': 'ダッシュボード',
+      'talent-list': 'タレント一覧',
+      'messages': 'メッセージ',
+      'notifications': 'お知らせ',
+      'store': '店舗',
+      'talent': 'タレント'
     };
     return labels[crumb] || crumb;
   };
@@ -73,7 +86,6 @@ export function Navigation() {
   const getDisplayBreadcrumbs = (path: string) => {
     return path.split("/")
       .filter(Boolean)
-      .filter(segment => segment !== "talent")
       .map(segment => ({
         label: getBreadcrumbLabel(segment),
         path: `/${path.split("/").slice(0, path.split("/").indexOf(segment) + 1).join("/")}`
@@ -196,19 +208,19 @@ export function Navigation() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>アカウント</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href="/talent/mypage">
+                <Link href={user.role === 'store' ? "/store/dashboard" : "/talent/mypage"}>
                   <a>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
                       <UserCircle className="h-4 w-4 mr-2" />
-                      マイページ
+                      {user.role === 'store' ? 'ダッシュボード' : 'マイページ'}
                     </DropdownMenuItem>
                   </a>
                 </Link>
-                <Link href="/talent/settings">
+                <Link href={user.role === 'store' ? "/store/settings" : "/talent/settings"}>
                   <a>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => setIsDropdownOpen(false)}>
                       <Settings className="h-4 w-4 mr-2" />
-                      アカウント設定
+                      設定
                     </DropdownMenuItem>
                   </a>
                 </Link>
