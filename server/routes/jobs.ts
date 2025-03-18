@@ -34,7 +34,9 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
       transportation_support: validatedData.transportationSupport,
       housing_support: validatedData.housingSupport,
       benefits: JSON.stringify(validatedData.selectedBenefits),
-      status: validatedData.status || 'draft'
+      status: validatedData.status || 'draft',
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
     log('info', '変換後のデータ', { jobData });
@@ -138,20 +140,7 @@ router.get("/", async (_req, res) => {
     });
 
     const jobListings = await db
-      .select({
-        id: jobs.id,
-        business_name: jobs.business_name,
-        location: jobs.location,
-        service_type: jobs.service_type,
-        title: jobs.title,
-        minimum_guarantee: jobs.minimum_guarantee,
-        maximum_guarantee: jobs.maximum_guarantee,
-        transportation_support: jobs.transportation_support,
-        housing_support: jobs.housing_support,
-        status: jobs.status,
-        created_at: jobs.created_at,
-        updated_at: jobs.updated_at
-      })
+      .select()
       .from(jobs)
       .where(
         and(
