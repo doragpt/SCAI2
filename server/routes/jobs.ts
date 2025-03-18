@@ -41,19 +41,30 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
 
     log('info', '変換後のデータ', { jobData });
 
-    // 新規求人データを作成
-    const [job] = await db
-      .insert(jobs)
-      .values(jobData)
-      .returning();
+    try {
+      // 新規求人データを作成
+      const [job] = await db
+        .insert(jobs)
+        .values(jobData)
+        .returning();
 
-    log('info', '求人基本情報の保存成功', {
-      jobId: job.id,
-      userId: req.user?.id,
-      savedData: job
-    });
+      log('info', '求人基本情報の保存成功', {
+        jobId: job.id,
+        userId: req.user?.id,
+        savedData: job
+      });
 
-    res.status(201).json(job);
+      res.status(201).json(job);
+    } catch (dbError) {
+      // データベースエラーの詳細なログ
+      log('error', 'データベース保存エラー', {
+        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+        errorDetails: dbError,
+        jobData,
+        stack: dbError instanceof Error ? dbError.stack : undefined
+      });
+      throw dbError;
+    }
   } catch (error) {
     log('error', '求人基本情報の保存エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -167,7 +178,6 @@ router.get("/", async (_req, res) => {
     });
 
     return res.status(500).json({
-      error: 'InternalServerError',
       message: "求人情報の取得に失敗しました",
       details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
     });
