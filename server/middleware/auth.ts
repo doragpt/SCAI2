@@ -14,7 +14,7 @@ declare global {
       id: number;
       role: UserRole;
       username: string;
-      displayName: string | null;
+      displayName: string;
     }
   }
 }
@@ -26,8 +26,24 @@ export async function authenticate(
   next: NextFunction
 ) {
   try {
-    if (!req.session || !req.session.userId) {
+    // セッション状態をログ
+    log('debug', '認証ミドルウェア: セッション状態', {
+      sessionId: req.sessionID,
+      session: req.session,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user
+    });
+
+    if (!req.isAuthenticated()) {
+      log('warn', '認証ミドルウェア: 未認証アクセス');
       return res.status(401).json({ message: '認証が必要です' });
+    }
+
+    if (!req.user) {
+      log('warn', '認証ミドルウェア: ユーザー情報なし', {
+        sessionId: req.sessionID
+      });
+      return res.status(401).json({ message: 'ユーザー情報が見つかりません' });
     }
 
     // ユーザーの存在確認
@@ -39,10 +55,12 @@ export async function authenticate(
         displayName: users.displayName
       })
       .from(users)
-      .where(eq(users.id, req.session.userId));
+      .where(eq(users.id, req.user.id));
 
     if (!user) {
-      log('warn', 'ユーザーが見つかりません', { userId: req.session.userId });
+      log('warn', '認証ミドルウェア: DBユーザーなし', { 
+        userId: req.user.id 
+      });
       return res.status(401).json({ message: 'ユーザーが見つかりません' });
     }
 
@@ -55,9 +73,10 @@ export async function authenticate(
     next();
   } catch (error) {
     log('error', '認証エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     });
-    return res.status(401).json({ 
+    return res.status(500).json({ 
       message: error instanceof Error ? error.message : '認証に失敗しました'
     });
   }
@@ -78,12 +97,6 @@ export function authorize(...roles: UserRole[]) {
       });
       return res.status(403).json({ message: 'アクセス権限がありません' });
     }
-
-    log('info', '認可成功', {
-      userId: req.user.id,
-      role: req.user.role,
-      requiredRoles: roles
-    });
 
     next();
   };

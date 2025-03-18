@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -77,15 +76,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   });
 
-  useEffect(() => {
-    if (initialData?.mainCatch) {
-      setMainCatchLength(initialData.mainCatch.length);
-    }
-    if (initialData?.mainDescription) {
-      setMainDescriptionLength(initialData.mainDescription.length);
-    }
-  }, [initialData]);
-
   // フォームの状態変更を監視（デバッグ用）
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
@@ -101,7 +91,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       console.log('Submitting data:', data);
       const response = await fetch("/api/jobs/basic-info", {
         method: initialData ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // 認証情報を含める
         body: JSON.stringify({
           ...data,
           title: data.mainCatch.substring(0, 50) // mainCatchの最初の50文字をtitleとして使用
@@ -110,6 +103,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 401) {
+          throw new Error("認証エラー: ログインが必要です");
+        }
         throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
 

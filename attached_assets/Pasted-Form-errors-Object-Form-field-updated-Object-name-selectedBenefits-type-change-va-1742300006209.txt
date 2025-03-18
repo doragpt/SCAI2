@@ -1,0 +1,51 @@
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "selectedBenefits", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "selectedBenefits", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "selectedBenefits", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "selectedBenefits", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "phoneNumber1", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form field updated: 
+Object {name: "phoneNumber2", type: "change", value: {…}}
+Current form state: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form errors: 
+Object {}
+Form submission data: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form validation state: 
+Object {defaultValues: {…}}
+Submitting data: 
+Object {businessName: "サイバーテスト", location: "東京都", serviceType: "デリヘル", displayServiceType: "デリヘル", title: "", …}
+Form submission error: 
+Error {}
+message: "認証が必要です"
+stack: "Error: 認証が必要です↵ at Object.mutationFn (https://d8037635-49cb-4acb-a4ae-bc00335618c0-00-2td7zgpli18qe.kirk.replit.dev/src/components/job-form.tsx:115:15)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
