@@ -21,25 +21,59 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
     // リクエストデータのバリデーション
     const validatedData = jobSchema.parse(req.body);
 
+    log('debug', 'バリデーション後のデータ', { 
+      validatedData,
+      validation: {
+        hasRequiredFields: {
+          businessName: !!validatedData.businessName,
+          location: !!validatedData.location,
+          serviceType: !!validatedData.serviceType,
+          phoneNumber1: !!validatedData.phoneNumber1,
+        }
+      }
+    });
+
+    if (!req.user?.id) {
+      throw new Error('ユーザーIDが見つかりません');
+    }
+
     // データの変換（フィールド名の調整）
     const jobData = {
-      title: validatedData.mainCatch?.substring(0, 50) || '',
-      catch_phrase: validatedData.mainCatch,
-      description: validatedData.mainDescription,
       business_name: validatedData.businessName,
       location: validatedData.location,
       service_type: validatedData.serviceType,
-      minimum_guarantee: validatedData.minimumGuarantee,
-      maximum_guarantee: validatedData.maximumGuarantee,
-      transportation_support: validatedData.transportationSupport,
-      housing_support: validatedData.housingSupport,
-      benefits: JSON.stringify(validatedData.selectedBenefits),
+      display_service_type: validatedData.displayServiceType,
+      title: validatedData.catch_phrase?.substring(0, 50) || '',
+      catch_phrase: validatedData.catch_phrase,
+      description: validatedData.description,
+      benefits: JSON.stringify(validatedData.selectedBenefits || []),
+      minimum_guarantee: validatedData.minimumGuarantee || null,
+      maximum_guarantee: validatedData.maximumGuarantee || null,
+      transportation_support: validatedData.transportationSupport || false,
+      housing_support: validatedData.housingSupport || false,
+      phone_number1: validatedData.phoneNumber1,
+      phone_number2: validatedData.phoneNumber2 || null,
+      phone_number3: validatedData.phoneNumber3 || null,
+      phone_number4: validatedData.phoneNumber4 || null,
+      contact_email: validatedData.contactEmail || null,
+      contact_sns: validatedData.contactSns || null,
+      contact_sns_url: validatedData.contactSnsUrl || null,
+      store_id: req.user.id,
       status: validatedData.status || 'draft',
       created_at: new Date(),
       updated_at: new Date()
     };
 
-    log('info', '変換後のデータ', { jobData });
+    log('debug', 'DB挿入前のデータ', { 
+      jobData,
+      requiredFields: {
+        business_name: jobData.business_name,
+        location: jobData.location,
+        service_type: jobData.service_type,
+        store_id: jobData.store_id,
+        phone_number1: jobData.phone_number1
+      }
+    });
 
     try {
       // 新規求人データを作成
@@ -59,7 +93,7 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
       // データベースエラーの詳細なログ
       log('error', 'データベース保存エラー', {
         error: dbError instanceof Error ? dbError.message : 'Unknown error',
-        errorDetails: dbError,
+        errorDetails: JSON.stringify(dbError, null, 2),
         jobData,
         stack: dbError instanceof Error ? dbError.stack : undefined
       });
@@ -73,8 +107,7 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
       stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({
-      message: "求人情報の保存に失敗しました",
-      error: error instanceof Error ? error.message : undefined
+      message: error instanceof Error ? error.message : "求人情報の保存に失敗しました"
     });
   }
 });
@@ -85,13 +118,6 @@ router.get("/public", async (req, res) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 12;
     const offset = (page - 1) * limit;
-
-    log('info', 'パブリック求人一覧の取得を開始', {
-      path: req.path,
-      method: req.method,
-      query: { page, limit },
-      timestamp: new Date().toISOString()
-    });
 
     // 総件数を取得
     const [{ count }] = await db
@@ -131,55 +157,11 @@ router.get("/public", async (req, res) => {
   } catch (error) {
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack: error instanceof Error ? error.stack : undefined
     });
 
     return res.status(500).json({
       message: "求人情報の取得に失敗しました"
-    });
-  }
-});
-
-// 基本の求人一覧取得エンドポイントは維持
-router.get("/", async (_req, res) => {
-  try {
-    log('info', '求人一覧の取得を開始', {
-      path: _req.path,
-      method: _req.method,
-      timestamp: new Date().toISOString()
-    });
-
-    const jobListings = await db
-      .select()
-      .from(jobs)
-      .where(
-        and(
-          eq(jobs.status, 'published'),
-          isNotNull(jobs.business_name),
-          isNotNull(jobs.location)
-        )
-      )
-      .orderBy(desc(jobs.created_at));
-
-    return res.json({
-      jobs: jobListings,
-      pagination: {
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: jobListings.length
-      }
-    });
-  } catch (error) {
-    log('error', '求人一覧取得エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-
-    return res.status(500).json({
-      message: "求人情報の取得に失敗しました",
-      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
     });
   }
 });
