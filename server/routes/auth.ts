@@ -21,25 +21,46 @@ router.get("/user", authenticate, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
-      log('warn', 'ユーザー認証なし', {
-        sessionID: req.sessionID,
-        isAuthenticated: req.isAuthenticated()
-      });
+      log('warn', 'ユーザー認証なし');
       return res.status(401).json({ message: "認証が必要です" });
     }
 
-    log('info', 'ユーザー情報取得成功', {
-      userId: user.id,
-      role: user.role,
-      isAuthenticated: req.isAuthenticated(),
-      sessionID: req.sessionID
+    // データベースから最新のユーザー情報を取得
+    const userData = await storage.getUser(user.id);
+    if (!userData) {
+      log('warn', 'ユーザーが見つかりません', { id: user.id });
+      return res.status(404).json({ message: "ユーザーが見つかりません" });
+    }
+
+    // データベースの値をログ出力
+    log('info', 'データベースから取得したユーザー情報', {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: userData.preferredLocations
     });
 
-    res.json(user);
+    // 必要なユーザー情報のみを返す
+    const response = {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      birthDate: userData.birthDate,
+      location: userData.location,
+      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
+      role: userData.role,
+      displayName: userData.username // displayName を username から設定
+    };
+
+    // レスポンスデータをログ出力
+    log('info', 'クライアントに送信するレスポンス', response);
+
+    res.json(response);
   } catch (error) {
     log('error', 'ユーザー情報取得エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      sessionID: req.sessionID
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     res.status(500).json({
       message: "ユーザー情報の取得に失敗しました"
@@ -126,55 +147,18 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 router.post("/login", async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
-
-    log('info', 'ログインリクエスト受信', {
-      email: validatedData.email,
-      sessionID: req.sessionID
-    });
-
+    // 認証処理は auth.ts で実装済み
     passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        log('error', 'ログイン処理エラー', {
-          error: err,
-          sessionID: req.sessionID
-        });
-        return next(err);
-      }
-
+      if (err) return next(err);
       if (!user) {
-        log('warn', 'ログイン失敗', {
-          email: validatedData.email,
-          reason: info?.message || "認証失敗",
-          sessionID: req.sessionID
-        });
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
-
       req.login(user, (err) => {
-        if (err) {
-          log('error', 'セッション作成エラー', {
-            error: err,
-            sessionID: req.sessionID
-          });
-          return next(err);
-        }
-
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role,
-          sessionID: req.sessionID,
-          isAuthenticated: req.isAuthenticated()
-        });
-
+        if (err) return next(err);
         res.json(user);
       });
     })(req, res, next);
   } catch (error) {
-    log('error', 'ログインバリデーションエラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      sessionID: req.sessionID
-    });
     res.status(400).json({
       message: error instanceof Error ? error.message : "ログインに失敗しました"
     });
@@ -183,64 +167,15 @@ router.post("/login", async (req, res, next) => {
 
 // ログアウトエンドポイント
 router.post("/logout", (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    return res.sendStatus(200);
-  }
-
-  const sessionID = req.sessionID;
-  const userId = req.user?.id;
-
-  log('info', 'ログアウトリクエスト受信', {
-    userId,
-    sessionID
-  });
-
   req.logout((err) => {
-    if (err) {
-      log('error', 'ログアウトエラー', {
-        error: err,
-        userId,
-        sessionID
-      });
-      return next(err);
-    }
-
-    req.session.destroy((err) => {
-      if (err) {
-        log('error', 'セッション破棄エラー', {
-          error: err,
-          userId,
-          sessionID
-        });
-        return next(err);
-      }
-
-      log('info', 'ログアウト成功', {
-        userId,
-        sessionID
-      });
-
-      res.clearCookie('connect.sid');
-      res.sendStatus(200);
-    });
+    if (err) return next(err);
+    res.sendStatus(200);
   });
 });
 
-// セッション状態確認エンドポイント
-router.get("/check-session", (req, res) => {
-  log('info', 'セッション状態確認', {
-    isAuthenticated: req.isAuthenticated(),
-    sessionID: req.sessionID,
-    hasUser: !!req.user,
-    userId: req.user?.id,
-    headers: req.headers
-  });
-
-  res.json({
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user || null,
-    sessionID: req.sessionID
-  });
+// セッションチェックエンドポイント
+router.get("/check", authenticate, (req, res) => {
+  res.json(req.user);
 });
 
 export default router;

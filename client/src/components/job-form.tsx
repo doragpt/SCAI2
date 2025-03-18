@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -50,44 +51,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [mainCatchLength, setMainCatchLength] = useState(0);
   const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
 
-  // セッション状態の確認
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        console.log('Checking session...');
-        const response = await fetch('/api/auth/check-session', {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        const data = await response.json();
-        console.log('Session check response:', {
-          status: response.status,
-          data,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-
-        if (!data.isAuthenticated) {
-          toast({
-            variant: "destructive",
-            title: "認証エラー",
-            description: "ログインが必要です。再度ログインしてください。",
-          });
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "セッション確認中にエラーが発生しました。",
-        });
-      }
-    };
-    checkSession();
-  }, [toast]);
-
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
@@ -95,6 +58,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       displayServiceType: initialData?.displayServiceType || "デリヘル",
+      title: "", // 空文字列をデフォルト値として設定
       status: initialData?.status || "draft",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
@@ -114,6 +78,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   useEffect(() => {
+    if (initialData?.mainCatch) {
+      setMainCatchLength(initialData.mainCatch.length);
+    }
+    if (initialData?.mainDescription) {
+      setMainDescriptionLength(initialData.mainDescription.length);
+    }
+  }, [initialData]);
+
+  // フォームの状態変更を監視（デバッグ用）
+  useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
       console.log('Form field updated:', { name, type, value });
       console.log('Current form state:', form.getValues());
@@ -127,25 +101,15 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       console.log('Submitting data:', data);
       const response = await fetch("/api/jobs/basic-info", {
         method: initialData ? "PUT" : "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          title: data.mainCatch.substring(0, 50)
+          title: data.mainCatch.substring(0, 50) // mainCatchの最初の50文字をtitleとして使用
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-          headers: Object.fromEntries(response.headers.entries())
-        });
         throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
 

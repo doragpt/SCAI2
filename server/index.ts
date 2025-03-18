@@ -12,25 +12,6 @@ import app from "./app";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// グローバルなエラーハンドリングの設定
-process.on('uncaughtException', (error) => {
-  log('error', '未捕捉の例外が発生', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-    stack: error instanceof Error ? error.stack : undefined,
-    timestamp: new Date().toISOString()
-  });
-  // 致命的なエラーの場合はプロセスを終了
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  log('error', '未処理のPromise rejection', {
-    reason: reason instanceof Error ? reason.message : reason,
-    stack: reason instanceof Error ? reason.stack : undefined,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // 開発環境を設定
 process.env.NODE_ENV = "development";
 

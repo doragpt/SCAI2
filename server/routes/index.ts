@@ -15,34 +15,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       method: req.method,
       path: req.path,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined,
-      isAuthenticated: req.isAuthenticated && req.isAuthenticated(),
-      sessionID: req.sessionID,
-      user: req.user ? { id: req.user.id, role: req.user.role } : null,
-      timestamp: new Date().toISOString()
+      body: req.method !== 'GET' ? req.body : undefined
     });
     res.setHeader("Content-Type", "application/json");
     next();
   });
 
-  // 認証関連のルートを最初に登録
+  // 各ルーターを登録
   app.use('/api/auth', authRoutes);
-
-  // 認証が必要なルートを登録
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
 
   // 共通のエラーハンドリング
   app.use((err: Error, req: any, res: any, next: any) => {
-    log('error', 'APIエラー発生', {
+    log('error', 'APIエラー', {
       error: err instanceof Error ? err.message : 'Unknown error',
-      stack: err instanceof Error ? err.stack : undefined,
       path: req.path,
-      method: req.method,
-      isAuthenticated: req.isAuthenticated && req.isAuthenticated(),
-      sessionID: req.sessionID,
-      timestamp: new Date().toISOString()
+      method: req.method
     });
     res.status(500).json({
       message: process.env.NODE_ENV === 'development' ? err.message : '内部サーバーエラー'

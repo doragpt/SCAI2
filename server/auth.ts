@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
+import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -15,7 +16,6 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-// パスワード関連の関数
 async function hashPassword(password: string): Promise<string> {
   try {
     const salt = randomBytes(16).toString('hex');
@@ -34,6 +34,11 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     const [hashedPassword, salt] = stored.split('.');
     const derivedKey = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuffer = Buffer.from(hashedPassword, 'hex');
+    log('info', 'パスワード比較', {
+      suppliedLength: derivedKey.length,
+      storedLength: storedBuffer.length,
+      isEqual: timingSafeEqual(derivedKey, storedBuffer)
+    });
     return timingSafeEqual(derivedKey, storedBuffer);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
@@ -49,7 +54,22 @@ function sanitizeUser(user: SelectUser) {
 }
 
 export function setupAuth(app: Express) {
-  // Passportの初期化
+  // セッション設定
+  const sessionSettings: session.SessionOptions = {
+    store: storage.sessionStore,
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24時間
+    }
+  };
+
+  // セッションミドルウェアの初期化
+  app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -70,19 +90,24 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
+          log('info', 'ユーザー取得成功', { 
+            email: user.email,
+            role: user.role,
+            hasPassword: !!user.password
+          });
+
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
             log('warn', 'パスワードが一致しません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          log('info', 'ログイン成功', {
+          log('info', 'ログイン成功', { 
             userId: user.id,
             email: user.email,
             role: user.role
           });
-
-          return done(null, sanitizeUser(user));
+          return done(null, user);
         } catch (error) {
           log('error', 'ログインエラー', {
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -94,51 +119,23 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('info', 'セッションシリアライズ', {
-      userId: user.id,
-      timestamp: new Date().toISOString()
-    });
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      log('info', 'セッションデシリアライズ開始', {
-        userId: id,
-        timestamp: new Date().toISOString()
-      });
-
       const user = await storage.getUser(id);
-
       if (!user) {
-        log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', {
-          userId: id,
-          timestamp: new Date().toISOString()
-        });
         return done(null, false);
       }
-
-      log('info', 'デシリアライズ成功', {
-        userId: user.id,
-        role: user.role,
-        timestamp: new Date().toISOString()
-      });
-
-      done(null, sanitizeUser(user));
+      done(null, user);
     } catch (error) {
-      log('error', 'デシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        userId: id,
-        timestamp: new Date().toISOString()
-      });
       done(error);
     }
   });
 
-  app.set("trust proxy", 1);
-
   // ログインAPI
-  app.post("/api/auth/login", (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
     log('info', 'ログインリクエスト受信', {
       email: req.body.email,
       role: req.body.role
@@ -173,9 +170,9 @@ export function setupAuth(app: Express) {
   });
 
   // ログアウトAPI
-  app.post("/api/auth/logout", (req, res) => {
+  app.post("/api/logout", (req, res) => {
     try {
-      const userRole = req.user?.role;
+      const userRole = req.user?.role; // ログアウト前にロールを保存
 
       if (req.user) {
         log('info', 'ログアウトリクエスト受信', {
@@ -195,9 +192,9 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "セッションの破棄に失敗しました" });
           }
           res.clearCookie('connect.sid');
-          return res.status(200).json({
+          return res.status(200).json({ 
             message: "ログアウトしました",
-            role: userRole
+            role: userRole // ログアウト前のロールを返す
           });
         });
       });
@@ -209,29 +206,15 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // 前方互換性のためのルート
+  // 認証チェックAPI
   app.get("/api/check", (req, res) => {
-    log('warn', '非推奨のエンドポイント使用', {
-      path: req.path,
-      sessionID: req.sessionID,
-      timestamp: new Date().toISOString()
-    });
-
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-
-    res.json(sanitizeUser(req.user));
-  });
-
-  // 認証チェックAPI（新しい推奨パス）
-  app.get("/api/auth/check", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "認証されていません" });
     }
     res.json(sanitizeUser(req.user));
   });
 
+  app.set("trust proxy", 1);
   return app;
 }
 

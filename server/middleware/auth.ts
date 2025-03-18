@@ -1,46 +1,61 @@
 import { Request, Response, NextFunction } from 'express';
+import { db } from '../db';
+import { users } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { log } from '../utils/logger';
 
-// 認証ミドルウェア
-export function authenticate(req: Request, res: Response, next: NextFunction) {
-  try {
-    log('info', '認証チェック開始', {
-      isAuthenticated: req.isAuthenticated(),
-      hasSession: !!req.session,
-      hasUser: !!req.user,
-      sessionID: req.sessionID,
-      path: req.path,
-      method: req.method,
-      timestamp: new Date().toISOString()
-    });
+// ユーザーロールの型定義
+export type UserRole = "talent" | "store";
 
-    if (!req.isAuthenticated()) {
-      log('warn', '認証失敗: 未認証', {
-        path: req.path,
-        method: req.method,
-        sessionID: req.sessionID,
-        timestamp: new Date().toISOString()
-      });
+// ユーザー型の拡張
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      role: UserRole;
+      username: string;
+      displayName: string | null;
+    }
+  }
+}
+
+// 認証ミドルウェア
+export async function authenticate(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: '認証が必要です' });
     }
 
+    // ユーザーの存在確認
+    const [user] = await db
+      .select({
+        id: users.id,
+        role: users.role,
+        username: users.username,
+        displayName: users.displayName
+      })
+      .from(users)
+      .where(eq(users.id, req.session.userId));
+
+    if (!user) {
+      log('warn', 'ユーザーが見つかりません', { userId: req.session.userId });
+      return res.status(401).json({ message: 'ユーザーが見つかりません' });
+    }
+
     log('info', '認証成功', {
-      userId: req.user?.id,
-      role: req.user?.role,
-      path: req.path,
-      method: req.method,
-      timestamp: new Date().toISOString()
+      userId: user.id,
+      role: user.role
     });
 
+    req.user = user;
     next();
   } catch (error) {
     log('error', '認証エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      path: req.path,
-      method: req.method,
-      sessionID: req.sessionID,
-      timestamp: new Date().toISOString()
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     return res.status(401).json({ 
       message: error instanceof Error ? error.message : '認証に失敗しました'
@@ -49,7 +64,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 }
 
 // ロールベースの認可ミドルウェア
-export function authorize(...roles: string[]) {
+export function authorize(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       log('warn', '認可エラー: ユーザーが認証されていません');
