@@ -234,7 +234,7 @@ export const jobs = pgTable("jobs", {
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+  serviceTypeIdx: index("jobs_service_type_idx").on(table.service_type),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
