@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { jobs } from '@shared/schema';
+import { jobs, jobSchema } from '@shared/schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { sql } from 'drizzle-orm';
@@ -11,25 +11,30 @@ const router = Router();
 // 求人基本情報の保存
 router.post("/basic-info", authenticate, async (req: any, res) => {
   try {
-    log('info', '求人基本情報の保存リクエスト', {
+    log('info', '求人基本情報の保存リクエスト受信', {
       userId: req.user?.id,
-      requestBody: req.body
+      method: req.method,
+      path: req.path,
+      body: req.body
     });
+
+    // リクエストデータのバリデーション
+    const validatedData = jobSchema.parse(req.body);
 
     // データの変換（フィールド名の調整）
     const jobData = {
-      title: req.body.mainCatch?.substring(0, 50) || '',
-      catch_phrase: req.body.mainCatch,
-      description: req.body.mainDescription,
-      business_name: req.body.businessName,
-      location: req.body.location,
-      service_type: req.body.serviceType,
-      minimum_guarantee: req.body.minimumGuarantee,
-      maximum_guarantee: req.body.maximumGuarantee,
-      transportation_support: req.body.transportationSupport,
-      housing_support: req.body.housingSupport,
-      benefits: JSON.stringify(req.body.selectedBenefits),
-      status: req.body.status || 'draft'
+      title: validatedData.mainCatch?.substring(0, 50) || '',
+      catch_phrase: validatedData.mainCatch,
+      description: validatedData.mainDescription,
+      business_name: validatedData.businessName,
+      location: validatedData.location,
+      service_type: validatedData.serviceType,
+      minimum_guarantee: validatedData.minimumGuarantee,
+      maximum_guarantee: validatedData.maximumGuarantee,
+      transportation_support: validatedData.transportationSupport,
+      housing_support: validatedData.housingSupport,
+      benefits: JSON.stringify(validatedData.selectedBenefits),
+      status: validatedData.status || 'draft'
     };
 
     log('info', '変換後のデータ', { jobData });
@@ -51,7 +56,8 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
     log('error', '求人基本情報の保存エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userId: req.user?.id,
-      requestBody: req.body
+      requestBody: req.body,
+      stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({
       message: "求人情報の保存に失敗しました",
