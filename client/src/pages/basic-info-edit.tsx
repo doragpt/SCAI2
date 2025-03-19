@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,45 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { prefectures, UserResponse } from "@shared/schema";
+import { prefectures, UserResponse, userProfileUpdateSchema, type UserProfileUpdate } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-
-// 基本情報更新用のスキーマ定義
-const basicInfoSchema = z.object({
-  username: z.string().min(1, "ニックネームを入力してください"),
-  location: z.string().min(1, "居住地を選択してください"),
-  preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
-  currentPassword: z.string().optional(),
-  newPassword: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    )
-    .optional()
-    .or(z.literal("")),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  if (data.newPassword && !data.currentPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "現在のパスワードを入力してください",
-  path: ["currentPassword"],
-}).refine((data) => {
-  if (data.newPassword && data.newPassword !== data.confirmPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "新しいパスワードと確認用パスワードが一致しません",
-  path: ["confirmPassword"],
-});
-
-type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 
 export default function BasicInfoEdit() {
   const { user } = useAuth();
@@ -73,15 +36,16 @@ export default function BasicInfoEdit() {
     enabled: !!user,
   });
 
-  const form = useForm<BasicInfoFormData>({
-    resolver: zodResolver(basicInfoSchema),
+  const form = useForm<UserProfileUpdate>({
+    resolver: zodResolver(userProfileUpdateSchema),
     defaultValues: {
       username: "",
-      location: "",
+      location: undefined,
       preferredLocations: [],
+      displayName: "",
+      phoneNumber: "",
       currentPassword: "",
       newPassword: "",
-      confirmPassword: "",
     },
   });
 
@@ -92,27 +56,18 @@ export default function BasicInfoEdit() {
         username: userProfile.username,
         location: userProfile.location,
         preferredLocations: userProfile.preferredLocations,
+        displayName: userProfile.displayName,
+        phoneNumber: userProfile.phoneNumber || "",
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
       });
     }
   }, [userProfile, form]);
 
   // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: BasicInfoFormData) => {
-      const updateData = {
-        username: data.username,
-        location: data.location,
-        preferredLocations: data.preferredLocations,
-        ...(data.currentPassword && data.newPassword ? {
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword
-        } : {})
-      };
-
-      return await updateUserProfile(updateData);
+    mutationFn: async (data: UserProfileUpdate) => {
+      return await updateUserProfile(data);
     },
     onSuccess: (data) => {
       queryClient.setQueryData([QUERY_KEYS.USER], data);
@@ -130,7 +85,7 @@ export default function BasicInfoEdit() {
     },
   });
 
-  const onSubmit = async (data: BasicInfoFormData) => {
+  const onSubmit = async (data: UserProfileUpdate) => {
     await updateProfileMutation.mutateAsync(data);
   };
 
@@ -157,7 +112,7 @@ export default function BasicInfoEdit() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ニックネーム</FormLabel>
+                <FormLabel>ユーザー名</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -166,15 +121,27 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          {/* メールアドレス（表示のみ） */}
+          <FormField
+            control={form.control}
+            name="displayName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>表示名</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="space-y-2">
             <FormLabel>メールアドレス</FormLabel>
             <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.email || "未設定"}</p>
+              <p>{userProfile?.email}</p>
             </div>
           </div>
 
-          {/* 生年月日（表示のみ） */}
           <div className="space-y-2">
             <FormLabel>生年月日</FormLabel>
             <div className="p-3 bg-muted rounded-md">
@@ -235,7 +202,20 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          {/* パスワード変更セクション */}
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>電話番号（任意）</FormLabel>
+                <FormControl>
+                  <Input {...field} type="tel" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="space-y-4 border rounded-lg p-4">
             <h2 className="text-lg font-semibold">パスワード変更</h2>
             <FormField
@@ -257,19 +237,6 @@ export default function BasicInfoEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>新しいパスワード</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>新しいパスワード（確認）</FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
                   </FormControl>

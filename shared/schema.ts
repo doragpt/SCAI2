@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Constants
+// 定数定義
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
   displayName: text("display_name").notNull(),
+  phoneNumber: text("phone_number"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -46,6 +47,7 @@ export interface UserResponse {
   preferredLocations: Prefecture[];
   role: UserRole;
   displayName: string;
+  phoneNumber?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,8 +65,9 @@ export function transformUserToResponse(user: User): UserResponse {
       : [],
     role: user.role as UserRole,
     displayName: user.displayName,
-    createdAt: new Date(user.createdAt),
-    updatedAt: new Date(user.updatedAt)
+    phoneNumber: user.phoneNumber || null,
+    createdAt: new Date(user.createdAt || new Date()),
+    updatedAt: new Date(user.updatedAt || new Date())
   };
 }
 
@@ -76,6 +79,29 @@ export const loginSchema = z.object({
 });
 
 export type LoginData = z.infer<typeof loginSchema>;
+
+// Update schema for user profile
+export const userProfileUpdateSchema = z.object({
+  username: z.string().min(1, "ユーザー名を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "所在地を選択してください",
+    invalid_type_error: "無効な所在地です",
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "希望地域を1つ以上選択してください"),
+  displayName: z.string().min(1, "表示名を入力してください"),
+  phoneNumber: z.string().nullable().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    )
+    .optional()
+});
+
+export type UserProfileUpdate = z.infer<typeof userProfileUpdateSchema>;
 
 
 export const serviceTypes = [
@@ -593,7 +619,6 @@ export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
-
 export const userSchema = createInsertSchema(users, {
   username: z.string().min(1, "ユーザー名を入力してください"),
   password: z.string().min(8, "パスワードは8文字以上で入力してください"),
@@ -760,7 +785,7 @@ export type InsertViewHistory = typeof viewHistory.$inferInsert;
 export const keepListSchema = createInsertSchema(keepList);
 export const viewHistorySchema = createInsertSchema(viewHistory);
 
-export const keepListRelations = relations(keepList, ({ one }) => ({
+export const keepListRelations = relations(keepList, ({ one}) => ({
   job: one(jobs, {
     fields: [keepList.jobId],
     references: [jobs.id],
@@ -787,3 +812,4 @@ export type PreviousStore = {
 };
 
 export const talentRegisterFormSchema = talentProfileSchema;
+export type { UserResponse, LoginData, UserProfileUpdate };
