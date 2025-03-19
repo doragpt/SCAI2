@@ -19,20 +19,39 @@ if (!process.env.DATABASE_URL) {
 // プールの設定をエクスポート
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  maxConnections: 10,
-  connectionTimeoutMillis: 5000,
+  max: 10,
   idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
   maxUses: 7500,
-  connectionRetryLimit: 3,
 });
 
 // エラーハンドリングの追加
 pool.on('error', (err) => {
-  log('error', 'Unexpected error on idle client', {
+  log('error', 'データベースプールエラー', {
     error: err.message,
-    stack: err.stack
+    stack: err.stack,
+    timestamp: new Date().toISOString()
   });
+
+  // 重大なエラーの場合のみアプリケーションを終了
+  if (err.message.includes('terminating connection due to administrator command')) {
+    log('warn', 'データベース接続の再試行を開始します');
+    return;
+  }
+
   process.exit(-1);
+});
+
+pool.on('connect', () => {
+  log('info', 'データベース接続成功', {
+    timestamp: new Date().toISOString()
+  });
+});
+
+pool.on('remove', () => {
+  log('info', 'データベース接続が解放されました', {
+    timestamp: new Date().toISOString()
+  });
 });
 
 // DrizzleORMの設定
