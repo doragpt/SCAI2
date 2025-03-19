@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { TalentProfileData, SelectUser } from "@shared/schema";
+import type { UserResponse, SelectUser } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
@@ -183,8 +183,8 @@ export const searchJobsQuery = async (params: {
 // ユーザー情報取得関数
 export async function getUserProfile(): Promise<UserResponse> {
   console.log('ユーザー情報取得開始');
-  const response = await apiRequest("GET", QUERY_KEYS.USER);
 
+  const response = await apiRequest("GET", QUERY_KEYS.USER);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "ユーザー情報の取得に失敗しました");
@@ -192,14 +192,14 @@ export async function getUserProfile(): Promise<UserResponse> {
 
   const data = await response.json();
   console.log('ユーザー情報取得成功:', data);
-  return data;
+  return data as UserResponse;
 }
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: Partial<SelectUser>): Promise<UserResponse> {
   console.log('ユーザー情報更新開始:', data);
-  const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
 
+  const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "ユーザー情報の更新に失敗しました");
@@ -207,7 +207,7 @@ export async function updateUserProfile(data: Partial<SelectUser>): Promise<User
 
   const updatedData = await response.json();
   console.log('ユーザー情報更新成功:', updatedData);
-  return updatedData;
+  return updatedData as UserResponse;
 }
 
 // クエリクライアントの設定強化

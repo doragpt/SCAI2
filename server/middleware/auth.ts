@@ -49,6 +49,9 @@ export function authenticate(
       userId: req.user.id,
       email: req.user.email,
       username: req.user.username,
+      birthDate: req.user.birthDate,
+      location: req.user.location,
+      preferredLocations: req.user.preferredLocations,
       role: req.user.role,
       path: req.path
     });

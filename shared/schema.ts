@@ -472,10 +472,10 @@ export function transformUserToResponse(user: User): UserResponse {
     preferredLocations: Array.isArray(user.preferredLocations)
       ? user.preferredLocations.map(loc => loc as Prefecture)
       : [],
-    role: user.role,
+    role: user.role as "talent" | "store",
     displayName: user.displayName,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt
+    createdAt: user.createdAt || new Date(),
+    updatedAt: user.updatedAt || new Date()
   };
 }
 

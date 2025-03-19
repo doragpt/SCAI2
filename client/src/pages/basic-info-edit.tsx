@@ -72,6 +72,9 @@ export default function BasicInfoEdit() {
     queryKey: [QUERY_KEYS.USER],
     queryFn: getUserProfile,
     enabled: !!user,
+    onSuccess: (data) => {
+      console.log('ユーザープロフィール取得成功:', data);
+    },
     onError: (error: Error) => {
       toast({
         title: "エラー",
@@ -104,9 +107,9 @@ export default function BasicInfoEdit() {
       });
 
       form.reset({
-        username: userProfile.username || "",
-        location: userProfile.location || "",
-        preferredLocations: userProfile.preferredLocations || [],
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations,
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""

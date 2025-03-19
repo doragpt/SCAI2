@@ -54,11 +54,12 @@ export class DatabaseStorage implements IStorage {
           ? result.preferredLocations
           : [],
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        displayName: result.displayName,
+        createdAt: result.createdAt || new Date(),
+        updatedAt: result.updatedAt || new Date()
       };
 
+      // 変換後のデータをログ出力して確認
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
@@ -105,9 +106,9 @@ export class DatabaseStorage implements IStorage {
           ? result.preferredLocations
           : [],
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        displayName: result.displayName,
+        createdAt: result.createdAt || new Date(),
+        updatedAt: result.updatedAt || new Date()
       };
 
       log('info', 'ユーザー取得成功', {

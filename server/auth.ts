@@ -43,12 +43,8 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   }
 }
 
-function sanitizeUser(user: SelectUser) {
-  return transformUserToResponse(user);
-}
-
+// 認証設定の更新
 export function setupAuth(app: Express) {
-  // セッション設定の強化
   const sessionSettings: session.SessionOptions = {
     store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -64,12 +60,10 @@ export function setupAuth(app: Express) {
     rolling: true // セッションの有効期限を自動延長
   };
 
-  // セッションミドルウェアの初期化
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Passportの設定
   passport.use(
     new LocalStrategy(
       {
@@ -78,33 +72,19 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
-          log('info', 'ログイン試行', { email });
           const user = await storage.getUserByEmail(email);
-
           if (!user) {
-            log('warn', 'ユーザーが見つかりません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
-            log('warn', 'パスワードが一致しません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          log('info', 'ログイン成功', { 
-            userId: user.id,
-            email: user.email,
-            role: user.role
-          });
-
-          // ユーザー情報を正規化して返す
-          const sanitizedUser = sanitizeUser(user);
+          const sanitizedUser = transformUserToResponse(user);
           return done(null, sanitizedUser);
         } catch (error) {
-          log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error'
-          });
           return done(error);
         }
       }
@@ -112,7 +92,6 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('info', 'セッションシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -120,33 +99,16 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
-        log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
 
-      log('info', 'セッションデシリアライズ成功', { 
-        userId: user.id,
-        email: user.email,
-        username: user.username,
-        birthDate: user.birthDate,
-        location: user.location,
-        preferredLocations: user.preferredLocations,
-        role: user.role 
-      });
-
-      // ユーザー情報を正規化して返す
-      const sanitizedUser = sanitizeUser(user);
+      const sanitizedUser = transformUserToResponse(user);
       done(null, sanitizedUser);
     } catch (error) {
-      log('error', 'デシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        id
-      });
       done(error);
     }
   });
 
-  app.set("trust proxy", 1);
   return app;
 }
 
