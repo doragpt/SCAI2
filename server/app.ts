@@ -37,11 +37,35 @@ app.use('/api', (req, res, next) => {
     body: req.method !== 'GET' ? req.body : undefined,
     isAuthenticated: req.isAuthenticated(),
     sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasSessionUser: !!req.session?.user,
     timestamp: new Date().toISOString()
   });
 
   res.setHeader('Content-Type', 'application/json');
   next();
+});
+
+// セッションチェックエンドポイント
+app.get('/api/check', (req, res) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: '認証が必要です' });
+  }
+
+  log('info', 'セッションチェック成功', {
+    userId: req.user.id,
+    role: req.user.role,
+    email: req.user.email
+  });
+
+  res.json({
+    authenticated: true,
+    user: {
+      id: req.user.id,
+      role: req.user.role,
+      email: req.user.email
+    }
+  });
 });
 
 // 認証関連のルートを最初に登録

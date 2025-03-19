@@ -65,6 +65,7 @@ export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
@@ -86,13 +87,23 @@ export default function BasicInfoEdit() {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Received user data:', data);
+      return data;
     },
     enabled: !!user,
+    retry: 1,
+    staleTime: 30000,
   });
 
   useEffect(() => {
-    if (userProfile) {
+    if (userProfile && !isInitialized) {
+      console.log('Setting form values:', {
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations,
+      });
+
       form.reset({
         username: userProfile.username || "",
         location: userProfile.location || "",
@@ -101,8 +112,9 @@ export default function BasicInfoEdit() {
         newPassword: "",
         confirmPassword: "",
       });
+      setIsInitialized(true);
     }
-  }, [userProfile, form]);
+  }, [userProfile, form, isInitialized]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
@@ -115,6 +127,8 @@ export default function BasicInfoEdit() {
           newPassword: data.newPassword
         } : {})
       };
+
+      console.log('Sending update data:', updateData);
 
       const response = await apiRequest("PATCH", "/api/user", updateData);
       if (!response.ok) {

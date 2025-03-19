@@ -13,6 +13,14 @@ declare global {
       email: string;
       displayName: string | null;
     }
+
+    interface Session {
+      user: {
+        id: number;
+        role: UserRole;
+        email: string;
+      };
+    }
   }
 }
 
