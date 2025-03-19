@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, transformUserToResponse } from "@shared/schema";
 import { log } from "./utils/logger";
 
 declare global {
@@ -44,8 +44,8 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 }
 
 function sanitizeUser(user: SelectUser) {
-  const { password, ...sanitizedUser } = user;
-  return sanitizedUser;
+  // transformUserToResponse関数を使用してデータを変換
+  return transformUserToResponse(user);
 }
 
 export function setupAuth(app: Express) {

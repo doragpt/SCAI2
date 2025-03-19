@@ -21,7 +21,6 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // PostgreSQLセッションストアの設定
     this.sessionStore = new PgSession({
       pool,
       tableName: 'session',
@@ -48,15 +47,15 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate,
+        birthDate: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
+        preferredLocations: Array.isArray(result.preferred_locations)
+          ? result.preferred_locations
           : [],
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        displayName: result.display_name || result.username,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
       };
 
       log('info', 'ユーザー取得成功', {
