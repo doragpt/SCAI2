@@ -95,10 +95,10 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     const validatedData = jobSchema.parse(dataToValidate);
 
     // 必須フィールドの存在確認
-    if (!validatedData.title || !validatedData.mainCatch || !validatedData.mainDescription) {
+    if (!validatedData.mainCatch || !validatedData.mainDescription) {
       return res.status(400).json({
         message: "必須フィールドが不足しています",
-        details: "タイトル、キャッチコピー、詳細説明は必須です"
+        details: "キャッチコピー、詳細説明は必須です"
       });
     }
 
