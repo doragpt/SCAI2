@@ -78,8 +78,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       console.log('Submitting data:', data);
-      const response = await fetch("/api/jobs/basic-info", {
-        method: "POST",
+      const response = await fetch("/api/jobs", {
+        method: initialData ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });

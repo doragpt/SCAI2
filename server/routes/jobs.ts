@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { jobs } from '@shared/schema';
+import { jobs, jobSchema } from '@shared/schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { sql } from 'drizzle-orm';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get("/public", async (req, res) => {
 
     // 総件数を取得
     const [{ count }] = await db
-      .select({ count: sql`count(*)` })
+      .select({ count: sql<number>`count(*)::integer` })
       .from(jobs)
       .where(
         and(
@@ -35,20 +36,7 @@ router.get("/public", async (req, res) => {
 
     // データを取得
     const jobListings = await db
-      .select({
-        id: jobs.id,
-        businessName: jobs.businessName,
-        location: jobs.location,
-        serviceType: jobs.serviceType,
-        title: jobs.title,
-        minimumGuarantee: jobs.minimumGuarantee,
-        maximumGuarantee: jobs.maximumGuarantee,
-        transportationSupport: jobs.transportationSupport,
-        housingSupport: jobs.housingSupport,
-        status: jobs.status,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt
-      })
+      .select()
       .from(jobs)
       .where(
         and(
@@ -61,21 +49,11 @@ router.get("/public", async (req, res) => {
       .limit(limit)
       .offset(offset);
 
-    log('info', 'データベースクエリ実行結果', {
-      count: jobListings.length,
-      totalCount: count,
-      page,
-      limit,
-      timestamp: new Date().toISOString()
-    });
-
-    const totalPages = Math.ceil(count / limit);
-
     return res.json({
       jobs: jobListings,
       pagination: {
         currentPage: page,
-        totalPages: totalPages,
+        totalPages: Math.ceil(count / limit),
         totalItems: count
       }
     });
@@ -94,7 +72,7 @@ router.get("/public", async (req, res) => {
   }
 });
 
-// 基本の求人一覧取得エンドポイントは維持
+// 基本の求人一覧取得エンドポイント
 router.get("/", async (_req, res) => {
   try {
     log('info', '求人一覧の取得を開始', {
@@ -104,20 +82,7 @@ router.get("/", async (_req, res) => {
     });
 
     const jobListings = await db
-      .select({
-        id: jobs.id,
-        businessName: jobs.businessName,
-        location: jobs.location,
-        serviceType: jobs.serviceType,
-        title: jobs.title,
-        minimumGuarantee: jobs.minimumGuarantee,
-        maximumGuarantee: jobs.maximumGuarantee,
-        transportationSupport: jobs.transportationSupport,
-        housingSupport: jobs.housingSupport,
-        status: jobs.status,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt
-      })
+      .select()
       .from(jobs)
       .where(
         and(
@@ -146,6 +111,113 @@ router.get("/", async (_req, res) => {
     return res.status(500).json({
       error: 'InternalServerError',
       message: "求人情報の取得に失敗しました",
+      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+    });
+  }
+});
+
+// 求人作成エンドポイント
+router.post("/", authenticate, async (req: any, res) => {
+  try {
+    log('info', '求人作成を開始', {
+      userId: req.user.id,
+      timestamp: new Date().toISOString()
+    });
+
+    const validatedData = jobSchema.parse({
+      ...req.body,
+      status: "draft",
+    });
+
+    const [newJob] = await db
+      .insert(jobs)
+      .values(validatedData)
+      .returning();
+
+    log('info', '求人作成成功', {
+      userId: req.user.id,
+      jobId: newJob.id,
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(201).json(newJob);
+  } catch (error) {
+    log('error', '求人作成エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    if (error instanceof Error && error.name === 'ZodError') {
+      return res.status(400).json({
+        error: 'ValidationError',
+        message: '入力内容に誤りがあります',
+        details: error.message
+      });
+    }
+
+    return res.status(500).json({
+      error: 'InternalServerError',
+      message: "求人情報の作成に失敗しました",
+      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+    });
+  }
+});
+
+// 求人更新エンドポイント
+router.patch("/:id", authenticate, async (req: any, res) => {
+  try {
+    const jobId = parseInt(req.params.id);
+    if (isNaN(jobId)) {
+      return res.status(400).json({ message: "無効な求人IDです" });
+    }
+
+    log('info', '求人更新を開始', {
+      userId: req.user.id,
+      jobId,
+      timestamp: new Date().toISOString()
+    });
+
+    const validatedData = jobSchema.parse({
+      ...req.body
+    });
+
+    const [updatedJob] = await db
+      .update(jobs)
+      .set(validatedData)
+      .where(eq(jobs.id, jobId))
+      .returning();
+
+    if (!updatedJob) {
+      return res.status(404).json({ message: "求人が見つかりません" });
+    }
+
+    log('info', '求人更新成功', {
+      userId: req.user.id,
+      jobId,
+      timestamp: new Date().toISOString()
+    });
+
+    return res.json(updatedJob);
+  } catch (error) {
+    log('error', '求人更新エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id,
+      jobId: req.params.id,
+      timestamp: new Date().toISOString()
+    });
+
+    if (error instanceof Error && error.name === 'ZodError') {
+      return res.status(400).json({
+        error: 'ValidationError',
+        message: '入力内容に誤りがあります',
+        details: error.message
+      });
+    }
+
+    return res.status(500).json({
+      error: 'InternalServerError',
+      message: "求人情報の更新に失敗しました",
       details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
     });
   }
