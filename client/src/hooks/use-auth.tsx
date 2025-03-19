@@ -28,7 +28,14 @@ function useLoginMutation() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (credentials: LoginData) => {
+    mutationFn: async (credentials: LoginData & { role?: string }) => {
+      const currentPath = window.location.pathname;
+      const expectedRole = currentPath.includes('manager') ? 'store' : 'talent';
+
+      if (credentials.role && credentials.role !== expectedRole) {
+        throw new Error(`このページは${expectedRole === 'store' ? '店舗' : '女性'}専用のログインページです`);
+      }
+
       const response = await apiRequest("POST", "/api/login", credentials);
       if (!response.ok) {
         const error = await response.json();
@@ -38,9 +45,7 @@ function useLoginMutation() {
       return data;
     },
     onSuccess: (user: SelectUser) => {
-      // ユーザーデータをキャッシュに設定
       queryClient.setQueryData(["/api/user"], user);
-      // キャッシュの即時更新を強制
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
@@ -48,7 +53,6 @@ function useLoginMutation() {
         description: "ログインしました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -86,7 +90,6 @@ function useLogoutMutation() {
         description: "ログアウトしました。",
       });
 
-      // サーバーから返されたロールまたはストア内のロールに基づいてリダイレクト
       if (data?.role === "store") {
         setLocation("/manager/login");
       } else {
@@ -126,7 +129,6 @@ function useRegisterMutation() {
         description: "アカウントが正常に作成されました。",
       });
 
-      // ユーザーの役割に基づいてリダイレクト
       if (user.role === "talent") {
         setLocation("/talent/mypage");
       } else if (user.role === "store") {
@@ -144,8 +146,6 @@ function useRegisterMutation() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-
   const {
     data: user,
     error,
@@ -154,26 +154,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        console.log('Checking auth status...'); // デバッグログ
         const response = await apiRequest("GET", "/api/check");
-        console.log('Auth check response:', response); // デバッグログ
-
         if (!response.ok) {
           if (response.status === 401) {
             return null;
           }
           throw new Error('認証確認に失敗しました');
         }
-
         const data = await response.json();
-        console.log('Auth check data:', data); // デバッグログ
         return data;
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
       }
     },
-    staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
+    staleTime: 1000 * 60 * 5, 
     retry: 1,
   });
 

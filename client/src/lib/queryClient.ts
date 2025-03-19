@@ -38,7 +38,7 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
+      credentials: "include", // 重要: 認証情報を含める
     });
 
     console.log('API Response received:', {
@@ -47,6 +47,12 @@ export async function apiRequest(
       url: fullUrl,
       timestamp: new Date().toISOString()
     });
+
+    // 認証エラーの場合、明確なエラーメッセージを返す
+    if (response.status === 401) {
+      const error = await response.json();
+      throw new Error(error.message || "認証が必要です。再度ログインしてください。");
+    }
 
     return response;
   } catch (error) {
