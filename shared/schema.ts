@@ -469,7 +469,7 @@ export function transformUserToResponse(user: User): UserResponse {
     birthDate: user.birthDate,
     location: user.location as Prefecture,
     preferredLocations: Array.isArray(user.preferredLocations)
-      ? user.preferredLocations as Prefecture[]
+      ? user.preferredLocations.map(loc => loc as Prefecture)
       : [],
     role: user.role,
     displayName: user.displayName,
@@ -701,6 +701,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 
