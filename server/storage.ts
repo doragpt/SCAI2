@@ -28,7 +28,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getUser(id: number): Promise<User | undefined> {
+async getUser(id: number): Promise<User | undefined> {
     try {
       log('info', 'ユーザー取得開始', { id });
 
@@ -63,6 +63,7 @@ export class DatabaseStorage implements IStorage {
         email: user.email,
         role: user.role,
         birthDate: user.birthDate,
+        location: user.location,
         preferredLocations: user.preferredLocations
       });
 
