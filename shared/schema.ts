@@ -400,9 +400,21 @@ export const jobSchema = z.object({
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
-  phoneNumber2: z.string().optional().nullable(),
-  phoneNumber3: z.string().optional().nullable(),
-  phoneNumber4: z.string().optional().nullable(),
+  phoneNumber2: z.union([
+    z.string(),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
+  phoneNumber3: z.union([
+    z.string(),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
+  phoneNumber4: z.union([
+    z.string(),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
   contactEmail: z.union([
     z.string().email("正しいメールアドレスの形式で入力してください"),
     z.string().max(0),

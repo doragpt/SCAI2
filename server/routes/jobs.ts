@@ -111,6 +111,12 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     }
 
     try {
+      // DB挿入前のデータログ
+      log('info', 'DB挿入前のデータ', {
+        ...validatedData,
+        userId: req.user.id
+      });
+
       // DB挿入
       const [newJob] = await db
         .insert(jobs)
@@ -131,7 +137,8 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     } catch (dbError) {
       log('error', 'DB挿入エラー', {
         error: dbError instanceof Error ? dbError.message : 'Unknown error',
-        validatedData
+        validatedData,
+        sql: db.insert(jobs).values(validatedData).toSQL()
       });
       throw new Error('DB挿入に失敗しました');
     }
