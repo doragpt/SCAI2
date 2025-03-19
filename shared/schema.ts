@@ -212,7 +212,6 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  displayServiceType: text("display_service_type", { enum: serviceTypes }),
   title: text("title").notNull(),
   mainCatch: text("main_catch").notNull(),
   mainDescription: text("main_description").notNull(),
@@ -672,8 +671,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };

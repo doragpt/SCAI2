@@ -108,7 +108,8 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
   } catch (error) {
     log('error', '求人作成エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id
+      userId: req.user?.id,
+      requestBody: req.body
     });
 
     if (error instanceof Error && error.name === 'ZodError') {
