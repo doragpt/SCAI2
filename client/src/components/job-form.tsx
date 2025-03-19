@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  jobSchema, 
-  prefectures, 
+import {
+  jobSchema,
+  prefectures,
   serviceTypes,
   benefitTypes,
   benefitCategories,
-  type Job 
+  type Job
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,11 @@ import { QUERY_KEYS } from "@/lib/queryClient";
 import { useState } from "react";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
+
+// Added logging function
+const log = (level: 'info' | 'error', message: string, data?: any) => {
+  console[level](message, data);
+};
 
 type JobFormData = z.infer<typeof jobSchema>;
 
@@ -77,10 +82,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      const endpoint = initialData 
-        ? `/api/jobs/${initialData.id}`
-        : "/api/jobs";
+      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
+
+      log('info', '求人フォーム送信開始', {
+        method,
+        endpoint,
+        isUpdate: !!initialData
+      });
 
       const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
@@ -98,6 +107,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      log('error', '求人フォーム送信エラー', {
+        error: error.message
+      });
       toast({
         variant: "destructive",
         title: "エラーが発生しました",

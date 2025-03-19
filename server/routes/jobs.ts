@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { db } from '../db';
 import { jobs, jobSchema } from '@shared/schema';
-import { eq, desc, and, isNotNull } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
-import { sql } from 'drizzle-orm';
 import { authenticate, authorize } from '../middleware/auth';
+import { sql } from 'drizzle-orm';
 
 const router = Router();
 
@@ -49,8 +49,7 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
   try {
     log('info', '店舗求人一覧の取得を開始', {
       userId: req.user.id,
-      role: req.user.role,
-      timestamp: new Date().toISOString()
+      role: req.user.role
     });
 
     const jobListings = await db
@@ -70,13 +69,9 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
   } catch (error) {
     log('error', '店舗求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
+      userId: req.user?.id
     });
-
-    return res.status(500).json({
-      message: "求人情報の取得に失敗しました"
-    });
+    return res.status(500).json({ message: "求人情報の取得に失敗しました" });
   }
 });
 
@@ -85,18 +80,29 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
   try {
     log('info', '求人作成を開始', {
       userId: req.user.id,
-      role: req.user.role
+      role: req.user.role,
+      data: req.body
     });
 
     const validatedData = jobSchema.parse({
       ...req.body,
-      businessName: req.user.displayName
+      businessName: req.user.displayName,
+      status: "draft" // デフォルトステータスを設定
     });
 
     const [newJob] = await db
       .insert(jobs)
-      .values(validatedData)
+      .values({
+        ...validatedData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
       .returning();
+
+    log('info', '求人作成成功', {
+      userId: req.user.id,
+      jobId: newJob.id
+    });
 
     return res.status(201).json(newJob);
   } catch (error) {
@@ -146,7 +152,10 @@ router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => 
 
     const [updatedJob] = await db
       .update(jobs)
-      .set(validatedData)
+      .set({
+        ...validatedData,
+        updatedAt: new Date()
+      })
       .where(eq(jobs.id, jobId))
       .returning();
 
