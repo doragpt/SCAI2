@@ -215,14 +215,19 @@ export const jobs = pgTable("jobs", {
   display_service_type: text("display_service_type", { enum: serviceTypes }),
   title: text("title").notNull(),
   catch_phrase: text("catch_phrase").notNull(),
-  description: text("description").notNull(),
-  benefits: text("benefits").default("[]").notNull(),
+  description: text("description"),
+  benefits: text("benefits").default("[]"),
   minimum_guarantee: integer("minimum_guarantee"),
   maximum_guarantee: integer("maximum_guarantee"),
   transportation_support: boolean("transportation_support").default(false),
   housing_support: boolean("housing_support").default(false),
+  working_hours: text("working_hours"),
+  requirements: text("requirements"),
+  qualifications: text("qualifications"),
+  working_conditions: text("working_conditions"),
+  contact_sns_url: text("contact_sns_url"),
   store_id: integer("store_id").notNull().references(() => users.id),
-  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+  status: text("status", { enum: ["draft", "published", "closed"] }).default("draft"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -372,7 +377,7 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-// jobSchemaの定義を修正
+// jobSchemaの更新
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
@@ -384,7 +389,7 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   displayServiceType: z.enum(serviceTypes).default("デリヘル"),
-  title: z.string().default(""),
+  title: z.string().optional(),
   catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -396,13 +401,11 @@ export const jobSchema = z.object({
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
-  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
-  phoneNumber2: z.string().optional().nullable(),
-  phoneNumber3: z.string().optional().nullable(),
-  phoneNumber4: z.string().optional().nullable(),
-  contactEmail: z.string().optional().nullable(),
-  contactSns: z.string().optional().nullable(),
-  contactSnsUrl: z.string().optional().nullable(),
+  workingHours: z.string().optional(),
+  requirements: z.string().optional(),
+  qualifications: z.string().optional(),
+  workingConditions: z.string().optional(),
+  contactSnsUrl: z.string().optional(),
   status: z.enum(["draft", "published", "closed"]).default("draft"),
 });
 

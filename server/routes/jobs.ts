@@ -27,7 +27,8 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
         hasRequiredFields: {
           businessName: !!validatedData.businessName,
           location: !!validatedData.location,
-          serviceType: !!validatedData.serviceType
+          serviceType: !!validatedData.serviceType,
+          catchPhrase: !!validatedData.catch_phrase
         }
       }
     });
@@ -50,6 +51,11 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
       maximum_guarantee: validatedData.maximumGuarantee || null,
       transportation_support: validatedData.transportationSupport || false,
       housing_support: validatedData.housingSupport || false,
+      working_hours: validatedData.workingHours || null,
+      requirements: validatedData.requirements || null,
+      qualifications: validatedData.qualifications || null,
+      working_conditions: validatedData.workingConditions || null,
+      contact_sns_url: validatedData.contactSnsUrl || null,
       store_id: req.user.id,
       status: validatedData.status || 'draft',
       created_at: new Date(),
@@ -62,7 +68,9 @@ router.post("/basic-info", authenticate, async (req: any, res) => {
         business_name: jobData.business_name,
         location: jobData.location,
         service_type: jobData.service_type,
-        store_id: jobData.store_id
+        store_id: jobData.store_id,
+        title: jobData.title,
+        catch_phrase: jobData.catch_phrase
       }
     });
 
