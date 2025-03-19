@@ -9,7 +9,7 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 
 // 求人基本情報の保存
-router.post("/basic-info", authenticate, async (req: any, res) => {
+router.post("/basic-info", authenticate, async (req, res) => {
   try {
     log('info', '求人基本情報の保存リクエスト受信', {
       userId: req.user?.id,

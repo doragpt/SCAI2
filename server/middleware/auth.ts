@@ -7,18 +7,6 @@ import { log } from '../utils/logger';
 // ユーザーロールの型定義
 export type UserRole = "talent" | "store";
 
-// ユーザー型の拡張
-declare global {
-  namespace Express {
-    interface User {
-      id: number;
-      role: UserRole;
-      username: string;
-      displayName: string;
-    }
-  }
-}
-
 // 認証ミドルウェア
 export async function authenticate(
   req: Request,
@@ -39,7 +27,7 @@ export async function authenticate(
       return res.status(401).json({ message: '認証が必要です' });
     }
 
-    if (!req.user) {
+    if (!req.user?.id) {
       log('warn', '認証ミドルウェア: ユーザー情報なし', {
         sessionId: req.sessionID
       });
@@ -55,13 +43,23 @@ export async function authenticate(
         displayName: users.displayName
       })
       .from(users)
-      .where(eq(users.id, req.user.id));
+      .where(eq(users.id, req.user.id))
+      .limit(1);
 
     if (!user) {
       log('warn', '認証ミドルウェア: DBユーザーなし', { 
         userId: req.user.id 
       });
       return res.status(401).json({ message: 'ユーザーが見つかりません' });
+    }
+
+    // storeロールのユーザーのみ許可
+    if (user.role !== 'store') {
+      log('warn', '認証ミドルウェア: 権限不足', {
+        userId: user.id,
+        role: user.role
+      });
+      return res.status(403).json({ message: 'この操作には店舗権限が必要です' });
     }
 
     log('info', '認証成功', {
