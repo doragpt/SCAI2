@@ -15,34 +15,15 @@ router.get("/public", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 12;
     const offset = (page - 1) * limit;
 
-    log('info', 'パブリック求人一覧の取得を開始', {
-      query: { page, limit },
-      timestamp: new Date().toISOString()
-    });
-
-    // 総件数を取得
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::integer` })
       .from(jobs)
-      .where(
-        and(
-          eq(jobs.status, 'published'),
-          isNotNull(jobs.businessName),
-          isNotNull(jobs.location)
-        )
-      );
+      .where(eq(jobs.status, 'published'));
 
-    // データを取得
     const jobListings = await db
       .select()
       .from(jobs)
-      .where(
-        and(
-          eq(jobs.status, 'published'),
-          isNotNull(jobs.businessName),
-          isNotNull(jobs.location)
-        )
-      )
+      .where(eq(jobs.status, 'published'))
       .orderBy(desc(jobs.createdAt))
       .limit(limit)
       .offset(offset);
@@ -57,13 +38,9 @@ router.get("/public", async (req, res) => {
     });
   } catch (error) {
     log('error', 'パブリック求人一覧取得エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
-
-    return res.status(500).json({
-      message: "求人情報の取得に失敗しました"
-    });
+    return res.status(500).json({ message: "求人情報の取得に失敗しました" });
   }
 });
 
@@ -103,19 +80,17 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
   }
 });
 
-// 求人作成
+// 求人作成 (店舗ユーザーのみ)
 router.post("/", authenticate, authorize("store"), async (req: any, res) => {
   try {
     log('info', '求人作成を開始', {
       userId: req.user.id,
-      role: req.user.role,
-      timestamp: new Date().toISOString()
+      role: req.user.role
     });
 
     const validatedData = jobSchema.parse({
       ...req.body,
-      businessName: req.user.displayName,
-      status: "draft"
+      businessName: req.user.displayName
     });
 
     const [newJob] = await db
@@ -123,18 +98,11 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       .values(validatedData)
       .returning();
 
-    log('info', '求人作成成功', {
-      userId: req.user.id,
-      jobId: newJob.id,
-      timestamp: new Date().toISOString()
-    });
-
     return res.status(201).json(newJob);
   } catch (error) {
     log('error', '求人作成エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
+      userId: req.user?.id
     });
 
     if (error instanceof Error && error.name === 'ZodError') {
@@ -144,13 +112,11 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       });
     }
 
-    return res.status(500).json({
-      message: "求人情報の作成に失敗しました"
-    });
+    return res.status(500).json({ message: "求人情報の作成に失敗しました" });
   }
 });
 
-// 求人更新
+// 求人更新 (店舗ユーザーのみ)
 router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => {
   try {
     const jobId = parseInt(req.params.id);
@@ -158,7 +124,7 @@ router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => 
       return res.status(400).json({ message: "無効な求人IDです" });
     }
 
-    // 既存の求人を取得して権限チェック
+    // 権限チェック
     const existingJob = await db
       .select()
       .from(jobs)
@@ -173,12 +139,6 @@ router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => 
       return res.status(403).json({ message: "この求人を編集する権限がありません" });
     }
 
-    log('info', '求人更新を開始', {
-      userId: req.user.id,
-      jobId,
-      timestamp: new Date().toISOString()
-    });
-
     const validatedData = jobSchema.parse({
       ...req.body,
       businessName: req.user.displayName
@@ -190,19 +150,11 @@ router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => 
       .where(eq(jobs.id, jobId))
       .returning();
 
-    log('info', '求人更新成功', {
-      userId: req.user.id,
-      jobId,
-      timestamp: new Date().toISOString()
-    });
-
     return res.json(updatedJob);
   } catch (error) {
     log('error', '求人更新エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      jobId: req.params.id,
-      timestamp: new Date().toISOString()
+      userId: req.user?.id
     });
 
     if (error instanceof Error && error.name === 'ZodError') {
@@ -212,9 +164,7 @@ router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => 
       });
     }
 
-    return res.status(500).json({
-      message: "求人情報の更新に失敗しました"
-    });
+    return res.status(500).json({ message: "求人情報の更新に失敗しました" });
   }
 });
 

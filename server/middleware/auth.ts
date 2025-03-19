@@ -1,7 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from '../db';
-import { users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 import { log } from '../utils/logger';
 
 // ユーザーロールの型定義
@@ -81,17 +78,5 @@ export function authorize(role: UserRole) {
     });
 
     next();
-  };
-}
-
-// リクエストバリデーションミドルウェア
-export function validateRequest(schema: any) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      req.body = await schema.parseAsync(req.body);
-      next();
-    } catch (error) {
-      next(error);
-    }
   };
 }

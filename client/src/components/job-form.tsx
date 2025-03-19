@@ -79,11 +79,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mutationFn: async (data: JobFormData) => {
       const endpoint = initialData 
         ? `/api/jobs/${initialData.id}`
-        : "/api/jobs/store";
-
+        : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
-      const response = await apiRequest(method, endpoint, data);
 
+      const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
