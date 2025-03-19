@@ -22,9 +22,13 @@ export function errorHandler(
     timestamp: new Date().toISOString()
   });
 
+  // レスポンスヘッダーの設定
+  res.setHeader('Content-Type', 'application/json');
+
   // Zodバリデーションエラーの処理
   if (err instanceof ZodError) {
     return res.status(400).json({
+      status: 'error',
       message: 'バリデーションエラー',
       errors: err.errors.map(e => ({
         path: e.path.join('.'),
@@ -36,17 +40,21 @@ export function errorHandler(
   // APIエラーの処理
   if ((err as ApiError).statusCode) {
     const apiError = err as ApiError;
-    return res.status(apiError.statusCode).json({
+    const statusCode = apiError.statusCode || 500;
+    return res.status(statusCode).json({
+      status: 'error',
       message: apiError.message,
       code: apiError.code
     });
   }
 
   // その他のエラーの処理
-  const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  res.status(statusCode).json({
+  const defaultStatusCode = res.statusCode !== 200 ? res.statusCode : 500;
+  res.status(defaultStatusCode).json({
+    status: 'error',
     message: process.env.NODE_ENV === 'development' 
       ? err.message 
-      : '内部サーバーエラー'
+      : '内部サーバーエラー',
+    timestamp: new Date().toISOString()
   });
 }

@@ -22,27 +22,59 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 認証セットアップ
-setupAuth(app);
+// セッション設定前のデータベース接続確認
+async function checkDatabaseConnection() {
+  try {
+    const result = await pool.query('SELECT 1');
+    log('info', 'データベース接続確認成功', { result });
+    return true;
+  } catch (error) {
+    log('error', 'データベース接続確認失敗', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return false;
+  }
+}
 
-// ルート登録
-registerRoutes(app);
+// 初期化処理
+async function initialize() {
+  try {
+    // データベース接続確認
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      throw new Error('データベースに接続できません');
+    }
 
-// エラーハンドリング
-app.use(errorHandler);
+    // 認証セットアップ
+    setupAuth(app);
 
-// APIルートが見つからない場合のハンドラー
-app.use('/api/*', (req, res) => {
-  log('warn', 'APIルートが見つかりません', {
-    method: req.method,
-    path: req.path
-  });
-  res.status(404).json({
-    error: 'NotFound',
-    message: '指定されたAPIエンドポイントが見つかりません'
-  });
-});
+    // ルート登録
+    await registerRoutes(app);
 
-app.set("trust proxy", 1);
+    // エラーハンドリング
+    app.use(errorHandler);
 
-export default app;
+    // APIルートが見つからない場合のハンドラー
+    app.use('/api/*', (req, res) => {
+      log('warn', 'APIルートが見つかりません', {
+        method: req.method,
+        path: req.path
+      });
+      res.status(404).json({
+        error: 'NotFound',
+        message: '指定されたAPIエンドポイントが見つかりません'
+      });
+    });
+
+    app.set("trust proxy", 1);
+
+    return app;
+  } catch (error) {
+    log('error', 'アプリケーション初期化エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    throw error;
+  }
+}
+
+export default initialize();
