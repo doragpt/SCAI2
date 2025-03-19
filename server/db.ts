@@ -7,59 +7,33 @@ import { log } from './utils/logger';
 
 // WebSocket設定
 neonConfig.webSocketConstructor = ws;
+neonConfig.wsProxy = process.env.WS_PROXY_URL;
+neonConfig.useSecureWebSocket = true;
 
-// 環境変数チェック
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
-log('info', 'データベース接続を試行中...', {
-  host: new URL(process.env.DATABASE_URL).hostname,
-  database: new URL(process.env.DATABASE_URL).pathname.slice(1),
-  port: new URL(process.env.DATABASE_URL).port
-});
-
-// プールの設定
+// プールの設定をエクスポート
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  maxUses: 7500,
-  idleTimeoutMillis: 30000,
+  maxConnections: 10,
   connectionTimeoutMillis: 5000,
-  max: 10, // 最大接続数
+  idleTimeoutMillis: 30000,
+  maxUses: 7500,
+  connectionRetryLimit: 3,
 });
 
-// エラーハンドリングの設定
+// エラーハンドリングの追加
 pool.on('error', (err) => {
   log('error', 'Unexpected error on idle client', {
     error: err.message,
     stack: err.stack
   });
+  process.exit(-1);
 });
-
-pool.on('connect', (client) => {
-  log('info', 'New database connection established', {
-    pid: client.processID
-  });
-});
-
-// 接続テスト
-async function testConnection() {
-  try {
-    const startTime = Date.now();
-    await pool.query('SELECT 1');
-    const duration = Date.now() - startTime;
-    log('info', 'データベース接続成功', { duration });
-    return true;
-  } catch (error) {
-    log('error', 'データベース接続テストエラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    return false;
-  }
-}
 
 // DrizzleORMの設定
 export const db = drizzle(pool, { 
@@ -74,4 +48,4 @@ export const config = {
   table: 'session'
 };
 
-export { sql, testConnection };
+export { sql };

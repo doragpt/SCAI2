@@ -42,6 +42,7 @@ router.post("/basic-info", authenticate, async (req, res) => {
       business_name: validatedData.businessName,
       location: validatedData.location,
       service_type: validatedData.serviceType,
+      display_service_type: validatedData.displayServiceType,
       title: validatedData.catch_phrase?.substring(0, 50) || '',
       catch_phrase: validatedData.catch_phrase,
       description: validatedData.description,
@@ -88,6 +89,7 @@ router.post("/basic-info", authenticate, async (req, res) => {
 
       res.status(201).json(job);
     } catch (dbError) {
+      // データベースエラーの詳細なログ
       log('error', 'データベース保存エラー', {
         error: dbError instanceof Error ? dbError.message : 'Unknown error',
         errorDetails: JSON.stringify(dbError, null, 2),
