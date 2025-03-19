@@ -38,7 +38,7 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include" as const, // 明示的にincludeを指定
+      credentials: "include" as const,
     };
 
     console.log('リクエスト設定', {
@@ -180,16 +180,34 @@ export const searchJobsQuery = async (params: {
 };
 
 
+// ユーザー情報取得関数
+export async function getUserProfile(): Promise<SelectUser> {
+  console.log('ユーザー情報取得開始');
+  const response = await apiRequest("GET", QUERY_KEYS.USER);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "ユーザー情報の取得に失敗しました");
+  }
+
+  const data = await response.json();
+  console.log('ユーザー情報取得成功:', data);
+  return data;
+}
+
 // ユーザー情報更新関数
-export async function updateUserProfile(data: any): Promise<any> {
-  const response = await apiRequest("PATCH", "/api/user", data);
+export async function updateUserProfile(data: Partial<SelectUser>): Promise<SelectUser> {
+  console.log('ユーザー情報更新開始:', data);
+  const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
 
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "ユーザー情報の更新に失敗しました");
   }
 
-  return response.json();
+  const updatedData = await response.json();
+  console.log('ユーザー情報更新成功:', updatedData);
+  return updatedData;
 }
 
 // クエリクライアントの設定強化
@@ -217,8 +235,5 @@ export const queryClient = new QueryClient({
     }
   },
 });
-
-// デバッグ用のログ関数 (Removed - replaced with console.log in apiRequest)
-
 
 export { QUERY_KEYS };

@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { apiRequest } from "@/lib/queryClient";
+import { getUserProfile, updateUserProfile } from "@/lib/queryClient";
 import {
   Form,
   FormControl,
@@ -42,7 +42,6 @@ const basicInfoSchema = z.object({
     .or(z.literal("")),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
-  // 新しいパスワードが入力されている場合のみ、現在のパスワードを必須とする
   if (data.newPassword && !data.currentPassword) {
     return false;
   }
@@ -51,7 +50,6 @@ const basicInfoSchema = z.object({
   message: "現在のパスワードを入力してください",
   path: ["currentPassword"],
 }).refine((data) => {
-  // 新しいパスワードが入力されている場合のみ、確認用パスワードとの一致をチェック
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
     return false;
   }
@@ -68,19 +66,10 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // ユーザー情報の取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
-    queryFn: async () => {
-      console.log('Fetching user data...'); 
-      const response = await apiRequest("GET", "/api/user");
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
-      }
-      const data = await response.json();
-      console.log('Received user data:', data); 
-      return data;
-    },
+    queryFn: getUserProfile,
     enabled: !!user,
   });
 
@@ -96,29 +85,30 @@ export default function BasicInfoEdit() {
     },
   });
 
+  // フォームの初期値を設定
   useEffect(() => {
     if (userProfile) {
-      console.log('Setting form values:', {
+      console.log('フォーム初期値を設定:', {
         username: userProfile.username,
         location: userProfile.location,
         preferredLocations: userProfile.preferredLocations,
-        birthDate: userProfile.birthDate 
       });
 
       form.reset({
-        username: userProfile.username,
-        location: userProfile.location,
+        username: userProfile.username || "",
+        location: userProfile.location || "",
         preferredLocations: userProfile.preferredLocations || [],
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     }
   }, [userProfile, form]);
 
+  // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Sending update data:', data);
+      console.log('プロフィール更新データ:', data);
 
       const updateData = {
         username: data.username,
@@ -130,17 +120,7 @@ export default function BasicInfoEdit() {
         } : {})
       };
 
-      console.log('Update payload:', updateData); 
-
-      const response = await apiRequest("PATCH", "/api/user", updateData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "プロフィールの更新に失敗しました");
-      }
-
-      const result = await response.json();
-      console.log('Update response:', result);
-      return result;
+      return await updateUserProfile(updateData);
     },
     onSuccess: (data) => {
       queryClient.setQueryData([QUERY_KEYS.USER], data);
@@ -159,20 +139,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('Form submission data:', data); 
-
-    // パスワード関連のフィールドが空の場合は送信データから除外
-    const updateData = {
-      username: data.username,
-      location: data.location,
-      preferredLocations: data.preferredLocations,
-      ...(data.currentPassword && data.newPassword ? {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword
-      } : {})
-    };
-
-    await updateProfileMutation.mutateAsync(updateData);
+    await updateProfileMutation.mutateAsync(data);
   };
 
   if (!user) {
