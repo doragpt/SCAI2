@@ -37,9 +37,7 @@ function useLoginMutation() {
       const data = await response.json();
       return data;
     },
-    onSuccess: (data) => {
-      const { user, redirectTo } = data;
-
+    onSuccess: (user: SelectUser) => {
       // ユーザーデータをキャッシュに設定
       queryClient.setQueryData(["/api/user"], user);
       // キャッシュの即時更新を強制
@@ -50,8 +48,12 @@ function useLoginMutation() {
         description: "ログインしました。",
       });
 
-      // サーバーから返されたリダイレクトパスを使用
-      setLocation(redirectTo);
+      // ユーザーの役割に基づいてリダイレクト
+      if (user.role === "talent") {
+        setLocation("/talent/mypage");
+      } else if (user.role === "store") {
+        setLocation("/store/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({

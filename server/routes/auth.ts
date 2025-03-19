@@ -39,8 +39,7 @@ router.get("/user", authenticate, async (req, res) => {
       username: userData.username,
       birthDate: userData.birthDate,
       location: userData.location,
-      preferredLocations: userData.preferredLocations,
-      role: userData.role
+      preferredLocations: userData.preferredLocations
     });
 
     // 必要なユーザー情報のみを返す
@@ -52,8 +51,11 @@ router.get("/user", authenticate, async (req, res) => {
       location: userData.location,
       preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
       role: userData.role,
-      displayName: userData.username
+      displayName: userData.username // displayName を username から設定
     };
+
+    // レスポンスデータをログ出力
+    log('info', 'クライアントに送信するレスポンス', response);
 
     res.json(response);
   } catch (error) {
@@ -145,7 +147,7 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 router.post("/login", async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
-
+    // 認証処理は auth.ts で実装済み
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
@@ -153,14 +155,7 @@ router.post("/login", async (req, res, next) => {
       }
       req.login(user, (err) => {
         if (err) return next(err);
-
-        // ユーザーの役割に基づいてリダイレクト先を設定
-        const redirectPath = user.role === 'talent' ? '/talent/mypage' : '/store/dashboard';
-
-        res.json({
-          user,
-          redirectTo: redirectPath
-        });
+        res.json(user);
       });
     })(req, res, next);
   } catch (error) {

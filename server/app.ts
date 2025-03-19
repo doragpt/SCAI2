@@ -4,6 +4,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
+import talentRouter from './routes/talent';
+import jobsRouter from './routes/jobs';
 
 const app = express();
 
@@ -23,7 +25,27 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 認証セットアップ
 setupAuth(app);
 
-// ルート登録
+// APIミドルウェア
+app.use('/api', (req, res, next) => {
+  log('info', 'APIリクエスト受信', {
+    method: req.method,
+    path: req.path,
+    query: req.query,
+    body: req.method !== 'GET' ? req.body : undefined,
+    timestamp: new Date().toISOString()
+  });
+
+  // APIリクエストには必ずJSONを返すように設定
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
+// APIルートの直接登録
+app.use('/api/jobs', jobsRouter);
+app.use('/api/talent', talentRouter);
+
+// その他のAPIルートを登録
+log('info', 'APIルートの登録を開始');
 registerRoutes(app).catch(error => {
   log('error', 'ルート登録エラー', {
     error: error instanceof Error ? error.message : 'Unknown error'

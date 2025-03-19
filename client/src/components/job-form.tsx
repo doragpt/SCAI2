@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { z } from "zod";
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -47,58 +48,56 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [catchPhraseLength, setCatchPhraseLength] = useState(initialData?.catch_phrase?.length || 0);
-  const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
+  const [mainCatchLength, setMainCatchLength] = useState(0);
+  const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
-      businessName: initialData?.business_name || "",
+      businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
-      serviceType: initialData?.service_type || "デリヘル",
-      displayServiceType: initialData?.display_service_type || "デリヘル",
-      title: initialData?.title || "",
-      catch_phrase: initialData?.catch_phrase || "",
-      description: initialData?.description || "",
-      selectedBenefits: initialData?.selected_benefits || [],
-      phoneNumber1: initialData?.phone_number1 || "",
-      phoneNumber2: initialData?.phone_number2 || "",
-      phoneNumber3: initialData?.phone_number3 || "",
-      phoneNumber4: initialData?.phone_number4 || "",
-      contactEmail: initialData?.contact_email || "",
-      contactSns: initialData?.contact_sns || "",
-      contactSnsUrl: initialData?.contact_sns_url || "",
-      minimumGuarantee: initialData?.minimum_guarantee || null,
-      maximumGuarantee: initialData?.maximum_guarantee || null,
-      transportationSupport: initialData?.transportation_support || false,
-      housingSupport: initialData?.housing_support || false,
-      status: initialData?.status || "draft"
+      serviceType: initialData?.serviceType || "デリヘル",
+      displayServiceType: initialData?.displayServiceType || "デリヘル",
+      status: initialData?.status || "draft",
+      mainCatch: initialData?.mainCatch || "",
+      mainDescription: initialData?.mainDescription || "",
+      selectedBenefits: initialData?.selectedBenefits || [],
+      phoneNumber1: initialData?.phoneNumber1 || "",
+      phoneNumber2: initialData?.phoneNumber2 || "",
+      phoneNumber3: initialData?.phoneNumber3 || "",
+      phoneNumber4: initialData?.phoneNumber4 || "",
+      contactEmail: initialData?.contactEmail || "",
+      contactSns: initialData?.contactSns || "",
+      contactSnsUrl: initialData?.contactSnsUrl || "",
+      minimumGuarantee: initialData?.minimumGuarantee || null,
+      maximumGuarantee: initialData?.maximumGuarantee || null,
+      transportationSupport: initialData?.transportationSupport || false,
+      housingSupport: initialData?.housingSupport || false
     }
   });
+
+  // デバッグ用: フォームの状態変更を監視
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log('Form field updated:', { name, type, value });
+      console.log('Current form state:', form.getValues());
+      console.log('Form errors:', form.formState.errors);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       console.log('Submitting data:', data);
-      console.log('Form validation state:', form.formState);
-
       const response = await fetch("/api/jobs/basic-info", {
-        method: initialData ? "PUT" : "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...data,
-          title: data.catch_phrase.substring(0, 50)
-        }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        if (response.status === 401) {
-          throw new Error("認証エラー: ログインが必要です");
-        }
-        throw new Error(errorData.message || errorData.error || "求人情報の保存に失敗しました");
+        throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
 
       return response.json();
@@ -123,6 +122,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const onSubmit = (data: JobFormData) => {
     console.log("Form submission data:", data);
+    console.log("Form validation state:", form.formState);
     mutate(data);
   };
 
@@ -209,7 +209,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="catch_phrase"
+              name="mainCatch"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">キャッチコピー</FormLabel>
@@ -220,12 +220,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[100px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setCatchPhraseLength(e.target.value.length);
+                        setMainCatchLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    あと{300 - catchPhraseLength}文字
+                    あと{300 - mainCatchLength}文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -234,7 +234,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
             <FormField
               control={form.control}
-              name="description"
+              name="mainDescription"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">お仕事の内容</FormLabel>
@@ -245,12 +245,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[200px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setDescriptionLength(e.target.value.length);
+                        setMainDescriptionLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    あと{9000 - descriptionLength}文字
+                    あと{9000 - mainDescriptionLength}文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -264,7 +264,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardHeader>
             <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-8">
             <FormField
               control={form.control}
               name="selectedBenefits"
