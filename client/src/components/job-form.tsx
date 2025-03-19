@@ -410,7 +410,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">メールアドレス（任意）</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="例：recruit@example.com" />
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="例：recruit@example.com"
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -424,7 +429,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">SNS ID（任意）</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="例：@shop_recruit" />
+                    <Input
+                      {...field}
+                      placeholder="例：@shop_recruit"
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -438,7 +447,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">SNS友達追加URL（任意）</FormLabel>
                   <FormControl>
-                    <Input {...field} type="url" placeholder="例：https://line.me/ti/p/xxxxx" />
+                    <Input
+                      {...field}
+                      type="url"
+                      placeholder="例：https://line.me/ti/p/xxxxx"
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

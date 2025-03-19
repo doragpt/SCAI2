@@ -407,9 +407,21 @@ export const jobSchema = z.object({
   phoneNumber2: z.string().optional().nullable(),
   phoneNumber3: z.string().optional().nullable(),
   phoneNumber4: z.string().optional().nullable(),
-  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().nullable(),
-  contactSns: z.string().optional().nullable(),
-  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().nullable(),
+  contactEmail: z.union([
+    z.string().email("正しいメールアドレスの形式で入力してください"),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
+  contactSns: z.union([
+    z.string(),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
+  contactSnsUrl: z.union([
+    z.string().url("正しいURLの形式で入力してください"),
+    z.string().max(0),
+    z.null()
+  ]).optional(),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -661,6 +673,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 
