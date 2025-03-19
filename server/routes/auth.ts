@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { authenticate } from '../middleware/auth';
-import { talentRegisterFormSchema } from '@shared/schema';
+import { talentRegisterFormSchema, transformUserToResponse } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { log } from '../utils/logger';
@@ -40,25 +40,17 @@ router.get("/user", authenticate, async (req, res) => {
       username: userData.username,
       birthDate: userData.birthDate,
       location: userData.location,
-      preferredLocations: userData.preferredLocations
+      preferredLocations: userData.preferredLocations,
+      role: userData.role
     });
 
-    // 必要なユーザー情報のみを返す
-    const response = {
-      id: userData.id,
-      email: userData.email,
-      username: userData.username,
-      birthDate: userData.birthDate,
-      location: userData.location,
-      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
-      role: userData.role,
-      displayName: userData.username // displayName を username から設定
-    };
+    // transformUserToResponse関数を使用してレスポンスデータを生成
+    const responseData = transformUserToResponse(userData);
 
     // レスポンスデータをログ出力
-    log('info', 'クライアントに送信するレスポンス', response);
+    log('info', 'クライアントに送信するレスポンス', responseData);
 
-    res.json(response);
+    res.json(responseData);
   } catch (error) {
     log('error', 'ユーザー情報取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'

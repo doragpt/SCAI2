@@ -26,6 +26,7 @@ import type { UserResponse } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
+// 基本情報更新用のスキーマ定義
 const basicInfoSchema = z.object({
   username: z.string().min(1, "ニックネームを入力してください"),
   location: z.string().min(1, "居住地を選択してください"),
