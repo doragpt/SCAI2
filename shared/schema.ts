@@ -383,7 +383,7 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-// Update jobSchema to match the table definition
+// jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
@@ -406,7 +406,7 @@ export const jobSchema = z.object({
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
-  phoneNumber1: z.string().min(1, "電話番号を入力してください"),
+  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
   phoneNumber2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   phoneNumber3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   phoneNumber4: z.union([z.string(), z.string().max(0), z.null()]).optional(),
@@ -556,7 +556,6 @@ export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
-
 export const userSchema = createInsertSchema(users, {
   username: z.string().min(1, "ユーザー名を入力してください"),
   password: z.string().min(8, "パスワードは8文字以上で入力してください"),
@@ -677,7 +676,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 
