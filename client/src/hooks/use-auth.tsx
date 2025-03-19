@@ -32,17 +32,15 @@ function useLoginMutation() {
       const currentPath = window.location.pathname;
       const expectedRole = currentPath.includes('manager') ? 'store' : 'talent';
 
-      if (credentials.role && credentials.role !== expectedRole) {
-        throw new Error(`このページは${expectedRole === 'store' ? '店舗' : '女性'}専用のログインページです`);
-      }
+      // 強制的にロールを設定
+      credentials.role = expectedRole;
 
       const response = await apiRequest("POST", "/api/login", credentials);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
       }
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);

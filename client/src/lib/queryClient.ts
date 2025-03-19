@@ -38,20 +38,12 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include", // 重要: 認証情報を含める
+      credentials: "include", // セッションCookieを送信
     });
 
-    console.log('API Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: fullUrl,
-      timestamp: new Date().toISOString()
-    });
-
-    // 認証エラーの場合、明確なエラーメッセージを返す
-    if (response.status === 401) {
+    if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "認証が必要です。再度ログインしてください。");
+      throw new Error(error.message || "APIリクエストに失敗しました");
     }
 
     return response;

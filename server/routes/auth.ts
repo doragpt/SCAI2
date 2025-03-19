@@ -12,6 +12,7 @@ import { z } from 'zod';
 const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string().min(8, "パスワードは8文字以上である必要があります"),
+  role: z.enum(["talent", "store"]).optional(),
 });
 
 const router = Router();
@@ -146,19 +147,65 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 // ログインエンドポイント
 router.post("/login", async (req, res, next) => {
   try {
+    log('info', 'ログインリクエスト受信', {
+      email: req.body.email,
+      role: req.body.role
+    });
+
     const validatedData = loginSchema.parse(req.body);
-    // 認証処理は auth.ts で実装済み
+
+    // ユーザーの存在確認と役割の確認
+    const user = await storage.getUserByEmail(validatedData.email);
+    if (!user) {
+      log('warn', 'ユーザーが見つかりません', { email: validatedData.email });
+      return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
+    }
+
+    log('info', 'ユーザー取得成功', {
+      email: user.email,
+      role: user.role,
+      hasPassword: !!user.password
+    });
+
+    // パスワード認証
     passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) return next(err);
+      if (err) {
+        log('error', 'パスポート認証エラー', { error: err });
+        return next(err);
+      }
+
       if (!user) {
+        log('warn', '認証失敗', { message: info?.message });
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
+
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          log('error', 'セッション作成エラー', { error: err });
+          return next(err);
+        }
+
+        // セッションにユーザー情報を保存
+        req.session.user = {
+          id: user.id,
+          role: user.role,
+          email: user.email
+        };
+
+        log('info', 'ログイン成功', {
+          userId: user.id,
+          email: user.email,
+          role: user.role
+        });
+
         res.json(user);
       });
     })(req, res, next);
   } catch (error) {
+    log('error', 'ログインエラー', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+
     res.status(400).json({
       message: error instanceof Error ? error.message : "ログインに失敗しました"
     });
@@ -166,15 +213,27 @@ router.post("/login", async (req, res, next) => {
 });
 
 // ログアウトエンドポイント
-router.post("/logout", (req, res, next) => {
+router.post("/logout", (req, res) => {
+  const userRole = req.user?.role;
   req.logout((err) => {
-    if (err) return next(err);
-    res.sendStatus(200);
+    if (err) {
+      return res.status(500).json({ message: "ログアウトに失敗しました" });
+    }
+    // セッションを破棄
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+      }
+      res.json({ role: userRole });
+    });
   });
 });
 
 // セッションチェックエンドポイント
 router.get("/check", authenticate, (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "認証が必要です" });
+  }
   res.json(req.user);
 });
 

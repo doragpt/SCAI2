@@ -78,8 +78,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      const method = initialData ? "PATCH" : "POST";
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
+      const method = initialData ? "PATCH" : "POST";
 
       const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
@@ -107,7 +107,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    console.log("Form submission data:", data);
     mutate(data);
   };
 
