@@ -446,15 +446,36 @@ export interface JobListingResponse {
   };
 }
 
+// UserResponse型の定義を更新
 export type UserResponse = {
   id: number;
   email: string;
   username: string;
   birthDate: string;
-  location: string;
-  preferredLocations: string[];
+  location: Prefecture;
+  preferredLocations: Prefecture[];
   role: "talent" | "store";
+  displayName: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
+
+// データ変換用のヘルパー関数
+export function transformUserToResponse(user: User): UserResponse {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    birthDate: user.birthDate,
+    location: user.location,
+    preferredLocations: user.preferredLocations,
+    role: user.role,
+    displayName: user.displayName,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  };
+}
+
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
@@ -679,7 +700,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 

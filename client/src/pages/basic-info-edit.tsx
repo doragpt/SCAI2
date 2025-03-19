@@ -71,6 +71,13 @@ export default function BasicInfoEdit() {
     queryKey: [QUERY_KEYS.USER],
     queryFn: getUserProfile,
     enabled: !!user,
+    onError: (error: Error) => {
+      toast({
+        title: "エラー",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   });
 
   const form = useForm<BasicInfoFormData>({
@@ -92,15 +99,16 @@ export default function BasicInfoEdit() {
         username: userProfile.username,
         location: userProfile.location,
         preferredLocations: userProfile.preferredLocations,
+        birthDate: userProfile.birthDate
       });
 
       form.reset({
-        username: userProfile.username || "",
-        location: userProfile.location || "",
-        preferredLocations: userProfile.preferredLocations || [],
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations,
         currentPassword: "",
         newPassword: "",
-        confirmPassword: "",
+        confirmPassword: ""
       });
     }
   }, [userProfile, form]);
@@ -186,7 +194,7 @@ export default function BasicInfoEdit() {
           <div className="space-y-2">
             <FormLabel>生年月日</FormLabel>
             <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.birthDate 
+              <p>{userProfile?.birthDate
                 ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", { locale: ja })
                 : "未設定"}
               </p>
