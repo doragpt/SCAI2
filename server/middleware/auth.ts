@@ -1,21 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
-import { log } from '../utils/logger';
-
-// ユーザーロールの型定義
-export type UserRole = "talent" | "store";
-
-// ユーザー型の拡張
-declare global {
-  namespace Express {
-    interface User {
-      id: number;
-      role: UserRole;
-      email: string;
-      displayName: string | null;
-    }
-  }
-}
-
 // 認証ミドルウェア
 export function authenticate(
   req: Request,
