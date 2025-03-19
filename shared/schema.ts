@@ -243,6 +243,7 @@ export const jobs = pgTable("jobs", {
   storeIdIdx: index("jobs_store_id_idx").on(table.storeId),
 }));
 
+// users tableの定義を更新
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -701,7 +702,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 
