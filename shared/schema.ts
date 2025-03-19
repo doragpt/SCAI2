@@ -212,7 +212,6 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  title: text("title").notNull(),
   mainCatch: text("main_catch").notNull(),
   mainDescription: text("main_description").notNull(),
   selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -389,9 +388,6 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   status: z.enum(jobStatusTypes).default("draft"),
-  title: z.string()
-    .min(1, "タイトルを入力してください")
-    .max(100, "タイトルは100文字以内で入力してください"),
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),

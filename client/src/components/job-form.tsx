@@ -62,7 +62,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
-      title: initialData?.title || "",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
@@ -210,20 +209,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <CardTitle className="text-lg font-bold">求人情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium">タイトル</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="タイトルを入力してください" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="mainCatch"
