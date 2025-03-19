@@ -42,7 +42,6 @@ const basicInfoSchema = z.object({
     .or(z.literal("")),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
-  // 新しいパスワードが入力されている場合のみ、現在のパスワードを必須とする
   if (data.newPassword && !data.currentPassword) {
     return false;
   }
@@ -51,7 +50,6 @@ const basicInfoSchema = z.object({
   message: "現在のパスワードを入力してください",
   path: ["currentPassword"],
 }).refine((data) => {
-  // 新しいパスワードが入力されている場合のみ、確認用パスワードとの一致をチェック
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
     return false;
   }
@@ -68,22 +66,6 @@ export default function BasicInfoEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
-    queryKey: [QUERY_KEYS.USER],
-    queryFn: async () => {
-      console.log('Fetching user data...'); 
-      const response = await apiRequest("GET", "/api/user");
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
-      }
-      const data = await response.json();
-      console.log('Received user data:', data); 
-      return data;
-    },
-    enabled: !!user,
-  });
-
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -96,30 +78,34 @@ export default function BasicInfoEdit() {
     },
   });
 
+  const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
+    queryKey: [QUERY_KEYS.USER],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/user");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
   useEffect(() => {
     if (userProfile) {
-      console.log('Setting form values:', {
-        username: userProfile.username,
-        location: userProfile.location,
-        preferredLocations: userProfile.preferredLocations,
-        birthDate: userProfile.birthDate 
-      });
-
       form.reset({
-        username: userProfile.username,
-        location: userProfile.location,
+        username: userProfile.username || "",
+        location: userProfile.location || "",
         preferredLocations: userProfile.preferredLocations || [],
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     }
   }, [userProfile, form]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('Sending update data:', data);
-
       const updateData = {
         username: data.username,
         location: data.location,
@@ -130,17 +116,13 @@ export default function BasicInfoEdit() {
         } : {})
       };
 
-      console.log('Update payload:', updateData); 
-
       const response = await apiRequest("PATCH", "/api/user", updateData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
       }
 
-      const result = await response.json();
-      console.log('Update response:', result);
-      return result;
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData([QUERY_KEYS.USER], data);
@@ -159,20 +141,7 @@ export default function BasicInfoEdit() {
   });
 
   const onSubmit = async (data: BasicInfoFormData) => {
-    console.log('Form submission data:', data); 
-
-    // パスワード関連のフィールドが空の場合は送信データから除外
-    const updateData = {
-      username: data.username,
-      location: data.location,
-      preferredLocations: data.preferredLocations,
-      ...(data.currentPassword && data.newPassword ? {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword
-      } : {})
-    };
-
-    await updateProfileMutation.mutateAsync(updateData);
+    await updateProfileMutation.mutateAsync(data);
   };
 
   if (!user) {
@@ -207,7 +176,6 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          {/* メールアドレス（表示のみ） */}
           <div className="space-y-2">
             <FormLabel>メールアドレス</FormLabel>
             <div className="p-3 bg-muted rounded-md">
@@ -215,7 +183,6 @@ export default function BasicInfoEdit() {
             </div>
           </div>
 
-          {/* 生年月日（表示のみ） */}
           <div className="space-y-2">
             <FormLabel>生年月日</FormLabel>
             <div className="p-3 bg-muted rounded-md">
@@ -276,7 +243,6 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          {/* パスワード変更セクション */}
           <div className="space-y-4 border rounded-lg p-4">
             <h2 className="text-lg font-semibold">パスワード変更</h2>
             <FormField

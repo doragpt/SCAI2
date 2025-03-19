@@ -12,7 +12,9 @@ const app = express();
 
 // CORSの設定（認証情報を含むリクエストを許可）
 app.use(cors({
-  origin: true,
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : true,
   credentials: true,
   exposedHeaders: ['Set-Cookie', 'Date', 'ETag'],
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS'],
