@@ -44,7 +44,6 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 }
 
 function sanitizeUser(user: SelectUser) {
-  // transformUserToResponse関数を使用してデータを変換
   return transformUserToResponse(user);
 }
 
@@ -98,7 +97,10 @@ export function setupAuth(app: Express) {
             email: user.email,
             role: user.role
           });
-          return done(null, sanitizeUser(user));
+
+          // ユーザー情報を正規化して返す
+          const sanitizedUser = sanitizeUser(user);
+          return done(null, sanitizedUser);
         } catch (error) {
           log('error', 'ログインエラー', {
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -121,8 +123,20 @@ export function setupAuth(app: Express) {
         log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
-      log('info', 'セッションデシリアライズ成功', { userId: user.id });
-      done(null, sanitizeUser(user));
+
+      log('info', 'セッションデシリアライズ成功', { 
+        userId: user.id,
+        email: user.email,
+        username: user.username,
+        birthDate: user.birthDate,
+        location: user.location,
+        preferredLocations: user.preferredLocations,
+        role: user.role 
+      });
+
+      // ユーザー情報を正規化して返す
+      const sanitizedUser = sanitizeUser(user);
+      done(null, sanitizedUser);
     } catch (error) {
       log('error', 'デシリアライズエラー', {
         error: error instanceof Error ? error.message : 'Unknown error',

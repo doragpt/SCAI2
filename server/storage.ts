@@ -48,15 +48,15 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birth_date,
+        birthDate: result.birthDate,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferred_locations)
-          ? result.preferred_locations
+        preferredLocations: Array.isArray(result.preferredLocations)
+          ? result.preferredLocations
           : [],
         role: result.role,
-        displayName: result.display_name || result.username,
-        createdAt: result.created_at,
-        updatedAt: result.updated_at
+        displayName: result.displayName || result.username,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt
       };
 
       log('info', 'ユーザー取得成功', {

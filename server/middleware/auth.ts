@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../utils/logger';
+import { User as SelectUser } from '@shared/schema';
 
 // ユーザーロールの型定義
 export type UserRole = "talent" | "store";
@@ -7,12 +8,7 @@ export type UserRole = "talent" | "store";
 // ユーザー型の拡張
 declare global {
   namespace Express {
-    interface User {
-      id: number;
-      role: UserRole;
-      email: string;
-      displayName: string | null;
-    }
+    interface User extends SelectUser {}
   }
 }
 
@@ -41,7 +37,7 @@ export function authenticate(
     }
 
     // セッションの有効性を確認
-    if (!req.session || !req.session.user) {
+    if (!req.session) {
       log('warn', 'セッション無効', {
         path: req.path,
         sessionID: req.sessionID
@@ -49,17 +45,10 @@ export function authenticate(
       return res.status(401).json({ message: 'セッションが無効です' });
     }
 
-    // セッションとユーザー情報の整合性チェック
-    if (req.session.user.id !== req.user.id) {
-      log('warn', 'セッション不一致', {
-        sessionUserId: req.session.user.id,
-        requestUserId: req.user.id
-      });
-      return res.status(401).json({ message: '認証情報が一致しません' });
-    }
-
     log('info', '認証成功', {
       userId: req.user.id,
+      email: req.user.email,
+      username: req.user.username,
       role: req.user.role,
       path: req.path
     });
