@@ -81,7 +81,7 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     log('info', '求人作成を開始', {
       userId: req.user.id,
       role: req.user.role,
-      data: req.body
+      requestBody: req.body
     });
 
     // バリデーション前にデフォルト値を設定

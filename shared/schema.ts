@@ -207,6 +207,7 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
+// jobs table definition
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -226,13 +227,19 @@ export const jobs = pgTable("jobs", {
   contactEmail: text("contact_email"),
   contactSns: text("contact_sns"),
   contactSnsUrl: text("contact_sns_url"),
-  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
+  workingHours: text("working_hours"),
+  requirements: text("requirements"),
+  qualifications: text("qualifications"),
+  workingConditions: text("working_conditions"),
+  storeId: integer("store_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
   serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
   statusIdx: index("jobs_status_idx").on(table.status),
+  storeIdIdx: index("jobs_store_id_idx").on(table.storeId),
 }));
 
 export const users = pgTable("users", {
@@ -376,7 +383,7 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-// jobSchemaの定義を修正
+// Update jobSchema to match the table definition
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
@@ -408,16 +415,17 @@ export const jobSchema = z.object({
     z.string().max(0),
     z.null()
   ]).optional(),
-  contactSns: z.union([
-    z.string(),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
+  contactSns: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   contactSnsUrl: z.union([
     z.string().url("正しいURLの形式で入力してください"),
     z.string().max(0),
     z.null()
   ]).optional(),
+  workingHours: z.string().optional(),
+  requirements: z.string().optional(),
+  qualifications: z.string().optional(),
+  workingConditions: z.string().optional(),
+  storeId: z.number().optional(),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -669,7 +677,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };
