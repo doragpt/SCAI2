@@ -5,12 +5,12 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, transformUserToResponse } from "@shared/schema";
+import { User as SelectUser, transformUserToResponse, UserResponse } from "@shared/schema";
 import { log } from "./utils/logger";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends UserResponse {}
   }
 }
 
@@ -43,7 +43,6 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   }
 }
 
-// 認証設定の更新
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     store: storage.sessionStore,
@@ -74,17 +73,29 @@ export function setupAuth(app: Express) {
         try {
           const user = await storage.getUserByEmail(email);
           if (!user) {
+            log('warn', 'ログイン失敗: ユーザーが見つかりません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
+            log('warn', 'ログイン失敗: パスワードが一致しません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          const sanitizedUser = transformUserToResponse(user);
-          return done(null, sanitizedUser);
+          const userResponse = transformUserToResponse(user);
+          log('info', 'ログイン成功', {
+            userId: userResponse.id,
+            email: userResponse.email,
+            role: userResponse.role
+          });
+
+          return done(null, userResponse);
         } catch (error) {
+          log('error', 'ログインエラー', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            email
+          });
           return done(error);
         }
       }
@@ -92,6 +103,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
+    log('info', 'セッションシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -99,12 +111,23 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
+        log('warn', 'セッションデシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
 
-      const sanitizedUser = transformUserToResponse(user);
-      done(null, sanitizedUser);
+      const userResponse = transformUserToResponse(user);
+      log('info', 'セッションデシリアライズ成功', {
+        userId: userResponse.id,
+        email: userResponse.email,
+        role: userResponse.role
+      });
+
+      done(null, userResponse);
     } catch (error) {
+      log('error', 'セッションデシリアライズエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        id
+      });
       done(error);
     }
   });

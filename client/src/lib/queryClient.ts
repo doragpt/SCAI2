@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { UserResponse, SelectUser } from "@shared/schema";
+import type { UserResponse } from "@shared/schema";
 import { getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
@@ -41,11 +41,6 @@ export async function apiRequest(
       credentials: "include" as const,
     };
 
-    console.log('リクエスト設定', {
-      ...requestOptions,
-      timestamp: new Date().toISOString()
-    });
-
     const response = await fetch(fullUrl, requestOptions);
 
     if (!response.ok) {
@@ -55,10 +50,6 @@ export async function apiRequest(
         url: fullUrl,
         timestamp: new Date().toISOString()
       });
-
-      if (response.status === 401) {
-        console.warn('認証エラー - ログインが必要です');
-      }
 
       const error = await response.json();
       throw new Error(error.message || "APIリクエストに失敗しました");
@@ -77,7 +68,7 @@ export async function apiRequest(
 }
 
 // タレントプロフィール関連の関数
-export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
+export async function createOrUpdateTalentProfile(data: any): Promise<any> { //Type needs clarification from original code
   const response = await apiRequest(
     "POST",
     QUERY_KEYS.TALENT_PROFILE,
@@ -92,7 +83,7 @@ export async function createOrUpdateTalentProfile(data: TalentProfileData): Prom
   return response.json();
 }
 
-export async function getTalentProfile(): Promise<TalentProfileData> {
+export async function getTalentProfile(): Promise<any> { //Type needs clarification from original code
   const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
 
   if (!response.ok) {
@@ -185,55 +176,33 @@ export async function getUserProfile(): Promise<UserResponse> {
   console.log('ユーザー情報取得開始');
 
   const response = await apiRequest("GET", QUERY_KEYS.USER);
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "ユーザー情報の取得に失敗しました");
-  }
-
   const data = await response.json();
+
   console.log('ユーザー情報取得成功:', data);
   return data as UserResponse;
 }
 
 // ユーザー情報更新関数
-export async function updateUserProfile(data: Partial<SelectUser>): Promise<UserResponse> {
+export async function updateUserProfile(data: Partial<UserResponse>): Promise<UserResponse> {
   console.log('ユーザー情報更新開始:', data);
 
   const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
-  }
-
   const updatedData = await response.json();
+
   console.log('ユーザー情報更新成功:', updatedData);
   return updatedData as UserResponse;
 }
 
-// クエリクライアントの設定強化
+// クエリクライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5分間キャッシュを保持
       retry: 1,
       refetchOnWindowFocus: true,
-      refetchOnMount: true,
-      onError: (error) => {
-        console.error('クエリエラー', {
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString()
-        });
-      }
-    },
-    mutations: {
-      onError: (error) => {
-        console.error('ミューテーションエラー', {
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString()
-        });
-      }
+      refetchOnMount: true
     }
-  },
+  }
 });
 
 export { QUERY_KEYS };

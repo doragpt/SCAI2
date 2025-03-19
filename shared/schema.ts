@@ -14,7 +14,70 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// ServiceType関連の定義
+export type Prefecture = typeof prefectures[number];
+export type UserRole = "talent" | "store";
+
+// Base user schema
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  birthDate: text("birth_date").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
+  displayName: text("display_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+// User response type (excludes sensitive data)
+export interface UserResponse {
+  id: number;
+  email: string;
+  username: string;
+  birthDate: string;
+  location: Prefecture;
+  preferredLocations: Prefecture[];
+  role: UserRole;
+  displayName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// User data transformation
+export function transformUserToResponse(user: User): UserResponse {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    birthDate: user.birthDate,
+    location: user.location as Prefecture,
+    preferredLocations: Array.isArray(user.preferredLocations)
+      ? user.preferredLocations.map(loc => loc as Prefecture)
+      : [],
+    role: user.role as UserRole,
+    displayName: user.displayName,
+    createdAt: new Date(user.createdAt),
+    updatedAt: new Date(user.updatedAt)
+  };
+}
+
+// Form schemas
+export const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).optional(),
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
+
+
 export const serviceTypes = [
   "デリヘル",
   "ホテヘル",
@@ -166,7 +229,6 @@ export const allBenefitTypes = [
 ] as const;
 
 // Type definitions
-export type Prefecture = typeof prefectures[number];
 export type ServiceType = typeof serviceTypes[number];
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
@@ -244,19 +306,8 @@ export const jobs = pgTable("jobs", {
 }));
 
 // users tableの定義を更新
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  username: text("username").notNull(),
-  password: text("password").notNull(),
-  birthDate: text("birth_date").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
-  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
-  displayName: text("display_name").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+//既に上部で定義済み
+
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
@@ -358,8 +409,8 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 // Types
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+//User and InsertUser already defined above
+
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 export type JobResponse = {
@@ -379,11 +430,7 @@ export type JobResponse = {
 
 // Schemas
 // 既存のloginSchemaを更新
-export const loginSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).optional(),
-});
+//already defined above
 
 // Update jobSchema to match the table definition
 // jobSchemaも更新してプロパティ名を合わせる
@@ -435,49 +482,14 @@ export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
-export type LoginData = z.infer<typeof loginSchema>;
-
 // Response types
-export interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
+//JobListingResponse already defined above
 
 // UserResponse型の定義を更新
-export type UserResponse = {
-  id: number;
-  email: string;
-  username: string;
-  birthDate: string;
-  location: Prefecture;
-  preferredLocations: Prefecture[];
-  role: "talent" | "store";
-  displayName: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+//already defined above
 
 // データ変換用のヘルパー関数を修正
-export function transformUserToResponse(user: User): UserResponse {
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    birthDate: user.birthDate,
-    location: user.location as Prefecture,
-    preferredLocations: Array.isArray(user.preferredLocations)
-      ? user.preferredLocations.map(loc => loc as Prefecture)
-      : [],
-    role: user.role as "talent" | "store",
-    displayName: user.displayName,
-    createdAt: user.createdAt || new Date(),
-    updatedAt: user.updatedAt || new Date()
-  };
-}
+//already defined above
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
@@ -704,18 +716,10 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
 export type { User, TalentProfile, Job, Application, InsertApplication };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
 
-export interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
+//JobListingResponse already defined above
 
 export interface JobResponse extends Job {
   hasApplied?: boolean;

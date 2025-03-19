@@ -21,8 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { prefectures } from "@shared/schema";
-import type { UserResponse } from "@shared/schema";
+import { prefectures, UserResponse } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -72,16 +71,6 @@ export default function BasicInfoEdit() {
     queryKey: [QUERY_KEYS.USER],
     queryFn: getUserProfile,
     enabled: !!user,
-    onSuccess: (data) => {
-      console.log('ユーザープロフィール取得成功:', data);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "エラー",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
   });
 
   const form = useForm<BasicInfoFormData>({
@@ -99,13 +88,6 @@ export default function BasicInfoEdit() {
   // フォームの初期値を設定
   useEffect(() => {
     if (userProfile) {
-      console.log('フォーム初期値を設定:', {
-        username: userProfile.username,
-        location: userProfile.location,
-        preferredLocations: userProfile.preferredLocations,
-        birthDate: userProfile.birthDate
-      });
-
       form.reset({
         username: userProfile.username,
         location: userProfile.location,
@@ -120,8 +102,6 @@ export default function BasicInfoEdit() {
   // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
-      console.log('プロフィール更新データ:', data);
-
       const updateData = {
         username: data.username,
         location: data.location,

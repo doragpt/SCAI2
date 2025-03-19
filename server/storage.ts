@@ -42,7 +42,6 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
 
-      // データベースの値を適切な型に変換
       const user: User = {
         id: result.id,
         email: result.email,
@@ -59,7 +58,6 @@ export class DatabaseStorage implements IStorage {
         updatedAt: result.updatedAt || new Date()
       };
 
-      // 変換後のデータをログ出力して確認
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
@@ -114,6 +112,7 @@ export class DatabaseStorage implements IStorage {
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
+        username: user.username,
         role: user.role
       });
 
@@ -142,9 +141,9 @@ export class DatabaseStorage implements IStorage {
           password: insertUser.password,
           birthDate: insertUser.birthDate,
           location: insertUser.location,
-          preferredLocations: insertUser.preferredLocations,
+          preferredLocations: insertUser.preferredLocations || [],
           role: insertUser.role,
-          displayName: insertUser.displayName || insertUser.username,
+          displayName: insertUser.displayName,
           createdAt: new Date(),
           updatedAt: new Date()
         })
@@ -155,17 +154,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const user: User = {
-        id: result.id,
-        email: result.email,
-        username: result.username,
-        password: result.password,
-        birthDate: result.birthDate,
-        location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
-        role: result.role,
-        displayName: result.displayName || result.username,
+        ...result,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt
       };
@@ -192,7 +181,6 @@ export class DatabaseStorage implements IStorage {
 
       const updateData = {
         ...data,
-        displayName: data.username || data.displayName,
         updatedAt: new Date()
       };
 
@@ -207,17 +195,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const user: User = {
-        id: result.id,
-        email: result.email,
-        username: result.username,
-        password: result.password,
-        birthDate: result.birthDate,
-        location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
-        role: result.role,
-        displayName: result.displayName || result.username,
+        ...result,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt
       };
