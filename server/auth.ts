@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
   // セッション設定
   const sessionSettings: session.SessionOptions = {
     store: storage.sessionStore,
@@ -38,11 +38,17 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // 認証関連のルートで必ずJSONを返すように設定
+  app.use('/api/auth', (req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+  });
+
   // セッション状態のログ出力
   app.use((req, res, next) => {
     log('debug', 'セッション状態', {
       sessionId: req.sessionID,
-      userId: req.session?.userId,
+      session: req.session,
       isAuthenticated: req.isAuthenticated(),
       user: req.user
     });
@@ -64,9 +70,9 @@ export function setupAuth(app: Express) {
       log('debug', 'ユーザーデシリアライズ成功', { userId: id });
       done(null, user);
     } catch (error) {
-      log('error', 'デシリアライズエラー', { 
+      log('error', 'デシリアライズエラー', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId: id 
+        userId: id
       });
       done(error);
     }
@@ -102,9 +108,9 @@ export function setupAuth(app: Express) {
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
         log('error', 'ログイン処理エラー', { error: err });
-        return res.status(500).json({ 
+        return res.status(500).json({
           status: 'error',
-          message: "ログイン処理中にエラーが発生しました" 
+          message: "ログイン処理中にエラーが発生しました"
         });
       }
       if (!user) {
@@ -112,18 +118,18 @@ export function setupAuth(app: Express) {
           email: req.body.email,
           reason: info?.message || "認証失敗"
         });
-        return res.status(401).json({ 
+        return res.status(401).json({
           status: 'error',
-          message: info?.message || "認証に失敗しました" 
+          message: info?.message || "認証に失敗しました"
         });
       }
 
       req.login(user, (err) => {
         if (err) {
           log('error', 'セッション作成エラー', { error: err });
-          return res.status(500).json({ 
+          return res.status(500).json({
             status: 'error',
-            message: "セッションの作成に失敗しました" 
+            message: "セッションの作成に失敗しました"
           });
         }
 
@@ -131,9 +137,9 @@ export function setupAuth(app: Express) {
           userId: user.id,
           sessionId: req.sessionID
         });
-        res.json({ 
+        res.json({
           status: 'success',
-          user: sanitizeUser(user) 
+          user: sanitizeUser(user)
         });
       });
     })(req, res, next);
@@ -145,21 +151,21 @@ export function setupAuth(app: Express) {
     req.logout((err) => {
       if (err) {
         log('error', 'ログアウトエラー', { error: err });
-        return res.status(500).json({ 
+        return res.status(500).json({
           status: 'error',
-          message: "ログアウト処理中にエラーが発生しました" 
+          message: "ログアウト処理中にエラーが発生しました"
         });
       }
       req.session.destroy((err) => {
         if (err) {
           log('error', 'セッション破棄エラー', { error: err });
-          return res.status(500).json({ 
+          return res.status(500).json({
             status: 'error',
-            message: "セッションの破棄に失敗しました" 
+            message: "セッションの破棄に失敗しました"
           });
         }
         res.clearCookie('sessionId');
-        return res.status(200).json({ 
+        return res.status(200).json({
           status: 'success',
           message: "ログアウトしました",
           role: userRole
@@ -170,18 +176,37 @@ export function setupAuth(app: Express) {
 
   // 認証チェックAPI
   app.get("/api/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ 
+    try {
+      log('debug', '認証チェックリクエスト', {
+        isAuthenticated: req.isAuthenticated(),
+        sessionID: req.sessionID,
+        user: req.user
+      });
+
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({
+          status: 'error',
+          message: "認証されていません"
+        });
+      }
+
+      res.json({
+        status: 'success',
+        user: sanitizeUser(req.user as User)
+      });
+    } catch (error) {
+      log('error', '認証チェックエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      res.status(500).json({
         status: 'error',
-        message: "認証されていません" 
+        message: '認証チェック中にエラーが発生しました'
       });
     }
-    res.json({
-      status: 'success',
-      user: sanitizeUser(req.user as User)
-    });
   });
 
+  // その他の認証関連ルートも同様に...
   return app;
 }
 
