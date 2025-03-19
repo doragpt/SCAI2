@@ -49,7 +49,7 @@ function sanitizeUser(user: SelectUser) {
 }
 
 export function setupAuth(app: Express) {
-  // セッション設定
+  // セッション設定の強化
   const sessionSettings: session.SessionOptions = {
     store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',

@@ -161,6 +161,17 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
     }
 
+    // ロールの検証
+    if (validatedData.role && user.role !== validatedData.role) {
+      log('warn', 'ロール不一致', {
+        requestedRole: validatedData.role,
+        userRole: user.role
+      });
+      return res.status(403).json({
+        message: `このページは${validatedData.role === 'store' ? '店舗' : '女性'}専用のログインページです`
+      });
+    }
+
     log('info', 'ユーザー取得成功', {
       email: user.email,
       role: user.role,
@@ -192,6 +203,11 @@ router.post("/login", async (req, res, next) => {
           email: user.email,
           displayName: user.displayName
         };
+
+        // セッションCookieの設定を強化
+        req.session.cookie.secure = process.env.NODE_ENV === 'production';
+        req.session.cookie.httpOnly = true;
+        req.session.cookie.sameSite = 'lax';
 
         log('info', 'ログイン成功', {
           userId: user.id,

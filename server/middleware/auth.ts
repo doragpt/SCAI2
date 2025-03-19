@@ -38,6 +38,24 @@ export function authenticate(
       return res.status(401).json({ message: '認証が必要です' });
     }
 
+    // セッションの有効性を確認
+    if (!req.session || !req.session.user) {
+      log('warn', 'セッション無効', {
+        path: req.path,
+        sessionID: req.sessionID
+      });
+      return res.status(401).json({ message: 'セッションが無効です' });
+    }
+
+    // セッションとユーザー情報の整合性チェック
+    if (req.session.user.id !== req.user.id) {
+      log('warn', 'セッション不一致', {
+        sessionUserId: req.session.user.id,
+        requestUserId: req.user.id
+      });
+      return res.status(401).json({ message: '認証情報が一致しません' });
+    }
+
     log('info', '認証成功', {
       userId: req.user.id,
       role: req.user.role,
@@ -68,7 +86,9 @@ export function authorize(role: UserRole) {
         userRole: req.user.role,
         requiredRole: role
       });
-      return res.status(403).json({ message: 'アクセス権限がありません' });
+      return res.status(403).json({ 
+        message: `この操作には${role === 'store' ? '店舗' : '女性'}アカウントが必要です`
+      });
     }
 
     log('info', '認可成功', {

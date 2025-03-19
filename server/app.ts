@@ -10,11 +10,11 @@ import authRouter from './routes/auth';
 
 const app = express();
 
-// CORSの設定
+// CORSの設定（認証情報を含むリクエストを許可）
 app.use(cors({
   origin: true,
   credentials: true,
-  exposedHeaders: ['ETag', 'Content-Length', 'Content-Type'],
+  exposedHeaders: ['Set-Cookie', 'Date', 'ETag'],
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
@@ -23,10 +23,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 認証セットアップ（他のミドルウェアの前に配置）
+// 認証セットアップ（最初に配置）
 setupAuth(app);
 
-// APIミドルウェア
+// APIミドルウェア（ログ設定）
 app.use('/api', (req, res, next) => {
   log('info', 'APIリクエスト受信', {
     method: req.method,
@@ -38,7 +38,6 @@ app.use('/api', (req, res, next) => {
     timestamp: new Date().toISOString()
   });
 
-  // APIリクエストには必ずJSONを返すように設定
   res.setHeader('Content-Type', 'application/json');
   next();
 });
@@ -46,7 +45,7 @@ app.use('/api', (req, res, next) => {
 // 認証関連のルートを最初に登録
 app.use('/api', authRouter);
 
-// その他のAPIルートを登録
+// 保護されたAPIルートを登録
 app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
@@ -71,7 +70,6 @@ app.use('/api/*', (req, res) => {
     sessionID: req.sessionID
   });
   res.status(404).json({
-    error: 'NotFound',
     message: '指定されたAPIエンドポイントが見つかりません'
   });
 });
