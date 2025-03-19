@@ -38,6 +38,14 @@ app.use('/api', (req, res, next) => {
     timestamp: new Date().toISOString()
   });
 
+  // セッションの状態をログに出力
+  log('debug', 'セッション状態', {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+    session: req.session
+  });
+
   res.setHeader('Content-Type', 'application/json');
   next();
 });

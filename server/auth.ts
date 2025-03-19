@@ -61,7 +61,8 @@ export function setupAuth(app: Express) {
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24時間
-    }
+    },
+    rolling: true // セッションの有効期限を自動延長
   };
 
   // セッションミドルウェアの初期化
@@ -109,6 +110,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
+    log('info', 'セッションシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -116,10 +118,16 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
+        log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
+      log('info', 'セッションデシリアライズ成功', { userId: user.id });
       done(null, sanitizeUser(user));
     } catch (error) {
+      log('error', 'デシリアライズエラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        id
+      });
       done(error);
     }
   });

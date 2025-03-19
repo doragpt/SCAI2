@@ -10,7 +10,7 @@ const API_BASE_URL = (() => {
   return `${protocol}//${hostname}`;
 })();
 
-// APIリクエスト関数
+// APIリクエスト関数の強化
 export async function apiRequest(
   method: string,
   url: string,
@@ -20,7 +20,7 @@ export async function apiRequest(
   }
 ): Promise<Response> {
   try {
-    log('info', 'APIリクエスト開始', {
+    console.log('APIリクエスト開始', {
       method,
       url,
       data,
@@ -38,19 +38,27 @@ export async function apiRequest(
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include" as RequestCredentials, // 明示的に型を指定
+      credentials: "include" as const, // 明示的にincludeを指定
     };
 
-    log('info', 'リクエスト設定', requestOptions);
+    console.log('リクエスト設定', {
+      ...requestOptions,
+      timestamp: new Date().toISOString()
+    });
 
     const response = await fetch(fullUrl, requestOptions);
 
     if (!response.ok) {
-      log('error', 'APIリクエストエラー', {
+      console.error('APIリクエストエラー', {
         status: response.status,
         statusText: response.statusText,
-        url: fullUrl
+        url: fullUrl,
+        timestamp: new Date().toISOString()
       });
+
+      if (response.status === 401) {
+        console.warn('認証エラー - ログインが必要です');
+      }
 
       const error = await response.json();
       throw new Error(error.message || "APIリクエストに失敗しました");
@@ -58,7 +66,7 @@ export async function apiRequest(
 
     return response;
   } catch (error) {
-    log('error', 'APIリクエストエラー', {
+    console.error('APIリクエストエラー', {
       method,
       url,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -184,7 +192,7 @@ export async function updateUserProfile(data: any): Promise<any> {
   return response.json();
 }
 
-// クエリクライアントの設定
+// クエリクライアントの設定強化
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -192,19 +200,25 @@ export const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
+      onError: (error) => {
+        console.error('クエリエラー', {
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+      }
     },
+    mutations: {
+      onError: (error) => {
+        console.error('ミューテーションエラー', {
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
   },
 });
 
-// デバッグ用のログ関数
-function log(level: 'info' | 'error', message: string, data?: any) {
-  const logData = {
-    level,
-    message,
-    ...data,
-    timestamp: new Date().toISOString()
-  };
-  console.log(JSON.stringify(logData));
-}
+// デバッグ用のログ関数 (Removed - replaced with console.log in apiRequest)
+
 
 export { QUERY_KEYS };
