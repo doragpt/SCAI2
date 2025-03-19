@@ -27,13 +27,15 @@ export function authenticate(
       path: req.path,
       method: req.method,
       isAuthenticated: req.isAuthenticated(),
-      sessionID: req.sessionID
+      sessionID: req.sessionID,
+      user: req.user
     });
 
     if (!req.isAuthenticated() || !req.user) {
       log('warn', '未認証アクセス', {
         path: req.path,
-        method: req.method
+        method: req.method,
+        headers: req.headers
       });
       return res.status(401).json({ message: '認証が必要です' });
     }
@@ -65,7 +67,10 @@ export function authenticate(
     next();
   } catch (error) {
     log('error', '認証エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      path: req.path,
+      sessionID: req.sessionID,
+      user: req.user
     });
     return res.status(500).json({ 
       message: error instanceof Error ? error.message : '認証に失敗しました'
@@ -77,14 +82,18 @@ export function authenticate(
 export function authorize(role: UserRole) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      log('warn', '認可エラー: ユーザーが認証されていません');
+      log('warn', '認可エラー: ユーザーが認証されていません', {
+        path: req.path,
+        method: req.method
+      });
       return res.status(401).json({ message: '認証が必要です' });
     }
 
     if (req.user.role !== role) {
       log('warn', '認可エラー: 権限不足', {
         userRole: req.user.role,
-        requiredRole: role
+        requiredRole: role,
+        path: req.path
       });
       return res.status(403).json({ 
         message: `この操作には${role === 'store' ? '店舗' : '女性'}アカウントが必要です`
@@ -94,7 +103,8 @@ export function authorize(role: UserRole) {
     log('info', '認可成功', {
       userId: req.user.id,
       role: req.user.role,
-      requiredRole: role
+      requiredRole: role,
+      path: req.path
     });
 
     next();
