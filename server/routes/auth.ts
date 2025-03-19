@@ -41,7 +41,8 @@ router.get("/user", authenticate, async (req, res) => {
       birthDate: userData.birthDate,
       location: userData.location,
       preferredLocations: userData.preferredLocations,
-      role: userData.role
+      role: userData.role,
+      displayName: userData.displayName
     });
 
     // transformUserToResponse関数を使用してレスポンスデータを生成

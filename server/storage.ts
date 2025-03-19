@@ -28,7 +28,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | undefined> {
     try {
       log('info', 'ユーザー取得開始', { id });
 
@@ -42,6 +42,7 @@ async getUser(id: number): Promise<User | undefined> {
         return undefined;
       }
 
+      // データベースの値を適切な型に変換
       const user: User = {
         id: result.id,
         email: result.email,
@@ -61,10 +62,12 @@ async getUser(id: number): Promise<User | undefined> {
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
-        role: user.role,
+        username: user.username,
         birthDate: user.birthDate,
         location: user.location,
-        preferredLocations: user.preferredLocations
+        preferredLocations: user.preferredLocations,
+        role: user.role,
+        displayName: user.displayName
       });
 
       return user;

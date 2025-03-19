@@ -181,7 +181,7 @@ export const searchJobsQuery = async (params: {
 
 
 // ユーザー情報取得関数
-export async function getUserProfile(): Promise<SelectUser> {
+export async function getUserProfile(): Promise<UserResponse> {
   console.log('ユーザー情報取得開始');
   const response = await apiRequest("GET", QUERY_KEYS.USER);
 
@@ -196,7 +196,7 @@ export async function getUserProfile(): Promise<SelectUser> {
 }
 
 // ユーザー情報更新関数
-export async function updateUserProfile(data: Partial<SelectUser>): Promise<SelectUser> {
+export async function updateUserProfile(data: Partial<SelectUser>): Promise<UserResponse> {
   console.log('ユーザー情報更新開始:', data);
   const response = await apiRequest("PATCH", QUERY_KEYS.USER, data);
 

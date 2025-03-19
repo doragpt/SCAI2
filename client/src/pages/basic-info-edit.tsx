@@ -106,9 +106,7 @@ export default function BasicInfoEdit() {
       form.reset({
         username: userProfile.username,
         location: userProfile.location,
-        preferredLocations: Array.isArray(userProfile.preferredLocations) 
-          ? userProfile.preferredLocations 
-          : [],
+        preferredLocations: userProfile.preferredLocations,
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""
