@@ -50,7 +50,6 @@ app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
 // その他のAPIルートを登録
-log('info', 'APIルートの登録を開始');
 registerRoutes(app).catch(error => {
   log('error', 'ルート登録エラー', {
     error: error instanceof Error ? error.message : 'Unknown error'

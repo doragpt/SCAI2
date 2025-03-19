@@ -34,12 +34,16 @@ export async function apiRequest(
 
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-    const response = await fetch(fullUrl, {
+    const requestOptions = {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include", // セッションCookieを送信
-    });
+      credentials: "include" as RequestCredentials, // 明示的に型を指定
+    };
+
+    log('info', 'リクエスト設定', requestOptions);
+
+    const response = await fetch(fullUrl, requestOptions);
 
     if (!response.ok) {
       log('error', 'APIリクエストエラー', {
