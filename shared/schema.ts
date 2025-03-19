@@ -214,7 +214,7 @@ export const jobs = pgTable("jobs", {
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
-  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
+  benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
@@ -394,27 +394,15 @@ export const jobSchema = z.object({
   description: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
-  selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
+  benefits: z.array(z.enum(allBenefitTypes)).default([]),
   minimumGuarantee: z.number().nullable().optional(),
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
-  phoneNumber2: z.union([
-    z.string(),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
-  phoneNumber3: z.union([
-    z.string(),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
-  phoneNumber4: z.union([
-    z.string(),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
+  phoneNumber2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
+  phoneNumber3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
+  phoneNumber4: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   contactEmail: z.union([
     z.string().email("正しいメールアドレスの形式で入力してください"),
     z.string().max(0),

@@ -65,18 +65,18 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       status: initialData?.status || "draft",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
-      selectedBenefits: initialData?.selectedBenefits || [],
+      benefits: initialData?.benefits || [],
+      minimumGuarantee: initialData?.minimumGuarantee || null,
+      maximumGuarantee: initialData?.maximumGuarantee || null,
+      transportationSupport: initialData?.transportationSupport || false,
+      housingSupport: initialData?.housingSupport || false,
       phoneNumber1: initialData?.phoneNumber1 || "",
       phoneNumber2: initialData?.phoneNumber2 || "",
       phoneNumber3: initialData?.phoneNumber3 || "",
       phoneNumber4: initialData?.phoneNumber4 || "",
       contactEmail: initialData?.contactEmail || "",
       contactSns: initialData?.contactSns || "",
-      contactSnsUrl: initialData?.contactSnsUrl || "",
-      minimumGuarantee: initialData?.minimumGuarantee || null,
-      maximumGuarantee: initialData?.maximumGuarantee || null,
-      transportationSupport: initialData?.transportationSupport || false,
-      housingSupport: initialData?.housingSupport || false
+      contactSnsUrl: initialData?.contactSnsUrl || ""
     }
   });
 
@@ -326,7 +326,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
             <FormField
               control={form.control}
-              name="selectedBenefits"
+              name="benefits"
               render={() => (
                 <FormItem>
                   <div className="space-y-8">
@@ -340,7 +340,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             <FormField
                               key={benefit}
                               control={form.control}
-                              name="selectedBenefits"
+                              name="benefits"
                               render={({ field }) => {
                                 return (
                                   <FormItem
