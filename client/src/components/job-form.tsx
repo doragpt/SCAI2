@@ -57,6 +57,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
+    mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
@@ -125,6 +126,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       errors: form.formState.errors,
       data
     });
+
+    if (!form.formState.isValid) {
+      toast({
+        variant: "destructive",
+        title: "入力内容に誤りがあります",
+        description: "必須項目を入力してください。",
+      });
+      return;
+    }
+
     mutate(data);
   };
 
@@ -479,7 +490,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           >
             キャンセル
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={!form.formState.isValid || isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
           </Button>
