@@ -61,6 +61,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       selectedBenefits: initialData?.selected_benefits || [],
+      phoneNumber1: initialData?.phone_number1 || "",
+      phoneNumber2: initialData?.phone_number2 || "",
+      phoneNumber3: initialData?.phone_number3 || "",
+      phoneNumber4: initialData?.phone_number4 || "",
+      contactEmail: initialData?.contact_email || "",
+      contactSns: initialData?.contact_sns || "",
+      contactSnsUrl: initialData?.contact_sns_url || "",
       minimumGuarantee: initialData?.minimum_guarantee || null,
       maximumGuarantee: initialData?.maximum_guarantee || null,
       transportationSupport: initialData?.transportation_support || false,
@@ -88,8 +95,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Form submission error:', errorData);
-        throw new Error(errorData.message || "求人情報の保存に失敗しました");
+        if (response.status === 401) {
+          throw new Error("認証エラー: ログインが必要です");
+        }
+        throw new Error(errorData.message || errorData.error || "求人情報の保存に失敗しました");
       }
 
       return response.json();

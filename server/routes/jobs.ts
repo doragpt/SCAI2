@@ -9,7 +9,7 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 
 // 求人基本情報の保存
-router.post("/basic-info", authenticate, async (req, res) => {
+router.post("/basic-info", authenticate, async (req: any, res) => {
   try {
     log('info', '求人基本情報の保存リクエスト受信', {
       userId: req.user?.id,
@@ -28,7 +28,7 @@ router.post("/basic-info", authenticate, async (req, res) => {
           businessName: !!validatedData.businessName,
           location: !!validatedData.location,
           serviceType: !!validatedData.serviceType,
-          catchPhrase: !!validatedData.catch_phrase
+          phoneNumber1: !!validatedData.phoneNumber1,
         }
       }
     });
@@ -51,10 +51,12 @@ router.post("/basic-info", authenticate, async (req, res) => {
       maximum_guarantee: validatedData.maximumGuarantee || null,
       transportation_support: validatedData.transportationSupport || false,
       housing_support: validatedData.housingSupport || false,
-      working_hours: validatedData.workingHours || null,
-      requirements: validatedData.requirements || null,
-      qualifications: validatedData.qualifications || null,
-      working_conditions: validatedData.workingConditions || null,
+      phone_number1: validatedData.phoneNumber1,
+      phone_number2: validatedData.phoneNumber2 || null,
+      phone_number3: validatedData.phoneNumber3 || null,
+      phone_number4: validatedData.phoneNumber4 || null,
+      contact_email: validatedData.contactEmail || null,
+      contact_sns: validatedData.contactSns || null,
       contact_sns_url: validatedData.contactSnsUrl || null,
       store_id: req.user.id,
       status: validatedData.status || 'draft',
@@ -69,8 +71,7 @@ router.post("/basic-info", authenticate, async (req, res) => {
         location: jobData.location,
         service_type: jobData.service_type,
         store_id: jobData.store_id,
-        title: jobData.title,
-        catch_phrase: jobData.catch_phrase
+        phone_number1: jobData.phone_number1
       }
     });
 
