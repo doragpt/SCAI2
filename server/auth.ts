@@ -75,9 +75,8 @@ export function setupAuth(app: Express) {
       {
         usernameField: 'email',
         passwordField: 'password',
-        passReqToCallback: true,
       },
-      async (req, email, password, done) => {
+      async (email, password, done) => {
         try {
           log('info', 'ログイン試行', { email });
           const user = await storage.getUserByEmail(email);
@@ -110,7 +109,6 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('info', 'ユーザーシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -118,16 +116,10 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
-        log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', { userId: id });
         return done(null, false);
       }
-      log('info', 'ユーザーデシリアライズ成功', { userId: id });
       done(null, sanitizeUser(user));
     } catch (error) {
-      log('error', 'デシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        userId: id
-      });
       done(error);
     }
   });

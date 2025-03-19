@@ -16,11 +16,8 @@ app.use(cors({
   credentials: true,
   exposedHeaders: ['Set-Cookie', 'Date', 'ETag'],
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-
-// セッション管理のプロキシ設定
-app.set("trust proxy", 1);
 
 // リクエストボディのパース設定
 app.use(express.json({ limit: '10mb' }));
@@ -38,14 +35,8 @@ app.use('/api', (req, res, next) => {
     body: req.method !== 'GET' ? req.body : undefined,
     isAuthenticated: req.isAuthenticated(),
     sessionID: req.sessionID,
-    user: req.user,
     timestamp: new Date().toISOString()
   });
-
-  // セッション状態のチェックと更新
-  if (req.session) {
-    req.session.touch();
-  }
 
   res.setHeader('Content-Type', 'application/json');
   next();
@@ -75,8 +66,7 @@ app.use('/api/*', (req, res) => {
     method: req.method,
     path: req.path,
     isAuthenticated: req.isAuthenticated(),
-    sessionID: req.sessionID,
-    user: req.user
+    sessionID: req.sessionID
   });
   res.status(404).json({
     message: '指定されたAPIエンドポイントが見つかりません'
