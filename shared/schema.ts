@@ -220,6 +220,7 @@ export const jobs = pgTable("jobs", {
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
+  // 電話番号関連のカラムを明示的に定義
   phoneNumber1: text("phone_number_1").notNull(),
   phoneNumber2: text("phone_number_2"),
   phoneNumber3: text("phone_number_3"),
@@ -406,6 +407,7 @@ export const jobSchema = z.object({
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
+  // 電話番号のバリデーションを強化
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
   phoneNumber2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   phoneNumber3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
@@ -677,7 +679,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 
