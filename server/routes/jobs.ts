@@ -91,11 +91,19 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       status: "draft"
     };
 
+    log('info', 'バリデーション前のデータ', dataToValidate);
+
     // バリデーション
     const validatedData = jobSchema.parse(dataToValidate);
 
+    log('info', 'バリデーション後のデータ', validatedData);
+
     // 必須フィールドの存在確認
-    if (!validatedData.mainCatch || !validatedData.mainDescription) {
+    if (!validatedData.catchPhrase || !validatedData.description) {
+      log('warn', '必須フィールド不足', {
+        catchPhrase: !!validatedData.catchPhrase,
+        description: !!validatedData.description
+      });
       return res.status(400).json({
         message: "必須フィールドが不足しています",
         details: "キャッチコピー、詳細説明は必須です"
@@ -115,7 +123,8 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
 
       log('info', '求人作成成功', {
         userId: req.user.id,
-        jobId: newJob.id
+        jobId: newJob.id,
+        newJob
       });
 
       return res.status(201).json(newJob);

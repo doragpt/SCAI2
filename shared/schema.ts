@@ -212,8 +212,8 @@ export const jobs = pgTable("jobs", {
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  mainCatch: text("main_catch").notNull(),
-  mainDescription: text("main_description").notNull(),
+  catchPhrase: text("catch_phrase").notNull(),
+  description: text("description").notNull(),
   selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
@@ -388,10 +388,10 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   status: z.enum(jobStatusTypes).default("draft"),
-  mainCatch: z.string()
+  catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string()
+  description: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
@@ -669,7 +669,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 

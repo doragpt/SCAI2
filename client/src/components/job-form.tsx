@@ -52,8 +52,8 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [mainCatchLength, setMainCatchLength] = useState(0);
-  const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
+  const [catchPhraseLength, setCatchPhraseLength] = useState(0);
+  const [descriptionLength, setDescriptionLength] = useState(0);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -63,8 +63,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
-      mainCatch: initialData?.mainCatch || "",
-      mainDescription: initialData?.mainDescription || "",
+      catchPhrase: initialData?.catchPhrase || "",
+      description: initialData?.description || "",
       selectedBenefits: initialData?.selectedBenefits || [],
       phoneNumber1: initialData?.phoneNumber1 || "",
       phoneNumber2: initialData?.phoneNumber2 || "",
@@ -222,7 +222,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="mainCatch"
+              name="catchPhrase"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">キャッチコピー</FormLabel>
@@ -233,12 +233,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[100px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setMainCatchLength(e.target.value.length);
+                        setCatchPhraseLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    {mainCatchLength}/300文字
+                    {catchPhraseLength}/300文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -247,7 +247,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
             <FormField
               control={form.control}
-              name="mainDescription"
+              name="description"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">お仕事の内容</FormLabel>
@@ -258,12 +258,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[200px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setMainDescriptionLength(e.target.value.length);
+                        setDescriptionLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    {mainDescriptionLength}/9000文字
+                    {descriptionLength}/9000文字
                   </div>
                   <FormMessage />
                 </FormItem>
