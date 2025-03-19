@@ -460,22 +460,23 @@ export type UserResponse = {
   updatedAt: Date;
 };
 
-// データ変換用のヘルパー関数
+// データ変換用のヘルパー関数を修正
 export function transformUserToResponse(user: User): UserResponse {
   return {
     id: user.id,
     email: user.email,
     username: user.username,
     birthDate: user.birthDate,
-    location: user.location,
-    preferredLocations: user.preferredLocations,
+    location: user.location as Prefecture,
+    preferredLocations: Array.isArray(user.preferredLocations)
+      ? user.preferredLocations as Prefecture[]
+      : [],
     role: user.role,
     displayName: user.displayName,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   };
 }
-
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),

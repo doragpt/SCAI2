@@ -62,7 +62,8 @@ export class DatabaseStorage implements IStorage {
         id: user.id,
         email: user.email,
         role: user.role,
-        birthDate: user.birthDate
+        birthDate: user.birthDate,
+        preferredLocations: user.preferredLocations
       });
 
       return user;
