@@ -6,6 +6,7 @@ import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
 import talentRouter from './routes/talent';
 import jobsRouter from './routes/jobs';
+import authRouter from './routes/auth';
 
 const app = express();
 
@@ -22,7 +23,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 認証セットアップ
+// 認証セットアップ（他のミドルウェアの前に配置）
 setupAuth(app);
 
 // APIミドルウェア
@@ -32,6 +33,8 @@ app.use('/api', (req, res, next) => {
     path: req.path,
     query: req.query,
     body: req.method !== 'GET' ? req.body : undefined,
+    isAuthenticated: req.isAuthenticated(),
+    sessionID: req.sessionID,
     timestamp: new Date().toISOString()
   });
 
@@ -40,7 +43,10 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// APIルートの直接登録
+// 認証関連のルートを最初に登録
+app.use('/api', authRouter);
+
+// その他のAPIルートを登録
 app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
@@ -60,7 +66,9 @@ app.use(errorHandler);
 app.use('/api/*', (req, res) => {
   log('warn', 'APIルートが見つかりません', {
     method: req.method,
-    path: req.path
+    path: req.path,
+    isAuthenticated: req.isAuthenticated(),
+    sessionID: req.sessionID
   });
   res.status(404).json({
     error: 'NotFound',
