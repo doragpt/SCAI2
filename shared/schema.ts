@@ -208,6 +208,7 @@ export const bodyMarkSchema = z.object({
 
 // Tables
 // jobs table definition
+// 電話番号関連のカラムをスネークケースで定義
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -220,11 +221,10 @@ export const jobs = pgTable("jobs", {
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
-  // 電話番号関連のカラムを明示的に定義
-  phoneNumber1: text("phone_number_1").notNull(),
-  phoneNumber2: text("phone_number_2"),
-  phoneNumber3: text("phone_number_3"),
-  phoneNumber4: text("phone_number_4"),
+  phone_number_1: text("phone_number_1").notNull(),
+  phone_number_2: text("phone_number_2"),
+  phone_number_3: text("phone_number_3"),
+  phone_number_4: text("phone_number_4"),
   contactEmail: text("contact_email"),
   contactSns: text("contact_sns"),
   contactSnsUrl: text("contact_sns_url"),
@@ -385,6 +385,7 @@ export const loginSchema = z.object({
 });
 
 // Update jobSchema to match the table definition
+// jobSchemaも更新してプロパティ名を合わせる
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
@@ -407,11 +408,10 @@ export const jobSchema = z.object({
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
-  // 電話番号のバリデーションを強化
-  phoneNumber1: z.string().min(1, "電話番号を入力してください"),
-  phoneNumber2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  phoneNumber3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  phoneNumber4: z.union([z.string(), z.string().max(0), z.null()]).optional(),
+  phone_number_1: z.string().min(1, "電話番号を入力してください"),
+  phone_number_2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
+  phone_number_3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
+  phone_number_4: z.union([z.string(), z.string().max(0), z.null()]).optional(),
   contactEmail: z.union([
     z.string().email("正しいメールアドレスの形式で入力してください"),
     z.string().max(0),
@@ -679,6 +679,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 

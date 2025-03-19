@@ -70,10 +70,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       maximumGuarantee: initialData?.maximumGuarantee || null,
       transportationSupport: initialData?.transportationSupport || false,
       housingSupport: initialData?.housingSupport || false,
-      phoneNumber1: initialData?.phoneNumber1 || "",
-      phoneNumber2: initialData?.phoneNumber2 || "",
-      phoneNumber3: initialData?.phoneNumber3 || "",
-      phoneNumber4: initialData?.phoneNumber4 || "",
+      phone_number_1: initialData?.phone_number_1 || "",
+      phone_number_2: initialData?.phone_number_2 || "",
+      phone_number_3: initialData?.phone_number_3 || "",
+      phone_number_4: initialData?.phone_number_4 || "",
       contactEmail: initialData?.contactEmail || "",
       contactSns: initialData?.contactSns || "",
       contactSnsUrl: initialData?.contactSnsUrl || ""
@@ -389,7 +389,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="phoneNumber1"
+              name="phone_number_1"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">電話番号1</FormLabel>
@@ -405,7 +405,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <FormField
                 key={num}
                 control={form.control}
-                name={`phoneNumber${num}` as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
+                name={`phone_number_${num}` as "phone_number_2" | "phone_number_3" | "phone_number_4"}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-medium">電話番号{num}（任意）</FormLabel>
