@@ -84,27 +84,49 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       data: req.body
     });
 
-    const validatedData = jobSchema.parse({
+    // バリデーション前にデフォルト値を設定
+    const dataToValidate = {
       ...req.body,
       businessName: req.user.displayName,
-      status: "draft" // デフォルトステータスを設定
-    });
+      status: "draft"
+    };
 
-    const [newJob] = await db
-      .insert(jobs)
-      .values({
-        ...validatedData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      .returning();
+    // バリデーション
+    const validatedData = jobSchema.parse(dataToValidate);
 
-    log('info', '求人作成成功', {
-      userId: req.user.id,
-      jobId: newJob.id
-    });
+    // 必須フィールドの存在確認
+    if (!validatedData.title || !validatedData.mainCatch || !validatedData.mainDescription) {
+      return res.status(400).json({
+        message: "必須フィールドが不足しています",
+        details: "タイトル、キャッチコピー、詳細説明は必須です"
+      });
+    }
 
-    return res.status(201).json(newJob);
+    try {
+      // DB挿入
+      const [newJob] = await db
+        .insert(jobs)
+        .values({
+          ...validatedData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      log('info', '求人作成成功', {
+        userId: req.user.id,
+        jobId: newJob.id
+      });
+
+      return res.status(201).json(newJob);
+    } catch (dbError) {
+      log('error', 'DB挿入エラー', {
+        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+        validatedData
+      });
+      throw new Error('DB挿入に失敗しました');
+    }
+
   } catch (error) {
     log('error', '求人作成エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
