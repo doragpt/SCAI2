@@ -2,19 +2,9 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User } from "@shared/schema";
 import { log } from "./utils/logger";
-
-declare global {
-  namespace Express {
-    interface User extends SelectUser {}
-  }
-}
-
-const scryptAsync = promisify(scrypt);
 
 export function setupAuth(app: Express) {
   // セッション設定
@@ -23,19 +13,17 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    name: 'sessionId', // セッションクッキーの名前を設定
+    name: 'sessionId',
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24時間
+      maxAge: 24 * 60 * 60 * 1000
     }
   };
 
   // セッションミドルウェアの初期化
   app.use(session(sessionSettings));
-
-  // Passportの初期化
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -49,45 +37,6 @@ export function setupAuth(app: Express) {
     });
     next();
   });
-
-  // Passportの設定
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password',
-      },
-      async (email, password, done) => {
-        try {
-          log('info', 'ログイン試行', { email });
-          const user = await storage.getUserByEmail(email);
-
-          if (!user) {
-            log('warn', 'ユーザーが見つかりません', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          const isValidPassword = await comparePasswords(password, user.password);
-          if (!isValidPassword) {
-            log('warn', 'パスワードが一致しません', { email });
-            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
-          }
-
-          log('info', 'ログイン成功', { 
-            userId: user.id,
-            email: user.email,
-            role: user.role
-          });
-          return done(null, user);
-        } catch (error) {
-          log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error'
-          });
-          return done(error);
-        }
-      }
-    )
-  );
 
   passport.serializeUser((user: any, done) => {
     log('debug', 'ユーザーシリアライズ', { userId: user.id });
@@ -111,6 +60,31 @@ export function setupAuth(app: Express) {
       done(error);
     }
   });
+
+  // Passportの設定
+  passport.use(
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password',
+      },
+      async (email, password, done) => {
+        try {
+          const user = await storage.getUserByEmail(email);
+          if (!user) {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+          const isValidPassword = await storage.comparePasswords(password, user.password);
+          if (!isValidPassword) {
+            return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
+          }
+          return done(null, user);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    )
+  );
 
   // ログインAPI
   app.post("/api/login", (req, res, next) => {
@@ -200,29 +174,7 @@ export function setupAuth(app: Express) {
 }
 
 // ユーザー情報から機密情報を除外
-function sanitizeUser(user: SelectUser) {
+function sanitizeUser(user: User) {
   const { password, ...sanitizedUser } = user;
   return sanitizedUser;
 }
-
-async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${derivedKey.toString('hex')}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
-  try {
-    const [hashedPassword, salt] = stored.split('.');
-    const derivedKey = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuffer = Buffer.from(hashedPassword, 'hex');
-    return timingSafeEqual(derivedKey, storedBuffer);
-  } catch (error) {
-    log('error', 'パスワード比較エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-    return false;
-  }
-}
-
-export { hashPassword, comparePasswords };

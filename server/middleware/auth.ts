@@ -1,18 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from '../db';
-import { users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 import { log } from '../utils/logger';
 
-// ユーザーロールの型定義
-export type UserRole = "talent" | "store";
-
 // 認証ミドルウェア
-export async function authenticate(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function authenticate(req: Request, res: Response, next: NextFunction) {
   try {
     // セッション状態をログ
     log('debug', '認証ミドルウェア: セッション状態', {
@@ -27,72 +17,45 @@ export async function authenticate(
       return res.status(401).json({ message: '認証が必要です' });
     }
 
-    if (!req.user?.id) {
-      log('warn', '認証ミドルウェア: ユーザー情報なし', {
-        sessionId: req.sessionID
+    if (!req.user?.id || !req.user?.role) {
+      log('warn', '認証ミドルウェア: 不完全なユーザー情報', {
+        sessionId: req.sessionID,
+        user: req.user
       });
-      return res.status(401).json({ message: 'ユーザー情報が見つかりません' });
+      return res.status(401).json({ message: 'ユーザー情報が不完全です' });
     }
 
-    // ユーザーの存在確認
-    const [user] = await db
-      .select({
-        id: users.id,
-        role: users.role,
-        username: users.username,
-        displayName: users.displayName
-      })
-      .from(users)
-      .where(eq(users.id, req.user.id))
-      .limit(1);
-
-    if (!user) {
-      log('warn', '認証ミドルウェア: DBユーザーなし', { 
-        userId: req.user.id 
-      });
-      return res.status(401).json({ message: 'ユーザーが見つかりません' });
-    }
-
-    // storeロールのユーザーのみ許可
-    if (user.role !== 'store') {
+    if (req.user.role !== 'store') {
       log('warn', '認証ミドルウェア: 権限不足', {
-        userId: user.id,
-        role: user.role
+        userId: req.user.id,
+        role: req.user.role
       });
       return res.status(403).json({ message: 'この操作には店舗権限が必要です' });
     }
 
     log('info', '認証成功', {
-      userId: user.id,
-      role: user.role
+      userId: req.user.id,
+      role: req.user.role
     });
 
-    req.user = user;
     next();
   } catch (error) {
     log('error', '認証エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
-    return res.status(500).json({ 
-      message: error instanceof Error ? error.message : '認証に失敗しました'
-    });
+    return res.status(500).json({ message: '認証処理中にエラーが発生しました' });
   }
 }
 
 // ロールベースの認可ミドルウェア
-export function authorize(...roles: UserRole[]) {
+export function authorize(...roles: Array<'talent' | 'store'>) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      log('warn', '認可エラー: ユーザーが認証されていません');
+    if (!req.user?.role) {
       return res.status(401).json({ message: '認証が必要です' });
     }
 
     if (!roles.includes(req.user.role)) {
-      log('warn', '認可エラー: 権限不足', {
-        userRole: req.user.role,
-        requiredRoles: roles
-      });
       return res.status(403).json({ message: 'アクセス権限がありません' });
     }
 
