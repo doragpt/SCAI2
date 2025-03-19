@@ -59,25 +59,17 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24時間
     }
   };
-
-  // 開発環境の場合、sameSiteをlaxに設定
-  if (process.env.NODE_ENV !== 'production') {
-    sessionSettings.cookie = {
-      ...sessionSettings.cookie,
-      sameSite: 'lax'
-    };
-  }
 
   // セッションミドルウェアの初期化
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Passportの設定（既存の設定を維持）
+  // Passportの設定
   passport.use(
     new LocalStrategy(
       {
@@ -117,7 +109,6 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('info', 'ユーザーシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -125,16 +116,10 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
-        log('warn', 'デシリアライズ失敗: ユーザーが見つかりません', { userId: id });
         return done(null, false);
       }
-      log('info', 'ユーザーデシリアライズ成功', { userId: id });
       done(null, sanitizeUser(user));
     } catch (error) {
-      log('error', 'デシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        userId: id
-      });
       done(error);
     }
   });

@@ -16,8 +16,7 @@ app.use(cors({
   credentials: true,
   exposedHeaders: ['Set-Cookie', 'Date', 'ETag'],
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  maxAge: 86400 // 24時間
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // リクエストボディのパース設定

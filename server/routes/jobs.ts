@@ -117,18 +117,15 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
         userId: req.user.id
       });
 
-      // SQLクエリのログ出力
-      const insertQuery = db.insert(jobs).values({
-        ...validatedData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      log('info', 'SQLクエリ', {
-        sql: insertQuery.toSQL()
-      });
-
       // DB挿入
-      const [newJob] = await insertQuery.returning();
+      const [newJob] = await db
+        .insert(jobs)
+        .values({
+          ...validatedData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
 
       log('info', '求人作成成功', {
         userId: req.user.id,
