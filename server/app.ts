@@ -38,14 +38,6 @@ app.use('/api', (req, res, next) => {
     timestamp: new Date().toISOString()
   });
 
-  // セッションの状態をログに出力
-  log('debug', 'セッション状態', {
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user,
-    session: req.session
-  });
-
   res.setHeader('Content-Type', 'application/json');
   next();
 });
@@ -58,6 +50,7 @@ app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
 // その他のAPIルートを登録
+log('info', 'APIルートの登録を開始');
 registerRoutes(app).catch(error => {
   log('error', 'ルート登録エラー', {
     error: error instanceof Error ? error.message : 'Unknown error'

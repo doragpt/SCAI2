@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { getUserProfile, updateUserProfile } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Form,
   FormControl,
@@ -20,54 +21,126 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { prefectures, UserResponse, userProfileUpdateSchema, type UserProfileUpdate } from "@shared/schema";
+import { prefectures } from "@shared/schema";
+import type { UserResponse } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+
+const basicInfoSchema = z.object({
+  username: z.string().min(1, "ニックネームを入力してください"),
+  location: z.string().min(1, "居住地を選択してください"),
+  preferredLocations: z.array(z.string()).min(1, "希望地域を選択してください"),
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(48, "パスワードは48文字以内で入力してください")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    )
+    .optional()
+    .or(z.literal("")),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  // 新しいパスワードが入力されている場合のみ、現在のパスワードを必須とする
+  if (data.newPassword && !data.currentPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "現在のパスワードを入力してください",
+  path: ["currentPassword"],
+}).refine((data) => {
+  // 新しいパスワードが入力されている場合のみ、確認用パスワードとの一致をチェック
+  if (data.newPassword && data.newPassword !== data.confirmPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "新しいパスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
+});
+
+type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
 
 export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // ユーザー情報の取得
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
-    queryFn: getUserProfile,
+    queryFn: async () => {
+      console.log('Fetching user data...'); 
+      const response = await apiRequest("GET", "/api/user");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
+      }
+      const data = await response.json();
+      console.log('Received user data:', data); 
+      return data;
+    },
     enabled: !!user,
   });
 
-  const form = useForm<UserProfileUpdate>({
-    resolver: zodResolver(userProfileUpdateSchema),
+  const form = useForm<BasicInfoFormData>({
+    resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       username: "",
-      location: undefined,
+      location: "",
       preferredLocations: [],
-      displayName: "",
-      phoneNumber: "",
       currentPassword: "",
       newPassword: "",
+      confirmPassword: "",
     },
   });
 
-  // フォームの初期値を設定
   useEffect(() => {
     if (userProfile) {
-      form.reset({
+      console.log('Setting form values:', {
         username: userProfile.username,
         location: userProfile.location,
         preferredLocations: userProfile.preferredLocations,
-        displayName: userProfile.displayName,
-        phoneNumber: userProfile.phoneNumber || "",
-        currentPassword: "",
-        newPassword: "",
+        birthDate: userProfile.birthDate 
+      });
+
+      form.reset({
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations || [],
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       });
     }
   }, [userProfile, form]);
 
-  // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: UserProfileUpdate) => {
-      return await updateUserProfile(data);
+    mutationFn: async (data: BasicInfoFormData) => {
+      console.log('Sending update data:', data);
+
+      const updateData = {
+        username: data.username,
+        location: data.location,
+        preferredLocations: data.preferredLocations,
+        ...(data.currentPassword && data.newPassword ? {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        } : {})
+      };
+
+      console.log('Update payload:', updateData); 
+
+      const response = await apiRequest("PATCH", "/api/user", updateData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "プロフィールの更新に失敗しました");
+      }
+
+      const result = await response.json();
+      console.log('Update response:', result);
+      return result;
     },
     onSuccess: (data) => {
       queryClient.setQueryData([QUERY_KEYS.USER], data);
@@ -85,8 +158,21 @@ export default function BasicInfoEdit() {
     },
   });
 
-  const onSubmit = async (data: UserProfileUpdate) => {
-    await updateProfileMutation.mutateAsync(data);
+  const onSubmit = async (data: BasicInfoFormData) => {
+    console.log('Form submission data:', data); 
+
+    // パスワード関連のフィールドが空の場合は送信データから除外
+    const updateData = {
+      username: data.username,
+      location: data.location,
+      preferredLocations: data.preferredLocations,
+      ...(data.currentPassword && data.newPassword ? {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      } : {})
+    };
+
+    await updateProfileMutation.mutateAsync(updateData);
   };
 
   if (!user) {
@@ -112,7 +198,7 @@ export default function BasicInfoEdit() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ユーザー名</FormLabel>
+                <FormLabel>ニックネーム</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -121,31 +207,19 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="displayName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>表示名</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+          {/* メールアドレス（表示のみ） */}
           <div className="space-y-2">
             <FormLabel>メールアドレス</FormLabel>
             <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.email}</p>
+              <p>{userProfile?.email || "未設定"}</p>
             </div>
           </div>
 
+          {/* 生年月日（表示のみ） */}
           <div className="space-y-2">
             <FormLabel>生年月日</FormLabel>
             <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.birthDate
+              <p>{userProfile?.birthDate 
                 ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", { locale: ja })
                 : "未設定"}
               </p>
@@ -202,20 +276,7 @@ export default function BasicInfoEdit() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>電話番号（任意）</FormLabel>
-                <FormControl>
-                  <Input {...field} type="tel" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+          {/* パスワード変更セクション */}
           <div className="space-y-4 border rounded-lg p-4">
             <h2 className="text-lg font-semibold">パスワード変更</h2>
             <FormField
@@ -237,6 +298,19 @@ export default function BasicInfoEdit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>新しいパスワード</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>新しいパスワード（確認）</FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
                   </FormControl>

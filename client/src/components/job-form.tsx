@@ -37,6 +37,7 @@ import { useState } from "react";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 
+// Added logging function
 const log = (level: 'info' | 'error', message: string, data?: any) => {
   console[level](message, data);
 };
@@ -52,31 +53,30 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [catchPhraseLength, setCatchPhraseLength] = useState(0);
-  const [descriptionLength, setDescriptionLength] = useState(0);
+  const [mainCatchLength, setMainCatchLength] = useState(0);
+  const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
-      catchPhrase: initialData?.catchPhrase || "",
-      description: initialData?.description || "",
-      benefits: initialData?.benefits || [],
+      mainCatch: initialData?.mainCatch || "",
+      mainDescription: initialData?.mainDescription || "",
+      selectedBenefits: initialData?.selectedBenefits || [],
+      phoneNumber1: initialData?.phoneNumber1 || "",
+      phoneNumber2: initialData?.phoneNumber2 || "",
+      phoneNumber3: initialData?.phoneNumber3 || "",
+      phoneNumber4: initialData?.phoneNumber4 || "",
+      contactEmail: initialData?.contactEmail || "",
+      contactSns: initialData?.contactSns || "",
+      contactSnsUrl: initialData?.contactSnsUrl || "",
       minimumGuarantee: initialData?.minimumGuarantee || null,
       maximumGuarantee: initialData?.maximumGuarantee || null,
       transportationSupport: initialData?.transportationSupport || false,
-      housingSupport: initialData?.housingSupport || false,
-      phone_number_1: initialData?.phone_number_1 || "",
-      phone_number_2: initialData?.phone_number_2 || "",
-      phone_number_3: initialData?.phone_number_3 || "",
-      phone_number_4: initialData?.phone_number_4 || "",
-      contactEmail: initialData?.contactEmail || "",
-      contactSns: initialData?.contactSns || "",
-      contactSnsUrl: initialData?.contactSnsUrl || ""
+      housingSupport: initialData?.housingSupport || false
     }
   });
 
@@ -88,8 +88,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       log('info', '求人フォーム送信開始', {
         method,
         endpoint,
-        isUpdate: !!initialData,
-        formData: data
+        isUpdate: !!initialData
       });
 
       const response = await apiRequest(method, endpoint, data);
@@ -109,8 +108,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
     onError: (error: Error) => {
       log('error', '求人フォーム送信エラー', {
-        error: error.message,
-        formState: form.formState
+        error: error.message
       });
       toast({
         variant: "destructive",
@@ -121,21 +119,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    log('info', 'フォーム送信前の検証', {
-      isValid: form.formState.isValid,
-      errors: form.formState.errors,
-      data
-    });
-
-    if (!form.formState.isValid) {
-      toast({
-        variant: "destructive",
-        title: "入力内容に誤りがあります",
-        description: "必須項目を入力してください。",
-      });
-      return;
-    }
-
     mutate(data);
   };
 
@@ -222,7 +205,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="catchPhrase"
+              name="mainCatch"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">キャッチコピー</FormLabel>
@@ -233,12 +216,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[100px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setCatchPhraseLength(e.target.value.length);
+                        setMainCatchLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    {catchPhraseLength}/300文字
+                    {mainCatchLength}/300文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -247,7 +230,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
             <FormField
               control={form.control}
-              name="description"
+              name="mainDescription"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">お仕事の内容</FormLabel>
@@ -258,12 +241,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       className="min-h-[200px]"
                       onChange={(e) => {
                         field.onChange(e);
-                        setDescriptionLength(e.target.value.length);
+                        setMainDescriptionLength(e.target.value.length);
                       }}
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    {descriptionLength}/9000文字
+                    {mainDescriptionLength}/9000文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -287,13 +270,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <FormLabel className="font-medium">最低保証（円）</FormLabel>
                     <FormControl>
                       <Input
+                        {...field}
                         type="number"
                         placeholder="例：30000"
-                        value={field.value?.toString() || ''}
-                        onChange={(e) => {
-                          const value = e.target.value ? parseInt(e.target.value, 10) : null;
-                          field.onChange(value);
-                        }}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -309,13 +289,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <FormLabel className="font-medium">最高保証（円）</FormLabel>
                     <FormControl>
                       <Input
+                        {...field}
                         type="number"
                         placeholder="例：50000"
-                        value={field.value?.toString() || ''}
-                        onChange={(e) => {
-                          const value = e.target.value ? parseInt(e.target.value, 10) : null;
-                          field.onChange(value);
-                        }}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -326,7 +303,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
             <FormField
               control={form.control}
-              name="benefits"
+              name="selectedBenefits"
               render={() => (
                 <FormItem>
                   <div className="space-y-8">
@@ -340,7 +317,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             <FormField
                               key={benefit}
                               control={form.control}
-                              name="benefits"
+                              name="selectedBenefits"
                               render={({ field }) => {
                                 return (
                                   <FormItem
@@ -389,7 +366,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="phone_number_1"
+              name="phoneNumber1"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">電話番号1</FormLabel>
@@ -405,17 +382,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <FormField
                 key={num}
                 control={form.control}
-                name={`phone_number_${num}` as "phone_number_2" | "phone_number_3" | "phone_number_4"}
+                name={`phoneNumber${num}` as "phoneNumber2" | "phoneNumber3" | "phoneNumber4"}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-medium">電話番号{num}（任意）</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="tel"
-                        placeholder="例：03-1234-5678"
-                        value={field.value || ''}
-                      />
+                      <Input {...field} type="tel" placeholder="例：03-1234-5678" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -430,12 +402,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">メールアドレス（任意）</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      placeholder="例：recruit@example.com"
-                      value={field.value || ''}
-                    />
+                    <Input {...field} type="email" placeholder="例：recruit@example.com" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -449,11 +416,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">SNS ID（任意）</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="例：@shop_recruit"
-                      value={field.value || ''}
-                    />
+                    <Input {...field} placeholder="例：@shop_recruit" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -467,12 +430,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormItem>
                   <FormLabel className="font-medium">SNS友達追加URL（任意）</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="url"
-                      placeholder="例：https://line.me/ti/p/xxxxx"
-                      value={field.value || ''}
-                    />
+                    <Input {...field} type="url" placeholder="例：https://line.me/ti/p/xxxxx" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -490,7 +448,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           >
             キャンセル
           </Button>
-          <Button type="submit" disabled={!form.formState.isValid || isPending}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
           </Button>

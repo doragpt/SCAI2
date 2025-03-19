@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../utils/logger';
-import { User as SelectUser } from '@shared/schema';
 
 // ユーザーロールの型定義
 export type UserRole = "talent" | "store";
@@ -8,7 +7,12 @@ export type UserRole = "talent" | "store";
 // ユーザー型の拡張
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User {
+      id: number;
+      role: UserRole;
+      email: string;
+      displayName: string | null;
+    }
   }
 }
 
@@ -23,21 +27,19 @@ export function authenticate(
       path: req.path,
       method: req.method,
       isAuthenticated: req.isAuthenticated(),
-      sessionID: req.sessionID,
-      user: req.user
+      sessionID: req.sessionID
     });
 
     if (!req.isAuthenticated() || !req.user) {
       log('warn', '未認証アクセス', {
         path: req.path,
-        method: req.method,
-        headers: req.headers
+        method: req.method
       });
       return res.status(401).json({ message: '認証が必要です' });
     }
 
     // セッションの有効性を確認
-    if (!req.session) {
+    if (!req.session || !req.session.user) {
       log('warn', 'セッション無効', {
         path: req.path,
         sessionID: req.sessionID
@@ -45,13 +47,17 @@ export function authenticate(
       return res.status(401).json({ message: 'セッションが無効です' });
     }
 
+    // セッションとユーザー情報の整合性チェック
+    if (req.session.user.id !== req.user.id) {
+      log('warn', 'セッション不一致', {
+        sessionUserId: req.session.user.id,
+        requestUserId: req.user.id
+      });
+      return res.status(401).json({ message: '認証情報が一致しません' });
+    }
+
     log('info', '認証成功', {
       userId: req.user.id,
-      email: req.user.email,
-      username: req.user.username,
-      birthDate: req.user.birthDate,
-      location: req.user.location,
-      preferredLocations: req.user.preferredLocations,
       role: req.user.role,
       path: req.path
     });
@@ -59,10 +65,7 @@ export function authenticate(
     next();
   } catch (error) {
     log('error', '認証エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      path: req.path,
-      sessionID: req.sessionID,
-      user: req.user
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     return res.status(500).json({ 
       message: error instanceof Error ? error.message : '認証に失敗しました'
@@ -74,18 +77,14 @@ export function authenticate(
 export function authorize(role: UserRole) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      log('warn', '認可エラー: ユーザーが認証されていません', {
-        path: req.path,
-        method: req.method
-      });
+      log('warn', '認可エラー: ユーザーが認証されていません');
       return res.status(401).json({ message: '認証が必要です' });
     }
 
     if (req.user.role !== role) {
       log('warn', '認可エラー: 権限不足', {
         userRole: req.user.role,
-        requiredRole: role,
-        path: req.path
+        requiredRole: role
       });
       return res.status(403).json({ 
         message: `この操作には${role === 'store' ? '店舗' : '女性'}アカウントが必要です`
@@ -95,8 +94,7 @@ export function authorize(role: UserRole) {
     log('info', '認可成功', {
       userId: req.user.id,
       role: req.user.role,
-      requiredRole: role,
-      path: req.path
+      requiredRole: role
     });
 
     next();

@@ -81,73 +81,34 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     log('info', '求人作成を開始', {
       userId: req.user.id,
       role: req.user.role,
-      requestBody: req.body
+      data: req.body
     });
 
-    // バリデーション前にデフォルト値を設定
-    const dataToValidate = {
+    const validatedData = jobSchema.parse({
       ...req.body,
       businessName: req.user.displayName,
-      status: "draft"
-    };
+      status: "draft" // デフォルトステータスを設定
+    });
 
-    log('info', 'バリデーション前のデータ', dataToValidate);
-
-    // バリデーション
-    const validatedData = jobSchema.parse(dataToValidate);
-
-    log('info', 'バリデーション後のデータ', validatedData);
-
-    // 必須フィールドの存在確認
-    if (!validatedData.catchPhrase || !validatedData.description) {
-      log('warn', '必須フィールド不足', {
-        catchPhrase: !!validatedData.catchPhrase,
-        description: !!validatedData.description
-      });
-      return res.status(400).json({
-        message: "必須フィールドが不足しています",
-        details: "キャッチコピー、詳細説明は必須です"
-      });
-    }
-
-    try {
-      // DB挿入前のデータログ
-      log('info', 'DB挿入前のデータ', {
+    const [newJob] = await db
+      .insert(jobs)
+      .values({
         ...validatedData,
-        userId: req.user.id
-      });
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
 
-      // DB挿入
-      const [newJob] = await db
-        .insert(jobs)
-        .values({
-          ...validatedData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
+    log('info', '求人作成成功', {
+      userId: req.user.id,
+      jobId: newJob.id
+    });
 
-      log('info', '求人作成成功', {
-        userId: req.user.id,
-        jobId: newJob.id,
-        newJob
-      });
-
-      return res.status(201).json(newJob);
-    } catch (dbError) {
-      log('error', 'DB挿入エラー', {
-        error: dbError instanceof Error ? dbError.message : 'Unknown error',
-        validatedData,
-        sql: db.insert(jobs).values(validatedData).toSQL()
-      });
-      throw new Error('DB挿入に失敗しました');
-    }
-
+    return res.status(201).json(newJob);
   } catch (error) {
     log('error', '求人作成エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      requestBody: req.body
+      userId: req.user?.id
     });
 
     if (error instanceof Error && error.name === 'ZodError') {

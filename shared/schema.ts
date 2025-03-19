@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// 定数定義
+// Constants
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
   "群馬県", "栃木県", "茨城県", "東京都", "神奈川県", "千葉県", "埼玉県",
@@ -14,96 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-export type Prefecture = typeof prefectures[number];
-export type UserRole = "talent" | "store";
-
-// Base user schema
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  username: text("username").notNull(),
-  password: text("password").notNull(),
-  birthDate: text("birth_date").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
-  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
-  displayName: text("display_name").notNull(),
-  phoneNumber: text("phone_number"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-
-// User response type (excludes sensitive data)
-export interface UserResponse {
-  id: number;
-  email: string;
-  username: string;
-  birthDate: string;
-  location: Prefecture;
-  preferredLocations: Prefecture[];
-  role: UserRole;
-  displayName: string;
-  phoneNumber?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// User data transformation
-export function transformUserToResponse(user: User): UserResponse {
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    birthDate: user.birthDate,
-    location: user.location as Prefecture,
-    preferredLocations: Array.isArray(user.preferredLocations)
-      ? user.preferredLocations.map(loc => loc as Prefecture)
-      : [],
-    role: user.role as UserRole,
-    displayName: user.displayName,
-    phoneNumber: user.phoneNumber || null,
-    createdAt: new Date(user.createdAt || new Date()),
-    updatedAt: new Date(user.updatedAt || new Date())
-  };
-}
-
-// Form schemas
-export const loginSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).optional(),
-});
-
-export type LoginData = z.infer<typeof loginSchema>;
-
-// Update schema for user profile
-export const userProfileUpdateSchema = z.object({
-  username: z.string().min(1, "ユーザー名を入力してください"),
-  location: z.enum(prefectures, {
-    required_error: "所在地を選択してください",
-    invalid_type_error: "無効な所在地です",
-  }),
-  preferredLocations: z.array(z.enum(prefectures)).min(1, "希望地域を1つ以上選択してください"),
-  displayName: z.string().min(1, "表示名を入力してください"),
-  phoneNumber: z.string().nullable().optional(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string()
-    .min(8, "パスワードは8文字以上で入力してください")
-    .max(48, "パスワードは48文字以内で入力してください")
-    .regex(
-      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
-      "半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
-    )
-    .optional()
-});
-
-export type UserProfileUpdate = z.infer<typeof userProfileUpdateSchema>;
-
-
+// ServiceType関連の定義
 export const serviceTypes = [
   "デリヘル",
   "ホテヘル",
@@ -255,6 +166,7 @@ export const allBenefitTypes = [
 ] as const;
 
 // Type definitions
+export type Prefecture = typeof prefectures[number];
 export type ServiceType = typeof serviceTypes[number];
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
@@ -295,45 +207,49 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
-// jobs table definition
-// 電話番号関連のカラムをスネークケースで定義
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  catchPhrase: text("catch_phrase").notNull(),
-  description: text("description").notNull(),
-  benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
+  displayServiceType: text("display_service_type", { enum: serviceTypes }),
+  title: text("title").notNull(),
+  mainCatch: text("main_catch").notNull(),
+  mainDescription: text("main_description").notNull(),
+  selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
   minimumGuarantee: integer("minimum_guarantee"),
   maximumGuarantee: integer("maximum_guarantee"),
   transportationSupport: boolean("transportation_support").default(false),
   housingSupport: boolean("housing_support").default(false),
-  phone_number_1: text("phone_number_1").notNull(),
-  phone_number_2: text("phone_number_2"),
-  phone_number_3: text("phone_number_3"),
-  phone_number_4: text("phone_number_4"),
+  phoneNumber1: text("phone_number_1").notNull(),
+  phoneNumber2: text("phone_number_2"),
+  phoneNumber3: text("phone_number_3"),
+  phoneNumber4: text("phone_number_4"),
   contactEmail: text("contact_email"),
   contactSns: text("contact_sns"),
   contactSnsUrl: text("contact_sns_url"),
-  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
-  workingHours: text("working_hours"),
-  requirements: text("requirements"),
-  qualifications: text("qualifications"),
-  workingConditions: text("working_conditions"),
-  storeId: integer("store_id").references(() => users.id),
+  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.location),
   serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
   statusIdx: index("jobs_status_idx").on(table.status),
-  storeIdIdx: index("jobs_store_id_idx").on(table.storeId),
 }));
 
-// users tableの定義を更新
-//既に上部で定義済み
-
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  birthDate: text("birth_date").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
+  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
+  displayName: text("display_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
@@ -435,8 +351,8 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 // Types
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
-//User and InsertUser already defined above
-
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 export type JobResponse = {
@@ -456,10 +372,13 @@ export type JobResponse = {
 
 // Schemas
 // 既存のloginSchemaを更新
-//already defined above
+export const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).optional(),
+});
 
-// Update jobSchema to match the table definition
-// jobSchemaも更新してプロパティ名を合わせる
+// jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
@@ -471,51 +390,51 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   status: z.enum(jobStatusTypes).default("draft"),
-  catchPhrase: z.string()
+  mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
-  description: z.string()
+  mainDescription: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
-  benefits: z.array(z.enum(allBenefitTypes)).default([]),
+  selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
+  phoneNumber1: z.string().min(1, "電話番号を入力してください"),
+  phoneNumber2: z.string().optional(),
+  phoneNumber3: z.string().optional(),
+  phoneNumber4: z.string().optional(),
+  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
+  contactSns: z.string().optional().or(z.literal("")),
+  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
   minimumGuarantee: z.number().nullable().optional(),
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
-  phone_number_1: z.string().min(1, "電話番号を入力してください"),
-  phone_number_2: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  phone_number_3: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  phone_number_4: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  contactEmail: z.union([
-    z.string().email("正しいメールアドレスの形式で入力してください"),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
-  contactSns: z.union([z.string(), z.string().max(0), z.null()]).optional(),
-  contactSnsUrl: z.union([
-    z.string().url("正しいURLの形式で入力してください"),
-    z.string().max(0),
-    z.null()
-  ]).optional(),
-  workingHours: z.string().optional(),
-  requirements: z.string().optional(),
-  qualifications: z.string().optional(),
-  workingConditions: z.string().optional(),
-  storeId: z.number().optional(),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
+export type LoginData = z.infer<typeof loginSchema>;
+
 // Response types
-//JobListingResponse already defined above
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
 
-// UserResponse型の定義を更新
-//already defined above
-
-// データ変換用のヘルパー関数を修正
-//already defined above
+export type UserResponse = {
+  id: number;
+  email: string;
+  username: string;
+  birthDate: string;
+  location: string;
+  preferredLocations: string[];
+  role: "talent" | "store";
+};
 
 export const talentProfileSchema = z.object({
   lastName: z.string().min(1, "姓を入力してください"),
@@ -618,6 +537,20 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
+
+export const jobRequirementsSchema = z.object({
+  ageMin: z.number().min(18).max(99).optional(),
+  ageMax: z.number().min(18).max(99).optional(),
+  specMin: z.number().optional(),
+  specMax: z.number().optional(),
+  cupSizeConditions: z.array(z.object({
+    cupSize: z.enum(cupSizes),
+    specMin: z.number(),
+  })).optional(),
+  otherConditions: z.array(z.string()).default([]),
+});
+
+export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
 export const userSchema = createInsertSchema(users, {
   username: z.string().min(1, "ユーザー名を入力してください"),
@@ -741,10 +674,19 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
+
+
 export type { User, TalentProfile, Job, Application, InsertApplication };
 export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
 
-//JobListingResponse already defined above
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
 
 export interface JobResponse extends Job {
   hasApplied?: boolean;
@@ -785,7 +727,7 @@ export type InsertViewHistory = typeof viewHistory.$inferInsert;
 export const keepListSchema = createInsertSchema(keepList);
 export const viewHistorySchema = createInsertSchema(viewHistory);
 
-export const keepListRelations = relations(keepList, ({ one}) => ({
+export const keepListRelations = relations(keepList, ({ one }) => ({
   job: one(jobs, {
     fields: [keepList.jobId],
     references: [jobs.id],
@@ -812,4 +754,3 @@ export type PreviousStore = {
 };
 
 export const talentRegisterFormSchema = talentProfileSchema;
-export type { UserResponse, LoginData, UserProfileUpdate };

@@ -5,12 +5,12 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, transformUserToResponse, UserResponse } from "@shared/schema";
+import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
 
 declare global {
   namespace Express {
-    interface User extends UserResponse {}
+    interface User extends SelectUser {}
   }
 }
 
@@ -43,7 +43,13 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   }
 }
 
+function sanitizeUser(user: SelectUser) {
+  const { password, ...sanitizedUser } = user;
+  return sanitizedUser;
+}
+
 export function setupAuth(app: Express) {
+  // セッション設定の強化
   const sessionSettings: session.SessionOptions = {
     store: storage.sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -55,14 +61,15 @@ export function setupAuth(app: Express) {
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24時間
-    },
-    rolling: true // セッションの有効期限を自動延長
+    }
   };
 
+  // セッションミドルウェアの初期化
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Passportの設定
   passport.use(
     new LocalStrategy(
       {
@@ -71,30 +78,29 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          log('info', 'ログイン試行', { email });
           const user = await storage.getUserByEmail(email);
+
           if (!user) {
-            log('warn', 'ログイン失敗: ユーザーが見つかりません', { email });
+            log('warn', 'ユーザーが見つかりません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
-            log('warn', 'ログイン失敗: パスワードが一致しません', { email });
+            log('warn', 'パスワードが一致しません', { email });
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          const userResponse = transformUserToResponse(user);
-          log('info', 'ログイン成功', {
-            userId: userResponse.id,
-            email: userResponse.email,
-            role: userResponse.role
+          log('info', 'ログイン成功', { 
+            userId: user.id,
+            email: user.email,
+            role: user.role
           });
-
-          return done(null, userResponse);
+          return done(null, sanitizeUser(user));
         } catch (error) {
           log('error', 'ログインエラー', {
-            error: error instanceof Error ? error.message : 'Unknown error',
-            email
+            error: error instanceof Error ? error.message : 'Unknown error'
           });
           return done(error);
         }
@@ -103,7 +109,6 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    log('info', 'セッションシリアライズ', { userId: user.id });
     done(null, user.id);
   });
 
@@ -111,27 +116,15 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
-        log('warn', 'セッションデシリアライズ失敗: ユーザーが見つかりません', { id });
         return done(null, false);
       }
-
-      const userResponse = transformUserToResponse(user);
-      log('info', 'セッションデシリアライズ成功', {
-        userId: userResponse.id,
-        email: userResponse.email,
-        role: userResponse.role
-      });
-
-      done(null, userResponse);
+      done(null, sanitizeUser(user));
     } catch (error) {
-      log('error', 'セッションデシリアライズエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        id
-      });
       done(error);
     }
   });
 
+  app.set("trust proxy", 1);
   return app;
 }
 
