@@ -212,7 +212,6 @@ export const jobs = pgTable("jobs", {
   business_name: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   service_type: text("service_type", { enum: serviceTypes }).notNull(),
-  display_service_type: text("display_service_type", { enum: serviceTypes }),
   title: text("title").notNull(),
   catch_phrase: text("catch_phrase").notNull(),
   description: text("description"),
@@ -330,7 +329,6 @@ export const talentProfiles = pgTable("talent_profiles", {
   photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
 });
 
-
 // Relations
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
   applications: many(applications),
@@ -388,7 +386,6 @@ export const jobSchema = z.object({
     required_error: "業種を選択してください",
     invalid_type_error: "無効な業種です",
   }),
-  displayServiceType: z.enum(serviceTypes).default("デリヘル"),
   title: z.string().optional(),
   catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
@@ -671,7 +668,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };

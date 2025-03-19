@@ -4,7 +4,9 @@ import { errorHandler } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
+import { pool } from './db';
 
+// Expressアプリケーションの作成
 const app = express();
 
 // CORSの設定
@@ -24,12 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 setupAuth(app);
 
 // ルート登録
-registerRoutes(app).catch(error => {
-  log('error', 'ルート登録エラー', {
-    error: error instanceof Error ? error.message : 'Unknown error'
-  });
-  process.exit(1);
-});
+registerRoutes(app);
 
 // エラーハンドリング
 app.use(errorHandler);
@@ -45,5 +42,7 @@ app.use('/api/*', (req, res) => {
     message: '指定されたAPIエンドポイントが見つかりません'
   });
 });
+
+app.set("trust proxy", 1);
 
 export default app;

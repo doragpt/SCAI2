@@ -5,9 +5,33 @@ import jobsRoutes from './jobs';
 import applicationsRoutes from './applications';
 import blogRoutes from './blog';
 import { log } from '../utils/logger';
+import { db } from '../db';
+import { sql } from 'sql-template-strings';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
+
+  // 診断用エンドポイント
+  app.get("/api/ping", async (req, res) => {
+    try {
+      // データベース接続テスト
+      await db.execute(sql`SELECT 1`);
+
+      res.json({ 
+        status: "ok",
+        message: "Server is running",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      log('error', 'Ping endpoint error', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({ 
+        status: "error",
+        message: "Database connection failed"
+      });
+    }
+  });
 
   // APIリクエストの共通ミドルウェア
   app.use("/api/*", (req, res, next) => {
@@ -32,7 +56,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     log('error', 'APIエラー', {
       error: err instanceof Error ? err.message : 'Unknown error',
       path: req.path,
-      method: req.method
+      method: req.method,
+      stack: err.stack
     });
     res.status(500).json({
       message: process.env.NODE_ENV === 'development' ? err.message : '内部サーバーエラー'

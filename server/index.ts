@@ -7,7 +7,6 @@ import { log } from "./utils/logger";
 import { createServer } from "http";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import app from "./app";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,6 +41,17 @@ process.env.NODE_ENV = "development";
       });
       process.exit(1);
     }
+
+    // Expressアプリケーションの作成
+    const app = express();
+
+    // CORSの設定
+    app.use(cors({
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    }));
 
     // HTTPサーバーの作成
     const server = createServer(app);

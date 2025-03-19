@@ -75,7 +75,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       console.log('Form validation state:', form.formState);
 
       const response = await fetch("/api/jobs/basic-info", {
-        method: initialData ? "PUT" : "POST",
+        method: "POST",
         headers: { 
           "Content-Type": "application/json",
         },
