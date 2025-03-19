@@ -4,11 +4,11 @@ import { jobs, jobSchema } from '@shared/schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { sql } from 'drizzle-orm';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-// パブリック求人一覧取得（ページネーション対応）
+// パブリック求人一覧取得
 router.get("/public", async (req, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -16,8 +16,6 @@ router.get("/public", async (req, res) => {
     const offset = (page - 1) * limit;
 
     log('info', 'パブリック求人一覧の取得を開始', {
-      path: req.path,
-      method: req.method,
       query: { page, limit },
       timestamp: new Date().toISOString()
     });
@@ -60,34 +58,21 @@ router.get("/public", async (req, res) => {
   } catch (error) {
     log('error', 'パブリック求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
 
     return res.status(500).json({
-      error: 'InternalServerError',
-      message: "求人情報の取得に失敗しました",
-      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      message: "求人情報の取得に失敗しました"
     });
   }
 });
 
-// 基本の求人一覧取得エンドポイント
-router.get("/", authenticate, async (req: any, res) => {
+// 店舗の求人一覧取得
+router.get("/store", authenticate, authorize("store"), async (req: any, res) => {
   try {
-    // ユーザーロールの確認
-    if (req.user.role !== 'store') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: "この操作を実行する権限がありません"
-      });
-    }
-
-    log('info', '求人一覧の取得を開始', {
+    log('info', '店舗求人一覧の取得を開始', {
       userId: req.user.id,
       role: req.user.role,
-      path: req.path,
-      method: req.method,
       timestamp: new Date().toISOString()
     });
 
@@ -106,32 +91,21 @@ router.get("/", authenticate, async (req: any, res) => {
       }
     });
   } catch (error) {
-    log('error', '求人一覧取得エラー', {
+    log('error', '店舗求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userId: req.user?.id,
-      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
 
     return res.status(500).json({
-      error: 'InternalServerError',
-      message: "求人情報の取得に失敗しました",
-      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      message: "求人情報の取得に失敗しました"
     });
   }
 });
 
-// 求人作成エンドポイント
-router.post("/", authenticate, async (req: any, res) => {
+// 求人作成
+router.post("/", authenticate, authorize("store"), async (req: any, res) => {
   try {
-    // ユーザーロールの確認
-    if (req.user.role !== 'store') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: "この操作を実行する権限がありません"
-      });
-    }
-
     log('info', '求人作成を開始', {
       userId: req.user.id,
       role: req.user.role,
@@ -140,8 +114,8 @@ router.post("/", authenticate, async (req: any, res) => {
 
     const validatedData = jobSchema.parse({
       ...req.body,
-      businessName: req.user.displayName, // 店舗名を自動設定
-      status: "draft",
+      businessName: req.user.displayName,
+      status: "draft"
     });
 
     const [newJob] = await db
@@ -165,37 +139,23 @@ router.post("/", authenticate, async (req: any, res) => {
 
     if (error instanceof Error && error.name === 'ZodError') {
       return res.status(400).json({
-        error: 'ValidationError',
         message: '入力内容に誤りがあります',
         details: error.message
       });
     }
 
     return res.status(500).json({
-      error: 'InternalServerError',
-      message: "求人情報の作成に失敗しました",
-      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      message: "求人情報の作成に失敗しました"
     });
   }
 });
 
-// 求人更新エンドポイント
-router.patch("/:id", authenticate, async (req: any, res) => {
+// 求人更新
+router.patch("/:id", authenticate, authorize("store"), async (req: any, res) => {
   try {
-    // ユーザーロールの確認
-    if (req.user.role !== 'store') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: "この操作を実行する権限がありません"
-      });
-    }
-
     const jobId = parseInt(req.params.id);
     if (isNaN(jobId)) {
-      return res.status(400).json({
-        error: 'BadRequest',
-        message: "無効な求人IDです"
-      });
+      return res.status(400).json({ message: "無効な求人IDです" });
     }
 
     // 既存の求人を取得して権限チェック
@@ -206,17 +166,11 @@ router.patch("/:id", authenticate, async (req: any, res) => {
       .limit(1);
 
     if (!existingJob.length) {
-      return res.status(404).json({
-        error: 'NotFound',
-        message: "求人が見つかりません"
-      });
+      return res.status(404).json({ message: "求人が見つかりません" });
     }
 
     if (existingJob[0].businessName !== req.user.displayName) {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: "この求人を編集する権限がありません"
-      });
+      return res.status(403).json({ message: "この求人を編集する権限がありません" });
     }
 
     log('info', '求人更新を開始', {
@@ -227,7 +181,7 @@ router.patch("/:id", authenticate, async (req: any, res) => {
 
     const validatedData = jobSchema.parse({
       ...req.body,
-      businessName: req.user.displayName, // 店舗名を自動設定
+      businessName: req.user.displayName
     });
 
     const [updatedJob] = await db
@@ -253,16 +207,13 @@ router.patch("/:id", authenticate, async (req: any, res) => {
 
     if (error instanceof Error && error.name === 'ZodError') {
       return res.status(400).json({
-        error: 'ValidationError',
         message: '入力内容に誤りがあります',
         details: error.message
       });
     }
 
     return res.status(500).json({
-      error: 'InternalServerError',
-      message: "求人情報の更新に失敗しました",
-      details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      message: "求人情報の更新に失敗しました"
     });
   }
 });

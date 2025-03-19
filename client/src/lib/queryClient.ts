@@ -20,7 +20,7 @@ export async function apiRequest(
   }
 ): Promise<Response> {
   try {
-    console.log('API Request starting:', {
+    log('info', 'APIリクエスト開始', {
       method,
       url,
       data,
@@ -42,13 +42,19 @@ export async function apiRequest(
     });
 
     if (!response.ok) {
+      log('error', 'APIリクエストエラー', {
+        status: response.status,
+        statusText: response.statusText,
+        url: fullUrl
+      });
+
       const error = await response.json();
       throw new Error(error.message || "APIリクエストに失敗しました");
     }
 
     return response;
   } catch (error) {
-    console.error('API Request Error:', {
+    log('error', 'APIリクエストエラー', {
       method,
       url,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -185,5 +191,16 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// デバッグ用のログ関数
+function log(level: 'info' | 'error', message: string, data?: any) {
+  const logData = {
+    level,
+    message,
+    ...data,
+    timestamp: new Date().toISOString()
+  };
+  console.log(JSON.stringify(logData));
+}
 
 export { QUERY_KEYS };

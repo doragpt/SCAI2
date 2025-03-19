@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -78,13 +77,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
-      const method = initialData ? "PATCH" : "POST";
+      const endpoint = initialData 
+        ? `/api/jobs/${initialData.id}`
+        : "/api/jobs/store";
 
+      const method = initialData ? "PATCH" : "POST";
       const response = await apiRequest(method, endpoint, data);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "求人情報の保存に失敗しました");
+        const error = await response.json();
+        throw new Error(error.message || "求人情報の保存に失敗しました");
       }
       return response.json();
     },
@@ -96,12 +98,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       });
       onSuccess?.();
     },
-    onError: (error) => {
-      console.error('Form submission error:', error);
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "求人情報の保存に失敗しました",
+        description: error.message,
       });
     },
   });

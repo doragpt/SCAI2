@@ -34,11 +34,6 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     const [hashedPassword, salt] = stored.split('.');
     const derivedKey = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuffer = Buffer.from(hashedPassword, 'hex');
-    log('info', 'パスワード比較', {
-      suppliedLength: derivedKey.length,
-      storedLength: storedBuffer.length,
-      isEqual: timingSafeEqual(derivedKey, storedBuffer)
-    });
     return timingSafeEqual(derivedKey, storedBuffer);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
@@ -60,6 +55,7 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
+    name: 'sessionId',
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
@@ -90,12 +86,6 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "メールアドレスまたはパスワードが間違っています" });
           }
 
-          log('info', 'ユーザー取得成功', { 
-            email: user.email,
-            role: user.role,
-            hasPassword: !!user.password
-          });
-
           const isValidPassword = await comparePasswords(password, user.password);
           if (!isValidPassword) {
             log('warn', 'パスワードが一致しません', { email });
@@ -107,7 +97,7 @@ export function setupAuth(app: Express) {
             email: user.email,
             role: user.role
           });
-          return done(null, user);
+          return done(null, sanitizeUser(user));
         } catch (error) {
           log('error', 'ログインエラー', {
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -128,90 +118,10 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(null, false);
       }
-      done(null, user);
+      done(null, sanitizeUser(user));
     } catch (error) {
       done(error);
     }
-  });
-
-  // ログインAPI
-  app.post("/api/login", (req, res, next) => {
-    log('info', 'ログインリクエスト受信', {
-      email: req.body.email,
-      role: req.body.role
-    });
-
-    passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        log('error', 'ログイン処理エラー', { error: err });
-        return res.status(500).json({ message: "ログイン処理中にエラーが発生しました" });
-      }
-      if (!user) {
-        log('warn', 'ログイン失敗', {
-          email: req.body.email,
-          reason: info?.message || "認証失敗"
-        });
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
-      }
-
-      req.login(user, (err) => {
-        if (err) {
-          log('error', 'セッション作成エラー', { error: err });
-          return res.status(500).json({ message: "セッションの作成に失敗しました" });
-        }
-        log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        });
-        res.json(sanitizeUser(user));
-      });
-    })(req, res, next);
-  });
-
-  // ログアウトAPI
-  app.post("/api/logout", (req, res) => {
-    try {
-      const userRole = req.user?.role; // ログアウト前にロールを保存
-
-      if (req.user) {
-        log('info', 'ログアウトリクエスト受信', {
-          userId: req.user.id,
-          role: userRole
-        });
-      }
-
-      req.logout((err) => {
-        if (err) {
-          log('error', 'ログアウトエラー', { error: err });
-          return res.status(500).json({ message: "ログアウト処理中にエラーが発生しました" });
-        }
-        req.session.destroy((err) => {
-          if (err) {
-            log('error', 'セッション破棄エラー', { error: err });
-            return res.status(500).json({ message: "セッションの破棄に失敗しました" });
-          }
-          res.clearCookie('connect.sid');
-          return res.status(200).json({ 
-            message: "ログアウトしました",
-            role: userRole // ログアウト前のロールを返す
-          });
-        });
-      });
-    } catch (error) {
-      log('error', 'ログアウトエラー', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      return res.status(500).json({ message: "ログアウト処理中にエラーが発生しました" });
-    }
-  });
-
-  // 認証チェックAPI
-  app.get("/api/check", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "認証されていません" });
-    }
-    res.json(sanitizeUser(req.user));
   });
 
   app.set("trust proxy", 1);

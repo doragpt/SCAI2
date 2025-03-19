@@ -189,7 +189,8 @@ router.post("/login", async (req, res, next) => {
         req.session.user = {
           id: user.id,
           role: user.role,
-          email: user.email
+          email: user.email,
+          displayName: user.displayName
         };
 
         log('info', 'ログイン成功', {
@@ -230,11 +231,26 @@ router.post("/logout", (req, res) => {
 });
 
 // セッションチェックエンドポイント
-router.get("/check", authenticate, (req, res) => {
-  if (!req.user) {
+router.get("/check", (req, res) => {
+  if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "認証が必要です" });
   }
-  res.json(req.user);
+
+  log('info', 'セッションチェック成功', {
+    userId: req.user.id,
+    role: req.user.role,
+    email: req.user.email
+  });
+
+  // 必要なユーザー情報のみを返す
+  const response = {
+    id: req.user.id,
+    email: req.user.email,
+    role: req.user.role,
+    displayName: req.user.displayName
+  };
+
+  res.json(response);
 });
 
 export default router;
