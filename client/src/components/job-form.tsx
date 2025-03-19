@@ -63,6 +63,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
+      title: initialData?.title || "", // Added title field
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
@@ -88,7 +89,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       log('info', '求人フォーム送信開始', {
         method,
         endpoint,
-        isUpdate: !!initialData
+        isUpdate: !!initialData,
+        formData: data
       });
 
       const response = await apiRequest(method, endpoint, data);
@@ -108,7 +110,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
     onError: (error: Error) => {
       log('error', '求人フォーム送信エラー', {
-        error: error.message
+        error: error.message,
+        formState: form.formState
       });
       toast({
         variant: "destructive",
@@ -119,6 +122,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    log('info', 'フォーム送信前の検証', {
+      isValid: form.formState.isValid,
+      errors: form.formState.errors,
+      data
+    });
     mutate(data);
   };
 

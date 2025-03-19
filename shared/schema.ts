@@ -399,17 +399,17 @@ export const jobSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
-  minimumGuarantee: z.number().optional().nullable(),
-  maximumGuarantee: z.number().optional().nullable(),
+  minimumGuarantee: z.number().nullable().optional(),
+  maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
   housingSupport: z.boolean().default(false),
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
-  phoneNumber2: z.string().optional(),
-  phoneNumber3: z.string().optional(),
-  phoneNumber4: z.string().optional(),
-  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
-  contactSns: z.string().optional().or(z.literal("")),
-  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
+  phoneNumber2: z.string().optional().nullable(),
+  phoneNumber3: z.string().optional().nullable(),
+  phoneNumber4: z.string().optional().nullable(),
+  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().nullable(),
+  contactSns: z.string().optional().nullable(),
+  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().nullable(),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
