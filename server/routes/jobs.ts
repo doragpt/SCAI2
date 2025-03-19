@@ -73,24 +73,28 @@ router.get("/public", async (req, res) => {
 });
 
 // 基本の求人一覧取得エンドポイント
-router.get("/", async (_req, res) => {
+router.get("/", authenticate, async (req: any, res) => {
   try {
+    // ユーザーロールの確認
+    if (req.user.role !== 'store') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: "この操作を実行する権限がありません"
+      });
+    }
+
     log('info', '求人一覧の取得を開始', {
-      path: _req.path,
-      method: _req.method,
+      userId: req.user.id,
+      role: req.user.role,
+      path: req.path,
+      method: req.method,
       timestamp: new Date().toISOString()
     });
 
     const jobListings = await db
       .select()
       .from(jobs)
-      .where(
-        and(
-          eq(jobs.status, 'published'),
-          isNotNull(jobs.businessName),
-          isNotNull(jobs.location)
-        )
-      )
+      .where(eq(jobs.businessName, req.user.displayName))
       .orderBy(desc(jobs.createdAt));
 
     return res.json({
@@ -104,6 +108,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     log('error', '求人一覧取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id,
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
@@ -119,13 +124,23 @@ router.get("/", async (_req, res) => {
 // 求人作成エンドポイント
 router.post("/", authenticate, async (req: any, res) => {
   try {
+    // ユーザーロールの確認
+    if (req.user.role !== 'store') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: "この操作を実行する権限がありません"
+      });
+    }
+
     log('info', '求人作成を開始', {
       userId: req.user.id,
+      role: req.user.role,
       timestamp: new Date().toISOString()
     });
 
     const validatedData = jobSchema.parse({
       ...req.body,
+      businessName: req.user.displayName, // 店舗名を自動設定
       status: "draft",
     });
 
@@ -167,9 +182,41 @@ router.post("/", authenticate, async (req: any, res) => {
 // 求人更新エンドポイント
 router.patch("/:id", authenticate, async (req: any, res) => {
   try {
+    // ユーザーロールの確認
+    if (req.user.role !== 'store') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: "この操作を実行する権限がありません"
+      });
+    }
+
     const jobId = parseInt(req.params.id);
     if (isNaN(jobId)) {
-      return res.status(400).json({ message: "無効な求人IDです" });
+      return res.status(400).json({
+        error: 'BadRequest',
+        message: "無効な求人IDです"
+      });
+    }
+
+    // 既存の求人を取得して権限チェック
+    const existingJob = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, jobId))
+      .limit(1);
+
+    if (!existingJob.length) {
+      return res.status(404).json({
+        error: 'NotFound',
+        message: "求人が見つかりません"
+      });
+    }
+
+    if (existingJob[0].businessName !== req.user.displayName) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: "この求人を編集する権限がありません"
+      });
     }
 
     log('info', '求人更新を開始', {
@@ -179,7 +226,8 @@ router.patch("/:id", authenticate, async (req: any, res) => {
     });
 
     const validatedData = jobSchema.parse({
-      ...req.body
+      ...req.body,
+      businessName: req.user.displayName, // 店舗名を自動設定
     });
 
     const [updatedJob] = await db
@@ -187,10 +235,6 @@ router.patch("/:id", authenticate, async (req: any, res) => {
       .set(validatedData)
       .where(eq(jobs.id, jobId))
       .returning();
-
-    if (!updatedJob) {
-      return res.status(404).json({ message: "求人が見つかりません" });
-    }
 
     log('info', '求人更新成功', {
       userId: req.user.id,

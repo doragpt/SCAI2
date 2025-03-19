@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  jobSchema,
-  prefectures,
+import { 
+  jobSchema, 
+  prefectures, 
   serviceTypes,
   benefitTypes,
   benefitCategories,
-  type Job
+  type Job 
 } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
 import { useState } from "react";
 import type { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
 
 type JobFormData = z.infer<typeof jobSchema>;
 
@@ -77,18 +78,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      console.log('Submitting data:', data);
-      const response = await fetch("/api/jobs", {
-        method: initialData ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const method = initialData ? "PATCH" : "POST";
+      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
 
+      const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "求人情報の保存に失敗しました");
       }
-
       return response.json();
     },
     onSuccess: () => {
