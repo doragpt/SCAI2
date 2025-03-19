@@ -37,7 +37,6 @@ import { useState } from "react";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 
-// Added logging function
 const log = (level: 'info' | 'error', message: string, data?: any) => {
   console[level](message, data);
 };
@@ -63,7 +62,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
-      title: initialData?.title || "", // Added title field
+      title: initialData?.title || "",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
@@ -213,6 +212,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">タイトル</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="タイトルを入力してください" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="mainCatch"
               render={({ field }) => (
                 <FormItem>
@@ -278,10 +291,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <FormLabel className="font-medium">最低保証（円）</FormLabel>
                     <FormControl>
                       <Input
-                        {...field}
                         type="number"
                         placeholder="例：30000"
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        value={field.value?.toString() || ''}
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value, 10) : null;
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -297,10 +313,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <FormLabel className="font-medium">最高保証（円）</FormLabel>
                     <FormControl>
                       <Input
-                        {...field}
                         type="number"
                         placeholder="例：50000"
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        value={field.value?.toString() || ''}
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value, 10) : null;
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -395,7 +414,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormItem>
                     <FormLabel className="font-medium">電話番号{num}（任意）</FormLabel>
                     <FormControl>
-                      <Input {...field} type="tel" placeholder="例：03-1234-5678" />
+                      <Input
+                        {...field}
+                        type="tel"
+                        placeholder="例：03-1234-5678"
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
