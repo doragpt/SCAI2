@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { z } from "zod";
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -57,7 +57,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
-      displayServiceType: initialData?.displayServiceType || "デリヘル",
       status: initialData?.status || "draft",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
@@ -75,16 +74,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       housingSupport: initialData?.housingSupport || false
     }
   });
-
-  // デバッグ用: フォームの状態変更を監視
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      console.log('Form field updated:', { name, type, value });
-      console.log('Current form state:', form.getValues());
-      console.log('Form errors:', form.formState.errors);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
@@ -122,7 +111,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const onSubmit = (data: JobFormData) => {
     console.log("Form submission data:", data);
-    console.log("Form validation state:", form.formState);
     mutate(data);
   };
 
@@ -216,7 +204,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="ここにキャッチコピーを入力してください(300文字以内)"
+                      placeholder="キャッチコピーを入力してください（300文字以内）"
                       className="min-h-[100px]"
                       onChange={(e) => {
                         field.onChange(e);
@@ -225,7 +213,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    あと{300 - mainCatchLength}文字
+                    {mainCatchLength}/300文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -241,7 +229,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="ここにお仕事の内容を入力してください(9000文字以内)"
+                      placeholder="お仕事の内容を入力してください（9000文字以内）"
                       className="min-h-[200px]"
                       onChange={(e) => {
                         field.onChange(e);
@@ -250,7 +238,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     />
                   </FormControl>
                   <div className="text-sm text-muted-foreground">
-                    あと{9000 - mainDescriptionLength}文字
+                    {mainDescriptionLength}/9000文字
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -259,12 +247,52 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </CardContent>
         </Card>
 
-        {/* 待遇情報 */}
+        {/* 給与・待遇情報 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-bold">待遇情報</CardTitle>
+            <CardTitle className="text-lg font-bold">給与・待遇情報</CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="minimumGuarantee"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="font-medium">最低保証（円）</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        placeholder="例：30000"
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="maximumGuarantee"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="font-medium">最高保証（円）</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        placeholder="例：50000"
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="selectedBenefits"
@@ -292,13 +320,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                                       <Checkbox
                                         checked={field.value?.includes(benefit)}
                                         onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value || [], benefit])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== benefit
-                                                ) || []
-                                              )
+                                          const currentValue = field.value || [];
+                                          const newValue = checked
+                                            ? [...currentValue, benefit]
+                                            : currentValue.filter((value) => value !== benefit);
+                                          field.onChange(newValue);
                                         }}
                                       />
                                     </FormControl>
@@ -306,7 +332,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                                       {benefit}
                                     </FormLabel>
                                   </FormItem>
-                                )
+                                );
                               }}
                             />
                           ))}
@@ -324,7 +350,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </CardContent>
         </Card>
 
-        {/* 連絡先情報 */}
+        {/* 応募用連絡先 */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-bold">応募用連絡先</CardTitle>

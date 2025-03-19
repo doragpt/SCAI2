@@ -389,7 +389,6 @@ export const jobSchema = z.object({
     required_error: "業種を選択してください",
     invalid_type_error: "無効な業種です",
   }),
-  displayServiceType: z.enum(serviceTypes).default("デリヘル"),
   status: z.enum(jobStatusTypes).default("draft"),
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
@@ -398,13 +397,13 @@ export const jobSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
-  phoneNumber1: z.string().min(1, "電話番号1を入力してください"),
+  phoneNumber1: z.string().min(1, "電話番号を入力してください"),
   phoneNumber2: z.string().optional(),
   phoneNumber3: z.string().optional(),
   phoneNumber4: z.string().optional(),
-  contactEmail: z.string().optional().or(z.literal("")).transform(val => val || ""),
-  contactSns: z.string().optional().or(z.literal("")).transform(val => val || ""),
-  contactSnsUrl: z.string().optional().or(z.literal("")).transform(val => val || ""),
+  contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
+  contactSns: z.string().optional().or(z.literal("")),
+  contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
   minimumGuarantee: z.number().nullable().optional(),
   maximumGuarantee: z.number().nullable().optional(),
   transportationSupport: z.boolean().default(false),
