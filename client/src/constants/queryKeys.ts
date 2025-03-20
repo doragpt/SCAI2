@@ -9,6 +9,10 @@ export const QUERY_KEYS = {
   AUTH_LOGOUT: "/api/logout",
   AUTH_REGISTER: "/api/auth/register",
 
+  // 店舗関連
+  STORE_STATS: "/api/store/stats", // 追加
+  STORE_PROFILE: "/api/store/profile",
+
   // タレント関連
   TALENT_PROFILE: "/api/talent/profile",
 

@@ -19,7 +19,12 @@ import {
   LineChart,
   MessageCircle,
   LogOut,
-  Loader2
+  Loader2,
+  HelpCircle,
+  Trash,
+  MoreVertical,
+  AlertCircle,
+  Pencil // 追加
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -58,6 +63,13 @@ const jobStatusLabels = {
   closed: "締切"
 } as const;
 
+// ブログ投稿のステータスラベル
+const blogStatusLabels = {
+  draft: "下書き",
+  published: "公開中",
+  scheduled: "予約投稿"
+} as const;
+
 // プランのラベル
 const planLabels = {
   free: "無料プラン",
@@ -75,8 +87,8 @@ export default function StoreDashboard() {
 
   // 統計情報を取得
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/store/stats"],
-    queryFn: () => apiRequest("GET", "/api/store/stats"),
+    queryKey: [QUERY_KEYS.STORE_STATS], // クエリキーを修正
+    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS), // クエリキーを修正
     staleTime: 300000, // 5分
   });
 
@@ -102,7 +114,7 @@ export default function StoreDashboard() {
   });
 
 
-  // ブログ投稿の取得 (Retained from original)
+  // ブログ投稿の取得
   const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
     queryKey: [QUERY_KEYS.BLOG_POSTS],
     queryFn: () => apiRequest("GET", "/api/blog/posts"),
@@ -123,7 +135,7 @@ export default function StoreDashboard() {
     },
   });
 
-  // 記事の削除Mutation (Retained from original)
+  // 記事の削除Mutation
   const deleteMutation = useMutation({
     mutationFn: (postId: number) =>
       apiRequest("DELETE", `/api/blog/posts/${postId}`),
@@ -143,7 +155,7 @@ export default function StoreDashboard() {
     },
   });
 
-  // 記事のステータス更新Mutation (Retained from original)
+  // 記事のステータス更新Mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ postId, status }: { postId: number; status: string }) =>
       apiRequest("PATCH", `/api/blog/posts/${postId}/status`, { status }),
@@ -379,7 +391,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* 応募一覧タブ (Retained from original, mostly) */}
+              {/* 応募一覧タブ */}
               <TabsContent value="applications">
                 <Card>
                   <CardContent className="p-6">
@@ -388,7 +400,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* ブログ管理タブ (Retained from original, mostly) */}
+              {/* ブログ管理タブ */}
               <TabsContent value="blog">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -529,7 +541,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* フリースペースタブ (Retained from original, mostly) */}
+              {/* フリースペースタブ */}
               <TabsContent value="freeSpace">
                 <Card>
                   <CardHeader>
@@ -549,7 +561,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* Q&A管理タブ (Retained from original, mostly) */}
+              {/* Q&A管理タブ */}
               <TabsContent value="qa">
                 <Card>
                   <CardHeader>

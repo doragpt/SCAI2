@@ -32,7 +32,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       method: req.method,
       path: req.path,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined
+      body: req.method !== 'GET' ? req.body : undefined,
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      timestamp: new Date().toISOString()
     });
     next();
   });
@@ -41,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/jobs', jobsRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
-  app.use('/api/store/dashboard', dashboardRoutes);
+  app.use('/api/store', dashboardRoutes); // パスを修正
 
   // エラーハンドリングミドルウェアを最後に登録
   app.use(errorHandler);

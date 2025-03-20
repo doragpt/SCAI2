@@ -53,7 +53,21 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
     });
 
     const jobListings = await db
-      .select()
+      .select({
+        id: jobs.id,
+        businessName: jobs.businessName,
+        location: jobs.location,
+        serviceType: jobs.serviceType,
+        title: jobs.title,
+        mainCatch: jobs.mainCatch,
+        mainDescription: jobs.mainDescription,
+        selectedBenefits: jobs.selectedBenefits,
+        minimumGuarantee: jobs.minimumGuarantee,
+        maximumGuarantee: jobs.maximumGuarantee,
+        status: jobs.status,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt
+      })
       .from(jobs)
       .where(eq(jobs.businessName, req.user.displayName))
       .orderBy(desc(jobs.createdAt));
