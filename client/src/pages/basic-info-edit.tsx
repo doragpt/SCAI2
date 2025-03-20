@@ -90,7 +90,7 @@ export default function BasicInfoEdit() {
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      log('info', 'ユーザー情報取得成功', { data });
+      console.log('Received user profile:', data); // デバッグ用
       return data;
     },
     enabled: !!user,
@@ -99,13 +99,11 @@ export default function BasicInfoEdit() {
   // ユーザーデータが取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
-      log('info', 'フォーム値を更新', userProfile);
+      console.log('Setting form values:', userProfile); // デバッグ用
       form.reset({
         username: userProfile.username || "",
         location: userProfile.location || "",
-        preferredLocations: Array.isArray(userProfile.preferredLocations) 
-          ? userProfile.preferredLocations 
-          : [],
+        preferredLocations: Array.isArray(userProfile.preferredLocations) ? userProfile.preferredLocations : [],
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
