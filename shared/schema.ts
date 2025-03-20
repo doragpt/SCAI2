@@ -390,6 +390,7 @@ export const jobSchema = z.object({
     invalid_type_error: "無効な業種です",
   }),
   status: z.enum(jobStatusTypes).default("draft"),
+  title: z.string().min(1, "タイトルを入力してください"),
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -397,6 +398,8 @@ export const jobSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
+  minimumGuarantee: z.number().nonnegative().optional(),
+  maximumGuarantee: z.number().nonnegative().optional(),
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
   phoneNumber2: z.string().optional(),
   phoneNumber3: z.string().optional(),
@@ -404,10 +407,6 @@ export const jobSchema = z.object({
   contactEmail: z.string().email("正しいメールアドレスの形式で入力してください").optional().or(z.literal("")),
   contactSns: z.string().optional().or(z.literal("")),
   contactSnsUrl: z.string().url("正しいURLの形式で入力してください").optional().or(z.literal("")),
-  minimumGuarantee: z.number().nullable().optional(),
-  maximumGuarantee: z.number().nullable().optional(),
-  transportationSupport: z.boolean().default(false),
-  housingSupport: z.boolean().default(false),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -672,7 +671,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 

@@ -35,13 +35,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Send, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -50,9 +49,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {Badge} from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 
-// スタイル用の定数
 const FORM_STEP_NAMES = {
   basic: "基本情報",
   detail: "詳細情報",
@@ -60,7 +58,6 @@ const FORM_STEP_NAMES = {
 } as const;
 
 type FormStep = keyof typeof FORM_STEP_NAMES;
-
 type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
@@ -84,11 +81,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       location: initialData?.location || "東京都",
       serviceType: initialData?.serviceType || "デリヘル",
       status: initialData?.status || "draft",
+      title: initialData?.title || "",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
-      minimumGuarantee: initialData?.minimumGuarantee || 0, // nullの代わりに0を使用
-      maximumGuarantee: initialData?.maximumGuarantee || 0, // nullの代わりに0を使用
+      minimumGuarantee: initialData?.minimumGuarantee || 0,
+      maximumGuarantee: initialData?.maximumGuarantee || 0,
       phoneNumber1: initialData?.phoneNumber1 || "",
       phoneNumber2: initialData?.phoneNumber2 || "",
       phoneNumber3: initialData?.phoneNumber3 || "",
@@ -99,12 +97,28 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   });
 
+  // フォームの値が変更されたときにログを出力
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log('Form value changed:', { name, type, value });
+      console.log('Form state:', form.formState);
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      const response = await apiRequest(method, endpoint, data);
+      // 数値型の変換を確実に行う
+      const formattedData = {
+        ...data,
+        minimumGuarantee: data.minimumGuarantee ? Number(data.minimumGuarantee) : undefined,
+        maximumGuarantee: data.maximumGuarantee ? Number(data.maximumGuarantee) : undefined,
+      };
+
+      const response = await apiRequest(method, endpoint, formattedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -120,6 +134,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Form submission error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -129,6 +144,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    console.log('Submitting form with data:', data);
     mutate(data);
   };
 
@@ -143,7 +159,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         </DialogHeader>
         <div className="space-y-6 p-6 bg-background rounded-lg border">
           <div className="space-y-4">
-            {/* ヘッダー情報 */}
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold">{form.getValues("businessName")}</h2>
@@ -155,25 +170,22 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">給与</div>
                 <div className="text-xl font-bold">
-                  {form.getValues("minimumGuarantee") && `${form.getValues("minimumGuarantee").toLocaleString()}円`}
-                  {form.getValues("maximumGuarantee") && ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円`}
+                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
+                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
                 </div>
               </div>
             </div>
 
-            {/* メインキャッチ */}
             <div className="bg-primary/5 p-4 rounded-lg">
               <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
             </div>
 
-            {/* 詳細情報 */}
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                 <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
               </div>
 
-              {/* 待遇情報 */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -186,7 +198,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 </div>
               </div>
 
-              {/* 応募ボタン（デモ用） */}
               <div className="mt-8 flex justify-center">
                 <Button className="w-full max-w-md" size="lg">
                   <Send className="h-5 w-5 mr-2" />
@@ -210,7 +221,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             ))}
           </TabsList>
 
-          {/* 基本情報 */}
           <TabsContent value="basic">
             <Card>
               <CardHeader>
@@ -280,11 +290,23 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">タイトル</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="タイトルを入力してください" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* 詳細情報 */}
           <TabsContent value="detail">
             <Card>
               <CardHeader>
@@ -344,7 +366,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </Card>
           </TabsContent>
 
-          {/* 給与・待遇情報 */}
           <TabsContent value="benefits">
             <Card>
               <CardHeader>
@@ -364,8 +385,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value || ''} // nullの場合は空文字列を表示
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
+                            value={field.value}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：30000"
                           />
                         </FormControl>
@@ -386,8 +407,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value || ''} // nullの場合は空文字列を表示
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
+                            value={field.value}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：50000"
                           />
                         </FormControl>
