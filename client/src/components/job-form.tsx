@@ -2,21 +2,21 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job, serviceTypes } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as z from 'zod';
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -24,7 +24,7 @@ const FORM_STEP_NAMES = {
 } as const;
 
 type FormStep = keyof typeof FORM_STEP_NAMES;
-type JobFormData = typeof jobSchema._type;
+type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
   initialData?: Job;
@@ -46,7 +46,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     defaultValues: {
       businessName: initialData?.businessName || user?.username || "",
       location: initialData?.location || user?.location || "",
-      serviceType: initialData?.serviceType || "デリヘル",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -68,8 +67,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         location: user.location,
       };
 
-      console.log('送信データ:', formattedData);
-
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
       const response = await apiRequest(method, endpoint, formattedData);
@@ -89,7 +86,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -99,7 +95,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    console.log('フォームデータ:', data);
     mutate(data);
   };
 
@@ -121,38 +116,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="serviceType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サービスタイプ</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="サービスタイプを選択" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {serviceTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="catchPhrase"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-medium">キャッチコピー</FormLabel>
+                      <FormLabel>キャッチコピー</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
@@ -177,7 +144,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-medium">お仕事の内容</FormLabel>
+                      <FormLabel>お仕事の内容</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
@@ -212,7 +179,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     name="minimumGuarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel className="font-medium">最低保証（円）</FormLabel>
+                        <FormLabel>最低保証（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
@@ -234,7 +201,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     name="maximumGuarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel className="font-medium">最高保証（円）</FormLabel>
+                        <FormLabel>最高保証（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
@@ -331,6 +298,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </Button>
             <Button
               type="submit"
+              disabled={isPending}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する

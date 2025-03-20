@@ -14,81 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// ServiceType関連の定義
-export const serviceTypes = [
-  "デリヘル",
-  "ホテヘル",
-  "箱ヘル",
-  "エステ",
-  "オナクラ",
-  "メンズエステ"
-] as const;
-
-export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
-export const photoTags = [
-  "現在の髪色",
-  "タトゥー",
-  "傷",
-  "アトピー",
-  "自撮り写真",
-  "スタジオ写真（無加工）",
-  "スタジオ写真（加工済み）"
-] as const;
-
-export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
-export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
-export const idTypes = [
-  "運転免許証",
-  "マイナンバーカード",
-  "パスポート",
-  "写真付き住民基本台帳カード",
-  "在留カードまたは特別永住者証明書",
-  "健康保険証",
-  "卒業アルバム"
-] as const;
-
-export const allergyTypes = ["犬", "猫", "鳥"] as const;
-export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
-export const workTypes = ["出稼ぎ", "在籍"] as const;
-export const jobStatusTypes = ["draft", "published", "closed"] as const;
-
-export const commonNgOptions = [
-  "AF",
-  "聖水",
-  "即尺",
-  "即尺(事前に洗い済み)",
-  "撮影顔出し",
-  "撮影顔無し"
-] as const;
-
-export const estheOptions = [
-  "ホイップ",
-  "マッサージジェル",
-  "極液",
-  "ベビードール",
-  "マイクロビキニ",
-  "ブラなしベビードール",
-  "トップレス",
-  "フルヌード",
-  "ノンショーツ",
-  "deepリンパ",
-  "ハンド抜き",
-  "キス",
-  "フェラ",
-  "スキンフェラ"
-] as const;
-
-// 待遇のカテゴリー定義
-export const benefitCategories = {
-  interview: "面接・入店前",
-  workStyle: "働き方自由",
-  salary: "お給料目安",
-  bonus: "お給料+α",
-  facility: "お店の環境",
-  requirements: "採用について"
-} as const;
-
-// 待遇項目の定義（カテゴリー別）
+// 待遇の定義（先に定義）
 export const benefitTypes = {
   interview: [
     "見学だけでもOK",
@@ -165,9 +91,72 @@ export const allBenefitTypes = [
   ...benefitTypes.requirements,
 ] as const;
 
+export const benefitCategories = {
+  interview: "面接・入店前",
+  workStyle: "働き方自由",
+  salary: "お給料目安",
+  bonus: "お給料+α",
+  facility: "お店の環境",
+  requirements: "採用について"
+} as const;
+
+// その他の定数定義
+export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
+export const photoTags = [
+  "現在の髪色",
+  "タトゥー",
+  "傷",
+  "アトピー",
+  "自撮り写真",
+  "スタジオ写真（無加工）",
+  "スタジオ写真（加工済み）"
+] as const;
+
+export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
+export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
+export const idTypes = [
+  "運転免許証",
+  "マイナンバーカード",
+  "パスポート",
+  "写真付き住民基本台帳カード",
+  "在留カードまたは特別永住者証明書",
+  "健康保険証",
+  "卒業アルバム"
+] as const;
+
+export const allergyTypes = ["犬", "猫", "鳥"] as const;
+export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
+export const workTypes = ["出稼ぎ", "在籍"] as const;
+export const jobStatusTypes = ["draft", "published", "closed"] as const;
+
+export const commonNgOptions = [
+  "AF",
+  "聖水",
+  "即尺",
+  "即尺(事前に洗い済み)",
+  "撮影顔出し",
+  "撮影顔無し"
+] as const;
+
+export const estheOptions = [
+  "ホイップ",
+  "マッサージジェル",
+  "極液",
+  "ベビードール",
+  "マイクロビキニ",
+  "ブラなしベビードール",
+  "トップレス",
+  "フルヌード",
+  "ノンショーツ",
+  "deepリンパ",
+  "ハンド抜き",
+  "キス",
+  "フェラ",
+  "スキンフェラ"
+] as const;
+
 // Type definitions
 export type Prefecture = typeof prefectures[number];
-export type ServiceType = typeof serviceTypes[number];
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
 export type CupSize = typeof cupSizes[number];
@@ -182,37 +171,11 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
-// Service Type Labels
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  "デリヘル": "デリヘル",
-  "ホテヘル": "ホテヘル",
-  "箱ヘル": "箱ヘル",
-  "エステ": "エステ",
-  "オナクラ": "オナクラ",
-  "メンズエステ": "メンズエステ",
-} as const;
-
-// Zod schemas for validation
-export const photoSchema = z.object({
-  id: z.string().optional(),
-  url: z.string(),
-  tag: z.enum(photoTags),
-  order: z.number().optional(),
-});
-
-export const bodyMarkSchema = z.object({
-  hasBodyMark: z.boolean().default(false),
-  details: z.string().optional(),
-  others: z.array(z.string()).default([]),
-});
-
-// Tables
-// jobsテーブルの定義を修正
+// Tablesの定義
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
-  location: text("location").notNull(),  // 追加
-  serviceType: text("service_type").notNull(), // 追加
+  location: text("location").notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -336,43 +299,25 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
   }),
 }));
 
-// Types
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type JobResponse = {
-  id: number;
-  businessName: string;
-  location: Prefecture;
-  serviceType: ServiceType;
-  title: string;
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
-  transportationSupport: boolean;
-  housingSupport: boolean;
-  status: "draft" | "published" | "closed";
-  createdAt: Date;
-  updatedAt: Date;
-};
 
-// Schemas
-// 既存のloginSchemaを更新
-export const loginSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).optional(),
+// Zod schemas for validation
+export const photoSchema = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  tag: z.enum(photoTags),
+  order: z.number().optional(),
+});
+
+export const bodyMarkSchema = z.object({
+  hasBodyMark: z.boolean().default(false),
+  details: z.string().optional(),
+  others: z.array(z.string()).default([]),
 });
 
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
   location: z.string().min(1, "所在地を入力してください"),
-  serviceType: z.enum(serviceTypes, {
-    required_error: "サービスタイプを選択してください",
-  }),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -649,9 +594,8 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
 export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
 
 export interface JobListingResponse {
   jobs: Job[];
@@ -728,3 +672,17 @@ export type PreviousStore = {
 };
 
 export const talentRegisterFormSchema = talentProfileSchema;
+
+export const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).optional(),
+});
+
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
