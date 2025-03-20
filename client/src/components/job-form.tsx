@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, prefectures, serviceTypes, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,45 +45,22 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mode: "onTouched",
     defaultValues: {
       businessName: initialData?.businessName || "",
-      location: initialData?.location || "東京都",
-      serviceType: initialData?.serviceType || "デリヘル",
-      status: initialData?.status || "draft",
-      title: initialData?.title || "",
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
-      phoneNumber1: initialData?.phoneNumber1 || "",
-      phoneNumber2: initialData?.phoneNumber2 || "",
-      phoneNumber3: initialData?.phoneNumber3 || "",
-      phoneNumber4: initialData?.phoneNumber4 || "",
-      contactEmail: initialData?.contactEmail || "",
-      contactSns: initialData?.contactSns || "",
-      contactSnsUrl: initialData?.contactSnsUrl || "",
+      status: initialData?.status || "draft",
+      //Removed unnecessary default values from edited code.  These are handled by the schema.
     }
   });
 
-  // フォームの状態監視（デバッグ用）
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      console.log('Form state:', {
-        values: form.getValues(),
-        isDirty: form.formState.isDirty,
-        isValid: form.formState.isValid,
-        errors: form.formState.errors
-      });
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      console.log('Submitting data:', data);
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
-
       const response = await apiRequest(method, endpoint, data);
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -100,7 +76,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Form submission error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -110,16 +85,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = async (data: JobFormData) => {
-    console.log('Submitting form with data:', data);
     try {
       mutate(data);
     } catch (error) {
       console.error('Submit error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラーが発生しました",
-        description: "フォームの送信中にエラーが発生しました。",
-      });
     }
   };
 
@@ -134,23 +103,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         </DialogHeader>
         <div className="space-y-6 p-6 bg-background rounded-lg border">
           <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl font-bold">{form.getValues("businessName")}</h2>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge>{form.getValues("serviceType")}</Badge>
-                  <span className="text-sm text-muted-foreground">{form.getValues("location")}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">給与</div>
-                <div className="text-xl font-bold">
-                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
-                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
-                </div>
-              </div>
-            </div>
-
             <div className="bg-primary/5 p-4 rounded-lg">
               <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
             </div>
@@ -159,6 +111,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <div>
                 <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                 <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">給与</h3>
+                <div className="text-xl font-bold">
+                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
+                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
+                </div>
               </div>
 
               <div>
@@ -202,70 +162,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">勤務地</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || undefined}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="都道府県を選択" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {prefectures.map((prefecture) => (
-                            <SelectItem key={prefecture} value={prefecture}>
-                              {prefecture}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="serviceType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">業種</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || undefined}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="業種を選択" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {serviceTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">タイトル</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="タイトルを入力してください" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="mainCatch"
