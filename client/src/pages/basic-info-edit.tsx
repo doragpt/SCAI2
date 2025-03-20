@@ -84,24 +84,22 @@ export default function BasicInfoEdit() {
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/user");
+      const response = await apiRequest("GET", QUERY_KEYS.USER);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('Received user profile:', data);
       return data;
     },
     enabled: !!user,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 30000, // 30秒間はキャッシュを使用
+    refetchOnMount: true, // コンポーネントがマウントされるたびに再取得
   });
 
   // ユーザーデータが取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
-      console.log('Setting form values:', userProfile); // デバッグ用
       form.reset({
         username: userProfile.username,
         location: userProfile.location,
@@ -126,7 +124,7 @@ export default function BasicInfoEdit() {
         } : {})
       };
 
-      const response = await apiRequest("PATCH", "/api/user", updateData);
+      const response = await apiRequest("PATCH", QUERY_KEYS.USER, updateData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "プロフィールの更新に失敗しました");
@@ -135,7 +133,11 @@ export default function BasicInfoEdit() {
       return response.json();
     },
     onSuccess: (data) => {
+      // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.USER], data);
+      // 関連するクエリを無効化
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
+
       toast({
         title: "プロフィールを更新しました",
         description: "変更が保存されました。",

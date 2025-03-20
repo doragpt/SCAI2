@@ -18,16 +18,17 @@ export default function ProfileViewPage() {
   const { data: userProfile, isLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/user");
+      const response = await apiRequest("GET", QUERY_KEYS.USER);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('Received user profile:', data); // デバッグ用
       return data;
     },
     enabled: !!user,
+    staleTime: 30000, // 30秒間はキャッシュを使用
+    refetchOnMount: true, // コンポーネントがマウントされるたびに再取得
   });
 
   if (!user) {
@@ -41,10 +42,6 @@ export default function ProfileViewPage() {
       </div>
     );
   }
-
-  const calculateAge = (birthDate: string) => {
-    return differenceInYears(new Date(), new Date(birthDate));
-  };
 
   return (
     <div className="container max-w-2xl py-8">
@@ -72,6 +69,10 @@ export default function ProfileViewPage() {
                   <p className="mt-1">{userProfile?.username || "未設定"}</p>
                 </div>
                 <div>
+                  <p className="text-sm text-muted-foreground">メールアドレス</p>
+                  <p className="mt-1">{userProfile?.email || "未設定"}</p>
+                </div>
+                <div>
                   <p className="text-sm text-muted-foreground">生年月日</p>
                   <p className="mt-1">
                     {userProfile?.birthDate
@@ -82,12 +83,8 @@ export default function ProfileViewPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">年齢</p>
-                  <p className="mt-1">
-                    {userProfile?.birthDate
-                      ? `${calculateAge(userProfile.birthDate)}歳`
-                      : "未設定"}
-                  </p>
+                  <p className="text-sm text-muted-foreground">居住地</p>
+                  <p className="mt-1">{userProfile?.location || "未設定"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">希望エリア</p>
