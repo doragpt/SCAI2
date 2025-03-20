@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, type Job, serviceTypes } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -52,15 +53,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
-    }
+    },
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
-      const method = initialData ? "PATCH" : "POST";
-
-      // フォームデータの送信前に必須フィールドを確認
       if (!user?.location || !user?.username) {
         throw new Error("ユーザー情報が不足しています");
       }
@@ -69,13 +66,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         businessName: user.username,
         location: user.location,
-        minimumGuarantee: Number(data.minimumGuarantee),
-        maximumGuarantee: Number(data.maximumGuarantee),
       };
 
-      console.log('Sending data:', formattedData);
+      console.log('送信データ:', formattedData);
 
+      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
+      const method = initialData ? "PATCH" : "POST";
       const response = await apiRequest(method, endpoint, formattedData);
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -101,7 +99,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    console.log('Form data:', data);
+    console.log('フォームデータ:', data);
     mutate(data);
   };
 
@@ -123,6 +121,34 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="serviceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サービスタイプ</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="サービスタイプを選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {serviceTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="catchPhrase"
                   render={({ field }) => (
                     <FormItem>
@@ -133,7 +159,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           placeholder="キャッチコピーを入力してください（300文字以内）"
                           className="min-h-[100px]"
                           onChange={(e) => {
-                            field.onChange(e);
+                            field.onChange(e.target.value);
                             setCatchPhraseLength(e.target.value.length);
                           }}
                         />
@@ -158,7 +184,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           placeholder="お仕事の内容を入力してください（9000文字以内）"
                           className="min-h-[200px]"
                           onChange={(e) => {
-                            field.onChange(e);
+                            field.onChange(e.target.value);
                             setDescriptionLength(e.target.value.length);
                           }}
                         />
@@ -193,8 +219,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                             placeholder="例：30000"
                           />
                         </FormControl>
@@ -215,8 +241,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                             placeholder="例：50000"
                           />
                         </FormControl>
@@ -300,13 +326,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               type="button"
               variant="outline"
               onClick={onCancel}
-              disabled={isPending}
             >
               キャンセル
             </Button>
             <Button
               type="submit"
-              disabled={isPending}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する
