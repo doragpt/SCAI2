@@ -20,13 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 const FORM_STEP_NAMES = {
-  basic: "基本情報",
   detail: "詳細情報",
   benefits: "給与・待遇"
 } as const;
 
 type FormStep = keyof typeof FORM_STEP_NAMES;
-type JobFormData = z.infer<typeof jobSchema>;
+type JobFormData = typeof jobSchema._type;
 
 type JobFormProps = {
   initialData?: Job;
@@ -39,10 +38,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const queryClient = useQueryClient();
   const [mainCatchLength, setMainCatchLength] = useState(0);
   const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
-  const [currentStep, setCurrentStep] = useState<FormStep>("basic");
+  const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
 
-  // フォームの初期化
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     mode: "onTouched",
@@ -80,7 +78,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  // 保存処理
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       console.log('Submitting data:', data);
@@ -193,33 +190,18 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs value={currentStep} onValueChange={(value) => setCurrentStep(value as FormStep)}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             {Object.entries(FORM_STEP_NAMES).map(([key, label]) => (
               <TabsTrigger key={key} value={key}>{label}</TabsTrigger>
             ))}
           </TabsList>
 
-          <TabsContent value="basic">
+          <TabsContent value="detail">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold">基本情報</CardTitle>
+                <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* 店舗名（読み取り専用） */}
-                <FormField
-                  control={form.control}
-                  name="businessName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">店舗名</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled className="bg-muted" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="location"
@@ -283,16 +265,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="detail">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
                   name="mainCatch"
@@ -365,7 +338,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value || ''}
+                            value={field.value}
                             onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                             placeholder="例：30000"
                           />
@@ -387,7 +360,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value || ''}
+                            value={field.value}
                             onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                             placeholder="例：50000"
                           />
@@ -476,8 +449,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             >
               キャンセル
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isPending}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
