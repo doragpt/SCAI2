@@ -101,11 +101,11 @@ export default function BasicInfoEdit() {
     if (userProfile) {
       log('info', 'フォーム値を更新', userProfile);
       form.reset({
-        username: userProfile.username || userProfile.email.split('@')[0],
-        location: userProfile.location || '東京都',
-        preferredLocations: Array.isArray(userProfile.preferredLocations) && userProfile.preferredLocations.length > 0
-          ? userProfile.preferredLocations
-          : ['東京都'],
+        username: userProfile.username || "",
+        location: userProfile.location || "",
+        preferredLocations: Array.isArray(userProfile.preferredLocations) 
+          ? userProfile.preferredLocations 
+          : [],
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",

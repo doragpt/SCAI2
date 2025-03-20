@@ -43,17 +43,17 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
 
-      // 必須フィールドのデフォルト値を設定
+      // データベースの値を優先し、未設定の場合のみデフォルト値を使用
       const user: User = {
         id: result.id,
         email: result.email,
-        username: result.username || result.email.split('@')[0], // emailからデフォルトユーザー名を生成
+        username: result.username || result.email.split('@')[0],
         password: result.password,
-        birthDate: result.birthDate || new Date().toISOString(), // デフォルト値を設定
-        location: result.location || '東京都', // デフォルト値を設定
+        birthDate: result.birthDate || null,
+        location: result.location || '東京都',
         preferredLocations: Array.isArray(result.preferredLocations) && result.preferredLocations.length > 0
           ? result.preferredLocations
-          : ['東京都'], // デフォルト値を設定
+          : [],
         role: result.role,
         displayName: result.displayName || result.username || result.email.split('@')[0],
         createdAt: result.createdAt,
@@ -63,8 +63,10 @@ export class DatabaseStorage implements IStorage {
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
-        role: user.role,
-        birthDate: user.birthDate
+        username: user.username,
+        birthDate: user.birthDate,
+        location: user.location,
+        preferredLocations: user.preferredLocations
       });
 
       return user;
