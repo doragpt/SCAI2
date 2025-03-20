@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
@@ -33,6 +34,7 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
@@ -41,7 +43,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
-      businessName: initialData?.businessName || "",
+      businessName: initialData?.businessName || user?.username || "",
+      location: initialData?.location || user?.location || "",
+      serviceType: initialData?.serviceType || "デリヘル",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -56,7 +60,22 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      const response = await apiRequest(method, endpoint, data);
+      // フォームデータの送信前に必須フィールドを確認
+      if (!user?.location || !user?.username) {
+        throw new Error("ユーザー情報が不足しています");
+      }
+
+      const formattedData = {
+        ...data,
+        businessName: user.username,
+        location: user.location,
+        minimumGuarantee: Number(data.minimumGuarantee),
+        maximumGuarantee: Number(data.maximumGuarantee),
+      };
+
+      console.log('Sending data:', formattedData);
+
+      const response = await apiRequest(method, endpoint, formattedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -67,11 +86,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
       toast({
         title: "求人情報を保存しました",
-        description: "変更内容が保存されました。",
+        description: "変更が保存されました。",
       });
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -81,6 +101,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    console.log('Form data:', data);
     mutate(data);
   };
 

@@ -207,10 +207,12 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
-// jobsテーブルの定義
+// jobsテーブルの定義を修正
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
+  location: text("location").notNull(),  // 追加
+  serviceType: text("service_type").notNull(), // 追加
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -367,6 +369,10 @@ export const loginSchema = z.object({
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
+  location: z.string().min(1, "所在地を入力してください"),
+  serviceType: z.enum(serviceTypes, {
+    required_error: "サービスタイプを選択してください",
+  }),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -641,7 +647,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 
