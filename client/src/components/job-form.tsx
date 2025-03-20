@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Check } from "lucide-react";
+import { Loader2, Eye, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -38,11 +38,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
 
-  console.log('Initial form data:', initialData); // デバッグ用
-
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    mode: "onTouched",
     defaultValues: {
       businessName: initialData?.businessName || "",
       catchPhrase: initialData?.catchPhrase || "",
@@ -56,30 +53,15 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      console.log('Mutation starting with data:', data); // デバッグ用
-
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      const formattedData = {
-        ...data,
-        minimumGuarantee: Number(data.minimumGuarantee),
-        maximumGuarantee: Number(data.maximumGuarantee),
-      };
-
-      console.log('Sending formatted data:', formattedData); // デバッグ用
-
-      const response = await apiRequest(method, endpoint, formattedData);
-
+      const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
         const error = await response.json();
-        console.error('API Error:', error); // デバッグ用
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
-
-      const result = await response.json();
-      console.log('API Success response:', result); // デバッグ用
-      return result;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
@@ -90,7 +72,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error); // デバッグ用
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -99,18 +80,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = async (data: JobFormData) => {
-    console.log('Form submission:', {
-      data,
-      isValid: form.formState.isValid,
-      errors: form.formState.errors
-    });
-
-    try {
-      mutate(data);
-    } catch (error) {
-      console.error('Submit error:', error);
-    }
+  const onSubmit = (data: JobFormData) => {
+    mutate(data);
   };
 
   return (
@@ -202,7 +173,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             value={field.value}
-                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：30000"
                           />
                         </FormControl>
@@ -224,7 +195,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             value={field.value}
-                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：50000"
                           />
                         </FormControl>
@@ -293,22 +264,33 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex items-center justify-between">
           <Button
             type="button"
             variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
+            onClick={() => setShowPreview(true)}
           >
-            キャンセル
+            <Eye className="h-4 w-4 mr-2" />
+            プレビュー
           </Button>
-          <Button 
-            type="submit"
-            disabled={isPending}
-          >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            保存する
-          </Button>
+
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isPending}
+            >
+              キャンセル
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              保存する
+            </Button>
+          </div>
         </div>
 
         <Dialog open={showPreview} onOpenChange={setShowPreview}>

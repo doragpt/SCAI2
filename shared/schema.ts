@@ -1,7 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, index, boolean } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
 
 // Constants
 export const prefectures = [
@@ -207,6 +207,7 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
+// jobsテーブルの定義
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -219,8 +220,7 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  locationIdx: index("jobs_location_idx").on(table.businessName),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.catchPhrase),
+  businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -318,7 +318,6 @@ export const talentProfiles = pgTable("talent_profiles", {
   photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
 });
 
-
 // Relations
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
   applications: many(applications),
@@ -375,8 +374,8 @@ export const jobSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
-  minimumGuarantee: z.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
-  maximumGuarantee: z.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
+  minimumGuarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
+  maximumGuarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
 });
 
