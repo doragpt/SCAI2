@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { jobFormSchema, benefitTypes, benefitCategories, type JobFormData, type Job } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Check } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import * as z from 'zod';
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -24,7 +23,6 @@ const FORM_STEP_NAMES = {
 } as const;
 
 type FormStep = keyof typeof FORM_STEP_NAMES;
-type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
   initialData?: Job;
@@ -42,10 +40,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [showPreview, setShowPreview] = useState(false);
 
   const form = useForm<JobFormData>({
-    resolver: zodResolver(jobSchema),
+    resolver: zodResolver(jobFormSchema),
     defaultValues: {
-      businessName: initialData?.businessName || user?.username || "",
-      location: initialData?.location || user?.location || "",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -65,23 +61,27 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         businessName: user.username,
         location: user.location,
+        minimumGuarantee: Number(data.minimumGuarantee) || 0,
+        maximumGuarantee: Number(data.maximumGuarantee) || 0,
       };
 
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
+
       const response = await apiRequest(method, endpoint, formattedData);
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
       toast({
-        title: "求人情報を保存しました",
-        description: "変更が保存されました。",
+        title: "保存完了",
+        description: "求人情報を保存しました。",
       });
       onSuccess?.();
     },
@@ -339,7 +339,19 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {form.getValues("benefits")?.map((benefit) => (
                         <div key={benefit} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" />
+                          <svg
+                            className="h-4 w-4 text-primary"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
                           <span>{benefit}</span>
                         </div>
                       ))}

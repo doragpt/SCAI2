@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { type JobResponse, type ServiceType } from "@shared/schema";
+import { type JobResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
-import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
+import { formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -26,7 +26,7 @@ export default function JobDetail() {
     error
   } = useQuery<JobResponse>({
     queryKey: ["/api/jobs", id],
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("求人詳細取得エラー:", error);
       toast({
         variant: "destructive",
@@ -77,10 +77,10 @@ export default function JobDetail() {
 
   const seoData: SEOProps = {
     title: `${job.businessName}の求人情報`,
-    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。日給${formatSalary(job.minimumGuarantee, job.maximumGuarantee)}。交通費支給、寮完備など充実した待遇をご用意。`,
+    description: `${job.location}エリアの求人。日給${formatSalary(job.minimumGuarantee, job.maximumGuarantee)}。交通費支給、寮完備など充実した待遇をご用意。`,
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
-      description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
+      description: `${job.location}エリアの求人。未経験者歓迎、充実した待遇をご用意しています。`,
       datePosted: job.createdAt.toISOString(),
       employmentType: "アルバイト",
       hiringOrganization: {
@@ -144,9 +144,9 @@ export default function JobDetail() {
                     <div className="grid gap-4">
                       <div className="flex items-center">
                         <Building className="h-4 w-4 mr-2" />
-                        <span className="font-medium">業種:</span>
+                        <span className="font-medium">店舗名:</span>
                         <span className="ml-2">
-                          {getServiceTypeLabel(job.serviceType as ServiceType)}
+                          {job.businessName}
                         </span>
                       </div>
                       <div className="flex items-center">
