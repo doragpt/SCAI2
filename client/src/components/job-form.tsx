@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       businessName: initialData?.businessName || "",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
-      selectedBenefits: initialData?.selectedBenefits || [],
+      benefits: initialData?.benefits || [],
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
@@ -207,7 +207,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="selectedBenefits"
+                  name="benefits"
                   render={() => (
                     <FormItem>
                       <div className="space-y-8">
@@ -221,7 +221,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                                 <FormField
                                   key={benefit}
                                   control={form.control}
-                                  name="selectedBenefits"
+                                  name="benefits"
                                   render={({ field }) => {
                                     return (
                                       <FormItem
@@ -324,7 +324,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {form.getValues("selectedBenefits")?.map((benefit) => (
+                      {form.getValues("benefits")?.map((benefit) => (
                         <div key={benefit} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-primary" />
                           <span>{benefit}</span>
