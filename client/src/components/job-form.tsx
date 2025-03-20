@@ -4,19 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Send, Check } from "lucide-react";
+import { Loader2, Send, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -35,18 +33,20 @@ type JobFormProps = {
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [mainCatchLength, setMainCatchLength] = useState(0);
-  const [mainDescriptionLength, setMainDescriptionLength] = useState(0);
+  const [catchPhraseLength, setCatchPhraseLength] = useState(0);
+  const [descriptionLength, setDescriptionLength] = useState(0);
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
+
+  console.log('Initial form data:', initialData); // デバッグ用
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     mode: "onTouched",
     defaultValues: {
       businessName: initialData?.businessName || "",
-      mainCatch: initialData?.mainCatch || "",
-      mainDescription: initialData?.mainDescription || "",
+      catchPhrase: initialData?.catchPhrase || "",
+      description: initialData?.description || "",
       selectedBenefits: initialData?.selectedBenefits || [],
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
@@ -56,6 +56,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
+      console.log('Mutation starting with data:', data); // デバッグ用
+
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
@@ -65,12 +67,19 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         maximumGuarantee: Number(data.maximumGuarantee),
       };
 
+      console.log('Sending formatted data:', formattedData); // デバッグ用
+
       const response = await apiRequest(method, endpoint, formattedData);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('API Error:', error); // デバッグ用
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
-      return response.json();
+
+      const result = await response.json();
+      console.log('API Success response:', result); // デバッグ用
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
@@ -81,6 +90,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error); // デバッグ用
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -90,6 +100,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = async (data: JobFormData) => {
+    console.log('Form submission:', {
+      data,
+      isValid: form.formState.isValid,
+      errors: form.formState.errors
+    });
+
     try {
       mutate(data);
     } catch (error) {
@@ -115,7 +131,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="mainCatch"
+                  name="catchPhrase"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-medium">キャッチコピー</FormLabel>
@@ -126,12 +142,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           className="min-h-[100px]"
                           onChange={(e) => {
                             field.onChange(e);
-                            setMainCatchLength(e.target.value.length);
+                            setCatchPhraseLength(e.target.value.length);
                           }}
                         />
                       </FormControl>
                       <div className="text-sm text-muted-foreground">
-                        {mainCatchLength}/300文字
+                        {catchPhraseLength}/300文字
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -140,7 +156,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="mainDescription"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-medium">お仕事の内容</FormLabel>
@@ -151,12 +167,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           className="min-h-[200px]"
                           onChange={(e) => {
                             field.onChange(e);
-                            setMainDescriptionLength(e.target.value.length);
+                            setDescriptionLength(e.target.value.length);
                           }}
                         />
                       </FormControl>
                       <div className="text-sm text-muted-foreground">
-                        {mainDescriptionLength}/9000文字
+                        {descriptionLength}/9000文字
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -180,11 +196,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       <FormItem className="flex-1">
                         <FormLabel className="font-medium">最低保証（円）</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
+                          <input
                             type="number"
                             min="0"
                             step="1000"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             value={field.value}
                             onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                             placeholder="例：30000"
@@ -202,11 +218,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       <FormItem className="flex-1">
                         <FormLabel className="font-medium">最高保証（円）</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
+                          <input
                             type="number"
                             min="0"
                             step="1000"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             value={field.value}
                             onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                             placeholder="例：50000"
@@ -295,63 +311,51 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </Button>
         </div>
 
-        <PreviewDialog open={showPreview} onOpenChange={setShowPreview} form={form} />
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>求人情報プレビュー</DialogTitle>
+              <DialogDescription>
+                求職者に表示される実際の画面イメージです
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 p-6 bg-background rounded-lg border">
+              <div className="space-y-4">
+                <div className="bg-primary/5 p-4 rounded-lg">
+                  <p className="text-lg font-bold text-primary">{form.getValues("catchPhrase")}</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
+                    <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">給与</h3>
+                    <div className="text-xl font-bold">
+                      {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
+                      {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {form.getValues("selectedBenefits")?.map((benefit) => (
+                        <div key={benefit} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-primary" />
+                          <span>{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </form>
     </Form>
-  );
-}
-
-type PreviewDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  form: ReturnType<typeof useForm<JobFormData>>;
-};
-
-function PreviewDialog({ open, onOpenChange, form }: PreviewDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>求人情報プレビュー</DialogTitle>
-          <DialogDescription>
-            求職者に表示される実際の画面イメージです
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 p-6 bg-background rounded-lg border">
-          <div className="space-y-4">
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
-                <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">給与</h3>
-                <div className="text-xl font-bold">
-                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
-                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {form.getValues("selectedBenefits")?.map((benefit) => (
-                    <div key={benefit} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-primary" />
-                      <span>{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

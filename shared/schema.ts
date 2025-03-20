@@ -210,8 +210,8 @@ export const bodyMarkSchema = z.object({
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
-  mainCatch: text("main_catch").notNull(),
-  mainDescription: text("main_description").notNull(),
+  catchPhrase: text("catch_phrase").notNull(),
+  description: text("description").notNull(),
   selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
   minimumGuarantee: integer("minimum_guarantee").default(0),
   maximumGuarantee: integer("maximum_guarantee").default(0),
@@ -220,7 +220,7 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   locationIdx: index("jobs_location_idx").on(table.businessName),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.mainCatch),
+  serviceTypeIdx: index("jobs_service_type_idx").on(table.catchPhrase),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -368,10 +368,10 @@ export const loginSchema = z.object({
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
-  mainCatch: z.string()
+  catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
-  mainDescription: z.string()
+  description: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
@@ -642,6 +642,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };
