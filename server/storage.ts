@@ -96,15 +96,15 @@ export class DatabaseStorage implements IStorage {
       const user: User = {
         id: result.id,
         email: result.email,
-        username: result.username,
+        username: result.username || result.email.split('@')[0],
         password: result.password,
-        birthDate: result.birthDate,
-        location: result.location,
+        birthDate: result.birthDate || null,
+        location: result.location || '東京都',
         preferredLocations: Array.isArray(result.preferredLocations)
           ? result.preferredLocations
           : [],
         role: result.role,
-        displayName: result.displayName || result.username,
+        displayName: result.displayName || result.username || result.email.split('@')[0],
         createdAt: result.createdAt,
         updatedAt: result.updatedAt
       };
@@ -112,6 +112,10 @@ export class DatabaseStorage implements IStorage {
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
+        username: user.username,
+        birthDate: user.birthDate,
+        location: user.location,
+        preferredLocations: user.preferredLocations,
         role: user.role
       });
 

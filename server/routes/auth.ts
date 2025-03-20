@@ -40,7 +40,9 @@ router.get("/user", authenticate, async (req, res) => {
       username: userData.username,
       birthDate: userData.birthDate,
       location: userData.location,
-      preferredLocations: userData.preferredLocations
+      preferredLocations: userData.preferredLocations,
+      role: userData.role,
+      displayName: userData.displayName
     });
 
     // 必要なユーザー情報のみを返す
@@ -52,7 +54,7 @@ router.get("/user", authenticate, async (req, res) => {
       location: userData.location,
       preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
       role: userData.role,
-      displayName: userData.username // displayName を username から設定
+      displayName: userData.displayName
     };
 
     // レスポンスデータをログ出力
@@ -172,13 +174,7 @@ router.post("/login", async (req, res, next) => {
       });
     }
 
-    log('info', 'ユーザー取得成功', {
-      email: user.email,
-      role: user.role,
-      hasPassword: !!user.password
-    });
-
-    // パスワード認証
+    // パスポート認証
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
         log('error', 'パスポート認証エラー', { error: err });
@@ -190,18 +186,24 @@ router.post("/login", async (req, res, next) => {
         return res.status(401).json({ message: info?.message || "認証に失敗しました" });
       }
 
-      req.login(user, (err) => {
+      req.login(user, async (err) => {
         if (err) {
           log('error', 'セッション作成エラー', { error: err });
           return next(err);
         }
 
+        // 最新のユーザー情報を取得
+        const updatedUser = await storage.getUser(user.id);
+        if (!updatedUser) {
+          return res.status(500).json({ message: "ユーザー情報の取得に失敗しました" });
+        }
+
         // セッションにユーザー情報を保存
         req.session.user = {
-          id: user.id,
-          role: user.role,
-          email: user.email,
-          displayName: user.displayName
+          id: updatedUser.id,
+          role: updatedUser.role,
+          email: updatedUser.email,
+          displayName: updatedUser.displayName
         };
 
         // セッションCookieの設定を強化
@@ -210,19 +212,21 @@ router.post("/login", async (req, res, next) => {
         req.session.cookie.sameSite = 'lax';
 
         log('info', 'ログイン成功', {
-          userId: user.id,
-          email: user.email,
-          role: user.role
+          userId: updatedUser.id,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          username: updatedUser.username,
+          location: updatedUser.location
         });
 
-        res.json(user);
+        // 更新されたユーザー情報を返す
+        res.json(updatedUser);
       });
     })(req, res, next);
   } catch (error) {
     log('error', 'ログインエラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-
     res.status(400).json({
       message: error instanceof Error ? error.message : "ログインに失敗しました"
     });
