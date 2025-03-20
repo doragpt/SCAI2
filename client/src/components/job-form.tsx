@@ -36,13 +36,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
 
+  // ユーザー情報チェック
   if (!user?.location || !user?.username) {
     return (
-      <div className="p-4 text-center">
+      <div className="p-4 text-center bg-red-50 rounded-md">
         <p className="text-red-500">ユーザー情報が不足しています。プロフィールを更新してください。</p>
       </div>
     );
   }
+
+  console.log('User info:', { username: user.username, location: user.location });
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -61,18 +64,27 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate: submitForm, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
+      // データ検証
+      if (!data.location) {
+        throw new Error("所在地は必須項目です");
+      }
+
       const formattedData = {
         ...data,
         businessName: user.username,
         location: user.location,
       };
 
+      console.log('Submitting data:', formattedData);
+
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
+
       const response = await apiRequest(method, endpoint, formattedData);
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('API Error:', error);
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
 
@@ -87,6 +99,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -96,6 +109,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    console.log('Form submission data:', data);
     submitForm(data);
   };
 
@@ -298,7 +312,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !form.formState.isValid}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する
