@@ -90,12 +90,12 @@ export default function BasicInfoEdit() {
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
       const data = await response.json();
-      console.log('Received user profile:', data); // デバッグ用
+      console.log('Received user profile:', data);
       return data;
     },
     enabled: !!user,
-    staleTime: 0, // キャッシュを無効化
-    cacheTime: 0, // キャッシュを無効化
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // ユーザーデータが取得できたらフォームを更新
