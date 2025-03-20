@@ -24,7 +24,7 @@ import {
   Trash,
   MoreVertical,
   AlertCircle,
-  Pencil // 追加
+  Pencil
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -55,7 +55,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-
 // 求人ステータスのラベル
 const jobStatusLabels = {
   draft: "下書き",
@@ -69,6 +68,29 @@ const blogStatusLabels = {
   published: "公開中",
   scheduled: "予約投稿"
 } as const;
+
+// 統計情報の型定義
+interface DashboardStats {
+  // 掲載情報
+  storePlan: 'free' | 'premium';
+  storeArea: string;
+  displayRank: number;
+
+  // アクセス状況
+  todayPageViews: number;
+  todayUniqueVisitors: number;
+  monthlyPageViews: number;
+  monthlyUniqueVisitors: number;
+
+  // 応募者対応状況
+  newInquiriesCount: number;
+  pendingInquiriesCount: number;
+  completedInquiriesCount: number;
+  activeJobsCount: number;
+  totalApplicationsCount: number;
+  draftJobsCount?: number;
+  closedJobsCount?: number;
+}
 
 // プランのラベル
 const planLabels = {
@@ -86,9 +108,9 @@ export default function StoreDashboard() {
   const [selectedTab, setSelectedTab] = useState("jobs");
 
   // 統計情報を取得
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: [QUERY_KEYS.STORE_STATS], // クエリキーを修正
-    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS), // クエリキーを修正
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: [QUERY_KEYS.STORE_STATS],
+    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS),
     staleTime: 300000, // 5分
   });
 
@@ -100,11 +122,7 @@ export default function StoreDashboard() {
     retry: 2,
     retryDelay: 1000,
     onError: (error) => {
-      console.error("Store jobs fetch error:", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        userId: user?.id,
-        timestamp: new Date().toISOString()
-      });
+      console.error("Store jobs fetch error:", error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -112,7 +130,6 @@ export default function StoreDashboard() {
       });
     },
   });
-
 
   // ブログ投稿の取得
   const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
@@ -122,11 +139,7 @@ export default function StoreDashboard() {
     retry: 2,
     retryDelay: 1000,
     onError: (error) => {
-      console.error("Blog posts fetch error:", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        userId: user?.id,
-        timestamp: new Date().toISOString()
-      });
+      console.error("Blog posts fetch error:", error);
       toast({
         variant: "destructive",
         title: "エラー",
@@ -135,50 +148,13 @@ export default function StoreDashboard() {
     },
   });
 
-  // 記事の削除Mutation
-  const deleteMutation = useMutation({
-    mutationFn: (postId: number) =>
-      apiRequest("DELETE", `/api/blog/posts/${postId}`),
-    onSuccess: () => {
-      toast({
-        title: "記事を削除しました",
-      });
-      // ブログ一覧を更新
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "記事の削除に失敗しました",
-      });
-    },
-  });
-
-  // 記事のステータス更新Mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ postId, status }: { postId: number; status: string }) =>
-      apiRequest("PATCH", `/api/blog/posts/${postId}/status`, { status }),
-    onSuccess: () => {
-      toast({
-        title: "記事のステータスを更新しました",
-      });
-      // ブログ一覧を更新
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "ステータスの更新に失敗しました",
-      });
-    },
-  });
-
   if (statsLoading || jobsLoading || blogsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">データを読み込み中...</p>
+        </div>
       </div>
     );
   }
@@ -196,21 +172,22 @@ export default function StoreDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={() => setLocation('/store/settings')}>
+              <Button variant="outline" size="sm" onClick={() => window.open('/store/settings', '_blank')}>
                 <Settings className="h-4 w-4 mr-2" />
-                店舗設定
+                設定
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
                 {logoutMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-4 w-4" />
                 )}
-                ログアウト
+                <span className="ml-2">ログアウト</span>
               </Button>
             </div>
           </div>
@@ -218,54 +195,48 @@ export default function StoreDashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* ダッシュボード概要 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">新規応募</p>
-                  <p className="text-2xl font-bold">{stats?.newApplications || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <LineChart className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">今日のPV</p>
-                  <p className="text-2xl font-bold">{stats?.todayPageViews || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <MessageCircle className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">未対応メッセージ</p>
-                  <p className="text-2xl font-bold">{stats?.unreadMessages || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
+            {/* 応募者対応状況カード */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  応募者対応状況
+                </CardTitle>
+                <CardDescription>
+                  問い合わせと対応状況
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-3xl font-bold text-primary">
+                      {stats?.newInquiriesCount || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      新規問い合わせ
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <div className="text-sm font-medium">対応待ち</div>
+                      <div className="text-2xl font-semibold text-yellow-600">
+                        {stats?.pendingInquiriesCount || 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">対応済み</div>
+                      <div className="text-2xl font-semibold text-green-600">
+                        {stats?.completedInquiriesCount || 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-4 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
@@ -283,10 +254,6 @@ export default function StoreDashboard() {
                 <TabsTrigger value="freeSpace" className="py-2">
                   <PenBox className="h-4 w-4 mr-2" />
                   フリースペース
-                </TabsTrigger>
-                <TabsTrigger value="qa" className="py-2">
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  Q&A管理
                 </TabsTrigger>
               </TabsList>
 
@@ -308,9 +275,7 @@ export default function StoreDashboard() {
                   <CardContent>
                     {!jobListings?.jobs?.length ? (
                       <div className="text-center py-8">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                          <FileEdit className="h-6 w-6 text-primary" />
-                        </div>
+                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <p className="text-muted-foreground">
                           求人情報がありません
                         </p>
@@ -336,13 +301,11 @@ export default function StoreDashboard() {
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Calendar className="h-4 w-4" />
+                                    <span>{job.location}</span>
+                                    <span>•</span>
                                     <span>
                                       {job.createdAt ? format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja }) : "-"}
                                     </span>
-                                    <span>•</span>
-                                    <Clock className="h-4 w-4" />
-                                    <span>最終更新: {format(new Date(job.updatedAt), "HH:mm", { locale: ja })}</span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -588,34 +551,25 @@ export default function StoreDashboard() {
             {/* 店舗プロフィール */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  店舗プロフィール
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  店舗情報
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
-                      {planLabels[stats?.storePlan || 'free']}
-                    </Badge>
-                    <Button variant="outline" size="sm" onClick={() => setLocation('/store/settings')}>
-                      <PenBox className="h-4 w-4 mr-2" />
-                      編集
-                    </Button>
+                  <div>
+                    <p className="font-medium">店舗名</p>
+                    <p className="text-sm text-muted-foreground">{user?.displayName || user?.username || "未設定"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">店舗名</p>
-                    <p className="font-medium">{user?.displayName || user?.username}</p>
+                    <p className="font-medium">所在地</p>
+                    <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">所在地</p>
-                    <p className="font-medium">{user?.location || "未設定"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">掲載エリア</p>
-                    <p className="font-medium">{stats?.storeArea || "未設定"}</p>
-                  </div>
+                  <Button variant="outline" className="w-full" onClick={() => window.open('/store/settings', '_blank')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    店舗情報を編集
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -623,38 +577,80 @@ export default function StoreDashboard() {
             {/* アクセス状況 */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5" />
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-primary" />
                   アクセス状況
                 </CardTitle>
+                <CardDescription>
+                  店舗ページへのアクセス数
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">今日のアクセス</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <p className="text-2xl font-bold">{stats?.todayPageViews || 0}</p>
-                        <p className="text-xs text-muted-foreground">ページビュー</p>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.todayPageViews || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">総アクセス</div>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold">{stats?.todayUniqueVisitors || 0}</p>
-                        <p className="text-xs text-muted-foreground">ユニークユーザー</p>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.todayUniqueVisitors || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">ユニーク</div>
                       </div>
                     </div>
                   </div>
-                  <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">今月のアクセス</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <p className="text-2xl font-bold">{stats?.monthlyPageViews || 0}</p>
-                        <p className="text-xs text-muted-foreground">ページビュー</p>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.monthlyPageViews || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">総アクセス</div>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold">{stats?.monthlyUniqueVisitors || 0}</p>
-                        <p className="text-xs text-muted-foreground">ユニークユーザー</p>
+                        <div className="text-2xl font-bold text-primary">
+                          {stats?.monthlyUniqueVisitors || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">ユニーク</div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 掲載状況 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  掲載状況
+                </CardTitle>
+                <CardDescription>
+                  現在の掲載プランと表示状況
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
+                      {planLabels[stats?.storePlan || 'free']}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">掲載エリア</span>
+                      <span className="font-medium">{stats?.storeArea || '未設定'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">表示順位</span>
+                      <span className="font-medium">{stats?.displayRank || '-'}位</span>
                     </div>
                   </div>
                 </div>
