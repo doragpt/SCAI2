@@ -170,6 +170,29 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
+// 一時的なserviceTypes定義（互換性維持のため）
+export const serviceTypes = [
+  "デリヘル",
+  "ホテヘル",
+  "箱ヘル",
+  "エステ",
+  "オナクラ",
+  "メンズエステ"
+] as const;
+
+export type ServiceType = typeof serviceTypes[number];
+
+// 既存のserviceTypeLabels定義を更新
+export const serviceTypeLabels: Record<ServiceType, string> = {
+  "デリヘル": "デリヘル",
+  "ホテヘル": "ホテヘル",
+  "箱ヘル": "箱ヘル",
+  "エステ": "エステ",
+  "オナクラ": "オナクラ",
+  "メンズエステ": "メンズエステ"
+};
+
+
 // Tablesの定義
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
@@ -332,6 +355,7 @@ export const jobFormSchema = z.object({
 export const jobSchema = jobFormSchema.extend({
   businessName: z.string().min(1, "店舗名は必須です"),
   location: z.string().min(1, "所在地は必須です"),
+  serviceType: z.enum(serviceTypes).default("デリヘル"), // デフォルト値を設定
 });
 
 // 型定義
@@ -603,7 +627,7 @@ export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory, ServiceType };
 
 export interface JobListingResponse {
   jobs: Job[];

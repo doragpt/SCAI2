@@ -63,6 +63,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         location: user.location,
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
+        serviceType: "デリヘル", // デフォルト値を設定
       };
 
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
