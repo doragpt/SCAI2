@@ -11,19 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Check } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as z from 'zod';
 
-const FORM_STEP_NAMES = {
-  detail: "詳細情報",
-  benefits: "給与・待遇"
-} as const;
-
-type FormStep = keyof typeof FORM_STEP_NAMES;
+type FormStep = "detail" | "benefits";
 type JobFormData = z.infer<typeof jobSchema>;
 
 type JobFormProps = {
@@ -33,19 +28,28 @@ type JobFormProps = {
 };
 
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
 
+  if (!user?.location || !user?.username) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-red-500">ユーザー情報が不足しています。プロフィールを更新してください。</p>
+      </div>
+    );
+  }
+
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
+    mode: "onChange",
     defaultValues: {
-      businessName: initialData?.businessName || user?.username || "",
-      location: initialData?.location || user?.location || "",
+      businessName: user.username,
+      location: user.location,
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -55,12 +59,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const { mutate, isPending } = useMutation({
+  const { mutate: submitForm, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      if (!user?.location || !user?.username) {
-        throw new Error("ユーザー情報が不足しています");
-      }
-
       const formattedData = {
         ...data,
         businessName: user.username,
@@ -75,13 +75,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
       toast({
-        title: "求人情報を保存しました",
-        description: "変更が保存されました。",
+        title: "保存しました",
+        description: "求人情報が正常に保存されました。",
       });
       onSuccess?.();
     },
@@ -95,7 +96,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    mutate(data);
+    submitForm(data);
   };
 
   return (
@@ -103,15 +104,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs value={currentStep} onValueChange={(value) => setCurrentStep(value as FormStep)}>
           <TabsList className="grid w-full grid-cols-2">
-            {Object.entries(FORM_STEP_NAMES).map(([key, label]) => (
-              <TabsTrigger key={key} value={key}>{label}</TabsTrigger>
-            ))}
+            <TabsTrigger value="detail">詳細情報</TabsTrigger>
+            <TabsTrigger value="benefits">給与・待遇</TabsTrigger>
           </TabsList>
 
           <TabsContent value="detail">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
+                <CardTitle>詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -126,7 +126,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           placeholder="キャッチコピーを入力してください（300文字以内）"
                           className="min-h-[100px]"
                           onChange={(e) => {
-                            field.onChange(e.target.value);
+                            field.onChange(e);
                             setCatchPhraseLength(e.target.value.length);
                           }}
                         />
@@ -151,7 +151,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           placeholder="お仕事の内容を入力してください（9000文字以内）"
                           className="min-h-[200px]"
                           onChange={(e) => {
-                            field.onChange(e.target.value);
+                            field.onChange(e);
                             setDescriptionLength(e.target.value.length);
                           }}
                         />
@@ -170,7 +170,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           <TabsContent value="benefits">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold">給与・待遇情報</CardTitle>
+                <CardTitle>給与・待遇情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="flex gap-4">
@@ -339,8 +339,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {form.getValues("benefits")?.map((benefit) => (
                         <div key={benefit} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span>{benefit}</span>
+                          <span>・{benefit}</span>
                         </div>
                       ))}
                     </div>
