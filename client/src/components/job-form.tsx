@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Send, Check, Info } from "lucide-react";
+import { Loader2, Eye, Send, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -45,7 +45,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    mode: "onTouched",
+    mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
@@ -67,33 +67,17 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   });
 
-  // デバッグ用のフォーム状態監視
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      console.log('Form state:', {
-        values: form.getValues(),
-        isDirty: form.formState.isDirty,
-        isValid: form.formState.isValid,
-        errors: form.formState.errors,
-      });
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      // 送信データの整形
+      // 数値型の変換を確実に行う
       const formattedData = {
         ...data,
-        businessName: initialData?.businessName || data.businessName,
-        minimumGuarantee: Number(data.minimumGuarantee) || 0,
-        maximumGuarantee: Number(data.maximumGuarantee) || 0,
+        minimumGuarantee: data.minimumGuarantee || 0,
+        maximumGuarantee: data.maximumGuarantee || 0,
       };
-
-      console.log('Sending job data:', formattedData);
 
       const response = await apiRequest(method, endpoint, formattedData);
       if (!response.ok) {
@@ -112,7 +96,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Submit error:', error);
+      console.error('Form submission error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -123,29 +107,24 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const onSubmit = async (data: JobFormData) => {
     try {
-      if (!form.formState.isValid) {
-        // エラーのあるタブに移動
-        if (form.formState.errors.businessName || form.formState.errors.location || 
-            form.formState.errors.serviceType || form.formState.errors.title) {
-          setCurrentStep("basic");
-        } else if (form.formState.errors.mainCatch || form.formState.errors.mainDescription) {
-          setCurrentStep("detail");
-        }
-
-        toast({
-          variant: "destructive",
-          title: "入力エラー",
-          description: "必須項目を入力してください",
-        });
-        return;
-      }
-
-      console.log('Submitting form with data:', data);
-      await mutate(data);
+      mutate(data);
     } catch (error) {
       console.error('Submit error:', error);
     }
   };
+
+  // フォームの状態をデバッグ
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      console.log('Form state:', {
+        values: form.getValues(),
+        isDirty: form.formState.isDirty,
+        isValid: form.formState.isValid,
+        errors: form.formState.errors
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const PreviewDialog = () => (
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -232,13 +211,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-medium">店舗名</FormLabel>
-                      <div className="flex items-center gap-2">
-                        <FormControl>
-                          <Input {...field} disabled className="bg-muted" />
-                        </FormControl>
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">店舗名は風営法の観点から変更できません</p>
+                      <FormControl>
+                        <Input {...field} placeholder="店舗名を入力してください" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -271,20 +246,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">タイトル</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="タイトルを入力してください" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="serviceType"
                   render={({ field }) => (
                     <FormItem>
@@ -303,6 +264,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">タイトル</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="タイトルを入力してください" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -390,7 +365,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             value={field.value || ''}
-                            onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：30000"
                           />
                         </FormControl>
@@ -412,7 +387,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             value={field.value || ''}
-                            onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：50000"
                           />
                         </FormControl>
@@ -500,9 +475,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             >
               キャンセル
             </Button>
-            <Button
+            <Button 
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !form.formState.isValid}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する

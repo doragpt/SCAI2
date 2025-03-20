@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Constants
 export const prefectures = [
@@ -379,7 +380,7 @@ export const loginSchema = z.object({
 
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
-  businessName: z.string(), // 店舗名は編集不可のため、バリデーションを緩和
+  businessName: z.string().min(1, "店舗名を入力してください"),
   location: z.enum(prefectures, {
     required_error: "勤務地を選択してください",
     invalid_type_error: "無効な勤務地です",
@@ -397,8 +398,8 @@ export const jobSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   selectedBenefits: z.array(z.enum(allBenefitTypes)).default([]),
-  minimumGuarantee: z.number().nonnegative().default(0),
-  maximumGuarantee: z.number().nonnegative().default(0),
+  minimumGuarantee: z.number().nonnegative().optional(),
+  maximumGuarantee: z.number().nonnegative().optional(),
   phoneNumber1: z.string().min(1, "電話番号を入力してください"),
   phoneNumber2: z.string().optional(),
   phoneNumber3: z.string().optional(),
