@@ -1,54 +1,23 @@
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  jobSchema,
-  prefectures,
-  serviceTypes,
-  benefitTypes,
-  benefitCategories,
-  type Job
-} from "@shared/schema";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { z } from "zod";
+import { jobSchema, prefectures, serviceTypes, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Send, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
-import type { z } from "zod";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 const FORM_STEP_NAMES = {
@@ -76,6 +45,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
+    mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
       location: initialData?.location || "東京都",
@@ -97,15 +67,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   });
 
-  // フォームの値が変更されたときにログを出力
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      console.log('Form value changed:', { name, type, value });
-      console.log('Form state:', form.formState);
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
@@ -114,8 +75,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       // 数値型の変換を確実に行う
       const formattedData = {
         ...data,
-        minimumGuarantee: data.minimumGuarantee ? Number(data.minimumGuarantee) : undefined,
-        maximumGuarantee: data.maximumGuarantee ? Number(data.maximumGuarantee) : undefined,
+        minimumGuarantee: data.minimumGuarantee || 0,
+        maximumGuarantee: data.maximumGuarantee || 0,
       };
 
       const response = await apiRequest(method, endpoint, formattedData);
@@ -123,6 +84,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
@@ -143,10 +105,26 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = (data: JobFormData) => {
-    console.log('Submitting form with data:', data);
-    mutate(data);
+  const onSubmit = async (data: JobFormData) => {
+    try {
+      mutate(data);
+    } catch (error) {
+      console.error('Submit error:', error);
+    }
   };
+
+  // フォームの状態をデバッグ
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      console.log('Form state:', {
+        values: form.getValues(),
+        isDirty: form.formState.isDirty,
+        isValid: form.formState.isValid,
+        errors: form.formState.errors
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const PreviewDialog = () => (
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -290,6 +268,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="title"
@@ -385,7 +364,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value}
+                            value={field.value || ''}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：30000"
                           />
@@ -407,7 +386,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             type="number"
                             min="0"
                             step="1000"
-                            value={field.value}
+                            value={field.value || ''}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             placeholder="例：50000"
                           />
@@ -496,7 +475,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             >
               キャンセル
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button 
+              type="submit"
+              disabled={isPending || !form.formState.isValid}
+            >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する
             </Button>
