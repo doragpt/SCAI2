@@ -1,0 +1,1107 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>DXフリースペース編集｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8">
+    
+    
+    
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/blog_common.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/entry.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/entry_list.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/dx_freespace_list.css" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/dx_freespace_detail.css?cache01=20170711094719" media="screen,print">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/dxfs_prev.css?cache01=20170711094719" media="screen,print">
+    <link rel="stylesheet" media="screen,print" type="text/css" href="https://manager.girlsheaven-job.net/css/thickbox_picselect.css">
+    <script src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script type="text/javascript" src="https://manager.girlsheaven-job.net/js/thickbox.js"></script>
+    <script type="text/javascript" src="https://manager.girlsheaven-job.net/js/imgselect.js?cache01=20230704174419"></script>
+    <script src="https://manager.girlsheaven-job.net/js/ipop_preview.js?cache01=20170928095122"></script>
+    
+    
+    <script language="JavaScript">
+    <!--
+    //<![CDATA[
+    function changeChokusoFlg(value) {
+      for (i = 1; i <= 3; i++) {
+        obj = document.getElementById('dispTypeIconList_' + i);
+        if (i == value) {
+          obj.className = "iconChecked";
+          document.srvEntryInputForm.dispType[i-1].checked = true;
+        } else {
+          obj.className = "iconNotChecked";
+          document.srvEntryInputForm.dispType[i-1].checked = false;
+        }
+      }
+    }
+    function changeEllipsisFlg(type) {
+      if (type == 1) {
+          obj = document.getElementById('pcEllipsisFlgIconList_1');
+          if(document.srvEntryInputForm.pcEllipsisFlg.value == 1){
+              obj.className = "iconNotChecked";
+              document.srvEntryInputForm.pcEllipsisFlg.value = 0;
+          }else{
+              obj.className = "iconChecked";
+              document.srvEntryInputForm.pcEllipsisFlg.value = 1;
+          }
+      }else if(type == 2){
+          obj = document.getElementById('spEllipsisFlgIconList_1');
+          if(document.srvEntryInputForm.spEllipsisFlg.value == 1){
+              obj.className = "iconNotChecked";
+              document.srvEntryInputForm.spEllipsisFlg.value = 0;
+          }else{
+              obj.className = "iconChecked";
+              document.srvEntryInputForm.spEllipsisFlg.value = 1;
+          }
+      }
+    }
+    //2017/05/18 PC DX1カラム対応 start
+    function changeEllipsisFlgPC(type) {
+      if (type == 1) {
+          obj = document.getElementById('pcEllipsisFlgPCIconList_1');
+          if(document.srvEntryInputForm.pcEllipsisFlg_pc.value == 1){
+              obj.className = "iconNotChecked";
+              document.srvEntryInputForm.pcEllipsisFlg_pc.value = 0;
+          }else{
+              obj.className = "iconChecked";
+              document.srvEntryInputForm.pcEllipsisFlg_pc.value = 1;
+          }
+      }else if(type == 2){
+          obj = document.getElementById('spEllipsisFlgPCIconList_1');
+          if(document.srvEntryInputForm.spEllipsisFlg_pc.value == 1){
+              obj.className = "iconNotChecked";
+              document.srvEntryInputForm.spEllipsisFlg_pc.value = 0;
+          }else{
+              obj.className = "iconChecked";
+              document.srvEntryInputForm.spEllipsisFlg_pc.value = 1;
+          }
+      }
+    }
+    function copySptextToPc() {
+        if (document.getElementById('title_pc').value !== "" || CKEDITOR.instances.girls_basic_pc.getData() !== "")  {
+            if(window.confirm('DXフリースペースが入力されています。\n上書きしてよろしいですか？')){
+                copySpText();
+            }else{
+                return false;
+            }
+        } else {
+            copySpText();
+        }
+        function copySpText() {
+            var title = document.getElementById('title').value;
+            var body  = CKEDITOR.instances.girls_basic.getData();
+            document.getElementById('title_pc').value = title;
+            CKEDITOR.instances.girls_basic_pc.setData(body);
+        }
+    }
+    function copyPctextToSp() {
+        if (document.getElementById('title').value !== "" || CKEDITOR.instances.girls_basic.getData() !== "")  {
+            if(window.confirm('DXフリースペースが入力されています。\n上書きしてよろしいですか？')){
+                copyPcText();
+            }else{
+                return false;
+            }
+        } else {
+            copyPcText();
+        }
+        function copyPcText() {
+            var title = document.getElementById('title_pc').value;
+            var body  = CKEDITOR.instances.girls_basic_pc.getData();
+            document.getElementById('title').value = title;
+            CKEDITOR.instances.girls_basic.setData(body);
+        }
+    }
+    //2017/05/18 PC DX1カラム対応 end
+        //]]>
+    -->
+    </script>
+    
+    
+    
+    
+<script type="text/javascript" src="https://manager.girlsheaven-job.net/js/ckeditor/ckeditor.js?cache01=20170711094721"></script><style>.cke{visibility:hidden;}</style>
+<script type="text/javascript">
+
+$(document).ready(function() {
+            // CKEditorのインスタンスを設定
+        var oCKEditor = CKEDITOR.instances['girls_basic'];
+        var config0 = CKEDITOR.config;
+        // インスタンスを一度デストロイ（削除）する
+        if (CKEDITOR.instances['girls_basic']) {
+            CKEDITOR.instances['girls_basic'].destroy(true);
+        }
+        config0.height = '400px';
+        config0.toolbar = [["FontSize","Bold","Italic","Underline","Strike","JustifyCenter","HorizontalRule","TextColor","Link","Source"],["ImageDialog"]];
+        config0.customConfig = 'https://manager.girlsheaven-job.net/js/ckeditor/' + 'config_mp.js';
+        config0.removePlugins = 'justifyi,elementspath,form';
+        config0.extraPlugins = 'ImageDialog';
+        config0.image_removeLinkByEmptyURL = false;
+        config0.disableObjectResizing = false;
+        config0.allowedContent = true;
+        config0.fontSize_sizes = 'あいうえお　/x-small;あいうえお　　/small;あいうえお　　　/medium;あいうえお　　　　/large;あいうえお　　　　　/x-large;あいうえお　　　　　　/xx-large';
+        config0.enterMode = CKEDITOR.ENTER_BR;
+        config0.shiftEnterMode = CKEDITOR.ENTER_P;
+        config0.linkShowAdvancedTab = false;
+        config0.entities = false;
+        config0.coreStyles_italic =
+        {
+            element : 'span',
+            styles  : { 'font-style': 'italic' }
+        };
+        
+        // 2017/05/18 PC DX1カラム対応 start
+        config0.ckeditor_id = "girls_basic";
+        // 2017/05/18 PC DX1カラム対応 end
+
+        CKEDITOR.replace('girls_basic', config0);
+            // CKEditorのインスタンスを設定
+        var oCKEditor = CKEDITOR.instances['girls_basic_pc'];
+        var config1 = CKEDITOR.config;
+        // インスタンスを一度デストロイ（削除）する
+        if (CKEDITOR.instances['girls_basic_pc']) {
+            CKEDITOR.instances['girls_basic_pc'].destroy(true);
+        }
+        config1.height = '400px';
+        config1.toolbar = [["FontSize","Bold","Italic","Underline","Strike","JustifyCenter","HorizontalRule","TextColor","Link","Source"],["ImageDialog"]];
+        config1.customConfig = 'https://manager.girlsheaven-job.net/js/ckeditor/' + 'config_mp.js';
+        config1.removePlugins = 'justifyi,elementspath,form';
+        config1.extraPlugins = 'ImageDialog';
+        config1.image_removeLinkByEmptyURL = false;
+        config1.disableObjectResizing = false;
+        config1.allowedContent = true;
+        config1.fontSize_sizes = 'あいうえお　/x-small;あいうえお　　/small;あいうえお　　　/medium;あいうえお　　　　/large;あいうえお　　　　　/x-large;あいうえお　　　　　　/xx-large';
+        config1.enterMode = CKEDITOR.ENTER_BR;
+        config1.shiftEnterMode = CKEDITOR.ENTER_P;
+        config1.linkShowAdvancedTab = false;
+        config1.entities = false;
+        config1.coreStyles_italic =
+        {
+            element : 'span',
+            styles  : { 'font-style': 'italic' }
+        };
+        
+        // 2017/05/18 PC DX1カラム対応 start
+        config1.ckeditor_id = "girls_basic_pc";
+        // 2017/05/18 PC DX1カラム対応 end
+
+        CKEDITOR.replace('girls_basic_pc', config1);
+        
+    if (typeof ckAfterLoad === 'function') {
+        ckAfterLoad();
+    }
+    
+});
+
+</script>
+
+    
+  
+  <script type="text/javascript" src="https://manager.girlsheaven-job.net/js/ckeditor/config_mp.js?t=DBAA"></script><link rel="stylesheet" type="text/css" href="https://manager.girlsheaven-job.net/js/ckeditor/skins/moono/editor.css?t=DBAA"><script type="text/javascript" src="https://manager.girlsheaven-job.net/js/ckeditor/lang/ja.js?t=DBAA"></script><script type="text/javascript" src="https://manager.girlsheaven-job.net/js/ckeditor/styles.js?t=DBAA"></script><style id="cke_ui_color" type="text/css"></style></head><body>
+    
+    
+<!-- operationId:6DAC0F64-BB72-43FF-9D8B4C1955A1BDFF -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class=" ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class=" ">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class=" ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" borderNone">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class="active  ">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class=" borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgba(0, 180, 0, 0.282);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/20 12:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+    
+
+    
+    
+
+
+      <div id="ucsContent" class="content">
+        <div id="wrap" class="blogEntry">
+
+          
+          <div id="ucsHeader">
+  <p id="ucsHeaderTitle">DX管理(お試し版)</p>
+  <ul id="ucsSubMenu">
+    <li>
+      
+      
+      
+      
+      <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?gop=newc" target="_blank" id="shop_preview_btn">お店の公開ページを見る</a>
+      
+      
+    </li>
+  </ul>
+</div>
+<div id="ucsMenu">
+  <ul>
+    <li>
+      
+      
+      <span class="lev1">トーク管理</span>
+      <ul>
+        <li>
+          <a href="/talk/list/" class="lev2 ">トーク一覧</a>
+        </li>
+      </ul>
+      
+    </li>
+    
+        
+    <li>
+      <span class="lev1">応募管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/application/" class="lev2 ">応募一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+        <li>
+      <span class="lev1">検討中管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/favoriteuser/list/" class="lev2 ">検討中ユーザー一覧</a>
+        </li>
+      </ul>
+    </li>
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    <li>
+      
+      
+            
+      
+            
+      <span class="lev1">DX管理(お試し版)</span>
+      
+      <ul>
+        
+        <li>
+          <a href="/dx_pc_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">PCデザイン編集<br>(1カラム)</a>
+        </li>
+        
+        
+        <li>
+          <a href="/dx_sp_design_edit/" class="lev2" onclick="windowOpenDesign(this.href); return false;">SPデザイン編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxfreespacelist/" class="lev2 active">DXフリースペース</a>
+        </li>
+        
+        
+        
+        
+        <li>
+          <a href="/dxtemplateedit/" class="lev2 ">テンプレート設定</a>
+        </li>
+        
+                <li>
+          <a href="/shopcontentssort_dx_confirm/" target="_blank" class="lev2">DXページプレビュー</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        <li>
+          <a href="/dxlogo/" class="lev2 ">特大ロゴ編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+
+
+    
+
+    <li>
+      <span class="lev1">店長ブログ管理</span>
+      <ul>
+        <li>
+          <a href="/blog/edit/" class="lev2 ">店長ブログを書く</a>
+        </li>
+        <li>
+          <a href="/blog/" class="lev2 ">店長ブログ編集・削除</a>
+        </li>
+        <li>
+          <a href="/blog/restore/" class="lev2 ">店長ブログ復旧</a>
+        </li>
+        <li>
+          <a href="/profile/" class="lev2 ">プロフィール編集</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+    
+      
+      
+        
+          
+        
+        
+          
+        
+        
+          
+        
+      
+    
+    
+    
+    <li>
+      <span class="lev1">仕事情報管理</span>
+      <ul>
+        <li>
+          <a href="/job/" class="lev2 ">基本情報確認・編集</a>
+        </li>
+        
+                <li>
+          <a href="/salarylist/" class="lev2 ">バック料金表</a>
+        </li>
+                
+        
+        <li>
+          <a href="/jobsearchedit/" class="lev2 ">検索用情報確認・編集</a>
+        </li>
+        
+        
+                
+        
+        
+                
+        <li>
+          <a href="/imageedit/" class="lev2 ">画像確認・文言変更</a>
+        </li>
+                        <li>
+          <a href="/freespace/" class="lev2 ">フリースペース編集</a>
+        </li>
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                            <li>
+          <a href="/privilegelist/" class="lev2 ">特典確認・編集</a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+                <a href="/tainyu/" class="lev2 ">体験入店編集(未契約)</a>
+                
+        
+        
+        <li>
+          <a href="/dxitemlist/" class="lev2 ">Q＆A編集</a>
+        </li>
+                
+        
+        <li>
+          <a href="/drcontentslist/" class="lev2 ">編集部取材レポート</a>
+        </li>
+                
+      </ul>
+    </li>
+          
+            
+            <li>
+      <span class="lev1">デザイン管理</span>
+      <ul>
+        <li>
+          <a href="/shopcontentssort/" target="_blank" class="lev2 ">PC配置変更</a>
+        </li>
+      </ul>
+    </li>
+              
+            
+        
+    
+        
+    <li>
+      <span class="lev1">データ解析</span>
+      <ul>
+        <li>
+          <a href="/joblog/" class="lev2 ">アクセス解析</a>
+        </li>
+      </ul>
+    </li>
+        
+    <li>
+      <span class="lev1">通知設定</span>
+      <ul>
+        <li class="analysis">
+          <a href="/mailsetting/" class="lev2 ">メール通知設定</a>
+        </li>
+        <li class="analysis">
+          <a href="/sns_setting/" class="lev2 ">SNS通知設定</a>
+        </li>
+        
+        <li class="analysis">
+          <a href="/sms_setting/" class="lev2 ">SMS通知設定</a>
+        </li>
+        
+      </ul>
+    </li>
+    
+    
+    <li>
+      <span class="lev1">口コミ管理</span>
+      <ul>
+        <li class="analysis">
+          <a href="/reviewlist/" class="lev2 ">口コミ一覧</a>
+        </li>
+      </ul>
+    </li>
+    
+    
+        <li>
+      <span class="lev1">外部連携</span>
+      <ul>
+        <li class="analysis">
+          <a href="/twitter_setting/" class="lev2 ">Twitter連携</a>
+        </li>
+      </ul>
+    </li>
+        
+  </ul>
+</div>
+
+
+<script type="text/javascript">
+var voiceRenewEdit = document.getElementById('voicerenewedit');
+voiceRenewEdit.addEventListener("click", 
+  function() {
+    $.ajax({
+        'type' : 'POST',
+        'async': true,
+        'url'  : '/noscreen/ajax/',
+        'data' : {
+            'ajax_type' : 'voice_renew_check_regist_cnt'
+        }
+    }).done(function(data) {
+      if (data.reload == true) {
+        location.href = "/voice_renew/edit/";
+      }
+      else{
+        alert('登録上限の30 件（公開、非公開、予約含む）に達しているため新規の登録・複製はできません。登録する場合は既存の先輩ボイスを削除してください');
+      }
+    });
+});
+</script>
+
+<!--//#ucsMenu-->
+
+          
+
+          <div id="ucsMainContent">
+            <div class="sorting">
+              <h1>DXフリースペース編集</h1>
+            </div>
+                        <div class="infoArea">
+              DXフリースペース編集画面です。<br>
+			お店ページに表示していない場合は配置変更の『使用しない機能』に入っていますので『使用する機能』に移動をすると表示します。<br>
+            <a href="http://www.girlsheaven-job.net/dxsample/" target="_blank" style="font-weight: bold;">→DXフリースペースのサンプル集はこちら</a>
+            
+            <br><br>
+            ※[スマホ版]のみ登録すると、[スマホ版]と[PC版]両方に表示されます。<br>
+            ※[PC版]のみ登録すると[スマホ版]には表示されず、[PC版]にのみ表示されます。
+            
+            
+            <script type="text/javascript">
+<!--
+
+$(function() {
+    $("#sns_link_copy_btn").click(function(){
+        $('input[name=snsLinkTxt]').select();
+        document.execCommand('copy')
+    });
+
+    $("#colum_tel_copy_btn").click(function(){
+        $('input[name=columTelTxt]').select();
+        document.execCommand('copy')
+    });
+
+    $("#email_copy_btn").click(function(){
+        $('input[name=dispEmailTxt]').select();
+        document.execCommand('copy')
+    });
+
+    
+    
+    $("#sns_url_copy_btn").click(function(){
+        $('input[name=snsUrlTxt]').select();
+        document.execCommand('copy')
+    });
+
+    $("#colum_tel_js_copy_btn").click(function(){
+        $('input[name=columTelJsTxt]').select();
+        document.execCommand('copy')
+    });
+
+    $("#email_js_copy_btn").click(function(){
+        $('input[name=dispEmailJsTxt]').select();
+        document.execCommand('copy')
+    });
+    
+    
+
+});
+
+// -->
+</script>
+<style type="text/css">
+
+.actCntSource{
+    height:14px;
+    color:#555;
+    background:#fffefa;
+    border-color:#CCC !important;
+    float:left;
+}
+.copyBtn{
+    width: 50px;
+    height: 26px;
+    line-height: 0px;
+}
+.infoSubTitle{
+    padding-top:3px;
+}
+
+-->
+</style>
+
+
+<br><br>《文字にリンクをつける場合（ソース表示で記載）》
+
+<br>・SNSリンク（以下のURLを使用すると「SNSリンク」に入力したURLをご利用できます。）
+
+
+<br><input class="actCntSource" name="snsLinkTxt" style="width:715px;" type="text" readonly="" value="<a href=&quot;https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/jump/?type=sns&quot; target=&quot;_blank&quot;>SNS応募はこちら</a>"><button id="sns_link_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+
+<p class="infoSubTitle">・電話番号&nbsp;&nbsp;<!--※Chrome(バージョン：56以上)、Microsoft edgeでは使用できません。--></p><input class="actCntSource" name="columTelTxt" style="width:520px;" type="text" readonly="" value="<a href=&quot;JavaScript:gotel(21,10,'0474022615');&quot;>0474022615</a>"><button id="colum_tel_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+<p class="infoSubTitle">・メールアドレス&nbsp;&nbsp;<!--※Chrome(バージョン：56以上)、Microsoft edgeでは使用できません。--></p><input class="actCntSource" name="dispEmailTxt" style="width:520px;" type="text" readonly="" value="<a href=&quot;JavaScript:gomail(1,10);&quot;>contact@c-para.com</a>"><button id="email_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+
+<br>《画像にリンクを貼る場合（エディターのリンク挿入で貼り付け）》
+<br>・SNSリンク（以下のURLを使用すると「SNSリンク」に入力したURLをご利用できます。）
+<br><input class="actCntSource" name="snsUrlTxt" style="width:520px;" type="text" readonly="" value="www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/jump/?type=sns"><button id="sns_url_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+<p class="infoSubTitle">・電話番号&nbsp;&nbsp;<!--※Chrome(バージョン：56以上)、Microsoft edgeでは使用できません。--></p><input class="actCntSource" name="columTelJsTxt" style="width:520px;" type="text" readonly="" value="JavaScript:gotel(21,10,'0474022615');"><button id="colum_tel_js_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+<p class="infoSubTitle">・メールアドレス&nbsp;&nbsp;<!--※Chrome(バージョン：56以上)、Microsoft edgeでは使用できません。--></p><input class="actCntSource" name="dispEmailJsTxt" style="width:520px;" type="text" readonly="" value="JavaScript:gomail(1,10);"><button id="email_js_copy_btn" class="btnDefault copyBtn" type="button">コピー</button>
+
+
+            
+            </div>
+
+            <form style="background: none repeat scroll 0% 0% transparent;" name="srvEntryInputForm" method="post" action="/dxfreespacedetail/">
+              <div id="contents" style="opacity: 1;">
+
+                
+                
+                
+                        
+                        
+                      
+                <div class="freespaceEllipsisFlg">
+                  
+                  <table cellpadding="0" cellspacing="0" class="freespaceHeadline" style="margin-bottom: 15px;">
+                      <tbody><tr>
+                          <td class="freespaceHeadlineText">スマホ用DXフリースペース</td>
+                          <td class="freespaceHeadlineButton" align="right">
+                              <a style="width:130px;" href="javascript:void(0)" class="btnDefault" onclick="javascript:copyPctextToSp();">PCの内容で上書く</a>
+                          </td>
+                      </tr>
+                  </tbody></table>
+                  
+                  <table cellpadding="0" cellspacing="0">
+                    <tbody><tr>
+                      <td rowspan="2" class="CheckLayoutLabel">省略表示：</td>
+                      <td class="ellipsisFlgCheckLayout">
+                        <div class="ellipsisFlgCheck">
+                          <div class="ellipsisFlgIcon">
+                            <span id="pcEllipsisFlgIconList_1" class="iconNotChecked" onclick="javascript:changeEllipsisFlg(1);">PC閲覧時</span>
+                            <input type="hidden" id="pcEllipsisFlg" name="pcEllipsisFlg" value="0">
+                          </div>
+                        </div>
+                        <div class="ellipsisFlgCheck">
+                          <div class="ellipsisFlgIcon">
+                            <span id="spEllipsisFlgIconList_1" class="iconNotChecked" onclick="javascript:changeEllipsisFlg(2);">スマホ閲覧時</span>
+                            <input type="hidden" id="spEllipsisFlg" name="spEllipsisFlg" value="0">
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="ellipsisFlgMessage">※本文が長い場合、途中でカットし「続きを見る」リンクを表示します</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+                <div id="articleWrapFs">
+                  <div id="articleTitle">
+                    <input name="title" maxlength="50" size="40" id="title" title="全角50文字以内" type="text" placeholder="ここにタイトルを入力してください(50文字以内)" onkeydown="if(event.keyCode==13) return false;" data-check="max50" data-length="50" label="#caution_title" value="はじめまして、シーパラダイスです">
+                    <span id="caution_title" class="cautionTextLine" style="display: inline;">あと34文字</span><div class="infotext" style="text-align: left;">(50文字)</div>
+                  </div>
+                  <!-- //articleTitle -->
+                </div>
+                <!-- //articleWrap -->
+
+                <span style="float:left;margin-top:10px;margin-left:10px">
+                    <a href="/contents/editor/help.html" target="_blank">？使い方</a>
+                </span>
+                <div style="padding: 0px 10px 0px;clear:both;">
+                    <textarea data-check="max16000" data-name="本文" name="body" id="girls_basic" class="mpeditor" style="visibility: hidden; display: none;">&lt;div style="text-align: center;"&gt;&lt;a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/movie//"&gt;&lt;img src="/img/img_sys/job/136031/upload/4DCE8DAC-9852-362E-9B13CDF5B51D947B.gif?1680237087572" width="725" /&gt;&lt;/a&gt;&lt;br /&gt;
+&lt;img src="/img/img_sys/job/136031/upload/5679B415-CEC1-3087-88A077981C0CEE9B.jpg?1678765084011" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;img alt="" src="/img/img_sys/job/136031/upload/D2C822A7-EE41-3006-8AA89F4313BE471E.jpg?1688358066674" /&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/DB557014-FAB2-348D-BEA3F9AE72E3EF6D.jpg?1688358101888" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;img alt="" src="/img/img_sys/job/136031/upload/A9B403DE-3FA1-35A3-B9149C983CD8C628.jpg?1687940697235" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/reviews/" style="text-align: center;"&gt;&lt;img src="/img/img_sys/job/136031/upload/6D69673D-CF3F-36C2-B483EA0A02697D55.jpg?1676529968883" width="640" /&gt;&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;a href="http://line.me/ti/p/mvm02arXvb" style="text-align: center;"&gt;&lt;img src="/img/img_sys/job/136031/upload/32EA3F88-F389-362F-8BC65F1E939A286B.jpg?1608642515128" width="640" /&gt;&lt;/a&gt;&lt;a href="JavaScript:gotel(21,10,'0474022615');"&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/E34198AF-C185-37CE-AEA79A3342B1023B.jpg?1687940716381" width="640" /&gt;&lt;/a&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/C8DE6143-C8F8-30AB-B392B80CE9A643F2.jpg?1685356855124" /&gt;&lt;img src="/img/img_sys/job/136031/upload/94D64677-2265-3161-94FC8D7951658ABA.jpg?1689040841333" /&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/15D1A893-521C-388D-BD481EF6027F97CC.jpg?1685356862212" /&gt;&lt;/div&gt;</textarea><div id="cke_girls_basic" class="cke_1 cke cke_reset cke_chrome cke_editor_girls_basic cke_ltr cke_browser_webkit cke_hidpi" dir="ltr" lang="ja" role="application" aria-labelledby="cke_girls_basic_arialbl"><span id="cke_girls_basic_arialbl" class="cke_voice_label">リッチテキストエディタ, girls_basic</span><div class="cke_inner cke_reset" role="presentation"><span id="cke_1_top" class="cke_top cke_reset_all" role="presentation" style="height: auto; user-select: none;"><span id="cke_12" class="cke_voice_label">編集ツールバー</span><span id="cke_1_toolbox" class="cke_toolbox" role="group" aria-labelledby="cke_12" onmousedown="return false;"><span id="cke_14" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span id="cke_13" class="cke_combo cke_combo__fontsize  cke_combo_off" role="presentation"><span id="cke_13_label" class="cke_combo_label">サイズ</span><a class="cke_combo_button" hidefocus="true" title="フォントサイズ" tabindex="-1" "="" href="javascript:void('フォントサイズ')" role="button" aria-labelledby="cke_13_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(2,event,this);" onmousedown="return CKEDITOR.tools.callFunction(4,event);" onfocus="return CKEDITOR.tools.callFunction(3,event);" onclick="CKEDITOR.tools.callFunction(1,this);return false;"><span id="cke_13_text" class="cke_combo_text cke_combo_inlinelabel">サイズ</span><span class="cke_combo_open"><span class="cke_combo_arrow"></span></span></a></span><span class="cke_toolgroup" role="presentation"><a id="cke_15" class="cke_button cke_button__bold  cke_button_off" href="javascript:void('太字')" title="太字" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_15_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(5,event);" onfocus="return CKEDITOR.tools.callFunction(6,event);" onmousedown="return CKEDITOR.tools.callFunction(7,event);" onclick="CKEDITOR.tools.callFunction(8,this);return false;"><span class="cke_button_icon cke_button__bold_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -24px;background-size:16px;">&nbsp;</span><span id="cke_15_label" class="cke_button_label cke_button__bold_label" aria-hidden="false">太字</span></a><a id="cke_16" class="cke_button cke_button__italic  cke_button_off" href="javascript:void('斜体')" title="斜体" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_16_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(9,event);" onfocus="return CKEDITOR.tools.callFunction(10,event);" onmousedown="return CKEDITOR.tools.callFunction(11,event);" onclick="CKEDITOR.tools.callFunction(12,this);return false;"><span class="cke_button_icon cke_button__italic_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -48px;background-size:16px;">&nbsp;</span><span id="cke_16_label" class="cke_button_label cke_button__italic_label" aria-hidden="false">斜体</span></a><a id="cke_17" class="cke_button cke_button__underline  cke_button_off" href="javascript:void('下線')" title="下線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_17_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(13,event);" onfocus="return CKEDITOR.tools.callFunction(14,event);" onmousedown="return CKEDITOR.tools.callFunction(15,event);" onclick="CKEDITOR.tools.callFunction(16,this);return false;"><span class="cke_button_icon cke_button__underline_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -144px;background-size:16px;">&nbsp;</span><span id="cke_17_label" class="cke_button_label cke_button__underline_label" aria-hidden="false">下線</span></a><a id="cke_18" class="cke_button cke_button__strike  cke_button_off" href="javascript:void('打ち消し線')" title="打ち消し線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_18_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(17,event);" onfocus="return CKEDITOR.tools.callFunction(18,event);" onmousedown="return CKEDITOR.tools.callFunction(19,event);" onclick="CKEDITOR.tools.callFunction(20,this);return false;"><span class="cke_button_icon cke_button__strike_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -72px;background-size:16px;">&nbsp;</span><span id="cke_18_label" class="cke_button_label cke_button__strike_label" aria-hidden="false">打ち消し線</span></a><a id="cke_19" class="cke_button cke_button__justifycenter  cke_button_off" href="javascript:void('中央揃え')" title="中央揃え" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_19_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(21,event);" onfocus="return CKEDITOR.tools.callFunction(22,event);" onmousedown="return CKEDITOR.tools.callFunction(23,event);" onclick="CKEDITOR.tools.callFunction(24,this);return false;"><span class="cke_button_icon cke_button__justifycenter_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1104px;background-size:16px;">&nbsp;</span><span id="cke_19_label" class="cke_button_label cke_button__justifycenter_label" aria-hidden="false">中央揃え</span></a><a id="cke_20" class="cke_button cke_button__horizontalrule  cke_button_off" href="javascript:void('水平線')" title="水平線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_20_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(25,event);" onfocus="return CKEDITOR.tools.callFunction(26,event);" onmousedown="return CKEDITOR.tools.callFunction(27,event);" onclick="CKEDITOR.tools.callFunction(28,this);return false;"><span class="cke_button_icon cke_button__horizontalrule_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -888px;background-size:16px;">&nbsp;</span><span id="cke_20_label" class="cke_button_label cke_button__horizontalrule_label" aria-hidden="false">水平線</span></a><a id="cke_21" class="cke_button cke_button__textcolor cke_button_off " href="javascript:void('文字色')" title="文字色" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_21_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(29,event);" onfocus="return CKEDITOR.tools.callFunction(30,event);" onmousedown="return CKEDITOR.tools.callFunction(31,event);" onclick="CKEDITOR.tools.callFunction(32,this);return false;"><span class="cke_button_icon cke_button__textcolor_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -408px;background-size:16px;">&nbsp;</span><span id="cke_21_label" class="cke_button_label cke_button__textcolor_label" aria-hidden="false">文字色</span><span class="cke_button_arrow"></span></a><a id="cke_22" class="cke_button cke_button__link  cke_button_off" href="javascript:void('リンク挿入/編集')" title="リンク挿入/編集" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_22_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(33,event);" onfocus="return CKEDITOR.tools.callFunction(34,event);" onmousedown="return CKEDITOR.tools.callFunction(35,event);" onclick="CKEDITOR.tools.callFunction(36,this);return false;"><span class="cke_button_icon cke_button__link_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1248px;background-size:16px;">&nbsp;</span><span id="cke_22_label" class="cke_button_label cke_button__link_label" aria-hidden="false">リンク挿入/編集</span></a><a id="cke_23" class="cke_button cke_button__source  cke_button_off" href="javascript:void('ソース')" title="ソース" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_23_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(37,event);" onfocus="return CKEDITOR.tools.callFunction(38,event);" onmousedown="return CKEDITOR.tools.callFunction(39,event);" onclick="CKEDITOR.tools.callFunction(40,this);return false;"><span class="cke_button_icon cke_button__source_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1824px;background-size:16px;">&nbsp;</span><span id="cke_23_label" class="cke_button_label cke_button__source_label" aria-hidden="false">ソース</span></a></span><span class="cke_toolbar_end"></span></span><span id="cke_24" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span class="cke_toolgroup" role="presentation"><a id="cke_25" class="cke_button cke_button__imagedialog  cke_button_off" href="javascript:void('画像読込')" title="画像読込" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_25_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(41,event);" onfocus="return CKEDITOR.tools.callFunction(42,event);" onmousedown="return CKEDITOR.tools.callFunction(43,event);" onclick="CKEDITOR.tools.callFunction(44,this);return false;"><span class="cke_button_icon cke_button__imagedialog_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/ImageDialog/images/imagedialog.png?t=DBAA);background-position:0 undefinedpx;background-size:16px;">&nbsp;</span><span id="cke_25_label" class="cke_button_label cke_button__imagedialog_label" aria-hidden="false">画像読込</span></a></span><span class="cke_toolbar_end"></span></span></span></span><div id="cke_1_contents" class="cke_contents cke_reset" role="presentation" style="height: 400px;"><iframe src="" frameborder="0" class="cke_wysiwyg_frame cke_reset" style="width: 100%; height: 100%;" title="リッチテキストエディタ, girls_basic" tabindex="0" allowtransparency="true"></iframe></div></div></div>
+                    <span id="caution_body" class="cautionTextLine"></span>
+
+                    <div id="globalHeaderMsg" style="display:none; border:solid 4px #FF0000; text-align:left; width:650px; margin:0px 0px 30px 0px; padding: 30px 10px;">
+                    <span style="font-weight: bold; font-size: 16px;">DXフリースペースの本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+                      ■互換表示設定解除方法<br>
+                      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+                      &nbsp;&nbsp;②互換表示設定をクリック<br>
+                      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+                    </div>
+
+                </div>
+                
+                <div class="preview">
+                    <a style="margin: 0 auto;" href="javascript:$p.ipop();" class="btnDefault">スマホプレビュー</a>
+                </div>
+
+                
+                <table cellpadding="0" cellspacing="0" class="freespaceHeadline" style="margin-bottom: 10px;">
+                    <tbody><tr>
+                        <td class="freespaceHeadlineText">PC用DXフリースペース</td>
+                        <td class="freespaceHeadlineButton" align="right">
+                            <a style="width:130px;" href="javascript:void(0)" class="btnDefault" onclick="javascript:copySptextToPc();">スマホの内容で上書く</a>
+                        </td>
+                    </tr>
+                </tbody></table>
+                <div class="freespaceDispType" style="display:none">
+                  <table>
+                    <tbody><tr>
+                      <td class="CheckLayoutLabel">表示サイズ：</td>
+                      <td class="dispTypeCheckLayout">
+                        <div class="dispTypeCheck clearfix">
+                          <div class="dispTypeIcon">
+                            <label for="galAttribute_1" id="dispTypeIconList_1" class="iconNotChecked" onclick="javascript:changeChokusoFlg(1);">
+                              <input type="radio" id="dispType1" name="dispType" value="1">大
+                            </label>
+                          </div>
+                          <div class="dispTypeIcon">
+                            <label for="galAttribute_2" id="dispTypeIconList_2" class="iconChecked" onclick="javascript:changeChokusoFlg(2);">
+                              <input type="radio" id="dispType2" name="dispType" value="2" checked="">中
+                            </label>
+                          </div>
+                          <div class="dispTypeIcon">
+                            <label for="galAttribute_3" id="dispTypeIconList_3" class="iconNotChecked" onclick="javascript:changeChokusoFlg(3);">
+                              <input type="radio" id="dispType3" name="dispType" value="3">小
+                            </label>
+                          </div>
+                        </div>
+                        <div class="cautionText" style="margin-top: 10px;">※３カラムテンプレートを使用している場合のみ有効です</div>
+                      </td>
+                    </tr>
+                  </tbody></table>
+                </div>
+                <div class="freespaceEllipsisFlg">
+                  <table cellpadding="0" cellspacing="0">
+                    <tbody><tr>
+                      <td rowspan="2" class="CheckLayoutLabel">省略表示：</td>
+                      <td class="ellipsisFlgCheckLayout">
+                        <div class="ellipsisFlgCheck">
+                          <div class="ellipsisFlgIcon">
+                            <span id="pcEllipsisFlgPCIconList_1" class="iconNotChecked" onclick="javascript:changeEllipsisFlgPC(1);">PC閲覧時</span>
+                            <input type="hidden" id="pcEllipsisFlg_pc" name="pcEllipsisFlg_pc" value="0">
+                          </div>
+                        </div>
+                        <div class="ellipsisFlgCheck">
+                          <div class="ellipsisFlgIcon">
+                            <span id="spEllipsisFlgPCIconList_1" class="iconNotChecked" onclick="javascript:changeEllipsisFlgPC(2);">スマホ閲覧時</span>
+                            <input type="hidden" id="spEllipsisFlg_pc" name="spEllipsisFlg_pc" value="0">
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="ellipsisFlgMessage">※本文が長い場合、途中でカットし「続きを見る」リンクを表示します</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+                <div id="articleWrapFs">
+                  <div id="articleTitle">
+                    <input name="title_pc" maxlength="50" size="40" id="title_pc" title="全角50文字以内" type="text" placeholder="ここにタイトルを入力してください(50文字以内)" onkeydown="if(event.keyCode==13) return false;" data-check="max50" data-length="50" label="#caution_title_pc" value="はじめまして、シーパラダイスです">
+                    <span id="caution_title_pc" class="cautionTextLine" style="display: inline;">あと34文字</span><div class="infotext" style="text-align: left;">(50文字)</div>
+                  </div>
+                  <!-- //articleTitle -->
+                </div>
+                <!-- //articleWrap -->
+
+                <span style="float:left;margin-top:10px;margin-left:10px">
+                    <a href="/contents/editor/help.html" target="_blank">？使い方</a>
+                </span>
+                <div style="padding: 0px 10px 0px;clear:both;">
+                    <textarea data-check="max16000" data-name="本文" name="body_pc" id="girls_basic_pc" class="mpeditor" style="visibility: hidden; display: none;">&lt;div style="text-align: center;"&gt;&lt;a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/movie//" style="text-align: center;"&gt;&lt;img src="/img/img_sys/job/136031/upload/4DCE8DAC-9852-362E-9B13CDF5B51D947B.gif?1680237087572" width="725" /&gt;&lt;/a&gt;&lt;br style="text-align: center;" /&gt;
+&lt;img src="/img/img_sys/job/136031/upload/5679B415-CEC1-3087-88A077981C0CEE9B.jpg?1678765084011" style="text-align: center;" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;img alt="" src="https://manager.girlsheaven-job.net/img/img_sys/job/136031/upload/D2C822A7-EE41-3006-8AA89F4313BE471E.jpg?1688358066674" style="text-align: center;" /&gt;&lt;img alt="" src="https://manager.girlsheaven-job.net/img/img_sys/job/136031/upload/DB557014-FAB2-348D-BEA3F9AE72E3EF6D.jpg?1688358101888" style="text-align: center;" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;img alt="" src="/img/img_sys/job/136031/upload/A9B403DE-3FA1-35A3-B9149C983CD8C628.jpg?1687940697235" style="text-align: center;" /&gt;&lt;br style="text-align: center;" /&gt;
+&lt;a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/reviews/" style="text-align: center;"&gt;&lt;img src="/img/img_sys/job/136031/upload/6D69673D-CF3F-36C2-B483EA0A02697D55.jpg?1676529968883" width="640" /&gt;&lt;/a&gt;&lt;br style="text-align: center;" /&gt;
+&lt;br style="text-align: center;" /&gt;
+&lt;a href="http://line.me/ti/p/mvm02arXvb" style="text-align: center;"&gt;&lt;img src="/img/img_sys/job/136031/upload/32EA3F88-F389-362F-8BC65F1E939A286B.jpg?1608642515128" width="640" /&gt;&lt;/a&gt;&lt;a href="JavaScript:gotel(21,10,'0474022615');" style="text-align: center;"&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/E34198AF-C185-37CE-AEA79A3342B1023B.jpg?1687940716381" width="640" /&gt;&lt;/a&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/C8DE6143-C8F8-30AB-B392B80CE9A643F2.jpg?1685356855124" style="text-align: center;" /&gt;&lt;img src="/img/img_sys/job/136031/upload/94D64677-2265-3161-94FC8D7951658ABA.jpg?1689040857421" /&gt;&lt;img alt="" src="/img/img_sys/job/136031/upload/15D1A893-521C-388D-BD481EF6027F97CC.jpg?1685356862212" style="text-align: center;" /&gt;&lt;/div&gt;</textarea><div id="cke_girls_basic_pc" class="cke_2 cke cke_reset cke_chrome cke_editor_girls_basic_pc cke_ltr cke_browser_webkit cke_hidpi" dir="ltr" lang="ja" role="application" aria-labelledby="cke_girls_basic_pc_arialbl"><span id="cke_girls_basic_pc_arialbl" class="cke_voice_label">リッチテキストエディタ, girls_basic_pc</span><div class="cke_inner cke_reset" role="presentation"><span id="cke_2_top" class="cke_top cke_reset_all" role="presentation" style="height: auto; user-select: none;"><span id="cke_35" class="cke_voice_label">編集ツールバー</span><span id="cke_2_toolbox" class="cke_toolbox" role="group" aria-labelledby="cke_35" onmousedown="return false;"><span id="cke_37" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span id="cke_36" class="cke_combo cke_combo__fontsize  cke_combo_off" role="presentation"><span id="cke_36_label" class="cke_combo_label">サイズ</span><a class="cke_combo_button" hidefocus="true" title="フォントサイズ" tabindex="-1" "="" href="javascript:void('フォントサイズ')" role="button" aria-labelledby="cke_36_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(48,event,this);" onmousedown="return CKEDITOR.tools.callFunction(50,event);" onfocus="return CKEDITOR.tools.callFunction(49,event);" onclick="CKEDITOR.tools.callFunction(47,this);return false;"><span id="cke_36_text" class="cke_combo_text cke_combo_inlinelabel">サイズ</span><span class="cke_combo_open"><span class="cke_combo_arrow"></span></span></a></span><span class="cke_toolgroup" role="presentation"><a id="cke_38" class="cke_button cke_button__bold  cke_button_off" href="javascript:void('太字')" title="太字" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_38_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(51,event);" onfocus="return CKEDITOR.tools.callFunction(52,event);" onmousedown="return CKEDITOR.tools.callFunction(53,event);" onclick="CKEDITOR.tools.callFunction(54,this);return false;"><span class="cke_button_icon cke_button__bold_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -24px;background-size:16px;">&nbsp;</span><span id="cke_38_label" class="cke_button_label cke_button__bold_label" aria-hidden="false">太字</span></a><a id="cke_39" class="cke_button cke_button__italic  cke_button_off" href="javascript:void('斜体')" title="斜体" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_39_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(55,event);" onfocus="return CKEDITOR.tools.callFunction(56,event);" onmousedown="return CKEDITOR.tools.callFunction(57,event);" onclick="CKEDITOR.tools.callFunction(58,this);return false;"><span class="cke_button_icon cke_button__italic_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -48px;background-size:16px;">&nbsp;</span><span id="cke_39_label" class="cke_button_label cke_button__italic_label" aria-hidden="false">斜体</span></a><a id="cke_40" class="cke_button cke_button__underline  cke_button_off" href="javascript:void('下線')" title="下線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_40_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(59,event);" onfocus="return CKEDITOR.tools.callFunction(60,event);" onmousedown="return CKEDITOR.tools.callFunction(61,event);" onclick="CKEDITOR.tools.callFunction(62,this);return false;"><span class="cke_button_icon cke_button__underline_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -144px;background-size:16px;">&nbsp;</span><span id="cke_40_label" class="cke_button_label cke_button__underline_label" aria-hidden="false">下線</span></a><a id="cke_41" class="cke_button cke_button__strike  cke_button_off" href="javascript:void('打ち消し線')" title="打ち消し線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_41_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(63,event);" onfocus="return CKEDITOR.tools.callFunction(64,event);" onmousedown="return CKEDITOR.tools.callFunction(65,event);" onclick="CKEDITOR.tools.callFunction(66,this);return false;"><span class="cke_button_icon cke_button__strike_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -72px;background-size:16px;">&nbsp;</span><span id="cke_41_label" class="cke_button_label cke_button__strike_label" aria-hidden="false">打ち消し線</span></a><a id="cke_42" class="cke_button cke_button__justifycenter  cke_button_off" href="javascript:void('中央揃え')" title="中央揃え" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_42_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(67,event);" onfocus="return CKEDITOR.tools.callFunction(68,event);" onmousedown="return CKEDITOR.tools.callFunction(69,event);" onclick="CKEDITOR.tools.callFunction(70,this);return false;"><span class="cke_button_icon cke_button__justifycenter_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1104px;background-size:16px;">&nbsp;</span><span id="cke_42_label" class="cke_button_label cke_button__justifycenter_label" aria-hidden="false">中央揃え</span></a><a id="cke_43" class="cke_button cke_button__horizontalrule  cke_button_off" href="javascript:void('水平線')" title="水平線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_43_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(71,event);" onfocus="return CKEDITOR.tools.callFunction(72,event);" onmousedown="return CKEDITOR.tools.callFunction(73,event);" onclick="CKEDITOR.tools.callFunction(74,this);return false;"><span class="cke_button_icon cke_button__horizontalrule_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -888px;background-size:16px;">&nbsp;</span><span id="cke_43_label" class="cke_button_label cke_button__horizontalrule_label" aria-hidden="false">水平線</span></a><a id="cke_44" class="cke_button cke_button__textcolor cke_button_off " href="javascript:void('文字色')" title="文字色" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_44_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(75,event);" onfocus="return CKEDITOR.tools.callFunction(76,event);" onmousedown="return CKEDITOR.tools.callFunction(77,event);" onclick="CKEDITOR.tools.callFunction(78,this);return false;"><span class="cke_button_icon cke_button__textcolor_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -408px;background-size:16px;">&nbsp;</span><span id="cke_44_label" class="cke_button_label cke_button__textcolor_label" aria-hidden="false">文字色</span><span class="cke_button_arrow"></span></a><a id="cke_45" class="cke_button cke_button__link  cke_button_off" href="javascript:void('リンク挿入/編集')" title="リンク挿入/編集" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_45_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(79,event);" onfocus="return CKEDITOR.tools.callFunction(80,event);" onmousedown="return CKEDITOR.tools.callFunction(81,event);" onclick="CKEDITOR.tools.callFunction(82,this);return false;"><span class="cke_button_icon cke_button__link_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1248px;background-size:16px;">&nbsp;</span><span id="cke_45_label" class="cke_button_label cke_button__link_label" aria-hidden="false">リンク挿入/編集</span></a><a id="cke_46" class="cke_button cke_button__source  cke_button_off" href="javascript:void('ソース')" title="ソース" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_46_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(83,event);" onfocus="return CKEDITOR.tools.callFunction(84,event);" onmousedown="return CKEDITOR.tools.callFunction(85,event);" onclick="CKEDITOR.tools.callFunction(86,this);return false;"><span class="cke_button_icon cke_button__source_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons_hidpi.png?t=DBAA);background-position:0 -1824px;background-size:16px;">&nbsp;</span><span id="cke_46_label" class="cke_button_label cke_button__source_label" aria-hidden="false">ソース</span></a></span><span class="cke_toolbar_end"></span></span><span id="cke_47" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span class="cke_toolgroup" role="presentation"><a id="cke_48" class="cke_button cke_button__imagedialog  cke_button_off" href="javascript:void('画像読込')" title="画像読込" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_48_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(87,event);" onfocus="return CKEDITOR.tools.callFunction(88,event);" onmousedown="return CKEDITOR.tools.callFunction(89,event);" onclick="CKEDITOR.tools.callFunction(90,this);return false;"><span class="cke_button_icon cke_button__imagedialog_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/ImageDialog/images/imagedialog.png?t=DBAA);background-position:0 undefinedpx;background-size:16px;">&nbsp;</span><span id="cke_48_label" class="cke_button_label cke_button__imagedialog_label" aria-hidden="false">画像読込</span></a></span><span class="cke_toolbar_end"></span></span></span></span><div id="cke_2_contents" class="cke_contents cke_reset" role="presentation" style="height: 400px;"><iframe src="" frameborder="0" class="cke_wysiwyg_frame cke_reset" title="リッチテキストエディタ, girls_basic_pc" tabindex="0" allowtransparency="true" style="width: 100%; height: 100%;"></iframe></div></div></div>
+                    <span id="caution_body_pc" class="cautionTextLine"></span>
+
+                    <div id="globalHeaderMsg" style="display:none; border:solid 4px #FF0000; text-align:left; width:650px; margin:0px 0px 30px 0px; padding: 30px 10px;">
+                    <span style="font-weight: bold; font-size: 16px;">DXフリースペースの本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+                      ■互換表示設定解除方法<br>
+                      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+                      &nbsp;&nbsp;②互換表示設定をクリック<br>
+                      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+                    </div>
+
+                </div>
+                <div class="preview">
+                    <a style="margin: 0 auto;" href="javascript:$p_pc.ipop_pc();" class="btnDefault">PCプレビュー</a>
+                </div>
+                
+				<div style="background: #FFC; padding: 10px; margin:20px 10px 10px; clear: both; text-align: left;">
+				●画像・動画を掲載される際のお願い<br>
+・過度な性的表現や明らかに卑猥な画像は掲載をお控えください。<br>
+・使用の素材(画像、映像、音楽)が何らかの著作権または肖像権を侵害していないことをご確認ください。（プライバシーの侵害も含む）<br>
+・その他、公序良俗に反する恐れのあるものは掲載をお控えください。<br>
+以上をご理解のうえ、ご協力のほど宜しくお願い申し上げます。<br>
+管理者が不適当と判断した場合は即時削除または掲載中止と致します。<br>
+掲載内容におけるトラブル等については弊社は一切責任を負いません。
+				</div>
+                <input type="hidden" id="img_sel_view_type" name="img_sel_view_type" value="dxfreespace">
+                <input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+                <p class="btnDefaultBlock" style="clear:both;margin-top:20px;">
+                  
+                  
+                  
+                  <a href="javascript:void(0);" data-submit="" value="update:::1" data-check="" class="btnDefault">保存</a>
+                  
+                </p>
+
+                <div id="ipop">
+                    <div class="box">
+                        <p class="addTxt01"></p>
+                    </div><br>
+                    <div id="ipop_close" style="clear: both;">閉じる</div>
+                </div>
+                
+                <div id="ipop_pc" style="display:none;">
+                    <div class="box">
+                        <p class="addTxt01"></p>
+                    </div><br>
+                    <div id="ipop_close_pc" style="clear: both;">閉じる</div>
+                </div>
+                
+
+
+              </div><!-- //contents-->
+              <input type="hidden" name="dtlNo" value="1">
+            </form>
+
+          </div><!-- //ucsMainContent-->
+        </div><!-- //wrap-->
+      </div><!-- //ucsContent-->
+
+
+
+
+    
+    <p id="pageTop" style="display: block;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+    
+  
+
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>

@@ -1,42 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { StoreApplicationView } from "@/components/store-application-view";
+import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
-  LogOut,
-  MessageCircle,
+  Building2,
+  PenBox,
+  FileEdit,
+  Eye,
+  Settings,
   Users,
   BarChart,
   Plus,
-  FileEdit,
-  AlertCircle,
-  Image,
-  PenBox,
-  HelpCircle,
-  Eye,
+  Clock,
   Calendar,
   LineChart,
-  Settings,
-  Pencil,
-  Clock,
-  MoreVertical,
-  Trash,
-  Building2
+  MessageCircle,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { useState } from "react";
-import { Separator } from "@/components/ui/separator";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { StoreApplicationView } from "@/components/store-application-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,37 +58,6 @@ const jobStatusLabels = {
   closed: "締切"
 } as const;
 
-// ブログ投稿のステータスラベル
-const blogStatusLabels = {
-  draft: "下書き",
-  published: "公開中",
-  scheduled: "予約投稿"
-} as const;
-
-// 統計情報の型定義を更新
-interface DashboardStats {
-  // 掲載情報
-  storePlan: 'free' | 'premium';
-  storeArea: string;
-  displayRank: number;
-
-  // アクセス状況
-  todayPageViews: number;
-  todayUniqueVisitors: number;
-  monthlyPageViews: number;
-  monthlyUniqueVisitors: number;
-
-  // 応募者対応状況
-  newInquiriesCount: number;
-  pendingInquiriesCount: number;
-  completedInquiriesCount: number;
-  activeJobsCount: number;
-  totalApplicationsCount: number;
-  draftJobsCount?: number;
-  closedJobsCount?: number;
-
-}
-
 // プランのラベル
 const planLabels = {
   free: "無料プラン",
@@ -103,18 +66,18 @@ const planLabels = {
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
-  const [selectedTab, setSelectedTab] = useState("jobs");
-  const [showJobForm, setShowJobForm] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [selectedTab, setSelectedTab] = useState("jobs");
 
-  // 統計情報を取得するクエリ
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: [QUERY_KEYS.DASHBOARD_STATS],
-    queryFn: () => apiRequest("GET", "/api/store/dashboard/stats"),
-    refetchInterval: 300000, // 5分ごとに更新
+  // 統計情報を取得
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["/api/store/stats"],
+    queryFn: () => apiRequest("GET", "/api/store/stats"),
+    staleTime: 300000, // 5分
   });
 
   // 求人情報の取得
@@ -138,7 +101,8 @@ export default function StoreDashboard() {
     },
   });
 
-  // ブログ投稿の取得
+
+  // ブログ投稿の取得 (Retained from original)
   const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
     queryKey: [QUERY_KEYS.BLOG_POSTS],
     queryFn: () => apiRequest("GET", "/api/blog/posts"),
@@ -159,7 +123,7 @@ export default function StoreDashboard() {
     },
   });
 
-  // 記事の削除Mutation
+  // 記事の削除Mutation (Retained from original)
   const deleteMutation = useMutation({
     mutationFn: (postId: number) =>
       apiRequest("DELETE", `/api/blog/posts/${postId}`),
@@ -179,7 +143,7 @@ export default function StoreDashboard() {
     },
   });
 
-  // 記事のステータス更新Mutation
+  // 記事のステータス更新Mutation (Retained from original)
   const updateStatusMutation = useMutation({
     mutationFn: ({ postId, status }: { postId: number; status: string }) =>
       apiRequest("PATCH", `/api/blog/posts/${postId}/status`, { status }),
@@ -202,10 +166,7 @@ export default function StoreDashboard() {
   if (statsLoading || jobsLoading || blogsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">データを読み込み中...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -223,22 +184,21 @@ export default function StoreDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => window.open('/store/settings', '_blank')}>
+              <Button variant="outline" onClick={() => setLocation('/store/settings')}>
                 <Settings className="h-4 w-4 mr-2" />
-                設定
+                店舗設定
               </Button>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
                 {logoutMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 mr-2" />
                 )}
-                <span className="ml-2">ログアウト</span>
+                ログアウト
               </Button>
             </div>
           </div>
@@ -246,48 +206,54 @@ export default function StoreDashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* ダッシュボード概要 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">新規応募</p>
+                  <p className="text-2xl font-bold">{stats?.newApplications || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <LineChart className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">今日のPV</p>
+                  <p className="text-2xl font-bold">{stats?.todayPageViews || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <MessageCircle className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">未対応メッセージ</p>
+                  <p className="text-2xl font-bold">{stats?.unreadMessages || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
-            {/* 応募者対応状況カード */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  応募者対応状況
-                </CardTitle>
-                <CardDescription>
-                  問い合わせと対応状況
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-3xl font-bold text-primary">
-                      {stats?.newInquiriesCount || 0}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      新規問い合わせ
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <div className="text-sm font-medium">対応待ち</div>
-                      <div className="text-2xl font-semibold text-yellow-600">
-                        {stats?.pendingInquiriesCount || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">対応済み</div>
-                      <div className="text-2xl font-semibold text-green-600">
-                        {stats?.completedInquiriesCount || 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-4 h-auto">
                 <TabsTrigger value="jobs" className="py-2">
@@ -330,7 +296,9 @@ export default function StoreDashboard() {
                   <CardContent>
                     {!jobListings?.jobs?.length ? (
                       <div className="text-center py-8">
-                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                          <FileEdit className="h-6 w-6 text-primary" />
+                        </div>
                         <p className="text-muted-foreground">
                           求人情報がありません
                         </p>
@@ -356,15 +324,17 @@ export default function StoreDashboard() {
                                     </Badge>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>{job.location}</span>
-                                    <span>•</span>
+                                    <Calendar className="h-4 w-4" />
                                     <span>
                                       {job.createdAt ? format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja }) : "-"}
                                     </span>
+                                    <span>•</span>
+                                    <Clock className="h-4 w-4" />
+                                    <span>最終更新: {format(new Date(job.updatedAt), "HH:mm", { locale: ja })}</span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm">
+                                  <Button variant="outline" size="sm" onClick={() => window.open(`/jobs/${job.id}`, '_blank')}>
                                     <Eye className="h-4 w-4 mr-2" />
                                     プレビュー
                                   </Button>
@@ -385,19 +355,19 @@ export default function StoreDashboard() {
                               <div className="grid grid-cols-4 gap-4">
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">応募数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold">{job.applicationCount || 0}</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">閲覧数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold">{job.viewCount || 0}</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">面接設定: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold">{job.interviewCount || 0}</span>
                                 </div>
                                 <div className="text-sm">
                                   <span className="text-muted-foreground">採用数: </span>
-                                  <span className="font-semibold">-</span>
+                                  <span className="font-semibold">{job.hiredCount || 0}</span>
                                 </div>
                               </div>
                             </CardContent>
@@ -409,7 +379,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* 応募一覧タブ */}
+              {/* 応募一覧タブ (Retained from original, mostly) */}
               <TabsContent value="applications">
                 <Card>
                   <CardContent className="p-6">
@@ -418,7 +388,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* ブログ管理タブ */}
+              {/* ブログ管理タブ (Retained from original, mostly) */}
               <TabsContent value="blog">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -559,7 +529,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* フリースペースタブ */}
+              {/* フリースペースタブ (Retained from original, mostly) */}
               <TabsContent value="freeSpace">
                 <Card>
                   <CardHeader>
@@ -579,7 +549,7 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* Q&A管理タブ */}
+              {/* Q&A管理タブ (Retained from original, mostly) */}
               <TabsContent value="qa">
                 <Card>
                   <CardHeader>
@@ -603,27 +573,37 @@ export default function StoreDashboard() {
 
           {/* サイドバー */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
+            {/* 店舗プロフィール */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
-                  店舗情報
+                  店舗プロフィール
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div>
-                    <p className="font-medium">店舗名</p>
-                    <p className="text-sm text-muted-foreground">{user?.displayName || user?.username || "未設定"}</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
+                      {planLabels[stats?.storePlan || 'free']}
+                    </Badge>
+                    <Button variant="outline" size="sm" onClick={() => setLocation('/store/settings')}>
+                      <PenBox className="h-4 w-4 mr-2" />
+                      編集
+                    </Button>
                   </div>
                   <div>
-                    <p className="font-medium">所在地</p>
-                    <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
+                    <p className="text-sm text-muted-foreground">店舗名</p>
+                    <p className="font-medium">{user?.displayName || user?.username}</p>
                   </div>
-                  <Button variant="outline" className="w-full" onClick={() => window.open('/store/settings', '_blank')}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    店舗情報を編集
-                  </Button>
+                  <div>
+                    <p className="text-sm text-muted-foreground">所在地</p>
+                    <p className="font-medium">{user?.location || "未設定"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">掲載エリア</p>
+                    <p className="font-medium">{stats?.storeArea || "未設定"}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -631,80 +611,38 @@ export default function StoreDashboard() {
             {/* アクセス状況 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <LineChart className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
                   アクセス状況
                 </CardTitle>
-                <CardDescription>
-                  店舗ページへのアクセス数
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-sm text-muted-foreground">今日のアクセス</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
                       <div>
-                        <div className="text-2xl font-bold text-primary">
-                          {stats?.todayPageViews || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                        <p className="text-2xl font-bold">{stats?.todayPageViews || 0}</p>
+                        <p className="text-xs text-muted-foreground">ページビュー</p>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-primary">
-                          {stats?.todayUniqueVisitors || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                        <p className="text-2xl font-bold">{stats?.todayUniqueVisitors || 0}</p>
+                        <p className="text-xs text-muted-foreground">ユニークユーザー</p>
                       </div>
                     </div>
                   </div>
+                  <Separator />
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-sm text-muted-foreground">今月のアクセス</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
                       <div>
-                        <div className="text-2xl font-bold text-primary">
-                          {stats?.monthlyPageViews || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                        <p className="text-2xl font-bold">{stats?.monthlyPageViews || 0}</p>
+                        <p className="text-xs text-muted-foreground">ページビュー</p>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-primary">
-                          {stats?.monthlyUniqueVisitors || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                        <p className="text-2xl font-bold">{stats?.monthlyUniqueVisitors || 0}</p>
+                        <p className="text-xs text-muted-foreground">ユニークユーザー</p>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 掲載状況 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  掲載状況
-                </CardTitle>
-                <CardDescription>
-                  現在の掲載プランと表示状況
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
-                      {planLabels[stats?.storePlan || 'free']}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">掲載エリア</span>
-                      <span className="font-medium">{stats?.storeArea || '未設定'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">表示順位</span>
-                      <span className="font-medium">{stats?.displayRank || '-'}位</span>
                     </div>
                   </div>
                 </div>

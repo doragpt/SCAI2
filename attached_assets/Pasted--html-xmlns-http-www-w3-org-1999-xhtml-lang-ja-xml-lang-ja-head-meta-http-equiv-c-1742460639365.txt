@@ -1,0 +1,1077 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <script type="text/javascript" async="" src="https://cdn.treasuredata.com/sdk/2.1/td.min.js"></script><script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>トップ｜ガールズヘブン マネージャー管理</title>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/pagetop.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753" charset="utf-8"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common_head.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/common.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_green.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/skin_orange.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/ucs.css">
+
+
+    <link rel="stylesheet" type="text/css" href="https://manager.girlsheaven-job.net/css/mypage.css?cache01=20240625091448">
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/highcharts.js"></script>
+  
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+  <body>
+        
+        
+    
+    <!-- operationId:A83F9A03-82E5-4274-BE4D69AD840403BD -->
+<input type="hidden" id="authId" name="authId" value="3EdgdBHY19M=">
+<div id="globalHeader">
+  <div id="globalHeaderTop">
+    <div id="globalHeaderTopInner">
+      <h1 class="logo">
+        <a href="/top/">
+          <img src="https://manager.girlsheaven-job.net/img/manager/logo.png" alt="ガールズヘブン">
+        </a>
+      </h1>
+      <ul id="globalTabMenu">
+                  
+                  <li class="active  ">
+           <a href="/top/" id="globalTabMypage">
+             トップ
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+         
+                  <li class=" ">
+           
+           
+           <a href="/talk/list/" id="globalTabGuruppo">
+           
+             トーク
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/application/" id="globalTabGuruppo">
+             応募
+                        </a>
+         </li>
+
+         
+                  <li class=" ">
+           <a href="/blog/" id="globalTabBlog">
+             ブログ
+             <span class="order">あと2</span>
+           </a>
+         </li>
+
+         
+         
+         
+         
+         
+           
+             
+             
+           
+         
+         
+         
+
+         
+                  <li class=" ">
+           <a href="/job/" id="globalTabBlog">
+             仕事情報
+           </a>
+         </li>
+
+         
+                  
+         
+                  
+         <li class=" ">
+           <a href="/joblog/" id="globalTabBlog">
+             アクセス
+           </a>
+         </li>
+         
+         
+                                      <li class=" ">
+           <a href="/shopcontentssort/" id="globalTabBlog" target="_blank">
+             デザイン
+           </a>
+         </li>
+                    
+         
+                  
+         
+         
+         
+                                                 
+         <li class=" ">
+           <a href="/dxlogo/" id="globalTabBlog">
+             
+             
+             DX(お試し)
+             
+           </a>
+         </li>
+         
+         
+         
+
+         
+         
+         
+         
+         
+         
+
+
+         
+                  		
+
+
+         
+         
+                           <li class=" borderNone">
+           <a href="/reviewlist/" id="globalTabGuruppo">
+             口コミ
+             
+                          
+           </a>
+         </li>
+                  
+
+       </ul>
+    </div>
+  </div>
+  <div id="globalHeaderBottom">
+    <div id="globalHeaderBottomInner">
+      
+      <div style="float:left;width:240px;">
+      
+              <a href="javascript:void(0);" onclick="javascript:GoSortUpdate(149698);" id="globalHeaderupdate" style="outline-color: rgba(0, 180, 0, 0.224);">
+              
+          お店検索の表示順アップ(<span style="color: #F00;">残り<span class="remainingCount">13/13</span>回</span>)
+          
+        </a>
+
+    
+        <img id="img_update_promotion" src="https://manager.girlsheaven-job.net/img/manager/icon_update_promotion.png" style="display:block;position:absolute; top:5px; left:-170px;">
+        
+      </div>
+      <div style="float:left;width:160px;">
+        最終更新日付<br><span class="shopdate">[ 2025/03/20 12:00 ]</span>
+      </div>
+      <div>
+        <div style="height:20px;">
+          <span id="globalHeaderLoginStatus">シーパラダイス様でログイン中</span>
+          <a href="/logout/" id="globalHeaderLogout">ログアウト</a>
+        </div>
+        
+        
+        <div id="globalHeaderLink">
+        
+                    
+          
+          <div class="linkOuter">
+            <p>通知設定</p>
+            <div class="linkInner">
+          
+          <a href="/mailsetting/" class="mailinfo">メール通知設定</a>
+          <a href="/sns_setting/" class="snsinfo">SNS通知設定</a>
+          
+          <a href="/sms_setting/" class="smsinfo">SMS通知設定</a>
+          
+          
+            </div>
+          </div>
+          
+          
+          
+          
+          
+          
+                    
+                            <a href="/twitter_setting/">Twitter連携設定</a>
+                                  
+          
+          <a href="https://www.hgjn-help.com/category/show/361?site_domain=recruit_faq" class="help" target="_blank">ヘルプ</a>
+          <a href="/contents/manual/help.pdf" class="manual" target="_blank">マニュアル</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="globalHeaderMsg" style="display:none">
+      <span style="font-size: 16px; font-weight: bold;">新管理画面で店長ブログ本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+      ■互換表示設定解除方法<br>
+      &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+      &nbsp;&nbsp;②互換表示設定をクリック<br>
+      &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+    </div>
+    
+  </div>
+</div>
+
+    
+    <form method="post" name="form1" action="">
+    <div style="position: relative;" id="content">
+        
+    
+    
+      <div style="position: static;" class="subContent">
+        <div id="dashboard">
+          <div class="dashboardProfile">
+            <p class="nickname">
+              <a href="/profile/">
+                                  【☆女性店長の女性第一のお店☆】働くならシーパラダイス☆
+                              </a>
+              <span class="prfx">さん</span>
+              <a href="/profile/" class="config gaLog">[設定]</a>
+            </p>
+            <div class="dashboardProfileInner">
+              <div class="profImg">
+                <a href="/profile/">
+                                  <img src="https://manager.girlsheaven-job.net/img/img_sys/job/136031/profile/BC93DE36-9695-308D-81CE2EA681FEEEE7.jpg" alt="プロフィール画像" id="profThumb">
+                                </a>
+              </div>
+              <div style="clear:both;">
+              ページタイプ：<span style="color: #F00;">レギュラー(A)</span><br>
+              
+              デコオプション：<span style="color: #F00;">未契約</span><br>
+              DXオプション：<span style="color: #F00;">未契約</span><br>
+              
+              
+              体験入店オプション：<span style="color: #F00;">未契約</span><br>
+              
+              旅行deバイト：<span style="color: #F00;">未契約</span><br>
+              はじめての高収入：<span style="color: #F00;">未契約</span><br>
+              
+              店舗型コミュニティ：<span style="color: #F00;">未契約</span><br>
+              人妻店コミュニティ：<span style="color: #F00;">未契約</span><br>
+              
+              経験者・即戦力特典：<span style="color: #F00;">未契約</span><br>
+              ぽっちゃり特典：<span style="color: #F00;">未契約</span><br>
+              
+              </div>
+              
+              
+              
+              
+              
+              
+              
+              
+              <div id="profMoreLink">
+                <li id="moreLinkLeftSide">
+                  
+                  
+                  <a href="/privilegelist/">特典確認・編集</a>
+                  
+                </li>
+              </div>
+              
+              
+              
+              
+            </div>
+          </div>
+          
+                    
+          <div id="dashboardBlog">
+            <div class="titleHeader">
+              <h2>ブログ</h2>
+            </div>
+            <div id="dashboardBlogInner">
+              <p id="dashboardBlogTitle">
+                
+                
+                
+                
+                <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/blog/" target="_blank">
+                
+                
+                                  【☆女性店長の女性第一のお店☆】働くならシーパラダイス☆
+                                  さんのブログ
+                </a>
+              </p>
+              <ul id="blogMenu">
+                <li id="blogMenuEdit">
+                  <a href="/blog/edit/">ブログを書く</a>
+                </li>
+              </ul>
+              <ul id="blogSubMenu">
+                <li id="blogEdit">
+                  <a href="/blog/">
+                    <span class="icon"></span>ブログの編集
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div id="dashboardBlog">
+            <div class="titleHeader">
+              <h2>店長ブログ投稿アドレス</h2>
+            </div>
+            <div id="dashboardBlogInner">
+              <li>149698_136031@msg.girlsheaven-job.net</li>
+              <li><a target="_blank" href="/contents/howto_message/howto_message.html">メール投稿の使い方</a></li>
+            </div>
+          </div>
+          
+                    
+          <div id="dashboardPublic">
+            <div class="titleHeader">
+              <h2>お店の公開ページ</h2>
+            </div>
+            <div id="dashboardPublicInner">
+              <ul id="dashboardPublicLink">
+                <li>
+                  
+                  
+                  
+                  
+                  <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?op=newc" target="_blank">お店トップ</a>
+                  
+                  
+                </li>
+                <li>
+                                  店長ブログ
+                                </li>
+                <li>
+                                  
+                  
+                  
+                  
+                  <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/movie/?op=newc" target="_blank">求人ムービー</a>
+                  
+                  
+                                </li>
+                <li class="noBorder">
+                
+                                  店舗地図
+                                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="dashboardPochikuma">
+          <div id="pointLot"></div>
+        </div>
+        <div id="fixedLeft">
+          <div style="margin-bottom:10px; text-align:center;">
+	<a target="_blank" href="https://link-f.biz/archives/category/girlsheaven">
+		<img src="https://manager.girlsheaven-job.net/img/manager/link_bnr_g.png">
+	</a>
+</div>
+<div style="margin-bottom:10px; text-align:center;">
+	<a target="_blank" href="https://manager.girlsheaven-job.net/contents/manual/0324ghbp.pdf">
+		<img src="https://manager.girlsheaven-job.net/img/manager/20160326practicesGuide.jpg">
+	</a>
+</div>
+<div style="padding-bottom: 10px; text-align: center;">
+  <a target="_blank" href="http://img.cityheaven.net/img/cms/pdf/girlsapp.pdf">
+    <img src="https://cfwww.girlsheaven-job.net/manager/img/cms/smartmanager.jpg">
+  </a>
+</div>
+
+          <div style="border:1px solid  #AAAAAA;; padding:3px; color:#333333; font-size:12px; margin-bottom: 10px;">
+  <div style="border-bottom: 1px dotted #CCCCCC; padding-bottom: 4px; margin-bottom: 4px;">
+    <span style="font-weight: bold;">トラブル・操作のお問い合わせ </span>
+  </div>(メール)
+  <a href="mailto:info@girlsheaven-job.net">info@girlsheaven-job.net</a>
+  <br>(フリーダイヤル)0120-081-320
+  <br>(営業時間)11:00～19:00
+  <br>(休日)土日、祝祭日はメールのみ
+</div>
+          <div style="border:1px solid  #FF99CC;; padding:3px; color:#333333; font-size:12px; margin-bottom: 10px; text-align: center;">
+  <span style="color: #FF0033;">ガールズコンテンツをオフィシャルに♪</span>
+  <div style="text-align: center; padding: 5px 0;">
+    <a href="/contents/linkparts/d/index.html" target="_blank">
+      <img src="https://manager.girlsheaven-job.net/img/manager/linkparts_d.gif" width="170" alt="">
+    </a>
+  </div>
+  <div style="text-align: center; padding: 5px 0;">
+    <a href="/contents/linkparts/pc/index.html" target="_blank">
+      <img src="https://manager.girlsheaven-job.net/img/manager/linkparts_pc.gif" width="170" alt="">
+    </a>
+  </div>
+  <div style="text-align: center; padding: 5px 0;">
+    <a href="/contents/linkparts/s/index.html" target="_blank">
+      <img src="https://manager.girlsheaven-job.net/img/manager/linkparts_s.gif" width="170" alt="">
+    </a>
+  </div>
+  <div style="text-align: center; padding: 5px 0;">
+    <a href="/contents/linkparts/index.html" target="_blank">
+      <img src="https://manager.girlsheaven-job.net/img/manager/linkparts.gif" width="170" alt="">
+    </a>
+  </div>
+</div>
+
+
+
+        </div>
+      </div>
+      <div style="margin-left: 0px;" class="mainContent">
+      <div style="padding-bottom:10px;"><a target="_blank" href="https://primary-designers.com/order/design/girls/"><img src="https://manager.girlsheaven-job.net/img/manager/banner_designorder_st.jpg" width="100%"></a></div>
+
+
+     
+        <div id="notifyItemAreaOuter">
+          <div id="notifyItemArea">
+            <p style="background:#efefef; line-height:26px; padding-left:5px;margin-bottom:5px; font-weight:bold;">ガールズヘブンからのお知らせ</p>
+            <ul id="infoAlertList">
+              <li>
+                <a href="/contents/guideline/guideline.html" target="_blank">
+                  <span style="color:red; font-weight: bold;">情報掲載に関するお願い</span>
+                </a>　※必ずお読みください
+              </li>
+                          <li>
+                <a href="javascript:void(0);" data-submit="/topics/detail/" value="messageId:::506">
+                                    気になるQ&amp;Aレポートの非表示対応を延期いたします
+                                  </a>
+              </li>
+                          <li>
+                <a href="javascript:void(0);" data-submit="/topics/detail/" value="messageId:::505">
+                                    【3月17日(月)】求人情報の変更権限について
+                                  </a>
+              </li>
+                          <li>
+                <a href="javascript:void(0);" data-submit="/topics/detail/" value="messageId:::504">
+                                    【3月17日(月)】一部コンテンツ表示終了のお知らせ
+                                  </a>
+              </li>
+                        </ul>
+            <p>
+              <a href="/topics/" class="moreLink moreLinkMain"></a>
+            </p>
+          </div>
+        </div>
+
+        
+                
+
+                                                              
+        
+        
+        
+        
+        
+        
+        <div id="questionArea">
+          <div id="questionAreaTitle">
+            <h2>
+              <span class="icon"></span>
+              <img src="https://manager.girlsheaven-job.net/img/manager/titleQuestion.png" alt="最新の質問">
+            </h2>
+          </div>
+          <div id="questionAreaInner">
+            <p class="desc">あなたのお店へのアルバイト質問が確認できます。
+              <br>質問内容の確認・返信はそれぞれの質問を選択してください。
+            </p>
+                      
+            
+            <a href="javascript:void(0);" data-submit="/talk/detail/" value="webmailId:::1200103:::userId:::401226:::nickName:::さなえ💕　55歳　太め">
+            
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                
+                                <p class="titleNoSubtitle">
+                  はじめまして。熟女店の展開はされていますか？また、スペック的に難しいでしょうか？よろしくお願…
+                </p>
+                                
+                <span class="lapse">06月13日
+                                </span>
+                <span class="comment">
+                  さなえ💕　55...さん
+                </span>
+              </div>
+            </div>
+            </a>
+                      
+            
+            <a href="javascript:void(0);" data-submit="/talk/detail/" value="webmailId:::815112:::userId:::387878:::nickName:::こはりり">
+            
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                
+                                <p class="titleNoSubtitle">
+                  今年19歳になる定時制の高校生です。本来ならば高卒の歳になるのですが勤務は可能でしょうか。ど…
+                </p>
+                                
+                <span class="lapse">05月30日
+                                </span>
+                <span class="comment">
+                  こはりりさん
+                </span>
+              </div>
+            </div>
+            </a>
+                      
+            
+            <a href="javascript:void(0);" data-submit="/talk/detail/" value="webmailId:::692578:::userId:::335234:::nickName:::assss">
+            
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                
+                                <p class="titleNoSubtitle">
+                  ありがとうございます！また明日連絡致します。
+                </p>
+                                
+                <span class="lapse">10月21日
+                                </span>
+                <span class="comment">
+                  assssさん
+                </span>
+              </div>
+            </div>
+            </a>
+                      
+            
+            <a href="/talk/list/" class="moreLink moreLinkMain"></a>
+            
+          </div>
+        </div>
+        <div id="ouboArea">
+          <div id="ouboAreaTitle">
+            <h2>
+              <span class="icon"></span>
+              <img src="https://manager.girlsheaven-job.net/img/manager/titleEntry.png" alt="最新の応募">
+            </h2>
+          </div>
+          <div id="ouboAreaInner">
+            <p class="desc">あなたのお店へのアルバイト応募が確認できます。
+              <br>応募内容の確認・返信はそれぞれの応募を選択してください。
+            </p>
+                      <a href="javascript:void(0);" data-submit="/application/detail/" value="oubo_id:::483750">
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                <p class="subtitle">
+                  やまざきさん
+                </p>
+                <span class="lapse">10月28日
+                                </span>
+              </div>
+            </div>
+            </a>
+                      <a href="javascript:void(0);" data-submit="/application/detail/" value="oubo_id:::479786">
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                <p class="subtitle">
+                  りなぴだよさん
+                </p>
+                <span class="lapse">10月13日
+                                </span>
+              </div>
+            </div>
+            </a>
+                      <a href="javascript:void(0);" data-submit="/application/detail/" value="oubo_id:::479565">
+            <div class="guruppoItem addBorder">
+              <div class="main">
+                <p class="subtitle">
+                  ぴちゃんさん
+                </p>
+                <span class="lapse">10月12日
+                                </span>
+              </div>
+            </div>
+            </a>
+                      <a href="/application/" class="moreLink moreLinkMain"></a>
+          </div>
+        </div>
+        <div id="blogArea">
+          <div class="mainTitleHeader">
+            <h2>
+              <span class="icon"></span>
+              <img class="title" src="https://manager.girlsheaven-job.net/img/manager/titleBlog.png" alt="ブログの更新情報">
+            </h2>
+          </div>
+          <div id="blogAreaInner">
+            <div id="checklist">
+              <div id="checklistInner">
+                <div id="checklistSelect">
+                                  <p class="moreLinkBlog">
+                                      <a href="/blog/edit/" class="moreLink moreLinkMainBlog"></a>
+                                    </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+      </div>
+      <div style="position: static;" id="rightContent">
+        
+        
+                
+        <div id="moduleOfficial">
+          <div class="titleHeader">
+            <h2>2025年3月のアクセス数</h2>
+          </div>
+          <div class="linkList">
+            <ul id="accesstable">
+              <li>
+                <div class="title">アクション数：</div>
+                <div class="number">0</div>
+              </li>
+              <li>
+                <div class="title">PCアクセス数：</div>
+                <div class="number">0</div>
+              </li>
+              
+              <li>
+                <div class="title">スマホアクセス数：</div>
+                <div class="number">0</div>
+              </li>
+            </ul>
+          </div>
+          <a href="/joblog/" class="moreLink moreLinkSide"></a>
+        </div>
+                
+        
+                
+        <div id="moduleOfficial">
+          <div class="titleHeader" style="margin-bottom: 0px;">
+            <h2>店長ブログパーツ</h2>
+          </div>
+          <div style="padding:5px;">
+            <a href="https://blogparts.girlsheaven-job.net/blog/?cid=2500000735" target="_blank">
+              <img src="https://manager.girlsheaven-job.net/img/manager/blogparts_banner.gif" width="100%" alt="店長ブログパーツ">
+            </a>
+          </div>
+        </div>
+        
+                
+        
+        
+        
+        
+          
+          
+          
+        
+        
+        
+
+        <div id="moduleOfficial">
+          <div class="titleHeader">
+            <h2>シーパラダイスのPC版URL</h2>
+          </div>
+          <div class="linkList">
+            <ul id="moduleOfficialList">
+              <li>お店トップページ：
+                <br>
+                
+                
+                
+                
+                <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?op=newc" target="_blank">https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/</a>
+                
+                
+              </li>
+              <li>店長ブログURL：
+                <br>
+                                
+                
+                
+                
+                https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/blog/
+                
+                
+                              </li>
+              
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              
+              <li>店舗地図URL：
+                <br>
+                
+                                
+                
+                
+                
+                https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/map/
+                
+                
+                              </li>
+            </ul>
+            <span style="color: red;">こちらのＵＲＬは携帯orスマホでアクセスした時に自動的に携帯サイトorスマホサイトにリンクするようになっています。</span>
+          </div>
+        </div>
+        
+        <div id="moduleOfficial">
+          <div class="titleHeader">
+            <h2>シーパラダイスのスマホ版URL</h2>
+          </div>
+          <div class="linkList">
+            <ul id="moduleOfficialList">
+              <li>お店トップページ：
+                <br>
+                
+                
+                
+                
+                <a href="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?pcmode=sp&amp;op=newc" onclick="window.open('https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?pcmode=sp', '別ウィンドウ' ,'width=375,height=667'); return false;" target="_blank">https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?pcmode=sp</a>
+                
+                
+              </li>
+              <li>店長ブログURL：
+                <br>
+                                
+                
+                
+                
+                https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/blog/?pcmode=sp
+                
+                
+                              </li>
+              
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              
+              <li>店舗地図URL：
+                <br>
+                
+                                
+                
+                
+                
+                https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/map/?pcmode=sp
+                
+                
+                              </li>
+            </ul>
+            <span style="color: red;">こちらのＵＲＬは携帯でアクセスした時に自動的に携帯サイトにリンクするようになっています。</span>
+          </div>
+        </div>
+        
+        <div id="moduleOfficial">
+          <div class="titleHeader">
+            <h2>店舗ご担当者の皆様へ　※必ずお読みください</h2>
+          </div>
+          <div class="linkList">
+            <span style="font-weight: bold;">●画像・動画を掲載される際のお願い</span>
+            <br>・過度な性的表現や明らかに卑猥な画像は掲載をお控えください。
+            <br>・使用の素材(画像、映像、音楽)が何らかの著作権または肖像権などを侵害していないことをご確認ください。（プライバシーの侵害も含む）
+            <br>・その他、公序良俗に反する恐れのあるものは掲載をお控えください。
+            <br>以上をご理解のうえ、ご協力のほど宜しくお願い申し上げます。
+            <br>
+            <br>管理者が不適当と判断した場合は即時削除または掲載中止と致します。掲載内容におけるトラブル等については弊社は一切責任を負いません。
+            <br>
+            <br>
+            <span style="font-weight: bold;">●画像の取り扱いに際してのお願い</span>
+            <br>最近、一部の店舗様におきまして、他店舗様、あるいは他サイト様の画像を、その所有者の許可を得ないで無断使用したり加工して掲載されるケースが多発しております。
+            <br>
+            <br>このようなケースで何らかのトラブルが生じた場合には、該当画像の削除および、掲載を中止させて頂きます（以後のご掲載をお断りさせていただく場合もございます）。ご理解の程をお願いいたします。
+            <br>
+            <br>
+            <span style="font-weight: bold;">●女の子掲載の際のお願い</span>
+            <br>18歳未満または高校生の掲載はお控えください。
+            <br>発覚した場合は契約を即時解消させていただきますので予めご了承ください。
+            <br>
+            <br>風俗求人産業の健全な活性化の為、各店舗様におかれましては、良識あるサイト活用のほどお願い申し上げます。
+            <br>今後とも当サイトをよろしくお願い申し上げます。
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    
+
+
+
+<link href="https://manager.girlsheaven-job.net/css/jquery_ui.css" rel="stylesheet" type="text/css">
+
+<style type="text/css">
+<!--
+.ui-widget-content {
+    background: rgba(255, 255, 255, 0);
+}
+.ui-dialog-titlebar {
+    display:none;
+}
+.ui-dialog .ui-dialog-content {
+    overflow: hidden;
+    padding: 2em 2em;
+}
+.ui-corner-all {
+    border:0px;
+}
+.ui-widget {
+    font-family: Meiryo UI;
+}
+-->
+</style>
+<script type="text/javascript">
+<!--
+$("#js-dialog-update-promotion").dialog({
+    modal:true,
+    width:'780px',
+    height:'auto',
+    position:'center',
+    resizable:false,
+    draggable:false,
+    open:function(event, ui) {
+        $('#js-dialog-update-promotion-close').on('click', function() {
+            $('#js-dialog-update-promotion').dialog('close');
+        });
+        $('.ui-widget-overlay').on('click', function() {
+            $('#js-dialog-update-promotion').dialog('close');
+        });
+        $('#js-dialog-update-promotion-blog-entry').blur();
+    }
+});
+// ↓2019/09/25 運用者メッセージの店舗別登録＆表示対応
+function goDetail(messageId) {
+    var messageId = messageId;
+    document.form1.action = "/topics/detail/?messageId="+messageId;
+    document.form1.submit();
+}
+// ↑2019/09/25 運用者メッセージの店舗別登録＆表示対応
+-->
+</script>
+
+    
+    </form><div class="ui-dialog ui-widget ui-widget-content ui-corner-all" tabindex="-1" style="outline: 0px; z-index: 1002; height: auto; width: 780px; display: block; top: 247.5px; left: 473.5px;" role="dialog" aria-labelledby="ui-id-1"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span id="ui-id-1" class="ui-dialog-title">&nbsp;</span><a href="#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a></div><div id="js-dialog-update-promotion" style="width: auto; min-height: 0px; height: 282.2px;" class="ui-dialog-content ui-widget-content" scrolltop="0" scrollleft="0">
+    <div style="background:#FFF; width:730px;border-radius: 10px;border:1px #000; display: inline-block;">
+        
+        <div style="padding:80px 60px 160px;">
+        
+
+
+
+
+            <div style="font-weight: bold;font-size: 23px;">
+                
+                                                こんにちは。本日もガールズヘブンをよろしくお願いします。
+                                
+            </div>
+
+
+
+
+            <div style="width:575px;margin-top:10px;">
+                
+                
+                
+                
+                                
+                <div style="float:left;width:67%;margin-bottom:50px;">
+                
+                    <span style="font-weight: bold;font-size:25px;color:#FF7700;">店長ブログの投稿が１本もありません</span>
+                    <span style="margin-top:15px;"><p style="word-break:break-all;font-size:15px;font-weight:bold;">今日のブログネタ：写メ日記ってお休みの日でも投稿すべき？</p></span>                </div>
+                <div>
+                </div>
+                <p class="btnDefaultBlock" style="float:right;vertical-align:top;margin-top:5px;">
+                    <a id="js-dialog-update-promotion-blog-entry" class="btnDefault" style="line-height:50px;font-size:18px;font-weight:bold;width:160px;height:50px;padding-left:5px;padding-right:5px ;" href="/blog/edit/">ブログを投稿する</a>
+                </p>
+                
+                                                
+            </div>
+            <a id="js-dialog-update-promotion-close" style="background:url(https://manager.girlsheaven-job.net/img/manager/icon_close.png) no-repeat; width:50px; height:55px; display:block;position:absolute; top:5px; right:5px; cursor:pointer;"></a>
+        </div>
+    </div>
+</div></div><div class="ui-widget-overlay" style="width: 1259px; height: 1901px; z-index: 1001;"></div>
+    
+    <p id="pageTop" style="display: none;">
+  <a href="JavaScript:void(0);">
+    <img src="https://manager.girlsheaven-job.net/img/manager/pagetop.png">
+  </a>
+</p>
+
+<div id="globalFooter">
+    <p id="copyright">Copyright&nbsp;©&nbsp;<a href="http://www.girlsheaven-job.net/">風俗求人ガールズヘブン</a>&nbsp;All Rights Reserved.</p>
+</div>
+
+    
+
+    
+    <div id="screen_overlay">
+        <img src="https://manager.girlsheaven-job.net/img/manager/load2.gif">
+    </div>
+        
+  
+
+<style>.tb_button {padding:1px;cursor:pointer;border-right: 1px solid #8b8b8b;border-left: 1px solid #FFF;border-bottom: 1px solid #fff;}.tb_button.hover {borer:2px outset #def; background-color: #f8f8f8 !important;}.ws_toolbar {z-index:100000} .ws_toolbar .ws_tb_btn {cursor:pointer;border:1px solid #555;padding:3px}   .tb_highlight{background-color:yellow} .tb_hide {visibility:hidden} .ws_toolbar img {padding:2px;margin:0px}</style></body></html>
