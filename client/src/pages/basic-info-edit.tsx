@@ -65,6 +65,7 @@ export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const log = console.log; // Added for brevity
 
   // フォームの初期化
   const form = useForm<BasicInfoFormData>({
@@ -88,7 +89,9 @@ export default function BasicInfoEdit() {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      return response.json();
+      const data = await response.json();
+      log('info', 'ユーザー情報取得成功', { data });
+      return data;
     },
     enabled: !!user,
   });
@@ -96,10 +99,13 @@ export default function BasicInfoEdit() {
   // ユーザーデータが取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
+      log('info', 'フォーム値を更新', userProfile);
       form.reset({
-        username: userProfile.username || "",
-        location: userProfile.location || "",
-        preferredLocations: userProfile.preferredLocations || [],
+        username: userProfile.username || userProfile.email.split('@')[0],
+        location: userProfile.location || '東京都',
+        preferredLocations: Array.isArray(userProfile.preferredLocations) && userProfile.preferredLocations.length > 0
+          ? userProfile.preferredLocations
+          : ['東京都'],
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
@@ -192,7 +198,7 @@ export default function BasicInfoEdit() {
           <div className="space-y-2">
             <FormLabel>生年月日</FormLabel>
             <div className="p-3 bg-muted rounded-md">
-              <p>{userProfile?.birthDate 
+              <p>{userProfile?.birthDate
                 ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", { locale: ja })
                 : "未設定"}
               </p>
