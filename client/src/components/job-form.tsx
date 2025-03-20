@@ -45,26 +45,45 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mode: "onTouched",
     defaultValues: {
       businessName: initialData?.businessName || "",
+      location: initialData?.location || "",      // 店舗の情報から取得
+      serviceType: initialData?.serviceType || "", // 店舗の情報から取得
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
-      //Removed unnecessary default values from edited code.  These are handled by the schema.
     }
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
+      console.log('Submitting form data:', data); // デバッグ用
+
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
-      const response = await apiRequest(method, endpoint, data);
+
+      // フォームデータの整形
+      const formattedData = {
+        ...data,
+        // 数値型の確実な変換
+        minimumGuarantee: Number(data.minimumGuarantee),
+        maximumGuarantee: Number(data.maximumGuarantee),
+        // locationとserviceTypeは店舗情報から
+        location: initialData?.location || "",
+        serviceType: initialData?.serviceType || "",
+      };
+
+      console.log('Formatted data:', formattedData); // デバッグ用
+
+      const response = await apiRequest(method, endpoint, formattedData);
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('API Error:', error); // デバッグ用
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
@@ -76,6 +95,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error); // デバッグ用
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -85,6 +105,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = async (data: JobFormData) => {
+    console.log('Form state on submit:', {
+      values: data,
+      isValid: form.formState.isValid,
+      errors: form.formState.errors
+    });
+
     try {
       mutate(data);
     } catch (error) {

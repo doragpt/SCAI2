@@ -381,6 +381,8 @@ export const loginSchema = z.object({
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
+  location: z.string(),      // DBとの整合性のため残す
+  serviceType: z.string(),   // DBとの整合性のため残す
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
