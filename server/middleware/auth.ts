@@ -11,7 +11,11 @@ declare global {
       id: number;
       role: UserRole;
       email: string;
-      displayName: string | null;
+      username: string;
+      displayName: string;
+      birthDate: string | null;
+      location: string;
+      preferredLocations: string[];
     }
   }
 }
@@ -27,7 +31,8 @@ export function authenticate(
       path: req.path,
       method: req.method,
       isAuthenticated: req.isAuthenticated(),
-      sessionID: req.sessionID
+      sessionID: req.sessionID,
+      user: req.user
     });
 
     if (!req.isAuthenticated() || !req.user) {
@@ -58,6 +63,8 @@ export function authenticate(
 
     log('info', '認証成功', {
       userId: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
       role: req.user.role,
       path: req.path
     });
@@ -93,6 +100,7 @@ export function authorize(role: UserRole) {
 
     log('info', '認可成功', {
       userId: req.user.id,
+      username: req.user.username,
       role: req.user.role,
       requiredRole: role
     });

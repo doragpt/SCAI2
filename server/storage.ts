@@ -51,9 +51,7 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate || null,
         location: result.location || '東京都',
-        preferredLocations: Array.isArray(result.preferredLocations) && result.preferredLocations.length > 0
-          ? result.preferredLocations
-          : [],
+        preferredLocations: Array.isArray(result.preferredLocations) ? result.preferredLocations : [],
         role: result.role,
         displayName: result.displayName || result.username || result.email.split('@')[0],
         createdAt: result.createdAt,
@@ -100,9 +98,7 @@ export class DatabaseStorage implements IStorage {
         password: result.password,
         birthDate: result.birthDate || null,
         location: result.location || '東京都',
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
+        preferredLocations: Array.isArray(result.preferredLocations) ? result.preferredLocations : [],
         role: result.role,
         displayName: result.displayName || result.username || result.email.split('@')[0],
         createdAt: result.createdAt,

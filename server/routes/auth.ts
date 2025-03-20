@@ -57,9 +57,6 @@ router.get("/user", authenticate, async (req, res) => {
       displayName: userData.displayName
     };
 
-    // レスポンスデータをログ出力
-    log('info', 'クライアントに送信するレスポンス', response);
-
     res.json(response);
   } catch (error) {
     log('error', 'ユーザー情報取得エラー', {
@@ -203,7 +200,11 @@ router.post("/login", async (req, res, next) => {
           id: updatedUser.id,
           role: updatedUser.role,
           email: updatedUser.email,
-          displayName: updatedUser.displayName
+          username: updatedUser.username,
+          displayName: updatedUser.displayName,
+          birthDate: updatedUser.birthDate,
+          location: updatedUser.location,
+          preferredLocations: updatedUser.preferredLocations
         };
 
         // セッションCookieの設定を強化
@@ -214,8 +215,8 @@ router.post("/login", async (req, res, next) => {
         log('info', 'ログイン成功', {
           userId: updatedUser.id,
           email: updatedUser.email,
-          role: updatedUser.role,
           username: updatedUser.username,
+          role: updatedUser.role,
           location: updatedUser.location
         });
 
