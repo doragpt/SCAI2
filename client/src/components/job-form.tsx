@@ -38,7 +38,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, Send, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryClient";
 import { useState } from "react";
@@ -50,6 +50,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {Badge} from "@/components/ui/badge";
 
 // スタイル用の定数
 const FORM_STEP_NAMES = {
@@ -86,6 +87,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
+      minimumGuarantee: initialData?.minimumGuarantee || 0, // nullの代わりに0を使用
+      maximumGuarantee: initialData?.maximumGuarantee || 0, // nullの代わりに0を使用
       phoneNumber1: initialData?.phoneNumber1 || "",
       phoneNumber2: initialData?.phoneNumber2 || "",
       phoneNumber3: initialData?.phoneNumber3 || "",
@@ -93,10 +96,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       contactEmail: initialData?.contactEmail || "",
       contactSns: initialData?.contactSns || "",
       contactSnsUrl: initialData?.contactSnsUrl || "",
-      minimumGuarantee: initialData?.minimumGuarantee || null,
-      maximumGuarantee: initialData?.maximumGuarantee || null,
-      transportationSupport: initialData?.transportationSupport || false,
-      housingSupport: initialData?.housingSupport || false
     }
   });
 
@@ -135,43 +134,65 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const PreviewDialog = () => (
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>求人情報プレビュー</DialogTitle>
           <DialogDescription>
-            実際の表示イメージを確認できます
+            求職者に表示される実際の画面イメージです
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xl font-bold">{form.getValues("mainCatch")}</h3>
-            <p className="mt-2 whitespace-pre-wrap">{form.getValues("mainDescription")}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">勤務地</p>
-              <p>{form.getValues("location")}</p>
+        <div className="space-y-6 p-6 bg-background rounded-lg border">
+          <div className="space-y-4">
+            {/* ヘッダー情報 */}
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold">{form.getValues("businessName")}</h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge>{form.getValues("serviceType")}</Badge>
+                  <span className="text-sm text-muted-foreground">{form.getValues("location")}</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">給与</div>
+                <div className="text-xl font-bold">
+                  {form.getValues("minimumGuarantee") && `${form.getValues("minimumGuarantee").toLocaleString()}円`}
+                  {form.getValues("maximumGuarantee") && ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円`}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">業種</p>
-              <p>{form.getValues("serviceType")}</p>
+
+            {/* メインキャッチ */}
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
             </div>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">給与</p>
-            <p>
-              {form.getValues("minimumGuarantee") && `${form.getValues("minimumGuarantee").toLocaleString()}円`}
-              {form.getValues("maximumGuarantee") && ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円`}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">待遇</p>
-            <div className="flex flex-wrap gap-2">
-              {form.getValues("selectedBenefits")?.map((benefit) => (
-                <span key={benefit} className="px-2 py-1 bg-primary/10 rounded-md text-sm">
-                  {benefit}
-                </span>
-              ))}
+
+            {/* 詳細情報 */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
+                <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
+              </div>
+
+              {/* 待遇情報 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {form.getValues("selectedBenefits")?.map((benefit) => (
+                    <div key={benefit} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 応募ボタン（デモ用） */}
+              <div className="mt-8 flex justify-center">
+                <Button className="w-full max-w-md" size="lg">
+                  <Send className="h-5 w-5 mr-2" />
+                  この求人に応募する
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -341,8 +362,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           <Input
                             {...field}
                             type="number"
+                            min="0"
+                            step="1000"
+                            value={field.value || ''} // nullの場合は空文字列を表示
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
                             placeholder="例：30000"
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -360,8 +384,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                           <Input
                             {...field}
                             type="number"
+                            min="0"
+                            step="1000"
+                            value={field.value || ''} // nullの場合は空文字列を表示
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
                             placeholder="例：50000"
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                           />
                         </FormControl>
                         <FormMessage />
