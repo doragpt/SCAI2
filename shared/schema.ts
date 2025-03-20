@@ -16,7 +16,7 @@ export const prefectures = [
 
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
 
-// 待遇の定義
+// Benefits Definition
 export const benefitTypes = {
   interview: [
     "見学だけでもOK",
@@ -92,7 +92,7 @@ export const benefitCategories = {
   requirements: "採用について"
 } as const;
 
-// フラットな待遇リストの生成
+// Create flat benefit list
 export const allBenefitTypes = [
   ...benefitTypes.interview,
   ...benefitTypes.workStyle,
@@ -126,6 +126,10 @@ export const jobs = pgTable("jobs", {
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
+// Types
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+
 // Job schema
 export const jobSchema = z.object({
   businessName: z.string().min(1, "店舗名を入力してください"),
@@ -142,9 +146,10 @@ export const jobSchema = z.object({
   status: z.enum(jobStatusTypes).default("draft"),
 });
 
-// Types
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
+// Relations
+export const jobsRelations = relations(jobs, ({ many }) => ({
+  applications: many(applications),
+}));
 
 // Job-related response types
 export interface JobListingResponse {
@@ -160,10 +165,6 @@ export interface JobResponse extends Job {
   hasApplied?: boolean;
   applicationStatus?: string;
 }
-
-// Export types
-export { type BenefitType, type BenefitCategory };
-
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -260,10 +261,6 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Relations
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  applications: many(applications),
-}));
-
 export const applicationsRelations = relations(applications, ({ one }) => ({
   job: one(jobs, {
     fields: [applications.jobId],
@@ -274,7 +271,6 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 
 // Zod schemas for validation
 export const photoSchema = z.object({
@@ -293,8 +289,6 @@ export const bodyMarkSchema = z.object({
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
-
-export type LoginData = z.infer<typeof loginSchema>;
 
 // Response types
 export interface JobListingResponse {
