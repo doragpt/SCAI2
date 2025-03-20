@@ -24,9 +24,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 認証セットアップ（最初に配置）
-log('info', '認証セットアップを開始');
 setupAuth(app);
-log('info', '認証セットアップ完了');
 
 // APIミドルウェア（ログ設定）
 app.use('/api', (req, res, next) => {
@@ -45,11 +43,9 @@ app.use('/api', (req, res, next) => {
 });
 
 // 認証関連のルートを最初に登録
-log('info', 'ルート登録開始: 認証');
 app.use('/api', authRouter);
 
 // 保護されたAPIルートを登録
-log('info', 'ルート登録開始: 保護されたAPI');
 app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
