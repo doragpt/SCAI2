@@ -351,19 +351,7 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
 // Types
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = typeof jobs.$inferInsert;
-export type User = {
-  id: number;
-  email: string;
-  username: string;
-  password: string;
-  birthDate: string;
-  location: Prefecture;
-  preferredLocations: Prefecture[];
-  role: "talent" | "store";
-  displayName: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
@@ -443,12 +431,9 @@ export type UserResponse = {
   email: string;
   username: string;
   birthDate: string;
-  location: Prefecture;
-  preferredLocations: Prefecture[];
+  location: string;
+  preferredLocations: string[];
   role: "talent" | "store";
-  displayName: string;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export const talentProfileSchema = z.object({
@@ -687,6 +672,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 
