@@ -210,30 +210,17 @@ export const bodyMarkSchema = z.object({
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
-  serviceType: text("service_type", { enum: serviceTypes }).notNull(),
-  displayServiceType: text("display_service_type", { enum: serviceTypes }),
-  title: text("title").notNull(),
   mainCatch: text("main_catch").notNull(),
   mainDescription: text("main_description").notNull(),
   selectedBenefits: jsonb("selected_benefits").$type<BenefitType[]>().default([]).notNull(),
-  minimumGuarantee: integer("minimum_guarantee"),
-  maximumGuarantee: integer("maximum_guarantee"),
-  transportationSupport: boolean("transportation_support").default(false),
-  housingSupport: boolean("housing_support").default(false),
-  phoneNumber1: text("phone_number_1").notNull(),
-  phoneNumber2: text("phone_number_2"),
-  phoneNumber3: text("phone_number_3"),
-  phoneNumber4: text("phone_number_4"),
-  contactEmail: text("contact_email"),
-  contactSns: text("contact_sns"),
-  contactSnsUrl: text("contact_sns_url"),
-  status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+  minimumGuarantee: integer("minimum_guarantee").default(0),
+  maximumGuarantee: integer("maximum_guarantee").default(0),
+  status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  locationIdx: index("jobs_location_idx").on(table.location),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
+  locationIdx: index("jobs_location_idx").on(table.businessName),
+  serviceTypeIdx: index("jobs_service_type_idx").on(table.mainCatch),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -381,8 +368,6 @@ export const loginSchema = z.object({
 // jobSchemaの定義を修正
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
-  location: z.string(),      // DBとの整合性のため残す
-  serviceType: z.string(),   // DBとの整合性のため残す
   mainCatch: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -657,7 +642,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };

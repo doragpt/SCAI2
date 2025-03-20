@@ -45,8 +45,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mode: "onTouched",
     defaultValues: {
       businessName: initialData?.businessName || "",
-      location: initialData?.location || "",      // 店舗の情報から取得
-      serviceType: initialData?.serviceType || "", // 店舗の情報から取得
       mainCatch: initialData?.mainCatch || "",
       mainDescription: initialData?.mainDescription || "",
       selectedBenefits: initialData?.selectedBenefits || [],
@@ -58,32 +56,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      console.log('Submitting form data:', data); // デバッグ用
-
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      // フォームデータの整形
       const formattedData = {
         ...data,
-        // 数値型の確実な変換
         minimumGuarantee: Number(data.minimumGuarantee),
         maximumGuarantee: Number(data.maximumGuarantee),
-        // locationとserviceTypeは店舗情報から
-        location: initialData?.location || "",
-        serviceType: initialData?.serviceType || "",
       };
 
-      console.log('Formatted data:', formattedData); // デバッグ用
-
       const response = await apiRequest(method, endpoint, formattedData);
-
       if (!response.ok) {
         const error = await response.json();
-        console.error('API Error:', error); // デバッグ用
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
-
       return response.json();
     },
     onSuccess: () => {
@@ -95,7 +81,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error); // デバッグ用
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -105,72 +90,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = async (data: JobFormData) => {
-    console.log('Form state on submit:', {
-      values: data,
-      isValid: form.formState.isValid,
-      errors: form.formState.errors
-    });
-
     try {
       mutate(data);
     } catch (error) {
       console.error('Submit error:', error);
     }
   };
-
-  const PreviewDialog = () => (
-    <Dialog open={showPreview} onOpenChange={setShowPreview}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>求人情報プレビュー</DialogTitle>
-          <DialogDescription>
-            求職者に表示される実際の画面イメージです
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 p-6 bg-background rounded-lg border">
-          <div className="space-y-4">
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
-                <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">給与</h3>
-                <div className="text-xl font-bold">
-                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
-                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {form.getValues("selectedBenefits")?.map((benefit) => (
-                    <div key={benefit} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-primary" />
-                      <span>{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-center">
-                <Button className="w-full max-w-md" size="lg">
-                  <Send className="h-5 w-5 mr-2" />
-                  この求人に応募する
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 
   return (
     <Form {...form}>
@@ -352,37 +277,81 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="flex items-center justify-between">
+        <div className="flex justify-end gap-4">
           <Button
             type="button"
             variant="outline"
-            onClick={() => setShowPreview(true)}
+            onClick={onCancel}
+            disabled={isPending}
           >
-            <Eye className="h-4 w-4 mr-2" />
-            プレビュー
+            キャンセル
           </Button>
-
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isPending}
-            >
-              キャンセル
-            </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-            >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              保存する
-            </Button>
-          </div>
+          <Button 
+            type="submit"
+            disabled={isPending}
+          >
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            保存する
+          </Button>
         </div>
 
-        <PreviewDialog />
+        <PreviewDialog open={showPreview} onOpenChange={setShowPreview} form={form} />
       </form>
     </Form>
+  );
+}
+
+type PreviewDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  form: ReturnType<typeof useForm<JobFormData>>;
+};
+
+function PreviewDialog({ open, onOpenChange, form }: PreviewDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>求人情報プレビュー</DialogTitle>
+          <DialogDescription>
+            求職者に表示される実際の画面イメージです
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 p-6 bg-background rounded-lg border">
+          <div className="space-y-4">
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <p className="text-lg font-bold text-primary">{form.getValues("mainCatch")}</p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
+                <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("mainDescription")}</p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">給与</h3>
+                <div className="text-xl font-bold">
+                  {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
+                  {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {form.getValues("selectedBenefits")?.map((benefit) => (
+                    <div key={benefit} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
