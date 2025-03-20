@@ -16,7 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import * as z from 'zod';
+import { z } from "zod";
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -67,10 +67,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         location: user.location,
       };
 
+      console.log('送信データ:', formattedData);
+
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
       const response = await apiRequest(method, endpoint, formattedData);
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -95,6 +96,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    console.log('フォームデータ:', data);
     mutate(data);
   };
 

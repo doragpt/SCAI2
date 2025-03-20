@@ -14,7 +14,9 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// 待遇の定義（先に定義）
+export const jobStatusTypes = ["draft", "published", "closed"] as const;
+
+// 待遇の定義
 export const benefitTypes = {
   interview: [
     "見学だけでもOK",
@@ -81,16 +83,6 @@ export const benefitTypes = {
   ]
 } as const;
 
-// フラットな待遇リストの生成（型定義用）
-export const allBenefitTypes = [
-  ...benefitTypes.interview,
-  ...benefitTypes.workStyle,
-  ...benefitTypes.salary,
-  ...benefitTypes.bonus,
-  ...benefitTypes.facility,
-  ...benefitTypes.requirements,
-] as const;
-
 export const benefitCategories = {
   interview: "面接・入店前",
   workStyle: "働き方自由",
@@ -100,78 +92,23 @@ export const benefitCategories = {
   requirements: "採用について"
 } as const;
 
-// その他の定数定義
-export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
-export const photoTags = [
-  "現在の髪色",
-  "タトゥー",
-  "傷",
-  "アトピー",
-  "自撮り写真",
-  "スタジオ写真（無加工）",
-  "スタジオ写真（加工済み）"
-] as const;
-
-export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
-export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
-export const idTypes = [
-  "運転免許証",
-  "マイナンバーカード",
-  "パスポート",
-  "写真付き住民基本台帳カード",
-  "在留カードまたは特別永住者証明書",
-  "健康保険証",
-  "卒業アルバム"
-] as const;
-
-export const allergyTypes = ["犬", "猫", "鳥"] as const;
-export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
-export const workTypes = ["出稼ぎ", "在籍"] as const;
-export const jobStatusTypes = ["draft", "published", "closed"] as const;
-
-export const commonNgOptions = [
-  "AF",
-  "聖水",
-  "即尺",
-  "即尺(事前に洗い済み)",
-  "撮影顔出し",
-  "撮影顔無し"
-] as const;
-
-export const estheOptions = [
-  "ホイップ",
-  "マッサージジェル",
-  "極液",
-  "ベビードール",
-  "マイクロビキニ",
-  "ブラなしベビードール",
-  "トップレス",
-  "フルヌード",
-  "ノンショーツ",
-  "deepリンパ",
-  "ハンド抜き",
-  "キス",
-  "フェラ",
-  "スキンフェラ"
+// フラットな待遇リストの生成
+export const allBenefitTypes = [
+  ...benefitTypes.interview,
+  ...benefitTypes.workStyle,
+  ...benefitTypes.salary,
+  ...benefitTypes.bonus,
+  ...benefitTypes.facility,
+  ...benefitTypes.requirements,
 ] as const;
 
 // Type definitions
 export type Prefecture = typeof prefectures[number];
-export type PhotoTag = typeof photoTags[number];
-export type BodyType = typeof bodyTypes[number];
-export type CupSize = typeof cupSizes[number];
-export type FaceVisibility = typeof faceVisibilityTypes[number];
-export type IdType = typeof idTypes[number];
-export type AllergyType = typeof allergyTypes[number];
-export type SmokingType = typeof smokingTypes[number];
-export type CommonNgOption = typeof commonNgOptions[number];
-export type EstheOption = typeof estheOptions[number];
-export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
-// Tablesの定義
+// Tables
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -188,6 +125,45 @@ export const jobs = pgTable("jobs", {
   businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
+
+// Job schema
+export const jobSchema = z.object({
+  businessName: z.string().min(1, "店舗名を入力してください"),
+  location: z.string().min(1, "所在地を入力してください"),
+  catchPhrase: z.string()
+    .min(1, "キャッチコピーを入力してください")
+    .max(300, "キャッチコピーは300文字以内で入力してください"),
+  description: z.string()
+    .min(1, "仕事内容を入力してください")
+    .max(9000, "仕事内容は9000文字以内で入力してください"),
+  benefits: z.array(z.enum(allBenefitTypes)).default([]),
+  minimumGuarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
+  maximumGuarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
+  status: z.enum(jobStatusTypes).default("draft"),
+});
+
+// Types
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+
+// Job-related response types
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}
+
+// Export types
+export { type BenefitType, type BenefitCategory };
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -312,22 +288,6 @@ export const bodyMarkSchema = z.object({
   hasBodyMark: z.boolean().default(false),
   details: z.string().optional(),
   others: z.array(z.string()).default([]),
-});
-
-// jobSchemaの定義を修正
-export const jobSchema = z.object({
-  businessName: z.string(),  // 店舗名は必須だが編集不可
-  location: z.string().min(1, "所在地を入力してください"),
-  catchPhrase: z.string()
-    .min(1, "キャッチコピーを入力してください")
-    .max(300, "キャッチコピーは300文字以内で入力してください"),
-  description: z.string()
-    .min(1, "仕事内容を入力してください")
-    .max(9000, "仕事内容は9000文字以内で入力してください"),
-  benefits: z.array(z.enum(allBenefitTypes)).default([]),
-  minimumGuarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
-  maximumGuarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
-  status: z.enum(jobStatusTypes).default("draft"),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
@@ -686,3 +646,68 @@ export type InsertUser = typeof users.$inferInsert;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 export type TalentProfile = typeof talentProfiles.$inferSelect;
+
+export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
+export const photoTags = [
+  "現在の髪色",
+  "タトゥー",
+  "傷",
+  "アトピー",
+  "自撮り写真",
+  "スタジオ写真（無加工）",
+  "スタジオ写真（加工済み）"
+] as const;
+
+export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
+export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
+export const idTypes = [
+  "運転免許証",
+  "マイナンバーカード",
+  "パスポート",
+  "写真付き住民基本台帳カード",
+  "在留カードまたは特別永住者証明書",
+  "健康保険証",
+  "卒業アルバム"
+] as const;
+
+export const allergyTypes = ["犬", "猫", "鳥"] as const;
+export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
+export const workTypes = ["出稼ぎ", "在籍"] as const;
+
+
+export const commonNgOptions = [
+  "AF",
+  "聖水",
+  "即尺",
+  "即尺(事前に洗い済み)",
+  "撮影顔出し",
+  "撮影顔無し"
+] as const;
+
+export const estheOptions = [
+  "ホイップ",
+  "マッサージジェル",
+  "極液",
+  "ベビードール",
+  "マイクロビキニ",
+  "ブラなしベビードール",
+  "トップレス",
+  "フルヌード",
+  "ノンショーツ",
+  "deepリンパ",
+  "ハンド抜き",
+  "キス",
+  "フェラ",
+  "スキンフェラ"
+] as const;
+
+export type PhotoTag = typeof photoTags[number];
+export type BodyType = typeof bodyTypes[number];
+export type CupSize = typeof cupSizes[number];
+export type FaceVisibility = typeof faceVisibilityTypes[number];
+export type IdType = typeof idTypes[number];
+export type AllergyType = typeof allergyTypes[number];
+export type SmokingType = typeof smokingTypes[number];
+export type CommonNgOption = typeof commonNgOptions[number];
+export type EstheOption = typeof estheOptions[number];
+export type WorkType = typeof workTypes[number];
