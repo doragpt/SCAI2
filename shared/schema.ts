@@ -14,74 +14,37 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// 待遇の定義（先に定義）
+// 初期定義（先に定義）
 const interviewBenefits = [
-  "見学だけでもOK",
-  "体験入店OK",
-  "店外面接OK",
-  "面接交通費支給",
-  "友達と面接OK",
-  "オンライン面接OK",
-  "写メ面接OK",
-  "即日勤務OK",
-  "入店特典あり"
+  "見学だけでもOK", "体験入店OK", "店外面接OK", "面接交通費支給",
+  "友達と面接OK", "オンライン面接OK", "写メ面接OK", "即日勤務OK", "入店特典あり"
 ] as const;
 
 const workStyleBenefits = [
-  "自由出勤OK",
-  "週1日〜OK",
-  "週3日以上歓迎",
-  "週5日以上歓迎",
-  "土日だけOK",
-  "1日3時間〜OK",
-  "短期OK",
-  "長期休暇OK",
-  "掛け持ちOK"
+  "自由出勤OK", "週1日〜OK", "週3日以上歓迎", "週5日以上歓迎",
+  "土日だけOK", "1日3時間〜OK", "短期OK", "長期休暇OK", "掛け持ちOK"
 ] as const;
 
 const salaryBenefits = [
-  "日給2万円以上",
-  "日給3万円以上",
-  "日給4万円以上",
-  "日給5万円以上",
-  "日給6万円以上",
-  "日給7万円以上",
+  "日給2万円以上", "日給3万円以上", "日給4万円以上",
+  "日給5万円以上", "日給6万円以上", "日給7万円以上"
 ] as const;
 
 const bonusBenefits = [
-  "バック率50%以上",
-  "バック率60%以上",
-  "バック率70%以上",
-  "完全日払いOK",
-  "保証制度あり",
-  "指名バックあり",
-  "オプションバックあり",
-  "ボーナスあり"
+  "バック率50%以上", "バック率60%以上", "バック率70%以上",
+  "完全日払いOK", "保証制度あり", "指名バックあり",
+  "オプションバックあり", "ボーナスあり"
 ] as const;
 
 const facilityBenefits = [
-  "送迎あり",
-  "駅チカ",
-  "駐車場完備",
-  "個室待機",
-  "アリバイ対策OK",
-  "寮完備",
-  "託児所あり",
-  "制服貸与",
-  "食事支給"
+  "送迎あり", "駅チカ", "駐車場完備", "個室待機",
+  "アリバイ対策OK", "寮完備", "託児所あり", "制服貸与", "食事支給"
 ] as const;
 
 const requirementsBenefits = [
-  "未経験大歓迎",
-  "経験者優遇",
-  "主婦・人妻歓迎",
-  "学生さん歓迎",
-  "20代活躍中",
-  "30代活躍中",
-  "40代以上歓迎",
-  "スリム体型",
-  "グラマー体型",
-  "tattoo(小)OK"
+  "未経験大歓迎", "経験者優遇", "主婦・人妻歓迎", "学生さん歓迎",
+  "20代活躍中", "30代活躍中", "40代以上歓迎", "スリム体型",
+  "グラマー体型", "tattoo(小)OK"
 ] as const;
 
 // 全待遇リストの定義
@@ -113,35 +76,24 @@ export const benefitCategories = {
   requirements: "採用について"
 } as const;
 
-// その他の定数定義
+// その他の定数
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
 export const photoTags = [
-  "現在の髪色",
-  "タトゥー",
-  "傷",
-  "アトピー",
-  "自撮り写真",
-  "スタジオ写真（無加工）",
-  "スタジオ写真（加工済み）"
+  "現在の髪色", "タトゥー", "傷", "アトピー",
+  "自撮り写真", "スタジオ写真（無加工）", "スタジオ写真（加工済み）"
 ] as const;
 
 export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
 export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
 export const idTypes = [
-  "運転免許証",
-  "マイナンバーカード",
-  "パスポート",
-  "写真付き住民基本台帳カード",
-  "在留カードまたは特別永住者証明書",
-  "健康保険証",
-  "卒業アルバム"
+  "運転免許証", "マイナンバーカード", "パスポート",
+  "写真付き住民基本台帳カード", "在留カードまたは特別永住者証明書",
+  "健康保険証", "卒業アルバム"
 ] as const;
-
 export const allergyTypes = ["犬", "猫", "鳥"] as const;
 export const smokingTypes = ["紙タバコ", "電子タバコ"] as const;
 export const workTypes = ["出稼ぎ", "在籍"] as const;
 export const jobStatusTypes = ["draft", "published", "closed"] as const;
-
 export const commonNgOptions = [
   "AF",
   "聖水",
@@ -184,7 +136,7 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
-// Tablesの定義
+// Tables
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -297,8 +249,8 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Relations
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  applications: many(applications),
+export const jobsRelations = relations(jobs, ({ many }) => ({
+  applications: many(applications)
 }));
 
 export const applicationsRelations = relations(applications, ({ one }) => ({
@@ -607,23 +559,13 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
-
-export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
-
-export interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
-
-export interface JobResponse extends Job {
-  hasApplied?: boolean;
-  applicationStatus?: string;
-}
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = typeof jobs.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;
+export type TalentProfile = typeof talentProfiles.$inferSelect;
 
 export const keepList = pgTable('keepList', {
   id: serial('id').primaryKey(),
@@ -693,10 +635,19 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type TalentProfile = typeof talentProfiles.$inferSelect;
+export type { User, TalentProfile, Job, Application, InsertApplication };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
+
+export interface JobListingResponse {
+  jobs: Job[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+export interface JobResponse extends Job {
+  hasApplied?: boolean;
+  applicationStatus?: string;
+}

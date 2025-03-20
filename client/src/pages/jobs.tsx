@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Banknote, Check, Building2 } from "lucide-react";
+import { Loader2, MapPin, Banknote } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { formatSalary, formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 // Animation variants
 const container = {
@@ -38,7 +37,6 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-// 求人カードコンポーネント
 const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div variants={item}>
@@ -62,20 +60,6 @@ const JobCard = ({ job }: { job: JobResponse }) => {
               <div className="flex items-center text-primary font-semibold">
                 <Banknote className="h-5 w-5 mr-2" />
                 日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {job.transportationSupport && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <Check className="h-3.5 w-3.5 mr-1" />
-                    交通費支給
-                  </Badge>
-                )}
-                {job.housingSupport && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    <Building2 className="h-3.5 w-3.5 mr-1" />
-                    寮完備
-                  </Badge>
-                )}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
                 {formatDate(job.createdAt)}
@@ -113,9 +97,7 @@ export default function Jobs() {
         if (location !== "all") url.searchParams.append("location", location);
 
         const response = await fetch(url);
-
         if (!response.ok) {
-          const errorText = await response.text();
           throw new Error("求人情報の取得に失敗しました");
         }
 
@@ -128,14 +110,13 @@ export default function Jobs() {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error.message || "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+        description: error.message
       });
     }
   });
 
   return (
     <div className="space-y-8">
-      {/* ヘッダー */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -149,7 +130,6 @@ export default function Jobs() {
         </div>
       </motion.div>
 
-      {/* フィルター */}
       <div className="grid grid-cols-1 gap-4">
         <Select value={location} onValueChange={setLocation}>
           <SelectTrigger>
@@ -166,7 +146,6 @@ export default function Jobs() {
         </Select>
       </div>
 
-      {/* 求人一覧 */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
