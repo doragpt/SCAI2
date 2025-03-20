@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import {
   prefectures,
-  type JobResponse
+  type JobResponse,
 } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
