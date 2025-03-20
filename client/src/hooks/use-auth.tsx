@@ -31,8 +31,6 @@ function useLoginMutation() {
     mutationFn: async (credentials: LoginData & { role?: string }) => {
       const currentPath = window.location.pathname;
       const expectedRole = currentPath.includes('manager') ? 'store' : 'talent';
-
-      // 強制的にロールを設定
       credentials.role = expectedRole;
 
       const response = await apiRequest("POST", "/api/login", credentials);
@@ -43,8 +41,11 @@ function useLoginMutation() {
       return response.json();
     },
     onSuccess: (user: SelectUser) => {
+      // ユーザーデータをキャッシュにセット
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
+      // 全ての関連クエリを無効化して再取得を強制
+      queryClient.invalidateQueries({ queryKey: ["/api"] });
 
       toast({
         title: "ログイン成功",
@@ -80,8 +81,11 @@ function useLogoutMutation() {
       return response.json();
     },
     onSuccess: (data: { role?: string }) => {
-      queryClient.setQueryData(["/api/user"], null);
+      // キャッシュを完全にクリア
       queryClient.clear();
+
+      // ユーザーデータを明示的に削除
+      queryClient.setQueryData(["/api/user"], null);
 
       toast({
         title: "ログアウト完了",
@@ -119,8 +123,11 @@ function useRegisterMutation() {
       return result.user;
     },
     onSuccess: (user: SelectUser) => {
+      // ユーザーデータをキャッシュにセット
       queryClient.setQueryData(["/api/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
+      // 全ての関連クエリを無効化して再取得を強制
+      queryClient.invalidateQueries({ queryKey: ["/api"] });
 
       toast({
         title: "登録完了",
@@ -166,8 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    staleTime: 1000 * 60 * 5, 
-    retry: 1,
+    staleTime: 0, // キャッシュを無効化
+    refetchOnMount: true, // マウント時に必ず再取得
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
   });
 
   const loginMutation = useLoginMutation();

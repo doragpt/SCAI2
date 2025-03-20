@@ -65,7 +65,6 @@ export default function BasicInfoEdit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const log = console.log; // Added for brevity
 
   // フォームの初期化
   const form = useForm<BasicInfoFormData>({
@@ -89,21 +88,20 @@ export default function BasicInfoEdit() {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     enabled: !!user,
-    staleTime: 30000, // 30秒間はキャッシュを使用
-    refetchOnMount: true, // コンポーネントがマウントされるたびに再取得
+    staleTime: 0, // キャッシュを無効化
+    refetchOnMount: true, // マウント時に必ず再取得
   });
 
   // ユーザーデータが取得できたらフォームを更新
   useEffect(() => {
     if (userProfile) {
       form.reset({
-        username: userProfile.username,
-        location: userProfile.location,
-        preferredLocations: userProfile.preferredLocations,
+        username: userProfile.username || "",
+        location: userProfile.location || "",
+        preferredLocations: userProfile.preferredLocations || [],
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
@@ -135,8 +133,11 @@ export default function BasicInfoEdit() {
     onSuccess: (data) => {
       // キャッシュを更新
       queryClient.setQueryData([QUERY_KEYS.USER], data);
-      // 関連するクエリを無効化
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
+      // 関連するクエリを無効化して即時再取得
+      queryClient.invalidateQueries({ 
+        queryKey: [QUERY_KEYS.USER],
+        refetchType: 'all'
+      });
 
       toast({
         title: "プロフィールを更新しました",

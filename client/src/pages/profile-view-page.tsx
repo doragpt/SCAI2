@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, PenSquare } from "lucide-react";
 import { Redirect } from "wouter";
-import { format, differenceInYears } from "date-fns";
+import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -23,12 +23,12 @@ export default function ProfileViewPage() {
         const error = await response.json();
         throw new Error(error.message || "ユーザー情報の取得に失敗しました");
       }
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     enabled: !!user,
-    staleTime: 30000, // 30秒間はキャッシュを使用
-    refetchOnMount: true, // コンポーネントがマウントされるたびに再取得
+    staleTime: 0, // キャッシュを無効化
+    refetchOnMount: true, // マウント時に必ず再取得
+    refetchInterval: 30000, // 30秒ごとに再取得
   });
 
   if (!user) {
