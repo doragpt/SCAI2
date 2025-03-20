@@ -94,6 +94,8 @@ export default function BasicInfoEdit() {
       return data;
     },
     enabled: !!user,
+    staleTime: 0, // キャッシュを無効化
+    cacheTime: 0, // キャッシュを無効化
   });
 
   // ユーザーデータが取得できたらフォームを更新
@@ -101,9 +103,9 @@ export default function BasicInfoEdit() {
     if (userProfile) {
       console.log('Setting form values:', userProfile); // デバッグ用
       form.reset({
-        username: userProfile.username || "",
-        location: userProfile.location || "",
-        preferredLocations: Array.isArray(userProfile.preferredLocations) ? userProfile.preferredLocations : [],
+        username: userProfile.username,
+        location: userProfile.location,
+        preferredLocations: userProfile.preferredLocations,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
