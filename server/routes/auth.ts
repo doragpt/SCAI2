@@ -48,9 +48,9 @@ router.get("/user", authenticate, async (req, res) => {
       id: userData.id,
       email: userData.email,
       username: userData.username,
-      birthDate: userData.birthDate,
+      birthDate: userData.birth_date, // スネークケースからキャメルケースに変換
       location: userData.location,
-      preferredLocations: Array.isArray(userData.preferredLocations) ? userData.preferredLocations : [],
+      preferredLocations: Array.isArray(userData.preferred_locations) ? userData.preferred_locations : [],
       role: userData.role,
       displayName: userData.username // displayName を username から設定
     };
@@ -93,9 +93,9 @@ router.patch("/user", authenticate, async (req, res) => {
       id: updatedUser.id,
       email: updatedUser.email,
       username: updatedUser.username,
-      birthDate: updatedUser.birthDate,
+      birthDate: updatedUser.birth_date, // スネークケースからキャメルケースに変換
       location: updatedUser.location,
-      preferredLocations: Array.isArray(updatedUser.preferredLocations) ? updatedUser.preferredLocations : [],
+      preferredLocations: Array.isArray(updatedUser.preferred_locations) ? updatedUser.preferred_locations : [],
       role: updatedUser.role,
       displayName: updatedUser.username
     };
@@ -197,12 +197,12 @@ router.post("/login", async (req, res, next) => {
         }
 
         // セッションにユーザー情報を保存
-        req.session.user = {
-          id: user.id,
-          role: user.role,
-          email: user.email,
-          displayName: user.displayName
-        };
+        if (req.session) {
+          req.session.userId = user.id;
+          req.session.userRole = user.role;
+          req.session.userEmail = user.email;
+          req.session.displayName = user.display_name;
+        }
 
         // セッションCookieの設定を強化
         req.session.cookie.secure = process.env.NODE_ENV === 'production';
@@ -263,7 +263,7 @@ router.get("/check", (req, res) => {
     id: req.user.id,
     email: req.user.email,
     role: req.user.role,
-    displayName: req.user.displayName
+    displayName: req.user.display_name // スネークケースからキャメルケースに変換
   };
 
   res.json(response);

@@ -16,7 +16,7 @@ export async function publishScheduledPosts() {
       .where(
         and(
           eq(blogPosts.status, "scheduled"),
-          lte(blogPosts.scheduled_at, now)
+          sql`${blogPosts.scheduled_at} <= ${now}`
         )
       );
 
@@ -36,7 +36,7 @@ export async function publishScheduledPosts() {
       .where(
         and(
           eq(blogPosts.status, "scheduled"),
-          lte(blogPosts.scheduled_at, now)
+          sql`${blogPosts.scheduled_at} <= ${now}`
         )
       )
       .returning();
