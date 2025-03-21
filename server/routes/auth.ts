@@ -123,14 +123,34 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // リクエストデータのバリデーション
     const validatedData = talentRegisterFormSchema.parse(req.body);
 
+    // キャメルケースからスネークケースへの変換
+    // ユーザー登録に必要なデータをリクエストから直接取得
+    const userData: any = {
+      ...validatedData,
+      email: req.body.email,
+      username: req.body.username,
+      password: req.body.password,
+      role: req.body.role || "talent",
+      location: req.body.location
+    };
+    
+    // フロントエンドから送られるキャメルケースのフィールドをバックエンドのスネークケースに変換
+    if (req.body.birthDate) {
+      userData.birth_date = req.body.birthDate;
+    }
+    
+    if (req.body.preferredLocations) {
+      userData.preferred_locations = req.body.preferredLocations;
+    }
+
     // パスワードのハッシュ化
-    const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     // ユーザーの作成
     const user = await storage.createUser({
-      ...validatedData,
+      ...userData,
       password: hashedPassword,
-      displayName: validatedData.username // displayName を username として設定
+      display_name: userData.username
     });
 
     // セッションの作成
