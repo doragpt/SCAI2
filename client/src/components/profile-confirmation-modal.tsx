@@ -256,7 +256,7 @@ export function ProfileConfirmationModal({
                 <InfoItem
                   label="アレルギー"
                   value={
-                    formData.allergies.hasAllergy ? (
+                    formData.allergies.has_allergy ? (
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-2">
                           {formData.allergies.types.map((type, index) => (
