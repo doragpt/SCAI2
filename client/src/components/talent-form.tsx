@@ -667,7 +667,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
   const handleUpdatePreviousStore = (index: number, value: string) => {
     const updatedStores = [...form.watch("previous_stores") || []];
-    updatedStores[index] = { storeName: value };
+    updatedStores[index] = { store_name: value };
     form.setValue("previous_stores", updatedStores);
   };
 
@@ -677,7 +677,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddPreviousStore = () => {
-    form.setValue("previous_stores", [...form.watch("previous_stores") || [], { storeName: "" }]);
+    form.setValue("previous_stores", [...form.watch("previous_stores") || [], { store_name: "" }]);
   };
 
   const handleConfirm = async () => {
@@ -1723,9 +1723,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
                             <Input
                               placeholder="店舗名を入力してください"
-                              value={store.storeName}
+                              value={store.store_name}
                               onChange={(e) =>
-                                handleUpdateCurrentStore(index, "storeName", e.target.value)
+                                handleUpdateCurrentStore(index, "store_name", e.target.value)
                               }
                             />
                           </div>
@@ -1733,9 +1733,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             <Label className="text-sm text-muted-foreground mb-2">源氏名</Label>
                             <Input
                               placeholder="源氏名を入力してください"
-                              value={store.stageName}
+                              value={store.stage_name}
                               onChange={(e) =>
-                                handleUpdateCurrentStore(index, "stageName", e.target.value)
+                                handleUpdateCurrentStore(index, "stage_name", e.target.value)
                               }
                             />
                           </div>
@@ -1768,13 +1768,13 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     </Button>
                   </div>
                   <div className="space-y-4">
-                    {form.watch("previousStores")?.map((store, index) => (
+                    {form.watch("previous_stores")?.map((store, index) => (
                       <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">店舗名</Label>
                           <Input
                             placeholder="店舗名を入力してください"
-                            value={store.storeName}
+                            value={store.store_name}
                             onChange={(e) => handleUpdatePreviousStore(index, e.target.value)}
                           />
                         </div>
