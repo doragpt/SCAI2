@@ -1666,7 +1666,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       <div>
                         <h3 className="text-lg font-semibold mb-4">SNSアカウント</h3>
                         <div className="space-y-4">
-                          {form.watch("snsUrls").map((url, index) => (
+                          {form.watch("sns_urls").map((url, index) => (
                             <div key={index} className="flex gap-2">
                               <Input
                                 placeholder="SNSアカウントのURLを入力"
