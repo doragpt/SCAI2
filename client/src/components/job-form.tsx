@@ -348,7 +348,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </DialogHeader>
             <div className="space-y-6 p-6 bg-background rounded-lg border">
               <div className="space-y-4">
-                <div className="bg-primary/5 p-4 rounded-lg">
+                <div className="bg
+
+-primary/5 p-4 rounded-lg">
                   <p className="text-lg font-bold text-primary">{form.getValues("catchPhrase")}</p>
                 </div>
 
