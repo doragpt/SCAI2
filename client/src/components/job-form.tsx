@@ -77,13 +77,9 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
     },
     onSuccess: (data) => {
       console.log("Mutation - onSuccess:", data);
-
-      // キャッシュの無効化と再フェッチ
       queryClient.invalidateQueries({ 
         queryKey: [QUERY_KEYS.STORE_PROFILE],
       });
-
-      // ダッシュボードの統計情報も更新
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.STORE_STATS],
       });
@@ -93,10 +89,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
         description: "変更内容が保存されました。",
       });
 
-      // フォームをリセット
       form.reset(data);
-
-      // 成功時のコールバックを実行
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -113,8 +106,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
     console.log("Submitting form data:", data);
     mutate(data);
   };
-
-  console.log("Form component re-rendered");
 
   return (
     <Form {...form}>
@@ -189,7 +180,8 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
                     step="1000"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                    value={field.value === 0 ? "" : field.value}
                     placeholder="例：30000"
                   />
                 </FormControl>
@@ -211,7 +203,8 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
                     step="1000"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                    value={field.value === 0 ? "" : field.value}
                     placeholder="例：50000"
                   />
                 </FormControl>
