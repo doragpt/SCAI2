@@ -160,36 +160,31 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
         
         // ログ出力
         log('info', 'プロフィール初期化データ', {
-          lastNameKana,
-          firstNameKana,
-          nearestStation,
-          height,
-          weight,
-          cupSize,
-          faceVisibility
+          location: user.location || '',
+          preferred_locations: user.preferred_locations || []
         });
         
-        // 基本的なプロファイル情報を作成
+        // 基本的なプロファイル情報を作成（デフォルト値を設定）
         const initialProfile = {
           location: user.location || '',
           preferred_locations: user.preferred_locations || [],
-          // 登録フォームから姓名（カナ）を設定
-          last_name: '',  // 空のまま残し、詳細プロフィール設定時に入力
-          first_name: '', // 空のまま残し、詳細プロフィール設定時に入力
-          last_name_kana: lastNameKana,
-          first_name_kana: firstNameKana,
-          nearest_station: nearestStation,
+          // 詳細プロフィール設定時に入力するためのデフォルト値
+          last_name: '',
+          first_name: '',
+          last_name_kana: '',
+          first_name_kana: '',
+          nearest_station: '',
           available_ids: { types: [], others: [] },
           can_provide_residence_record: false,
-          height: height,
-          weight: weight,
-          cup_size: cupSize as "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K", // 型アサーションで明示的に型を指定
+          height: 150, // デフォルト値
+          weight: 45,  // デフォルト値
+          cup_size: "D" as "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K", // デフォルト値
           bust: null,
           waist: null,
           hip: null,
           body_mark: { has_body_mark: false, details: '', others: [] },
           smoking: { enabled: false, types: [], others: [] },
-          face_visibility: faceVisibility as "全出し" | "口だけ隠し" | "目だけ隠し" | "全隠し", // 型アサーションで明示的に型を指定
+          face_visibility: "全隠し" as "全出し" | "口だけ隠し" | "目だけ隠し" | "全隠し", // デフォルト値
           has_esthe_experience: false,
           esthe_experience_period: '',
           esthe_options: { available: [], ng_options: [] },
