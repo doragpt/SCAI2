@@ -982,7 +982,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           <div key={type} className="flex itemscenter space-x-2">
                             <Checkbox
                               id={`id-${type}`}
-                              checked={field.value.types.includes(type)}
+                              checked={field.value?.types?.includes(type) || false}
                               onCheckedChange={(checked) => {
                                 const updated = checked
                                   ? [...field.value.types, type]
