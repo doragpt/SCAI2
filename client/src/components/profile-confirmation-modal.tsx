@@ -195,9 +195,9 @@ export function ProfileConfirmationModal({
                   label="現在の在籍店舗"
                   value={
                     <div className="space-y-2">
-                      {formData.currentStores.map((store, index) => (
+                      {formData.current_stores.map((store, index) => (
                         <div key={index} className="text-sm">
-                          {store.storeName} ({store.stageName})
+                          {store.store_name} ({store.stage_name})
                         </div>
                       ))}
                     </div>
@@ -207,20 +207,20 @@ export function ProfileConfirmationModal({
                   label="過去の在籍店舗"
                   value={
                     <div className="space-y-2">
-                      {formData.previousStores.map((store, index) => (
+                      {formData.previous_stores.map((store, index) => (
                         <div key={index} className="text-sm">
-                          {store.storeName}
+                          {store.store_name}
                         </div>
                       ))}
                     </div>
                   }
                 />
-                {formData.photoDiaryUrls && formData.photoDiaryUrls.length > 0 && (
+                {formData.photo_diary_urls && formData.photo_diary_urls.length > 0 && (
                   <InfoItem
                     label="写メ日記URL"
                     value={
                       <div className="space-y-2">
-                        {formData.photoDiaryUrls.map((url, index) => (
+                        {formData.photo_diary_urls.map((url, index) => (
                           <div key={index} className="text-sm break-all">
                             {url}
                           </div>
@@ -243,10 +243,10 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {formData.ngOptions.common.map((option, index) => (
+                        {formData.ng_options.common.map((option, index) => (
                           <Badge key={index} variant="outline">{option}</Badge>
                         ))}
-                        {formData.ngOptions.others.map((other, index) => (
+                        {formData.ng_options.others.map((other, index) => (
                           <Badge key={index} variant="outline">{other}</Badge>
                         ))}
                       </div>

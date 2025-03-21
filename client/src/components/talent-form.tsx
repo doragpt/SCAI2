@@ -1716,7 +1716,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     </Button>
                   </div>
                   <div className="space-y-4">
-                    {form.watch("currentStores")?.map((store, index) => (
+                    {form.watch("current_stores")?.map((store, index) => (
                       <div key={index} className="relative border rounded-lg p-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
