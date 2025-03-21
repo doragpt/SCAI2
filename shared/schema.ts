@@ -14,7 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// 待遇の定義（先に定義）
+// 待遇の定義
 export const benefitTypes = {
   interview: [
     "見学だけでもOK",
@@ -81,7 +81,7 @@ export const benefitTypes = {
   ]
 } as const;
 
-// フラットな待遇リストの生成（型定義用）
+// フラットな待遇リストの生成
 export const allBenefitTypes = [
   ...benefitTypes.interview,
   ...benefitTypes.workStyle,
@@ -100,7 +100,11 @@ export const benefitCategories = {
   requirements: "採用について"
 } as const;
 
-// その他の定数定義
+// Type definitions for benefits
+export type BenefitType = typeof allBenefitTypes[number];
+export type BenefitCategory = keyof typeof benefitTypes;
+
+// Other constants and types
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
 export const photoTags = [
   "現在の髪色",
@@ -171,7 +175,7 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
-// Tablesの定義
+// Tables
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
@@ -314,7 +318,7 @@ export const bodyMarkSchema = z.object({
   others: z.array(z.string()).default([]),
 });
 
-// jobSchemaの定義を修正
+// Job Schema
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
   location: z.string().min(1, "所在地を入力してください"),

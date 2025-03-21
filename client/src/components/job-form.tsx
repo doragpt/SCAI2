@@ -75,6 +75,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
