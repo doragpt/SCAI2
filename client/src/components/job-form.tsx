@@ -30,7 +30,6 @@ type StoreProfileFormProps = {
   onCancel?: () => void;
 };
 
-// 内部実装はStoreProfileFormとして定義
 function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -50,6 +49,13 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       maximum_guarantee: initialData?.maximum_guarantee || 0,
       status: initialData?.status || "draft",
     }
+  });
+
+  // フォームの状態をデバッグ用にログ出力
+  console.log("Form State:", {
+    isValid: form.formState.isValid,
+    errors: form.formState.errors,
+    values: form.getValues(),
   });
 
   const { mutate, isPending } = useMutation({
@@ -82,6 +88,8 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
   });
 
   const onSubmit = (data: StoreProfileFormData) => {
+    // 送信前のデータをログ出力
+    console.log("Submitting data:", data);
     mutate(data);
   };
 
@@ -286,7 +294,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
             </Button>
             <Button
               type="submit"
-              disabled={!form.formState.isValid || isPending}
+              disabled={!form.formState.isDirty || isPending}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する
