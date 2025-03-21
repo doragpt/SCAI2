@@ -113,13 +113,18 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
 
     const validatedData = jobSchema.parse(req.body);
 
-    // 店舗情報を認証済みユーザーから取得して、求人データを作成
+    // 求人データの作成（スネークケースのカラム名を使用）
     const jobData = {
-      ...validatedData,
-      business_name: req.user.displayName, // カラム名をスネークケースに修正
+      business_name: req.user.displayName,
       location: req.user.location,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      catch_phrase: validatedData.catchPhrase,
+      description: validatedData.description,
+      benefits: validatedData.benefits,
+      minimum_guarantee: Number(validatedData.minimumGuarantee) || 0,
+      maximum_guarantee: Number(validatedData.maximumGuarantee) || 0,
+      status: validatedData.status,
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
     log('info', '求人作成データ', { jobData });
@@ -132,7 +137,7 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     log('info', '求人作成成功', {
       userId: req.user.id,
       jobId: newJob.id,
-      businessName: newJob.businessName,
+      businessName: newJob.business_name,
       location: newJob.location,
     });
 

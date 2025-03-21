@@ -223,7 +223,7 @@ export const bodyMarkSchema = z.object({
 // Jobsテーブル定義を修正
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  businessName: text("business_name").notNull(),
+  business_name: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
@@ -234,7 +234,7 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
+  businessNameIdx: index("jobs_business_name_idx").on(table.business_name),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
