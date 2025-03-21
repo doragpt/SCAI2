@@ -84,6 +84,64 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mutate(data);
   };
 
+  // benefits選択フィールドのレンダリング
+  const renderBenefitsField = () => (
+    <FormField
+      control={form.control}
+      name="benefits"
+      render={() => (
+        <FormItem>
+          <div className="space-y-8">
+            {Object.entries(benefitTypes).map(([category, benefits]) => (
+              <div key={category}>
+                <h3 className="text-base font-medium mb-4">
+                  {benefitCategories[category as keyof typeof benefitCategories]}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {benefits.map((benefit) => (
+                    <FormField
+                      key={benefit}
+                      control={form.control}
+                      name="benefits"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={benefit}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(benefit)}
+                                onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
+                                  const newValue = checked
+                                    ? [...currentValue, benefit]
+                                    : currentValue.filter((value) => value !== benefit);
+                                  field.onChange(newValue);
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal cursor-pointer">
+                              {benefit}
+                            </FormLabel>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+                {category !== Object.keys(benefitTypes).slice(-1)[0] && (
+                  <Separator className="my-6" />
+                )}
+              </div>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -205,60 +263,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="benefits"
-                  render={() => (
-                    <FormItem>
-                      <div className="space-y-8">
-                        {Object.entries(benefitTypes).map(([category, benefits]) => (
-                          <div key={category}>
-                            <h3 className="text-base font-medium mb-4">
-                              {benefitCategories[category as keyof typeof benefitCategories]}
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {benefits.map((benefit) => (
-                                <FormField
-                                  key={benefit}
-                                  control={form.control}
-                                  name="benefits"
-                                  render={({ field }) => {
-                                    return (
-                                      <FormItem
-                                        key={benefit}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                      >
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(benefit)}
-                                            onCheckedChange={(checked) => {
-                                              const currentValue = field.value || [];
-                                              const newValue = checked
-                                                ? [...currentValue, benefit]
-                                                : currentValue.filter((value) => value !== benefit);
-                                              field.onChange(newValue);
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="font-normal cursor-pointer">
-                                          {benefit}
-                                        </FormLabel>
-                                      </FormItem>
-                                    );
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            {category !== Object.keys(benefitTypes).slice(-1)[0] && (
-                              <Separator className="my-6" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {renderBenefitsField()}
               </CardContent>
             </Card>
           </TabsContent>
