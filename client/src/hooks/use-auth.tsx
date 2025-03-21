@@ -75,7 +75,8 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
+      // パスを修正: /api/logout → /auth/logout
+      const response = await apiRequest("POST", "/auth/logout");
       if (!response.ok) {
         throw new Error("ログアウトに失敗しました");
       }
@@ -161,7 +162,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/check");
+        // パスを修正: /api/check → /check
+        const response = await apiRequest("GET", "/check");
         if (!response.ok) {
           if (response.status === 401) {
             return null;
