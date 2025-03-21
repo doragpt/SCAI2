@@ -734,7 +734,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddAllergy = (value: string) => {
     const allergies = form.getValues()?.allergies;
     if (!allergies) {
-      form.setValue("allergies", { types: [], others: [value], has_allergy: false });
+      form.setValue("allergies", { types: [], others: [value], hasAllergy: false });
       return;
     }
     
@@ -756,7 +756,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddBodyMark = useCallback((value: string) => {
     const bodyMark = form.getValues()?.body_mark;
     if (!bodyMark) {
-      form.setValue("body_mark", { has_body_mark: false, others: [value] });
+      form.setValue("body_mark", { hasBodyMark: false, others: [value] });
       return;
     }
     
@@ -795,12 +795,12 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddEstheNgOption = (value: string) => {
     const estheOptions = form.getValues()?.esthe_options;
     if (!estheOptions) {
-      form.setValue("esthe_options", { ng_options: [value], available: [] });
+      form.setValue("esthe_options", { ngOptions: [value], available: [] });
       return;
     }
     
-    const updated = [...(estheOptions.ng_options || []), value];
-    form.setValue("esthe_options.ng_options", updated);
+    const updated = [...(estheOptions.ngOptions || []), value];
+    form.setValue("esthe_options.ngOptions", updated);
   };
 
   // handleIdTypeChangeの修正
