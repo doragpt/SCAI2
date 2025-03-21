@@ -14,7 +14,7 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// 初期定義（先に定義）
+// Initial definitions (defined first)
 const interviewBenefits = [
   "見学だけでもOK", "体験入店OK", "店外面接OK", "面接交通費支給",
   "友達と面接OK", "オンライン面接OK", "写メ面接OK", "即日勤務OK", "入店特典あり"
@@ -47,7 +47,17 @@ const requirementsBenefits = [
   "グラマー体型", "tattoo(小)OK"
 ] as const;
 
-// 全待遇リストの定義
+// Adding serviceTypes here
+export const serviceTypes = [
+  "store-health",
+  "delivery-health",
+  "hotel-health",
+  "fuzoku-esthe",
+  "m-seikan",
+  "onakura"
+] as const;
+
+// All benefit list definition
 export const allBenefitTypes = [
   ...interviewBenefits,
   ...workStyleBenefits,
@@ -57,7 +67,7 @@ export const allBenefitTypes = [
   ...requirementsBenefits,
 ] as const;
 
-// カテゴリー別待遇の定義
+// Category-wise benefit definition
 export const benefitTypes = {
   interview: interviewBenefits,
   workStyle: workStyleBenefits,
@@ -76,7 +86,7 @@ export const benefitCategories = {
   requirements: "採用について"
 } as const;
 
-// その他の定数
+// Other constants
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
 export const photoTags = [
   "現在の髪色", "タトゥー", "傷", "アトピー",
@@ -135,6 +145,8 @@ export type WorkType = typeof workTypes[number];
 export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
+export type ServiceType = typeof serviceTypes[number]; // Added ServiceType here
+
 
 // Tables
 export const jobs = pgTable("jobs", {
@@ -279,9 +291,9 @@ export const bodyMarkSchema = z.object({
   others: z.array(z.string()).default([]),
 });
 
-// jobSchemaの定義
+// jobSchema definition
 export const jobSchema = z.object({
-  businessName: z.string(),  // 店舗名は必須だが編集不可
+  businessName: z.string(),  // Store name is required but cannot be edited
   location: z.string().min(1, "所在地を入力してください"),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
@@ -636,7 +648,8 @@ export const loginSchema = z.object({
 });
 
 export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory, ServiceType };
+export { serviceTypes }; // Added export here
 
 export interface JobListingResponse {
   jobs: Job[];
