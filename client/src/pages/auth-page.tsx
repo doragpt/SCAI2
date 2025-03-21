@@ -535,11 +535,17 @@ export default function AuthPage() {
                       <span className="text-destructive">※</span>は必須項目です
                     </p>
 
+                    {/* デバッグ情報を表示 */}
+                    <div className="mb-2 p-2 bg-gray-100 text-xs overflow-auto max-h-32">
+                      <p>isValid: {String(registerForm.formState.isValid)}</p>
+                      <p>isDirty: {String(registerForm.formState.isDirty)}</p>
+                      <p>errors: {JSON.stringify(registerForm.formState.errors)}</p>
+                    </div>
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={registerMutation.isPending || !registerForm.formState.isValid}
-                      onClick={() => console.log('Submit button clicked')}
+                      disabled={registerMutation.isPending}
+                      onClick={() => console.log('Submit button clicked', registerForm.formState)}
                     >
                       {registerMutation.isPending && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
