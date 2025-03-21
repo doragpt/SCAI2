@@ -92,22 +92,35 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
 // 求人作成 (店舗ユーザーのみ)
 router.post("/", authenticate, authorize("store"), async (req: any, res) => {
   try {
-    log('info', '求人作成を開始', {
+    // 認証済みユーザー情報の詳細なログ出力
+    log('info', '求人作成 - 認証済みユーザー情報', {
       userId: req.user.id,
+      displayName: req.user.displayName,
+      location: req.user.location,
       role: req.user.role,
-      data: req.body
+      isAuthenticated: req.isAuthenticated(),
     });
 
-    const validatedData = jobSchema.parse({
-      ...req.body,
-      businessName: req.user.displayName,
-      status: "draft" // デフォルトステータスを設定
-    });
+    const validatedData = jobSchema.parse(req.body);
 
+    if (!req.user.displayName || !req.user.location) {
+      log('error', '店舗情報が不足しています', {
+        userId: req.user.id,
+        displayName: req.user.displayName,
+        location: req.user.location,
+      });
+      return res.status(400).json({
+        message: "店舗情報が正しく設定されていません。管理者にお問い合わせください。"
+      });
+    }
+
+    // 店舗情報を認証済みユーザーから取得
     const [newJob] = await db
       .insert(jobs)
       .values({
         ...validatedData,
+        businessName: req.user.displayName, // 認証済みユーザーの店舗名を使用
+        location: req.user.location, // 認証済みユーザーの所在地を使用
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -115,14 +128,17 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
 
     log('info', '求人作成成功', {
       userId: req.user.id,
-      jobId: newJob.id
+      jobId: newJob.id,
+      businessName: newJob.businessName,
+      location: newJob.location,
     });
 
     return res.status(201).json(newJob);
   } catch (error) {
     log('error', '求人作成エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id
+      userId: req.user?.id,
+      requestBody: req.body,
     });
 
     if (error instanceof Error && error.name === 'ZodError') {
