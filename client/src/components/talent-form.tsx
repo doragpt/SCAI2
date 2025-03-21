@@ -795,12 +795,12 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddEstheNgOption = (value: string) => {
     const estheOptions = form.getValues()?.estheOptions;
     if (!estheOptions) {
-      form.setValue("estheOptions", { ngOptions: [value], available: [] });
+      form.setValue("esthe_options", { ng_options: [value], available: [] });
       return;
     }
     
     const updated = [...(estheOptions.ngOptions || []), value];
-    form.setValue("estheOptions.ngOptions", updated);
+    form.setValue("esthe_options.ng_options", updated);
   };
 
   // handleIdTypeChangeの修正
@@ -1375,7 +1375,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <h3 className="text-lg font-semibold mb-4">エステオプション</h3>
               <FormField
                 control={form.control}
-                name="hasEstheExperience"
+                name="has_esthe_experience"
                 render={({ field }) => (
                   <FormItem>
                     <SwitchField
@@ -1391,7 +1391,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 )}
               />
 
-              {form.watch("hasEstheExperience") && (
+              {form.watch("has_esthe_experience") && (
                 <Collapsible
                   open={isEstheOpen}
                   onOpenChange={setIsEstheOpen}
@@ -1400,7 +1400,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   <div className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="estheExperiencePeriod"
+                      name="esthe_experience_period"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>経験期間</FormLabel>
@@ -1414,7 +1414,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
                     <FormField
                       control={form.control}
-                      name="estheOptions.available"
+                      name="esthe_options.available"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>可能オプション（出来るものだけチェックをつけてください）</FormLabel>
@@ -1441,7 +1441,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
                     <FormField
                       control={form.control}
-                      name="estheOptions.ngOptions"
+                      name="esthe_options.ng_options"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>その他できないプレイやオプション</FormLabel>
