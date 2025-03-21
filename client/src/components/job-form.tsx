@@ -32,7 +32,6 @@ type JobFormProps = {
 
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
   const [descriptionLength, setDescriptionLength] = useState(0);
@@ -50,7 +49,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
-      location: initialData?.location || "" // Added for default value
     }
   });
 
@@ -64,7 +62,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
-        location: user?.location, // ユーザープロフィールから所在地を取得
       };
 
       const response = await apiRequest(method, endpoint, formattedData);
@@ -93,20 +90,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       });
     },
   });
-
-  // ユーザーの所在地が未設定の場合のバリデーション
-  if (!user?.location) {
-    return (
-      <div className="p-6 bg-destructive/10 rounded-lg">
-        <h3 className="text-lg font-semibold text-destructive mb-2">
-          所在地が未設定です
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          求人を作成するには、プロフィール設定で所在地を設定してください。
-        </p>
-      </div>
-    );
-  }
 
   const onSubmit = (data: JobFormData) => {
     mutate(data);
@@ -339,11 +322,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                     <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">店舗所在地</h3>
-                    <p>{user?.location}</p> {/* Added location to preview */}
                   </div>
 
                   <div>
