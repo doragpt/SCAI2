@@ -32,6 +32,8 @@ export function JobFormDialog({
     onOpenChange(false);
   };
 
+  console.log("JobFormDialog - initialData:", initialData); // デバッグログ追加
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleCloseAttempt}>
@@ -45,8 +47,19 @@ export function JobFormDialog({
             </DialogDescription>
           </DialogHeader>
           <JobForm
-            initialData={initialData}
-            onSuccess={() => onOpenChange(false)}
+            key={initialData?.id} // キーを追加して強制的に再レンダリング
+            initialData={{
+              catch_phrase: initialData?.catch_phrase || "",
+              description: initialData?.description || "",
+              benefits: initialData?.benefits || [],
+              minimum_guarantee: initialData?.minimum_guarantee || 0,
+              maximum_guarantee: initialData?.maximum_guarantee || 0,
+              status: initialData?.status || "draft",
+            }}
+            onSuccess={() => {
+              onOpenChange(false);
+              setShowConfirmClose(false);
+            }}
             onCancel={handleCloseAttempt}
           />
         </DialogContent>

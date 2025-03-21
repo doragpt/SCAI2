@@ -36,26 +36,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
-// ステータスのラベル
+// プロフィールのステータスラベル
 const profileStatusLabels = {
   draft: "未公開",
   published: "公開中"
@@ -66,6 +48,12 @@ const blogStatusLabels = {
   draft: "下書き",
   published: "公開中",
   scheduled: "予約投稿"
+} as const;
+
+// プランのラベル
+const planLabels = {
+  free: "無料プラン",
+  premium: "有料プラン"
 } as const;
 
 // 統計情報の型定義
@@ -88,11 +76,6 @@ interface DashboardStats {
   totalApplicationsCount: number;
 }
 
-// プランのラベル
-const planLabels = {
-  free: "無料プラン",
-  premium: "有料プラン"
-} as const;
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
@@ -102,13 +85,6 @@ export default function StoreDashboard() {
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [selectedTab, setSelectedTab] = useState("profile");
 
-  // 統計情報を取得
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: [QUERY_KEYS.STORE_STATS],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS),
-    staleTime: 300000, // 5分
-  });
-
   // 店舗プロフィール情報の取得
   const { data: profile, isLoading: profileLoading } = useQuery<StoreProfileResponse>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
@@ -116,10 +92,10 @@ export default function StoreDashboard() {
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
-    staleTime: 0, // キャッシュを即時無効化
-    cacheTime: 0, // キャッシュを使用しない
-    refetchOnMount: true, // コンポーネントマウント時に再フェッチ
-    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再フェッチ
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     onError: (error) => {
       console.error("Store profile fetch error:", error);
       toast({
@@ -128,6 +104,13 @@ export default function StoreDashboard() {
         description: error instanceof Error ? error.message : "店舗情報の取得に失敗しました",
       });
     },
+  });
+
+  // ダッシュボードの統計情報を取得
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: [QUERY_KEYS.STORE_STATS],
+    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS),
+    staleTime: 300000, // 5分
   });
 
   if (statsLoading || profileLoading) {

@@ -22,33 +22,25 @@ type StoreProfileFormProps = {
 function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [catchPhraseLength, setCatchPhraseLength] = useState(0);
-  const [descriptionLength, setDescriptionLength] = useState(0);
+  const [catchPhraseLength, setCatchPhraseLength] = useState(initialData?.catch_phrase?.length || 0);
+  const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
+
+  console.log("StoreProfileForm - initialData:", initialData); // デバッグログ追加
 
   const form = useForm<StoreProfileFormData>({
     resolver: zodResolver(storeProfileSchema),
-    mode: "onChange",
     defaultValues: {
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
-      status: "draft",
+      status: "draft" as JobStatus,
     }
-  });
-
-  // フォームの状態をデバッグ用にログ出力
-  console.log("Form State:", {
-    isValid: form.formState.isValid,
-    errors: form.formState.errors,
-    values: form.getValues(),
-    isDirty: form.formState.isDirty
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfileFormData) => {
-      // 送信前のデータを整形
       const formattedData = {
         ...data,
         minimum_guarantee: Number(data.minimum_guarantee) || 0,
@@ -89,8 +81,9 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
         description: "変更内容が保存されました。",
       });
 
-      form.reset(data);
-      onSuccess?.();
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error: Error) => {
       console.error("Mutation - onError:", error);
