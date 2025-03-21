@@ -45,17 +45,22 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     defaultValues: {
       businessName: initialData?.businessName || user?.username || "",
       location: initialData?.location || user?.location || "",
+      serviceType: initialData?.serviceType || "デリヘル",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
-    },
+    }
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
+      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
+      const method = initialData ? "PATCH" : "POST";
+
+      // フォームデータの送信前に必須フィールドを確認
       if (!user?.location || !user?.username) {
         throw new Error("ユーザー情報が不足しています");
       }
@@ -64,12 +69,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         businessName: user.username,
         location: user.location,
+        minimumGuarantee: Number(data.minimumGuarantee),
+        maximumGuarantee: Number(data.maximumGuarantee),
       };
 
-      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
-      const method = initialData ? "PATCH" : "POST";
-      const response = await apiRequest(method, endpoint, formattedData);
+      console.log('Sending data:', formattedData);
 
+      const response = await apiRequest(method, endpoint, formattedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -85,6 +91,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -94,6 +101,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
+    console.log('Form data:', data);
     mutate(data);
   };
 
@@ -118,14 +126,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   name="catchPhrase"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>キャッチコピー</FormLabel>
+                      <FormLabel className="font-medium">キャッチコピー</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           placeholder="キャッチコピーを入力してください（300文字以内）"
                           className="min-h-[100px]"
                           onChange={(e) => {
-                            field.onChange(e.target.value);
+                            field.onChange(e);
                             setCatchPhraseLength(e.target.value.length);
                           }}
                         />
@@ -143,14 +151,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>お仕事の内容</FormLabel>
+                      <FormLabel className="font-medium">お仕事の内容</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           placeholder="お仕事の内容を入力してください（9000文字以内）"
                           className="min-h-[200px]"
                           onChange={(e) => {
-                            field.onChange(e.target.value);
+                            field.onChange(e);
                             setDescriptionLength(e.target.value.length);
                           }}
                         />
@@ -178,15 +186,15 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     name="minimumGuarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>最低保証（円）</FormLabel>
+                        <FormLabel className="font-medium">最低保証（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：30000"
                           />
                         </FormControl>
@@ -200,15 +208,15 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     name="maximumGuarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>最高保証（円）</FormLabel>
+                        <FormLabel className="font-medium">最高保証（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：50000"
                           />
                         </FormControl>
@@ -292,6 +300,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               type="button"
               variant="outline"
               onClick={onCancel}
+              disabled={isPending}
             >
               キャンセル
             </Button>
