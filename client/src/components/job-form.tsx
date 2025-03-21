@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { storeProfileSchema, type StoreProfileFormData, benefitTypes, benefitCategories, type JobStatus } from "@shared/schema";
+import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -13,62 +13,50 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 
-type StoreProfileFormProps = {
-  initialData?: StoreProfileFormData;
+type JobFormProps = {
+  initialData?: StoreProfile;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
+export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(initialData?.catch_phrase?.length || 0);
   const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
 
-  console.log("StoreProfileForm - initialData:", initialData); // デバッグログ追加
-
-  const form = useForm<StoreProfileFormData>({
+  const form = useForm<StoreProfile>({
     resolver: zodResolver(storeProfileSchema),
     defaultValues: {
+      ...initialData,
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
-      status: "draft" as JobStatus,
+      status: initialData?.status || "draft",
     }
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: StoreProfileFormData) => {
+    mutationFn: async (data: StoreProfile) => {
       const formattedData = {
         ...data,
         minimum_guarantee: Number(data.minimum_guarantee) || 0,
         maximum_guarantee: Number(data.maximum_guarantee) || 0,
-        status: "draft" as JobStatus,
+        status: data.status || "draft",
         benefits: data.benefits || [],
       };
 
-      console.log("Mutation - Request data:", formattedData);
-
-      try {
-        const response = await apiRequest("PATCH", "/api/store/profile", formattedData);
-        if (!response.ok) {
-          const error = await response.json();
-          console.error("Mutation - API Error:", error);
-          throw new Error(error.message || "店舗情報の保存に失敗しました");
-        }
-
-        const result = await response.json();
-        console.log("Mutation - API Success:", result);
-        return result;
-      } catch (error) {
-        console.error("Mutation - Request Error:", error);
-        throw error;
+      const response = await apiRequest("PATCH", "/api/store/profile", formattedData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "店舗情報の保存に失敗しました");
       }
+
+      return response.json();
     },
     onSuccess: (data) => {
-      console.log("Mutation - onSuccess:", data);
       queryClient.invalidateQueries({ 
         queryKey: [QUERY_KEYS.STORE_PROFILE],
       });
@@ -86,7 +74,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       }
     },
     onError: (error: Error) => {
-      console.error("Mutation - onError:", error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -95,20 +82,13 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
     },
   });
 
-  const onSubmit = (data: StoreProfileFormData) => {
-    console.log("Submitting form data:", data);
+  const onSubmit = (data: StoreProfile) => {
     mutate(data);
   };
 
   return (
     <Form {...form}>
-      <form 
-        onSubmit={(e) => {
-          console.log("Form submit event triggered");
-          form.handleSubmit(onSubmit)(e);
-        }} 
-        className="space-y-8"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="catch_phrase"
@@ -215,7 +195,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
               <div className="space-y-8">
                 {Object.entries(benefitTypes).map(([category, benefits]) => (
                   <div key={category}>
-                    <h3 className="text-base font-medium mb-4">
+                    <h3 className="text-lg font-semibold mb-4">
                       {benefitCategories[category as keyof typeof benefitCategories]}
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -283,5 +263,3 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
     </Form>
   );
 }
-
-export { StoreProfileForm as JobForm };

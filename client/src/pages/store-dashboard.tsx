@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type StoreProfile, type StoreProfileResponse } from "@shared/schema";
+import { type StoreProfile } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,20 +9,12 @@ import {
   Building2,
   PenBox,
   FileEdit,
-  Eye,
   Settings,
   Users,
-  BarChart,
-  Plus,
-  Clock,
-  Calendar,
   LineChart,
-  MessageCircle,
+  Plus,
   LogOut,
   Loader2,
-  HelpCircle,
-  Trash,
-  MoreVertical,
   AlertCircle,
   Pencil
 } from "lucide-react";
@@ -76,7 +68,6 @@ interface DashboardStats {
   totalApplicationsCount: number;
 }
 
-
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
@@ -86,9 +77,15 @@ export default function StoreDashboard() {
   const [selectedTab, setSelectedTab] = useState("profile");
 
   // 店舗プロフィール情報の取得
-  const { data: profile, isLoading: profileLoading } = useQuery<StoreProfileResponse>({
+  const { data: profile, isLoading: profileLoading } = useQuery<StoreProfile>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
-    queryFn: () => apiRequest("GET", "/api/store/profile"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/store/profile");
+      if (!response.ok) {
+        throw new Error("店舗情報の取得に失敗しました");
+      }
+      return response.json();
+    },
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
@@ -96,14 +93,6 @@ export default function StoreDashboard() {
     cacheTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    onError: (error) => {
-      console.error("Store profile fetch error:", error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "店舗情報の取得に失敗しました",
-      });
-    },
   });
 
   // ダッシュボードの統計情報を取得
@@ -392,7 +381,7 @@ export default function StoreDashboard() {
                   </div>
                   <div>
                     <p className="font-medium">所在地</p>
-                    <p className="text-sm text-muted-foreground">{user?.location || "未設定"}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.location || "未設定"}</p>
                   </div>
                   <Button variant="outline" className="w-full" onClick={() => window.open('/store/settings', '_blank')}>
                     <Settings className="h-4 w-4 mr-2" />
