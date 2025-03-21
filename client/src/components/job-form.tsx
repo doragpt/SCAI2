@@ -1,18 +1,4 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { storeProfileSchema, type StoreProfileFormData } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { benefitTypes, benefitCategories } from "@shared/schema";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/constants/queryKeys";
-import { apiRequest } from "@/lib/queryClient";
+// Previous imports remain the same...
 
 type StoreProfileFormProps = {
   initialData?: StoreProfileFormData;

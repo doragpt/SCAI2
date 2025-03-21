@@ -364,6 +364,8 @@ export const storeProfileSchema = z.object({
   status: z.enum(jobStatusTypes).default("draft"),
 });
 
+// 型定義の追加
+export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -645,6 +647,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Application, InsertApplication };
