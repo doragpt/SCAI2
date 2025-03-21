@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ type JobFormProps = {
 
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
   const [descriptionLength, setDescriptionLength] = useState(0);
@@ -42,7 +44,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     resolver: zodResolver(jobSchema),
     mode: "onChange",
     defaultValues: {
-      businessName: initialData?.businessName || "",
+      businessName: initialData?.businessName || user?.businessName || "",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -60,6 +62,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       // APIリクエストデータの整形
       const formattedData = {
         ...data,
+        location: user?.location, // ユーザー情報から所在地を取得
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
       };
