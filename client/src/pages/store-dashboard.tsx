@@ -116,6 +116,10 @@ export default function StoreDashboard() {
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
+    staleTime: 0, // キャッシュを即時無効化
+    cacheTime: 0, // キャッシュを使用しない
+    refetchOnMount: true, // コンポーネントマウント時に再フェッチ
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再フェッチ
     onError: (error) => {
       console.error("Store profile fetch error:", error);
       toast({

@@ -34,7 +34,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
-      status: "draft", // Corrected default value
+      status: initialData?.status || "draft",
     }
   });
 
@@ -77,14 +77,26 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
     },
     onSuccess: (data) => {
       console.log("Mutation - onSuccess:", data);
+
+      // キャッシュの無効化と再フェッチ
       queryClient.invalidateQueries({ 
         queryKey: [QUERY_KEYS.STORE_PROFILE],
-        refetchType: 'all'
       });
+
+      // ダッシュボードの統計情報も更新
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.STORE_STATS],
+      });
+
       toast({
         title: "店舗情報を保存しました",
         description: "変更内容が保存されました。",
       });
+
+      // フォームをリセット
+      form.reset(data);
+
+      // 成功時のコールバックを実行
       onSuccess?.();
     },
     onError: (error: Error) => {
