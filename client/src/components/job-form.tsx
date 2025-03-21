@@ -34,11 +34,11 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
-      status: initialData?.status || "draft",
+      status: "draft", // Corrected default value
     }
   });
 
-  // デバッグ用のログ出力
+  // フォームの状態をデバッグ用にログ出力
   console.log("Form State:", {
     isValid: form.formState.isValid,
     errors: form.formState.errors,
@@ -48,25 +48,32 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfileFormData) => {
-      // 数値型のフィールドを適切に変換
+      // 送信前のデータを整形
       const formattedData = {
         ...data,
-        minimum_guarantee: Number(data.minimum_guarantee),
-        maximum_guarantee: Number(data.maximum_guarantee),
+        minimum_guarantee: Number(data.minimum_guarantee) || 0,
+        maximum_guarantee: Number(data.maximum_guarantee) || 0,
+        status: data.status || "draft",
+        benefits: data.benefits || [],
       };
 
       console.log("Mutation - Request data:", formattedData);
 
-      const response = await apiRequest("PATCH", "/api/store/profile", formattedData);
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("Mutation - API Error:", error);
-        throw new Error(error.message || "店舗情報の保存に失敗しました");
-      }
+      try {
+        const response = await apiRequest("PATCH", "/api/store/profile", formattedData);
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("Mutation - API Error:", error);
+          throw new Error(error.message || "店舗情報の保存に失敗しました");
+        }
 
-      const result = await response.json();
-      console.log("Mutation - API Success:", result);
-      return result;
+        const result = await response.json();
+        console.log("Mutation - API Success:", result);
+        return result;
+      } catch (error) {
+        console.error("Mutation - Request Error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log("Mutation - onSuccess:", data);
@@ -85,7 +92,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error.message,
+        description: error.message || "店舗情報の保存に失敗しました",
       });
     },
   });
@@ -195,6 +202,23 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <input 
+                  type="hidden" 
+                  {...field} 
+                  value={field.value || "draft"}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
