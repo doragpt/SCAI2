@@ -1269,7 +1269,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         <div key={option} className="flex items-center space-x-2">
                           <Checkbox
                             id={`ng-${option}`}
-                            checked={field.value.common.includes(option)}
+                            checked={field.value?.common?.includes(option) || false}
                             onCheckedChange={(checked) => {
                               handleNgOptionChange(option, checked === true);
                             }}
@@ -1286,7 +1286,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     </div>
                     <div className="space-y-2 mt-4">
                       <div className="flex flex-wrap gap-2">
-                        {field.value.others.map((option, index) => (
+                        {field.value?.others?.map((option, index) => (
                           <Badge key={index} variant="outline" className="flex items-center gap-1">
                             {option}
                             <Button
@@ -1388,7 +1388,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           <FormLabel>その他できないプレイやオプション</FormLabel>
                           <div className="space-y-2">
                             <div className="flex flex-wrap gap-2">
-                              {field.value.map((option, index) => (
+                              {field.value?.map((option, index) => (
                                 <Badge key={index} variant="outline" className="flex items-center gap-1">
                                   {option}
                                   <Button
@@ -1396,7 +1396,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                     size="sm"
                                     className="h-4 w-4 p-0 hover:bg-transparent"
                                     onClick={() => {
-                                      const updated = field.value.filter((_, i) => i !== index);
+                                      const updated = field.value?.filter((_, i) => i !== index) || [];
                                       form.setValue("estheOptions.ngOptions", updated);
                                     }}
                                   >
@@ -1465,7 +1465,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             size="sm"
                             className="h-4 w-4 p-0 hover:bg-transparent"
                             onClick={() => {
-                              const updated = form.getValues().allergies.others.filter((_, i) => i !== index);
+                              const updated = form.getValues()?.allergies?.others?.filter((_, i) => i !== index) || [];
                               form.setValue("allergies.others", updated);
                             }}
                           >
@@ -1530,7 +1530,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               size="sm"
                               className="h-4 w-4 p-0 hover:bg-transparent"
                               onClick={() => {
-                                const updated = form.getValues().smoking.others.filter((_, i) => i !== index);
+                                const updated = form.getValues()?.smoking?.others?.filter((_, i) => i !== index) || [];
                                 form.setValue("smoking.others", updated);
                               }}
                             >
