@@ -16,7 +16,10 @@ import {
   LogOut,
   Loader2,
   AlertCircle,
-  Pencil
+  Pencil,
+  TrendingUp,
+  Eye,
+  UserPlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -25,6 +28,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
@@ -120,7 +124,7 @@ export default function StoreDashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold">{user?.display_name}</h1>
+              <h1 className="text-2xl font-bold text-primary">{user?.display_name}</h1>
               <p className="text-sm text-muted-foreground">
                 最終更新: {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })}
               </p>
@@ -149,6 +153,78 @@ export default function StoreDashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* ヒーローセクション */}
+        <div className="mb-8 bg-primary/5 rounded-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 新規応募 */}
+            <Card className="bg-white/50 backdrop-blur">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">新規応募</p>
+                    <h3 className="text-3xl font-bold text-primary mt-1">
+                      {stats?.newInquiriesCount || 0}
+                    </h3>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserPlus className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <Progress 
+                  value={stats?.newInquiriesCount ? (stats.newInquiriesCount / (stats.totalApplicationsCount || 1)) * 100 : 0} 
+                  className="mt-4"
+                />
+              </CardContent>
+            </Card>
+
+            {/* 本日のアクセス */}
+            <Card className="bg-white/50 backdrop-blur">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">本日のアクセス</p>
+                    <h3 className="text-3xl font-bold text-primary mt-1">
+                      {stats?.todayPageViews || 0}
+                    </h3>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm">
+                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                  <span className="text-green-500 font-medium">
+                    {stats?.todayUniqueVisitors || 0}
+                  </span>
+                  <span className="text-muted-foreground ml-1">ユニークユーザー</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 対応状況 */}
+            <Card className="bg-white/50 backdrop-blur">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">対応済み応募</p>
+                    <h3 className="text-3xl font-bold text-primary mt-1">
+                      {stats?.completedInquiriesCount || 0}
+                    </h3>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <Progress 
+                  value={stats?.completedInquiriesCount ? (stats.completedInquiriesCount / (stats.totalApplicationsCount || 1)) * 100 : 0} 
+                  className="mt-4"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* 既存のグリッドコンテンツ */}
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
