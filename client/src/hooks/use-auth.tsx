@@ -33,7 +33,8 @@ function useLoginMutation() {
       const expectedRole = currentPath.includes('manager') ? 'store' : 'talent';
       credentials.role = expectedRole;
 
-      const response = await apiRequest("POST", "/api/login", credentials);
+      // パスを修正: /api/login → /auth/login
+      const response = await apiRequest("POST", "/auth/login", credentials);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "ログインに失敗しました");
@@ -114,7 +115,8 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const response = await apiRequest("POST", "/api/auth/register", data);
+      // パスを修正: /api/auth/register → /auth/register
+      const response = await apiRequest("POST", "/auth/register", data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "登録に失敗しました");
