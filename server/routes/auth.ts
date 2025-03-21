@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { authenticate } from '../middleware/auth';
-import { talentRegisterFormSchema } from '@shared/schema';
+import { talentRegisterFormSchema, CupSize, FaceVisibility } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { log } from '../utils/logger';
@@ -158,6 +158,17 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
         // 登録フォームからデータを取得
         const { lastNameKana, firstNameKana, nearestStation, height, weight, cupSize, faceVisibility } = validatedData;
         
+        // ログ出力
+        log('info', 'プロフィール初期化データ', {
+          lastNameKana,
+          firstNameKana,
+          nearestStation,
+          height,
+          weight,
+          cupSize,
+          faceVisibility
+        });
+        
         // 基本的なプロファイル情報を作成
         const initialProfile = {
           location: user.location || '',
@@ -172,13 +183,13 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
           can_provide_residence_record: false,
           height: height,
           weight: weight,
-          cup_size: cupSize,
+          cup_size: cupSize as "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K", // 型アサーションで明示的に型を指定
           bust: null,
           waist: null,
           hip: null,
           body_mark: { has_body_mark: false, details: '', others: [] },
           smoking: { enabled: false, types: [], others: [] },
-          face_visibility: faceVisibility,
+          face_visibility: faceVisibility as "全出し" | "口だけ隠し" | "目だけ隠し" | "全隠し", // 型アサーションで明示的に型を指定
           has_esthe_experience: false,
           esthe_experience_period: '',
           esthe_options: { available: [], ng_options: [] },
