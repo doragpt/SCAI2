@@ -21,7 +21,6 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // PostgreSQLセッションストアの設定
     this.sessionStore = new PgSession({
       pool,
       tableName: 'session',
@@ -43,30 +42,28 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
 
-      // データベースの値を優先し、未設定の場合のみデフォルト値を使用
       const user: User = {
         id: result.id,
         email: result.email,
-        username: result.username || result.email.split('@')[0],
+        username: result.username,
         password: result.password,
-        birthDate: result.birthDate || null,
-        location: result.location || '東京都',
-        preferredLocations: Array.isArray(result.preferredLocations) && result.preferredLocations.length > 0
-          ? result.preferredLocations
-          : [],
+        birth_date: result.birth_date,
+        location: result.location,
+        service_type: result.service_type,
+        preferred_locations: result.preferred_locations,
         role: result.role,
-        displayName: result.displayName || result.username || result.email.split('@')[0],
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        display_name: result.display_name,
+        created_at: result.created_at,
+        updated_at: result.updated_at
       };
 
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
         username: user.username,
-        birthDate: user.birthDate,
+        role: user.role,
         location: user.location,
-        preferredLocations: user.preferredLocations
+        service_type: user.service_type
       });
 
       return user;
@@ -98,21 +95,21 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate,
+        birth_date: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
+        service_type: result.service_type,
+        preferred_locations: result.preferred_locations,
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        display_name: result.display_name,
+        created_at: result.created_at,
+        updated_at: result.updated_at
       };
 
       log('info', 'ユーザー取得成功', {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        service_type: user.service_type
       });
 
       return user;
@@ -129,7 +126,8 @@ export class DatabaseStorage implements IStorage {
     try {
       log('info', '新規ユーザー作成開始', {
         email: insertUser.email,
-        role: insertUser.role
+        role: insertUser.role,
+        service_type: insertUser.service_type
       });
 
       const [result] = await db
@@ -138,13 +136,14 @@ export class DatabaseStorage implements IStorage {
           email: insertUser.email,
           username: insertUser.username,
           password: insertUser.password,
-          birthDate: insertUser.birthDate,
+          birth_date: insertUser.birth_date,
           location: insertUser.location,
-          preferredLocations: insertUser.preferredLocations,
+          service_type: insertUser.service_type,
+          preferred_locations: insertUser.preferred_locations,
           role: insertUser.role,
-          displayName: insertUser.displayName || insertUser.username,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          display_name: insertUser.display_name,
+          created_at: new Date(),
+          updated_at: new Date()
         })
         .returning();
 
@@ -157,21 +156,21 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate,
+        birth_date: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
+        service_type: result.service_type,
+        preferred_locations: result.preferred_locations,
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        display_name: result.display_name,
+        created_at: result.created_at,
+        updated_at: result.updated_at
       };
 
       log('info', '新規ユーザー作成完了', {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        service_type: user.service_type
       });
 
       return user;
@@ -190,8 +189,7 @@ export class DatabaseStorage implements IStorage {
 
       const updateData = {
         ...data,
-        displayName: data.username || data.displayName,
-        updatedAt: new Date()
+        updated_at: new Date()
       };
 
       const [result] = await db
@@ -209,21 +207,21 @@ export class DatabaseStorage implements IStorage {
         email: result.email,
         username: result.username,
         password: result.password,
-        birthDate: result.birthDate,
+        birth_date: result.birth_date,
         location: result.location,
-        preferredLocations: Array.isArray(result.preferredLocations)
-          ? result.preferredLocations
-          : [],
+        service_type: result.service_type,
+        preferred_locations: result.preferred_locations,
         role: result.role,
-        displayName: result.displayName || result.username,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt
+        display_name: result.display_name,
+        created_at: result.created_at,
+        updated_at: result.updated_at
       };
 
       log('info', 'ユーザー更新成功', {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        service_type: user.service_type
       });
 
       return user;

@@ -48,28 +48,20 @@ router.get("/store", authenticate, authorize("store"), async (req: any, res) => 
   try {
     log('info', '店舗求人一覧の取得を開始', {
       userId: req.user.id,
+      displayName: req.user.display_name,
       role: req.user.role
     });
 
     const jobListings = await db
-      .select({
-        id: jobs.id,
-        businessName: jobs.businessName,
-        location: jobs.location,
-        serviceType: jobs.serviceType,
-        title: jobs.title,
-        mainCatch: jobs.mainCatch,
-        mainDescription: jobs.mainDescription,
-        selectedBenefits: jobs.selectedBenefits,
-        minimumGuarantee: jobs.minimumGuarantee,
-        maximumGuarantee: jobs.maximumGuarantee,
-        status: jobs.status,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt
-      })
+      .select()
       .from(jobs)
-      .where(eq(jobs.businessName, req.user.displayName))
-      .orderBy(desc(jobs.createdAt));
+      .where(eq(jobs.business_name, req.user.display_name))
+      .orderBy(desc(jobs.created_at));
+
+    log('info', '店舗求人一覧取得成功', {
+      userId: req.user.id,
+      jobCount: jobListings.length
+    });
 
     return res.json({
       jobs: jobListings,
@@ -94,38 +86,36 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     // 認証済みユーザー情報の詳細なログ出力
     log('info', '求人作成 - 認証済みユーザー情報', {
       userId: req.user.id,
-      displayName: req.user.displayName,
+      displayName: req.user.display_name,
       location: req.user.location,
-      serviceType: req.user.serviceType,
+      serviceType: req.user.service_type,
       role: req.user.role,
       isAuthenticated: req.isAuthenticated(),
     });
 
-    if (!req.user.displayName || !req.user.location || !req.user.serviceType) {
+    // 店舗情報の確認
+    if (!req.user.display_name || !req.user.location || !req.user.service_type) {
       log('error', '店舗情報が不足しています', {
         userId: req.user.id,
-        displayName: req.user.displayName,
+        displayName: req.user.display_name,
         location: req.user.location,
-        serviceType: req.user.serviceType,
+        serviceType: req.user.service_type,
       });
       return res.status(400).json({
         message: "店舗情報が正しく設定されていません。管理者にお問い合わせください。"
       });
     }
 
-    const validatedData = jobSchema.parse(req.body);
-
-    // 求人データの作成（スネークケースのカラム名を使用）
     const jobData = {
-      business_name: req.user.displayName,
+      business_name: req.user.display_name,
       location: req.user.location,
-      service_type: req.user.serviceType,
-      catch_phrase: validatedData.catchPhrase,
-      description: validatedData.description,
-      benefits: validatedData.benefits,
-      minimum_guarantee: Number(validatedData.minimumGuarantee) || 0,
-      maximum_guarantee: Number(validatedData.maximumGuarantee) || 0,
-      status: validatedData.status,
+      service_type: req.user.service_type,
+      catch_phrase: req.body.catch_phrase,
+      description: req.body.description,
+      benefits: req.body.benefits,
+      minimum_guarantee: Number(req.body.minimum_guarantee) || 0,
+      maximum_guarantee: Number(req.body.maximum_guarantee) || 0,
+      status: req.body.status,
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -152,13 +142,6 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       userId: req.user?.id,
       requestBody: req.body,
     });
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return res.status(400).json({
-        message: '入力内容に誤りがあります',
-        details: error.message
-      });
-    }
 
     return res.status(500).json({ message: "求人情報の作成に失敗しました" });
   }
