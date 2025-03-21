@@ -225,17 +225,18 @@ export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   business_name: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
-  catchPhrase: text("catch_phrase").notNull(),
+  service_type: text("service_type", { enum: serviceTypes }).notNull(),
+  catch_phrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
-  minimumGuarantee: integer("minimum_guarantee").default(0),
-  maximumGuarantee: integer("maximum_guarantee").default(0),
+  minimum_guarantee: integer("minimum_guarantee").default(0),
+  maximum_guarantee: integer("maximum_guarantee").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  businessNameIdx: index("jobs_business_name_idx").on(table.business_name),
-  statusIdx: index("jobs_status_idx").on(table.status),
+  business_name_idx: index("jobs_business_name_idx").on(table.business_name),
+  status_idx: index("jobs_status_idx").on(table.status),
 }));
 
 export const users = pgTable("users", {
@@ -243,88 +244,89 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   username: text("username").notNull(),
   password: text("password").notNull(),
-  birthDate: text("birth_date").notNull(),
+  birth_date: text("birth_date").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  service_type: text("service_type", { enum: serviceTypes }), // 店舗ユーザーの場合のみ使用
+  preferred_locations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   role: text("role", { enum: ["talent", "store"] }).notNull().default("talent"),
-  displayName: text("display_name").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  display_name: text("display_name").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
-  jobId: integer("job_id").notNull().references(() => jobs.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  job_id: integer("job_id").notNull().references(() => jobs.id),
+  user_id: integer("user_id").notNull().references(() => users.id),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
   message: text("message"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  jobIdIdx: index("applications_job_id_idx").on(table.jobId),
-  userIdIdx: index("applications_user_id_idx").on(table.userId),
-  statusIdx: index("applications_status_idx").on(table.status),
+  job_id_idx: index("applications_job_id_idx").on(table.job_id),
+  user_id_idx: index("applications_user_id_idx").on(table.user_id),
+  status_idx: index("applications_status_idx").on(table.status),
 }));
 
 export const talentProfiles = pgTable("talent_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  lastName: text("last_name").notNull(),
-  firstName: text("first_name").notNull(),
-  lastNameKana: text("last_name_kana").notNull(),
-  firstNameKana: text("first_name_kana").notNull(),
+  user_id: integer("user_id").notNull().references(() => users.id),
+  last_name: text("last_name").notNull(),
+  first_name: text("first_name").notNull(),
+  last_name_kana: text("last_name_kana").notNull(),
+  first_name_kana: text("first_name_kana").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
-  nearestStation: text("nearest_station").notNull(),
-  availableIds: jsonb("available_ids").$type<{
+  nearest_station: text("nearest_station").notNull(),
+  available_ids: jsonb("available_ids").$type<{
     types: IdType[];
     others: string[];
   }>().default({ types: [], others: [] }).notNull(),
-  canProvideResidenceRecord: boolean("can_provide_residence_record").default(false),
+  can_provide_residence_record: boolean("can_provide_residence_record").default(false),
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
-  cupSize: text("cup_size", { enum: cupSizes }).notNull(),
+  cup_size: text("cup_size", { enum: cupSizes }).notNull(),
   bust: integer("bust"),
   waist: integer("waist"),
   hip: integer("hip"),
-  faceVisibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
-  canPhotoDiary: boolean("can_photo_diary").default(false),
-  canHomeDelivery: boolean("can_home_delivery").default(false),
-  ngOptions: jsonb("ng_options").$type<{
+  face_visibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
+  can_photo_diary: boolean("can_photo_diary").default(false),
+  can_home_delivery: boolean("can_home_delivery").default(false),
+  ng_options: jsonb("ng_options").$type<{
     common: CommonNgOption[];
     others: string[];
   }>().default({ common: [], others: [] }).notNull(),
   allergies: jsonb("allergies").$type<{
     types: AllergyType[];
     others: string[];
-    hasAllergy: boolean;
-  }>().default({ types: [], others: [], hasAllergy: false }).notNull(),
+    has_allergy: boolean;
+  }>().default({ types: [], others: [], has_allergy: false }).notNull(),
   smoking: jsonb("smoking").$type<{
     enabled: boolean;
     types: SmokingType[];
     others: string[];
   }>().default({ enabled: false, types: [], others: [] }).notNull(),
-  hasSnsAccount: boolean("has_sns_account").default(false),
-  snsUrls: jsonb("sns_urls").$type<string[]>().default([]).notNull(),
-  currentStores: jsonb("current_stores").$type<{
-    storeName: string;
-    stageName: string;
+  has_sns_account: boolean("has_sns_account").default(false),
+  sns_urls: jsonb("sns_urls").$type<string[]>().default([]).notNull(),
+  current_stores: jsonb("current_stores").$type<{
+    store_name: string;
+    stage_name: string;
   }[]>().default([]).notNull(),
-  previousStores: jsonb("previous_stores").$type<{
-    storeName: string;
+  previous_stores: jsonb("previous_stores").$type<{
+    store_name: string;
   }[]>().default([]).notNull(),
-  photoDiaryUrls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
-  selfIntroduction: text("self_introduction"),
+  photo_diary_urls: jsonb("photo_diary_urls").$type<string[]>().default([]).notNull(),
+  self_introduction: text("self_introduction"),
   notes: text("notes"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  estheOptions: jsonb("esthe_options").$type<{
+  updated_at: timestamp("updated_at").defaultNow(),
+  esthe_options: jsonb("esthe_options").$type<{
     available: EstheOption[];
-    ngOptions: string[];
-  }>().default({ available: [], ngOptions: [] }).notNull(),
-  hasEstheExperience: boolean("has_esthe_experience").default(false),
-  estheExperiencePeriod: text("esthe_experience_period"),
-  preferredLocations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
-  ngLocations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
-  bodyMark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
+    ng_options: string[];
+  }>().default({ available: [], ng_options: [] }).notNull(),
+  has_esthe_experience: boolean("has_esthe_experience").default(false),
+  esthe_experience_period: text("esthe_experience_period"),
+  preferred_locations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
+  ng_locations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
+  body_mark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
     hasBodyMark: false,
     details: "",
     others: []
@@ -339,11 +341,11 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
 
 export const applicationsRelations = relations(applications, ({ one }) => ({
   job: one(jobs, {
-    fields: [applications.jobId],
+    fields: [applications.job_id],
     references: [jobs.id],
   }),
   user: one(users, {
-    fields: [applications.userId],
+    fields: [applications.user_id],
     references: [users.id],
   }),
 }));
@@ -357,14 +359,14 @@ export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 export type JobResponse = {
   id: number;
-  catchPhrase: string;
+  catch_phrase: string;
   description: string;
   benefits: BenefitType[];
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
+  minimum_guarantee?: number;
+  maximum_guarantee?: number;
   status: "draft" | "published" | "closed";
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 };
 
 // Schemas
@@ -377,22 +379,22 @@ export const loginSchema = z.object({
 
 // jobSchemaの修正（フォームで扱う項目のみを定義）
 export const jobSchema = z.object({
-  catchPhrase: z.string()
+  catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
   description: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   benefits: z.array(z.enum(allBenefitTypes)).default([]),
-  minimumGuarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
-  maximumGuarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
+  minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
+  maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
 });
 
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 })
-  .omit({ id: true, createdAt: true, updatedAt: true });
+  .omit({ id: true, created_at: true, updated_at: true });
 
 export type LoginData = z.infer<typeof loginSchema>;
 
@@ -410,78 +412,78 @@ export type UserResponse = {
   id: number;
   email: string;
   username: string;
-  birthDate: string;
+  birth_date: string;
   location: string;
-  preferredLocations: string[];
+  preferred_locations: string[];
   role: "talent" | "store";
 };
 
 export const talentProfileSchema = z.object({
-  lastName: z.string().min(1, "姓を入力してください"),
-  firstName: z.string().min(1, "名を入力してください"),
-  lastNameKana: z.string()
+  last_name: z.string().min(1, "姓を入力してください"),
+  first_name: z.string().min(1, "名を入力してください"),
+  last_name_kana: z.string()
     .min(1, "姓（カナ）を入力してください")
     .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
-  firstNameKana: z.string()
+  first_name_kana: z.string()
     .min(1, "名（カナ）を入力してください")
     .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
   location: z.enum(prefectures, {
     required_error: "都道府県を選択してください",
   }),
-  nearestStation: z.string().min(1, "最寄り駅を入力してください"),
-  availableIds: z.object({
+  nearest_station: z.string().min(1, "最寄り駅を入力してください"),
+  available_ids: z.object({
     types: z.array(z.enum(idTypes)).min(1, "身分証明書を1つ以上選択してください"),
     others: z.array(z.string()).default([]),
   }).default({ types: [], others: [] }),
-  canProvideResidenceRecord: z.boolean().default(false),
+  can_provide_residence_record: z.boolean().default(false),
   height: z.number().min(100).max(200),
   weight: z.number().min(30).max(150),
-  cupSize: z.enum(cupSizes, {
+  cup_size: z.enum(cupSizes, {
     required_error: "カップサイズを選択してください",
   }),
   bust: z.number().nullable(),
   waist: z.number().nullable(),
   hip: z.number().nullable(),
-  faceVisibility: z.enum(faceVisibilityTypes, {
+  face_visibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
-  canPhotoDiary: z.boolean().default(false),
-  canHomeDelivery: z.boolean().default(false),
-  ngOptions: z.object({
+  can_photo_diary: z.boolean().default(false),
+  can_home_delivery: z.boolean().default(false),
+  ng_options: z.object({
     common: z.array(z.enum(commonNgOptions)).default([]),
     others: z.array(z.string()).default([]),
   }).default({ common: [], others: [] }),
   allergies: z.object({
     types: z.array(z.enum(allergyTypes)).default([]),
     others: z.array(z.string()).default([]),
-    hasAllergy: z.boolean().default(false),
-  }).default({ types: [], others: [], hasAllergy: false }),
+    has_allergy: z.boolean().default(false),
+  }).default({ types: [], others: [], has_allergy: false }),
   smoking: z.object({
     enabled: z.boolean().default(false),
     types: z.array(z.enum(smokingTypes)).default([]),
     others: z.array(z.string()).default([]),
   }).default({ enabled: false, types: [], others: [] }),
-  hasSnsAccount: z.boolean().default(false),
-  snsUrls: z.array(z.string()).default([]),
-  currentStores: z.array(z.object({
-    storeName: z.string(),
-    stageName: z.string(),
+  has_sns_account: z.boolean().default(false),
+  sns_urls: z.array(z.string()).default([]),
+  current_stores: z.array(z.object({
+    store_name: z.string(),
+    stage_name: z.string(),
   })).default([]),
-  previousStores: z.array(z.object({
-    storeName: z.string(),
+  previous_stores: z.array(z.object({
+    store_name: z.string(),
   })).default([]),
-  photoDiaryUrls: z.array(z.string()).default([]),
-  selfIntroduction: z.string().optional(),
+  photo_diary_urls: z.array(z.string()).default([]),
+  self_introduction: z.string().optional(),
   notes: z.string().optional(),
-  estheOptions: z.object({
+  esthe_options: z.object({
     available: z.array(z.enum(estheOptions)).default([]),
-    ngOptions: z.array(z.string()).default([]),
-  }).default({ available: [], ngOptions: [] }),
-  hasEstheExperience: z.boolean().default(false),
-  estheExperiencePeriod: z.string().optional(),
-  preferredLocations: z.array(z.enum(prefectures)).default([]),
-  ngLocations: z.array(z.enum(prefectures)).default([]),
-  bodyMark: z.object({
+    ng_options: z.array(z.string()).default([]),
+  }).default({ available: [], ng_options: [] }),
+  has_esthe_experience: z.boolean().default(false),
+  esthe_experience_period: z.string().optional(),
+  preferred_locations: z.array(z.enum(prefectures)).default([]),
+  ng_locations: z.array(z.enum(prefectures)).default([]),
+  body_mark: z.object({
     hasBodyMark: z.boolean().default(false),
     details: z.string().optional(),
     others: z.array(z.string()).default([]),
@@ -500,8 +502,8 @@ export const talentProfileSchema = z.object({
 });
 
 export const talentProfileUpdateSchema = talentProfileSchema.extend({
-  currentPassword: z.string().optional(),
-  newPassword: z.string()
+  current_password: z.string().optional(),
+  new_password: z.string()
     .optional()
     .refine(
       (val) => {
@@ -519,15 +521,15 @@ export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
 
 export const jobRequirementsSchema = z.object({
-  ageMin: z.number().min(18).max(99).optional(),
-  ageMax: z.number().min(18).max(99).optional(),
-  specMin: z.number().optional(),
-  specMax: z.number().optional(),
-  cupSizeConditions: z.array(z.object({
-    cupSize: z.enum(cupSizes),
-    specMin: z.number(),
+  age_min: z.number().min(18).max(99).optional(),
+  age_max: z.number().min(18).max(99).optional(),
+  spec_min: z.number().optional(),
+  spec_max: z.number().optional(),
+  cup_size_conditions: z.array(z.object({
+    cup_size: z.enum(cupSizes),
+    spec_min: z.number(),
   })).optional(),
-  otherConditions: z.array(z.string()).default([]),
+  other_conditions: z.array(z.string()).default([]),
 });
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
@@ -539,46 +541,56 @@ export const userSchema = createInsertSchema(users, {
     required_error: "ユーザータイプを選択してください",
     invalid_type_error: "無効なユーザータイプです",
   }),
-  displayName: z.string().min(1, "表示名を入力してください"),
+  service_type: z.enum(serviceTypes).optional(), // 店舗ユーザーの場合のみ必須
+  display_name: z.string().min(1, "表示名を入力してください"),
   location: z.enum(prefectures, {
     required_error: "所在地を選択してください",
     invalid_type_error: "無効な所在地です",
   }),
-  birthDate: z.date({
+  birth_date: z.date({
     required_error: "生年月日を入力してください",
     invalid_type_error: "無効な日付形式です",
   }),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+}).omit({ id: true, created_at: true, updated_at: true })
+.superRefine((data, ctx) => {
+  if (data.role === "store" && !data.service_type) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "店舗ユーザーの場合、業種の選択は必須です",
+      path: ["service_type"]
+    });
+  }
+});
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
-  storeId: integer("store_id").notNull().references(() => users.id),
+  store_id: integer("store_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   content: text("content").notNull(),
   status: text("status", { enum: ["draft", "published", "scheduled"] }).notNull().default("draft"),
-  publishedAt: timestamp("published_at"),
-  scheduledAt: timestamp("scheduled_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  published_at: timestamp("published_at"),
+  scheduled_at: timestamp("scheduled_at"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
   thumbnail: text("thumbnail"),
   images: jsonb("images").$type<string[]>().default([]),
 }, (table) => {
   return {
-    storeIdIdx: index("blog_posts_store_id_idx").on(table.storeId),
-    statusIdx: index("blog_posts_status_idx").on(table.status),
-    publishedAtIdx: index("blog_posts_published_at_idx").on(table.publishedAt),
+    store_id_idx: index("blog_posts_store_id_idx").on(table.store_id),
+    status_idx: index("blog_posts_status_idx").on(table.status),
+    published_at_idx: index("blog_posts_published_at_idx").on(table.published_at),
   };
 });
 
 export const blogPostSchema = createInsertSchema(blogPosts)
   .extend({
     images: z.array(z.string()).optional(),
-    scheduledAt: z.union([
+    scheduled_at: z.union([
       z.date(),
       z.string().transform((val) => new Date(val)),
       z.null(),
     ]).optional(),
-    publishedAt: z.union([
+    published_at: z.union([
       z.date(),
       z.string().transform((val) => new Date(val)),
       z.null(),
@@ -590,24 +602,24 @@ export const blogPostSchema = createInsertSchema(blogPosts)
   })
   .omit({
     id: true,
-    createdAt: true,
-    updatedAt: true,
+    created_at: true,
+    updated_at: true,
   })
   .superRefine((data, ctx) => {
     if (data.status === "scheduled") {
-      if (!data.scheduledAt) {
+      if (!data.scheduled_at) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "予約投稿には公開日時の指定が必要です",
-          path: ["scheduledAt"]
+          path: ["scheduled_at"]
         });
       } else {
-        const scheduledDate = new Date(data.scheduledAt);
+        const scheduledDate = new Date(data.scheduled_at);
         if (scheduledDate <= new Date()) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "予約日時は現在時刻より後に設定してください",
-            path: ["scheduledAt"]
+            path: ["scheduled_at"]
           });
         }
       }
@@ -619,7 +631,7 @@ export type InsertBlogPost = typeof blogPosts.$inferInsert;
 
 export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
   store: one(users, {
-    fields: [blogPosts.storeId],
+    fields: [blogPosts.store_id],
     references: [users.id],
   }),
 }));
@@ -640,12 +652,12 @@ export type SelectUser = {
   id: number;
   username: string;
   role: "talent" | "store";
-  displayName: string;
+  display_name: string;
   location: string;
-  birthDate: string;
-  birthDateModified: boolean;
-  preferredLocations: string[];
-  createdAt: Date;
+  birth_date: string;
+  birth_date_modified: boolean;
+  preferred_locations: string[];
+  created_at: Date;
 };
 
 export type TalentProfileData = z.infer<typeof talentProfileSchema>;
@@ -674,27 +686,27 @@ export interface JobResponse extends Job {
 
 export const keepList = pgTable('keepList', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  jobId: integer('job_id').notNull().references(() => jobs.id),
-  addedAt: timestamp('added_at').defaultNow(),
+  user_id: integer('user_id').notNull().references(() => users.id),
+  job_id: integer('job_id').notNull().references(() => jobs.id),
+  added_at: timestamp('added_at').defaultNow(),
   note: text('note')
 }, (table) => {
   return {
-    userIdIdx: index('keep_list_user_id_idx').on(table.userId),
-    jobIdIdx: index('keep_list_job_id_idx').on(table.jobId),
+    user_id_idx: index('keep_list_user_id_idx').on(table.user_id),
+    job_id_idx: index('keep_list_job_id_idx').on(table.job_id),
   };
 });
 
 export const viewHistory = pgTable('viewHistory', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  jobId: integer('job_id').notNull().references(() => jobs.id),
-  viewedAt: timestamp('viewed_at').defaultNow()
+  user_id: integer('user_id').notNull().references(() => users.id),
+  job_id: integer('job_id').notNull().references(() => jobs.id),
+  viewed_at: timestamp('viewed_at').defaultNow()
 }, (table) => {
   return {
-    userIdIdx: index('view_history_user_id_idx').on(table.userId),
-    jobIdIdx: index('view_history_job_id_idx').on(table.jobId),
-    viewedAtIdx: index('view_history_viewed_at_idx').on(table.viewedAt),
+    user_id_idx: index('view_history_user_id_idx').on(table.user_id),
+    job_id_idx: index('view_history_job_id_idx').on(table.job_id),
+    viewed_at_idx: index('view_history_viewed_at_idx').on(table.viewed_at),
   };
 });
 
@@ -708,28 +720,28 @@ export const viewHistorySchema = createInsertSchema(viewHistory);
 
 export const keepListRelations = relations(keepList, ({ one }) => ({
   job: one(jobs, {
-    fields: [keepList.jobId],
+    fields: [keepList.job_id],
     references: [jobs.id],
   }),
   user: one(users, {
-    fields: [keepList.userId],
+    fields: [keepList.user_id],
     references: [users.id],
   }),
 }));
 
 export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
   job: one(jobs, {
-    fields: [viewHistory.jobId],
+    fields: [viewHistory.job_id],
     references: [jobs.id],
   }),
   user: one(users, {
-    fields: [viewHistory.userId],
+    fields: [viewHistory.user_id],
     references: [users.id],
   }),
 }));
 
 export type PreviousStore = {
-  storeName: string;
+  store_name: string;
 };
 
 export const talentRegisterFormSchema = talentProfileSchema;

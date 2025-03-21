@@ -96,15 +96,17 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       userId: req.user.id,
       displayName: req.user.displayName,
       location: req.user.location,
+      serviceType: req.user.serviceType,
       role: req.user.role,
       isAuthenticated: req.isAuthenticated(),
     });
 
-    if (!req.user.displayName || !req.user.location) {
+    if (!req.user.displayName || !req.user.location || !req.user.serviceType) {
       log('error', '店舗情報が不足しています', {
         userId: req.user.id,
         displayName: req.user.displayName,
         location: req.user.location,
+        serviceType: req.user.serviceType,
       });
       return res.status(400).json({
         message: "店舗情報が正しく設定されていません。管理者にお問い合わせください。"
@@ -117,6 +119,7 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
     const jobData = {
       business_name: req.user.displayName,
       location: req.user.location,
+      service_type: req.user.serviceType,
       catch_phrase: validatedData.catchPhrase,
       description: validatedData.description,
       benefits: validatedData.benefits,
@@ -139,6 +142,7 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       jobId: newJob.id,
       businessName: newJob.business_name,
       location: newJob.location,
+      serviceType: newJob.service_type
     });
 
     return res.status(201).json(newJob);
