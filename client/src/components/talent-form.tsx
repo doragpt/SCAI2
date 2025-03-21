@@ -745,7 +745,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveBodyMark = (index: number) => {
-    const updated = [...form.getValues()?.bodyMark?.others || []].filter((_, i) => i !== index);
+    const bodyMark = form.getValues()?.bodyMark;
+    if (!bodyMark || !bodyMark.others) return;
+    
+    const updated = [...bodyMark.others].filter((_, i) => i !== index);
     form.setValue("bodyMark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -766,16 +769,29 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleAddEstheNgOption = (value: string) => {
-    const updated = [...form.getValues()?.estheOptions?.ngOptions || [], value];
+    const estheOptions = form.getValues()?.estheOptions;
+    if (!estheOptions) {
+      form.setValue("estheOptions", { ngOptions: [value], available: [] });
+      return;
+    }
+    
+    const updated = [...(estheOptions.ngOptions || []), value];
     form.setValue("estheOptions.ngOptions", updated);
   };
 
   // handleIdTypeChangeの修正
   const handleIdTypeChange = (type: typeof idTypes[number], checked: boolean) => {
-    const current = form.watch("availableIds.types") || [];
+    const availableIds = form.getValues()?.availableIds;
+    if (!availableIds) {
+      form.setValue("availableIds", { types: checked ? [type] : [], others: [] });
+      return;
+    }
+    
+    const current = availableIds.types || [];
     const updated = checked
       ? [...current, type]
       : current.filter((t) => t !== type);
+      
     form.setValue("availableIds.types", updated, {
       shouldValidate: true,
       shouldDirty: true
@@ -784,10 +800,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
   // NGオプションのチェックボックス実装
   const handleNgOptionChange = (option: typeof commonNgOptions[number], checked: boolean) => {
-    const current = form.watch("ngOptions.common") || [];
+    const ngOptions = form.getValues()?.ngOptions;
+    if (!ngOptions) {
+      form.setValue("ngOptions", { common: checked ? [option] : [], others: [] });
+      return;
+    }
+    
+    const current = ngOptions.common || [];
     const updated = checked
       ? [...current, option]
       : current.filter((o) => o !== option);
+      
     form.setValue("ngOptions.common", updated, {
       shouldValidate: true,
       shouldDirty: true
@@ -795,7 +818,13 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddNgOption = useCallback((value: string) => {
-    const updated = [...form.getValues()?.ngOptions?.others || [], value];
+    const ngOptions = form.getValues()?.ngOptions;
+    if (!ngOptions) {
+      form.setValue("ngOptions", { common: [], others: [value] });
+      return;
+    }
+    
+    const updated = [...(ngOptions.others || []), value];
     form.setValue("ngOptions.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -804,7 +833,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveNgOption = useCallback((index: number) => {
-    const updated = [...form.getValues()?.ngOptions?.others || []].filter((_, i) => i !== index);
+    const ngOptions = form.getValues()?.ngOptions;
+    if (!ngOptions || !ngOptions.others) return;
+    
+    const updated = [...ngOptions.others].filter((_, i) => i !== index);
     form.setValue("ngOptions.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
