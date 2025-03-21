@@ -123,25 +123,25 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // リクエストデータのバリデーション
     const validatedData = talentRegisterFormSchema.parse(req.body);
 
-    // キャメルケースからスネークケースへの変換
-    // ユーザー登録に必要なデータをリクエストから直接取得
-    const userData: any = {
-      ...validatedData,
-      email: req.body.email,
-      username: req.body.username,
-      password: req.body.password,
-      role: req.body.role || "talent",
-      location: req.body.location
+    log('info', '登録データバリデーション成功', {
+      email: validatedData.email,
+      username: validatedData.username,
+      birthDate: validatedData.birthDate,
+      location: validatedData.location,
+      role: validatedData.role || "talent",
+    });
+
+    // キャメルケースからスネークケースへの変換（ユーザーテーブル用）
+    const userData = {
+      email: validatedData.email,
+      username: validatedData.username,
+      password: validatedData.password,
+      birth_date: validatedData.birthDate,
+      location: validatedData.location,
+      preferred_locations: validatedData.preferredLocations || [],
+      role: validatedData.role || "talent",
+      display_name: validatedData.username,
     };
-    
-    // フロントエンドから送られるキャメルケースのフィールドをバックエンドのスネークケースに変換
-    if (req.body.birthDate) {
-      userData.birth_date = req.body.birthDate;
-    }
-    
-    if (req.body.preferredLocations) {
-      userData.preferred_locations = req.body.preferredLocations;
-    }
 
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -149,33 +149,36 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // ユーザーの作成
     const user = await storage.createUser({
       ...userData,
-      password: hashedPassword,
-      display_name: userData.username
+      password: hashedPassword
     });
 
     // タレントプロフィールの初期作成（ロールがtalentの場合）
     if (user.role === 'talent') {
       try {
+        // 登録フォームからデータを取得
+        const { lastNameKana, firstNameKana, nearestStation, height, weight, cupSize, faceVisibility } = validatedData;
+        
         // 基本的なプロファイル情報を作成
         const initialProfile = {
           location: user.location || '',
           preferred_locations: user.preferred_locations || [],
-          last_name: '',
-          first_name: '',
-          last_name_kana: '',
-          first_name_kana: '',
-          nearest_station: '',
+          // 登録フォームから姓名（カナ）を設定
+          last_name: '',  // 空のまま残し、詳細プロフィール設定時に入力
+          first_name: '', // 空のまま残し、詳細プロフィール設定時に入力
+          last_name_kana: lastNameKana,
+          first_name_kana: firstNameKana,
+          nearest_station: nearestStation,
           available_ids: { types: [], others: [] },
           can_provide_residence_record: false,
-          height: 0,
-          weight: 0,
-          cup_size: 'A',
+          height: height,
+          weight: weight,
+          cup_size: cupSize,
           bust: null,
           waist: null,
           hip: null,
           body_mark: { has_body_mark: false, details: '', others: [] },
           smoking: { enabled: false, types: [], others: [] },
-          face_visibility: "全隠し",
+          face_visibility: faceVisibility,
           has_esthe_experience: false,
           esthe_experience_period: '',
           esthe_options: { available: [], ng_options: [] },
