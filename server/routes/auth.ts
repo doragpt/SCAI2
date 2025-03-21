@@ -38,12 +38,18 @@ router.get("/user", authenticate, async (req, res) => {
       id: userData.id,
       email: userData.email,
       username: userData.username,
-      birthDate: userData.birthDate,
+      birth_date: userData.birth_date,
       location: userData.location,
-      preferredLocations: userData.preferredLocations
+      preferred_locations: userData.preferred_locations
     });
 
     // 必要なユーザー情報のみを返す
+    // birth_dateの形式を確認してログ出力
+    log('info', '生年月日データ', {
+      birth_date: userData.birth_date,
+      type: typeof userData.birth_date
+    });
+
     const response = {
       id: userData.id,
       email: userData.email,

@@ -83,9 +83,30 @@ export default function BasicInfoView() {
           <p className="text-sm text-muted-foreground">生年月日</p>
           <p>
             {userProfile?.birthDate
-              ? format(new Date(userProfile.birthDate), "yyyy年MM月dd日", {
-                  locale: ja,
-                })
+              ? (() => {
+                  console.log('Birth date value:', userProfile.birthDate, typeof userProfile.birthDate);
+                  try {
+                    // 日付文字列の形式に基づいて処理を分岐
+                    let formattedDate;
+                    if (typeof userProfile.birthDate === 'string' && userProfile.birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                      // YYYY-MM-DD形式の場合
+                      const [year, month, day] = userProfile.birthDate.split('-');
+                      formattedDate = `${year}年${month}月${day}日`;
+                    } else {
+                      // それ以外の場合はDate型に変換して表示
+                      const date = new Date(userProfile.birthDate);
+                      if (isNaN(date.getTime())) {
+                        // 無効な日付の場合はそのまま表示
+                        return userProfile.birthDate;
+                      }
+                      formattedDate = format(date, "yyyy年MM月dd日", { locale: ja });
+                    }
+                    return formattedDate;
+                  } catch (error) {
+                    console.error('Date format error:', error);
+                    return userProfile.birthDate; // そのまま表示
+                  }
+                })()
               : "未設定"}
           </p>
         </div>
