@@ -636,33 +636,33 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }
 
   const handleUpdateSnsUrl = (index: number, value: string) => {
-    const updatedUrls = [...form.watch("snsUrls") || []];
+    const updatedUrls = [...form.watch("sns_urls") || []];
     updatedUrls[index] = value;
-    form.setValue("snsUrls", updatedUrls);
+    form.setValue("sns_urls", updatedUrls);
   };
 
   const handleRemoveSnsUrl = (index: number) => {
-    const updatedUrls = [...form.watch("snsUrls") || []].filter((_, i) => i !== index);
-    form.setValue("snsUrls", updatedUrls);
+    const updatedUrls = [...form.watch("sns_urls") || []].filter((_, i) => i !== index);
+    form.setValue("sns_urls", updatedUrls);
   };
 
   const handleAddSnsUrl = () => {
-    form.setValue("snsUrls", [...form.watch("snsUrls") || [], ""]);
+    form.setValue("sns_urls", [...form.watch("sns_urls") || [], ""]);
   };
 
   const handleUpdateCurrentStore = (index: number, key: keyof CurrentStore, value: string) => {
-    const updatedStores = [...form.watch("currentStores") || []];
+    const updatedStores = [...form.watch("current_stores") || []];
     updatedStores[index] = { ...updatedStores[index], [key]: value };
-    form.setValue("currentStores", updatedStores);
+    form.setValue("current_stores", updatedStores);
   };
 
   const handleRemoveCurrentStore = (index: number) => {
-    const updatedStores = [...form.watch("currentStores") || []].filter((_, i) => i !== index);
-    form.setValue("currentStores", updatedStores);
+    const updatedStores = [...form.watch("current_stores") || []].filter((_, i) => i !== index);
+    form.setValue("current_stores", updatedStores);
   };
 
   const handleAddCurrentStore = () => {
-    form.setValue("currentStores", [...form.watch("currentStores") || [], { storeName: "", stageName: "" }]);
+    form.setValue("current_stores", [...form.watch("current_stores") || [], { storeName: "", stageName: "" }]);
   };
 
   const handleUpdatePreviousStore = (index: number, value: string) => {
