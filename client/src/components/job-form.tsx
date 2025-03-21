@@ -30,7 +30,8 @@ type StoreProfileFormProps = {
   onCancel?: () => void;
 };
 
-export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
+// 内部実装はStoreProfileFormとして定義
+function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
@@ -341,3 +342,6 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
     </Form>
   );
 }
+
+// 後方互換性のために JobForm として再エクスポート
+export { StoreProfileForm as JobForm };

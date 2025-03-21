@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type Job, type JobListingResponse, type BlogPost, type BlogPostListResponse } from "@shared/schema";
+import { type StoreProfile, type StoreProfileResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,11 +55,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// 求人ステータスのラベル
-const jobStatusLabels = {
-  draft: "下書き",
-  published: "公開中",
-  closed: "締切"
+// ステータスのラベル
+const profileStatusLabels = {
+  draft: "未公開",
+  published: "公開中"
 } as const;
 
 // ブログ投稿のステータスラベル
@@ -86,10 +85,7 @@ interface DashboardStats {
   newInquiriesCount: number;
   pendingInquiriesCount: number;
   completedInquiriesCount: number;
-  activeJobsCount: number;
   totalApplicationsCount: number;
-  draftJobsCount?: number;
-  closedJobsCount?: number;
 }
 
 // プランのラベル
@@ -103,9 +99,8 @@ export default function StoreDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [showJobForm, setShowJobForm] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
-  const [selectedTab, setSelectedTab] = useState("jobs");
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("profile");
 
   // 統計情報を取得
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
@@ -114,41 +109,24 @@ export default function StoreDashboard() {
     staleTime: 300000, // 5分
   });
 
-  // 求人情報の取得
-  const { data: jobListings, isLoading: jobsLoading } = useQuery<JobListingResponse>({
-    queryKey: [QUERY_KEYS.JOBS_STORE],
-    queryFn: () => apiRequest("GET", "/api/jobs/store"),
+  // 店舗プロフィール情報の取得
+  const { data: profile, isLoading: profileLoading } = useQuery<StoreProfileResponse>({
+    queryKey: [QUERY_KEYS.STORE_PROFILE],
+    queryFn: () => apiRequest("GET", "/api/store/profile"),
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
     onError: (error) => {
-      console.error("Store jobs fetch error:", error);
+      console.error("Store profile fetch error:", error);
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error instanceof Error ? error.message : "求人情報の取得に失敗しました",
+        description: error instanceof Error ? error.message : "店舗情報の取得に失敗しました",
       });
     },
   });
 
-  // ブログ投稿の取得
-  const { data: blogListings, isLoading: blogsLoading } = useQuery<BlogPostListResponse>({
-    queryKey: [QUERY_KEYS.BLOG_POSTS],
-    queryFn: () => apiRequest("GET", "/api/blog/posts"),
-    enabled: !!user?.id && user?.role === "store",
-    retry: 2,
-    retryDelay: 1000,
-    onError: (error) => {
-      console.error("Blog posts fetch error:", error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "ブログ記事の取得に失敗しました",
-      });
-    },
-  });
-
-  if (statsLoading || jobsLoading || blogsLoading) {
+  if (statsLoading || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -166,7 +144,7 @@ export default function StoreDashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold">{user?.displayName || user?.username}</h1>
+              <h1 className="text-2xl font-bold">{user?.display_name}</h1>
               <p className="text-sm text-muted-foreground">
                 最終更新: {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })}
               </p>
@@ -239,9 +217,9 @@ export default function StoreDashboard() {
 
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="grid grid-cols-4 h-auto">
-                <TabsTrigger value="jobs" className="py-2">
-                  <FileEdit className="h-4 w-4 mr-2" />
-                  求人管理
+                <TabsTrigger value="profile" className="py-2">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  店舗情報
                 </TabsTrigger>
                 <TabsTrigger value="applications" className="py-2">
                   <Users className="h-4 w-4 mr-2" />
@@ -257,97 +235,87 @@ export default function StoreDashboard() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* 求人管理タブ */}
-              <TabsContent value="jobs">
+              {/* 店舗情報タブ */}
+              <TabsContent value="profile">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle>求人一覧</CardTitle>
+                      <CardTitle>店舗プロフィール</CardTitle>
                       <CardDescription>
-                        掲載中の求人情報を管理できます
+                        店舗の基本情報を管理できます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setShowJobForm(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      新規作成
+                    <Button onClick={() => setShowProfileForm(true)}>
+                      <FileEdit className="h-4 w-4 mr-2" />
+                      編集する
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    {!jobListings?.jobs?.length ? (
+                    {!profile ? (
                       <div className="text-center py-8">
                         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <p className="text-muted-foreground">
-                          求人情報がありません
+                          店舗情報が未設定です
                         </p>
-                        <Button variant="outline" className="mt-4" onClick={() => setShowJobForm(true)}>
+                        <Button variant="outline" className="mt-4" onClick={() => setShowProfileForm(true)}>
                           <Plus className="h-4 w-4 mr-2" />
-                          求人を作成する
+                          店舗情報を設定する
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {jobListings.jobs.map((job) => (
-                          <Card key={job.id} className="hover:bg-accent/5 transition-colors">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold">{job.title}</h3>
-                                    <Badge variant={
-                                      job.status === "published" ? "default" :
-                                        job.status === "draft" ? "secondary" : "destructive"
-                                    }>
-                                      {jobStatusLabels[job.status]}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>{job.location}</span>
-                                    <span>•</span>
-                                    <span>
-                                      {job.createdAt ? format(new Date(job.createdAt), "yyyy年MM月dd日", { locale: ja }) : "-"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => window.open(`/jobs/${job.id}`, '_blank')}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    プレビュー
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedJobId(job.id);
-                                      setShowJobForm(true);
-                                    }}
-                                  >
-                                    <FileEdit className="h-4 w-4 mr-2" />
-                                    編集
-                                  </Button>
-                                </div>
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">基本情報</h3>
+                          <div className="grid gap-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">店舗名</span>
+                              <span className="font-medium">{profile.business_name}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">所在地</span>
+                              <span className="font-medium">{profile.location}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">業種</span>
+                              <span className="font-medium">{profile.service_type}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">公開状態</span>
+                              <Badge variant={profile.status === "published" ? "default" : "secondary"}>
+                                {profileStatusLabels[profile.status]}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">キャッチコピー</h3>
+                          <p className="whitespace-pre-wrap">{profile.catch_phrase}</p>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">店舗紹介</h3>
+                          <p className="whitespace-pre-wrap">{profile.description}</p>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">給与</h3>
+                          <div className="text-xl font-bold">
+                            {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
+                            {profile.maximum_guarantee ? ` ～ ${profile.maximum_guarantee.toLocaleString()}円` : ""}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {profile.benefits?.map((benefit) => (
+                              <div key={benefit} className="flex items-center gap-2 text-sm">
+                                <span>・{benefit}</span>
                               </div>
-                              <Separator className="my-4" />
-                              <div className="grid grid-cols-4 gap-4">
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">応募数: </span>
-                                  <span className="font-semibold">{job.applicationCount || 0}</span>
-                                </div>
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">閲覧数: </span>
-                                  <span className="font-semibold">{job.viewCount || 0}</span>
-                                </div>
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">面接設定: </span>
-                                  <span className="font-semibold">{job.interviewCount || 0}</span>
-                                </div>
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">採用数: </span>
-                                  <span className="font-semibold">{job.hiredCount || 0}</span>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -379,127 +347,20 @@ export default function StoreDashboard() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    {!blogListings?.posts?.length ? (
-                      <div className="text-center py-8">
-                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">
-                          ブログ記事がありません
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="mt-4"
-                          onClick={() => setLocation('/store/blog/new')}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          記事を作成する
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {blogListings.posts.map((post) => (
-                          <Card key={post.id} className="hover:bg-accent/5 transition-colors">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold">{post.title}</h3>
-                                    <Badge variant={
-                                      post.status === "published" ? "default" :
-                                        post.status === "scheduled" ? "secondary" : "outline"
-                                    }>
-                                      {blogStatusLabels[post.status]}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>
-                                      {post.publishedAt
-                                        ? format(new Date(post.publishedAt), "yyyy年MM月dd日 HH:mm", { locale: ja })
-                                        : "未公開"}
-                                    </span>
-                                    {post.status === "scheduled" && (
-                                      <>
-                                        <Clock className="h-4 w-4" />
-                                        <span>
-                                          {format(new Date(post.scheduledAt!), "yyyy年MM月dd日 HH:mm", { locale: ja })}
-                                          に公開予定
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => setLocation(`/blog/${post.id}`)}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    プレビュー
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
-                                  >
-                                    <FileEdit className="h-4 w-4 mr-2" />
-                                    編集
-                                  </Button>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      {post.status !== "published" && (
-                                        <DropdownMenuItem
-                                          onClick={() => updateStatusMutation.mutate({ postId: post.id, status: "published" })}
-                                        >
-                                          公開する
-                                        </DropdownMenuItem>
-                                      )}
-                                      {post.status === "published" && (
-                                        <DropdownMenuItem
-                                          onClick={() => updateStatusMutation.mutate({ postId: post.id, status: "draft" })}
-                                        >
-                                          非公開にする
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuSeparator />
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <DropdownMenuItem
-                                            onSelect={(e) => e.preventDefault()}
-                                            className="text-destructive"
-                                          >
-                                            <Trash className="h-4 w-4 mr-2" />
-                                            削除
-                                          </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>記事の削除</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              この記事を削除してもよろしいですか？
-                                              この操作は取り消せません。
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                                            <AlertDialogAction
-                                              onClick={() => deleteMutation.mutate(post.id)}
-                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            >
-                                              削除する
-                                            </AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
+                    <div className="text-center py-8">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        まだブログ記事がありません
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => setLocation('/store/blog/new')}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        記事を作成する
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -523,26 +384,6 @@ export default function StoreDashboard() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
-              {/* Q&A管理タブ */}
-              <TabsContent value="qa">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Q&A管理</CardTitle>
-                    <CardDescription>
-                      よくある質問と回答を管理できます
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <Button variant="outline" className="w-full">
-                        <HelpCircle className="h-4 w-4 mr-2" />
-                        Q&Aを編集
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </div>
 
@@ -560,7 +401,7 @@ export default function StoreDashboard() {
                 <div className="space-y-4">
                   <div>
                     <p className="font-medium">店舗名</p>
-                    <p className="text-sm text-muted-foreground">{user?.displayName || user?.username || "未設定"}</p>
+                    <p className="text-sm text-muted-foreground">{user?.display_name || "未設定"}</p>
                   </div>
                   <div>
                     <p className="font-medium">所在地</p>
@@ -660,12 +501,11 @@ export default function StoreDashboard() {
         </div>
       </div>
 
-      {/* 求人フォームダイアログ */}
+      {/* 店舗情報編集ダイアログ */}
       <JobFormDialog
-        open={showJobForm}
-        onOpenChange={setShowJobForm}
-        jobId={selectedJobId}
-        initialData={selectedJobId ? jobListings?.jobs.find(j => j.id === selectedJobId) : undefined}
+        open={showProfileForm}
+        onOpenChange={setShowProfileForm}
+        initialData={profile}
       />
     </div>
   );
