@@ -1799,14 +1799,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => form.setValue("photoDiaryUrls", [...form.watch("photoDiaryUrls") || [], ""])}
+                      onClick={() => form.setValue("photo_diary_urls", [...form.watch("photo_diary_urls") || [], ""])}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       URLを追加
                     </Button>
                   </div>
                   <div className="space-y-4">
-                    {form.watch("photoDiaryUrls")?.map((url, index) => (
+                    {form.watch("photo_diary_urls")?.map((url, index) => (
                       <div key={index} className="relative flex items-center gap-4 border rounded-lg p-4">
                         <div className="flex-1">
                           <Label className="text-sm text-muted-foreground mb-2">URL {index + 1}</Label>
@@ -1814,9 +1814,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             placeholder="写メ日記のURLを入力してください"
                             value={url}
                             onChange={(e) => {
-                              const updatedUrls = [...form.watch("photoDiaryUrls") || []];
+                              const updatedUrls = [...form.watch("photo_diary_urls") || []];
                               updatedUrls[index] = e.target.value;
-                              form.setValue("photoDiaryUrls", updatedUrls);
+                              form.setValue("photo_diary_urls", updatedUrls);
                             }}
                           />
                         </div>
@@ -1826,8 +1826,8 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           size="icon"
                           className="absolute top-2 right-2"
                           onClick={() => {
-                            const updatedUrls = form.watch("photoDiaryUrls")?.filter((_, i) => i !== index) || [];
-                            form.setValue("photoDiaryUrls", updatedUrls);
+                            const updatedUrls = form.watch("photo_diary_urls")?.filter((_, i) => i !== index) || [];
+                            form.setValue("photo_diary_urls", updatedUrls);
                           }}
                         >
                           <X className="h-4 w-4" />
