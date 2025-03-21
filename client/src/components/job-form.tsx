@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, type Job, serviceTypes } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -57,13 +58,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: JobFormData) => {
-      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
-      const method = initialData ? "PATCH" : "POST";
-
-      // フォームデータの送信前に必須フィールドを確認
       if (!user?.location || !user?.username) {
         throw new Error("ユーザー情報が不足しています");
       }
+
+      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
+      const method = initialData ? "PATCH" : "POST";
 
       const formattedData = {
         ...data,
@@ -73,13 +73,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         maximumGuarantee: Number(data.maximumGuarantee),
       };
 
-      console.log('Sending data:', formattedData);
-
+      console.log('送信データ:', formattedData);
       const response = await apiRequest(method, endpoint, formattedData);
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
       }
+
       return response.json();
     },
     onSuccess: () => {
@@ -91,7 +92,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
+      console.error('保存エラー:', error);
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
@@ -101,7 +102,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: JobFormData) => {
-    console.log('Form data:', data);
     mutate(data);
   };
 
@@ -121,6 +121,30 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* サービスタイプ選択 */}
+                <FormField
+                  control={form.control}
+                  name="serviceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サービスタイプ</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="サービスタイプを選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {serviceTypes.map((type) => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="catchPhrase"
