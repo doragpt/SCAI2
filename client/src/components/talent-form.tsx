@@ -570,7 +570,7 @@ const defaultValues: TalentProfileData = {
   notes: "",
   esthe_options: {
     available: [],
-    ngOptions: [],
+    ng_options: [],
   },
   has_esthe_experience: false,
   esthe_experience_period: "",
@@ -824,32 +824,32 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
   // NGオプションのチェックボックス実装
   const handleNgOptionChange = (option: typeof commonNgOptions[number], checked: boolean) => {
-    const ngOptions = form.getValues()?.ngOptions;
-    if (!ngOptions) {
-      form.setValue("ngOptions", { common: checked ? [option] : [], others: [] });
+    const ng_options = form.getValues()?.ng_options;
+    if (!ng_options) {
+      form.setValue("ng_options", { common: checked ? [option] : [], others: [] });
       return;
     }
     
-    const current = ngOptions.common || [];
+    const current = ng_options.common || [];
     const updated = checked
       ? [...current, option]
       : current.filter((o) => o !== option);
       
-    form.setValue("ngOptions.common", updated, {
+    form.setValue("ng_options.common", updated, {
       shouldValidate: true,
       shouldDirty: true
     });
   };
 
   const handleAddNgOption = useCallback((value: string) => {
-    const ngOptions = form.getValues()?.ngOptions;
-    if (!ngOptions) {
-      form.setValue("ngOptions", { common: [], others: [value] });
+    const ng_options = form.getValues()?.ng_options;
+    if (!ng_options) {
+      form.setValue("ng_options", { common: [], others: [value] });
       return;
     }
     
-    const updated = [...(ngOptions.others || []), value];
-    form.setValue("ngOptions.others", updated, {
+    const updated = [...(ng_options.others || []), value];
+    form.setValue("ng_options.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
@@ -857,11 +857,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveNgOption = useCallback((index: number) => {
-    const ngOptions = form.getValues()?.ngOptions;
-    if (!ngOptions || !ngOptions.others) return;
+    const ng_options = form.getValues()?.ng_options;
+    if (!ng_options || !ng_options.others) return;
     
-    const updated = [...ngOptions.others].filter((_, i) => i !== index);
-    form.setValue("ngOptions.others", updated, {
+    const updated = [...ng_options.others].filter((_, i) => i !== index);
+    form.setValue("ng_options.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
