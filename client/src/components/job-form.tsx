@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, prefectures, type Job } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -9,13 +10,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const FORM_STEP_NAMES = {
   detail: "詳細情報",
@@ -33,6 +32,7 @@ type JobFormProps = {
 
 export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
   const [descriptionLength, setDescriptionLength] = useState(0);
@@ -50,6 +50,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       minimumGuarantee: initialData?.minimumGuarantee || 0,
       maximumGuarantee: initialData?.maximumGuarantee || 0,
       status: initialData?.status || "draft",
+      location: initialData?.location || "" // Added for default value
     }
   });
 
@@ -63,6 +64,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
+        location: user?.location, // ユーザープロフィールから所在地を取得
       };
 
       const response = await apiRequest(method, endpoint, formattedData);
@@ -73,7 +75,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.JOBS_STORE] });
+      queryClient.invalidateQueries({ 
+        queryKey: [QUERY_KEYS.JOBS_STORE],
+        refetchType: 'all'
+      });
       toast({
         title: "求人情報を保存しました",
         description: "変更内容が保存されました。",
@@ -88,6 +93,20 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       });
     },
   });
+
+  // ユーザーの所在地が未設定の場合のバリデーション
+  if (!user?.location) {
+    return (
+      <div className="p-6 bg-destructive/10 rounded-lg">
+        <h3 className="text-lg font-semibold text-destructive mb-2">
+          所在地が未設定です
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          求人を作成するには、プロフィール設定で所在地を設定してください。
+        </p>
+      </div>
+    );
+  }
 
   const onSubmit = (data: JobFormData) => {
     mutate(data);
@@ -320,6 +339,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                     <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">店舗所在地</h3>
+                    <p>{user?.location}</p> {/* Added location to preview */}
                   </div>
 
                   <div>
