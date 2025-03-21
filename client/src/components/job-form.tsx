@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { storeProfileSchema, type StoreProfileFormData, benefitTypes, benefitCategories } from "@shared/schema";
+import { storeProfileSchema, type StoreProfileFormData, benefitTypes, benefitCategories, type JobStatus } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
-      status: initialData?.status || "draft",
+      status: "draft",
     }
   });
 
@@ -53,7 +53,7 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
         ...data,
         minimum_guarantee: Number(data.minimum_guarantee) || 0,
         maximum_guarantee: Number(data.maximum_guarantee) || 0,
-        status: data.status || "draft",
+        status: "draft" as JobStatus,
         benefits: data.benefits || [],
       };
 
@@ -216,23 +216,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
 
         <FormField
           control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <input 
-                  type="hidden" 
-                  {...field} 
-                  value={field.value || "draft"}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="benefits"
           render={() => (
             <FormItem>
@@ -298,10 +281,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
           <Button
             type="submit"
             disabled={isPending}
-            onClick={() => {
-              console.log("Submit button clicked");
-              console.log("Current form state:", form.getValues());
-            }}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
