@@ -717,7 +717,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddIdType = useCallback((value: string) => {
-    const updated = [...form.getValues().availableIds.others || [], value];
+    const updated = [...form.getValues()?.availableIds?.others || [], value];
     form.setValue("availableIds.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -745,7 +745,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveBodyMark = (index: number) => {
-    const updated = [...form.getValues().bodyMark.others || []].filter((_, i) => i !== index);
+    const updated = [...form.getValues()?.bodyMark?.others || []].filter((_, i) => i !== index);
     form.setValue("bodyMark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -754,7 +754,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleRemoveIdType = useCallback((index: number) => {
-    const updated = [...form.getValues().availableIds.others || []].filter((_, i) => i !== index);
+    const availableIds = form.getValues()?.availableIds;
+    if (!availableIds || !availableIds.others) return;
+    
+    const updated = [...availableIds.others].filter((_, i) => i !== index);
     form.setValue("availableIds.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -763,7 +766,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleAddEstheNgOption = (value: string) => {
-    const updated = [...form.getValues().estheOptions.ngOptions || [], value];
+    const updated = [...form.getValues()?.estheOptions?.ngOptions || [], value];
     form.setValue("estheOptions.ngOptions", updated);
   };
 
@@ -792,7 +795,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddNgOption = useCallback((value: string) => {
-    const updated = [...form.getValues().ngOptions.others || [], value];
+    const updated = [...form.getValues()?.ngOptions?.others || [], value];
     form.setValue("ngOptions.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
@@ -801,7 +804,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveNgOption = useCallback((index: number) => {
-    const updated = [...form.getValues().ngOptions.others || []].filter((_, i) => i !== index);
+    const updated = [...form.getValues()?.ngOptions?.others || []].filter((_, i) => i !== index);
     form.setValue("ngOptions.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
