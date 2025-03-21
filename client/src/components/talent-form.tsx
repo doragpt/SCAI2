@@ -577,7 +577,7 @@ const defaultValues: TalentProfileData = {
   preferred_locations: [],
   ng_locations: [],
   body_mark: {
-    hasBodyMark: false,
+    has_body_mark: false,
     details: "",
     others: [],
   },
@@ -756,7 +756,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddBodyMark = useCallback((value: string) => {
     const bodyMark = form.getValues()?.body_mark;
     if (!bodyMark) {
-      form.setValue("body_mark", { types: [], others: [value] });
+      form.setValue("body_mark", { has_body_mark: false, others: [value] });
       return;
     }
     
@@ -1658,7 +1658,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
             <FormField
               control={form.control}
-              name="hasSnsAccount"
+              name="has_sns_account"
               render={({ field }) => (
                 <FormItem>
                   <>
@@ -1861,7 +1861,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <h3 className="text-lg font-semibold mb-4">自己紹介</h3>
               <FormField
                 control={form.control}
-                name="selfIntroduction"
+                name="self_introduction"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>自己紹介文</FormLabel>

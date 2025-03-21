@@ -268,7 +268,7 @@ export class DatabaseStorage implements IStorage {
         bust: result.bust || null,
         waist: result.waist || null,
         hip: result.hip || null,
-        body_mark: result.body_mark || { hasBodyMark: false, details: '', others: [] },
+        body_mark: result.body_mark || { has_body_mark: false, details: '', others: [] },
         smoking: result.smoking || {
           enabled: false,
           types: [],
