@@ -717,8 +717,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddIdType = useCallback((value: string) => {
-    const updated = [...form.getValues()?.availableIds?.others || [], value];
-    form.setValue("availableIds.others", updated, {
+    const availableIds = form.getValues()?.available_ids;
+    if (!availableIds) {
+      form.setValue("available_ids", { types: [], others: [value] });
+      return;
+    }
+    
+    const updated = [...(availableIds.others || []), value];
+    form.setValue("available_ids.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
@@ -726,18 +732,36 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleAddAllergy = (value: string) => {
-    const updated = [...form.getValues().allergies.others || [], value];
+    const allergies = form.getValues()?.allergies;
+    if (!allergies) {
+      form.setValue("allergies", { types: [], others: [value], has_allergy: false });
+      return;
+    }
+    
+    const updated = [...(allergies.others || []), value];
     form.setValue("allergies.others", updated);
   };
 
   const handleAddSmokingType = (value: string) => {
-    const updated = [...form.getValues().smoking.others || [], value];
+    const smoking = form.getValues()?.smoking;
+    if (!smoking) {
+      form.setValue("smoking", { types: [], others: [value] });
+      return;
+    }
+    
+    const updated = [...(smoking.others || []), value];
     form.setValue("smoking.others", updated);
   };
 
   const handleAddBodyMark = useCallback((value: string) => {
-    const updated = [...form.getValues().bodyMark.others || [], value];
-    form.setValue("bodyMark.others", updated, {
+    const bodyMark = form.getValues()?.body_mark;
+    if (!bodyMark) {
+      form.setValue("body_mark", { types: [], others: [value] });
+      return;
+    }
+    
+    const updated = [...(bodyMark.others || []), value];
+    form.setValue("body_mark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
@@ -745,11 +769,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleRemoveBodyMark = (index: number) => {
-    const bodyMark = form.getValues()?.bodyMark;
+    const bodyMark = form.getValues()?.body_mark;
     if (!bodyMark || !bodyMark.others) return;
     
     const updated = [...bodyMark.others].filter((_, i) => i !== index);
-    form.setValue("bodyMark.others", updated, {
+    form.setValue("body_mark.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
@@ -757,11 +781,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleRemoveIdType = useCallback((index: number) => {
-    const availableIds = form.getValues()?.availableIds;
+    const availableIds = form.getValues()?.available_ids;
     if (!availableIds || !availableIds.others) return;
     
     const updated = [...availableIds.others].filter((_, i) => i !== index);
-    form.setValue("availableIds.others", updated, {
+    form.setValue("available_ids.others", updated, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
@@ -781,9 +805,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
   // handleIdTypeChangeの修正
   const handleIdTypeChange = (type: typeof idTypes[number], checked: boolean) => {
-    const availableIds = form.getValues()?.availableIds;
+    const availableIds = form.getValues()?.available_ids;
     if (!availableIds) {
-      form.setValue("availableIds", { types: checked ? [type] : [], others: [] });
+      form.setValue("available_ids", { types: checked ? [type] : [], others: [] });
       return;
     }
     
@@ -792,7 +816,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
       ? [...current, type]
       : current.filter((t) => t !== type);
       
-    form.setValue("availableIds.types", updated, {
+    form.setValue("available_ids.types", updated, {
       shouldValidate: true,
       shouldDirty: true
     });
