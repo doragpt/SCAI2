@@ -223,6 +223,8 @@ export const bodyMarkSchema = z.object({
 // Jobsテーブル定義を修正
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -232,7 +234,7 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  businessNameIdx: index("jobs_business_name_idx").on(table.catchPhrase), // Modified index
+  businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -373,7 +375,7 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-// jobSchemaの修正
+// jobSchemaの修正（フォームで扱う項目のみを定義）
 export const jobSchema = z.object({
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")

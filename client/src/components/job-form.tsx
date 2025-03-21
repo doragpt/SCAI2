@@ -56,11 +56,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      // APIリクエストデータの整形
+      // APIリクエストデータの整形（最小限のデータのみ送信）
       const formattedData = {
-        ...data,
+        catchPhrase: data.catchPhrase,
+        description: data.description,
+        benefits: data.benefits,
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
+        status: data.status,
       };
 
       const response = await apiRequest(method, endpoint, formattedData);
