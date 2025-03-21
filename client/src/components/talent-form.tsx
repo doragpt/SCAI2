@@ -793,13 +793,13 @@ export function TalentForm({ initialData }: TalentFormProps) {
   }, [form]);
 
   const handleAddEstheNgOption = (value: string) => {
-    const estheOptions = form.getValues()?.estheOptions;
+    const estheOptions = form.getValues()?.esthe_options;
     if (!estheOptions) {
       form.setValue("esthe_options", { ng_options: [value], available: [] });
       return;
     }
     
-    const updated = [...(estheOptions.ngOptions || []), value];
+    const updated = [...(estheOptions.ng_options || []), value];
     form.setValue("esthe_options.ng_options", updated);
   };
 
@@ -969,21 +969,21 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 <div className="space-y-1">
                   <Label>生年月日</Label>
                   <p className="text-lg font-medium">
-                    {user?.birthDate
-                      ? new Date(user.birthDate).toLocaleDateString('ja-JP')
+                    {user?.birth_date
+                      ? new Date(user.birth_date).toLocaleDateString('ja-JP')
                       : '基本情報から設定してください'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <Label>年齢</Label>
                   <p className="text-lg font-medium">
-                    {user?.birthDate ? `${calculateAge(new Date(user.birthDate))}歳` : '基本情報から設定してください'}
+                    {user?.birth_date ? `${calculateAge(new Date(user.birth_date))}歳` : '基本情報から設定してください'}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 ※生年月日の設定・修正は基本情報編集ページから行ってください
-                {user?.birthDateModified && '（修正は1回のみ可能です）'}
+                {user?.birth_date_modified && '（修正は1回のみ可能です）'}
               </p>
             </div>
 
@@ -1318,7 +1318,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
             <FormField
               control={form.control}
-              name="ngOptions"
+              name="ng_options"
               render={({ field }) => (
                 <FormItem>
                   <div>
@@ -1456,7 +1456,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                     className="h-4 w-4 p-0 hover:bg-transparent"
                                     onClick={() => {
                                       const updated = field.value?.filter((_, i) => i !== index) || [];
-                                      form.setValue("estheOptions.ngOptions", updated);
+                                      form.setValue("esthe_options.ng_options", updated);
                                     }}
                                   >
                                     <X className="h-3 w-3" />
