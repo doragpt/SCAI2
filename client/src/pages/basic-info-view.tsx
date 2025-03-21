@@ -84,24 +84,23 @@ export default function BasicInfoView() {
           <p>
             {userProfile?.birthDate
               ? (() => {
-                  console.log('Birth date value:', userProfile.birthDate, typeof userProfile.birthDate);
+                  // デバッグ用のログは削除
                   try {
-                    // 日付文字列の形式に基づいて処理を分岐
-                    let formattedDate;
-                    if (typeof userProfile.birthDate === 'string' && userProfile.birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                      // YYYY-MM-DD形式の場合
-                      const [year, month, day] = userProfile.birthDate.split('-');
-                      formattedDate = `${year}年${month}月${day}日`;
+                    // ISO形式のタイムスタンプを日付形式に変換
+                    const date = new Date(userProfile.birthDate);
+                    if (!isNaN(date.getTime())) {
+                      // 有効な日付の場合は日本語形式に変換
+                      return format(date, "yyyy年MM月dd日", { locale: ja });
                     } else {
-                      // それ以外の場合はDate型に変換して表示
-                      const date = new Date(userProfile.birthDate);
-                      if (isNaN(date.getTime())) {
-                        // 無効な日付の場合はそのまま表示
-                        return userProfile.birthDate;
+                      // もしISO形式でない場合は、その他の形式をチェック
+                      if (typeof userProfile.birthDate === 'string' && userProfile.birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        // YYYY-MM-DD形式の場合
+                        const [year, month, day] = userProfile.birthDate.split('-');
+                        return `${year}年${month}月${day}日`;
                       }
-                      formattedDate = format(date, "yyyy年MM月dd日", { locale: ja });
+                      // それでも解析できない場合はそのまま表示
+                      return userProfile.birthDate;
                     }
-                    return formattedDate;
                   } catch (error) {
                     console.error('Date format error:', error);
                     return userProfile.birthDate; // そのまま表示
