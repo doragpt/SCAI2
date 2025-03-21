@@ -5,7 +5,6 @@ import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
 import talentRouter from './routes/talent';
-import jobsRouter from './routes/jobs';
 import authRouter from './routes/auth';
 
 const app = express();
@@ -46,7 +45,6 @@ app.use('/api', (req, res, next) => {
 app.use('/api', authRouter);
 
 // 保護されたAPIルートを登録
-app.use('/api/jobs', jobsRouter);
 app.use('/api/talent', talentRouter);
 
 // その他のAPIルートを登録

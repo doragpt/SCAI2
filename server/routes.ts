@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import jobsRoutes from './routes/jobs';
+import storeRoutes from './routes/store';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
 import dashboardRoutes from './routes/dashboard';
@@ -41,10 +41,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 各ルーターを登録
-  app.use('/api/jobs', jobsRoutes);
+  app.use('/api/store', storeRoutes);
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
-  app.use('/api/store', dashboardRoutes); // パスを修正
+  app.use('/api/dashboard', dashboardRoutes);
 
   // エラーハンドリングミドルウェアを最後に登録
   app.use(errorHandler);
