@@ -105,7 +105,6 @@ export default function AuthPage() {
     try {
       // フォームのバリデーションチェック
       const isValid = await registerForm.trigger();
-      // フォームバリデーションの結果
 
       if (!isValid) {
         const errors = registerForm.formState.errors;
@@ -120,18 +119,11 @@ export default function AuthPage() {
         return;
       }
 
-      // プロフィールデータを取得
-      const profileData = await getTalentProfile();
-      console.log('Fetched profile data:', profileData);
-
-      // フォームデータとプロフィールデータをマージ
-      const mergedData = {
-        ...profileData, // 既存のプロフィールデータを先に展開
-        ...data, // フォームデータで上書き
-      };
-
-      console.log('Merged data:', mergedData);
-      setFormData(mergedData);
+      // 認証前なので、プロファイルデータの取得はスキップして直接フォームデータを使用
+      console.log('Form data:', data);
+      setFormData(data);
+      
+      // 年齢確認モーダルを表示
       setShowAgeVerification(true);
     } catch (error) {
       console.error('Form submission error:', error);
