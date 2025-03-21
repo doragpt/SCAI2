@@ -724,7 +724,49 @@ export type PreviousStore = {
   store_name: string;
 };
 
-export const talentRegisterFormSchema = talentProfileSchema;
+// 登録フォーム用のスキーマ定義（簡略化されたもの）
+export const talentRegisterFormSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上である必要があります")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "パスワードは半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string().min(1, "確認用パスワードを入力してください"),
+  username: z.string().min(1, "ニックネームを入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "都道府県を選択してください",
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "希望地域を1つ以上選択してください"),
+  lastNameKana: z.string()
+    .min(1, "姓（カナ）を入力してください")
+    .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
+  firstNameKana: z.string()
+    .min(1, "名（カナ）を入力してください")
+    .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
+  nearestStation: z.string().min(1, "最寄り駅を入力してください"),
+  height: z.coerce.number()
+    .min(100, "身長は100cm以上で入力してください")
+    .max(200, "身長は200cm以下で入力してください"),
+  weight: z.coerce.number()
+    .min(30, "体重は30kg以上で入力してください")
+    .max(150, "体重は150kg以下で入力してください"),
+  cupSize: z.enum(cupSizes, {
+    required_error: "カップサイズを選択してください",
+  }),
+  faceVisibility: z.enum(faceVisibilityTypes, {
+    required_error: "パネルの顔出し設定を選択してください",
+  }),
+  privacyPolicy: z.boolean().refine(val => val === true, {
+    message: "利用規約に同意してください",
+  }),
+  role: z.enum(["talent", "store"]).default("talent")
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードと確認用パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
 
 export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
     user: one(users, {
