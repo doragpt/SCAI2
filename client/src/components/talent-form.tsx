@@ -1483,7 +1483,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <h3 className="text-lg font-semibold mb-4">アレルギー</h3>
               <FormField
                 control={form.control}
-                name="allergies.hasAllergy"
+                name="allergies.has_allergy"
                 render={({ field }) => (
                   <FormItem>
                     <SwitchField
@@ -1495,7 +1495,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   </FormItem>
                 )}
               />
-              {form.watch("allergies.hasAllergy") && (
+              {form.watch("allergies.has_allergy") && (
                 <div className="mt-4">
                   <div className="grid grid-cols-2 gap-4">
                     {allergyTypes.map((type) => (
@@ -1613,7 +1613,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
               <FormField
                 control={form.control}
-                name="bodyMark.hasBodyMark"
+                name="body_mark.has_body_mark"
                 render={({ field }) => (
                   <FormItem>
                     <SwitchField
@@ -1625,11 +1625,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   </FormItem>
                 )}
               />
-              {form.watch("bodyMark.hasBodyMark") && (
+              {form.watch("body_mark.has_body_mark") && (
                 <div className="mt-4 space-y-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {form.watch("bodyMark.others").map((mark, index) => (
+                      {form.watch("body_mark.others").map((mark, index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
                           {mark}
                           <Button

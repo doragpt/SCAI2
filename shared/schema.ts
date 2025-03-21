@@ -468,11 +468,11 @@ export const talentProfileSchema = z.object({
   preferred_locations: z.array(z.enum(prefectures)).default([]),
   ng_locations: z.array(z.enum(prefectures)).default([]),
   body_mark: z.object({
-    hasBodyMark: z.boolean().default(false),
+    has_body_mark: z.boolean().default(false),
     details: z.string().optional(),
     others: z.array(z.string()).default([]),
   }).default({
-    hasBodyMark: false,
+    has_body_mark: false,
     details: "",
     others: []
   }),
