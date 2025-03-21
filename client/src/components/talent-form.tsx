@@ -45,12 +45,12 @@ import { createOrUpdateTalentProfile } from "@/lib/api/talent";
 
 // Store type definitions
 type CurrentStore = {
-  storeName: string;
-  stageName: string;
+  store_name: string;
+  stage_name: string;
 };
 
 type PreviousStore = {
-  storeName: string;
+  store_name: string;
 };
 
 const PhotoUploadGuidelines = () => (
@@ -662,22 +662,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddCurrentStore = () => {
-    form.setValue("current_stores", [...form.watch("current_stores") || [], { storeName: "", stageName: "" }]);
+    form.setValue("current_stores", [...form.watch("current_stores") || [], { store_name: "", stage_name: "" }]);
   };
 
   const handleUpdatePreviousStore = (index: number, value: string) => {
-    const updatedStores = [...form.watch("previousStores") || []];
+    const updatedStores = [...form.watch("previous_stores") || []];
     updatedStores[index] = { storeName: value };
-    form.setValue("previousStores", updatedStores);
+    form.setValue("previous_stores", updatedStores);
   };
 
   const handleRemovePreviousStore = (index: number) => {
-    const updatedStores = [...form.watch("previousStores") || []].filter((_, i) => i !== index);
-    form.setValue("previousStores", updatedStores);
+    const updatedStores = [...form.watch("previous_stores") || []].filter((_, i) => i !== index);
+    form.setValue("previous_stores", updatedStores);
   };
 
   const handleAddPreviousStore = () => {
-    form.setValue("previousStores", [...form.watch("previousStores") || [], { storeName: "" }]);
+    form.setValue("previous_stores", [...form.watch("previous_stores") || [], { storeName: "" }]);
   };
 
   const handleConfirm = async () => {
