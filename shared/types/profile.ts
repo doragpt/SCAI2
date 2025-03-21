@@ -86,7 +86,7 @@ export const profileSchema = z.object({
 
   // 身体的特徴（追加）
   bodyMark: z.object({
-    hasBodyMark: z.boolean(),
+    has_body_mark: z.boolean(),
     details: z.string(),
     others: z.array(z.string()),
   }),

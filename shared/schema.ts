@@ -214,7 +214,7 @@ export const photoSchema = z.object({
 });
 
 export const bodyMarkSchema = z.object({
-  hasBodyMark: z.boolean().default(false),
+  has_body_mark: z.boolean().default(false),
   details: z.string().optional(),
   others: z.array(z.string()).default([]),
 });
@@ -330,7 +330,7 @@ export const talentProfiles = pgTable("talent_profiles", {
   preferred_locations: jsonb("preferred_locations").$type<Prefecture[]>().default([]).notNull(),
   ng_locations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
   body_mark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
-    hasBodyMark: false,
+    has_body_mark: false,
     details: "",
     others: []
   }).notNull(),
