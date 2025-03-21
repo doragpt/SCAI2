@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { blogPosts } from "@shared/schema";
-import { and, lte, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 export async function publishScheduledPosts() {
   try {
@@ -16,7 +16,7 @@ export async function publishScheduledPosts() {
       .where(
         and(
           eq(blogPosts.status, "scheduled"),
-          lte(blogPosts.scheduledAt, now)
+          lte(blogPosts.scheduled_at, now)
         )
       );
 
@@ -30,13 +30,13 @@ export async function publishScheduledPosts() {
       .update(blogPosts)
       .set({
         status: "published",
-        publishedAt: now,
-        updatedAt: now
+        published_at: now,
+        updated_at: now
       })
       .where(
         and(
           eq(blogPosts.status, "scheduled"),
-          lte(blogPosts.scheduledAt, now)
+          lte(blogPosts.scheduled_at, now)
         )
       )
       .returning();
@@ -46,8 +46,8 @@ export async function publishScheduledPosts() {
       posts: result.map(post => ({
         id: post.id,
         title: post.title,
-        scheduledAt: post.scheduledAt,
-        publishedAt: post.publishedAt
+        scheduled_at: post.scheduled_at,
+        published_at: post.published_at
       })),
       timestamp: now.toISOString()
     });
