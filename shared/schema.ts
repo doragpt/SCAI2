@@ -382,10 +382,6 @@ export const loginSchema = z.object({
 // jobSchemaの修正
 export const jobSchema = z.object({
   businessName: z.string(),
-  location: z.enum(prefectures, {
-    required_error: "所在地を選択してください",
-    invalid_type_error: "無効な所在地です",
-  }),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -661,6 +657,7 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
+
 
 
 export type { User, TalentProfile, Job, Application, InsertApplication };

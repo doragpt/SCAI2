@@ -44,7 +44,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
-      location: initialData?.location || "",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -110,29 +109,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">所在地</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="都道府県を選択" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {prefectures.map((pref) => (
-                            <SelectItem key={pref} value={pref}>{pref}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="catchPhrase"
@@ -344,11 +320,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                     <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">店舗所在地</h3>
-                    <p>{form.getValues("location")}</p>
                   </div>
 
                   <div>
