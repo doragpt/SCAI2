@@ -532,7 +532,7 @@ const defaultValues: TalentProfileData = {
   firstNameKana: "",
   location: "東京都",
   nearestStation: "",
-  availableIds: {
+  available_ids: {
     types: [],
     others: [],
   },
@@ -1031,7 +1031,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
             <div>
               <FormField
                 control={form.control}
-                name="availableIds"
+                name="available_ids"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>持参可能な身分証明書</FormLabel>
@@ -1046,7 +1046,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                 const updated = checked
                                   ? [...field.value.types, type]
                                   : field.value.types.filter((t) => t !== type);
-                                form.setValue("availableIds.types", updated, {
+                                form.setValue("available_ids.types", updated, {
                                   shouldValidate: true,
                                   shouldDirty: true,
                                 });
