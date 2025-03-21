@@ -28,13 +28,9 @@ type JobFormProps = {
   initialData?: Job;
   onSuccess?: () => void;
   onCancel?: () => void;
-  storeInfo: {
-    businessName: string;
-    location: string;
-  };
 };
 
-export function JobForm({ initialData, onSuccess, onCancel, storeInfo }: JobFormProps) {
+export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
@@ -46,7 +42,6 @@ export function JobForm({ initialData, onSuccess, onCancel, storeInfo }: JobForm
     resolver: zodResolver(jobSchema),
     mode: "onChange",
     defaultValues: {
-      businessName: initialData?.businessName || storeInfo.businessName,
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -64,7 +59,6 @@ export function JobForm({ initialData, onSuccess, onCancel, storeInfo }: JobForm
       // APIリクエストデータの整形
       const formattedData = {
         ...data,
-        location: storeInfo.location, // 運営側で設定された所在地を使用
         minimumGuarantee: Number(data.minimumGuarantee) || 0,
         maximumGuarantee: Number(data.maximumGuarantee) || 0,
       };
@@ -116,22 +110,6 @@ export function JobForm({ initialData, onSuccess, onCancel, storeInfo }: JobForm
                 <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* 店舗名（表示のみ） */}
-                <div className="space-y-2">
-                  <FormLabel>店舗名</FormLabel>
-                  <div className="p-3 bg-muted rounded-md">
-                    <p>{storeInfo.businessName}</p>
-                  </div>
-                </div>
-
-                {/* 所在地（表示のみ） */}
-                <div className="space-y-2">
-                  <FormLabel>所在地</FormLabel>
-                  <div className="p-3 bg-muted rounded-md">
-                    <p>{storeInfo.location}</p>
-                  </div>
-                </div>
-
                 <FormField
                   control={form.control}
                   name="catchPhrase"
@@ -343,20 +321,6 @@ export function JobForm({ initialData, onSuccess, onCancel, storeInfo }: JobForm
                   <div>
                     <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                     <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">店舗情報</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">店舗名</p>
-                        <p>{storeInfo.businessName}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">所在地</p>
-                        <p>{storeInfo.location}</p>
-                      </div>
-                    </div>
                   </div>
 
                   <div>

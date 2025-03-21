@@ -223,8 +223,6 @@ export const bodyMarkSchema = z.object({
 // Jobsテーブル定義を修正
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  businessName: text("business_name").notNull(),
-  location: text("location", { enum: prefectures }).notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -234,8 +232,7 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
-  locationIdx: index("jobs_location_idx").on(table.location),
+  businessNameIdx: index("jobs_business_name_idx").on(table.catchPhrase), // Modified index
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -358,14 +355,11 @@ export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 export type JobResponse = {
   id: number;
-  businessName: string;
-  location: Prefecture;
-  serviceType: ServiceType;
-  title: string;
+  catchPhrase: string;
+  description: string;
+  benefits: BenefitType[];
   minimumGuarantee?: number;
   maximumGuarantee?: number;
-  transportationSupport: boolean;
-  housingSupport: boolean;
   status: "draft" | "published" | "closed";
   createdAt: Date;
   updatedAt: Date;
@@ -381,7 +375,6 @@ export const loginSchema = z.object({
 
 // jobSchemaの修正
 export const jobSchema = z.object({
-  businessName: z.string(),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
