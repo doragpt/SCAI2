@@ -14,15 +14,15 @@ export const prefectures = [
   "佐賀県", "熊本県", "宮崎県", "鹿児島県", "沖縄県"
 ] as const;
 
-// ServiceType関連の定義
-export const serviceTypes = [
-  "デリヘル",
-  "ホテヘル",
-  "箱ヘル",
-  "エステ",
-  "オナクラ",
-  "メンズエステ"
-] as const;
+// ServiceType関連の定義は削除
+//export const serviceTypes = [
+//  "デリヘル",
+//  "ホテヘル",
+//  "箱ヘル",
+//  "エステ",
+//  "オナクラ",
+//  "メンズエステ"
+//] as const;
 
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
 export const photoTags = [
@@ -167,7 +167,7 @@ export const allBenefitTypes = [
 
 // Type definitions
 export type Prefecture = typeof prefectures[number];
-export type ServiceType = typeof serviceTypes[number];
+//export type ServiceType = typeof serviceTypes[number];
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
 export type CupSize = typeof cupSizes[number];
@@ -182,15 +182,15 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
-// Service Type Labels
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  "デリヘル": "デリヘル",
-  "ホテヘル": "ホテヘル",
-  "箱ヘル": "箱ヘル",
-  "エステ": "エステ",
-  "オナクラ": "オナクラ",
-  "メンズエステ": "メンズエステ",
-} as const;
+// Service Type Labelsは削除
+//export const serviceTypeLabels: Record<ServiceType, string> = {
+//  "デリヘル": "デリヘル",
+//  "ホテヘル": "ホテヘル",
+//  "箱ヘル": "箱ヘル",
+//  "エステ": "エステ",
+//  "オナクラ": "オナクラ",
+//  "メンズエステ": "メンズエステ",
+//} as const;
 
 // Zod schemas for validation
 export const photoSchema = z.object({
@@ -212,7 +212,6 @@ export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
   location: text("location").notNull(),
-  serviceType: text("service_type").notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -224,7 +223,6 @@ export const jobs = pgTable("jobs", {
 }, (table) => ({
   businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
   locationIdx: index("jobs_location_idx").on(table.location),
-  serviceTypeIdx: index("jobs_service_type_idx").on(table.serviceType),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -349,7 +347,7 @@ export type JobResponse = {
   id: number;
   businessName: string;
   location: Prefecture;
-  serviceType: ServiceType;
+  //serviceType: ServiceType; //削除
   title: string;
   minimumGuarantee?: number;
   maximumGuarantee?: number;
@@ -372,9 +370,6 @@ export const loginSchema = z.object({
 export const jobSchema = z.object({
   businessName: z.string(),  // 店舗名は必須だが編集不可
   location: z.string().min(1, "所在地を入力してください"),
-  serviceType: z.enum(serviceTypes, {
-    required_error: "サービスタイプを選択してください",
-  }),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -651,8 +646,9 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
+
 export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, BenefitType, BenefitCategory };
 
 export interface JobListingResponse {
   jobs: Job[];
