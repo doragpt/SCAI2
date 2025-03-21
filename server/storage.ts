@@ -1,16 +1,19 @@
-import { users, store_profiles, type User, type InsertUser, type StoreProfile, type InsertStoreProfile } from "@shared/schema";
+import { users, store_profiles, talentProfiles, type User, type StoreProfile, type InsertStoreProfile, type TalentProfileData } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { log } from "./utils/logger";
 
+// InsertUser型の定義
+type InsertUser = Omit<User, 'id' | 'created_at' | 'updated_at'>;
+
 const PgSession = connectPgSimple(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: any): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
   getTalentProfile(userId: number): Promise<TalentProfileData | null>;
   createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData>;
@@ -243,7 +246,7 @@ export class DatabaseStorage implements IStorage {
       const [result] = await db
         .select()
         .from(talentProfiles)
-        .where(eq(talentProfiles.userId, userId));
+        .where(eq(talentProfiles.user_id, userId));
 
       if (!result) {
         log('info', 'タレントプロフィールが見つかりません', { userId });
@@ -251,67 +254,56 @@ export class DatabaseStorage implements IStorage {
       }
 
       const profileData: TalentProfileData = {
-        userId: result.userId || '',
-        lastName: result.lastName || '',
-        firstName: result.firstName || '',
-        lastNameKana: result.lastNameKana || '',
-        firstNameKana: result.firstNameKana || '',
+        last_name: result.last_name || '',
+        first_name: result.first_name || '',
+        last_name_kana: result.last_name_kana || '',
+        first_name_kana: result.first_name_kana || '',
         location: result.location || '',
-        nearestStation: result.nearestStation || '',
-        availableIds: result.availableIds || [],
-        canProvideResidenceRecord: !!result.canProvideResidenceRecord,
+        nearest_station: result.nearest_station || '',
+        available_ids: result.available_ids || { types: [], others: [] },
+        can_provide_residence_record: !!result.can_provide_residence_record,
         height: result.height || 0,
         weight: result.weight || 0,
-        cupSize: result.cupSize || '',
-        bust: result.bust || 0,
-        waist: result.waist || 0,
-        hip: result.hip || 0,
-        bodyMark: result.bodyMark || '',
-        smoking: typeof result.smoking === 'boolean' ? {
-          enabled: result.smoking,
-          types: [],
-          others: []
-        } : result.smoking || {
+        cup_size: result.cup_size || 'A',
+        bust: result.bust || null,
+        waist: result.waist || null,
+        hip: result.hip || null,
+        body_mark: result.body_mark || { hasBodyMark: false, details: '', others: [] },
+        smoking: result.smoking || {
           enabled: false,
           types: [],
           others: []
         },
-        faceVisibility: typeof result.faceVisibility === 'string'
-          ? result.faceVisibility
-          : result.faceVisibility === true
-            ? "全出し"
-            : result.faceVisibility === false
-              ? "全隠し"
-              : "全隠し",
-        hasEstheExperience: !!result.hasEstheExperience,
-        estheExperiencePeriod: result.estheExperiencePeriod || '',
-        estheOptions: result.estheOptions || [],
-        currentStores: result.currentStores || [],
-        previousStores: result.previousStores || [],
-        selfIntroduction: result.selfIntroduction || '',
+        face_visibility: result.face_visibility || "全隠し",
+        has_esthe_experience: !!result.has_esthe_experience,
+        esthe_experience_period: result.esthe_experience_period || '',
+        esthe_options: result.esthe_options || { available: [], ng_options: [] },
+        current_stores: result.current_stores || [],
+        previous_stores: result.previous_stores || [],
+        self_introduction: result.self_introduction || '',
         notes: result.notes || '',
-        preferredLocations: result.preferredLocations || [],
-        ngLocations: result.ngLocations || [],
-        canPhotoDiary: !!result.canPhotoDiary,
-        canHomeDelivery: !!result.canHomeDelivery,
-        ngOptions: result.ngOptions || [],
-        allergies: result.allergies || [],
-        hasSnsAccount: !!result.hasSnsAccount,
-        snsUrls: result.snsUrls || [],
-        photoDiaryUrls: result.photoDiaryUrls || [],
+        preferred_locations: result.preferred_locations || [],
+        ng_locations: result.ng_locations || [],
+        can_photo_diary: !!result.can_photo_diary,
+        can_home_delivery: !!result.can_home_delivery,
+        ng_options: result.ng_options || { common: [], others: [] },
+        allergies: result.allergies || { types: [], others: [], has_allergy: false },
+        has_sns_account: !!result.has_sns_account,
+        sns_urls: result.sns_urls || [],
+        photo_diary_urls: result.photo_diary_urls || [],
         photos: result.photos || []
       };
 
       log('info', 'タレントプロフィール取得成功', {
         userId,
         profileData: {
-          lastName: profileData.lastName,
-          firstName: profileData.firstName,
-          lastNameKana: profileData.lastNameKana,
-          firstNameKana: profileData.firstNameKana,
+          last_name: profileData.last_name,
+          first_name: profileData.first_name,
+          last_name_kana: profileData.last_name_kana,
+          first_name_kana: profileData.first_name_kana,
           location: profileData.location,
-          nearestStation: profileData.nearestStation,
-          faceVisibility: profileData.faceVisibility
+          nearest_station: profileData.nearest_station,
+          face_visibility: profileData.face_visibility
         }
       });
 
@@ -330,36 +322,36 @@ export class DatabaseStorage implements IStorage {
       log('info', 'タレントプロフィール作成/更新開始', {
         userId,
         inputData: {
-          lastName: data.lastName,
-          firstName: data.firstName,
-          lastNameKana: data.lastNameKana,
-          firstNameKana: data.firstNameKana,
+          last_name: data.last_name,
+          first_name: data.first_name,
+          last_name_kana: data.last_name_kana,
+          first_name_kana: data.first_name_kana,
           location: data.location,
-          nearestStation: data.nearestStation,
+          nearest_station: data.nearest_station,
           height: data.height,
           weight: data.weight,
-          cupSize: data.cupSize,
-          faceVisibility: data.faceVisibility,
+          cup_size: data.cup_size,
+          face_visibility: data.face_visibility,
         }
       });
 
       const [existingProfile] = await db
         .select()
         .from(talentProfiles)
-        .where(eq(talentProfiles.userId, userId));
+        .where(eq(talentProfiles.user_id, userId));
 
       let result;
       const profileData = {
         ...data,
-        userId,
-        updatedAt: new Date(),
+        user_id: userId,
+        updated_at: new Date(),
       };
 
       if (existingProfile) {
         [result] = await db
           .update(talentProfiles)
           .set(profileData)
-          .where(eq(talentProfiles.userId, userId))
+          .where(eq(talentProfiles.user_id, userId))
           .returning();
       } else {
         [result] = await db
@@ -375,20 +367,22 @@ export class DatabaseStorage implements IStorage {
       log('info', 'タレントプロフィール作成/更新成功', {
         userId,
         savedProfile: {
-          lastName: result.lastName,
-          firstName: result.firstName,
-          lastNameKana: result.lastNameKana,
-          firstNameKana: result.firstNameKana,
+          last_name: result.last_name,
+          first_name: result.first_name,
+          last_name_kana: result.last_name_kana,
+          first_name_kana: result.first_name_kana,
           location: result.location,
-          nearestStation: result.nearestStation,
+          nearest_station: result.nearest_station,
           height: result.height,
           weight: result.weight,
-          cupSize: result.cupSize,
-          faceVisibility: result.faceVisibility,
+          cup_size: result.cup_size,
+          face_visibility: result.face_visibility,
         }
       });
 
-      return result as TalentProfileData;
+      return {
+        ...result,
+      } as unknown as TalentProfileData;
     } catch (error) {
       log('error', 'タレントプロフィール作成/更新エラー', {
         error: error instanceof Error ? error.message : 'Unknown error',
