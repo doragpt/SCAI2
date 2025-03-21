@@ -44,8 +44,22 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
   try {
     log('info', '店舗プロフィール更新開始', {
       userId: req.user.id,
-      displayName: req.user.display_name
+      displayName: req.user.display_name,
+      requestBody: req.body
     });
+
+    // 認証済みユーザー情報の確認
+    if (!req.user.display_name || !req.user.location || !req.user.service_type) {
+      log('error', '店舗情報が不足しています', {
+        userId: req.user.id,
+        displayName: req.user.display_name,
+        location: req.user.location,
+        serviceType: req.user.service_type,
+      });
+      return res.status(400).json({
+        message: "店舗情報が正しく設定されていません。管理者にお問い合わせください。"
+      });
+    }
 
     const [existingProfile] = await db
       .select()
@@ -53,34 +67,79 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       .where(eq(store_profiles.user_id, req.user.id));
 
     if (!existingProfile) {
-      return res.status(404).json({ message: "店舗プロフィールが見つかりません" });
+      // プロフィールが存在しない場合は新規作成
+      log('info', '店舗プロフィール新規作成', {
+        userId: req.user.id,
+        displayName: req.user.display_name
+      });
+
+      const insertData = {
+        user_id: req.user.id,
+        business_name: req.user.display_name,
+        location: req.user.location,
+        service_type: req.user.service_type,
+        catch_phrase: req.body.catch_phrase,
+        description: req.body.description,
+        benefits: req.body.benefits || [],
+        minimum_guarantee: Number(req.body.minimum_guarantee) || 0,
+        maximum_guarantee: Number(req.body.maximum_guarantee) || 0,
+        status: req.body.status || "draft",
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      log('info', '新規作成データ', { insertData });
+
+      // バリデーション
+      const validatedData = storeProfileSchema.parse(insertData);
+
+      const [newProfile] = await db
+        .insert(store_profiles)
+        .values(validatedData)
+        .returning();
+
+      log('info', '店舗プロフィール作成成功', {
+        userId: req.user.id,
+        profileId: newProfile.id
+      });
+
+      return res.status(201).json(newProfile);
     }
 
-    // バリデーション
-    const validatedData = storeProfileSchema.parse(req.body);
-
-    // 更新データの準備
+    // 既存プロフィールの更新
     const updateData = {
-      ...validatedData,
+      catch_phrase: req.body.catch_phrase,
+      description: req.body.description,
+      benefits: req.body.benefits || existingProfile.benefits,
+      minimum_guarantee: Number(req.body.minimum_guarantee) || existingProfile.minimum_guarantee,
+      maximum_guarantee: Number(req.body.maximum_guarantee) || existingProfile.maximum_guarantee,
+      status: req.body.status || existingProfile.status,
       updated_at: new Date()
     };
 
+    log('info', '更新データ', { updateData });
+
+    // バリデーション
+    const validatedData = storeProfileSchema.parse(updateData);
+
     const [updatedProfile] = await db
       .update(store_profiles)
-      .set(updateData)
+      .set(validatedData)
       .where(eq(store_profiles.user_id, req.user.id))
       .returning();
 
     log('info', '店舗プロフィール更新成功', {
       userId: req.user.id,
-      profileId: updatedProfile.id
+      profileId: updatedProfile.id,
+      updatedData: validatedData
     });
 
     return res.json(updatedProfile);
   } catch (error) {
     log('error', '店舗プロフィール更新エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id
+      userId: req.user?.id,
+      requestBody: req.body
     });
 
     if (error instanceof Error && error.name === 'ZodError') {
