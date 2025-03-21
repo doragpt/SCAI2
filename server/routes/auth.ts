@@ -262,8 +262,12 @@ router.get("/check", (req, res) => {
   const response = {
     id: req.user.id,
     email: req.user.email,
+    username: req.user.username,
     role: req.user.role,
-    displayName: req.user.display_name // スネークケースからキャメルケースに変換
+    displayName: req.user.display_name, // スネークケースからキャメルケースに変換
+    birthDate: req.user.birth_date, // スネークケースからキャメルケースに変換
+    location: req.user.location,
+    preferredLocations: req.user.preferred_locations || [] // スネークケースからキャメルケースに変換
   };
 
   res.json(response);

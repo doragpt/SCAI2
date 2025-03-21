@@ -395,10 +395,11 @@ export type UserResponse = {
   id: number;
   email: string;
   username: string;
-  birth_date: string;
+  birthDate: string; // キャメルケースに修正
   location: string;
-  preferred_locations: string[];
+  preferredLocations: string[]; // キャメルケースに修正
   role: "talent" | "store";
+  displayName?: string; // 表示名を追加
 };
 
 export const talentProfileSchema = z.object({
@@ -630,7 +631,6 @@ export interface BlogPostListResponse {
 
 export type Photo = z.infer<typeof photoSchema>;
 export type BodyMark = z.infer<typeof bodyMarkSchema>;
-export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 export type SelectUser = {
   id: number;
   username: string;
@@ -647,11 +647,6 @@ export type TalentProfileData = z.infer<typeof talentProfileSchema>;
 export type InsertTalentProfile = typeof talentProfiles.$inferInsert;
 export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
-
-
-
-export type { User, TalentProfile, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory, StoreProfile, InsertStoreProfile };
 
 export interface StoreProfileResponse extends StoreProfile {
   hasApplied?: boolean;
@@ -738,11 +733,4 @@ export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
     }),
 }));
 
-export type StoreProfileListResponse = {
-    profiles: StoreProfile[];
-    pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalItems: number;
-    };
-};
+// StoreProfileListResponseはすでに上部で定義されています。
