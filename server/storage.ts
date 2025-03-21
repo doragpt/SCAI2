@@ -1,4 +1,4 @@
-import { users, talentProfiles, type User, type InsertUser, type TalentProfileData } from "@shared/schema";
+import { users, store_profiles, type User, type InsertUser, type StoreProfile, type InsertStoreProfile } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -14,6 +14,8 @@ export interface IStorage {
   updateUser(id: number, data: Partial<User>): Promise<User>;
   getTalentProfile(userId: number): Promise<TalentProfileData | null>;
   createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData>;
+  getStoreProfile(userId: number): Promise<StoreProfile | null>;
+  createOrUpdateStoreProfile(userId: number, data: InsertStoreProfile): Promise<StoreProfile>;
   sessionStore: session.Store;
 }
 
@@ -389,6 +391,89 @@ export class DatabaseStorage implements IStorage {
       return result as TalentProfileData;
     } catch (error) {
       log('error', 'タレントプロフィール作成/更新エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
+  }
+
+  async getStoreProfile(userId: number): Promise<StoreProfile | null> {
+    try {
+      log('info', '店舗プロフィール取得開始', { userId });
+
+      const [result] = await db
+        .select()
+        .from(store_profiles)
+        .where(eq(store_profiles.user_id, userId));
+
+      if (!result) {
+        log('info', '店舗プロフィールが見つかりません', { userId });
+        return null;
+      }
+
+      log('info', '店舗プロフィール取得成功', {
+        userId,
+        business_name: result.business_name,
+        service_type: result.service_type
+      });
+
+      return result;
+    } catch (error) {
+      log('error', '店舗プロフィール取得エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
+  }
+
+  async createOrUpdateStoreProfile(userId: number, data: InsertStoreProfile): Promise<StoreProfile> {
+    try {
+      log('info', '店舗プロフィール作成/更新開始', {
+        userId,
+        business_name: data.business_name,
+        service_type: data.service_type
+      });
+
+      const [existingProfile] = await db
+        .select()
+        .from(store_profiles)
+        .where(eq(store_profiles.user_id, userId));
+
+      let result;
+      const profileData = {
+        ...data,
+        user_id: userId,
+        updated_at: new Date(),
+      };
+
+      if (existingProfile) {
+        [result] = await db
+          .update(store_profiles)
+          .set(profileData)
+          .where(eq(store_profiles.user_id, userId))
+          .returning();
+      } else {
+        [result] = await db
+          .insert(store_profiles)
+          .values(profileData)
+          .returning();
+      }
+
+      if (!result) {
+        throw new Error('店舗プロフィールの保存に失敗しました');
+      }
+
+      log('info', '店舗プロフィール作成/更新成功', {
+        userId,
+        business_name: result.business_name,
+        service_type: result.service_type
+      });
+
+      return result;
+    } catch (error) {
+      log('error', '店舗プロフィール作成/更新エラー', {
         error: error instanceof Error ? error.message : 'Unknown error',
         userId
       });

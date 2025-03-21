@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { storeProfileSchema, benefitTypes, benefitCategories } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,15 @@ const FORM_STEP_NAMES = {
 } as const;
 
 type FormStep = keyof typeof FORM_STEP_NAMES;
-type JobFormData = typeof jobSchema._type;
+type StoreProfileFormData = typeof storeProfileSchema._type;
 
-type JobFormProps = {
-  initialData?: Job;
+type StoreProfileFormProps = {
+  initialData?: StoreProfileFormData;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
+export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(0);
@@ -38,8 +38,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>("detail");
   const [showPreview, setShowPreview] = useState(false);
 
-  const form = useForm<JobFormData>({
-    resolver: zodResolver(jobSchema),
+  const form = useForm<StoreProfileFormData>({
+    resolver: zodResolver(storeProfileSchema),
     mode: "onChange",
     defaultValues: {
       catch_phrase: initialData?.catch_phrase || "",
@@ -52,24 +52,21 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: JobFormData) => {
-      const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
-      const method = initialData ? "PATCH" : "POST";
-
-      const response = await apiRequest(method, endpoint, data);
+    mutationFn: async (data: StoreProfileFormData) => {
+      const response = await apiRequest("PATCH", "/api/store/profile", data);
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "求人情報の保存に失敗しました");
+        throw new Error(error.message || "店舗情報の保存に失敗しました");
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEYS.JOBS_STORE],
+        queryKey: [QUERY_KEYS.STORE_PROFILE],
         refetchType: 'all'
       });
       toast({
-        title: "求人情報を保存しました",
+        title: "店舗情報を保存しました",
         description: "変更内容が保存されました。",
       });
       onSuccess?.();
@@ -83,7 +80,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     },
   });
 
-  const onSubmit = (data: JobFormData) => {
+  const onSubmit = (data: StoreProfileFormData) => {
     mutate(data);
   };
 
@@ -299,7 +296,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>求人情報プレビュー</DialogTitle>
+              <DialogTitle>店舗情報プレビュー</DialogTitle>
               <DialogDescription>
                 求職者に表示される実際の画面イメージです
               </DialogDescription>

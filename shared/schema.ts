@@ -220,9 +220,10 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
-// Jobsテーブル定義を修正
-export const jobs = pgTable("jobs", {
+// store_profilesテーブルの追加
+export const store_profiles = pgTable("store_profiles", {
   id: serial("id").primaryKey(),
+  user_id: integer("user_id").notNull().references(() => users.id),
   business_name: text("business_name").notNull(),
   location: text("location", { enum: prefectures }).notNull(),
   service_type: text("service_type", { enum: serviceTypes }).notNull(),
@@ -235,9 +236,11 @@ export const jobs = pgTable("jobs", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  business_name_idx: index("jobs_business_name_idx").on(table.business_name),
-  status_idx: index("jobs_status_idx").on(table.status),
+  user_id_idx: index("store_profiles_user_id_idx").on(table.user_id),
+  business_name_idx: index("store_profiles_business_name_idx").on(table.business_name),
+  status_idx: index("store_profiles_status_idx").on(table.status),
 }));
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -256,14 +259,14 @@ export const users = pgTable("users", {
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
-  job_id: integer("job_id").notNull().references(() => jobs.id),
+  store_profile_id: integer("store_profile_id").notNull().references(() => store_profiles.id),
   user_id: integer("user_id").notNull().references(() => users.id),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
   message: text("message"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  job_id_idx: index("applications_job_id_idx").on(table.job_id),
+  store_profile_id_idx: index("applications_store_profile_id_idx").on(table.store_profile_id),
   user_id_idx: index("applications_user_id_idx").on(table.user_id),
   status_idx: index("applications_status_idx").on(table.status),
 }));
@@ -335,50 +338,20 @@ export const talentProfiles = pgTable("talent_profiles", {
 });
 
 // Relations
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  applications: many(applications),
-}));
-
-export const applicationsRelations = relations(applications, ({ one }) => ({
-  job: one(jobs, {
-    fields: [applications.job_id],
-    references: [jobs.id],
-  }),
+export const store_profilesRelations = relations(store_profiles, ({ one }) => ({
   user: one(users, {
-    fields: [applications.user_id],
+    fields: [store_profiles.user_id],
     references: [users.id],
   }),
 }));
 
 // Types
-export type Job = typeof jobs.$inferSelect;
-export type InsertJob = typeof jobs.$inferInsert;
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Application = typeof applications.$inferSelect;
-export type InsertApplication = typeof applications.$inferInsert;
-export type JobResponse = {
-  id: number;
-  catch_phrase: string;
-  description: string;
-  benefits: BenefitType[];
-  minimum_guarantee?: number;
-  maximum_guarantee?: number;
-  status: "draft" | "published" | "closed";
-  created_at: Date;
-  updated_at: Date;
-};
+export type StoreProfile = typeof store_profiles.$inferSelect;
+export type InsertStoreProfile = typeof store_profiles.$inferInsert;
 
 // Schemas
-// 既存のloginSchemaを更新
-export const loginSchema = z.object({
-  email: z.string().email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-  role: z.enum(["talent", "store"]).optional(),
-});
-
-// jobSchemaの修正（フォームで扱う項目のみを定義）
-export const jobSchema = z.object({
+// スキーマの追加（フォームで扱う項目のみを定義）
+export const storeProfileSchema = z.object({
   catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -391,6 +364,13 @@ export const jobSchema = z.object({
   status: z.enum(jobStatusTypes).default("draft"),
 });
 
+
+export const loginSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+  role: z.enum(["talent", "store"]).optional(),
+});
+
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
 })
@@ -399,8 +379,9 @@ export const applicationSchema = createInsertSchema(applications, {
 export type LoginData = z.infer<typeof loginSchema>;
 
 // Response types
-export interface JobListingResponse {
-  jobs: Job[];
+
+export interface StoreProfileListResponse {
+  profiles: StoreProfile[];
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -552,15 +533,15 @@ export const userSchema = createInsertSchema(users, {
     invalid_type_error: "無効な日付形式です",
   }),
 }).omit({ id: true, created_at: true, updated_at: true })
-.superRefine((data, ctx) => {
-  if (data.role === "store" && !data.service_type) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "店舗ユーザーの場合、業種の選択は必須です",
-      path: ["service_type"]
-    });
-  }
-});
+  .superRefine((data, ctx) => {
+    if (data.role === "store" && !data.service_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "店舗ユーザーの場合、業種の選択は必須です",
+        path: ["service_type"]
+      });
+    }
+  });
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
@@ -666,20 +647,10 @@ export type ProfileData = TalentProfileData;
 export type RegisterFormData = z.infer<typeof talentRegisterFormSchema>;
 
 
+export type { User, TalentProfile, Application, InsertApplication };
+export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory, StoreProfile, InsertStoreProfile };
 
-export type { User, TalentProfile, Job, Application, InsertApplication };
-export type { Prefecture, BodyType, CupSize, PhotoTag, FaceVisibility, IdType, AllergyType, SmokingType, CommonNgOption, EstheOption, ServiceType, BenefitType, BenefitCategory };
-
-export interface JobListingResponse {
-  jobs: Job[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
-
-export interface JobResponse extends Job {
+export interface StoreProfileResponse extends StoreProfile {
   hasApplied?: boolean;
   applicationStatus?: string;
 }
@@ -687,25 +658,25 @@ export interface JobResponse extends Job {
 export const keepList = pgTable('keepList', {
   id: serial('id').primaryKey(),
   user_id: integer('user_id').notNull().references(() => users.id),
-  job_id: integer('job_id').notNull().references(() => jobs.id),
+  store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
   added_at: timestamp('added_at').defaultNow(),
   note: text('note')
 }, (table) => {
   return {
     user_id_idx: index('keep_list_user_id_idx').on(table.user_id),
-    job_id_idx: index('keep_list_job_id_idx').on(table.job_id),
+    store_profile_id_idx: index('keep_list_store_profile_id_idx').on(table.store_profile_id),
   };
 });
 
 export const viewHistory = pgTable('viewHistory', {
   id: serial('id').primaryKey(),
   user_id: integer('user_id').notNull().references(() => users.id),
-  job_id: integer('job_id').notNull().references(() => jobs.id),
+  store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
   viewed_at: timestamp('viewed_at').defaultNow()
 }, (table) => {
   return {
     user_id_idx: index('view_history_user_id_idx').on(table.user_id),
-    job_id_idx: index('view_history_job_id_idx').on(table.job_id),
+    store_profile_id_idx: index('view_history_store_profile_id_idx').on(table.store_profile_id),
     viewed_at_idx: index('view_history_viewed_at_idx').on(table.viewed_at),
   };
 });
@@ -718,10 +689,21 @@ export type InsertViewHistory = typeof viewHistory.$inferInsert;
 export const keepListSchema = createInsertSchema(keepList);
 export const viewHistorySchema = createInsertSchema(viewHistory);
 
+export const applicationsRelations = relations(applications, ({ one }) => ({
+  store_profile: one(store_profiles, {
+    fields: [applications.store_profile_id],
+    references: [store_profiles.id],
+  }),
+  user: one(users, {
+    fields: [applications.user_id],
+    references: [users.id],
+  }),
+}));
+
 export const keepListRelations = relations(keepList, ({ one }) => ({
-  job: one(jobs, {
-    fields: [keepList.job_id],
-    references: [jobs.id],
+  store_profile: one(store_profiles, {
+    fields: [keepList.store_profile_id],
+    references: [store_profiles.id],
   }),
   user: one(users, {
     fields: [keepList.user_id],
@@ -730,9 +712,9 @@ export const keepListRelations = relations(keepList, ({ one }) => ({
 }));
 
 export const viewHistoryRelations = relations(viewHistory, ({ one }) => ({
-  job: one(jobs, {
-    fields: [viewHistory.job_id],
-    references: [jobs.id],
+  store_profile: one(store_profiles, {
+    fields: [viewHistory.store_profile_id],
+    references: [store_profiles.id],
   }),
   user: one(users, {
     fields: [viewHistory.user_id],
@@ -745,3 +727,19 @@ export type PreviousStore = {
 };
 
 export const talentRegisterFormSchema = talentProfileSchema;
+
+export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
+    user: one(users, {
+        fields: [talentProfiles.user_id],
+        references: [users.id],
+    }),
+}));
+
+export type StoreProfileListResponse = {
+    profiles: StoreProfile[];
+    pagination: {
+        currentPage: number;
+        totalPages: number;
+        totalItems: number;
+    };
+};
