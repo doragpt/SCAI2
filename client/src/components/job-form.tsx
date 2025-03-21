@@ -110,13 +110,21 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
   });
 
   const onSubmit = (data: StoreProfileFormData) => {
-    console.log("Submitting data:", data);
+    console.log("Submitting form data:", data);
     mutate(data);
   };
 
+  console.log("Form component re-rendered");
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form 
+        onSubmit={(e) => {
+          console.log("Form submit event triggered");
+          form.handleSubmit(onSubmit)(e);
+        }} 
+        className="space-y-8"
+      >
         <FormField
           control={form.control}
           name="catch_phrase"
@@ -181,7 +189,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
                     step="1000"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     {...field}
-                    value={field.value || ''}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     placeholder="例：30000"
                   />
@@ -204,7 +211,6 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
                     step="1000"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     {...field}
-                    value={field.value || ''}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     placeholder="例：50000"
                   />
@@ -299,6 +305,10 @@ function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProfileForm
           <Button
             type="submit"
             disabled={isPending}
+            onClick={() => {
+              console.log("Submit button clicked");
+              console.log("Current form state:", form.getValues());
+            }}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
