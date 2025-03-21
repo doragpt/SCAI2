@@ -526,57 +526,57 @@ const OtherItemInput = React.forwardRef<
 OtherItemInput.displayName = 'OtherItemInput';
 
 const defaultValues: TalentProfileData = {
-  lastName: "",
-  firstName: "",
-  lastNameKana: "",
-  firstNameKana: "",
+  last_name: "",
+  first_name: "",
+  last_name_kana: "",
+  first_name_kana: "",
   location: "東京都",
-  nearestStation: "",
+  nearest_station: "",
   available_ids: {
     types: [],
     others: [],
   },
-  canProvideResidenceRecord: false,
+  can_provide_residence_record: false,
   height: 150,
   weight: 45,
-  cupSize: "D",
+  cup_size: "D",
   bust: null,
   waist: null,
   hip: null,
-  faceVisibility: "全隠し",
-  canPhotoDiary: false,
-  canHomeDelivery: false,
-  ngOptions: {
+  face_visibility: "全隠し",
+  can_photo_diary: false,
+  can_home_delivery: false,
+  ng_options: {
     common: [],
     others: [],
   },
   allergies: {
     types: [],
     others: [],
-    hasAllergy: false,
+    has_allergy: false,
   },
   smoking: {
     enabled: false,
     types: [],
     others: [],
   },
-  hasSnsAccount: false,
-  snsUrls: [],
-  currentStores: [],
-  previousStores: [],
-  photoDiaryUrls: [],
+  has_sns_account: false,
+  sns_urls: [],
+  current_stores: [],
+  previous_stores: [],
+  photo_diary_urls: [],
   photos: [],
-  selfIntroduction: "",
+  self_introduction: "",
   notes: "",
-  estheOptions: {
+  esthe_options: {
     available: [],
     ngOptions: [],
   },
-  hasEstheExperience: false,
-  estheExperiencePeriod: "",
-  preferredLocations: [],
-  ngLocations: [],
-  bodyMark: {
+  has_esthe_experience: false,
+  esthe_experience_period: "",
+  preferred_locations: [],
+  ng_locations: [],
+  body_mark: {
     hasBodyMark: false,
     details: "",
     others: [],
@@ -905,7 +905,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="lastName"
+                  name="last_name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>姓</FormLabel>
@@ -918,7 +918,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="first_name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>名</FormLabel>
@@ -937,7 +937,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="lastNameKana"
+                  name="last_name_kana"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>セイ</FormLabel>
@@ -950,7 +950,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="firstNameKana"
+                  name="first_name_kana"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>メイ</FormLabel>
@@ -1014,7 +1014,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               />
               <FormField
                 control={form.control}
-                name="nearestStation"
+                name="nearest_station"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>最寄駅</FormLabel>
@@ -1093,7 +1093,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
             <FormField
               control={form.control}
-              name="canProvideResidenceRecord"
+              name="can_provide_residence_record"
               render={({ field }) => (
                 <FormItem>
                   <SwitchField
@@ -1155,7 +1155,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
             </div>
             <FormField
               control={form.control}
-              name="cupSize"
+              name="cup_size"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>カップサイズ</FormLabel>
@@ -1261,7 +1261,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               <h3 className="text-lg font-semibold mb-4">顔出し</h3>
               <FormField
                 control={form.control}
-                name="faceVisibility"
+                name="face_visibility"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>パネルの顔出し</FormLabel>
@@ -1287,7 +1287,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
             <FormField
               control={form.control}
-              name="canPhotoDiary"
+              name="can_photo_diary"
               render={({ field }) => (
                 <FormItem>
                   <SwitchField
@@ -1302,7 +1302,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
             />
             <FormField
               control={form.control}
-              name="canHomeDelivery"
+              name="can_home_delivery"
               render={({ field }) => (
                 <FormItem>
                   <SwitchField
