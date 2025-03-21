@@ -1,8 +1,15 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { type ServiceType, serviceTypeLabels } from "@shared/schema"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+// 業種の日本語表示用ユーティリティ
+export function getServiceTypeLabel(serviceType: ServiceType | "all"): string {
+  if (serviceType === "all") return "全ての業種";
+  return serviceTypeLabels[serviceType] || serviceType;
 }
 
 // 給与表示のフォーマット

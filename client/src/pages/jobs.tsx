@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, MapPin, Banknote } from "lucide-react";
+import { Loader2, Search, MapPin, Banknote, Check, Building2 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +14,15 @@ import {
 } from "@/components/ui/select";
 import {
   prefectures,
-  type JobResponse,
+  serviceTypes,
+  type ServiceType,
+  type JobResponse
 } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { formatSalary, formatDate } from "@/lib/utils";
+import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 // Animation variants
 const container = {
@@ -37,6 +40,7 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
+// 求人カードコンポーネント
 const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div variants={item}>
@@ -53,6 +57,9 @@ const JobCard = ({ job }: { job: JobResponse }) => {
                   {job.location}
                 </div>
               </div>
+              <Badge variant="outline" className="bg-primary/5">
+                {job.serviceType}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -60,6 +67,20 @@ const JobCard = ({ job }: { job: JobResponse }) => {
               <div className="flex items-center text-primary font-semibold">
                 <Banknote className="h-5 w-5 mr-2" />
                 日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {job.transportationSupport && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    交通費支給
+                  </Badge>
+                )}
+                {job.housingSupport && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Building2 className="h-3.5 w-3.5 mr-1" />
+                    寮完備
+                  </Badge>
+                )}
               </div>
               <div className="text-xs text-muted-foreground mt-2">
                 {formatDate(job.createdAt)}
@@ -75,34 +96,46 @@ const JobCard = ({ job }: { job: JobResponse }) => {
 export default function Jobs() {
   const { user } = useAuth();
   const [location, setLocation] = useState<string>("all");
+  const [serviceType, setServiceType] = useState<string>("all");
   const [page, setPage] = useState(1);
   const limit = 12;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const locationParam = params.get("location") || "all";
+    const serviceTypeParam = params.get("serviceType") || "all";
     const pageParam = parseInt(params.get("page") || "1");
 
     setLocation(locationParam);
+    setServiceType(serviceTypeParam);
     setPage(pageParam);
   }, []);
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["jobs", { page, limit, location }],
+    queryKey: ["jobs", { page, limit, location, serviceType }],
     queryFn: async () => {
       try {
+        console.log('Fetching jobs data...', { page, limit, location, serviceType });
         const url = new URL("/api/jobs/public", window.location.origin);
         url.searchParams.append("page", page.toString());
         url.searchParams.append("limit", limit.toString());
         if (location !== "all") url.searchParams.append("location", location);
+        if (serviceType !== "all") url.searchParams.append("serviceType", serviceType);
 
         const response = await fetch(url);
+        console.log('API Response:', response);
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
           throw new Error("求人情報の取得に失敗しました");
         }
 
-        return response.json();
+        const result = await response.json();
+        console.log('Jobs API Response:', result);
+        return result;
       } catch (error) {
+        console.error("求人情報取得エラー:", error);
         throw error;
       }
     },
@@ -110,13 +143,14 @@ export default function Jobs() {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error.message
+        description: error.message || "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
       });
     }
   });
 
   return (
     <div className="space-y-8">
+      {/* ヘッダー */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -130,7 +164,8 @@ export default function Jobs() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-4">
+      {/* フィルター */}
+      <div className="grid grid-cols-2 gap-4">
         <Select value={location} onValueChange={setLocation}>
           <SelectTrigger>
             <SelectValue placeholder="エリアを選択" />
@@ -144,8 +179,23 @@ export default function Jobs() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={serviceType} onValueChange={setServiceType}>
+          <SelectTrigger>
+            <SelectValue placeholder="業種を選択" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全ての業種</SelectItem>
+            {serviceTypes.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* 求人一覧 */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />

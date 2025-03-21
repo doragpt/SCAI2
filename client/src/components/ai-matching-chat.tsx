@@ -38,6 +38,18 @@ import {
   User,
   Loader2,
   ArrowLeft,
+  Check,
+  X,
+  FileCheck,
+  FileText,
+  Heart,
+  Settings,
+  Clock,
+  Building2,
+  Briefcase,
+  Store,
+  MapPin,
+  Globe,
   XCircle,
   CreditCard as IdCard,
   CheckCircle,
@@ -58,14 +70,23 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMatching, startMatching } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
-import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { format } from 'date-fns'
+import { ja } from 'date-fns/locale'
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { TalentProfileData } from "@shared/schema";
-
-// Remaining code is identical to original
 
 interface Message {
   type: "ai" | "user";

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { type JobResponse } from "@shared/schema";
+import { type JobResponse, type ServiceType, serviceTypes } from "@shared/schema";
 import {
   Loader2,
   MapPin,
@@ -18,6 +18,24 @@ import {
   HelpCircle,
   MessageSquare,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState } from "react";
 import { SEO } from "@/lib/seo";
 import { motion } from "framer-motion";
@@ -52,6 +70,31 @@ const IconWrapper = ({ type, className }: { type: string; className?: string }) 
   }[type];
 
   return IconComponent ? <IconComponent className={className} /> : null;
+};
+
+const areaGroups = [
+  { label: "北海道・東北", areas: ["北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県"] },
+  { label: "関東", areas: ["東京都", "神奈川県", "千葉県", "埼玉県", "茨城県", "栃木県", "群馬県"] },
+  { label: "中部", areas: ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県"] },
+  { label: "関西", areas: ["三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"] },
+  { label: "中国", areas: ["鳥取県", "島根県", "岡山県", "広島県", "山口県"] },
+  { label: "四国", areas: ["徳島県", "香川県", "愛媛県", "高知県"] },
+  { label: "九州・沖縄", areas: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"] },
+];
+
+// エリア統計の型定義
+type AreaStats = {
+  [key: string]: number;
+};
+
+const areaStats: AreaStats = {
+  "北海道・東北": 234,
+  "関東": 567,
+  "中部": 345,
+  "関西": 456,
+  "中国": 123,
+  "四国": 89,
+  "九州・沖縄": 234,
 };
 
 // 給与表示のフォーマッター
@@ -94,7 +137,7 @@ const testimonials = [
   },
 ];
 
-// JobCardコンポーネント
+// JobCardコンポーネントの修正
 const JobCard = ({ job }: { job: JobResponse }) => {
   return (
     <motion.div
@@ -114,6 +157,18 @@ const JobCard = ({ job }: { job: JobResponse }) => {
                 {job.location}
               </CardDescription>
             </div>
+            <HoverCard>
+              <HoverCardTrigger>
+                <Badge variant="outline" className="bg-primary/5">
+                  {job.serviceType}
+                </Badge>
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <p className="text-sm">
+                  {job.serviceType}に関する求人です
+                </p>
+              </HoverCardContent>
+            </HoverCard>
           </div>
         </CardHeader>
         <CardContent>
@@ -121,6 +176,20 @@ const JobCard = ({ job }: { job: JobResponse }) => {
             <div className="flex items-center text-primary font-semibold">
               <Banknote className="h-5 w-5 mr-2" />
               <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {job.transportationSupport && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  交通費支給
+                </Badge>
+              )}
+              {job.housingSupport && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Building2 className="h-3.5 w-3.5 mr-1" />
+                  寮完備
+                </Badge>
+              )}
             </div>
             <Button
               variant="outline"
@@ -141,19 +210,26 @@ const JobCard = ({ job }: { job: JobResponse }) => {
 
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
+  const [selectedType, setSelectedType] = useState<ServiceType | "all">("all");
   const { toast } = useToast();
 
   const { data, isLoading: jobsLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: async () => {
       try {
+        console.log('Fetching jobs data...'); // デバッグログ追加
         const response = await fetch("/api/jobs");
+        console.log('API Response:', response); // デバッグログ追加
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText); // デバッグログ追加
           throw new Error("求人情報の取得に失敗しました");
         }
 
-        return response.json();
+        const result = await response.json();
+        console.log('Jobs API Response:', result);
+        return result;
       } catch (error) {
         console.error("求人情報取得エラー:", error);
         throw error;
@@ -162,7 +238,11 @@ export default function HomePage() {
   });
 
   const jobListings = data?.jobs || [];
-  const filteredListings = jobListings.slice(0, 6);
+
+  const filteredListings = jobListings.filter(job => {
+    if (!job) return false;
+    return selectedType === "all" || job.serviceType === selectedType;
+  }).slice(0, 6);
 
   if (authLoading || jobsLoading) {
     return (
@@ -351,12 +431,36 @@ export default function HomePage() {
                   最新の高収入求人をチェック
                 </p>
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/jobs">
-                  すべての求人を見る
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
+              <div className="flex items-center gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Select value={selectedType} onValueChange={(value) => setSelectedType(value as ServiceType | "all")}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="業種を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">全ての業種</SelectItem>
+                          {serviceTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>業種を選んで絞り込み</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/jobs">
+                    すべての求人を見る
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
 
             {jobsLoading ? (

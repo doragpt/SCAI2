@@ -13,6 +13,7 @@ interface ExtendedTalentProfile extends Omit<TalentProfileData, 'photos'> {
   guaranteeAmount: number;
   age: number;
   photos: string[];
+  serviceTypes: string[];
 }
 
 export default function ScoutDashboard() {
@@ -100,6 +101,16 @@ export default function ScoutDashboard() {
                         {profile.weight && <div>体重: {profile.weight}kg</div>}
                         {profile.bust && <div>バスト: {profile.bust}cm</div>}
                         {profile.waist && <div>ウエスト: {profile.waist}cm</div>}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.serviceTypes.map((type) => (
+                          <span
+                            key={type}
+                            className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
+                          >
+                            {type}
+                          </span>
+                        ))}
                       </div>
                       <Button 
                         className="w-full"
