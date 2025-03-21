@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, Check } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,11 +42,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     resolver: zodResolver(jobSchema),
     mode: "onChange",
     defaultValues: {
-      catchPhrase: initialData?.catchPhrase || "",
+      catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
-      minimumGuarantee: initialData?.minimumGuarantee || 0,
-      maximumGuarantee: initialData?.maximumGuarantee || 0,
+      minimum_guarantee: initialData?.minimum_guarantee || 0,
+      maximum_guarantee: initialData?.maximum_guarantee || 0,
       status: initialData?.status || "draft",
     }
   });
@@ -56,17 +56,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      // APIリクエストデータの整形（最小限のデータのみ送信）
-      const formattedData = {
-        catchPhrase: data.catchPhrase,
-        description: data.description,
-        benefits: data.benefits,
-        minimumGuarantee: Number(data.minimumGuarantee) || 0,
-        maximumGuarantee: Number(data.maximumGuarantee) || 0,
-        status: data.status,
-      };
-
-      const response = await apiRequest(method, endpoint, formattedData);
+      const response = await apiRequest(method, endpoint, data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -115,7 +105,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="catchPhrase"
+                  name="catch_phrase"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-medium">キャッチコピー</FormLabel>
@@ -175,7 +165,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <div className="flex gap-4">
                   <FormField
                     control={form.control}
-                    name="minimumGuarantee"
+                    name="minimum_guarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormLabel className="font-medium">最低保証（円）</FormLabel>
@@ -197,7 +187,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
                   <FormField
                     control={form.control}
-                    name="maximumGuarantee"
+                    name="maximum_guarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormLabel className="font-medium">最高保証（円）</FormLabel>
@@ -298,7 +288,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={!form.formState.isValid || isPending}
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存する
@@ -317,7 +307,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <div className="space-y-6 p-6 bg-background rounded-lg border">
               <div className="space-y-4">
                 <div className="bg-primary/5 p-4 rounded-lg">
-                  <p className="text-lg font-bold text-primary">{form.getValues("catchPhrase")}</p>
+                  <p className="text-lg font-bold text-primary">{form.getValues("catch_phrase")}</p>
                 </div>
 
                 <div className="space-y-6">
@@ -329,8 +319,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">給与</h3>
                     <div className="text-xl font-bold">
-                      {form.getValues("minimumGuarantee") ? `${form.getValues("minimumGuarantee").toLocaleString()}円` : ""}
-                      {form.getValues("maximumGuarantee") ? ` ～ ${form.getValues("maximumGuarantee").toLocaleString()}円` : ""}
+                      {form.getValues("minimum_guarantee") ? `${form.getValues("minimum_guarantee").toLocaleString()}円` : ""}
+                      {form.getValues("maximum_guarantee") ? ` ～ ${form.getValues("maximum_guarantee").toLocaleString()}円` : ""}
                     </div>
                   </div>
 
