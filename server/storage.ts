@@ -335,6 +335,9 @@ export class DatabaseStorage implements IStorage {
         }
       });
 
+      // ユーザー情報を取得して生年月日を利用可能にする
+      const userData = await this.getUser(userId);
+      
       const [existingProfile] = await db
         .select()
         .from(talentProfiles)
@@ -344,6 +347,8 @@ export class DatabaseStorage implements IStorage {
       const profileData = {
         ...data,
         user_id: userId,
+        // ユーザーの生年月日をタレントプロフィールにも反映
+        birth_date: userData?.birth_date,
         updated_at: new Date(),
       };
 

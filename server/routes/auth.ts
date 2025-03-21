@@ -153,6 +153,59 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
       display_name: userData.username
     });
 
+    // タレントプロフィールの初期作成（ロールがtalentの場合）
+    if (user.role === 'talent') {
+      try {
+        // 基本的なプロファイル情報を作成
+        const initialProfile = {
+          location: user.location || '',
+          preferred_locations: user.preferred_locations || [],
+          last_name: '',
+          first_name: '',
+          last_name_kana: '',
+          first_name_kana: '',
+          nearest_station: '',
+          available_ids: { types: [], others: [] },
+          can_provide_residence_record: false,
+          height: 0,
+          weight: 0,
+          cup_size: 'A',
+          bust: null,
+          waist: null,
+          hip: null,
+          body_mark: { has_body_mark: false, details: '', others: [] },
+          smoking: { enabled: false, types: [], others: [] },
+          face_visibility: "全隠し",
+          has_esthe_experience: false,
+          esthe_experience_period: '',
+          esthe_options: { available: [], ng_options: [] },
+          current_stores: [],
+          previous_stores: [],
+          self_introduction: '',
+          notes: '',
+          ng_locations: [],
+          can_photo_diary: false,
+          can_home_delivery: false,
+          ng_options: { common: [], others: [] },
+          allergies: { types: [], others: [], has_allergy: false },
+          has_sns_account: false,
+          sns_urls: [],
+          photo_diary_urls: [],
+          photos: []
+        };
+        
+        // タレントプロフィールを作成（ここで生年月日も自動的にコピーされる）
+        await storage.createOrUpdateTalentProfile(user.id, initialProfile);
+        log('info', 'ユーザー登録時にタレントプロフィールを初期化しました', { userId: user.id });
+      } catch (error) {
+        // プロフィール作成エラーはログに記録するが、ユーザー登録自体は続行
+        log('error', 'タレントプロフィール初期化エラー', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          userId: user.id
+        });
+      }
+    }
+
     // セッションの作成
     req.login(user, (err) => {
       if (err) {
