@@ -120,7 +120,7 @@ router.patch("/user", authenticate, async (req, res) => {
 // 認証エンドポイント
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // リクエストデータのバリデーション
+    // リクエストデータのバリデーション（基本的なフォームデータのみ）
     const validatedData = talentRegisterFormSchema.parse(req.body);
 
     log('info', '登録データバリデーション成功', {
@@ -155,8 +155,8 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     // タレントプロフィールの初期作成（ロールがtalentの場合）
     if (user.role === 'talent') {
       try {
-        // 登録フォームからデータを取得
-        const { lastNameKana, firstNameKana, nearestStation, height, weight, cupSize, faceVisibility } = validatedData;
+        // 簡易登録フォームでは詳細データがないので、デフォルト値を設定
+        // 以前は詳細なスキーマを使用していたが、現在は簡易登録フォームを使用
         
         // ログ出力
         log('info', 'プロフィール初期化データ', {

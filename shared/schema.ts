@@ -725,7 +725,8 @@ export type PreviousStore = {
 };
 
 // 登録フォーム用のスキーマ定義（簡略化されたもの）
-export const talentRegisterFormSchema = z.object({
+// 完全な登録スキーマ
+export const fullTalentRegisterFormSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
   password: z.string()
     .min(8, "パスワードは8文字以上である必要があります")
@@ -759,6 +760,31 @@ export const talentRegisterFormSchema = z.object({
   faceVisibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
+  privacyPolicy: z.boolean().refine(val => val === true, {
+    message: "利用規約に同意してください",
+  }),
+  role: z.enum(["talent", "store"]).default("talent")
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "パスワードと確認用パスワードが一致しません",
+  path: ["passwordConfirm"],
+});
+
+// 登録ページの最初のステップで使用する簡易登録スキーマ
+export const talentRegisterFormSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string()
+    .min(8, "パスワードは8文字以上である必要があります")
+    .regex(
+      /^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!#$%\(\)\+,\-\./:=?@\[\]\^_`\{\|\}]*$/,
+      "パスワードは半角英字小文字、半角数字をそれぞれ1種類以上含める必要があります"
+    ),
+  passwordConfirm: z.string().min(1, "確認用パスワードを入力してください"),
+  username: z.string().min(1, "ニックネームを入力してください"),
+  birthDate: z.string().min(1, "生年月日を入力してください"),
+  location: z.enum(prefectures, {
+    required_error: "都道府県を選択してください",
+  }),
+  preferredLocations: z.array(z.enum(prefectures)).min(1, "希望地域を1つ以上選択してください"),
   privacyPolicy: z.boolean().refine(val => val === true, {
     message: "利用規約に同意してください",
   }),
