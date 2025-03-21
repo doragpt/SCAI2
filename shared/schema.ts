@@ -78,6 +78,96 @@ export const estheOptions = [
   "スキンフェラ"
 ] as const;
 
+// 各カテゴリーごとの定数として定義
+const interviewBenefits = [
+  "見学だけでもOK",
+  "体験入店OK",
+  "店外面接OK",
+  "面接交通費支給",
+  "友達と面接OK",
+  "オンライン面接OK",
+  "写メ面接OK",
+  "即日勤務OK",
+  "入店特典あり"
+] as const;
+
+const workStyleBenefits = [
+  "自由出勤OK",
+  "週1日〜OK",
+  "週3日以上歓迎",
+  "週5日以上歓迎",
+  "土日だけOK",
+  "1日3時間〜OK",
+  "短期OK",
+  "長期休暇OK",
+  "掛け持ちOK"
+] as const;
+
+const salaryBenefits = [
+  "日給2万円以上",
+  "日給3万円以上",
+  "日給4万円以上",
+  "日給5万円以上",
+  "日給6万円以上",
+  "日給7万円以上",
+] as const;
+
+const bonusBenefits = [
+  "バック率50%以上",
+  "バック率60%以上",
+  "バック率70%以上",
+  "完全日払いOK",
+  "保証制度あり",
+  "指名バックあり",
+  "オプションバックあり",
+  "ボーナスあり"
+] as const;
+
+const facilityBenefits = [
+  "送迎あり",
+  "駅チカ",
+  "駐車場完備",
+  "個室待機",
+  "アリバイ対策OK",
+  "寮完備",
+  "託児所あり",
+  "制服貸与",
+  "食事支給"
+] as const;
+
+const requirementsBenefits = [
+  "未経験大歓迎",
+  "経験者優遇",
+  "主婦・人妻歓迎",
+  "学生さん歓迎",
+  "20代活躍中",
+  "30代活躍中",
+  "40代以上歓迎",
+  "スリム体型",
+  "グラマー体型",
+  "tattoo(小)OK"
+] as const;
+
+// benefitTypesオブジェクトを作成
+export const benefitTypes = {
+  interview: interviewBenefits,
+  workStyle: workStyleBenefits,
+  salary: salaryBenefits,
+  bonus: bonusBenefits,
+  facility: facilityBenefits,
+  requirements: requirementsBenefits,
+} as const;
+
+// フラットな待遇リストの生成
+export const allBenefitTypes = [
+  ...interviewBenefits,
+  ...workStyleBenefits,
+  ...salaryBenefits,
+  ...bonusBenefits,
+  ...facilityBenefits,
+  ...requirementsBenefits,
+] as const;
+
 // 待遇のカテゴリー定義
 export const benefitCategories = {
   interview: "面接・入店前",
@@ -87,83 +177,6 @@ export const benefitCategories = {
   facility: "お店の環境",
   requirements: "採用について"
 } as const;
-
-// 待遇項目の定義（カテゴリー別）
-export const benefitTypes = {
-  interview: [
-    "見学だけでもOK",
-    "体験入店OK",
-    "店外面接OK",
-    "面接交通費支給",
-    "友達と面接OK",
-    "オンライン面接OK",
-    "写メ面接OK",
-    "即日勤務OK",
-    "入店特典あり"
-  ],
-  workStyle: [
-    "自由出勤OK",
-    "週1日〜OK",
-    "週3日以上歓迎",
-    "週5日以上歓迎",
-    "土日だけOK",
-    "1日3時間〜OK",
-    "短期OK",
-    "長期休暇OK",
-    "掛け持ちOK"
-  ],
-  salary: [
-    "日給2万円以上",
-    "日給3万円以上",
-    "日給4万円以上",
-    "日給5万円以上",
-    "日給6万円以上",
-    "日給7万円以上",
-  ],
-  bonus: [
-    "バック率50%以上",
-    "バック率60%以上",
-    "バック率70%以上",
-    "完全日払いOK",
-    "保証制度あり",
-    "指名バックあり",
-    "オプションバックあり",
-    "ボーナスあり"
-  ],
-  facility: [
-    "送迎あり",
-    "駅チカ",
-    "駐車場完備",
-    "個室待機",
-    "アリバイ対策OK",
-    "寮完備",
-    "託児所あり",
-    "制服貸与",
-    "食事支給"
-  ],
-  requirements: [
-    "未経験大歓迎",
-    "経験者優遇",
-    "主婦・人妻歓迎",
-    "学生さん歓迎",
-    "20代活躍中",
-    "30代活躍中",
-    "40代以上歓迎",
-    "スリム体型",
-    "グラマー体型",
-    "tattoo(小)OK"
-  ]
-} as const;
-
-// フラットな待遇リストの生成（型定義用）
-export const allBenefitTypes = [
-  ...benefitTypes.interview,
-  ...benefitTypes.workStyle,
-  ...benefitTypes.salary,
-  ...benefitTypes.bonus,
-  ...benefitTypes.facility,
-  ...benefitTypes.requirements,
-] as const;
 
 // Type definitions
 export type Prefecture = typeof prefectures[number];
@@ -207,10 +220,11 @@ export const bodyMarkSchema = z.object({
 });
 
 // Tables
-// jobsテーブルの定義
+// Jobsテーブル定義を修正
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   businessName: text("business_name").notNull(),
+  location: text("location", { enum: prefectures }).notNull(),
   catchPhrase: text("catch_phrase").notNull(),
   description: text("description").notNull(),
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
@@ -221,6 +235,7 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   businessNameIdx: index("jobs_business_name_idx").on(table.businessName),
+  locationIdx: index("jobs_location_idx").on(table.location),
   statusIdx: index("jobs_status_idx").on(table.status),
 }));
 
@@ -364,9 +379,13 @@ export const loginSchema = z.object({
   role: z.enum(["talent", "store"]).optional(),
 });
 
-// jobSchemaの定義を修正
+// jobSchemaの修正
 export const jobSchema = z.object({
-  businessName: z.string(),  // 店舗名は必須だが編集不可
+  businessName: z.string(),
+  location: z.enum(prefectures, {
+    required_error: "所在地を選択してください",
+    invalid_type_error: "無効な所在地です",
+  }),
   catchPhrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -381,7 +400,8 @@ export const jobSchema = z.object({
 
 export const applicationSchema = createInsertSchema(applications, {
   message: z.string().optional(),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+})
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 export type LoginData = z.infer<typeof loginSchema>;
 

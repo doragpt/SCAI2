@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { jobSchema, benefitTypes, benefitCategories, type Job } from "@shared/schema";
+import { jobSchema, benefitTypes, benefitCategories, prefectures, type Job } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,8 +41,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
+    mode: "onChange",
     defaultValues: {
       businessName: initialData?.businessName || "",
+      location: initialData?.location || "",
       catchPhrase: initialData?.catchPhrase || "",
       description: initialData?.description || "",
       benefits: initialData?.benefits || [],
@@ -56,7 +59,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       const endpoint = initialData ? `/api/jobs/${initialData.id}` : "/api/jobs";
       const method = initialData ? "PATCH" : "POST";
 
-      const response = await apiRequest(method, endpoint, data);
+      // APIリクエストデータの整形
+      const formattedData = {
+        ...data,
+        minimumGuarantee: Number(data.minimumGuarantee) || 0,
+        maximumGuarantee: Number(data.maximumGuarantee) || 0,
+      };
+
+      const response = await apiRequest(method, endpoint, formattedData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "求人情報の保存に失敗しました");
@@ -84,64 +94,6 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     mutate(data);
   };
 
-  // benefits選択フィールドのレンダリング
-  const renderBenefitsField = () => (
-    <FormField
-      control={form.control}
-      name="benefits"
-      render={() => (
-        <FormItem>
-          <div className="space-y-8">
-            {Object.entries(benefitTypes).map(([category, benefits]) => (
-              <div key={category}>
-                <h3 className="text-base font-medium mb-4">
-                  {benefitCategories[category as keyof typeof benefitCategories]}
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {benefits.map((benefit) => (
-                    <FormField
-                      key={benefit}
-                      control={form.control}
-                      name="benefits"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={benefit}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(benefit)}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  const newValue = checked
-                                    ? [...currentValue, benefit]
-                                    : currentValue.filter((value) => value !== benefit);
-                                  field.onChange(newValue);
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              {benefit}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-                {category !== Object.keys(benefitTypes).slice(-1)[0] && (
-                  <Separator className="my-6" />
-                )}
-              </div>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -158,6 +110,29 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <CardTitle className="text-lg font-bold">詳細情報</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">所在地</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="都道府県を選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {prefectures.map((pref) => (
+                            <SelectItem key={pref} value={pref}>{pref}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="catchPhrase"
@@ -216,7 +191,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <CardHeader>
                 <CardTitle className="text-lg font-bold">給与・待遇情報</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-8">
+              <CardContent className="space-y-4">
                 <div className="flex gap-4">
                   <FormField
                     control={form.control}
@@ -230,7 +205,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value}
+                            value={field.value || ''}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：30000"
                           />
@@ -252,7 +227,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             min="0"
                             step="1000"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={field.value}
+                            value={field.value || ''}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             placeholder="例：50000"
                           />
@@ -263,7 +238,60 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   />
                 </div>
 
-                {renderBenefitsField()}
+                <FormField
+                  control={form.control}
+                  name="benefits"
+                  render={() => (
+                    <FormItem>
+                      <div className="space-y-8">
+                        {Object.entries(benefitTypes).map(([category, benefits]) => (
+                          <div key={category}>
+                            <h3 className="text-base font-medium mb-4">
+                              {benefitCategories[category as keyof typeof benefitCategories]}
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              {benefits.map((benefit) => (
+                                <FormField
+                                  key={benefit}
+                                  control={form.control}
+                                  name="benefits"
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem
+                                        key={benefit}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                      >
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(benefit)}
+                                            onCheckedChange={(checked) => {
+                                              const currentValue = field.value || [];
+                                              const newValue = checked
+                                                ? [...currentValue, benefit]
+                                                : currentValue.filter((value) => value !== benefit);
+                                              field.onChange(newValue);
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="font-normal cursor-pointer">
+                                          {benefit}
+                                        </FormLabel>
+                                      </FormItem>
+                                    );
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            {category !== Object.keys(benefitTypes).slice(-1)[0] && (
+                              <Separator className="my-6" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -316,6 +344,11 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">お仕事の内容</h3>
                     <p className="whitespace-pre-wrap leading-relaxed">{form.getValues("description")}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">店舗所在地</h3>
+                    <p>{form.getValues("location")}</p>
                   </div>
 
                   <div>
