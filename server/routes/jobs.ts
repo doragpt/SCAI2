@@ -4,7 +4,6 @@ import { jobs, jobSchema } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
-import { sql } from 'drizzle-orm';
 
 const router = Router();
 
@@ -101,8 +100,6 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       isAuthenticated: req.isAuthenticated(),
     });
 
-    const validatedData = jobSchema.parse(req.body);
-
     if (!req.user.displayName || !req.user.location) {
       log('error', '店舗情報が不足しています', {
         userId: req.user.id,
@@ -114,16 +111,22 @@ router.post("/", authenticate, authorize("store"), async (req: any, res) => {
       });
     }
 
-    // 店舗情報を認証済みユーザーから取得
+    const validatedData = jobSchema.parse(req.body);
+
+    // 店舗情報を認証済みユーザーから取得して、求人データを作成
+    const jobData = {
+      ...validatedData,
+      business_name: req.user.displayName, // カラム名をスネークケースに修正
+      location: req.user.location,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    log('info', '求人作成データ', { jobData });
+
     const [newJob] = await db
       .insert(jobs)
-      .values({
-        ...validatedData,
-        businessName: req.user.displayName, // 認証済みユーザーの店舗名を使用
-        location: req.user.location, // 認証済みユーザーの所在地を使用
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
+      .values(jobData)
       .returning();
 
     log('info', '求人作成成功', {
