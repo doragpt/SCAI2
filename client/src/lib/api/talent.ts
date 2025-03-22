@@ -31,7 +31,7 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
   }
 }
 
-export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<void> {
+export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
   try {
     console.log('Updating talent profile with data:', data);
     const response = await apiRequest("POST", "/talent/profile", data);
@@ -45,7 +45,10 @@ export async function createOrUpdateTalentProfile(data: TalentProfileData): Prom
       throw new Error(errorData.message || "プロフィールの保存に失敗しました");
     }
 
-    console.log('Talent profile updated successfully');
+    // サーバーから返された更新後のプロフィールデータを取得
+    const updatedProfile = await response.json();
+    console.log('Talent profile updated successfully:', updatedProfile);
+    return updatedProfile;
   } catch (error) {
     console.error('Error updating talent profile:', error);
     throw error;

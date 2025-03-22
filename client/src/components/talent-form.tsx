@@ -686,13 +686,37 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
     try {
       setIsSubmitting(true);
-      await createOrUpdateTalentProfile(formData);
+      
+      // プロフィールデータを送信して結果を取得
+      const result = await createOrUpdateTalentProfile(formData);
+      console.log("プロフィール保存結果:", result);
+      
+      // 成功通知を表示
       toast({
         title: "保存完了",
         description: "プロフィールを保存しました",
       });
+      
+      // 確認モーダルを閉じる
       setIsConfirmationOpen(false);
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
+      
+      // フォームをリセットして最新のデータを反映
+      if (result) {
+        form.reset(result);
+      }
+      
+      // キャッシュを確実に無効化して最新データを取得
+      await queryClient.invalidateQueries({ 
+        queryKey: [QUERY_KEYS.TALENT_PROFILE],
+        refetchType: 'all'
+      });
+      
+      // 必要なら強制的にリフェッチする
+      await queryClient.refetchQueries({ 
+        queryKey: [QUERY_KEYS.TALENT_PROFILE],
+        type: 'all'
+      });
+      
     } catch (error) {
       console.error("送信エラー:", error);
       toast({
