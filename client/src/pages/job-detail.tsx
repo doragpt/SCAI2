@@ -26,7 +26,8 @@ export default function JobDetail() {
     isLoading,
     error
   } = useQuery<JobResponse>({
-    queryKey: [QUERY_KEYS.JOB_DETAIL(id)],
+    queryKey: [QUERY_KEYS.JOB_DETAIL(id || '')],
+    enabled: !!id,
     queryFn: async () => {
       try {
         console.log('Fetching job detail...', { id });

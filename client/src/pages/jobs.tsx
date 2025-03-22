@@ -23,6 +23,7 @@ import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 // Animation variants
 const container = {

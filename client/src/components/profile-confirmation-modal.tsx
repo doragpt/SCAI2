@@ -287,7 +287,7 @@ export function ProfileConfirmationModal({
                     ) : "なし"
                   }
                 />
-                {(formData.body_mark || formData.bodyMark)?.hasBodyMark && (
+                {((formData.body_mark || formData.bodyMark)?.has_body_mark || (formData.body_mark || formData.bodyMark)?.hasBodyMark) && (
                   <InfoItem
                     label="ボディマーク"
                     value={
@@ -325,10 +325,7 @@ export function ProfileConfirmationModal({
                   label="対応可能なエステ"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.estheOptions?.available?.map((option, index) => (
-                        <Badge key={index} variant="outline">{option}</Badge>
-                      )) || 
-                       formData.esthe_options?.available?.map((option, index) => (
+                      {(formData.esthe_options || formData.estheOptions)?.available?.map((option: string, index: number) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -338,10 +335,7 @@ export function ProfileConfirmationModal({
                   label="エステNG項目"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.estheOptions?.ngOptions?.map((option, index) => (
-                        <Badge key={index} variant="outline">{option}</Badge>
-                      )) || 
-                       formData.esthe_options?.ng_options?.map((option, index) => (
+                      {(formData.esthe_options?.ng_options || formData.estheOptions?.ngOptions)?.map((option: string, index: number) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -360,7 +354,7 @@ export function ProfileConfirmationModal({
                   label="自己紹介"
                   value={
                     <p className="text-sm whitespace-pre-wrap">
-                      {formData.selfIntroduction || formData.self_introduction || "未入力"}
+                      {formData.self_introduction || formData.selfIntroduction || "未入力"}
                     </p>
                   }
                 />
