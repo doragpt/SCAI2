@@ -152,14 +152,45 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
 
     log('info', '更新データ', { updateData });
 
-    // バリデーション
-    const validatedData = storeProfileSchema.parse(updateData);
+    // バリデーション（更新用）
+    const validatedData = storeProfileSchema.parse({
+      catch_phrase: updateData.catch_phrase,
+      description: updateData.description,
+      benefits: updateData.benefits,
+      minimum_guarantee: updateData.minimum_guarantee,
+      maximum_guarantee: updateData.maximum_guarantee,
+      status: updateData.status,
+      working_hours: req.body.working_hours || existingProfile.working_hours,
+      transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : existingProfile.transportation_support,
+      housing_support: req.body.housing_support !== undefined ? req.body.housing_support : existingProfile.housing_support,
+      requirements: req.body.requirements !== undefined ? req.body.requirements : existingProfile.requirements
+    });
 
-    const [updatedProfile] = await db
-      .update(store_profiles)
-      .set(validatedData)
-      .where(eq(store_profiles.user_id, req.user.id))
-      .returning();
+    // 更新用のオブジェクトを作成
+    const fullUpdateData = {
+      ...validatedData,
+      updated_at: updateData.updated_at
+    };
+
+    // 更新処理
+    const result = await db.execute(
+      sql`UPDATE store_profiles
+          SET catch_phrase = ${fullUpdateData.catch_phrase},
+              description = ${fullUpdateData.description},
+              benefits = ${JSON.stringify(fullUpdateData.benefits)},
+              minimum_guarantee = ${fullUpdateData.minimum_guarantee},
+              maximum_guarantee = ${fullUpdateData.maximum_guarantee},
+              status = ${fullUpdateData.status},
+              working_hours = ${fullUpdateData.working_hours},
+              transportation_support = ${fullUpdateData.transportation_support},
+              housing_support = ${fullUpdateData.housing_support},
+              requirements = ${JSON.stringify(fullUpdateData.requirements)},
+              updated_at = ${fullUpdateData.updated_at}
+          WHERE user_id = ${req.user.id}
+          RETURNING *`
+    );
+    
+    const updatedProfile = result.rows[0];
 
     log('info', '店舗プロフィール更新成功', {
       userId: req.user.id,
