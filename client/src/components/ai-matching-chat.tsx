@@ -67,7 +67,7 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
-import { useMatching, startMatching } from "@/hooks/use-matching";
+import { useMatching, startMatching, type MatchedJob } from "@/hooks/use-matching";
 import { WORK_TYPES_WITH_DESCRIPTION, TIME_OPTIONS, RATE_OPTIONS, GUARANTEE_OPTIONS, prefectures } from "@/constants/work-types";
 import { formatConditionsMessage } from "@/utils/format-conditions-message";
 import { format } from 'date-fns'
@@ -99,25 +99,6 @@ const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
 }));
 
 type MatchingMethod = "auto" | "pickup" | null;
-
-interface MatchedJob {
-  id: number;
-  businessName: string;
-  location: string;
-  serviceType: string;
-  catchPhrase?: string;
-  minimumGuarantee: number | null;
-  maximumGuarantee: number | null;
-  transportationSupport: boolean;
-  housingSupport: boolean;
-  workingHours?: string;
-  description?: string;
-  benefits?: string[] | null;
-  matchScore: number;
-  matches: string[];
-  workingHours?: string;
-
-}
 
 
 export const AIMatchingChat = () => {
