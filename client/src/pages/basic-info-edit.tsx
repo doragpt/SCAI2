@@ -83,12 +83,16 @@ export default function BasicInfoEdit() {
   const { data: userProfile, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.USER);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
+      console.log('基本情報編集: ユーザーデータを取得中...');
+      try {
+        // apiRequestは直接JSONデータを返すように修正されています
+        const data = await apiRequest("GET", QUERY_KEYS.USER);
+        console.log('基本情報編集: 取得したユーザーデータ:', data);
+        return data;
+      } catch (error) {
+        console.error('基本情報編集エラー:', error);
+        throw new Error("ユーザー情報の取得に失敗しました");
       }
-      return response.json();
     },
     enabled: !!user,
     staleTime: 0, // キャッシュを無効化
@@ -112,6 +116,8 @@ export default function BasicInfoEdit() {
   // プロフィール更新のミューテーション
   const updateProfileMutation = useMutation({
     mutationFn: async (data: BasicInfoFormData) => {
+      console.log('基本情報更新: ユーザーデータを更新中...');
+      
       const updateData = {
         username: data.username,
         location: data.location,
@@ -122,13 +128,15 @@ export default function BasicInfoEdit() {
         } : {})
       };
 
-      const response = await apiRequest("PATCH", QUERY_KEYS.USER, updateData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "プロフィールの更新に失敗しました");
+      try {
+        // apiRequestは直接JSONデータを返すように修正されています
+        const data = await apiRequest("PATCH", QUERY_KEYS.USER, updateData);
+        console.log('基本情報更新: 更新完了', data);
+        return data;
+      } catch (error) {
+        console.error('基本情報更新エラー:', error);
+        throw new Error(error instanceof Error ? error.message : "プロフィールの更新に失敗しました");
       }
-
-      return response.json();
     },
     onSuccess: (data) => {
       // キャッシュを更新

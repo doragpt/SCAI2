@@ -22,12 +22,16 @@ export default function BasicInfoView() {
   } = useQuery({
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.USER);
-      if (!response.ok) {
+      console.log('基本情報表示: ユーザーデータを取得中...');
+      try {
+        // apiRequestは直接JSONデータを返すように修正されています
+        const data = await apiRequest("GET", QUERY_KEYS.USER);
+        console.log('基本情報表示: 取得したユーザーデータ:', data);
+        return data;
+      } catch (error) {
+        console.error('基本情報取得エラー:', error);
         throw new Error("ユーザー情報の取得に失敗しました");
       }
-      const data = await response.json();
-      return data;
     },
     enabled: !!user,
     refetchOnMount: true,
