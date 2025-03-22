@@ -14,11 +14,10 @@ import {
   FileText
 } from "lucide-react";
 import { Link, useLocation } from "wouter"; 
-import {
-  type TalentProfile,
-  type Application
-} from "@shared/schema";
+import { type TalentProfileData } from "@shared/schema";
+import { type Application } from "@/types/application";
 import { Button } from "@/components/ui/button";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -46,12 +45,13 @@ export default function MyPage() {
   const { user } = useAuth();
   const [_, setLocation] = useLocation(); 
 
-  const { data: profile, isLoading: isLoadingProfile } = useQuery<TalentProfile>({
+  const { data: profile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
     queryKey: ["/api/talent/profile"],
   });
 
   const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
-    queryKey: ["/api/applications"],
+    queryKey: [QUERY_KEYS.APPLICATIONS_TALENT],
+    enabled: !!user && user.role === "talent",
   });
 
   if (!user) {
