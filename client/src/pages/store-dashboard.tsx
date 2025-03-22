@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type StoreProfile } from "@shared/schema";
+import { type StoreProfile, type BlogPost } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,11 @@ import {
   LogOut,
   Loader2,
   AlertCircle,
-  Pencil
+  Pencil,
+  Eye,
+  Clock,
+  CheckCircle,
+  MoreVertical
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -28,6 +32,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 // プロフィールのステータスラベル
 const profileStatusLabels = {
@@ -327,26 +338,19 @@ export default function StoreDashboard() {
                         ブログの投稿・管理ができます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setLocation('/store/blog/new')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      新規作成
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        まだブログ記事がありません
-                      </p>
-                      <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => setLocation('/store/blog/new')}
-                      >
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setLocation('/store/blog')}>
+                        <FileEdit className="h-4 w-4 mr-2" />
+                        詳細管理
+                      </Button>
+                      <Button onClick={() => setLocation('/store/blog/new')}>
                         <Plus className="h-4 w-4 mr-2" />
-                        記事を作成する
+                        新規作成
                       </Button>
                     </div>
+                  </CardHeader>
+                  <CardContent>
+                    <BlogPostsList userId={user?.id} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -493,6 +497,154 @@ export default function StoreDashboard() {
         onOpenChange={setShowProfileForm}
         initialData={profile}
       />
+    </div>
+  );
+}
+
+// ブログ記事一覧コンポーネント
+function BlogPostsList({ userId }: { userId?: number }) {
+  const [, setLocation] = useLocation();
+  const MAX_TITLE_LENGTH = 30;
+  const MAX_POSTS_TO_SHOW = 5;
+
+  // ブログ記事の取得
+  const { data, isLoading, error } = useQuery({
+    queryKey: [QUERY_KEYS.BLOG_POSTS, "store"],
+    queryFn: async () => {
+      if (!userId) return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0 } };
+      
+      const params = new URLSearchParams();
+      params.append("page", "1");
+      params.append("limit", MAX_POSTS_TO_SHOW.toString());
+      
+      const response = await apiRequest("GET", `/api/blog/store-posts?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("ブログ記事の取得に失敗しました");
+      }
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 30000, // 30秒
+  });
+
+  // タイトルを適切な長さにトリミングする
+  const trimTitle = (title: string) => {
+    if (title.length <= MAX_TITLE_LENGTH) return title;
+    return `${title.substring(0, MAX_TITLE_LENGTH)}...`;
+  };
+
+  // 日付のフォーマット
+  const formatDate = (dateString: string | null | Date) => {
+    if (!dateString) return "-";
+    return format(new Date(dateString), "yyyy-MM-dd HH:mm", { locale: ja });
+  };
+
+  // ステータスに応じたバッジの表示
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "published":
+        return <Badge variant="default"><CheckCircle className="h-3 w-3 mr-1" />{blogStatusLabels.published}</Badge>;
+      case "scheduled":
+        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{blogStatusLabels.scheduled}</Badge>;
+      default:
+        return <Badge variant="secondary">{blogStatusLabels.draft}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">ブログ記事を読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center">
+        <AlertCircle className="h-8 w-8 mx-auto mb-4 text-destructive" />
+        <p className="text-muted-foreground">ブログ記事の取得中にエラーが発生しました</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          再読み込み
+        </Button>
+      </div>
+    );
+  }
+
+  if (!data?.posts || data.posts.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">
+          まだブログ記事がありません
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => setLocation('/store/blog/new')}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          記事を作成する
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>タイトル</TableHead>
+            <TableHead>ステータス</TableHead>
+            <TableHead>公開日時</TableHead>
+            <TableHead className="text-right">操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.posts.map((post: BlogPost) => (
+            <TableRow key={post.id}>
+              <TableCell className="font-medium">{trimTitle(post.title)}</TableCell>
+              <TableCell>{getStatusBadge(post.status)}</TableCell>
+              <TableCell>{formatDate(post.published_at)}</TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => window.open(`/blog/${post.id}`, '_blank')}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      閲覧
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation(`/store/blog/edit/${post.id}`)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      編集
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <div className="mt-4 text-right">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setLocation('/store/blog')}
+        >
+          すべての記事を表示
+        </Button>
+      </div>
     </div>
   );
 }
