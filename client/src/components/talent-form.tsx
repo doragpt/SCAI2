@@ -1560,9 +1560,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     {allergyTypes.map((type) => (
                       <div key={type} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={form.watch("allergies.types").includes(type)}
+                          checked={field.value?.includes(type) || false}
                           onCheckedChange={(checked) => {
-                            const current = form.watch("allergies.types") || [];
+                            const current = field.value || [];
                             const updated = checked
                               ? [...current, type]
                               : current.filter((t) => t !== type);
