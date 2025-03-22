@@ -1479,7 +1479,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                     const current = field.value || [];
                                     const newValue = checked
                                       ? [...current, option]
-                                      : current.filter((value) => value !== option);
+                                      : current.filter((value: string) => value !== option);
                                     form.setValue("esthe_options.available", newValue, {
                                       shouldValidate: true,
                                       shouldDirty: true
