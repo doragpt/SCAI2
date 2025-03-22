@@ -76,8 +76,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
       ...initialData,
-      scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt) : undefined,
-      publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt) : undefined,
+      scheduled_at: initialData?.scheduled_at ? new Date(initialData.scheduled_at) : undefined,
+      published_at: initialData?.published_at ? new Date(initialData.published_at) : undefined,
       status: initialData?.status || "draft",
     } || {
       title: "",
@@ -205,7 +205,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }
 
       // 予約投稿時の日時チェック
-      if (isScheduling && (!values.scheduledAt || new Date(values.scheduledAt) <= new Date())) {
+      if (isScheduling && (!values.scheduled_at || new Date(values.scheduled_at) <= new Date())) {
         toast({
           variant: "destructive",
           title: "エラー",
@@ -219,8 +219,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         title: values.title.trim(),
         content: values.content.trim(),
         status: isDraft ? "draft" : isScheduling ? "scheduled" : "published",
-        scheduledAt: isScheduling && values.scheduledAt ? new Date(values.scheduledAt) : null,
-        publishedAt: !isDraft && !isScheduling ? new Date() : null,
+        scheduled_at: isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null,
+        published_at: !isDraft && !isScheduling ? new Date() : null,
       };
 
       console.log('Submission data:', submissionData);
@@ -360,7 +360,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 {isScheduling && (
                   <FormField
                     control={form.control}
-                    name="scheduledAt"
+                    name="scheduled_at"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>公開予定日時</FormLabel>

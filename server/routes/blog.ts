@@ -69,9 +69,10 @@ router.post("/", authenticate, async (req: any, res) => {
 
     const validatedData = blogPostSchema.parse({
       ...req.body,
-      storeId: req.user.id,
-      status: 'draft',
-      createdAt: new Date()
+      store_id: req.user.id,
+      status: req.body.status || 'draft',
+      created_at: new Date(),
+      updated_at: new Date()
     });
 
     const [post] = await db
