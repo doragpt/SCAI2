@@ -6,17 +6,18 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
     console.log('Fetching talent profile...');
     // クエリキーから正しいAPIパスを使用
-    const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Talent profile API error:', errorData);
-      throw new Error(errorData.message || 'プロフィール取得に失敗しました');
-    }
-    const data = await response.json();
+    const data = await apiRequest<TalentProfileData | null>("GET", QUERY_KEYS.TALENT_PROFILE);
     console.log('Talent profile fetched successfully:', data);
-    return data as TalentProfileData;
+    return data;
   } catch (error) {
     console.error('Error fetching talent profile:', error);
+    
+    // 404エラーのような「データが存在しない」系のエラーはnullとして扱う
+    if (error instanceof Error && error.message.includes('見つかりません')) {
+      console.log('Profile not found, returning null');
+      return null;
+    }
+    
     throw error;
   }
 }
@@ -25,13 +26,7 @@ export async function createOrUpdateTalentProfile(data: TalentProfileData): Prom
   try {
     console.log('Updating talent profile with data:', data);
     // クエリキーから正しいAPIパスを使用
-    const response = await apiRequest("POST", QUERY_KEYS.TALENT_PROFILE, data);
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Talent profile update error:', errorData);
-      throw new Error(errorData.message || 'プロフィール更新に失敗しました');
-    }
-    const updatedProfile = await response.json();
+    const updatedProfile = await apiRequest<TalentProfileData>("POST", QUERY_KEYS.TALENT_PROFILE, data);
     console.log('Talent profile updated successfully:', updatedProfile);
     return updatedProfile;
   } catch (error) {

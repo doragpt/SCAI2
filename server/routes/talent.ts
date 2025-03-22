@@ -53,10 +53,9 @@ router.get('/profile', requireAuth, async (req, res) => {
     });
 
     if (!profile) {
-      return res.status(404).json({ 
-        error: 'NotFound',
-        message: "プロフィールが見つかりません" 
-      });
+      // プロフィールが存在しない場合は、空のプロフィールを返す
+      log('info', 'プロフィールが存在しないため、空のプロフィールを返します', { userId: req.user?.id });
+      return res.json(null);
     }
 
     // 生年月日情報がない場合は、ユーザーデータから追加
