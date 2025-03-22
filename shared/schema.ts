@@ -434,6 +434,8 @@ export const talentProfileSchema = z.object({
   first_name_kana: z.string()
     .min(1, "名（カナ）を入力してください")
     .regex(/^[ァ-ヶー]+$/, "カタカナで入力してください"),
+  // 生年月日情報をスキーマに追加（ユーザーテーブルから取得されるため必須ではない）
+  birth_date: z.string().nullable().optional(),
   location: z.enum(prefectures, {
     required_error: "都道府県を選択してください",
   }),
