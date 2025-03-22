@@ -21,11 +21,8 @@ export default function TalentRegistration() {
   useQuery({
     queryKey: [QUERY_KEYS.AUTH_CHECK],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
-      if (!response.ok) {
-        throw new Error("認証チェックに失敗しました");
-      }
-      const userData = await response.json();
+      const userData = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+      console.log('Auth check userData:', userData);
       // 成功したらユーザー情報をキャッシュに保存
       queryClient.setQueryData([QUERY_KEYS.USER], userData);
       return userData;

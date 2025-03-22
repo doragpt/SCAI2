@@ -23,11 +23,8 @@ export default function ProfileViewPage() {
   useQuery({
     queryKey: [QUERY_KEYS.AUTH_CHECK],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
-      if (!response.ok) {
-        throw new Error("認証チェックに失敗しました");
-      }
-      const userData = await response.json();
+      const userData = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+      console.log('Profile view - Auth check userData:', userData);
       // 成功したらユーザー情報をキャッシュに保存
       queryClient.setQueryData([QUERY_KEYS.USER], userData);
       return userData;
@@ -65,13 +62,8 @@ export default function ProfileViewPage() {
     queryKey: [QUERY_KEYS.USER],
     queryFn: async () => {
       console.log("ユーザー情報取得開始");
-      const response = await apiRequest("GET", QUERY_KEYS.USER);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ユーザー情報の取得に失敗しました");
-      }
-      const data = await response.json();
-      console.log("取得したユーザーデータ:", data);
+      const data = await apiRequest("GET", QUERY_KEYS.USER);
+      console.log("API Response from /auth/user:", data);
       return data;
     },
     enabled: !!user,
