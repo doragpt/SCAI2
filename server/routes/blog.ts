@@ -7,6 +7,76 @@ import { log } from '../utils/logger';
 
 const router = Router();
 
+// 店舗ユーザー向け：自分のブログ記事一覧取得（フィルター/ページネーション機能付き）
+// このエンドポイントを最初に配置して、:id パラメータと競合しないようにする
+router.get("/store-posts", authenticate, async (req: any, res) => {
+  try {
+    // 店舗ユーザーのみアクセス可能
+    if (req.user.role !== 'store') {
+      return res.status(403).json({ message: "店舗アカウントのみアクセスできます" });
+    }
+
+    const storeId = req.user.id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+    const status = req.query.status as string | undefined;
+    const search = req.query.search as string | undefined;
+
+    // フィルター条件の構築
+    let conditions = [eq(blogPosts.store_id, storeId)];
+    
+    if (status) {
+      conditions.push(sql`${blogPosts.status} = ${status}`);
+    }
+    
+    if (search) {
+      conditions.push(like(blogPosts.title, `%${search}%`));
+    }
+
+    // 総件数の取得
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(blogPosts)
+      .where(and(...conditions));
+    
+    const totalItems = Number(totalCountResult[0].count);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // 記事の取得
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(and(...conditions))
+      .orderBy(desc(blogPosts.created_at))
+      .limit(limit)
+      .offset(offset);
+    
+    log('info', '店舗ブログ記事一覧取得成功', {
+      userId: req.user.id,
+      postsCount: posts.length,
+      totalItems
+    });
+
+    res.json({
+      posts,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+      }
+    });
+  } catch (error) {
+    log('error', "店舗ブログ記事一覧取得エラー", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: "ブログ記事の取得に失敗しました"
+    });
+  }
+});
+
 // ブログ記事一覧取得
 router.get("/", async (req, res) => {
   try {
@@ -97,68 +167,7 @@ router.post("/", authenticate, async (req: any, res) => {
   }
 });
 
-// 店舗ユーザー向け：自分のブログ記事一覧取得（フィルター/ページネーション機能付き）
-router.get("/store-posts", authenticate, async (req: any, res) => {
-  try {
-    // 店舗ユーザーのみアクセス可能
-    if (req.user.role !== 'store') {
-      return res.status(403).json({ message: "店舗アカウントのみアクセスできます" });
-    }
-
-    const storeId = req.user.id;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const offset = (page - 1) * limit;
-    const status = req.query.status as string | undefined;
-    const search = req.query.search as string | undefined;
-
-    // フィルター条件の構築
-    let conditions = [eq(blogPosts.store_id, storeId)];
-    
-    if (status) {
-      conditions.push(sql`${blogPosts.status} = ${status}`);
-    }
-    
-    if (search) {
-      conditions.push(like(blogPosts.title, `%${search}%`));
-    }
-
-    // 総件数の取得
-    const totalCountResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(blogPosts)
-      .where(and(...conditions));
-    
-    const totalItems = Number(totalCountResult[0].count);
-    const totalPages = Math.ceil(totalItems / limit);
-
-    // 記事の取得
-    const posts = await db
-      .select()
-      .from(blogPosts)
-      .where(and(...conditions))
-      .orderBy(desc(blogPosts.created_at))
-      .limit(limit)
-      .offset(offset);
-
-    res.json({
-      posts,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-      }
-    });
-  } catch (error) {
-    log('error', "店舗ブログ記事一覧取得エラー", {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id
-    });
-    res.status(500).json({
-      message: "ブログ記事の取得に失敗しました"
-    });
-  }
-});
+// この重複したエンドポイントは削除しました
 
 // 記事更新（店舗ユーザーのみ）
 router.put("/:id", authenticate, async (req: any, res) => {

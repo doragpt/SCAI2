@@ -275,13 +275,13 @@ export default function BlogManagement() {
                         <StatusBadge status={post.status} />
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {format(new Date(post.createdAt), "yyyy/MM/dd", { locale: ja })}
+                        {format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {post.publishedAt
-                          ? format(new Date(post.publishedAt), "yyyy/MM/dd", { locale: ja })
-                          : post.scheduledAt
-                          ? `${format(new Date(post.scheduledAt), "yyyy/MM/dd", { locale: ja })} (予定)`
+                        {post.published_at
+                          ? format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })
+                          : post.scheduled_at
+                          ? `${format(new Date(post.scheduled_at), "yyyy/MM/dd", { locale: ja })} (予定)`
                           : "-"}
                       </TableCell>
                       <TableCell className="text-right">
