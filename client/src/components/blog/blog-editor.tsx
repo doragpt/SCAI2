@@ -93,16 +93,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      return apiRequest(
-        "POST", 
-        "/api/upload", 
-        formData,
-        {
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
+      // 通常のfetchを使用してContent-Typeを自動設定させる
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'ファイルのアップロードに失敗しました');
+      }
+      
+      return response.json();
     },
     onSuccess: (data) => {
       if (data?.url) {
