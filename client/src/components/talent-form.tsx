@@ -825,7 +825,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
     }
     
     const updated = [...(estheOptions.ng_options || []), value];
-    form.setValue("esthe_options.ng_options", updated);
+    form.setValue("esthe_options.ng_options", updated, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
   };
 
   // handleIdTypeChangeの修正
@@ -1464,12 +1467,16 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             {estheOptions.map((option) => (
                               <div key={option} className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={field.value.includes(option)}
+                                  checked={field.value?.includes(option) || false}
                                   onCheckedChange={(checked) => {
+                                    const current = field.value || [];
                                     const newValue = checked
-                                      ? [...(field.value || []), option]
-                                      : (field.value || []).filter((value) => value !== option);
-                                    field.onChange(newValue);
+                                      ? [...current, option]
+                                      : current.filter((value) => value !== option);
+                                    form.setValue("esthe_options.available", newValue, {
+                                      shouldValidate: true,
+                                      shouldDirty: true
+                                    });
                                   }}
                                 />
                                 <label className="text-sm">{option}</label>
@@ -1498,7 +1505,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                     className="h-4 w-4 p-0 hover:bg-transparent"
                                     onClick={() => {
                                       const updated = field.value?.filter((_, i) => i !== index) || [];
-                                      form.setValue("esthe_options.ng_options", updated);
+                                      form.setValue("esthe_options.ng_options", updated, {
+                                        shouldValidate: true,
+                                        shouldDirty: true
+                                      });
                                     }}
                                   >
                                     <X className="h-3 w-3" />
