@@ -129,22 +129,31 @@ export default function BlogManagement() {
 
       console.log("Fetching blog posts with params:", params.toString());
       
-      // API呼び出しとレスポンスの処理
-      const response = await fetch(`/api/blog/store-posts?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('ブログ記事一覧の取得に失敗しました');
+      // API呼び出しとレスポンスの処理 - URLを修正して直接確認を追加
+      // server/routes/blog.ts では /store-posts 、client側は /api/blog/store-posts を使用中
+      const apiUrl = `/api/blog/store-posts?${params.toString()}`;
+      console.log("Attempting to fetch from URL:", apiUrl);
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.error("Error response:", response.status, response.statusText);
+          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log("Blog posts API response:", result);
+        return result;
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error;
       }
-      
-      const result = await response.json();
-      console.log("Blog posts API response:", result);
-      return result;
     },
     enabled: !!user && user.role === "store",
   });
