@@ -114,7 +114,8 @@ export default function BlogManagement() {
   const {
     data,
     isLoading,
-    refetch
+    refetch,
+    error
   } = useQuery<{
     posts: BlogPost[];
     pagination: { currentPage: number; totalPages: number; totalItems: number };
@@ -126,6 +127,8 @@ export default function BlogManagement() {
       if (status) params.append("status", status);
       if (search) params.append("search", search);
 
+      console.log("Fetching blog posts with params:", params.toString());
+      
       // API呼び出しとレスポンスの処理
       const response = await fetch(`/api/blog/store-posts?${params.toString()}`, {
         method: 'GET',
@@ -139,7 +142,9 @@ export default function BlogManagement() {
         throw new Error('ブログ記事一覧の取得に失敗しました');
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log("Blog posts API response:", result);
+      return result;
     },
     enabled: !!user && user.role === "store",
   });
@@ -184,8 +189,15 @@ export default function BlogManagement() {
     return null;
   }
 
+  // デバッグ情報の表示
+  console.log("Query data:", data);
+  console.log("Query error:", error);
+
   const posts = data?.posts || [];
   const pagination = data?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
+  
+  // デバッグ用に実際の表示データを確認
+  console.log("Displaying posts:", posts);
 
   return (
     <div className="container mx-auto p-6">
