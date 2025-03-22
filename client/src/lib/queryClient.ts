@@ -96,23 +96,19 @@ export function invalidateTalentProfileCache() {
 }
 
 // 求人一覧取得用のクエリ関数
-export const getJobsQuery = async (): Promise<import("@shared/schema").Job[]> => {
+export const getJobsQuery = async (): Promise<any[]> => {
   try {
-    console.log('Fetching public jobs:', {
-      timestamp: new Date().toISOString()
-    });
+    console.log('Fetching jobs data...');
 
-    const response = await apiRequest<import("@shared/schema").Job[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
+    // パスを修正: /api/jobs/public → /jobs
+    const response = await apiRequest("GET", "/jobs");
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || "求人の取得に失敗しました");
     }
     return response.json();
   } catch (error) {
-    console.error('Jobs fetch error:', {
-      error: getErrorMessage(error),
-      timestamp: new Date().toISOString()
-    });
+    console.error('求人情報取得エラー:', error);
     throw error;
   }
 };
@@ -124,7 +120,7 @@ export const searchJobsQuery = async (params: {
   page?: number;
   limit?: number;
 }): Promise<{
-  jobs: import("@shared/schema").Job[];
+  jobs: any[];
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -138,7 +134,8 @@ export const searchJobsQuery = async (params: {
     if (params.page) searchParams.set("page", params.page.toString());
     if (params.limit) searchParams.set("limit", params.limit.toString());
 
-    const url = `/api/jobs/public${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    // パスを修正: /api/jobs/public → /jobs
+    const url = `/jobs${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
     console.log('Fetching jobs:', { url, params });
 
     const response = await apiRequest("GET", url);

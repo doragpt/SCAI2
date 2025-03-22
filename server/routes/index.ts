@@ -30,6 +30,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json(req.user);
   });
   
+  // 求人一覧を返すAPIエンドポイント
+  app.get('/jobs', (req, res) => {
+    // 仮実装: 空の配列を返す
+    log('info', '求人一覧リクエスト', { query: req.query });
+    res.json([]);
+  });
+  
+  // 求人詳細を返すAPIエンドポイント
+  app.get('/jobs/:id', (req, res) => {
+    // 仮実装: 404を返す
+    log('info', '求人詳細リクエスト', { jobId: req.params.id });
+    res.status(404).json({ message: "求人が見つかりません" });
+  });
+  
   // その他のAPIルートは今後実装予定
 
   // 共通のエラーハンドリング
