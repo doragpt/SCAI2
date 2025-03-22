@@ -90,7 +90,7 @@ export default function StoreDashboard() {
     retry: 2,
     retryDelay: 1000,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -98,8 +98,17 @@ export default function StoreDashboard() {
   // ダッシュボードの統計情報を取得
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: [QUERY_KEYS.STORE_STATS],
-    queryFn: () => apiRequest("GET", QUERY_KEYS.STORE_STATS),
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.STORE_STATS);
+      if (!response.ok) {
+        throw new Error("統計情報の取得に失敗しました");
+      }
+      return response.json();
+    },
     staleTime: 300000, // 5分
+    enabled: !!user?.id && user?.role === "store",
+    retry: 2,
+    retryDelay: 1000,
   });
 
   if (statsLoading || profileLoading) {

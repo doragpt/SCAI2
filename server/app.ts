@@ -6,6 +6,7 @@ import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
 import talentRouter from './routes/talent';
 import authRouter from './routes/auth';
+import storeRouter from './routes/store';
 import { authenticate } from './middleware/auth';
 
 const app = express();
@@ -55,6 +56,7 @@ app.get('/check', authenticate, (req, res) => {
 
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
+app.use('/store', storeRouter);
 
 // 求人関連のAPIルートを登録
 app.get('/api/jobs', (req, res) => {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { store_profiles, storeProfileSchema } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { store_profiles, storeProfileSchema, applications } from '@shared/schema';
+import { eq, and, gte, sql, count } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -150,6 +150,98 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     }
 
     return res.status(500).json({ message: "店舗プロフィールの更新に失敗しました" });
+  }
+});
+
+// 店舗ダッシュボード統計情報取得
+router.get("/stats", authenticate, authorize("store"), async (req: any, res) => {
+  try {
+    log('info', '店舗統計情報取得開始', {
+      userId: req.user.id,
+      displayName: req.user.display_name
+    });
+
+    // 店舗プロフィール情報を取得
+    const [profile] = await db
+      .select()
+      .from(store_profiles)
+      .where(eq(store_profiles.user_id, req.user.id));
+
+    if (!profile) {
+      log('warn', '店舗プロフィールがまだ作成されていません', {
+        userId: req.user.id
+      });
+      return res.status(404).json({ message: "店舗プロフィールが見つかりません" });
+    }
+
+    // 統計情報用計算
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    // 応募数を取得
+    const [applicationsStats] = await db
+      .select({
+        total: count(),
+        pending: count(
+          and(
+            eq(applications.status, "pending")
+          )
+        ),
+        accepted: count(
+          and(
+            eq(applications.status, "accepted")
+          )
+        ),
+        new: count(
+          and(
+            eq(applications.status, "pending"),
+            gte(applications.created_at, today)
+          )
+        )
+      })
+      .from(applications)
+      .innerJoin(
+        store_profiles,
+        eq(applications.store_profile_id, store_profiles.id)
+      )
+      .where(eq(store_profiles.user_id, req.user.id));
+
+    // 統計情報を構築
+    const stats = {
+      // 掲載情報
+      storePlan: profile?.status === "published" ? "premium" : "free",
+      storeArea: profile?.location || req.user.location,
+      displayRank: profile?.status === "published" ? 1 : 999,
+
+      // アクセス状況（実装が完了するまでモックデータ）
+      todayPageViews: Math.floor(Math.random() * 100),
+      todayUniqueVisitors: Math.floor(Math.random() * 50),
+      monthlyPageViews: Math.floor(Math.random() * 1000),
+      monthlyUniqueVisitors: Math.floor(Math.random() * 500),
+
+      // 応募者対応状況
+      newInquiriesCount: applicationsStats?.new || 0,
+      pendingInquiriesCount: applicationsStats?.pending || 0,
+      completedInquiriesCount: applicationsStats?.accepted || 0,
+      totalApplicationsCount: applicationsStats?.total || 0
+    };
+
+    log('info', '店舗統計情報取得成功', {
+      userId: req.user.id,
+      statsData: stats
+    });
+
+    return res.json(stats);
+  } catch (error) {
+    log('error', '店舗統計情報取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    return res.status(500).json({ message: "統計情報の取得に失敗しました" });
   }
 });
 
