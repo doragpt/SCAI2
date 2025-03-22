@@ -58,6 +58,7 @@ app.get('/check', authenticate, (req, res) => {
 
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
+app.use('/talent', talentRouter); // 両方のパスをサポート
 app.use('/store', storeRouter);
 // ブログルーターの登録
 app.use('/api/blog', blogRouter);
