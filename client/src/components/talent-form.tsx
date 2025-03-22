@@ -1356,15 +1356,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         <div key={option} className="flex items-center space-x-2">
                           <Checkbox
                             id={`ng-${option}`}
-                            checked={field.value?.common?.includes(option) || false}
+                            checked={(field.value && field.value.common && field.value.common.includes(option)) || false}
                             onCheckedChange={(checked) => {
-                              const current = field.value?.common || [];
+                              // 現在の値を取得、nullの場合は空配列として扱う
+                              const currentOptionsObject = form.getValues().ng_options || { common: [], others: [] };
+                              const currentCommon = currentOptionsObject.common || [];
+                              
+                              // 更新値を作成
                               const updated = checked
-                                ? [...current, option]
-                                : current.filter((o: string) => o !== option);
+                                ? [...currentCommon, option]
+                                : currentCommon.filter((o: string) => o !== option);
+                              
+                              // フォームの値を更新
                               form.setValue("ng_options.common", updated, {
                                 shouldValidate: true,
-                                shouldDirty: true
+                                shouldDirty: true,
+                                shouldTouch: true
                               });
                             }}
                             className="data-[state=checked]:bg-primary"
