@@ -70,9 +70,9 @@ export function ProfileConfirmationModal({
                   label="氏名"
                   value={
                     <div className="flex flex-col space-y-1">
-                      <span>{formData.last_name || formData.lastName} {formData.first_name || formData.firstName}</span>
+                      <span>{formData.last_name} {formData.first_name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formData.last_name_kana || formData.lastNameKana} {formData.first_name_kana || formData.firstNameKana}
+                        {formData.last_name_kana} {formData.first_name_kana}
                       </span>
                     </div>
                   }
@@ -82,7 +82,7 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{formData.location} ({formData.nearest_station || formData.nearestStation})</span>
+                      <span>{formData.location} ({formData.nearest_station})</span>
                     </div>
                   }
                 />
@@ -97,7 +97,7 @@ export function ProfileConfirmationModal({
                 />
                 <InfoItem
                   label="カップサイズ"
-                  value={formData.cup_size || formData.cupSize}
+                  value={formData.cup_size}
                 />
                 {formData.bust && (
                   <InfoItem
@@ -156,7 +156,7 @@ export function ProfileConfirmationModal({
                 </div>
                 <InfoItem 
                   label="顔出し設定" 
-                  value={<Badge variant="secondary">{formData.face_visibility || formData.faceVisibility || "未設定"}</Badge>} 
+                  value={<Badge variant="secondary">{formData.face_visibility || "未設定"}</Badge>} 
                 />
               </div>
             </section>
