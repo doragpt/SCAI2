@@ -5,24 +5,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
     console.log('Fetching talent profile...');
-    const response = await apiRequest("GET", "/api/talent/profile");
-
-    if (response.status === 404) {
-      console.log('Profile not found, this is normal for new users');
-      return null;
-    }
-
-    if (response.status === 401) {
-      console.log('Unauthorized access to talent profile');
-      throw new Error("認証が必要です");
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "プロフィールの取得に失敗しました");
-    }
-
-    const data = await response.json();
+    const data = await apiRequest("GET", "/api/talent/profile");
     console.log('Talent profile fetched successfully:', data);
     return data as TalentProfileData;
   } catch (error) {
@@ -34,19 +17,7 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
   try {
     console.log('Updating talent profile with data:', data);
-    const response = await apiRequest("POST", "/api/talent/profile", data);
-
-    if (response.status === 401) {
-      throw new Error("認証が必要です");
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "プロフィールの保存に失敗しました");
-    }
-
-    // サーバーから返された更新後のプロフィールデータを取得
-    const updatedProfile = await response.json();
+    const updatedProfile = await apiRequest("POST", "/api/talent/profile", data);
     console.log('Talent profile updated successfully:', updatedProfile);
     return updatedProfile;
   } catch (error) {
