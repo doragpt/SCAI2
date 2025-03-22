@@ -20,18 +20,22 @@ export default function JobDetail() {
   const { user } = useAuth();
   const [workingHours, setWorkingHours] = useState<number>(8);
   const [workingDays, setWorkingDays] = useState<number>(20);
+  
+  // IDが確実に存在する場合のみ処理を進めるための安全対策
+  const isValidId = id ? !isNaN(parseInt(id)) : false;
+  const jobId = isValidId ? id : '';
 
   const {
     data: job,
     isLoading,
     error
-  } = useQuery<JobResponse>({
-    queryKey: [QUERY_KEYS.JOB_DETAIL(id || '')],
-    enabled: !!id,
-    queryFn: async () => {
+  } = useQuery({
+    queryKey: [QUERY_KEYS.JOB_DETAIL(jobId)],
+    enabled: Boolean(isValidId),
+    queryFn: async (): Promise<JobResponse> => {
       try {
         console.log('Fetching job detail...', { id });
-        const url = QUERY_KEYS.JOB_DETAIL(id || '');
+        const url = QUERY_KEYS.JOB_DETAIL(jobId);
         console.log('Requesting URL:', url);
         
         const response = await fetch(url);
@@ -45,7 +49,7 @@ export default function JobDetail() {
 
         const result = await response.json();
         console.log('Job Detail API Response:', result);
-        return result;
+        return result as JobResponse;
       } catch (error) {
         console.error("求人詳細取得エラー:", error);
         throw error;
@@ -110,7 +114,7 @@ export default function JobDetail() {
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
       description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
-      datePosted: job.createdAt.toISOString(),
+      datePosted: new Date(job.createdAt).toISOString(),
       employmentType: "アルバイト",
       hiringOrganization: {
         name: job.businessName,
@@ -208,7 +212,7 @@ export default function JobDetail() {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <div className="whitespace-pre-wrap">
-                        {job.benefits}
+                        {Array.isArray(job.benefits) ? job.benefits.join(', ') : job.benefits?.toString()}
                       </div>
                       <div className="flex flex-wrap gap-2 pt-2">
                         {job.transportationSupport && (
