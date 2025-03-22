@@ -1175,12 +1175,12 @@ ${index + 1}. ${result.businessName}
                     <div>
                       <Label>提示可能な身分証明書</Label>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {profileData?.availableIds?.types?.map((id, index) => (
+                        {profileData?.available_ids?.types?.map((id, index) => (
                           <Badge key={index} variant="outline">
                             {id}
                           </Badge>
                         ))}
-                        {profileData?.availableIds?.others?.map((id, index) => (
+                        {profileData?.available_ids?.others?.map((id, index) => (
                           <Badge key={`other-${index}`} variant="outline">
                             {id}
                           </Badge>
