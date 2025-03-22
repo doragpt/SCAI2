@@ -11,14 +11,14 @@ const API_BASE_URL = (() => {
 })();
 
 // APIリクエスト関数
-export async function apiRequest(
+export async function apiRequest<T = any>(
   method: string,
   url: string,
   data?: unknown,
   options?: {
     headers?: Record<string, string>;
   }
-): Promise<Response> {
+): Promise<T> {
   try {
     log('info', 'APIリクエスト開始', {
       method,
@@ -41,6 +41,9 @@ export async function apiRequest(
       credentials: "include", // セッションCookieを送信
     });
 
+    // レスポンスのJSON解析
+    const responseData = await response.json();
+    
     if (!response.ok) {
       log('error', 'APIリクエストエラー', {
         status: response.status,
@@ -48,11 +51,11 @@ export async function apiRequest(
         url: fullUrl
       });
 
-      const error = await response.json();
-      throw new Error(error.message || "APIリクエストに失敗しました");
+      throw new Error(responseData.message || "APIリクエストに失敗しました");
     }
 
-    return response;
+    console.log(`API Response from ${url}:`, responseData);
+    return responseData as T;
   } catch (error) {
     log('error', 'APIリクエストエラー', {
       method,
@@ -66,29 +69,11 @@ export async function apiRequest(
 
 // タレントプロフィール関連の関数
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
-  const response = await apiRequest(
-    "POST",
-    QUERY_KEYS.TALENT_PROFILE,
-    data
-  );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "プロフィールの保存に失敗しました");
-  }
-
-  return response.json();
+  return await apiRequest<TalentProfileData>("POST", QUERY_KEYS.TALENT_PROFILE, data);
 }
 
 export async function getTalentProfile(): Promise<TalentProfileData> {
-  const response = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "プロフィールの取得に失敗しました");
-  }
-
-  return response.json();
+  return await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
 }
 
 export function invalidateTalentProfileCache() {
@@ -99,13 +84,7 @@ export function invalidateTalentProfileCache() {
 export const getJobsQuery = async (): Promise<any[]> => {
   try {
     console.log('Fetching jobs data...');
-
-    const response = await apiRequest("GET", QUERY_KEYS.JOBS_PUBLIC);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "求人の取得に失敗しました");
-    }
-    return response.json();
+    return await apiRequest<any[]>("GET", QUERY_KEYS.JOBS_PUBLIC);
   } catch (error) {
     console.error('求人情報取得エラー:', error);
     throw error;
@@ -136,12 +115,7 @@ export const searchJobsQuery = async (params: {
     const url = `${QUERY_KEYS.JOBS_SEARCH}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
     console.log('Fetching jobs:', { url, params });
 
-    const response = await apiRequest("GET", url);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "求人の検索に失敗しました");
-    }
-    const data = await response.json();
+    const data = await apiRequest<any[]>("GET", url);
 
     // レスポンスをページネーション形式に整形
     return {
@@ -165,14 +139,7 @@ export const searchJobsQuery = async (params: {
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: any): Promise<any> {
-  const response = await apiRequest("PATCH", "/auth/user", data);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "ユーザー情報の更新に失敗しました");
-  }
-
-  return response.json();
+  return await apiRequest<any>("PATCH", "/auth/user", data);
 }
 
 // AIマッチング関連の型定義
@@ -222,13 +189,7 @@ export async function getAIMatching(options?: Record<string, any>): Promise<Matc
       }
     }
     
-    const response = await apiRequest("GET", url);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "マッチング検索に失敗しました");
-    }
-    
-    const result = await response.json();
+    const result = await apiRequest<MatchingResult>("GET", url);
     
     log('info', 'AIマッチング成功', {
       totalMatches: result.totalMatches || 0,
@@ -266,18 +227,11 @@ export async function uploadPhoto(base64Data: string, fileName: string): Promise
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest(
+    const result = await apiRequest<{url: string, fileName: string}>(
       "POST",
       "/upload/photo",
       { base64Data, fileName }
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "写真のアップロードに失敗しました");
-    }
-
-    const result = await response.json();
     
     log('info', '写真アップロード成功', {
       fileName,
@@ -285,10 +239,7 @@ export async function uploadPhoto(base64Data: string, fileName: string): Promise
       timestamp: new Date().toISOString()
     });
 
-    return {
-      url: result.url,
-      fileName: result.fileName
-    };
+    return result;
   } catch (error) {
     log('error', '写真アップロードエラー', {
       fileName,
@@ -307,17 +258,10 @@ export async function getSignedPhotoUrl(key: string): Promise<string> {
       timestamp: new Date().toISOString()
     });
 
-    const response = await apiRequest(
+    const result = await apiRequest<{url: string}>(
       "GET",
       `/upload/signed-url/${key}`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "署名付きURLの取得に失敗しました");
-    }
-
-    const result = await response.json();
     
     log('info', '署名付きURL取得成功', {
       key,
