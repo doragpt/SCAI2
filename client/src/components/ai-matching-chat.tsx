@@ -1189,8 +1189,8 @@ ${index + 1}. ${result.businessName}
                     </div>
                     <div>
                       <Label>本籍地記載の住民票</Label>
-                      <Badge variant={profileData?.canProvideResidenceRecord ? "default" : "secondary"}>
-                        {profileData?.canProvideResidenceRecord ? "提出可能" : "提出不可"}
+                      <Badge variant={profileData?.can_provide_residence_record ? "default" : "secondary"}>
+                        {profileData?.can_provide_residence_record ? "提出可能" : "提出不可"}
                       </Badge>
                     </div>
                   </div>
@@ -1207,14 +1207,14 @@ ${index + 1}. ${result.businessName}
                   <div className="space-y-2">
                     <div>
                       <Label>写メ日記の投稿</Label>
-                      <Badge variant={profileData?.canPhotoDiary ? "default" : "secondary"}>
-                        {profileData?.canPhotoDiary ? "可能" : "不可"}
+                      <Badge variant={profileData?.can_photo_diary ? "default" : "secondary"}>
+                        {profileData?.can_photo_diary ? "可能" : "不可"}
                       </Badge>
                     </div>
                     <div>
                       <Label>自宅待機での出張</Label>
-                      <Badge variant={profileData?.canHomeDelivery ? "default" : "secondary"}>
-                        {profileData?.canHomeDelivery ? "可能" : "不可"}
+                      <Badge variant={profileData?.can_home_delivery ? "default" : "secondary"}>
+                        {profileData?.can_home_delivery ? "可能" : "不可"}
                       </Badge>
                     </div>
                   </div>
@@ -1231,8 +1231,8 @@ ${index + 1}. ${result.businessName}
                   <div className="flex flex-wrap gap-2">
                     {
                       [
-                        ...(profileData?.ngOptions?.common || []),
-                        ...(profileData?.ngOptions?.others || [])
+                        ...(profileData?.ng_options?.common || []),
+                        ...(profileData?.ng_options?.others || [])
                       ].map((option, index) => (
                         <Badge key={index} variant="destructive">
                           {option}
@@ -1266,25 +1266,25 @@ ${index + 1}. ${result.businessName}
                 <Separator className="my-6" />
 
                 {/* 傷・タトゥー・アトピー */}
-                {profileData?.bodyMark && (profileData.bodyMark.hasBodyMark || profileData.bodyMark.others?.length > 0) && (
+                {profileData?.body_mark && (profileData.body_mark.has_body_mark || profileData.body_mark.others?.length > 0) && (
                   <div className="space-y-4">
                     <h4 className="flex items-center gap-2 font-medium text-primary">
                       <PatchCheck className="h-4 w-4" />
                       傷・タトゥー・アトピー
                     </h4>
                     <div className="space-y-2">
-                      {profileData.bodyMark.others && profileData.bodyMark.others.length > 0 && (
+                      {profileData.body_mark.others && profileData.body_mark.others.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {profileData.bodyMark.others.map((mark, index) => (
+                          {profileData.body_mark.others.map((mark, index) => (
                             <Badge key={index} variant="outline">
                               {mark}
                             </Badge>
                           ))}
                         </div>
                       )}
-                      {profileData.bodyMark.details && (
+                      {profileData.body_mark.details && (
                         <p className="text-sm whitespace-pre-wrap">
-                          {profileData.bodyMark.details}
+                          {profileData.body_mark.details}
                         </p>
                       )}
                     </div>
@@ -1329,12 +1329,12 @@ ${index + 1}. ${result.businessName}
                     エステ関連
                   </h4>
                   <div className="space-y-2">
-                    <Badge variant={profileData?.hasEstheExperience ? "default" : "secondary"}>
-                      {profileData?.hasEstheExperience ? `あり（${profileData?.estheExperiencePeriod}）` : "無し"}
+                    <Badge variant={profileData?.has_esthe_experience ? "default" : "secondary"}>
+                      {profileData?.has_esthe_experience ? `あり（${profileData?.esthe_experience_period}）` : "無し"}
                     </Badge>
-                    {profileData?.estheOptions?.available && (
+                    {profileData?.esthe_options?.available && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {profileData.estheOptions.available.map((option, index) => (
+                        {profileData.esthe_options.available.map((option, index) => (
                           <Badge key={index} variant="outline">
                             {option}
                           </Badge>
@@ -1352,30 +1352,30 @@ ${index + 1}. ${result.businessName}
                     <Eye className="h-4 w-4" />
                     顔出し設定
                   </h4>
-                  <p className="text-sm font-medium">{profileData?.faceVisibility}</p>
+                  <p className="text-sm font-medium">{profileData?.face_visibility}</p>
                 </div>
 
                 <Separator className="my-6" />
 
                 {/* 在籍店舗情報 */}
-                {(profileData?.currentStores?.length > 0 || profileData?.previousStores?.length > 0) && (
+                {(profileData?.current_stores?.length > 0 || profileData?.previous_stores?.length > 0) && (
                   <div className="space-y-4">
                     <h4 className="flex items-center gap-2 font-medium text-primary">
                       <BuildingStore className="h-4 w-4" />
                       在籍店舗情報
                     </h4>
                     <div className="space-y-2">
-                      {profileData?.currentStores?.map((store, index) => (
+                      {profileData?.current_stores?.map((store, index) => (
                         <div key={index}>
                           <p className="text-sm font-medium">
-                            現在の在籍店舗: {store.storeName}（{store.stageName}）
+                            現在の在籍店舗: {store.store_name}（{store.stage_name}）
                           </p>
                         </div>
                       ))}
-                      {profileData?.previousStores?.map((store, index) => (
+                      {profileData?.previous_stores?.map((store, index) => (
                         <div key={index}>
                           <p className="text-sm font-medium">
-                            過去の在籍店舗: {store.storeName}
+                            過去の在籍店舗: {store.store_name}
                           </p>
                         </div>
                       ))}
@@ -1395,7 +1395,7 @@ ${index + 1}. ${result.businessName}
                     <div>
                       <Label>自己PR</Label>
                       <p className="text-sm whitespace-pre-wrap mt-1">
-                        {profileData?.selfIntroduction || "未入力"}
+                        {profileData?.self_introduction || "未入力"}
                       </p>
                     </div>
                     <div>
