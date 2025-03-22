@@ -34,7 +34,7 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<void> {
   try {
     console.log('Updating talent profile with data:', data);
-    const response = await apiRequest("POST", "/api/talent/profile", data);
+    const response = await apiRequest("POST", "/talent/profile", data);
 
     if (response.status === 401) {
       throw new Error("認証が必要です");

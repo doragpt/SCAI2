@@ -1036,9 +1036,9 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   <FormItem>
                     <FormLabel>持参可能な身分証明書</FormLabel>
                     <div className="space-y-4">
-                      <div className="grid gridcols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         {idTypes.map((type) => (
-                          <div key={type} className="flex itemscenter space-x-2">
+                          <div key={type} className="flex items-center space-x-2">
                             <Checkbox
                               id={`id-${type}`}
                               checked={field.value?.types?.includes(type) || false}
