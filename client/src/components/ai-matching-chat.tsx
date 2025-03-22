@@ -1217,6 +1217,12 @@ ${index + 1}. ${result.businessName}
                         {profileData?.can_home_delivery ? "可能" : "不可"}
                       </Badge>
                     </div>
+                    <div>
+                      <Label>性病検査表提出</Label>
+                      <Badge variant={profileData?.can_provide_std_test ? "default" : "secondary"}>
+                        {profileData?.can_provide_std_test ? "可能" : "不可"}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 
