@@ -5,7 +5,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
     console.log('Fetching talent profile...');
-    const response = await apiRequest("GET", "/api/talent/profile");
+    const response = await apiRequest("GET", "/talent/profile");
 
     if (response.status === 404) {
       console.log('Profile not found, this is normal for new users');
