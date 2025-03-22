@@ -100,8 +100,7 @@ export const getJobsQuery = async (): Promise<any[]> => {
   try {
     console.log('Fetching jobs data...');
 
-    // パスを修正: /api/jobs/public → /jobs
-    const response = await apiRequest("GET", "/jobs");
+    const response = await apiRequest("GET", QUERY_KEYS.JOBS_PUBLIC);
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || "求人の取得に失敗しました");
@@ -134,8 +133,7 @@ export const searchJobsQuery = async (params: {
     if (params.page) searchParams.set("page", params.page.toString());
     if (params.limit) searchParams.set("limit", params.limit.toString());
 
-    // パスを修正: /api/jobs/public → /jobs
-    const url = `/jobs${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    const url = `${QUERY_KEYS.JOBS_SEARCH}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
     console.log('Fetching jobs:', { url, params });
 
     const response = await apiRequest("GET", url);

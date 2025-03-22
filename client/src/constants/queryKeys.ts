@@ -17,10 +17,10 @@ export const QUERY_KEYS = {
   TALENT_PROFILE: "/api/talent/profile",
 
   // 求人関連
-  JOBS_PUBLIC: "/api/jobs",
-  JOBS_SEARCH: "/api/jobs",
+  JOBS_PUBLIC: "/jobs",
+  JOBS_SEARCH: "/jobs",
   JOBS_STORE: "/store/jobs",
-  JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
+  JOB_DETAIL: (id: string) => `/jobs/${id}`,
 
   // その他
   SIGNED_URL: "/storage/get-signed-url",

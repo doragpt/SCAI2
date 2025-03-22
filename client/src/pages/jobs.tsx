@@ -117,12 +117,15 @@ export default function Jobs() {
     queryFn: async () => {
       try {
         console.log('Fetching jobs data...', { page, limit, location, serviceType });
-        const url = new URL(QUERY_KEYS.JOBS_PUBLIC, window.location.origin);
-        url.searchParams.append("page", page.toString());
-        url.searchParams.append("limit", limit.toString());
-        if (location !== "all") url.searchParams.append("location", location);
-        if (serviceType !== "all") url.searchParams.append("serviceType", serviceType);
-
+        const searchParams = new URLSearchParams();
+        searchParams.append("page", page.toString());
+        searchParams.append("limit", limit.toString());
+        if (location !== "all") searchParams.append("location", location);
+        if (serviceType !== "all") searchParams.append("serviceType", serviceType);
+        
+        const url = `${QUERY_KEYS.JOBS_PUBLIC}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+        console.log('Requesting URL:', url);
+        
         const response = await fetch(url);
         console.log('API Response:', response);
 
