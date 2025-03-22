@@ -78,7 +78,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
     case "published":
       return (
-        <Badge variant="success" className="gap-1">
+        <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
           <CheckCircle className="h-3 w-3" />
           公開中
         </Badge>
@@ -342,78 +342,11 @@ export default function BlogManagement() {
 
         {posts.length > 0 && pagination.totalPages > 1 && (
           <CardFooter>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page > 1) setPage(page - 1);
-                    }}
-                    aria-disabled={page <= 1}
-                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => {
-                    // 現在のページ、最初のページ、最後のページ、または現在のページの前後のページのみ表示
-                    if (
-                      pageNum === 1 ||
-                      pageNum === pagination.totalPages ||
-                      Math.abs(pageNum - page) <= 1
-                    ) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setPage(pageNum);
-                            }}
-                            isActive={pageNum === page}
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-
-                    // 省略記号の表示（現在のページの前後にジャンプがある場合のみ）
-                    if (
-                      (pageNum === 2 && page > 3) ||
-                      (pageNum === pagination.totalPages - 1 &&
-                        page < pagination.totalPages - 2)
-                    ) {
-                      return (
-                        <PaginationItem key={`ellipsis-${pageNum}`}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
-                    }
-
-                    return null;
-                  }
-                )}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page < pagination.totalPages) setPage(page + 1);
-                    }}
-                    aria-disabled={page >= pagination.totalPages}
-                    className={
-                      page >= pagination.totalPages
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <Pagination
+              currentPage={page}
+              totalPages={pagination.totalPages}
+              onPageChange={setPage}
+            />
           </CardFooter>
         )}
       </Card>
