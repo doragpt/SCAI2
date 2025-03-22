@@ -8,6 +8,7 @@ import talentRouter from './routes/talent';
 import authRouter from './routes/auth';
 import storeRouter from './routes/store';
 import blogRouter from './routes/blog';
+import uploadRouter from './routes/upload';
 import { authenticate } from './middleware/auth';
 
 const app = express();
@@ -59,6 +60,7 @@ app.get('/check', authenticate, (req, res) => {
 app.use('/api/talent', talentRouter);
 app.use('/store', storeRouter);
 app.use('/api/blog', blogRouter);
+app.use('/api/upload', uploadRouter);
 
 // 求人関連のAPIルートを登録
 app.get('/api/jobs', (req, res) => {
