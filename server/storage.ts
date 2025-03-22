@@ -1,11 +1,12 @@
-import { users, store_profiles, talentProfiles, type User, type StoreProfile, type InsertStoreProfile, type TalentProfileData } from "@shared/schema";
+import { users, store_profiles, talentProfiles, type StoreProfile, type InsertStoreProfile, type TalentProfileData } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { log } from "./utils/logger";
 
-// InsertUser型の定義
+// User型とInsertUser型の定義
+type User = typeof users.$inferSelect;
 type InsertUser = Omit<User, 'id' | 'created_at' | 'updated_at'>;
 
 const PgSession = connectPgSimple(session);
