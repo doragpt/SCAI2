@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,24 @@ import { ja } from "date-fns/locale";
 export default function BasicInfoView() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // 最初にチェックAPIを呼び出して確実にユーザー情報を取得
+  useQuery({
+    queryKey: [QUERY_KEYS.AUTH_CHECK],
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+      if (!response.ok) {
+        throw new Error("認証チェックに失敗しました");
+      }
+      const userData = await response.json();
+      // 成功したらユーザー情報をキャッシュに保存
+      queryClient.setQueryData([QUERY_KEYS.USER], userData);
+      return userData;
+    },
+    enabled: !!user && !queryClient.getQueryData([QUERY_KEYS.USER]),
+    staleTime: 0,
+  });
 
   const {
     data: userProfile,
