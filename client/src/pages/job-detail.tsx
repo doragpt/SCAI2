@@ -35,7 +35,7 @@ export default function JobDetail() {
     queryFn: async (): Promise<JobResponse> => {
       try {
         console.log('Fetching job detail...', { id });
-        const url = QUERY_KEYS.JOB_DETAIL(jobId);
+        const url = `/api${QUERY_KEYS.JOB_DETAIL(jobId)}`;
         console.log('Requesting URL:', url);
         
         const response = await fetch(url);

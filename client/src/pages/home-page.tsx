@@ -239,7 +239,7 @@ export default function HomePage() {
 
   const jobListings = data?.jobs || [];
 
-  const filteredListings = jobListings.filter(job => {
+  const filteredListings = jobListings.filter((job: JobResponse) => {
     if (!job) return false;
     return selectedType === "all" || job.serviceType === selectedType;
   }).slice(0, 6);
@@ -501,7 +501,7 @@ export default function HomePage() {
                 animate="show"
                 className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                {filteredListings.map((job) => (
+                {filteredListings.map((job: JobResponse) => (
                   <JobCard key={job.id} job={job} />
                 ))}
               </motion.div>
