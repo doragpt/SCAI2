@@ -335,7 +335,17 @@ export const AIMatchingChat = () => {
 • 身分証: ${profileData.available_ids?.types?.length ? profileData.available_ids.types.join('、') : '未入力'}${
           profileData.available_ids?.others?.length ? `、${profileData.available_ids.others.join('、')}` : ''
         }
-• 所有資格: ${profileData.has_esthe_experience ? `エステ経験あり（${profileData.esthe_experience_period || '期間未入力'}）` : 'エステ経験なし'}
+• 本籍地記載の住民票: ${profileData.can_provide_residence_record ? '提出可' : '提出不可'}
+• 顔出し設定: ${profileData.face_visibility || '未設定'}
+• エステ経験: ${profileData.has_esthe_experience ? `あり（${profileData.esthe_experience_period || '期間未入力'}）` : 'なし'}
+• 喫煙: ${profileData.smoking?.enabled ? '喫煙あり' : '喫煙なし'}${
+          profileData.smoking?.types?.length ? ` (${profileData.smoking.types.join('、')})` : ''
+        }
+• ボディマーク: ${profileData.body_mark?.has_body_mark ? 'あり' : 'なし'}${
+          profileData.body_mark?.others?.length ? ` (${profileData.body_mark.others.join('、')})` : ''
+        }
+• 自己紹介: ${profileData.self_introduction ? profileData.self_introduction.substring(0, 50) + (profileData.self_introduction.length > 50 ? '...' : '') : '未入力'}
+• 備考: ${profileData.notes ? profileData.notes.substring(0, 50) + (profileData.notes.length > 50 ? '...' : '') : '未入力'}
 
 記入したものの情報に間違いはないか確認してね！
 間違いが無ければマッチングをはじめるよ！`
@@ -1091,25 +1101,25 @@ ${index + 1}. ${result.businessName}
                     <div>
                       <Label>氏名</Label>
                       <p className="text-sm font-medium">
-                        {profileData?.lastName} {profileData?.firstName}
+                        {profileData?.last_name} {profileData?.first_name}
                       </p>
                     </div>
                     <div>
                       <Label>フリガナ</Label>
                       <p className="text-sm font-medium">
-                        {profileData?.lastNameKana} {profileData?.firstNameKana}
+                        {profileData?.last_name_kana} {profileData?.first_name_kana}
                       </p>
                     </div>
                     <div>
                       <Label>生年月日</Label>
                       <p className="text-sm font-medium">
-                        {formatDate(user?.birthDate || '')}
+                        {formatDate(user?.birth_date || '')}
                       </p>
                     </div>
                     <div>
                       <Label>年齢</Label>
                       <p className="text-sm font-medium">
-                        {calculateAge(user?.birthDate) ? `${calculateAge(user?.birthDate)}歳` : "未入力"}
+                        {calculateAge(user?.birth_date) ? `${calculateAge(user?.birth_date)}歳` : "未入力"}
                       </p>
                     </div>
                     <div>
@@ -1118,7 +1128,7 @@ ${index + 1}. ${result.businessName}
                     </div>
                     <div>
                       <Label>最寄り駅</Label>
-                      <p className="text-sm font-medium">{profileData?.nearestStation}</p>
+                      <p className="text-sm font-medium">{profileData?.nearest_station}</p>
                     </div>
                   </div>
                 </div>
@@ -1148,7 +1158,7 @@ ${index + 1}. ${result.businessName}
                     </div>
                     <div>
                       <Label>カップサイズ</Label>
-                      <p className="text-sm font-medium">{profileData?.cupSize}カップ</p>
+                      <p className="text-sm font-medium">{profileData?.cup_size}カップ</p>
                     </div>
                   </div>
                 </div>
