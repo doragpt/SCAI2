@@ -34,12 +34,12 @@ function useLoginMutation() {
       credentials.role = expectedRole;
 
       // パスを修正: /api/login → /auth/login
-      const response = await apiRequest("POST", "/auth/login", credentials);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+      try {
+        return await apiRequest("POST", "/auth/login", credentials);
+      } catch (error) {
+        console.error('店舗ログインエラー:', error);
+        throw new Error(error instanceof Error ? error.message : "ログインに失敗しました");
       }
-      return response.json();
     },
     onSuccess: (user: SelectUser) => {
       // ユーザーデータをキャッシュにセット
@@ -76,11 +76,12 @@ function useLogoutMutation() {
   return useMutation({
     mutationFn: async () => {
       // パスを修正: /api/logout → /auth/logout
-      const response = await apiRequest("POST", "/auth/logout");
-      if (!response.ok) {
+      try {
+        return await apiRequest("POST", "/auth/logout");
+      } catch (error) {
+        console.error('ログアウトエラー:', error);
         throw new Error("ログアウトに失敗しました");
       }
-      return response.json();
     },
     onSuccess: (data: { role?: string }) => {
       // キャッシュを完全にクリア
@@ -117,17 +118,20 @@ function useRegisterMutation() {
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
       // パスを修正: /api/auth/register → /auth/register
-      const response = await apiRequest("POST", "/auth/register", data);
-      if (!response.ok) {
-        const error = await response.json();
-        // エラーコードに基づいてメッセージをカスタマイズ
-        if (error.code === "EMAIL_ALREADY_EXISTS") {
-          throw new Error(error.message || "このメールアドレスは既に使用されています。別のメールアドレスを使用してください。");
+      try {
+        return await apiRequest("POST", "/auth/register", data);
+      } catch (error) {
+        console.error('登録エラー:', error);
+        // APIからのエラーメッセージを処理
+        const message = error instanceof Error ? error.message : "登録に失敗しました";
+        
+        // エラーコードに基づいてメッセージをカスタマイズ 
+        if (message.includes("EMAIL_ALREADY_EXISTS") || message.includes("既に使用されています")) {
+          throw new Error("このメールアドレスは既に使用されています。別のメールアドレスを使用してください。");
         }
-        throw new Error(error.message || "登録に失敗しました");
+        
+        throw new Error(message);
       }
-      const result = await response.json();
-      return result;
     },
     onSuccess: (userData: SelectUser) => {
       // ユーザーデータをキャッシュにセット
@@ -167,15 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         // パスを修正: /api/check → /check
-        const response = await apiRequest("GET", "/check");
-        if (!response.ok) {
-          if (response.status === 401) {
-            return null;
-          }
-          throw new Error('認証確認に失敗しました');
-        }
-        const data = await response.json();
-        return data;
+        return await apiRequest("GET", "/check");
       } catch (error) {
         console.error('Auth check error:', error);
         return null;
