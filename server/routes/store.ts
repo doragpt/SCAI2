@@ -90,13 +90,46 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
 
       log('info', '新規作成データ', { insertData });
 
-      // バリデーション
-      const validatedData = storeProfileSchema.parse(insertData);
+      // バリデーション（新規作成用）
+      const validatedData = storeProfileSchema.parse({
+        catch_phrase: insertData.catch_phrase,
+        description: insertData.description, 
+        benefits: insertData.benefits,
+        minimum_guarantee: insertData.minimum_guarantee,
+        maximum_guarantee: insertData.maximum_guarantee,
+        status: insertData.status,
+        working_hours: req.body.working_hours,
+        transportation_support: req.body.transportation_support || false,
+        housing_support: req.body.housing_support || false
+      });
 
-      const [newProfile] = await db
-        .insert(store_profiles)
-        .values(validatedData)
-        .returning();
+      // 必須フィールドとvalidatedDataを結合
+      const fullData = {
+        ...validatedData,
+        user_id: insertData.user_id,
+        business_name: insertData.business_name,
+        location: insertData.location,
+        service_type: insertData.service_type,
+        created_at: insertData.created_at,
+        updated_at: insertData.updated_at
+      };
+
+      // insert処理を実行（型エラーを解消するため直接SQL実行に変更）
+      const result = await db.execute(
+        sql`INSERT INTO store_profiles 
+            (user_id, business_name, location, service_type, catch_phrase, description, 
+             benefits, minimum_guarantee, maximum_guarantee, status, 
+             working_hours, transportation_support, housing_support, created_at, updated_at)
+            VALUES 
+            (${fullData.user_id}, ${fullData.business_name}, ${fullData.location}, ${fullData.service_type}, 
+             ${fullData.catch_phrase}, ${fullData.description}, ${JSON.stringify(fullData.benefits)}, 
+             ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, ${fullData.status}, 
+             ${fullData.working_hours}, ${fullData.transportation_support}, ${fullData.housing_support}, 
+             ${fullData.created_at}, ${fullData.updated_at})
+            RETURNING *`
+      );
+      
+      const newProfile = result.rows[0];
 
       log('info', '店舗プロフィール作成成功', {
         userId: req.user.id,

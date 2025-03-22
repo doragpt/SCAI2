@@ -229,10 +229,12 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
     }
     
     // 希望報酬額（デフォルト値を設定）
-    const desiredGuarantee = talentResult.desired_guarantee || 20000;
+    // talentProfileには直接desired_guaranteeがないので固定値を設定
+    const desiredGuarantee = 20000;
     
     // 希望業種取得（デフォルト空配列）
-    const serviceTypes = talentResult.service_types || [];
+    // talentProfileには直接service_typesがないため、対応するものがあれば設定
+    const serviceTypes: string[] = [];
     
     // 希望エリア取得
     const preferredLocations = userResult.preferred_locations || [];

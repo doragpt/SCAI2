@@ -32,7 +32,8 @@ import { StoreApplicationView } from "@/components/store-application-view";
 // プロフィールのステータスラベル
 const profileStatusLabels = {
   draft: "未公開",
-  published: "公開中"
+  published: "公開中",
+  closed: "募集終了"
 } as const;
 
 // ブログ投稿のステータスラベル
