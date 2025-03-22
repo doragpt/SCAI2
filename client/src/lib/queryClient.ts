@@ -67,18 +67,8 @@ export async function apiRequest<T = any>(
   }
 }
 
-// タレントプロフィール関連の関数
-export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
-  return await apiRequest<TalentProfileData>("POST", QUERY_KEYS.TALENT_PROFILE, data);
-}
-
-export async function getTalentProfile(): Promise<TalentProfileData> {
-  return await apiRequest<TalentProfileData>("GET", QUERY_KEYS.TALENT_PROFILE);
-}
-
-export function invalidateTalentProfileCache() {
-  return queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
-}
+// Note: タレントプロフィール関連の関数は lib/api/talent.ts に移動しました
+// このモジュールは apiRequest 関数のみをエクスポートします
 
 // 求人一覧取得用のクエリ関数
 export const getJobsQuery = async (): Promise<any[]> => {
