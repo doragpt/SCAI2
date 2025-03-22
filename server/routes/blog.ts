@@ -9,6 +9,7 @@ const router = Router();
 
 // 店舗ユーザー向け：自分のブログ記事一覧取得（フィルター/ページネーション機能付き）
 // このエンドポイントを最初に配置して、:id パラメータと競合しないようにする
+// リクエストパスは `/api/blog/store-posts` となる
 router.get("/store-posts", authenticate, async (req: any, res) => {
   log('info', '店舗ブログ記事一覧リクエスト開始', {
     userId: req.user?.id,

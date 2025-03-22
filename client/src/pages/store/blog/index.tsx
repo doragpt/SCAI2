@@ -130,19 +130,14 @@ export default function BlogManagement() {
       console.log("Fetching blog posts with params:", params.toString());
       
       // API呼び出しとレスポンスの処理
-      // ブログ記事一覧の取得エンドポイント：/api/blog/store-posts
+      // サーバー側では /api/blog プレフィックスの後に /store-posts が来る
       const apiUrl = `/api/blog/store-posts?${params.toString()}`;
       console.log("Attempting to fetch from URL:", apiUrl);
       console.log("Current user:", user);
       
       try {
-        // 認証情報を確認
-        console.log("Checking authentication status before fetch");
-        const authCheck = await fetch("/check", {
-          credentials: 'include'
-        });
-        const authData = await authCheck.json();
-        console.log("Authentication status:", authData);
+        // APIリクエスト実行
+        console.log("Executing fetch to:", apiUrl);
         
         const response = await fetch(apiUrl, {
           method: 'GET',
@@ -152,17 +147,28 @@ export default function BlogManagement() {
           credentials: 'include'
         });
         
-        console.log("Response status:", response.status, response.statusText);
-        console.log("Response headers:", [...response.headers.entries()]);
+        console.log("Response status:", response.status);
         
+        // エラーレスポンスの処理
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Error response:", response.status, response.statusText, errorText);
-          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status} ${response.statusText} - ${errorText}`);
+          console.error("API error:", response.status, errorText);
+          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status}`);
         }
         
+        // 正常レスポンスの処理
         const result = await response.json();
         console.log("Blog posts API response:", result);
+        
+        // データ構造の検証
+        if (!result.posts) {
+          console.warn("API response has unexpected format:", result);
+          return {
+            posts: [],
+            pagination: { currentPage: 1, totalPages: 1, totalItems: 0 }
+          };
+        }
+        
         return result;
       } catch (error) {
         console.error("Fetch error:", error);
