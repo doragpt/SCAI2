@@ -139,14 +139,7 @@ export default function BlogManagement() {
       
       try {
         // APIリクエスト実行 - apiRequestヘルパーを使用
-        const response = await apiRequest("GET", apiUrl);
-        
-        if (!response.ok) {
-          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status}`);
-        }
-        
-        // 正常レスポンスの処理
-        const result = await response.json();
+        const result = await apiRequest("GET", apiUrl);
         
         // データ構造の検証
         if (!result.posts) {
@@ -171,11 +164,7 @@ export default function BlogManagement() {
     
     try {
       // 削除APIのエンドポイントは `/api/blog/:id` 形式
-      const response = await apiRequest("DELETE", `/api/blog/${deletePostId}`);
-      
-      if (!response.ok) {
-        throw new Error(`記事の削除に失敗しました: ${response.status}`);
-      }
+      await apiRequest("DELETE", `/api/blog/${deletePostId}`);
       
       toast({
         title: "記事を削除しました",
