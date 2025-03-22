@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import authRoutes from './auth';
 import talentRoutes from './talent';
+import applicationsRoutes from './applications';
 import { log } from '../utils/logger';
 import { authenticate } from '../middleware/auth';
 
@@ -24,6 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 各ルーターを登録
   app.use('/auth', authRoutes);
+  app.use('/applications', applicationsRoutes);
   // 注意: /talent のルーティングは app.ts で /api/talent として登録されているため、
   // ここでは登録しません。
   

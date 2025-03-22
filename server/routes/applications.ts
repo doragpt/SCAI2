@@ -74,7 +74,7 @@ router.post("/:jobId", authenticate, async (req: any, res) => {
 });
 
 // 応募履歴の取得
-router.get("/history", authenticate, async (req: any, res) => {
+router.get("/talent", authenticate, async (req: any, res) => {
   try {
     // ストアプロフィール情報も含めて取得
     const applicationHistory = await db
