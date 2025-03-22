@@ -120,14 +120,18 @@ function useRegisterMutation() {
       const response = await apiRequest("POST", "/auth/register", data);
       if (!response.ok) {
         const error = await response.json();
+        // エラーコードに基づいてメッセージをカスタマイズ
+        if (error.code === "EMAIL_ALREADY_EXISTS") {
+          throw new Error(error.message || "このメールアドレスは既に使用されています。別のメールアドレスを使用してください。");
+        }
         throw new Error(error.message || "登録に失敗しました");
       }
       const result = await response.json();
-      return result.user;
+      return result;
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (userData: SelectUser) => {
       // ユーザーデータをキャッシュにセット
-      queryClient.setQueryData(["/check"], user);
+      queryClient.setQueryData(["/check"], userData);
 
       // 全ての関連クエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api"] });
@@ -137,9 +141,9 @@ function useRegisterMutation() {
         description: "アカウントが正常に作成されました。",
       });
 
-      if (user.role === "talent") {
+      if (userData.role === "talent") {
         setLocation("/talent/mypage");
-      } else if (user.role === "store") {
+      } else if (userData.role === "store") {
         setLocation("/store/dashboard");
       }
     },

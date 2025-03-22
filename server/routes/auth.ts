@@ -225,6 +225,18 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     });
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // PostgreSQLのエラーコードを確認（23505は一意制約違反）
+    const pgError = error as any;
+    if (pgError.code === '23505' && pgError.constraint === 'users_email_key') {
+      // メールアドレスが既に使われている場合
+      return res.status(400).json({
+        message: "このメールアドレスは既に使用されています。別のメールアドレスを使用してください。",
+        code: "EMAIL_ALREADY_EXISTS"
+      });
+    }
+    
+    // その他のエラー
     res.status(500).json({
       message: "登録処理中にエラーが発生しました",
       details: error instanceof Error ? error.message : undefined
