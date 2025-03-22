@@ -404,7 +404,24 @@ export class DatabaseStorage implements IStorage {
       log('info', '店舗プロフィール取得開始', { userId });
 
       const [result] = await db
-        .select()
+        .select({
+          id: store_profiles.id,
+          user_id: store_profiles.user_id,
+          business_name: store_profiles.business_name,
+          location: store_profiles.location,
+          service_type: store_profiles.service_type,
+          catch_phrase: store_profiles.catch_phrase,
+          description: store_profiles.description,
+          benefits: store_profiles.benefits,
+          minimum_guarantee: store_profiles.minimum_guarantee,
+          maximum_guarantee: store_profiles.maximum_guarantee,
+          status: store_profiles.status,
+          working_hours: store_profiles.working_hours,
+          transportation_support: store_profiles.transportation_support,
+          housing_support: store_profiles.housing_support,
+          created_at: store_profiles.created_at,
+          updated_at: store_profiles.updated_at
+        })
         .from(store_profiles)
         .where(eq(store_profiles.user_id, userId));
 
