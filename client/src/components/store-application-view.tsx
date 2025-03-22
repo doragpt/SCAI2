@@ -1,14 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Application } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
+import { Application } from "@/types/application";
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   pending: "処理中",
   accepted: "承諾",
-  rejected: "拒否"
+  rejected: "拒否",
+  withdrawn: "取り下げ"
 };
 
 export function StoreApplicationView() {
@@ -58,15 +59,15 @@ export function StoreApplicationView() {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">オファー金額:</span>
+                  <span className="text-muted-foreground">申請者:</span>
                   <span className="font-medium">
-                    ¥{application.guaranteeOffer?.toLocaleString() ?? "未設定"}
+                    {application.username || "不明"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">申請日時:</span>
                   <span className="font-medium">
-                    {new Date(application.createdAt).toLocaleDateString()}
+                    {new Date(application.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 {application.message && (
