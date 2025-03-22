@@ -1052,15 +1052,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           <div key={type} className="flex items-center space-x-2">
                             <Checkbox
                               id={`id-${type}`}
-                              checked={field.value?.types?.includes(type) || false}
+                              checked={(field.value && Array.isArray(field.value.types) && field.value.types.includes(type)) || false}
                               onCheckedChange={(checked) => {
-                                const current = field.value?.types || [];
+                                // 現在の値を取得、nullの場合は空配列として扱う
+                                const currentIds = form.getValues().available_ids || { types: [], others: [] };
+                                const current = currentIds.types || [];
+                                
+                                // 更新値を作成
                                 const updated = checked
                                   ? [...current, type]
                                   : current.filter((t: string) => t !== type);
+                                
+                                // フォームの値を更新
                                 form.setValue("available_ids.types", updated, {
                                   shouldValidate: true,
                                   shouldDirty: true,
+                                  shouldTouch: true
                                 });
                               }}
                               className="data-[state=checked]:bg-primary"
@@ -1464,15 +1471,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             {estheOptions.map((option) => (
                               <div key={option} className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={field.value?.includes(option) || false}
+                                  checked={(field.value && Array.isArray(field.value) && field.value.includes(option)) || false}
                                   onCheckedChange={(checked) => {
-                                    const current = field.value || [];
+                                    // 現在の値を取得、nullの場合は空配列として扱う
+                                    const currentOptionsObject = form.getValues().esthe_options || { available: [], ng_options: [] };
+                                    const current = currentOptionsObject.available || [];
+                                    
+                                    // 更新値を作成
                                     const newValue = checked
                                       ? [...current, option]
                                       : current.filter((value: string) => value !== option);
+                                      
+                                    // フォームの値を更新
                                     form.setValue("esthe_options.available", newValue, {
                                       shouldValidate: true,
-                                      shouldDirty: true
+                                      shouldDirty: true,
+                                      shouldTouch: true
                                     });
                                   }}
                                 />
@@ -1555,15 +1569,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           {allergyTypes.map((type) => (
                             <div key={type} className="flex items-center space-x-2">
                               <Checkbox
-                                checked={field.value?.includes(type) || false}
+                                checked={(field.value && Array.isArray(field.value) && field.value.includes(type)) || false}
                                 onCheckedChange={(checked) => {
-                                  const current = field.value || [];
+                                  // 現在の値を取得、nullの場合は空配列として扱う
+                                  const currentAllergies = form.getValues().allergies || { types: [], others: [], has_allergy: false };
+                                  const current = currentAllergies.types || [];
+                                  
+                                  // 更新値を作成
                                   const updated = checked
                                     ? [...current, type]
                                     : current.filter((t: string) => t !== type);
+                                    
+                                  // フォームの値を更新
                                   form.setValue("allergies.types", updated, {
                                     shouldValidate: true,
-                                    shouldDirty: true
+                                    shouldDirty: true,
+                                    shouldTouch: true
                                   });
                                 }}
                               />
@@ -1630,15 +1651,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           {smokingTypes.map((type) => (
                             <div key={type} className="flex items-center space-x-2">
                               <Checkbox
-                                checked={field.value?.includes(type) || false}
+                                checked={(field.value && Array.isArray(field.value) && field.value.includes(type)) || false}
                                 onCheckedChange={(checked) => {
-                                  const current = field.value || [];
+                                  // 現在の値を取得、nullの場合は空配列として扱う
+                                  const currentSmoking = form.getValues().smoking || { types: [], others: [], enabled: false };
+                                  const current = currentSmoking.types || [];
+                                  
+                                  // 更新値を作成
                                   const updated = checked
                                     ? [...current, type]
                                     : current.filter((t: string) => t !== type);
+                                    
+                                  // フォームの値を更新
                                   form.setValue("smoking.types", updated, {
                                     shouldValidate: true,
-                                    shouldDirty: true
+                                    shouldDirty: true,
+                                    shouldTouch: true
                                   });
                                 }}
                               />
