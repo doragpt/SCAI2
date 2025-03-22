@@ -175,6 +175,77 @@ export async function updateUserProfile(data: any): Promise<any> {
   return response.json();
 }
 
+// AIマッチング関連の型定義
+export interface MatchedJob {
+  id: number;
+  businessName: string;
+  location: string;
+  serviceType: string;
+  catchPhrase: string;
+  description: string;
+  minimumGuarantee: number | null;
+  maximumGuarantee: number | null;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+  benefits: string[];
+  matchScore: number;
+  matches: string[];
+}
+
+export interface MatchingResult {
+  matches: MatchedJob[];
+  totalMatches: number;
+  error?: string;
+}
+
+// AIマッチング検索リクエスト
+export async function getAIMatching(options?: Record<string, any>): Promise<MatchingResult> {
+  try {
+    log('info', 'AIマッチング開始', {
+      options,
+      timestamp: new Date().toISOString()
+    });
+
+    // オプションがあれば、クエリパラメータに変換
+    let url = '/api/talent/ai-matching';
+    if (options) {
+      const params = new URLSearchParams();
+      Object.entries(options).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+      
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    
+    const response = await apiRequest("GET", url);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "マッチング検索に失敗しました");
+    }
+    
+    const result = await response.json();
+    
+    log('info', 'AIマッチング成功', {
+      totalMatches: result.totalMatches || 0,
+      timestamp: new Date().toISOString()
+    });
+
+    return result;
+  } catch (error) {
+    log('error', 'AIマッチングエラー', {
+      options,
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 // クエリクライアントの設定
 export const queryClient = new QueryClient({
   defaultOptions: {

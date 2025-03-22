@@ -233,6 +233,10 @@ export const store_profiles = pgTable("store_profiles", {
   minimum_guarantee: integer("minimum_guarantee").default(0),
   maximum_guarantee: integer("maximum_guarantee").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
+  requirements: jsonb("requirements").$type<any>().default({}),
+  working_hours: text("working_hours"),
+  transportation_support: boolean("transportation_support").default(false),
+  housing_support: boolean("housing_support").default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -352,6 +356,21 @@ export type InsertStoreProfile = typeof store_profiles.$inferInsert;
 
 // Schemas
 // スキーマの追加（フォームで扱う項目のみを定義）
+// 先に型定義を行い、参照できるようにする
+export const jobRequirementsSchema = z.object({
+  age_min: z.number().min(18).max(99).optional(),
+  age_max: z.number().min(18).max(99).optional(),
+  spec_min: z.number().optional(),
+  spec_max: z.number().optional(),
+  cup_size_conditions: z.array(z.object({
+    cup_size: z.enum(cupSizes),
+    spec_min: z.number(),
+  })).optional(),
+  other_conditions: z.array(z.string()).default([]),
+});
+
+export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
+
 export const storeProfileSchema = z.object({
   catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
@@ -363,9 +382,12 @@ export const storeProfileSchema = z.object({
   minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
   maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
+  requirements: jobRequirementsSchema.optional(),
+  working_hours: z.string().optional(),
+  transportation_support: z.boolean().default(false),
+  housing_support: z.boolean().default(false),
 });
 
-// 型定義の追加
 export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
 
 export const loginSchema = z.object({
@@ -505,20 +527,6 @@ export const talentProfileUpdateSchema = talentProfileSchema.extend({
 export type TalentProfileUpdate = z.infer<typeof talentProfileUpdateSchema>;
 
 export const baseUserSchema = createInsertSchema(users).omit({ id: true });
-
-export const jobRequirementsSchema = z.object({
-  age_min: z.number().min(18).max(99).optional(),
-  age_max: z.number().min(18).max(99).optional(),
-  spec_min: z.number().optional(),
-  spec_max: z.number().optional(),
-  cup_size_conditions: z.array(z.object({
-    cup_size: z.enum(cupSizes),
-    spec_min: z.number(),
-  })).optional(),
-  other_conditions: z.array(z.string()).default([]),
-});
-
-export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
 export const userSchema = createInsertSchema(users, {
   username: z.string().min(1, "ユーザー名を入力してください"),

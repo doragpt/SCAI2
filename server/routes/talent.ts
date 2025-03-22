@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { talentProfileSchema } from '@shared/schema';
 import { log } from '../utils/logger';
+import { performAIMatching } from '../utils/matching';
 
 const router = Router();
 
@@ -96,6 +97,53 @@ router.post('/profile', requireAuth, async (req, res) => {
         message: "プロフィールの更新に失敗しました" 
       });
     }
+  }
+});
+
+// AIマッチング機能
+router.get('/ai-matching', requireAuth, async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: "認証が必要です" 
+      });
+    }
+
+    log('info', 'AIマッチングリクエスト', { 
+      userId: req.user.id,
+      query: req.query
+    });
+
+    // オプションのクエリパラメータ
+    const searchOptions = {
+      // 検索条件の追加は必要に応じて実装
+      filterByLocation: req.query.location,
+      filterByService: req.query.serviceType,
+    };
+
+    // マッチング処理の実行
+    const matchResults = await performAIMatching(req.user.id, searchOptions);
+
+    if (matchResults.error) {
+      return res.status(400).json({
+        error: 'MatchingError',
+        message: matchResults.error
+      });
+    }
+
+    log('info', 'AIマッチング結果', { 
+      userId: req.user.id,
+      totalMatches: matchResults.totalMatches || 0
+    });
+
+    res.json(matchResults);
+  } catch (error) {
+    log('error', 'AIマッチングエラー', { error });
+    res.status(500).json({ 
+      error: 'InternalServerError',
+      message: "マッチング処理中にエラーが発生しました" 
+    });
   }
 });
 
