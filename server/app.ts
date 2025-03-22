@@ -58,7 +58,9 @@ app.get('/check', authenticate, (req, res) => {
 
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
-app.use('/store', storeRouter);
+app.use('/api/store', storeRouter);  // '/store' -> '/api/store' に修正
+// ブログルーターの登録 - デバッグ情報を追加
+log('info', 'ブログルーター登録', { path: '/api/blog' });
 app.use('/api/blog', blogRouter);
 app.use('/api/upload', uploadRouter);
 

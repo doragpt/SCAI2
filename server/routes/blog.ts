@@ -10,9 +10,20 @@ const router = Router();
 // 店舗ユーザー向け：自分のブログ記事一覧取得（フィルター/ページネーション機能付き）
 // このエンドポイントを最初に配置して、:id パラメータと競合しないようにする
 router.get("/store-posts", authenticate, async (req: any, res) => {
+  log('info', '店舗ブログ記事一覧リクエスト開始', {
+    userId: req.user?.id,
+    userRole: req.user?.role,
+    query: req.query,
+    path: req.path
+  });
+
   try {
     // 店舗ユーザーのみアクセス可能
     if (req.user.role !== 'store') {
+      log('warn', '店舗ブログ記事アクセス権限なし', {
+        userId: req.user?.id,
+        userRole: req.user?.role
+      });
       return res.status(403).json({ message: "店舗アカウントのみアクセスできます" });
     }
 
@@ -22,6 +33,15 @@ router.get("/store-posts", authenticate, async (req: any, res) => {
     const offset = (page - 1) * limit;
     const status = req.query.status as string | undefined;
     const search = req.query.search as string | undefined;
+    
+    log('info', '店舗ブログ記事検索パラメータ', {
+      storeId,
+      page,
+      limit,
+      offset,
+      status,
+      search
+    });
 
     // フィルター条件の構築
     let conditions = [eq(blogPosts.store_id, storeId)];

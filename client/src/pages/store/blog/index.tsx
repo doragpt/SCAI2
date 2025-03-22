@@ -133,7 +133,17 @@ export default function BlogManagement() {
       // server/routes/blog.ts では /store-posts 、client側は /api/blog/store-posts を使用中
       const apiUrl = `/api/blog/store-posts?${params.toString()}`;
       console.log("Attempting to fetch from URL:", apiUrl);
+      console.log("Current user:", user);
+      
       try {
+        // 認証情報を確認
+        console.log("Checking authentication status before fetch");
+        const authCheck = await fetch("/check", {
+          credentials: 'include'
+        });
+        const authData = await authCheck.json();
+        console.log("Authentication status:", authData);
+        
         const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
@@ -142,9 +152,13 @@ export default function BlogManagement() {
           credentials: 'include'
         });
         
+        console.log("Response status:", response.status, response.statusText);
+        console.log("Response headers:", [...response.headers.entries()]);
+        
         if (!response.ok) {
-          console.error("Error response:", response.status, response.statusText);
-          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error("Error response:", response.status, response.statusText, errorText);
+          throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status} ${response.statusText} - ${errorText}`);
         }
         
         const result = await response.json();
