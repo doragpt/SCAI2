@@ -14,13 +14,13 @@ export const QUERY_KEYS = {
   STORE_PROFILE: "/store/profile",
 
   // タレント関連
-  TALENT_PROFILE: "/talent/profile",
+  TALENT_PROFILE: "/api/talent/profile",
 
   // 求人関連
-  JOBS_PUBLIC: "/jobs",
-  JOBS_SEARCH: "/jobs",
+  JOBS_PUBLIC: "/api/jobs",
+  JOBS_SEARCH: "/api/jobs",
   JOBS_STORE: "/store/jobs",
-  JOB_DETAIL: (id: string) => `/jobs/${id}`,
+  JOB_DETAIL: (id: string) => `/api/jobs/${id}`,
 
   // その他
   SIGNED_URL: "/storage/get-signed-url",

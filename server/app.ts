@@ -56,6 +56,13 @@ app.get('/check', authenticate, (req, res) => {
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
 
+// 求人関連のAPIルートを登録
+app.use('/api/jobs', (req, res, next) => {
+  // 既存のルートをそのまま呼び出すようにフォワード
+  req.url = req.originalUrl.replace('/api/jobs', '/jobs');
+  next();
+});
+
 // その他のAPIルートを登録
 log('info', 'APIルートの登録を開始');
 registerRoutes(app).catch(error => {
