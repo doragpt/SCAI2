@@ -20,7 +20,7 @@ export const QUERY_KEYS = {
   JOBS_PUBLIC: "/jobs",
   JOBS_SEARCH: "/jobs",
   JOBS_STORE: "/store/jobs",
-  JOB_DETAIL: (id: string) => `/jobs/${id}`,
+  JOB_DETAIL: (id: string | number | null | undefined) => id ? `/jobs/${id}` : '/jobs',
 
   // その他
   SIGNED_URL: "/storage/get-signed-url",
