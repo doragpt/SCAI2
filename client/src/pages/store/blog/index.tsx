@@ -126,10 +126,20 @@ export default function BlogManagement() {
       if (status) params.append("status", status);
       if (search) params.append("search", search);
 
-      return apiRequest(
-        "GET", 
-        `/api/blog/store-posts?${params.toString()}`
-      );
+      // API呼び出しとレスポンスの処理
+      const response = await fetch(`/api/blog/store-posts?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('ブログ記事一覧の取得に失敗しました');
+      }
+      
+      return response.json();
     },
     enabled: !!user && user.role === "store",
   });
