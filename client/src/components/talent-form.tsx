@@ -1548,7 +1548,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             const updated = checked
                               ? [...current, type]
                               : current.filter((t) => t !== type);
-                            form.setValue("allergies.types", updated);
+                            form.setValue("allergies.types", updated, {
+                              shouldValidate: true,
+                              shouldDirty: true
+                            });
                           }}
                         />
                         <label className="text-sm">{type}</label>
@@ -1613,7 +1616,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               const updated = checked
                                 ? [...current, type]
                                 : current.filter((t) => t !== type);
-                              form.setValue("smoking.types", updated);
+                              form.setValue("smoking.types", updated, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
                             }}
                           />
                           <label className="text-sm">{type}</label>
