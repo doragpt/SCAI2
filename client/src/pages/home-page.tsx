@@ -36,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SEO } from "@/lib/seo";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -218,7 +218,7 @@ export default function HomePage() {
     queryFn: async () => {
       try {
         console.log('Fetching jobs data...'); // デバッグログ追加
-        const response = await fetch("/api/jobs");
+        const response = await fetch("/jobs");
         console.log('API Response:', response); // デバッグログ追加
 
         if (!response.ok) {
