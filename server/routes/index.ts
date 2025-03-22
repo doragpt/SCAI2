@@ -7,13 +7,15 @@ import { authenticate } from '../middleware/auth';
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
 
-  // APIリクエストの共通ミドルウェア
-  app.use("/api/*", (req, res, next) => {
+  // APIリクエストの共通ミドルウェア - すべてのパスに適用
+  app.use((req, res, next) => {
     log('info', 'APIリクエスト受信', {
       method: req.method,
       path: req.path,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined
+      isAuthenticated: !!req.user,
+      sessionID: req.sessionID,
+      timestamp: new Date().toISOString()
     });
     res.setHeader("Content-Type", "application/json");
     next();
@@ -33,13 +35,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 求人一覧を返すAPIエンドポイント
   app.get('/jobs', (req, res) => {
     log('info', '求人一覧リクエスト', { query: req.query });
-    // ダミーデータを返す
+    // モックデータを返す
+    const mockJobs = [
+      {
+        id: 1,
+        businessName: "エステサロンA",
+        location: "東京都",
+        serviceType: "エステ",
+        catchPhrase: "高収入・寮完備・未経験歓迎",
+        description: "未経験者歓迎の高級エステサロンです。充実した研修制度があります。",
+        transportationSupport: true,
+        housingSupport: true,
+        minimumGuarantee: 15000,
+        maximumGuarantee: 30000,
+        workingHours: "12:00～翌0:00",
+        requirements: "18歳以上（高校生不可）、未経験者歓迎",
+        benefits: ["交通費支給", "寮完備", "日払い可"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 2,
+        businessName: "メンズエステB",
+        location: "大阪府",
+        serviceType: "メンズエステ",
+        catchPhrase: "働きやすい環境が自慢です",
+        description: "大阪で人気のメンズエステ。アットホームな雰囲気で働きやすいと評判です。",
+        transportationSupport: true,
+        housingSupport: false,
+        minimumGuarantee: 18000,
+        maximumGuarantee: 35000,
+        workingHours: "13:00～翌0:00",
+        requirements: "20歳以上、未経験者歓迎",
+        benefits: ["交通費支給", "週払い可"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 3,
+        businessName: "リラクゼーションC",
+        location: "福岡県",
+        serviceType: "リラクゼーション",
+        catchPhrase: "完全自由出勤制度",
+        description: "福岡で人気のリラクゼーションサロン。自分のペースで働けます。",
+        transportationSupport: true,
+        housingSupport: true,
+        minimumGuarantee: 12000,
+        maximumGuarantee: 25000,
+        workingHours: "10:00～22:00",
+        requirements: "18歳以上（高校生不可）、経験者優遇",
+        benefits: ["交通費支給", "寮完備", "自由出勤"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const location = req.query.location as string;
+    const serviceType = req.query.serviceType as string;
+    
+    // フィルタリング
+    let filteredJobs = [...mockJobs];
+    if (location && location !== 'all') {
+      filteredJobs = filteredJobs.filter(job => job.location === location);
+    }
+    if (serviceType && serviceType !== 'all') {
+      filteredJobs = filteredJobs.filter(job => job.serviceType === serviceType);
+    }
+    
+    const totalItems = filteredJobs.length;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    // ページネーション
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
+    
     res.json({
-      jobs: [],
+      jobs: paginatedJobs,
       pagination: {
-        currentPage: 1,
-        totalPages: 0,
-        totalItems: 0
+        currentPage: page,
+        totalPages: totalPages,
+        totalItems: totalItems
       }
     });
   });
@@ -47,8 +128,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 求人詳細を返すAPIエンドポイント
   app.get('/jobs/:id', (req, res) => {
     log('info', '求人詳細リクエスト', { jobId: req.params.id });
-    // 仮実装: 404を返す
-    res.status(404).json({ message: "求人が見つかりません" });
+    
+    const jobId = parseInt(req.params.id);
+    
+    // モックデータ
+    const mockJobs = [
+      {
+        id: 1,
+        businessName: "エステサロンA",
+        location: "東京都",
+        serviceType: "エステ",
+        catchPhrase: "高収入・寮完備・未経験歓迎",
+        description: "未経験者歓迎の高級エステサロンです。充実した研修制度があります。",
+        transportationSupport: true,
+        housingSupport: true,
+        minimumGuarantee: 15000,
+        maximumGuarantee: 30000,
+        workingHours: "12:00～翌0:00",
+        requirements: "18歳以上（高校生不可）、未経験者歓迎",
+        benefits: ["交通費支給", "寮完備", "日払い可"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 2,
+        businessName: "メンズエステB",
+        location: "大阪府",
+        serviceType: "メンズエステ",
+        catchPhrase: "働きやすい環境が自慢です",
+        description: "大阪で人気のメンズエステ。アットホームな雰囲気で働きやすいと評判です。",
+        transportationSupport: true,
+        housingSupport: false,
+        minimumGuarantee: 18000,
+        maximumGuarantee: 35000,
+        workingHours: "13:00～翌0:00",
+        requirements: "20歳以上、未経験者歓迎",
+        benefits: ["交通費支給", "週払い可"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 3,
+        businessName: "リラクゼーションC",
+        location: "福岡県",
+        serviceType: "リラクゼーション",
+        catchPhrase: "完全自由出勤制度",
+        description: "福岡で人気のリラクゼーションサロン。自分のペースで働けます。",
+        transportationSupport: true,
+        housingSupport: true,
+        minimumGuarantee: 12000,
+        maximumGuarantee: 25000,
+        workingHours: "10:00～22:00",
+        requirements: "18歳以上（高校生不可）、経験者優遇",
+        benefits: ["交通費支給", "寮完備", "自由出勤"],
+        status: "published",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    const job = mockJobs.find(job => job.id === jobId);
+    
+    if (!job) {
+      return res.status(404).json({ message: "求人が見つかりません" });
+    }
+    
+    res.json(job);
   });
   
   // その他のAPIルートは今後実装予定
