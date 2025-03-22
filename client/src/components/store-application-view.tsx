@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { Application } from "@/types/application";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 const statusLabels: Record<string, string> = {
   pending: "処理中",
@@ -14,7 +15,7 @@ const statusLabels: Record<string, string> = {
 
 export function StoreApplicationView() {
   const { data: applications, isLoading } = useQuery<Application[]>({
-    queryKey: ["/api/applications/store"],
+    queryKey: [QUERY_KEYS.APPLICATIONS_STORE],
   });
 
   if (isLoading) {

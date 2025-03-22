@@ -22,6 +22,11 @@ export const QUERY_KEYS = {
   JOBS_STORE: "/store/jobs",
   JOB_DETAIL: (id: string | number | null | undefined) => id ? `/jobs/${id}` : '/jobs',
 
+  // 応募関連
+  APPLICATIONS_TALENT: "/api/applications/talent",
+  APPLICATIONS_STORE: "/api/applications/store",
+  APPLICATION_CREATE: "/api/applications",
+  
   // その他
   SIGNED_URL: "/storage/get-signed-url",
   BLOG_POSTS: "/blog/posts",

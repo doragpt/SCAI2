@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { Application } from "@/types/application";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 const statusLabels: Record<string, string> = {
   pending: "処理中",
@@ -14,7 +15,7 @@ const statusLabels: Record<string, string> = {
 
 export function ScoutApplicationView() {
   const { data: applications, isLoading } = useQuery<Application[]>({
-    queryKey: ["/api/applications/scout"],
+    queryKey: [QUERY_KEYS.APPLICATIONS_TALENT],
   });
 
   if (isLoading) {
@@ -59,15 +60,21 @@ export function ScoutApplicationView() {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">オファー金額:</span>
+                  <span className="text-muted-foreground">店舗名:</span>
                   <span className="font-medium">
-                    ¥{application.guaranteeOffer?.toLocaleString() ?? "未設定"}
+                    {application.businessName || "不明"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">場所:</span>
+                  <span className="font-medium">
+                    {application.location || "不明"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">申請日時:</span>
                   <span className="font-medium">
-                    {new Date(application.createdAt).toLocaleDateString()}
+                    {new Date(application.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 {application.message && (
