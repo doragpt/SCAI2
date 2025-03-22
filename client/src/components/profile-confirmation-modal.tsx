@@ -90,9 +90,9 @@ export function ProfileConfirmationModal({
                   label="希望エリア"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.preferredLocations.map((location, index) => (
+                      {formData.preferredLocations?.map((location, index) => (
                         <Badge key={index} variant="outline">{location}</Badge>
-                      ))}
+                      )) || "未設定"}
                     </div>
                   }
                 />
@@ -100,9 +100,9 @@ export function ProfileConfirmationModal({
                   label="NGエリア"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.ngLocations.map((location, index) => (
+                      {formData.ngLocations?.map((location, index) => (
                         <Badge key={index} variant="outline">{location}</Badge>
-                      ))}
+                      )) || "未設定"}
                     </div>
                   }
                 />
@@ -141,10 +141,10 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {formData.availableIds.types.map((type, index) => (
+                        {formData.availableIds?.types?.map((type, index) => (
                           <Badge key={index} variant="outline">{type}</Badge>
                         ))}
-                        {formData.availableIds.others.map((other, index) => (
+                        {formData.availableIds?.others?.map((other, index) => (
                           <Badge key={index} variant="outline">{other}</Badge>
                         ))}
                       </div>
@@ -164,7 +164,7 @@ export function ProfileConfirmationModal({
               <SectionHeader icon={Camera} title="写真情報" />
               <div className="space-y-4 bg-card p-4 rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
-                  {formData.photos && formData.photos.map((photo, index) => (
+                  {formData.photos?.map((photo, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <Badge variant="outline">{photo.tag}</Badge>
                     </div>
@@ -172,7 +172,7 @@ export function ProfileConfirmationModal({
                 </div>
                 <InfoItem 
                   label="顔出し設定" 
-                  value={<Badge variant="secondary">{formData.faceVisibility}</Badge>} 
+                  value={<Badge variant="secondary">{formData.faceVisibility || "未設定"}</Badge>} 
                 />
               </div>
             </section>
@@ -195,11 +195,11 @@ export function ProfileConfirmationModal({
                   label="現在の在籍店舗"
                   value={
                     <div className="space-y-2">
-                      {formData.current_stores.map((store, index) => (
+                      {formData.current_stores?.map((store, index) => (
                         <div key={index} className="text-sm">
                           {store.store_name} ({store.stage_name})
                         </div>
-                      ))}
+                      )) || "なし"}
                     </div>
                   }
                 />
@@ -207,15 +207,15 @@ export function ProfileConfirmationModal({
                   label="過去の在籍店舗"
                   value={
                     <div className="space-y-2">
-                      {formData.previous_stores.map((store, index) => (
+                      {formData.previous_stores?.map((store, index) => (
                         <div key={index} className="text-sm">
                           {store.store_name}
                         </div>
-                      ))}
+                      )) || "なし"}
                     </div>
                   }
                 />
-                {formData.photo_diary_urls && formData.photo_diary_urls.length > 0 && (
+                {formData.photo_diary_urls?.length > 0 && (
                   <InfoItem
                     label="写メ日記URL"
                     value={
@@ -243,10 +243,10 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {formData.ng_options.common.map((option, index) => (
+                        {formData.ng_options?.common?.map((option, index) => (
                           <Badge key={index} variant="outline">{option}</Badge>
                         ))}
-                        {formData.ng_options.others.map((other, index) => (
+                        {formData.ng_options?.others?.map((other, index) => (
                           <Badge key={index} variant="outline">{other}</Badge>
                         ))}
                       </div>
@@ -256,13 +256,13 @@ export function ProfileConfirmationModal({
                 <InfoItem
                   label="アレルギー"
                   value={
-                    formData.allergies.has_allergy ? (
+                    formData.allergies?.has_allergy ? (
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-2">
-                          {formData.allergies.types.map((type, index) => (
+                          {formData.allergies?.types?.map((type, index) => (
                             <Badge key={index} variant="outline">{type}</Badge>
                           ))}
-                          {formData.allergies.others.map((other, index) => (
+                          {formData.allergies?.others?.map((other, index) => (
                             <Badge key={index} variant="outline">{other}</Badge>
                           ))}
                         </div>
@@ -273,13 +273,13 @@ export function ProfileConfirmationModal({
                 <InfoItem
                   label="喫煙"
                   value={
-                    formData.smoking.enabled ? (
+                    formData.smoking?.enabled ? (
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-2">
-                          {formData.smoking.types.map((type, index) => (
+                          {formData.smoking?.types?.map((type, index) => (
                             <Badge key={index} variant="outline">{type}</Badge>
                           ))}
-                          {formData.smoking.others.map((other, index) => (
+                          {formData.smoking?.others?.map((other, index) => (
                             <Badge key={index} variant="outline">{other}</Badge>
                           ))}
                         </div>
@@ -287,14 +287,14 @@ export function ProfileConfirmationModal({
                     ) : "なし"
                   }
                 />
-                {formData.bodyMark.hasBodyMark && (
+                {formData.bodyMark?.hasBodyMark && (
                   <InfoItem
                     label="ボディマーク"
                     value={
                       <div className="space-y-2">
-                        <div className="text-sm">{formData.bodyMark.details}</div>
+                        <div className="text-sm">{formData.bodyMark?.details}</div>
                         <div className="flex flex-wrap gap-2">
-                          {formData.bodyMark.others.map((mark, index) => (
+                          {formData.bodyMark?.others?.map((mark, index) => (
                             <Badge key={index} variant="outline">{mark}</Badge>
                           ))}
                         </div>
@@ -313,19 +313,22 @@ export function ProfileConfirmationModal({
               <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="エステ経験"
-                  value={formData.hasEstheExperience ? "あり" : "なし"}
+                  value={formData.hasEstheExperience || formData.has_esthe_experience ? "あり" : "なし"}
                 />
-                {formData.hasEstheExperience && (
+                {(formData.hasEstheExperience || formData.has_esthe_experience) && (
                   <InfoItem
                     label="経験期間"
-                    value={formData.estheExperiencePeriod}
+                    value={formData.estheExperiencePeriod || formData.esthe_experience_period}
                   />
                 )}
                 <InfoItem
                   label="対応可能なエステ"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.estheOptions.available.map((option, index) => (
+                      {formData.estheOptions?.available?.map((option, index) => (
+                        <Badge key={index} variant="outline">{option}</Badge>
+                      )) || 
+                       formData.esthe_options?.available?.map((option, index) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -335,7 +338,10 @@ export function ProfileConfirmationModal({
                   label="エステNG項目"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.estheOptions.ngOptions.map((option, index) => (
+                      {formData.estheOptions?.ngOptions?.map((option, index) => (
+                        <Badge key={index} variant="outline">{option}</Badge>
+                      )) || 
+                       formData.esthe_options?.ng_options?.map((option, index) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -354,7 +360,7 @@ export function ProfileConfirmationModal({
                   label="自己紹介"
                   value={
                     <p className="text-sm whitespace-pre-wrap">
-                      {formData.selfIntroduction || "未入力"}
+                      {formData.selfIntroduction || formData.self_introduction || "未入力"}
                     </p>
                   }
                 />
