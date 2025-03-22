@@ -850,24 +850,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
     });
   };
 
-  // NGオプションのチェックボックス実装
-  const handleNgOptionChange = (option: typeof commonNgOptions[number], checked: boolean) => {
-    const ng_options = form.getValues()?.ng_options;
-    if (!ng_options) {
-      form.setValue("ng_options", { common: checked ? [option] : [], others: [] });
-      return;
-    }
-    
-    const current = ng_options.common || [];
-    const updated = checked
-      ? [...current, option]
-      : current.filter((o) => o !== option);
-      
-    form.setValue("ng_options.common", updated, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-  };
+  // NGオプションのチェックボックス実装は個別のトグルハンドラでは行わず、FormFieldで統一して実装
 
   const handleAddNgOption = useCallback((value: string) => {
     const ng_options = form.getValues()?.ng_options;
