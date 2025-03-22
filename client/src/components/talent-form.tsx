@@ -548,6 +548,7 @@ const defaultValues: TalentProfileData = {
   face_visibility: "全隠し",
   can_photo_diary: false,
   can_home_delivery: false,
+  birth_date: null,
   ng_options: {
     common: [],
     others: [],
