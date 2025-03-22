@@ -36,7 +36,7 @@ const container = {
   }
 };
 
-const item = {
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
 };
@@ -46,7 +46,8 @@ export default function MyPage() {
   const [_, setLocation] = useLocation(); 
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery<TalentProfileData>({
-    queryKey: ["/api/talent/profile"],
+    queryKey: [QUERY_KEYS.TALENT_PROFILE],
+    enabled: !!user && user.role === "talent",
   });
 
   const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
@@ -130,7 +131,7 @@ export default function MyPage() {
         {quickAccessItems.map((item) => (
           <motion.div
             key={item.href}
-            variants={item}
+            variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -167,23 +168,26 @@ export default function MyPage() {
           </div>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
-              {applications?.length === 0 ? (
+              {!applications || applications.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center text-muted-foreground">
                     お知らせはありません
                   </CardContent>
                 </Card>
               ) : (
-                applications?.map((application) => (
-                  <motion.div key={application.id} variants={item}>
+                applications.map((application) => (
+                  <motion.div key={application.id} variants={itemVariants}>
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-medium">申請 #{application.id}</p>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(application.appliedAt), 'yyyy年MM月dd日', { locale: ja })}
+                              {format(new Date(application.created_at), 'yyyy年MM月dd日', { locale: ja })}
                             </p>
+                            {application.businessName && (
+                              <p className="text-sm mt-1">{application.businessName}</p>
+                            )}
                           </div>
                           <Badge
                             variant={
@@ -230,23 +234,26 @@ export default function MyPage() {
           </div>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
-              {applications?.length === 0 ? (
+              {!applications || applications.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center text-muted-foreground">
                     申請履歴はありません
                   </CardContent>
                 </Card>
               ) : (
-                applications?.map((application) => (
-                  <motion.div key={application.id} variants={item}>
+                applications.map((application) => (
+                  <motion.div key={application.id} variants={itemVariants}>
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-medium">申請 #{application.id}</p>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(application.appliedAt), 'yyyy年MM月dd日', { locale: ja })}
+                              {format(new Date(application.created_at), 'yyyy年MM月dd日', { locale: ja })}
                             </p>
+                            {application.businessName && (
+                              <p className="text-sm mt-1">{application.businessName}</p>
+                            )}
                           </div>
                           <Badge
                             variant={
