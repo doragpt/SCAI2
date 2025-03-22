@@ -34,18 +34,6 @@ export default function TalentRegistration() {
     },
     enabled: !!user?.id,
     retry: false,
-    // Return null on error
-    onError: (error: Error) => {
-      console.error('Talent Registration page: Query error:', error);
-      if (error.message === "認証が必要です") {
-        toast({
-          title: "エラー",
-          description: "認証が必要です",
-          variant: "destructive",
-        });
-      }
-      return null;
-    }
   });
 
   if (!user) {
