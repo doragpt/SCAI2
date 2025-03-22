@@ -286,6 +286,12 @@ router.post("/login", async (req, res, next) => {
 
         // セッションにユーザー情報を保存
         if (req.session) {
+          req.session.user = {
+            id: user.id,
+            role: user.role,
+            email: user.email,
+            display_name: user.display_name
+          };
           req.session.userId = user.id;
           req.session.userRole = user.role;
           req.session.userEmail = user.email;
@@ -303,7 +309,20 @@ router.post("/login", async (req, res, next) => {
           role: user.role
         });
 
-        res.json(user);
+        // クライアントに返すレスポンスの形式を統一
+        const response = {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          displayName: user.display_name,
+          birthDate: user.birth_date,
+          location: user.location,
+          preferredLocations: user.preferred_locations || []
+        };
+        
+        log('info', 'ログインレスポンス', { response });
+        res.json(response);
       });
     })(req, res, next);
   } catch (error) {

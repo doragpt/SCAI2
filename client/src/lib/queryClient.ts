@@ -167,7 +167,7 @@ export const searchJobsQuery = async (params: {
 
 // ユーザー情報更新関数
 export async function updateUserProfile(data: any): Promise<any> {
-  const response = await apiRequest("PATCH", "/api/user", data);
+  const response = await apiRequest("PATCH", "/auth/user", data);
 
   if (!response.ok) {
     const error = await response.json();
