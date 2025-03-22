@@ -24,7 +24,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 各ルーターを登録
   app.use('/auth', authRoutes);
-  app.use('/talent', talentRoutes);
+  // 注意: /talent のルーティングは app.ts で /api/talent として登録されているため、
+  // ここでは登録しません。
   
   // 認証チェックエンドポイント
   app.get('/check', authenticate, (req, res) => {

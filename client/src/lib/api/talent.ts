@@ -5,7 +5,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
     console.log('Fetching talent profile...');
-    const response = await apiRequest("GET", "/talent/profile");
+    const response = await apiRequest("GET", "/api/talent/profile");
 
     if (response.status === 404) {
       console.log('Profile not found, this is normal for new users');
@@ -34,7 +34,7 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
   try {
     console.log('Updating talent profile with data:', data);
-    const response = await apiRequest("POST", "/talent/profile", data);
+    const response = await apiRequest("POST", "/api/talent/profile", data);
 
     if (response.status === 401) {
       throw new Error("認証が必要です");
