@@ -151,6 +151,9 @@ export function ProfileConfirmationModal({
                       <div className="text-sm text-muted-foreground">
                         住民票提出: {(formData.can_provide_residence_record || formData.canProvideResidenceRecord) ? "可能" : "不可"}
                       </div>
+                      <div className="text-sm text-muted-foreground">
+                        1ヶ月以内の性病検査表: {(formData.can_provide_std_test || formData.canProvideStdTest) ? "可能" : "不可"}
+                      </div>
                     </div>
                   }
                 />
