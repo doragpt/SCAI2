@@ -112,11 +112,11 @@ export default function Jobs() {
   }, []);
 
   const { data: response, isLoading, error } = useQuery({
-    queryKey: ["jobs", { page, limit, location, serviceType }],
+    queryKey: [QUERY_KEYS.JOBS_PUBLIC, { page, limit, location, serviceType }],
     queryFn: async () => {
       try {
         console.log('Fetching jobs data...', { page, limit, location, serviceType });
-        const url = new URL("/jobs", window.location.origin);
+        const url = new URL(QUERY_KEYS.JOBS_PUBLIC, window.location.origin);
         url.searchParams.append("page", page.toString());
         url.searchParams.append("limit", limit.toString());
         if (location !== "all") url.searchParams.append("location", location);
