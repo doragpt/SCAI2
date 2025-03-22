@@ -262,6 +262,7 @@ export class DatabaseStorage implements IStorage {
         nearest_station: result.nearest_station || '',
         available_ids: result.available_ids || { types: [], others: [] },
         can_provide_residence_record: !!result.can_provide_residence_record,
+        can_provide_std_test: !!result.can_provide_std_test,
         height: result.height || 0,
         weight: result.weight || 0,
         cup_size: result.cup_size || 'A',

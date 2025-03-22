@@ -1364,7 +1364,8 @@ ${index + 1}. ${result.businessName}
                 <Separator className="my-6" />
 
                 {/* 在籍店舗情報 */}
-                {(profileData?.current_stores?.length > 0 || profileData?.previous_stores?.length > 0) && (
+                {(profileData && ((Array.isArray(profileData.current_stores) && profileData.current_stores.length > 0) || 
+                  (Array.isArray(profileData.previous_stores) && profileData.previous_stores.length > 0))) && (
                   <div className="space-y-4">
                     <h4 className="flex items-center gap-2 font-medium text-primary">
                       <BuildingStore className="h-4 w-4" />
