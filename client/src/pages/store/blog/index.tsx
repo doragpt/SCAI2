@@ -129,8 +129,8 @@ export default function BlogManagement() {
 
       console.log("Fetching blog posts with params:", params.toString());
       
-      // API呼び出しとレスポンスの処理 - URLを修正して直接確認を追加
-      // server/routes/blog.ts では /store-posts 、client側は /api/blog/store-posts を使用中
+      // API呼び出しとレスポンスの処理
+      // ブログ記事一覧の取得エンドポイント：/api/blog/store-posts
       const apiUrl = `/api/blog/store-posts?${params.toString()}`;
       console.log("Attempting to fetch from URL:", apiUrl);
       console.log("Current user:", user);
@@ -208,7 +208,7 @@ export default function BlogManagement() {
 
   // 店舗ユーザー以外はダッシュボードにリダイレクト
   if (!user || user.role !== "store") {
-    setLocation("/api/store/dashboard");
+    setLocation("/store/dashboard");
     return null;
   }
 

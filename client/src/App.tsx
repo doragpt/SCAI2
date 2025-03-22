@@ -44,13 +44,8 @@ function Router() {
       <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
       <Route path="/manager/login" component={ManagerLogin} />
       <ProtectedRoute 
-        path="/api/store/dashboard" 
-        component={StoreDashboard}
-        roleRequired="store"
-      />
-      <ProtectedRoute 
         path="/store/dashboard" 
-        component={() => <Redirect to="/api/store/dashboard" />}
+        component={StoreDashboard}
         roleRequired="store"
       />
       <ProtectedRoute 
