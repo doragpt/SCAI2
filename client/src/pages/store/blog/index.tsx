@@ -208,7 +208,7 @@ export default function BlogManagement() {
 
   // 店舗ユーザー以外はダッシュボードにリダイレクト
   if (!user || user.role !== "store") {
-    setLocation("/store/dashboard");
+    setLocation("/api/store/dashboard");
     return null;
   }
 
