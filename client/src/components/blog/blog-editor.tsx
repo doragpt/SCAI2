@@ -126,7 +126,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const createMutation = useMutation({
     mutationFn: (data: BlogPost) =>
-      apiRequest("POST", "/api/blog/posts", data),
+      apiRequest("POST", "/api/blog", data),
     onSuccess: () => {
       toast({
         title: "記事を作成しました",
@@ -146,7 +146,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const updateMutation = useMutation({
     mutationFn: (data: BlogPost) =>
-      apiRequest("PUT", `/api/blog/posts/${postId}`, data),
+      apiRequest("PUT", `/api/blog/${postId}`, data),
     onSuccess: () => {
       toast({
         title: "記事を更新しました",
