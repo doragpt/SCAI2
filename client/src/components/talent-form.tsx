@@ -1068,9 +1068,10 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               id={`id-${type}`}
                               checked={field.value?.types?.includes(type) || false}
                               onCheckedChange={(checked) => {
+                                const current = field.value?.types || [];
                                 const updated = checked
-                                  ? [...field.value.types, type]
-                                  : field.value.types.filter((t) => t !== type);
+                                  ? [...current, type]
+                                  : current.filter((t) => t !== type);
                                 form.setValue("available_ids.types", updated, {
                                   shouldValidate: true,
                                   shouldDirty: true,
