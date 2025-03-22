@@ -23,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { uploadPhoto } from "@/lib/queryClient";
 import { ProfileConfirmationModal } from "./profile-confirmation-modal";
 import {
   allergyTypes,
@@ -42,7 +43,6 @@ import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
 import { Textarea } from "@/components/ui/textarea";
 import { createOrUpdateTalentProfile } from "@/lib/api/talent";
-import { uploadPhoto } from "@/lib/queryClient";
 
 // Store type definitions
 type CurrentStore = {
@@ -687,7 +687,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
     try {
       setIsSubmitting(true);
-      const queryClient = useQueryClient();
       
       // 写真データをS3にアップロード
       const updatedPhotos = [];
