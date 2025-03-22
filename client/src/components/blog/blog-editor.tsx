@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -72,21 +72,43 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const quillRef = useRef<ReactQuill>(null);
   const queryClient = useQueryClient();
 
+  // デフォルト値を設定
+  const defaultValues = initialData ? {
+    ...initialData,
+    scheduled_at: initialData.scheduled_at ? new Date(initialData.scheduled_at) : null,
+    published_at: initialData.published_at ? new Date(initialData.published_at) : null,
+    status: initialData.status || "draft",
+  } : {
+    title: "",
+    content: "",
+    status: "draft" as const,
+    thumbnail: "",
+    images: [],
+  };
+  
+  console.log('BlogEditor初期化: initialData=', initialData);
+  console.log('BlogEditor初期化: defaultValues=', defaultValues);
+  
   const form = useForm<BlogPost>({
     resolver: zodResolver(blogPostSchema),
-    defaultValues: {
-      ...initialData,
-      scheduled_at: initialData?.scheduled_at ? new Date(initialData.scheduled_at) : undefined,
-      published_at: initialData?.published_at ? new Date(initialData.published_at) : undefined,
-      status: initialData?.status || "draft",
-    } || {
-      title: "",
-      content: "",
-      status: "draft",
-      thumbnail: "",
-      images: [],
-    },
+    defaultValues,
   });
+  
+  // 初期データをコンソールに出力（デバッグ用）
+  useEffect(() => {
+    console.log('BlogEditor: initialData更新', initialData);
+    
+    // 初期データがある場合にフォームの値を明示的に設定
+    if (initialData) {
+      console.log('BlogEditor: フォーム値を再設定します');
+      form.reset({
+        ...initialData,
+        scheduled_at: initialData.scheduled_at ? new Date(initialData.scheduled_at) : null,
+        published_at: initialData.published_at ? new Date(initialData.published_at) : null,
+        status: initialData.status || "draft",
+      });
+    }
+  }, [initialData, form]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -221,7 +243,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         ...values,
         title: values.title.trim(),
         content: values.content.trim(),
-        status: isDraft ? "draft" : isScheduling ? "scheduled" : "published",
+        status: isDraft ? "draft" as const : isScheduling ? "scheduled" as const : "published" as const,
         scheduled_at: isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null,
         published_at: !isDraft && !isScheduling ? new Date() : null,
       };
