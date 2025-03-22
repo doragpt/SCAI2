@@ -23,14 +23,14 @@ export interface MatchedJob {
   businessName: string;
   location: string;
   serviceType: string;
-  minimumGuarantee: number;
-  maximumGuarantee: number;
+  catchPhrase?: string;
+  minimumGuarantee: number | null;
+  maximumGuarantee: number | null;
   transportationSupport: boolean;
   housingSupport: boolean;
-  workingHours: string;
-  description: string;
-  requirements: string;
-  benefits: string;
+  workingHours?: string;
+  description?: string;
+  benefits?: string[] | null;
   matchScore: number;
   matches: string[];
 }

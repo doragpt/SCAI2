@@ -101,16 +101,20 @@ const VALID_WAITING_HOURS = Array.from({ length: 15 }, (_, i) => ({
 type MatchingMethod = "auto" | "pickup" | null;
 
 interface MatchedJob {
+  id: number;
   businessName: string;
-  matchScore: number;
   location: string;
-  matches: string[];
+  serviceType: string;
+  catchPhrase?: string;
+  minimumGuarantee: number | null;
+  maximumGuarantee: number | null;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+  workingHours?: string;
   description?: string;
-  features?: string[];
-  minimumGuarantee?: number;
-  maximumGuarantee?: number;
-  transportationSupport?: boolean;
-  housingSupport?: boolean;
+  benefits?: string[] | null;
+  matchScore: number;
+  matches: string[];
   workingHours?: string;
 
 }
@@ -490,7 +494,7 @@ ${index + 1}. ${result.businessName}
 ${results.map((result, index) => `
 ${index + 1}. ${result.businessName}
   • 勤務地: ${result.location}
-  • 待遇: ${result.minimumGuarantee !== undefined ? `${result.minimumGuarantee}円～` : ''}${result.maximumGuarantee !== undefined ? `${result.maximumGuarantee}円` : '要相談'}
+  • 待遇: ${result.minimumGuarantee !== null ? `${result.minimumGuarantee}円～` : ''}${result.maximumGuarantee !== null ? `${result.maximumGuarantee}円` : '要相談'}
   • サポート: ${[
         result.transportationSupport ? '交通費あり' : null,
         result.housingSupport ? '宿泊費あり' : null
@@ -498,7 +502,7 @@ ${index + 1}. ${result.businessName}
   • 勤務時間: ${result.workingHours || '要相談'}
   • マッチ度: ${result.matchScore}%
   • マッチポイント: ${result.matches?.join('、') || 'なし'}
-  • ${result.description || ''}
+  • ${result.catchPhrase || ''}
 `).join('\n')}
 
 これらの店舗の詳細を確認してみるね！`
