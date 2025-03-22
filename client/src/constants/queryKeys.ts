@@ -4,10 +4,10 @@ export const QUERY_KEYS = {
   USER_PROFILE: "/api/user/profile",
 
   // 認証関連
-  AUTH_CHECK: "/api/check",
-  AUTH_LOGIN: "/api/login",
-  AUTH_LOGOUT: "/api/logout",
-  AUTH_REGISTER: "/api/auth/register",
+  AUTH_CHECK: "/check",
+  AUTH_LOGIN: "/auth/login",
+  AUTH_LOGOUT: "/auth/logout",
+  AUTH_REGISTER: "/auth/register",
 
   // 店舗関連
   STORE_STATS: "/api/store/stats", // 追加

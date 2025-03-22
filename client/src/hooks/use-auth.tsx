@@ -43,7 +43,7 @@ function useLoginMutation() {
     },
     onSuccess: (user: SelectUser) => {
       // ユーザーデータをキャッシュにセット
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/check"], user);
 
       // 全ての関連クエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api"] });
@@ -87,7 +87,7 @@ function useLogoutMutation() {
       queryClient.clear();
 
       // ユーザーデータを明示的に削除
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/check"], null);
 
       toast({
         title: "ログアウト完了",
@@ -127,7 +127,7 @@ function useRegisterMutation() {
     },
     onSuccess: (user: SelectUser) => {
       // ユーザーデータをキャッシュにセット
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/check"], user);
 
       // 全ての関連クエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api"] });
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<SelectUser | null>({
-    queryKey: ["/api/user"],
+    queryKey: ["/check"],
     queryFn: async () => {
       try {
         // パスを修正: /api/check → /check
