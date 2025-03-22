@@ -1074,7 +1074,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                                 const current = field.value?.types || [];
                                 const updated = checked
                                   ? [...current, type]
-                                  : current.filter((t) => t !== type);
+                                  : current.filter((t: string) => t !== type);
                                 form.setValue("available_ids.types", updated, {
                                   shouldValidate: true,
                                   shouldDirty: true,
@@ -1093,7 +1093,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       </div>
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-2">
-                          {field.value.others.map((id, index) => (
+                          {field.value?.others?.map((id, index) => (
                             <Badge key={index} variant="outline" className="flex items-center gap-1">
                               {id}
                               <Button
@@ -1378,7 +1378,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               const current = field.value?.common || [];
                               const updated = checked
                                 ? [...current, option]
-                                : current.filter((o) => o !== option);
+                                : current.filter((o: string) => o !== option);
                               form.setValue("ng_options.common", updated, {
                                 shouldValidate: true,
                                 shouldDirty: true
