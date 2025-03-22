@@ -33,10 +33,22 @@ router.get('/profile', requireAuth, async (req, res) => {
       });
     }
 
+    // まずユーザー基本情報を取得
+    const userData = await storage.getUser(req.user.id);
+    if (!userData) {
+      return res.status(404).json({ 
+        error: 'NotFound',
+        message: "ユーザー情報が見つかりません" 
+      });
+    }
+
+    // タレントプロフィール情報を取得
     const profile = await storage.getTalentProfile(req.user.id);
+    
     log('info', 'タレントプロフィール取得結果', { 
       userId: req.user?.id,
       hasProfile: !!profile,
+      userData: !!userData,
       profileData: profile 
     });
 
@@ -45,6 +57,12 @@ router.get('/profile', requireAuth, async (req, res) => {
         error: 'NotFound',
         message: "プロフィールが見つかりません" 
       });
+    }
+
+    // 生年月日情報がない場合は、ユーザーデータから追加
+    if (!profile.birth_date && userData.birth_date) {
+      profile.birth_date = userData.birth_date;
+      log('info', '生年月日情報を補完', { birth_date: profile.birth_date });
     }
 
     res.json(profile);

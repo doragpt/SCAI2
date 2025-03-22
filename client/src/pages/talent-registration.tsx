@@ -15,6 +15,24 @@ import { apiRequest } from "@/lib/queryClient";
 export default function TalentRegistration() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // 最初にチェックAPIを呼び出して確実にユーザー情報を取得
+  useQuery({
+    queryKey: [QUERY_KEYS.AUTH_CHECK],
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+      if (!response.ok) {
+        throw new Error("認証チェックに失敗しました");
+      }
+      const userData = await response.json();
+      // 成功したらユーザー情報をキャッシュに保存
+      queryClient.setQueryData([QUERY_KEYS.USER], userData);
+      return userData;
+    },
+    enabled: !!user && !queryClient.getQueryData([QUERY_KEYS.USER]),
+    staleTime: 0,
+  });
 
   const {
     data: talentProfile,
@@ -27,6 +45,16 @@ export default function TalentRegistration() {
         console.log('Talent Registration page: Fetching profile data...');
         const data = await getTalentProfile();
         console.log('Talent Registration page: Profile data received:', data);
+        
+        // もしデータにbirth_dateが含まれていない場合は、ユーザー情報から取得する
+        if (data && !data.birth_date) {
+          const userData = queryClient.getQueryData<any>([QUERY_KEYS.USER]);
+          if (userData && userData.birthDate) {
+            console.log('Adding birth_date from user data:', userData.birthDate);
+            data.birth_date = userData.birthDate;
+          }
+        }
+        
         return data;
       } catch (error) {
         console.error('Talent Registration page: Error fetching profile data:', error);
@@ -35,6 +63,7 @@ export default function TalentRegistration() {
     },
     enabled: !!user?.id,
     retry: false,
+    refetchOnMount: true,
   });
 
   if (!user) {
