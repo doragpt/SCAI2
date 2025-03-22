@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { type BlogPost } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import {
   Table,
   TableBody,
