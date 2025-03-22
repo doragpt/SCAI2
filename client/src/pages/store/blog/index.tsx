@@ -139,7 +139,7 @@ export default function BlogManagement() {
     if (!deletePostId) return;
     
     try {
-      await apiRequest("DELETE", `/api/blog/posts/${deletePostId}`);
+      await apiRequest("DELETE", `/api/blog/${deletePostId}`);
       toast({
         title: "記事を削除しました",
         description: "ブログ記事が正常に削除されました",
