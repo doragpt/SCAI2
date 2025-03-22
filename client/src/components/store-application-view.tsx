@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { Application } from "@/types/application";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { apiRequest } from "@/lib/queryClient";
 
 const statusLabels: Record<string, string> = {
   pending: "処理中",
@@ -16,6 +17,13 @@ const statusLabels: Record<string, string> = {
 export function StoreApplicationView() {
   const { data: applications, isLoading } = useQuery<Application[]>({
     queryKey: [QUERY_KEYS.APPLICATIONS_STORE],
+    queryFn: async () => {
+      const response = await apiRequest("GET", QUERY_KEYS.APPLICATIONS_STORE);
+      if (!response.ok) {
+        throw new Error("応募一覧の取得に失敗しました");
+      }
+      return response.json();
+    },
   });
 
   if (isLoading) {
