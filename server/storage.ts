@@ -416,9 +416,6 @@ export class DatabaseStorage implements IStorage {
           minimum_guarantee: store_profiles.minimum_guarantee,
           maximum_guarantee: store_profiles.maximum_guarantee,
           status: store_profiles.status,
-          working_hours: store_profiles.working_hours,
-          transportation_support: store_profiles.transportation_support,
-          housing_support: store_profiles.housing_support,
           created_at: store_profiles.created_at,
           updated_at: store_profiles.updated_at
         })

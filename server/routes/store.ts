@@ -28,9 +28,6 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
         minimum_guarantee: store_profiles.minimum_guarantee,
         maximum_guarantee: store_profiles.maximum_guarantee,
         status: store_profiles.status,
-        working_hours: store_profiles.working_hours,
-        transportation_support: store_profiles.transportation_support,
-        housing_support: store_profiles.housing_support,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
       })
@@ -114,10 +111,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         benefits: insertData.benefits,
         minimum_guarantee: insertData.minimum_guarantee,
         maximum_guarantee: insertData.maximum_guarantee,
-        status: insertData.status,
-        working_hours: req.body.working_hours,
-        transportation_support: req.body.transportation_support || false,
-        housing_support: req.body.housing_support || false
+        status: insertData.status
       });
 
       // 必須フィールドとvalidatedDataを結合
@@ -135,13 +129,11 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       const result = await db.execute(
         sql`INSERT INTO store_profiles 
             (user_id, business_name, location, service_type, catch_phrase, description, 
-             benefits, minimum_guarantee, maximum_guarantee, status, 
-             working_hours, transportation_support, housing_support, created_at, updated_at)
+             benefits, minimum_guarantee, maximum_guarantee, status, created_at, updated_at)
             VALUES 
             (${fullData.user_id}, ${fullData.business_name}, ${fullData.location}, ${fullData.service_type}, 
              ${fullData.catch_phrase}, ${fullData.description}, ${JSON.stringify(fullData.benefits)}, 
-             ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, ${fullData.status}, 
-             ${fullData.working_hours}, ${fullData.transportation_support}, ${fullData.housing_support}, 
+             ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, ${fullData.status},
              ${fullData.created_at}, ${fullData.updated_at})
             RETURNING *`
       );
@@ -176,10 +168,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       benefits: updateData.benefits,
       minimum_guarantee: updateData.minimum_guarantee,
       maximum_guarantee: updateData.maximum_guarantee,
-      status: updateData.status,
-      working_hours: req.body.working_hours || existingProfile.working_hours,
-      transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : existingProfile.transportation_support,
-      housing_support: req.body.housing_support !== undefined ? req.body.housing_support : existingProfile.housing_support
+      status: updateData.status
     });
 
     // 更新用のオブジェクトを作成
@@ -197,9 +186,6 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               minimum_guarantee = ${fullUpdateData.minimum_guarantee},
               maximum_guarantee = ${fullUpdateData.maximum_guarantee},
               status = ${fullUpdateData.status},
-              working_hours = ${fullUpdateData.working_hours},
-              transportation_support = ${fullUpdateData.transportation_support},
-              housing_support = ${fullUpdateData.housing_support},
               updated_at = ${fullUpdateData.updated_at}
           WHERE user_id = ${req.user.id}
           RETURNING *`
@@ -254,9 +240,6 @@ router.get("/stats", authenticate, authorize("store"), async (req: any, res) => 
         minimum_guarantee: store_profiles.minimum_guarantee,
         maximum_guarantee: store_profiles.maximum_guarantee,
         status: store_profiles.status,
-        working_hours: store_profiles.working_hours,
-        transportation_support: store_profiles.transportation_support,
-        housing_support: store_profiles.housing_support,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
       })
