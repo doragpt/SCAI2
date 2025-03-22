@@ -116,7 +116,7 @@ export function ProfileConfirmationModal({
                 />
                 <InfoItem
                   label="カップサイズ"
-                  value={formData.cupSize}
+                  value={formData.cup_size || formData.cupSize}
                 />
                 {formData.bust && (
                   <InfoItem
@@ -141,15 +141,15 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {formData.availableIds?.types?.map((type, index) => (
+                        {(formData.available_ids || formData.availableIds)?.types?.map((type: string, index: number) => (
                           <Badge key={index} variant="outline">{type}</Badge>
                         ))}
-                        {formData.availableIds?.others?.map((other, index) => (
+                        {(formData.available_ids || formData.availableIds)?.others?.map((other: string, index: number) => (
                           <Badge key={index} variant="outline">{other}</Badge>
                         ))}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        住民票提出: {formData.canProvideResidenceRecord ? "可能" : "不可"}
+                        住民票提出: {(formData.can_provide_residence_record || formData.canProvideResidenceRecord) ? "可能" : "不可"}
                       </div>
                     </div>
                   }
@@ -172,7 +172,7 @@ export function ProfileConfirmationModal({
                 </div>
                 <InfoItem 
                   label="顔出し設定" 
-                  value={<Badge variant="secondary">{formData.faceVisibility || "未設定"}</Badge>} 
+                  value={<Badge variant="secondary">{formData.face_visibility || formData.faceVisibility || "未設定"}</Badge>} 
                 />
               </div>
             </section>
@@ -185,11 +185,11 @@ export function ProfileConfirmationModal({
               <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="写メ日記"
-                  value={formData.canPhotoDiary ? "可能" : "不可"}
+                  value={(formData.can_photo_diary || formData.canPhotoDiary) ? "可能" : "不可"}
                 />
                 <InfoItem
                   label="自宅派遣"
-                  value={formData.canHomeDelivery ? "可能" : "不可"}
+                  value={(formData.can_home_delivery || formData.canHomeDelivery) ? "可能" : "不可"}
                 />
                 <InfoItem
                   label="現在の在籍店舗"
@@ -287,14 +287,14 @@ export function ProfileConfirmationModal({
                     ) : "なし"
                   }
                 />
-                {formData.bodyMark?.hasBodyMark && (
+                {(formData.body_mark || formData.bodyMark)?.hasBodyMark && (
                   <InfoItem
                     label="ボディマーク"
                     value={
                       <div className="space-y-2">
-                        <div className="text-sm">{formData.bodyMark?.details}</div>
+                        <div className="text-sm">{(formData.body_mark || formData.bodyMark)?.details}</div>
                         <div className="flex flex-wrap gap-2">
-                          {formData.bodyMark?.others?.map((mark, index) => (
+                          {(formData.body_mark || formData.bodyMark)?.others?.map((mark: string, index: number) => (
                             <Badge key={index} variant="outline">{mark}</Badge>
                           ))}
                         </div>
@@ -313,12 +313,12 @@ export function ProfileConfirmationModal({
               <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="エステ経験"
-                  value={formData.hasEstheExperience || formData.has_esthe_experience ? "あり" : "なし"}
+                  value={(formData.has_esthe_experience || formData.hasEstheExperience) ? "あり" : "なし"}
                 />
-                {(formData.hasEstheExperience || formData.has_esthe_experience) && (
+                {(formData.has_esthe_experience || formData.hasEstheExperience) && (
                   <InfoItem
                     label="経験期間"
-                    value={formData.estheExperiencePeriod || formData.esthe_experience_period}
+                    value={formData.esthe_experience_period || formData.estheExperiencePeriod}
                   />
                 )}
                 <InfoItem
