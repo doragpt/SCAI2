@@ -365,32 +365,63 @@ export const AIMatchingChat = () => {
 
   // マッチング方法選択ハンドラー
   const handleMatchingMethodSelect = async (method: MatchingMethod) => {
-    setMatchingMethod(method);
-    setMessages(prev => [...prev, {
-      type: "user",
-      content: method === "auto" ? "自動で確認する" : "ピックアップして確認する"
-    }]);
-
-    if (method === "auto") {
+    try {
+      setIsLoading(true);
+      setMatchingMethod(method);
       setMessages(prev => [...prev, {
-        type: "ai",
-        content: "マッチングには時間がかかるから少しだけ時間をもらうね！"
-      }, {
-        type: "ai",
-        content: "マッチング中だよ...もう少し待っててね"
+        type: "user",
+        content: method === "auto" ? "自動で確認する" : "ピックアップして確認する"
       }]);
 
-      const results = await startMatching(conditions);
-      handleMatchingResults(results);
+      if (method === "auto") {
+        setMessages(prev => [...prev, {
+          type: "ai",
+          content: "マッチングには時間がかかるから少しだけ時間をもらうね！"
+        }, {
+          type: "ai",
+          content: "マッチング中だよ...もう少し待っててね"
+        }]);
 
-    } else {
-      setMessages(prev => [...prev, {
-        type: "ai",
-        content: "では合いそうな店舗をリストアップするね！"
-      }]);
+        try {
+          const results = await startMatching(conditions);
+          handleMatchingResults(results);
+        } catch (error) {
+          console.error('Auto matching error:', error);
+          setMessages(prev => [...prev, {
+            type: "ai",
+            content: `申し訳ありません。マッチング処理中にエラーが発生しました。
+少し時間をおいて再度お試しいただくか、別のマッチング方法を選択してください。
+エラー: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }]);
+        }
+      } else {
+        setMessages(prev => [...prev, {
+          type: "ai",
+          content: "では合いそうな店舗をリストアップするね！"
+        }]);
 
-      const results = await startMatching(conditions);
-      displayPickupResults(results);
+        try {
+          const results = await startMatching(conditions);
+          displayPickupResults(results);
+        } catch (error) {
+          console.error('Pickup matching error:', error);
+          setMessages(prev => [...prev, {
+            type: "ai",
+            content: `申し訳ありません。店舗情報の取得中にエラーが発生しました。
+少し時間をおいて再度お試しいただくか、別のマッチング方法を選択してください。
+エラー: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }]);
+        }
+      }
+    } catch (error) {
+      console.error('Matching method selection error:', error);
+      toast({
+        title: "エラー",
+        description: "マッチング処理中にエラーが発生しました。しばらくしてから再度お試しください。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -459,27 +490,38 @@ ${index + 1}. ${result.businessName}
 ${results.map((result, index) => `
 ${index + 1}. ${result.businessName}
   • 勤務地: ${result.location}
-  • 待遇: ${result.minimumGuarantee}円～${result.maximumGuarantee}円
+  • 待遇: ${result.minimumGuarantee !== undefined ? `${result.minimumGuarantee}円～` : ''}${result.maximumGuarantee !== undefined ? `${result.maximumGuarantee}円` : '要相談'}
   • サポート: ${[
         result.transportationSupport ? '交通費あり' : null,
         result.housingSupport ? '宿泊費あり' : null
       ].filter(Boolean).join('、') || 'なし'}
-  • 勤務時間: ${result.workingHours}
+  • 勤務時間: ${result.workingHours || '要相談'}
+  • マッチ度: ${result.matchScore}%
+  • マッチポイント: ${result.matches?.join('、') || 'なし'}
   • ${result.description || ''}
 `).join('\n')}
 
-これらの店舗に条件を確認してみるね！`
+これらの店舗の詳細を確認してみるね！`
       }]);
 
-      // 店舗への通知処理をシミュレート
+      // 店舗情報の詳細表示
       setTimeout(() => {
+        // 上位3件のみを詳しく分析して表示
+        const topMatches = results.slice(0, 3);
+        
         setMessages(prev => [...prev, {
           type: "ai",
-          content: `店舗へ確認メッセージを送信したよ！
-返信があったらすぐにお知らせするね。
+          content: `特に相性が良いと思われる店舗の詳細情報を分析しました：
 
-※ 通常1営業日以内に返信があります。
-急ぎの場合は、直接お電話での確認も可能です！`
+${topMatches.map((result, index) => `
+【${index + 1}】${result.businessName} (マッチ度: ${result.matchScore}%)
+${result.matches?.map(match => `✓ ${match}`).join('\n') || 'マッチポイントの詳細情報がありません'}
+
+${result.description || '店舗の詳細情報を準備中です'}
+`).join('\n\n')}
+
+これらの店舗に興味があれば、直接応募することができます。
+もっと詳しい情報を知りたい場合は、ジョブ一覧画面から探してみてください。`
         }]);
       }, 2000);
     } else {
@@ -494,7 +536,8 @@ ${index + 1}. ${result.businessName}
 • 給与条件を調整してみる
 • 業種の選択を増やしてみる
 
-条件を変更しますか？`
+お役に立てず申し訳ありません。プロフィール情報をさらに充実させると、
+より良いマッチング結果が得られる可能性があります。`
       }]);
     }
   };
