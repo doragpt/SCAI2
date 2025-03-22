@@ -126,34 +126,49 @@ router.get("/:id", authenticate, async (req: any, res) => {
       return res.status(400).json({ message: "無効な記事IDです" });
     }
 
-    // 記事取得条件
-    let query = db
+    log('info', "ブログ記事詳細取得リクエスト", {
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      postId: postId
+    });
+
+    // 記事の取得
+    const [post] = await db
       .select()
       .from(blogPosts)
       .where(eq(blogPosts.id, postId));
 
-    // 店舗ユーザーの場合、自分の記事（下書き含む）は閲覧可能
-    if (req.user && req.user.role === 'store') {
-      const [post] = await query;
-      
-      if (!post) {
-        return res.status(404).json({ message: "記事が見つかりません" });
-      }
-      
-      // 自分の記事かチェック
-      if (post.store_id === req.user.id) {
-        return res.json(post);
-      }
-    }
-
-    // 店舗ユーザー以外、または他店舗の記事は公開済みのみ閲覧可能
-    const [post] = await query.where(eq(blogPosts.status, 'published'));
-
+    // 記事が存在しない場合
     if (!post) {
+      log('warn', "ブログ記事が見つかりません", { 
+        postId: postId,
+        userId: req.user?.id 
+      });
       return res.status(404).json({ message: "記事が見つかりません" });
     }
 
-    res.json(post);
+    // アクセス権限チェック
+    const isOwner = req.user && req.user.role === 'store' && post.store_id === req.user.id;
+    const isPublished = post.status === 'published';
+
+    // 店舗ユーザーの自分の記事か、公開済みの記事のみアクセス可能
+    if (isOwner || isPublished) {
+      log('info', "ブログ記事詳細取得成功", { 
+        postId: post.id,
+        userId: req.user?.id,
+        isOwner: isOwner,
+        postStatus: post.status 
+      });
+      return res.json(post);
+    }
+
+    // 非公開記事で所有者でない場合
+    log('warn', "ブログ記事へのアクセス権限なし", { 
+      postId: post.id,
+      userId: req.user?.id,
+      postStatus: post.status 
+    });
+    return res.status(403).json({ message: "この記事は現在非公開です" });
   } catch (error) {
     log('error', "ブログ記事詳細取得エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
