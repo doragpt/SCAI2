@@ -517,14 +517,19 @@ function BlogPostsList({ userId }: { userId?: number }) {
       params.append("page", "1");
       params.append("limit", MAX_POSTS_TO_SHOW.toString());
       
-      const response = await apiRequest("GET", `${QUERY_KEYS.BLOG_POSTS_STORE}?${params.toString()}`);
-      if (!response.ok) {
+      try {
+        // apiRequestを直接使用し、JSONを返すように修正
+        const data = await apiRequest("GET", `${QUERY_KEYS.BLOG_POSTS_STORE}?${params.toString()}`);
+        console.log("Blog posts fetch result:", data);
+        return data;
+      } catch (error) {
+        console.error("ブログ記事の取得に失敗しました:", error);
         throw new Error("ブログ記事の取得に失敗しました");
       }
-      return response.json();
     },
     enabled: !!userId,
     staleTime: 30000, // 30秒
+    retry: 2,
   });
 
   // タイトルを適切な長さにトリミングする

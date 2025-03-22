@@ -321,7 +321,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             <div className="prose prose-sm max-w-none">
               {form.watch("thumbnail") && (
                 <div className="relative w-full mb-6">
-                  <img 
+                  <ThumbnailImage 
                     src={form.watch("thumbnail")} 
                     alt="サムネイル画像"
                     className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
@@ -369,7 +369,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           </div>
                           {field.value && (
                             <div className="relative w-full">
-                              <img
+                              <ThumbnailImage
                                 src={field.value}
                                 alt="サムネイル"
                                 className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
