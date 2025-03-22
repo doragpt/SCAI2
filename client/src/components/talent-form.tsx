@@ -745,7 +745,15 @@ export function TalentForm({ initialData }: TalentFormProps) {
     console.log("身分証明書追加: ", value);
     const availableIds = form.getValues()?.available_ids;
     if (!availableIds) {
-      form.setValue("available_ids", { types: [], others: [value] });
+      form.setValue("available_ids", { types: [], others: [value] }, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      
+      // フォームの状態を強制的に更新
+      const formState = { ...form.getValues() };
+      form.reset(formState);
       return;
     }
     
@@ -755,7 +763,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldDirty: true,
       shouldTouch: true
     });
+    
+    // フォームの状態を強制的に更新
+    const formState = { ...form.getValues() };
+    form.reset(formState);
+    
     console.log("更新後の身分証明書: ", form.getValues()?.available_ids?.others);
+    
+    // 入力値をクリア
+    if (idTypeInputRef.current) {
+      idTypeInputRef.current.value = '';
+    }
   }, [form]);
 
   const handleAddAllergy = (value: string) => {
@@ -858,7 +876,15 @@ export function TalentForm({ initialData }: TalentFormProps) {
     console.log("NGオプション追加: ", value);
     const ng_options = form.getValues()?.ng_options;
     if (!ng_options) {
-      form.setValue("ng_options", { common: [], others: [value] });
+      form.setValue("ng_options", { common: [], others: [value] }, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      
+      // フォームの状態を強制的に更新
+      const formState = { ...form.getValues() };
+      form.reset(formState);
       return;
     }
     
@@ -868,7 +894,17 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldDirty: true,
       shouldTouch: true
     });
+    
+    // フォームの状態を強制的に更新
+    const formState = { ...form.getValues() };
+    form.reset(formState);
+    
     console.log("更新後のNGオプション: ", form.getValues()?.ng_options?.others);
+    
+    // 入力値をクリア
+    if (ngOptionInputRef.current) {
+      ngOptionInputRef.current.value = '';
+    }
   }, [form]);
 
   const handleRemoveNgOption = useCallback((index: number) => {
