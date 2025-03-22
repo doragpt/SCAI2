@@ -885,6 +885,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const isButtonDisabled = photos.length === 0 || !hasCurrentHairPhoto;
 
   const ngOptionInputRef = useRef<HTMLInputElement>(null);
+  const idTypeInputRef = useRef<HTMLInputElement>(null);
+  const estheNgOptionRef = useRef<HTMLInputElement>(null);
+  const allergyInputRef = useRef<HTMLInputElement>(null);
+  const smokingInputRef = useRef<HTMLInputElement>(null);
+  const bodyMarkInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -1591,7 +1596,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               ))}
                             </div>
                             <OtherItemInput
-                              ref={React.createRef()}
+                              ref={estheNgOptionRef}
                               onAdd={handleAddEstheNgOption}
                               placeholder="できないプレイやオプションを入力"
                             />
@@ -1699,7 +1704,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       ))}
                     </div>
                     <OtherItemInput
-                      ref={React.createRef()}
+                      ref={allergyInputRef}
                       onAdd={handleAddAllergy}
                       placeholder="その他のアレルギーを入力"
                     />
@@ -1802,7 +1807,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       ))}
                     </div>
                     <OtherItemInput
-                      ref={React.createRef()}
+                      ref={smokingInputRef}
                       onAdd={handleAddSmokingType}
                       placeholder="その他の喫煙情報を入力"
                     />
@@ -1846,7 +1851,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                       ))}
                     </div>
                     <OtherItemInput
-                      ref={React.createRef()}
+                      ref={bodyMarkInputRef}
                       onAdd={handleAddBodyMark}
                       placeholder="傷・タトゥー・アトピーの情報を入力"
                     />
