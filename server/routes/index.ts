@@ -1,10 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import authRoutes from './auth';
-import jobsRoutes from './jobs';
-import applicationsRoutes from './applications';
-import blogRoutes from './blog';
 import { log } from '../utils/logger';
+import { authenticate } from '../middleware/auth';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
@@ -22,10 +20,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 各ルーターを登録
-  app.use('/api/auth', authRoutes);
-  app.use('/api/jobs', jobsRoutes);
-  app.use('/api/applications', applicationsRoutes);
-  app.use('/api/blog', blogRoutes);
+  app.use('/auth', authRoutes);
+  
+  // 認証チェックエンドポイント
+  app.get('/check', authenticate, (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+    return res.json(req.user);
+  });
+  
+  // その他のAPIルートは今後実装予定
 
   // 共通のエラーハンドリング
   app.use((err: Error, req: any, res: any, next: any) => {
