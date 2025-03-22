@@ -70,9 +70,9 @@ export function ProfileConfirmationModal({
                   label="氏名"
                   value={
                     <div className="flex flex-col space-y-1">
-                      <span>{formData.lastName} {formData.firstName}</span>
+                      <span>{formData.last_name || formData.lastName} {formData.first_name || formData.firstName}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formData.lastNameKana} {formData.firstNameKana}
+                        {formData.last_name_kana || formData.lastNameKana} {formData.first_name_kana || formData.firstNameKana}
                       </span>
                     </div>
                   }
@@ -82,7 +82,7 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span>{formData.location} ({formData.nearestStation})</span>
+                      <span>{formData.location} ({formData.nearest_station || formData.nearestStation})</span>
                     </div>
                   }
                 />
@@ -90,7 +90,7 @@ export function ProfileConfirmationModal({
                   label="希望エリア"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.preferredLocations?.map((location, index) => (
+                      {(formData.preferred_locations || formData.preferredLocations)?.map((location: string, index: number) => (
                         <Badge key={index} variant="outline">{location}</Badge>
                       )) || "未設定"}
                     </div>
@@ -100,7 +100,7 @@ export function ProfileConfirmationModal({
                   label="NGエリア"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {formData.ngLocations?.map((location, index) => (
+                      {(formData.ng_locations || formData.ngLocations)?.map((location: string, index: number) => (
                         <Badge key={index} variant="outline">{location}</Badge>
                       )) || "未設定"}
                     </div>
