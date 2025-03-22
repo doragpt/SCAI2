@@ -95,13 +95,16 @@ export default function ProfileViewPage() {
     );
   }
 
+  // タレントプロフィールがない場合は取得できてもnullになる可能性があるので、安全に処理
+  const isTalentProfileValid = talentProfile && typeof talentProfile === 'object' && Object.keys(talentProfile).length > 0;
+
   // ユーザーとタレントのデータを結合して表示
-  const birthDate = userProfile?.birthDate || (talentProfile && talentProfile.birth_date) || null;
-  const displayLocation = userProfile?.location || (talentProfile && talentProfile.location) || "未設定";
+  const birthDate = userProfile?.birthDate || (isTalentProfileValid && talentProfile.birth_date) || null;
+  const displayLocation = userProfile?.location || (isTalentProfileValid && talentProfile.location) || "未設定";
   const displayPreferredLocations = userProfile?.preferredLocations || [];
 
   // Web履歴書への誘導メッセージ
-  const showProfilePrompt = !talentProfile || Object.keys(talentProfile).length === 0;
+  const showProfilePrompt = !isTalentProfileValid;
 
   return (
     <div className="container max-w-2xl py-8">
@@ -183,37 +186,7 @@ export default function ProfileViewPage() {
               </div>
             </div>
 
-            {/* タレントプロフィール情報 */}
-            {talentProfile && Object.keys(talentProfile).length > 0 && (
-              <div>
-                <h2 className="text-lg font-medium mb-4">詳細情報</h2>
-                <p className="text-sm text-muted-foreground mb-2">※Web履歴書の内容が反映されます</p>
-                
-                {/* ここに詳細情報を表示 */}
-                <div className="grid grid-cols-2 gap-4">
-                  {talentProfile.height && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">身長</p>
-                      <p className="mt-1">{talentProfile.height}cm</p>
-                    </div>
-                  )}
-                  
-                  {talentProfile.bust && talentProfile.waist && talentProfile.hip && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">スリーサイズ</p>
-                      <p className="mt-1">B{talentProfile.bust} W{talentProfile.waist} H{talentProfile.hip}</p>
-                    </div>
-                  )}
-                  
-                  {talentProfile.cup_size && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">カップサイズ</p>
-                      <p className="mt-1">{talentProfile.cup_size}カップ</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* 詳細プロフィール情報は表示しない（ご要望に基づく） */}
           </div>
         </ScrollArea>
       </Card>
