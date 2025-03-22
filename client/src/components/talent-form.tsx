@@ -537,6 +537,7 @@ const defaultValues: TalentProfileData = {
     others: [],
   },
   can_provide_residence_record: false,
+  can_provide_std_test: false,
   height: 150,
   weight: 45,
   cup_size: "D",
