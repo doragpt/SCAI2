@@ -509,7 +509,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
 
   // ブログ記事の取得
   const { data, isLoading, error } = useQuery({
-    queryKey: [QUERY_KEYS.BLOG_POSTS, "store"],
+    queryKey: [QUERY_KEYS.BLOG_POSTS_STORE],
     queryFn: async () => {
       if (!userId) return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0 } };
       
@@ -517,7 +517,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
       params.append("page", "1");
       params.append("limit", MAX_POSTS_TO_SHOW.toString());
       
-      const response = await apiRequest("GET", `/api/blog/store-posts?${params.toString()}`);
+      const response = await apiRequest("GET", `${QUERY_KEYS.BLOG_POSTS_STORE}?${params.toString()}`);
       if (!response.ok) {
         throw new Error("ブログ記事の取得に失敗しました");
       }

@@ -34,6 +34,7 @@ export const QUERY_KEYS = {
   // その他
   SIGNED_URL: "/storage/get-signed-url",
   BLOG_POSTS: "/blog/posts",
+  BLOG_POSTS_STORE: "/api/blog/store-posts",
   BLOG_POST_DETAIL: (id: string) => `/blog/posts/${id}`,
   BLOG_POST_STATUS: (id: string) => `/blog/posts/${id}/status`
 } as const;
