@@ -187,6 +187,83 @@ export const queryClient = new QueryClient({
   },
 });
 
+// 写真アップロード用の関数
+export async function uploadPhoto(base64Data: string, fileName: string): Promise<{url: string, fileName: string}> {
+  try {
+    log('info', '写真アップロード開始', {
+      fileName,
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest(
+      "POST",
+      "/upload/photo",
+      { base64Data, fileName }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "写真のアップロードに失敗しました");
+    }
+
+    const result = await response.json();
+    
+    log('info', '写真アップロード成功', {
+      fileName,
+      uploadedFileName: result.fileName,
+      timestamp: new Date().toISOString()
+    });
+
+    return {
+      url: result.url,
+      fileName: result.fileName
+    };
+  } catch (error) {
+    log('error', '写真アップロードエラー', {
+      fileName,
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
+// 署名付きURLを取得する関数
+export async function getSignedPhotoUrl(key: string): Promise<string> {
+  try {
+    log('info', '署名付きURL取得開始', {
+      key,
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await apiRequest(
+      "GET",
+      `/upload/signed-url/${key}`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "署名付きURLの取得に失敗しました");
+    }
+
+    const result = await response.json();
+    
+    log('info', '署名付きURL取得成功', {
+      key,
+      timestamp: new Date().toISOString()
+    });
+
+    return result.url;
+  } catch (error) {
+    log('error', '署名付きURL取得エラー', {
+      key,
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 // デバッグ用のログ関数
 function log(level: 'info' | 'error', message: string, data?: any) {
   const logData = {

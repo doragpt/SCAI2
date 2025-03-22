@@ -27,6 +27,10 @@ export const QUERY_KEYS = {
   APPLICATIONS_STORE: "/api/applications/store",
   APPLICATION_CREATE: "/api/applications",
   
+  // アップロード関連
+  UPLOAD_PHOTO: "/upload/photo",
+  SIGNED_PHOTO_URL: (key: string) => `/upload/signed-url/${key}`,
+  
   // その他
   SIGNED_URL: "/storage/get-signed-url",
   BLOG_POSTS: "/blog/posts",
