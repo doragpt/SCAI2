@@ -1119,7 +1119,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           ))}
                         </div>
                         <OtherItemInput
-                          ref={React.createRef()}
+                          ref={idTypeInputRef}
                           onAdd={handleAddIdType}
                           placeholder="その他の身分証明書を入力"
                         />
