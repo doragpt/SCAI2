@@ -742,6 +742,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   };
 
   const handleAddIdType = useCallback((value: string) => {
+    console.log("身分証明書追加: ", value);
     const availableIds = form.getValues()?.available_ids;
     if (!availableIds) {
       form.setValue("available_ids", { types: [], others: [value] });
@@ -754,6 +755,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldDirty: true,
       shouldTouch: true
     });
+    console.log("更新後の身分証明書: ", form.getValues()?.available_ids?.others);
   }, [form]);
 
   const handleAddAllergy = (value: string) => {
@@ -853,6 +855,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
   // NGオプションのチェックボックス実装は個別のトグルハンドラでは行わず、FormFieldで統一して実装
 
   const handleAddNgOption = useCallback((value: string) => {
+    console.log("NGオプション追加: ", value);
     const ng_options = form.getValues()?.ng_options;
     if (!ng_options) {
       form.setValue("ng_options", { common: [], others: [value] });
@@ -865,6 +868,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldDirty: true,
       shouldTouch: true
     });
+    console.log("更新後のNGオプション: ", form.getValues()?.ng_options?.others);
   }, [form]);
 
   const handleRemoveNgOption = useCallback((index: number) => {
