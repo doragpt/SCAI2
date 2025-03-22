@@ -42,6 +42,7 @@ import { calculateAge } from "@/utils/date";
 import { useAuth } from "@/hooks/use-auth";
 import { Textarea } from "@/components/ui/textarea";
 import { createOrUpdateTalentProfile } from "@/lib/api/talent";
+import { uploadPhoto } from "@/lib/queryClient";
 
 // Store type definitions
 type CurrentStore = {
@@ -686,10 +687,49 @@ export function TalentForm({ initialData }: TalentFormProps) {
 
     try {
       setIsSubmitting(true);
+      const queryClient = useQueryClient();
+      
+      // 写真データをS3にアップロード
+      const updatedPhotos = [];
+      for (const photo of formData.photos) {
+        // Base64データURLからBlobに変換
+        if (photo.url.startsWith('data:')) {
+          try {
+            // データURLからBase64部分を抽出
+            const base64Data = photo.url.split(',')[1];
+            const fileName = `talent-photo-${Date.now()}.jpg`;
+            
+            // S3にアップロード
+            const uploadResult = await uploadPhoto(base64Data, fileName);
+            
+            // アップロード後のURLに更新
+            updatedPhotos.push({
+              ...photo,
+              url: uploadResult.url
+            });
+          } catch (error) {
+            console.error('写真のアップロードエラー:', error);
+            // エラーが発生した場合でも、元の写真URLを保持
+            updatedPhotos.push(photo);
+          }
+        } else {
+          // すでにS3にアップロード済みの場合はそのまま追加
+          updatedPhotos.push(photo);
+        }
+      }
+      
+      // 写真URLを更新したデータを作成
+      const updatedFormData = {
+        ...formData,
+        photos: updatedPhotos
+      };
       
       // プロフィールデータを送信して結果を取得
-      const result = await createOrUpdateTalentProfile(formData);
+      const result = await createOrUpdateTalentProfile(updatedFormData);
       console.log("プロフィール保存結果:", result);
+      
+      // キャッシュをクリア
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TALENT_PROFILE] });
       
       // 成功通知を表示
       toast({
