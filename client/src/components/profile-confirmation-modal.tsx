@@ -86,26 +86,7 @@ export function ProfileConfirmationModal({
                     </div>
                   }
                 />
-                <InfoItem
-                  label="希望エリア"
-                  value={
-                    <div className="flex flex-wrap gap-2">
-                      {(formData.preferred_locations || formData.preferredLocations)?.map((location: string, index: number) => (
-                        <Badge key={index} variant="outline">{location}</Badge>
-                      )) || "未設定"}
-                    </div>
-                  }
-                />
-                <InfoItem
-                  label="NGエリア"
-                  value={
-                    <div className="flex flex-wrap gap-2">
-                      {(formData.ng_locations || formData.ngLocations)?.map((location: string, index: number) => (
-                        <Badge key={index} variant="outline">{location}</Badge>
-                      )) || "未設定"}
-                    </div>
-                  }
-                />
+
                 <InfoItem
                   label="身長"
                   value={`${formData.height}cm`}
@@ -290,21 +271,7 @@ export function ProfileConfirmationModal({
                     ) : "なし"
                   }
                 />
-                {((formData.body_mark || formData.bodyMark)?.has_body_mark || (formData.body_mark || formData.bodyMark)?.hasBodyMark) && (
-                  <InfoItem
-                    label="ボディマーク"
-                    value={
-                      <div className="space-y-2">
-                        <div className="text-sm">{(formData.body_mark || formData.bodyMark)?.details}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {(formData.body_mark || formData.bodyMark)?.others?.map((mark: string, index: number) => (
-                            <Badge key={index} variant="outline">{mark}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    }
-                  />
-                )}
+
               </div>
             </section>
 
