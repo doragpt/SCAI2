@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -36,6 +36,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -51,6 +52,8 @@ import {
   Calendar,
   Search,
   Filter,
+  Loader2,
+  Settings,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -72,6 +75,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ブログ記事のステータスに応じたバッジの表示
 const StatusBadge = ({ status }: { status: string }) => {
@@ -108,6 +112,8 @@ export default function BlogManagement() {
   const [status, setStatus] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [deletePostId, setDeletePostId] = useState<number | null>(null);
+  const [selectedPosts, setSelectedPosts] = useState<number[]>([]);
+  const [bulkAction, setBulkAction] = useState<string | null>(null);
   const { toast } = useToast();
 
   // 記事一覧の取得
@@ -123,46 +129,27 @@ export default function BlogManagement() {
     queryKey: ["blog-management", page, status, search],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (page > 1) params.append("page", page.toString());
+      params.append("page", page.toString());
+      params.append("limit", "10"); // 1ページあたりの表示数
       if (status) params.append("status", status);
       if (search) params.append("search", search);
 
-      console.log("Fetching blog posts with params:", params.toString());
-      
-      // API呼び出しとレスポンスの処理
-      // サーバー側では /api/blog プレフィックスの後に /store-posts が来る
+      // APIエンドポイントを定数から取得（クエリキーと一致させる）
       const apiUrl = `/api/blog/store-posts?${params.toString()}`;
-      console.log("Attempting to fetch from URL:", apiUrl);
-      console.log("Current user:", user);
       
       try {
-        // APIリクエスト実行
-        console.log("Executing fetch to:", apiUrl);
+        // APIリクエスト実行 - apiRequestヘルパーを使用
+        const response = await apiRequest("GET", apiUrl);
         
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
-        });
-        
-        console.log("Response status:", response.status);
-        
-        // エラーレスポンスの処理
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("API error:", response.status, errorText);
           throw new Error(`ブログ記事一覧の取得に失敗しました: ${response.status}`);
         }
         
         // 正常レスポンスの処理
         const result = await response.json();
-        console.log("Blog posts API response:", result);
         
         // データ構造の検証
         if (!result.posts) {
-          console.warn("API response has unexpected format:", result);
           return {
             posts: [],
             pagination: { currentPage: 1, totalPages: 1, totalItems: 0 }
@@ -171,7 +158,7 @@ export default function BlogManagement() {
         
         return result;
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("ブログ記事取得エラー:", error);
         throw error;
       }
     },
@@ -183,12 +170,18 @@ export default function BlogManagement() {
     if (!deletePostId) return;
     
     try {
-      await apiRequest("DELETE", `/api/blog/${deletePostId}`);
+      // 削除APIのエンドポイントは `/api/blog/:id` 形式
+      const response = await apiRequest("DELETE", `/api/blog/${deletePostId}`);
+      
+      if (!response.ok) {
+        throw new Error(`記事の削除に失敗しました: ${response.status}`);
+      }
+      
       toast({
         title: "記事を削除しました",
         description: "ブログ記事が正常に削除されました",
       });
-      refetch();
+      refetch(); // 記事一覧を再読み込み
     } catch (error) {
       console.error("記事削除エラー:", error);
       toast({
@@ -197,7 +190,84 @@ export default function BlogManagement() {
         variant: "destructive",
       });
     } finally {
-      setDeletePostId(null);
+      setDeletePostId(null); // ダイアログを閉じる
+    }
+  };
+
+  // 記事の選択状態を切り替える
+  const togglePostSelection = (postId: number) => {
+    setSelectedPosts(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId) 
+        : [...prev, postId]
+    );
+  };
+
+  // 全ての記事の選択状態を切り替える
+  const toggleAllPosts = () => {
+    if (selectedPosts.length === posts.length) {
+      setSelectedPosts([]);
+    } else {
+      setSelectedPosts(posts.map(post => post.id));
+    }
+  };
+
+  // 一括操作処理
+  const handleBulkAction = async (action: string) => {
+    if (selectedPosts.length === 0) {
+      toast({
+        title: "選択エラー",
+        description: "操作する記事を選択してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // ステータス更新の場合
+      if (action === "publish" || action === "draft") {
+        const newStatus = action === "publish" ? "published" : "draft";
+        
+        // 各記事を順番に処理
+        for (const postId of selectedPosts) {
+          const post = posts.find(p => p.id === postId);
+          if (post) {
+            await apiRequest("PATCH", `/api/blog/${postId}`, {
+              ...post,
+              status: newStatus,
+            });
+          }
+        }
+        
+        toast({
+          title: "更新完了",
+          description: `${selectedPosts.length}件の記事を${newStatus === "published" ? "公開" : "下書き"}に設定しました`,
+        });
+      }
+      
+      // 複数記事の削除の場合
+      else if (action === "delete") {
+        for (const postId of selectedPosts) {
+          await apiRequest("DELETE", `/api/blog/${postId}`);
+        }
+        
+        toast({
+          title: "削除完了",
+          description: `${selectedPosts.length}件の記事を削除しました`,
+        });
+      }
+      
+      // 選択をクリアして記事一覧を更新
+      setSelectedPosts([]);
+      refetch();
+      
+    } catch (error) {
+      console.error("一括操作エラー:", error);
+      toast({
+        title: "操作エラー",
+        description: "一括操作の処理中にエラーが発生しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -218,15 +288,8 @@ export default function BlogManagement() {
     return null;
   }
 
-  // デバッグ情報の表示
-  console.log("Query data:", data);
-  console.log("Query error:", error);
-
   const posts = data?.posts || [];
   const pagination = data?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
-  
-  // デバッグ用に実際の表示データを確認
-  console.log("Displaying posts:", posts);
 
   return (
     <div className="container mx-auto p-6">
@@ -291,13 +354,54 @@ export default function BlogManagement() {
             </Button>
           </div>
 
+          {/* 一括操作メニュー */}
+          {posts.length > 0 && (
+            <div className="mb-4 flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="selectAll" 
+                  checked={selectedPosts.length === posts.length && posts.length > 0}
+                  onClick={toggleAllPosts}
+                />
+                <label htmlFor="selectAll" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  すべて選択 ({selectedPosts.length}/{posts.length})
+                </label>
+              </div>
+              
+              {selectedPosts.length > 0 && (
+                <div className="flex gap-2 ml-auto">
+                  <Select
+                    value={bulkAction || ""}
+                    onValueChange={(value) => {
+                      if (value) {
+                        handleBulkAction(value);
+                        setBulkAction(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="一括操作" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">一括操作を選択</SelectItem>
+                      <SelectItem value="publish">公開に設定</SelectItem>
+                      <SelectItem value="draft">下書きに設定</SelectItem>
+                      <SelectItem value="delete">削除</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 記事一覧テーブル */}
           {posts.length > 0 ? (
             <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[350px]">タイトル</TableHead>
+                    <TableHead className="w-[30px]"></TableHead>
+                    <TableHead className="w-[320px]">タイトル</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead className="hidden md:table-cell">作成日</TableHead>
                     <TableHead className="hidden md:table-cell">公開日</TableHead>
@@ -306,7 +410,16 @@ export default function BlogManagement() {
                 </TableHeader>
                 <TableBody>
                   {posts.map((post) => (
-                    <TableRow key={post.id}>
+                    <TableRow 
+                      key={post.id}
+                      className={selectedPosts.includes(post.id) ? "bg-muted/50" : ""}
+                    >
+                      <TableCell className="w-[30px]">
+                        <Checkbox 
+                          checked={selectedPosts.includes(post.id)}
+                          onClick={() => togglePostSelection(post.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
                           <span className="truncate">{post.title}</span>
@@ -346,6 +459,26 @@ export default function BlogManagement() {
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 閲覧
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {post.status !== "published" && (
+                              <DropdownMenuItem
+                                onClick={() => handleBulkAction("publish")}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                公開に設定
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {post.status !== "draft" && (
+                              <DropdownMenuItem
+                                onClick={() => handleBulkAction("draft")}
+                              >
+                                <FileEdit className="h-4 w-4 mr-2" />
+                                下書きに設定
                               </DropdownMenuItem>
                             )}
                             
