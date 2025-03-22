@@ -12,6 +12,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ImageResize from 'quill-image-resize-module-react';
 import Quill from 'quill';
+import { ThumbnailImage } from "./thumbnail-image";
 import {
   Card,
   CardContent,
