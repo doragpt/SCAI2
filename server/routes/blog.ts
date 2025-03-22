@@ -119,30 +119,45 @@ router.get("/", async (req, res) => {
 });
 
 // ブログ記事詳細取得
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req: any, res) => {
   try {
     const postId = parseInt(req.params.id);
     if (isNaN(postId)) {
       return res.status(400).json({ message: "無効な記事IDです" });
     }
 
-    const [post] = await db
+    // 記事取得条件
+    let query = db
       .select()
       .from(blogPosts)
       .where(eq(blogPosts.id, postId));
 
-    if (!post) {
-      return res.status(404).json({ message: "記事が見つかりません" });
+    // 店舗ユーザーの場合、自分の記事（下書き含む）は閲覧可能
+    if (req.user && req.user.role === 'store') {
+      const [post] = await query;
+      
+      if (!post) {
+        return res.status(404).json({ message: "記事が見つかりません" });
+      }
+      
+      // 自分の記事かチェック
+      if (post.store_id === req.user.id) {
+        return res.json(post);
+      }
     }
 
-    if (post.status !== 'published') {
-      return res.status(403).json({ message: "この記事は現在非公開です" });
+    // 店舗ユーザー以外、または他店舗の記事は公開済みのみ閲覧可能
+    const [post] = await query.where(eq(blogPosts.status, 'published'));
+
+    if (!post) {
+      return res.status(404).json({ message: "記事が見つかりません" });
     }
 
     res.json(post);
   } catch (error) {
     log('error', "ブログ記事詳細取得エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id,
       postId: req.params.id
     });
     res.status(500).json({

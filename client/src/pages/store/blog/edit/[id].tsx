@@ -14,7 +14,7 @@ export default function EditBlogPost() {
 
   const { data: post, isLoading } = useQuery<BlogPost>({
     queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(id)],
-    queryFn: () => apiRequest("GET", `/api/blog/posts/${id}`),
+    queryFn: () => apiRequest("GET", `/api/blog/${id}`),
     enabled: !!user?.id && !isNaN(postId),
   });
 
