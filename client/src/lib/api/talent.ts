@@ -5,8 +5,8 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 export async function getTalentProfile(): Promise<TalentProfileData | null> {
   try {
     console.log('Fetching talent profile...');
-    // 正しいAPIパスに修正 (/api/talent/profile)
-    const data = await apiRequest("GET", "/api/talent/profile");
+    // クエリキーから正しいAPIパスを使用
+    const data = await apiRequest("GET", QUERY_KEYS.TALENT_PROFILE);
     console.log('Talent profile fetched successfully:', data);
     return data as TalentProfileData;
   } catch (error) {
@@ -18,8 +18,8 @@ export async function getTalentProfile(): Promise<TalentProfileData | null> {
 export async function createOrUpdateTalentProfile(data: TalentProfileData): Promise<TalentProfileData> {
   try {
     console.log('Updating talent profile with data:', data);
-    // 正しいAPIパスに修正 (/api/talent/profile)
-    const updatedProfile = await apiRequest("POST", "/api/talent/profile", data);
+    // クエリキーから正しいAPIパスを使用
+    const updatedProfile = await apiRequest("POST", QUERY_KEYS.TALENT_PROFILE, data);
     console.log('Talent profile updated successfully:', updatedProfile);
     return updatedProfile;
   } catch (error) {

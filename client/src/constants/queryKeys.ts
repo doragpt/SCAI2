@@ -14,7 +14,7 @@ export const QUERY_KEYS = {
   STORE_PROFILE: "/store/profile",
 
   // タレント関連
-  TALENT_PROFILE: "/api/talent/profile",
+  TALENT_PROFILE: "/talent/profile",
 
   // 求人関連
   JOBS_PUBLIC: "/jobs",
