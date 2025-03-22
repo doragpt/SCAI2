@@ -212,7 +212,7 @@ export default function JobDetail() {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <div className="whitespace-pre-wrap">
-                        {Array.isArray(job.benefits) ? job.benefits.join(', ') : job.benefits?.toString()}
+                        {Array.isArray(job.benefits) ? job.benefits.join(', ') : typeof job.benefits === 'string' ? job.benefits : ''}
                       </div>
                       <div className="flex flex-wrap gap-2 pt-2">
                         {job.transportationSupport && (

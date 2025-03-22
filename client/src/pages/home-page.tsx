@@ -214,11 +214,11 @@ export default function HomePage() {
   const { toast } = useToast();
 
   const { data, isLoading: jobsLoading, error, refetch } = useQuery({
-    queryKey: ["/jobs"],
+    queryKey: [QUERY_KEYS.JOBS_PUBLIC],
     queryFn: async () => {
       try {
         console.log('Fetching jobs data...'); // デバッグログ追加
-        const response = await fetch("/jobs");
+        const response = await fetch(`/api${QUERY_KEYS.JOBS_PUBLIC}`);
         console.log('API Response:', response); // デバッグログ追加
 
         if (!response.ok) {

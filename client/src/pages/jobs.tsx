@@ -123,11 +123,10 @@ export default function Jobs() {
         if (location !== "all") searchParams.append("location", location);
         if (serviceType !== "all") searchParams.append("serviceType", serviceType);
         
-        const url = `${QUERY_KEYS.JOBS_PUBLIC}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+        const url = `/api${QUERY_KEYS.JOBS_PUBLIC}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         console.log('Requesting URL:', url);
         
         const response = await fetch(url);
-        console.log('API Response:', response);
 
         if (!response.ok) {
           const errorText = await response.text();
