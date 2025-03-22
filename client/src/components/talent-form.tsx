@@ -1375,7 +1375,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
                             id={`ng-${option}`}
                             checked={field.value?.common?.includes(option) || false}
                             onCheckedChange={(checked) => {
-                              handleNgOptionChange(option, checked === true);
+                              const current = field.value?.common || [];
+                              const updated = checked
+                                ? [...current, option]
+                                : current.filter((o) => o !== option);
+                              form.setValue("ng_options.common", updated, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
                             }}
                             className="data-[state=checked]:bg-primary"
                           />
