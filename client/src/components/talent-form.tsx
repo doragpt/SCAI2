@@ -691,7 +691,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
       // 写真データをS3にアップロード
       const updatedPhotos = [];
       for (const photo of formData.photos) {
-        // Base64データURLからBlobに変換
+        // Base64データURLの場合のみアップロード処理
         if (photo.url.startsWith('data:')) {
           try {
             // データURLからBase64部分を抽出
@@ -706,10 +706,20 @@ export function TalentForm({ initialData }: TalentFormProps) {
               ...photo,
               url: uploadResult.url
             });
+            
+            // アップロード成功ログ
+            console.log('S3アップロード成功:', fileName);
           } catch (error) {
             console.error('写真のアップロードエラー:', error);
             // エラーが発生した場合でも、元の写真URLを保持
             updatedPhotos.push(photo);
+            
+            // エラー通知
+            toast({
+              title: "写真アップロードエラー",
+              description: "一部の写真のアップロードに失敗しました。後でもう一度お試しください。",
+              variant: "destructive",
+            });
           }
         } else {
           // すでにS3にアップロード済みの場合はそのまま追加
