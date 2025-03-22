@@ -21,11 +21,22 @@ export default function TalentRegistration() {
     error,
   } = useQuery({
     queryKey: [QUERY_KEYS.TALENT_PROFILE],
-    queryFn: getTalentProfile,
+    queryFn: async () => {
+      try {
+        console.log('Talent Registration page: Fetching profile data...');
+        const data = await getTalentProfile();
+        console.log('Talent Registration page: Profile data received:', data);
+        return data;
+      } catch (error) {
+        console.error('Talent Registration page: Error fetching profile data:', error);
+        throw error;
+      }
+    },
     enabled: !!user?.id,
     retry: false,
     // Return null on error
     onError: (error: Error) => {
+      console.error('Talent Registration page: Query error:', error);
       if (error.message === "認証が必要です") {
         toast({
           title: "エラー",
