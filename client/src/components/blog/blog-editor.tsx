@@ -94,6 +94,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     defaultValues,
   });
   
+  // 記事の内容が読み込まれたかどうかのフラグ
+  const [contentLoaded, setContentLoaded] = useState(false);
+
   // 初期データをコンソールに出力（デバッグ用）
   useEffect(() => {
     console.log('BlogEditor: initialData更新', initialData);
@@ -101,14 +104,36 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     // 初期データがある場合にフォームの値を明示的に設定
     if (initialData) {
       console.log('BlogEditor: フォーム値を再設定します');
-      form.reset({
+      const resetData = {
         ...initialData,
+        content: initialData.content || '',
+        title: initialData.title || '',
         scheduled_at: initialData.scheduled_at ? new Date(initialData.scheduled_at) : null,
         published_at: initialData.published_at ? new Date(initialData.published_at) : null,
         status: initialData.status || "draft",
-      });
+      };
+      console.log('BlogEditor: 設定するフォームデータ', resetData);
+      
+      // フォームをリセット
+      form.reset(resetData);
+      
+      // コンテンツが正しく読み込まれたことを示すフラグをセット
+      setContentLoaded(true);
     }
   }, [initialData, form]);
+  
+  // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
+  useEffect(() => {
+    if (contentLoaded && initialData?.content) {
+      console.log('ReactQuill のコンテンツを強制的に更新します');
+      
+      // ReactQuillにコンテンツを強制的に設定
+      setTimeout(() => {
+        form.setValue('content', initialData.content, { shouldDirty: true });
+        console.log('ReactQuill コンテンツ更新完了');
+      }, 300);
+    }
+  }, [contentLoaded, initialData, form]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {

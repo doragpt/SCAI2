@@ -123,6 +123,7 @@ router.get("/:id", authenticate, async (req: any, res) => {
   try {
     const postId = parseInt(req.params.id);
     if (isNaN(postId)) {
+      log('warn', "無効な記事ID", { id: req.params.id });
       return res.status(400).json({ message: "無効な記事IDです" });
     }
 
@@ -147,9 +148,20 @@ router.get("/:id", authenticate, async (req: any, res) => {
       return res.status(404).json({ message: "記事が見つかりません" });
     }
 
+    console.log(`ブログ記事データ取得完了 ID:${postId}`, JSON.stringify(post, null, 2));
+
     // アクセス権限チェック
     const isOwner = req.user && req.user.role === 'store' && post.store_id === req.user.id;
     const isPublished = post.status === 'published';
+
+    log('info', "ブログ記事アクセス権限チェック", {
+      isOwner, 
+      isPublished,
+      postId: post.id,
+      postStoreId: post.store_id,
+      userId: req.user?.id,
+      userRole: req.user?.role
+    });
 
     // 店舗ユーザーの自分の記事か、公開済みの記事のみアクセス可能
     if (isOwner || isPublished) {

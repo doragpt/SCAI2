@@ -14,7 +14,12 @@ export default function EditBlogPost() {
 
   const { data: post, isLoading } = useQuery<BlogPost>({
     queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(id)],
-    queryFn: () => apiRequest("GET", `/api/blog/${id}`),
+    queryFn: async () => {
+      console.log(`Fetching blog post with ID: ${id}`);
+      const data = await apiRequest("GET", `/api/blog/${id}`);
+      console.log('Blog post data received:', data);
+      return data;
+    },
     enabled: !!user?.id && !isNaN(postId),
   });
 
