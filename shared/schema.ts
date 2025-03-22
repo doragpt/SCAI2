@@ -285,6 +285,7 @@ export const talentProfiles = pgTable("talent_profiles", {
     others: string[];
   }>().default({ types: [], others: [] }).notNull(),
   can_provide_residence_record: boolean("can_provide_residence_record").default(false),
+  can_provide_std_test: boolean("can_provide_std_test").default(false),
   height: integer("height").notNull(),
   weight: integer("weight").notNull(),
   cup_size: text("cup_size", { enum: cupSizes }).notNull(),
@@ -420,6 +421,7 @@ export const talentProfileSchema = z.object({
     others: z.array(z.string()).default([]),
   }).default({ types: [], others: [] }),
   can_provide_residence_record: z.boolean().default(false),
+  can_provide_std_test: z.boolean().default(false),
   height: z.number().min(100).max(200),
   weight: z.number().min(30).max(150),
   cup_size: z.enum(cupSizes, {

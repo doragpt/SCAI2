@@ -1105,6 +1105,22 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="can_provide_std_test"
+              render={({ field }) => (
+                <FormItem>
+                  <SwitchField
+                    label="1ヶ月以内の性病検査表の用意の可否"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
