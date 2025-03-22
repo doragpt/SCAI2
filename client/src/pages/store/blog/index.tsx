@@ -326,14 +326,14 @@ export default function BlogManagement() {
               </div>
               <div className="w-full sm:w-48">
                 <Select
-                  value={status || ""}
-                  onValueChange={(value) => setStatus(value || null)}
+                  value={status || "all"}
+                  onValueChange={(value) => setStatus(value === "all" ? null : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="すべてのステータス" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">すべてのステータス</SelectItem>
+                    <SelectItem value="all">すべてのステータス</SelectItem>
                     <SelectItem value="published">公開中</SelectItem>
                     <SelectItem value="scheduled">予約投稿</SelectItem>
                     <SelectItem value="draft">下書き</SelectItem>
@@ -371,9 +371,9 @@ export default function BlogManagement() {
               {selectedPosts.length > 0 && (
                 <div className="flex gap-2 ml-auto">
                   <Select
-                    value={bulkAction || ""}
+                    value={bulkAction || "select"}
                     onValueChange={(value) => {
-                      if (value) {
+                      if (value && value !== "select") {
                         handleBulkAction(value);
                         setBulkAction(null);
                       }
@@ -383,7 +383,7 @@ export default function BlogManagement() {
                       <SelectValue placeholder="一括操作" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">一括操作を選択</SelectItem>
+                      <SelectItem value="select">一括操作を選択</SelectItem>
                       <SelectItem value="publish">公開に設定</SelectItem>
                       <SelectItem value="draft">下書きに設定</SelectItem>
                       <SelectItem value="delete">削除</SelectItem>
