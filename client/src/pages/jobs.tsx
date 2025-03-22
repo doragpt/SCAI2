@@ -111,7 +111,7 @@ export default function Jobs() {
     setPage(pageParam);
   }, []);
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, error } = useQuery({
     queryKey: ["jobs", { page, limit, location, serviceType }],
     queryFn: async () => {
       try {
@@ -138,15 +138,21 @@ export default function Jobs() {
         console.error("求人情報取得エラー:", error);
         throw error;
       }
-    },
-    onError: (error: Error) => {
+    }
+  });
+
+  // エラー処理
+  useEffect(() => {
+    if (error) {
       toast({
         variant: "destructive",
         title: "エラーが発生しました",
-        description: error.message || "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
+        description: error instanceof Error 
+          ? error.message 
+          : "求人情報の取得に失敗しました。時間をおいて再度お試しください。"
       });
     }
-  });
+  }, [error]);
 
   return (
     <div className="space-y-8">

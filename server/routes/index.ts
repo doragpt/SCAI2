@@ -32,15 +32,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // 求人一覧を返すAPIエンドポイント
   app.get('/jobs', (req, res) => {
-    // 仮実装: 空の配列を返す
     log('info', '求人一覧リクエスト', { query: req.query });
-    res.json([]);
+    // ダミーデータを返す
+    res.json({
+      jobs: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0
+      }
+    });
   });
   
   // 求人詳細を返すAPIエンドポイント
   app.get('/jobs/:id', (req, res) => {
-    // 仮実装: 404を返す
     log('info', '求人詳細リクエスト', { jobId: req.params.id });
+    // 仮実装: 404を返す
     res.status(404).json({ message: "求人が見つかりません" });
   });
   

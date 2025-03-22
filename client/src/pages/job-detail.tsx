@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Clock, Building, Calendar, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,8 +25,12 @@ export default function JobDetail() {
     isLoading,
     error
   } = useQuery<JobResponse>({
-    queryKey: ["/api/jobs", id],
-    onError: (error) => {
+    queryKey: ["/jobs", id]
+  });
+  
+  // エラー処理
+  useEffect(() => {
+    if (error) {
       console.error("求人詳細取得エラー:", error);
       toast({
         variant: "destructive",
@@ -34,7 +38,7 @@ export default function JobDetail() {
         description: getErrorMessage(error)
       });
     }
-  });
+  }, [error]);
 
   if (isLoading) {
     return (
