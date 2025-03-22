@@ -802,3 +802,23 @@ export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
 }));
 
 // StoreProfileListResponseはすでに上部で定義されています。
+
+// JobResponse型の定義 - クライアント側の型定義
+export interface JobResponse {
+  id: number;
+  businessName: string;
+  location: Prefecture;
+  serviceType: ServiceType;
+  catchPhrase: string;
+  description: string;
+  transportationSupport: boolean;
+  housingSupport: boolean;
+  minimumGuarantee: number | null;
+  maximumGuarantee: number | null;
+  workingHours: string;
+  requirements: string;
+  benefits: BenefitType[];
+  status: JobStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
