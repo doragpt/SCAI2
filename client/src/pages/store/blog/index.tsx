@@ -391,7 +391,8 @@ export default function BlogManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[30px]"></TableHead>
-                    <TableHead className="w-[320px]">タイトル</TableHead>
+                    <TableHead className="w-[60px]">画像</TableHead>
+                    <TableHead className="w-[280px]">タイトル</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead className="hidden md:table-cell">作成日</TableHead>
                     <TableHead className="hidden md:table-cell">公開日</TableHead>
@@ -409,6 +410,17 @@ export default function BlogManagement() {
                           checked={selectedPosts.includes(post.id)}
                           onClick={() => togglePostSelection(post.id)}
                         />
+                      </TableCell>
+                      <TableCell className="p-1">
+                        {post.thumbnail && (
+                          <div className="w-12 h-12 overflow-hidden rounded-md">
+                            <ThumbnailImage
+                              src={post.thumbnail}
+                              alt={post.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">

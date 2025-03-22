@@ -607,6 +607,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-16">画像</TableHead>
             <TableHead>タイトル</TableHead>
             <TableHead>ステータス</TableHead>
             <TableHead>公開日時</TableHead>
@@ -616,6 +617,17 @@ function BlogPostsList({ userId }: { userId?: number }) {
         <TableBody>
           {data.posts.map((post: BlogPost) => (
             <TableRow key={post.id}>
+              <TableCell className="p-1">
+                {post.thumbnail && (
+                  <div className="w-14 h-14 overflow-hidden rounded-md">
+                    <ThumbnailImage
+                      src={post.thumbnail}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </TableCell>
               <TableCell className="font-medium">{trimTitle(post.title)}</TableCell>
               <TableCell>{getStatusBadge(post.status)}</TableCell>
               <TableCell>{formatDate(post.published_at)}</TableCell>
