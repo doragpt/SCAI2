@@ -3,10 +3,10 @@ import { storage } from '../storage';
 import { authenticate } from '../middleware/auth';
 import { talentRegisterFormSchema, CupSize, FaceVisibility } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
-import * as bcrypt from 'bcrypt';
 import { log } from '../utils/logger';
 import passport from 'passport';
 import { z } from 'zod';
+import { hashPassword } from '../auth';
 
 // ログインスキーマの定義
 const loginSchema = z.object({
@@ -143,8 +143,8 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
       display_name: validatedData.username,
     };
 
-    // パスワードのハッシュ化
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    // パスワードのハッシュ化 - auth.ts の hashPassword 関数を使用
+    const hashedPassword = await hashPassword(userData.password);
 
     // ユーザーの作成
     const user = await storage.createUser({

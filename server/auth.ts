@@ -2,8 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import * as bcrypt from 'bcrypt';
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { log } from "./utils/logger";
@@ -14,13 +13,9 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
-
 async function hashPassword(password: string): Promise<string> {
   try {
-    const salt = randomBytes(16).toString('hex');
-    const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
-    return `${derivedKey.toString('hex')}.${salt}`;
+    return await bcrypt.hash(password, 10);
   } catch (error) {
     log('error', 'パスワードハッシュ化エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -31,10 +26,7 @@ async function hashPassword(password: string): Promise<string> {
 
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
-    const [hashedPassword, salt] = stored.split('.');
-    const derivedKey = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuffer = Buffer.from(hashedPassword, 'hex');
-    return timingSafeEqual(derivedKey, storedBuffer);
+    return await bcrypt.compare(supplied, stored);
   } catch (error) {
     log('error', 'パスワード比較エラー', {
       error: error instanceof Error ? error.message : 'Unknown error'
