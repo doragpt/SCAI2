@@ -6,6 +6,7 @@ import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
 import talentRouter from './routes/talent';
 import authRouter from './routes/auth';
+import { authenticate } from './middleware/auth';
 
 const app = express();
 
@@ -42,7 +43,15 @@ app.use('/api', (req, res, next) => {
 });
 
 // 認証関連のルートを最初に登録
-app.use('/api', authRouter);
+app.use('/auth', authRouter);
+
+// 認証状態チェック用エンドポイント
+app.get('/check', authenticate, (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "認証が必要です" });
+  }
+  return res.json(req.user);
+});
 
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
