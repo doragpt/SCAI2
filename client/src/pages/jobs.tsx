@@ -137,7 +137,32 @@ export default function Jobs() {
 
         const result = await response.json();
         console.log('Jobs API Response:', result);
-        return result;
+        
+        // レスポンス形式を確認して適切に整形
+        if (result && Array.isArray(result)) {
+          // 配列で返ってきた場合はページネーション情報を追加
+          return {
+            jobs: result,
+            pagination: {
+              currentPage: page,
+              totalPages: Math.ceil(result.length / limit),
+              totalItems: result.length
+            }
+          };
+        } else if (result && result.jobs && result.pagination) {
+          // すでに正しい形式で返ってきた場合はそのまま返却
+          return result;
+        } else {
+          console.error('Invalid API response format:', result);
+          return {
+            jobs: [],
+            pagination: {
+              currentPage: 1,
+              totalPages: 0,
+              totalItems: 0
+            }
+          };
+        }
       } catch (error) {
         console.error("求人情報取得エラー:", error);
         throw error;
