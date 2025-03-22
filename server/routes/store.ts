@@ -162,8 +162,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       status: updateData.status,
       working_hours: req.body.working_hours || existingProfile.working_hours,
       transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : existingProfile.transportation_support,
-      housing_support: req.body.housing_support !== undefined ? req.body.housing_support : existingProfile.housing_support,
-      requirements: req.body.requirements !== undefined ? req.body.requirements : existingProfile.requirements
+      housing_support: req.body.housing_support !== undefined ? req.body.housing_support : existingProfile.housing_support
     });
 
     // 更新用のオブジェクトを作成
@@ -184,7 +183,6 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               working_hours = ${fullUpdateData.working_hours},
               transportation_support = ${fullUpdateData.transportation_support},
               housing_support = ${fullUpdateData.housing_support},
-              requirements = ${JSON.stringify(fullUpdateData.requirements)},
               updated_at = ${fullUpdateData.updated_at}
           WHERE user_id = ${req.user.id}
           RETURNING *`
