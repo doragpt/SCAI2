@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import authRoutes from './auth';
+import talentRoutes from './talent';
 import { log } from '../utils/logger';
 import { authenticate } from '../middleware/auth';
 
@@ -23,6 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 各ルーターを登録
   app.use('/auth', authRoutes);
+  app.use('/talent', talentRoutes);
   
   // 認証チェックエンドポイント
   app.get('/check', authenticate, (req, res) => {
