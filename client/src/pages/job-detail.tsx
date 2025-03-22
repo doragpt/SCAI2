@@ -13,6 +13,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -25,7 +26,29 @@ export default function JobDetail() {
     isLoading,
     error
   } = useQuery<JobResponse>({
-    queryKey: ["/jobs", id]
+    queryKey: [QUERY_KEYS.JOB_DETAIL(id)],
+    queryFn: async () => {
+      try {
+        console.log('Fetching job detail...', { id });
+        const url = new URL(`/jobs/${id}`, window.location.origin);
+        
+        const response = await fetch(url);
+        console.log('API Response:', response);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          throw new Error("求人詳細の取得に失敗しました");
+        }
+
+        const result = await response.json();
+        console.log('Job Detail API Response:', result);
+        return result;
+      } catch (error) {
+        console.error("求人詳細取得エラー:", error);
+        throw error;
+      }
+    }
   });
   
   // エラー処理
