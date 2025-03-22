@@ -319,19 +319,23 @@ export const AIMatchingChat = () => {
       }, {
         type: "ai",
         content: `【現在のプロフィール】
-• お名前: ${profileData.lastName || '未入力'} ${profileData.firstName || '未入力'}
-• フリガナ: ${profileData.lastNameKana || '未入力'} ${profileData.firstNameKana || '未入力'}
-• 生年月日: ${user?.birthDate ? format(new Date(user.birthDate), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
+• お名前: ${profileData.last_name || '未入力'} ${profileData.first_name || '未入力'}
+• フリガナ: ${profileData.last_name_kana || '未入力'} ${profileData.first_name_kana || '未入力'}
+• 生年月日: ${user?.birth_date ? format(new Date(user.birth_date), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
 • 在住地: ${profileData.location || '未入力'}
-• 最寄り駅: ${profileData.nearestStation || '未入力'}
+• 最寄り駅: ${profileData.nearest_station || '未入力'}
 • 身長: ${profileData.height ? `${profileData.height}cm` : '未入力'}
 • 体重: ${profileData.weight ? `${profileData.weight}kg` : '未入力'}
-• カップサイズ: ${profileData.cupSize || '未入力'}
+• カップサイズ: ${profileData.cup_size || '未入力'}
 • スリーサイズ: ${
           profileData.bust && profileData.waist && profileData.hip
             ? `B${profileData.bust} W${profileData.waist} H${profileData.hip}`
             : '未入力'
         }
+• 身分証: ${profileData.available_ids?.types?.length ? profileData.available_ids.types.join('、') : '未入力'}${
+          profileData.available_ids?.others?.length ? `、${profileData.available_ids.others.join('、')}` : ''
+        }
+• 所有資格: ${profileData.has_esthe_experience ? `エステ経験あり（${profileData.esthe_experience_period || '期間未入力'}）` : 'エステ経験なし'}
 
 記入したものの情報に間違いはないか確認してね！
 間違いが無ければマッチングをはじめるよ！`
