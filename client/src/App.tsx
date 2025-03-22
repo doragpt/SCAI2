@@ -25,6 +25,7 @@ import BasicInfoEdit from "@/pages/basic-info-edit";
 import NewBlogPost from "@/pages/store/blog/new";
 import EditBlogPost from "@/pages/store/blog/edit/[id]";
 import BlogPostView from "@/pages/blog/[id]";
+import BlogManagement from "@/pages/store/blog/index";
 
 function Router() {
   return (
@@ -46,6 +47,11 @@ function Router() {
       <ProtectedRoute 
         path="/store/dashboard" 
         component={StoreDashboard}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/blog"
+        component={BlogManagement}
         roleRequired="store"
       />
       <ProtectedRoute 
