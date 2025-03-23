@@ -58,6 +58,7 @@ interface BlogPost {
   created_at?: Date;
   updated_at?: Date;
   category?: string;
+  x_share?: boolean;
 }
 
 /**
@@ -224,6 +225,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     content: z.string(),
     status: z.enum(["draft", "published", "scheduled"]),
     category: z.string().optional(),
+    x_share: z.boolean().optional(),
   });
   
   const form = useForm<BlogPost>({
@@ -232,6 +234,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       title: "",
       content: "",
       status: "draft",
+      x_share: true,
     },
   });
 
@@ -246,10 +249,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   const handlePublish = () => {
     const values = form.getValues();
-    // サムネイル画像のURLをフォーム値に含める
+    // サムネイル画像のURLとX共有設定をフォーム値に含める
     publishMutation.mutate({
       ...values,
-      thumbnail: thumbnailUrl
+      thumbnail: thumbnailUrl,
+      x_share: values.x_share
     });
   };
 
@@ -295,7 +299,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         ...values, 
         status: "scheduled",
         scheduled_at: date.toISOString(),
-        thumbnail: thumbnailUrl
+        thumbnail: thumbnailUrl,
+        x_share: values.x_share
       }
     ).then(() => {
       setIsScheduling(false);
@@ -329,7 +334,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     const basePost = {
       ...values,
       thumbnail: thumbnailUrl,
-      status: "scheduled"
+      status: "scheduled",
+      x_share: values.x_share
     };
     
     try {
@@ -434,16 +440,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       value={form.watch("category") || ""}
                       onChange={(e) => form.setValue("category", e.target.value)}
                     >
-                      <option value="">選択してください</option>
-                      <option value="1">お給料</option>
-                      <option value="2">スタッフ</option>
-                      <option value="3">お店の環境</option>
-                      <option value="4">うれしい待遇</option>
-                      <option value="5">キャスト紹介</option>
-                      <option value="6">採用条件</option>
-                      <option value="7">お客様層</option>
-                      <option value="8">お仕事内容</option>
-                      <option value="9">お店のつぶやき</option>
+                      <option value="">カテゴリを選択</option>
+                      <option value="1">収入・待遇</option>
+                      <option value="2">スタッフ紹介</option>
+                      <option value="3">店舗の特徴</option>
+                      <option value="4">福利厚生</option>
+                      <option value="5">メンバー募集</option>
+                      <option value="6">応募資格</option>
+                      <option value="7">お客様について</option>
+                      <option value="8">業務案内</option>
+                      <option value="9">日常の出来事</option>
                     </select>
                   </div>
                 </div>
@@ -598,14 +604,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        id="twitter_share"
+                        id="x_share"
                         className="h-4 w-4 rounded border-gray-300"
-                        defaultChecked={true}
+                        checked={form.watch("x_share") || false}
+                        onChange={(e) => form.setValue("x_share", e.target.checked)}
                       />
-                      <Label htmlFor="twitter_share" className="cursor-pointer">Twitterに投稿</Label>
+                      <Label htmlFor="x_share" className="cursor-pointer">X（旧Twitter）に投稿</Label>
                     </div>
                     <div className="text-xs text-muted-foreground ml-auto">
-                      記事公開時にTwitterにも投稿します
+                      記事公開時にX（旧Twitter）にも投稿します
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/10">
