@@ -279,51 +279,51 @@ router.put("/:id", authenticate, async (req: any, res) => {
       return res.status(404).json({ message: "記事が見つからないか、アクセス権限がありません" });
     }
 
-    // 日付データの適切な処理
-    let scheduled_at = null;
-    if (req.body.scheduled_at) {
-      try {
-        scheduled_at = new Date(req.body.scheduled_at);
-      } catch (e) {
-        console.error('Invalid scheduled_at date:', req.body.scheduled_at);
-      }
-    }
-    
-    let published_at = null;
-    if (req.body.published_at) {
-      try {
-        published_at = new Date(req.body.published_at);
-      } catch (e) {
-        console.error('Invalid published_at date:', req.body.published_at);
-      }
-    }
-    
-    // 更新データの検証
-    const validatedData = {
+    // Zodスキーマを使用して正しく日付を扱う
+    // 入力データをスキーマ検証用に準備
+    const inputData = {
       ...req.body,
-      scheduled_at: scheduled_at,
-      published_at: published_at,
-      updated_at: new Date()
+      store_id: req.user.id
     };
-    
-    // デバッグ用ログ
-    console.log('更新データ:', JSON.stringify({
-      id: validatedData.id,
-      title: validatedData.title,
-      status: validatedData.status,
-      scheduled_at: validatedData.scheduled_at,
-      published_at: validatedData.published_at
-    }));
 
-    // 記事の更新
-    const [updatedPost] = await db
-      .update(blogPosts)
-      .set(validatedData)
-      .where(and(
-        eq(blogPosts.id, postId),
-        eq(blogPosts.store_id, req.user.id)
-      ))
-      .returning();
+    try {
+      // スキーマでの検証（ここでDateオブジェクトへの変換も行われる）
+      const validatedData = blogPostSchema.parse(inputData);
+      
+      // 更新日時を設定
+      validatedData.updated_at = new Date();
+      
+      // デバッグ用ログ
+      console.log('スキーマ検証済み更新データ:', JSON.stringify({
+        id: postId,
+        title: validatedData.title,
+        status: validatedData.status,
+        scheduled_at: validatedData.scheduled_at,
+        published_at: validatedData.published_at
+      }, (key, value) => {
+        // Date型を文字列に変換
+        if (value instanceof Date) {
+          return value.toISOString();
+        }
+        return value;
+      }));
+
+      // 記事の更新
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set(validatedData)
+        .where(and(
+          eq(blogPosts.id, postId),
+          eq(blogPosts.store_id, req.user.id)
+        ))
+        .returning();
+    } catch (validationError) {
+      console.error('バリデーションエラー:', validationError);
+      return res.status(400).json({ 
+        message: "入力データが不正です", 
+        details: validationError instanceof Error ? validationError.message : "Unknown validation error" 
+      });
+    }
 
     log('info', 'ブログ記事更新成功', {
       userId: req.user.id,
