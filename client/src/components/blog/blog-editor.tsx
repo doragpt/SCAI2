@@ -267,15 +267,18 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       
       // ReactQuillにコンテンツを強制的に設定（画像サイズを復元）
       setTimeout(() => {
-        // 画像サイズ属性を保持したHTMLを設定
-        const processedContent = preserveImageSizes(initialData.content);
+        // 画像サイズ属性を保持したHTMLを処理 (両方の処理方法を適用)
+        // 新しい処理関数で前処理
+        let processedContent = processQuillContent(initialData.content);
+        // 既存の処理関数でさらに処理
+        processedContent = preserveImageSizes(processedContent);
         
         if (quillRef.current) {
           const quill = quillRef.current.getEditor();
           // HTMLを直接インポート
           quill.clipboard.dangerouslyPasteHTML(processedContent);
-          // フォーム値も同期
-          form.setValue('content', quill.root.innerHTML, { shouldDirty: true });
+          // フォーム値も同期 (処理済みコンテンツを直接使用)
+          form.setValue('content', processedContent, { shouldDirty: true });
           
           // 画像の幅と高さを設定するための追加処理
           setTimeout(() => {
@@ -787,11 +790,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             formats={formats}
                             value={field.value}
                             onChange={(content) => {
-                              // 基本的な変更はそのまま反映
-                              field.onChange(content);
+                              // 基本的な変更を反映する前に画像サイズを処理
+                              // コンテンツを直接処理して画像サイズ属性を保持
+                              const processedContent = processQuillContent(content);
+                              field.onChange(processedContent);
                               
-                              // これ以上の処理は行わない
-                              // 画像サイズはQuillのimageResizeモジュールが自動的に処理する
+                              // 画像サイズはQuillのimageResizeモジュールとカスタム処理の両方で対応
+                              console.log('エディタコンテンツ変更 - 画像サイズを処理しました');
                             }}
                             className="min-h-[400px]"
                           />
