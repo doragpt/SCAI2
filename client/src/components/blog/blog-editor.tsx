@@ -540,13 +540,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             
                             // 現在のエディタ内で選択されているimg要素を見つける
                             // （active クラスが付いているものを探す）
-                            const activeImg = editorRoot.querySelector('img.resizable-image.active');
-                            if (activeImg === img) {
-                              // 現在のimg要素のstyle属性を設定
-                              activeImg.style.width = `${newWidth}px`;
-                              activeImg.style.height = `${newHeight}px`;
-                              activeImg.width = newWidth;
-                              activeImg.height = newHeight;
+                            const activeImg = editorRoot.querySelector('img.resizable-image.active') as HTMLImageElement;
+                            if (activeImg && activeImg === img) {
+                              try {
+                                // 現在のimg要素のstyle属性を設定
+                                activeImg.style.width = `${newWidth}px`;
+                                activeImg.style.height = `${newHeight}px`;
+                                activeImg.width = newWidth;
+                                activeImg.height = newHeight;
+                              } catch (error) {
+                                console.error('属性設定エラー:', error);
+                              }
                             }
                           }
                         } catch (error) {
@@ -643,6 +647,18 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               }
                               
                               console.log("エディタ内の画像サイズを直接更新しました");
+                              
+                              // 重要: フォームの値を更新して永続化（ハンドルを維持したまま）
+                              // この方法では、リサイズが完了してから200ms待ってフォームを更新
+                              // これによりハンドルが消える前に操作完了できる
+                              setTimeout(() => {
+                                // 最新のエディタ内容をフォームに反映（永続化）
+                                form.setValue('content', quill.root.innerHTML, {
+                                  shouldDirty: true,  // フォームを変更済み状態にする
+                                  shouldTouch: true   // フォームにタッチ済み状態にする
+                                });
+                                console.log("フォーム値を更新して変更を永続化しました");
+                              }, 200);
                             }
                           }
                         } catch (error) {
