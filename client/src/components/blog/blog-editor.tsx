@@ -43,7 +43,7 @@ const parseHtml = (html: string) => {
   return parser.parseFromString(html, 'text/html');
 };
 
-// QuillコンテンツのDOM操作用の統合関数（ログ強化版）
+// QuillコンテンツのDOM操作用の統合関数（改善版）
 const processQuillContent = (content: string): string => {
   // 内容が空の場合は空文字を返す
   if (!content) {
@@ -97,6 +97,11 @@ const processQuillContent = (content: string): string => {
         // スタイル属性にも設定
         img.style.height = `${finalHeight}px`;
       }
+      
+      // リサイズ可能なクラスを追加
+      if (!img.classList.contains('resizable-image')) {
+        img.classList.add('resizable-image');
+      }
     });
     
     return tempDiv.innerHTML;
@@ -118,8 +123,8 @@ const modules = {
     ['clean']
   ],
   imageResize: {
-    // 利用するモジュール
-    modules: ['Resize', 'DisplaySize'],
+    // 利用するモジュール（すべてのモジュールを有効化）
+    modules: ['Resize', 'DisplaySize', 'Toolbar', 'BaseModule'],
     // 画像のリサイズハンドル設定
     handleStyles: {
       // 許可する最小・最大サイズ
@@ -127,11 +132,19 @@ const modules = {
       maxWidth: 1200,
       // サイズ表示オプション
       displaySize: true,
-      // 属性の保存方法を指定
+      // 属性の保存方法を指定（すべての属性を保存）
       attributors: {
-        width: 'data-width',
-        height: 'data-height'
-      }
+        // 標準のHTML属性
+        width: 'width',
+        height: 'height',
+        // カスタムデータ属性（バックアップ用）
+        dataWidth: 'data-width',
+        dataHeight: 'data-height',
+        // クラス名も設定
+        class: 'resizable-image'
+      },
+      // サイズ変更後は即座に適用
+      autoApply: true
     }
   }
 };
@@ -514,60 +527,35 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (!content) return '';
     
     try {
-      // 処理中のエラーを防ぐためにDOMParserを使用せず、
-      // 単純な文字列処理のみに依存する
-      
-      // 画像タグを一つずつ探して処理
+      // 処理中のエラーを防ぐためにDOMParserを使用せず、単純な文字列処理のみに依存する
       const imgTagRegex = /<img\s[^>]*>/g;
-      let processedContent = content;
       
       // 全ての画像タグを処理
-      processedContent = processedContent.replace(imgTagRegex, (imgTag) => {
+      const processedContent = content.replace(imgTagRegex, (imgTag) => {
         try {
-          // width属性を探す (width="123")
+          // 各種属性を探す
           const widthMatch = imgTag.match(/width=["'](\d+)["']/);
           const heightMatch = imgTag.match(/height=["'](\d+)["']/);
-          
-          // data-width属性を探す (data-width="123")
           const dataWidthMatch = imgTag.match(/data-width=["'](\d+)["']/);
           const dataHeightMatch = imgTag.match(/data-height=["'](\d+)["']/);
           
-          // スタイル属性を探す (style="width: 123px; height: 456px")
+          // スタイル属性を解析
           const styleMatch = imgTag.match(/style=["']([^"']*)["']/);
-          let styleValue = styleMatch ? styleMatch[1] : '';
-          
+          const styleValue = styleMatch ? styleMatch[1] : '';
           const styleWidthMatch = styleValue.match(/width:\s*(\d+)px/);
           const styleHeightMatch = styleValue.match(/height:\s*(\d+)px/);
           
-          // 優先順位: data-属性 > 通常属性 > スタイル属性
-          let width = null;
-          let height = null;
-          
-          if (dataWidthMatch && dataWidthMatch[1]) {
-            width = dataWidthMatch[1];
-          } else if (widthMatch && widthMatch[1]) {
-            width = widthMatch[1];
-          } else if (styleWidthMatch && styleWidthMatch[1]) {
-            width = styleWidthMatch[1];
-          }
-          
-          if (dataHeightMatch && dataHeightMatch[1]) {
-            height = dataHeightMatch[1];
-          } else if (heightMatch && heightMatch[1]) {
-            height = heightMatch[1];
-          } else if (styleHeightMatch && styleHeightMatch[1]) {
-            height = styleHeightMatch[1];
-          }
+          // 優先順位に従ってサイズを決定
+          const width = dataWidthMatch?.[1] || widthMatch?.[1] || styleWidthMatch?.[1] || null;
+          const height = dataHeightMatch?.[1] || heightMatch?.[1] || styleHeightMatch?.[1] || null;
           
           // サイズ情報がない場合は元のタグを返す
-          if (!width && !height) {
-            return imgTag;
-          }
+          if (!width && !height) return imgTag;
           
-          // 修正したタグ
+          // 修正したタグを構築
           let result = imgTag;
           
-          // width属性を追加/更新
+          // width属性を設定
           if (width) {
             if (result.includes(' width=')) {
               result = result.replace(/width=["'][^"']*["']/i, `width="${width}"`);
@@ -583,7 +571,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             }
           }
           
-          // height属性を追加/更新
+          // height属性を設定
           if (height) {
             if (result.includes(' height=')) {
               result = result.replace(/height=["'][^"']*["']/i, `height="${height}"`);
@@ -599,7 +587,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             }
           }
           
-          // style属性を更新
+          // スタイル属性を構築
           let newStyle = styleValue || '';
           
           if (width) {
@@ -623,6 +611,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             result = result.replace(/style=["'][^"']*["']/i, `style="${newStyle}"`);
           } else {
             result = result.replace('<img ', `<img style="${newStyle}" `);
+          }
+          
+          // class属性を追加（リサイズ可能な画像として識別）
+          if (!result.includes(' class=')) {
+            result = result.replace('<img ', '<img class="resizable-image" ');
+          } else if (!result.includes('resizable-image')) {
+            result = result.replace(/class=["']([^"']*)["']/i, 'class="$1 resizable-image"');
           }
           
           return result;
