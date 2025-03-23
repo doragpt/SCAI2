@@ -512,87 +512,354 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <div className={isPreview ? "hidden" : ""}>
                         {/* CKEditorの代わりにシンプルなテキストエリアを使用 */}
                         <div className="border rounded-md">
-                          <div className="bg-muted p-2 border-b flex items-center gap-2">
-                            <button 
-                              type="button"
-                              className="p-1 hover:bg-muted-foreground/20 rounded"
-                              onClick={() => {
-                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
-                                if (textArea) {
-                                  const start = textArea.selectionStart;
-                                  const end = textArea.selectionEnd;
-                                  const text = textArea.value;
-                                  const beforeText = text.substring(0, start);
-                                  const selectedText = text.substring(start, end);
-                                  const afterText = text.substring(end);
-                                  
-                                  const newText = beforeText + '<strong>' + selectedText + '</strong>' + afterText;
-                                  field.onChange(newText);
-                                  
-                                  // カーソル位置を調整
-                                  setTimeout(() => {
-                                    textArea.focus();
-                                    textArea.setSelectionRange(start + 8, end + 8);
-                                  }, 0);
-                                }
-                              }}
-                              title="太字"
-                            >
-                              <strong>B</strong>
-                            </button>
-                            <button 
-                              type="button"
-                              className="p-1 hover:bg-muted-foreground/20 rounded"
-                              onClick={() => {
-                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
-                                if (textArea) {
-                                  const start = textArea.selectionStart;
-                                  const end = textArea.selectionEnd;
-                                  const text = textArea.value;
-                                  const beforeText = text.substring(0, start);
-                                  const selectedText = text.substring(start, end);
-                                  const afterText = text.substring(end);
-                                  
-                                  const newText = beforeText + '<em>' + selectedText + '</em>' + afterText;
-                                  field.onChange(newText);
-                                  
-                                  // カーソル位置を調整
-                                  setTimeout(() => {
-                                    textArea.focus();
-                                    textArea.setSelectionRange(start + 4, end + 4);
-                                  }, 0);
-                                }
-                              }}
-                              title="斜体"
-                            >
-                              <em>I</em>
-                            </button>
-                            <button 
-                              type="button"
-                              className="p-1 hover:bg-muted-foreground/20 rounded"
-                              onClick={() => {
-                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
-                                if (textArea) {
-                                  const start = textArea.selectionStart;
-                                  const text = textArea.value;
-                                  const beforeText = text.substring(0, start);
-                                  const afterText = text.substring(start);
-                                  
-                                  const newText = beforeText + '<img src="" alt="画像" />' + afterText;
-                                  field.onChange(newText);
-                                  
-                                  // カーソル位置を調整（src=""の中に）
-                                  setTimeout(() => {
-                                    textArea.focus();
-                                    textArea.setSelectionRange(start + 10, start + 10);
-                                  }, 0);
-                                }
-                              }}
-                              title="画像挿入"
-                            >
-                              <ImageIcon className="h-4 w-4" />
-                            </button>
-                            <span className="text-sm text-muted-foreground ml-2">HTML記法が使用できます</span>
+                          <div className="bg-muted p-2 border-b flex flex-wrap items-center gap-2">
+                            {/* スタイルグループ */}
+                            <div className="flex items-center border-r pr-2">
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<strong>' + selectedText + '</strong>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 8, end + 8);
+                                    }, 0);
+                                  }
+                                }}
+                                title="太字"
+                              >
+                                <strong>B</strong>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<em>' + selectedText + '</em>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 4, end + 4);
+                                    }, 0);
+                                  }
+                                }}
+                                title="斜体"
+                              >
+                                <em>I</em>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<u>' + selectedText + '</u>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 3, end + 3);
+                                    }, 0);
+                                  }
+                                }}
+                                title="下線"
+                              >
+                                <u>U</u>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<s>' + selectedText + '</s>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 3, end + 3);
+                                    }, 0);
+                                  }
+                                }}
+                                title="取り消し線"
+                              >
+                                <s>S</s>
+                              </button>
+                            </div>
+                            
+                            {/* 見出しグループ */}
+                            <div className="flex items-center border-r pr-2">
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<h2>' + selectedText + '</h2>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 4, end + 4);
+                                    }, 0);
+                                  }
+                                }}
+                                title="見出し2"
+                              >
+                                <span className="font-bold text-sm">H2</span>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<h3>' + selectedText + '</h3>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 4, end + 4);
+                                    }, 0);
+                                  }
+                                }}
+                                title="見出し3"
+                              >
+                                <span className="font-bold text-sm">H3</span>
+                              </button>
+                            </div>
+                            
+                            {/* リストグループ */}
+                            <div className="flex items-center border-r pr-2">
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    // 行ごとに処理
+                                    const lines = selectedText.split('\n');
+                                    const processedLines = lines.map(line => `<li>${line}</li>`).join('\n');
+                                    const newText = beforeText + '<ul>\n' + processedLines + '\n</ul>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 4, start + 4 + processedLines.length + 6);
+                                    }, 0);
+                                  }
+                                }}
+                                title="箇条書きリスト"
+                              >
+                                <span className="font-bold">•</span>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    // 行ごとに処理
+                                    const lines = selectedText.split('\n');
+                                    const processedLines = lines.map(line => `<li>${line}</li>`).join('\n');
+                                    const newText = beforeText + '<ol>\n' + processedLines + '\n</ol>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 4, start + 4 + processedLines.length + 6);
+                                    }, 0);
+                                  }
+                                }}
+                                title="番号付きリスト"
+                              >
+                                <span className="font-bold">1.</span>
+                              </button>
+                            </div>
+                            
+                            {/* メディアグループ */}
+                            <div className="flex items-center border-r pr-2">
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const afterText = text.substring(start);
+                                    
+                                    const newText = beforeText + '<img src="" alt="画像" width="100%" />' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整（src=""の中に）
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 10, start + 10);
+                                    }, 0);
+                                  }
+                                }}
+                                title="画像挿入"
+                              >
+                                <ImageIcon className="h-4 w-4" />
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end) || 'リンクテキスト';
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<a href="" target="_blank">' + selectedText + '</a>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整（href=""の中に）
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 9, start + 9);
+                                    }, 0);
+                                  }
+                                }}
+                                title="リンク挿入"
+                              >
+                                <span className="underline">URL</span>
+                              </button>
+                            </div>
+                            
+                            {/* 装飾グループ */}
+                            <div className="flex items-center">
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const end = textArea.selectionEnd;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const selectedText = text.substring(start, end);
+                                    const afterText = text.substring(end);
+                                    
+                                    const newText = beforeText + '<blockquote>' + selectedText + '</blockquote>' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 12, end + 12);
+                                    }, 0);
+                                  }
+                                }}
+                                title="引用"
+                              >
+                                <span className="font-bold text-sm">""</span>
+                              </button>
+                              <button 
+                                type="button"
+                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                onClick={() => {
+                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                  if (textArea) {
+                                    const start = textArea.selectionStart;
+                                    const text = textArea.value;
+                                    const beforeText = text.substring(0, start);
+                                    const afterText = text.substring(start);
+                                    
+                                    const newText = beforeText + '<hr />' + afterText;
+                                    field.onChange(newText);
+                                    
+                                    // カーソル位置を調整
+                                    setTimeout(() => {
+                                      textArea.focus();
+                                      textArea.setSelectionRange(start + 6, start + 6);
+                                    }, 0);
+                                  }
+                                }}
+                                title="水平線"
+                              >
+                                <span className="font-bold text-sm">—</span>
+                              </button>
+                            </div>
+
+                            <span className="text-xs text-muted-foreground ml-2">HTML記法が使用できます</span>
                           </div>
                           <textarea
                             id="simple-editor"
