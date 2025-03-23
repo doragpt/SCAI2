@@ -66,21 +66,44 @@ const processQuillContent = (content: string): string => {
       const width = img.getAttribute('width');
       const height = img.getAttribute('height');
       const style = img.getAttribute('style') || '';
+      const dataWidth = img.getAttribute('data-width');
+      const dataHeight = img.getAttribute('data-height');
       
-      // サイズ情報があれば、それを保存
-      if (width || height || style.includes('width') || style.includes('height')) {
-        // リサイズ可能なクラスを追加
-        if (!img.classList.contains('resizable-image')) {
-          img.classList.add('resizable-image');
+      // スタイル属性からサイズを抽出
+      let styleWidth = null;
+      let styleHeight = null;
+      
+      if (style.includes('width')) {
+        const widthMatch = style.match(/width:\s*(\d+)px/);
+        if (widthMatch && widthMatch[1]) {
+          styleWidth = widthMatch[1];
         }
-        
-        // data属性として保存
-        if (width) {
-          img.setAttribute('data-width', width);
+      }
+      
+      if (style.includes('height')) {
+        const heightMatch = style.match(/height:\s*(\d+)px/);
+        if (heightMatch && heightMatch[1]) {
+          styleHeight = heightMatch[1];
         }
-        if (height) {
-          img.setAttribute('data-height', height);
-        }
+      }
+      
+      // リサイズ可能なクラスを追加
+      if (!img.classList.contains('resizable-image')) {
+        img.classList.add('resizable-image');
+      }
+      
+      // 幅と高さを設定（優先順位: 属性 > スタイル > data属性）
+      const finalWidth = width || styleWidth || dataWidth;
+      const finalHeight = height || styleHeight || dataHeight;
+      
+      if (finalWidth) {
+        img.setAttribute('width', finalWidth);
+        img.style.width = `${finalWidth}px`;
+      }
+      
+      if (finalHeight) {
+        img.setAttribute('height', finalHeight);
+        img.style.height = `${finalHeight}px`;
       }
     });
     
