@@ -33,8 +33,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// モジュール登録 (エラーを無視)
-Quill.register('modules/imageResize', ImageResize, true);
+// モジュール登録（再試行とエラーログ付き）
+try {
+  // 既存の登録を削除してからやり直し
+  Quill.register('modules/imageResize', null, true);
+  // 新しく登録し直す
+  Quill.register('modules/imageResize', ImageResize, true);
+  console.log('ImageResizeモジュールを登録しました');
+} catch (err) {
+  console.error('ImageResizeモジュール登録エラー:', err);
+}
 
 // HTMLの解析関数を追加
 const parseHtml = (html: string) => {
