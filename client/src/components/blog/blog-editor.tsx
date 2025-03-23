@@ -374,11 +374,65 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 }
               });
 
-              // カスタムリサイザーを初期化
-              if (!resizer.current && quillElement) {
-                console.log('カスタム画像リサイザーを初期化します');
-                resizer.current = new ImageResizer(quillElement);
-              }
+              // シンプルな画像リサイズ機能の初期化
+              console.log('シンプルな画像リサイズ機能を初期化します');
+              // すべての画像をクリックしたときのイベントを設定
+              images.forEach((img: HTMLImageElement) => {
+                img.classList.add('resizable-image');
+                img.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('画像がクリックされました');
+                  // 既存のアクティブな画像があれば非アクティブに
+                  const prevActive = quillElement.querySelector('.resizable-image.active');
+                  if (prevActive) {
+                    prevActive.classList.remove('active');
+                    // 既存のハンドルを削除
+                    const handles = quillElement.querySelectorAll('.resize-handle');
+                    handles.forEach(handle => handle.remove());
+                  }
+                  
+                  // クリックした画像をアクティブに
+                  img.classList.add('active');
+                  
+                  // リサイズハンドルを追加
+                  const positions = ['nw', 'ne', 'sw', 'se'];
+                  positions.forEach(pos => {
+                    const handle = document.createElement('div');
+                    handle.className = `resize-handle ${pos}`;
+                    quillElement.appendChild(handle);
+                    
+                    // ハンドルの位置を設定
+                    const imgRect = img.getBoundingClientRect();
+                    const editorRect = quillElement.getBoundingClientRect();
+                    
+                    const top = imgRect.top - editorRect.top;
+                    const left = imgRect.left - editorRect.left;
+                    
+                    // ハンドルの位置を設定
+                    switch (pos) {
+                      case 'nw':
+                        handle.style.top = `${top - 6}px`;
+                        handle.style.left = `${left - 6}px`;
+                        break;
+                      case 'ne':
+                        handle.style.top = `${top - 6}px`;
+                        handle.style.left = `${left + imgRect.width - 6}px`;
+                        break;
+                      case 'sw':
+                        handle.style.top = `${top + imgRect.height - 6}px`;
+                        handle.style.left = `${left - 6}px`;
+                        break;
+                      case 'se':
+                        handle.style.top = `${top + imgRect.height - 6}px`;
+                        handle.style.left = `${left + imgRect.width - 6}px`;
+                        break;
+                    }
+                    
+                    console.log(`${pos}ハンドルを追加しました: top=${handle.style.top}, left=${handle.style.left}`);
+                  });
+                });
+              });
             } catch (error) {
               console.error('画像サイズ復元に失敗しました:', error);
             }
@@ -396,10 +450,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // コンポーネントのアンマウント時にリソースを解放
   useEffect(() => {
     return () => {
-      // リサイザーのクリーンアップ
-      if (resizer.current) {
-        resizer.current.destroy();
-        resizer.current = null;
+      // クリーンアップ - リサイズ関連の要素をすべて削除
+      if (quillRef.current) {
+        const quillElement = quillRef.current.getEditor().root;
+        const handles = quillElement.querySelectorAll('.resize-handle');
+        handles.forEach(handle => handle.remove());
+        
+        // イベントリスナもクリーンアップするとよいが、
+        // コンポーネントのアンマウント時にはDOM要素も削除されるため、
+        // イベントリスナは自動的にガベージコレクションされる
       }
     };
   }, []);
