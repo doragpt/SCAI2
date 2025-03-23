@@ -477,32 +477,64 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         let deltaX = moveEvent.clientX - startX;
                         let deltaY = moveEvent.clientY - startY;
                         
+                        // アスペクト比固定モード（Shiftキーで切替）
+                        // Shiftキーを押すと自由リサイズ、通常はアスペクト比固定
+                        const maintainAspectRatio = !moveEvent.shiftKey;
+                        
                         // ポジションごとに処理を変える
                         let newWidth = startWidth;
                         let newHeight = startHeight;
                         
                         switch (pos) {
                           case 'ne':
-                            // 右上の場合：幅を増やし、高さはアスペクト比を維持
+                            // 右上の場合
                             newWidth = startWidth + deltaX;
-                            newHeight = newWidth / aspectRatio;
+                            if (maintainAspectRatio) {
+                              // アスペクト比固定
+                              newHeight = newWidth / aspectRatio;
+                            } else {
+                              // 自由リサイズ
+                              newHeight = startHeight - deltaY;
+                            }
                             break;
                           case 'se':
-                            // 右下の場合：幅と高さを増やす
+                            // 右下の場合
                             newWidth = startWidth + deltaX;
-                            newHeight = startHeight + deltaY;
+                            if (maintainAspectRatio) {
+                              // アスペクト比固定
+                              newHeight = newWidth / aspectRatio;
+                            } else {
+                              // 自由リサイズ
+                              newHeight = startHeight + deltaY;
+                            }
                             break;
                           case 'sw':
-                            // 左下の場合：幅を減らし、高さを増やす
+                            // 左下の場合
                             newWidth = startWidth - deltaX;
-                            newHeight = startHeight + deltaY;
+                            if (maintainAspectRatio) {
+                              // アスペクト比固定
+                              newHeight = newWidth / aspectRatio;
+                            } else {
+                              // 自由リサイズ
+                              newHeight = startHeight + deltaY;
+                            }
                             break;
                           case 'nw':
-                            // 左上の場合：幅と高さを減らす
+                            // 左上の場合
                             newWidth = startWidth - deltaX;
-                            newHeight = startHeight - deltaY;
+                            if (maintainAspectRatio) {
+                              // アスペクト比固定
+                              newHeight = newWidth / aspectRatio;
+                            } else {
+                              // 自由リサイズ
+                              newHeight = startHeight - deltaY;
+                            }
                             break;
                         }
+                        
+                        // リサイズモードをログに出力（デバッグ用）
+                        console.log(`リサイズモード: ${maintainAspectRatio ? 'アスペクト比固定' : '自由リサイズ'}`);
+                        
                         
                         // 最小サイズを設定
                         newWidth = Math.max(50, Math.round(newWidth));
