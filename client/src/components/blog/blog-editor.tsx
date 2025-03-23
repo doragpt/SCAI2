@@ -125,26 +125,88 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   
   // HTML内の画像サイズ属性を保持する機能
   const preserveImageSizes = (html: string): string => {
-    // img要素のwidth/height属性またはstyle属性を保持する処理
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const images = doc.getElementsByTagName('img');
-    
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      // 元の属性を保持
-      const width = img.getAttribute('width');
-      const height = img.getAttribute('height');
-      const style = img.getAttribute('style');
+    try {
+      // 正規表現を使って画像タグを探し、サイズ情報を直接埋め込む
+      const imgPattern = /<img[^>]*>/gi;
       
-      // 属性が存在する場合、data-属性として保存
-      if (width) img.setAttribute('data-width', width);
-      if (height) img.setAttribute('data-height', height);
-      if (style) img.setAttribute('data-style', style);
+      return html.replace(imgPattern, (imgTag) => {
+        // style属性からサイズ情報を抽出
+        const styleMatch = imgTag.match(/style="([^"]*?)"/i);
+        let style = styleMatch ? styleMatch[1] : '';
+        
+        // width/heightスタイルを抽出
+        const widthStyleMatch = style.match(/width:\s*(\d+)px/i);
+        const heightStyleMatch = style.match(/height:\s*(\d+)px/i);
+        
+        // width/height属性を抽出
+        const widthAttrMatch = imgTag.match(/width="(\d+)"/i);
+        const heightAttrMatch = imgTag.match(/height="(\d+)"/i);
+        
+        // サイズ情報を決定（スタイルか属性から）
+        const width = widthStyleMatch ? widthStyleMatch[1] : (widthAttrMatch ? widthAttrMatch[1] : null);
+        const height = heightStyleMatch ? heightStyleMatch[1] : (heightAttrMatch ? heightAttrMatch[1] : null);
+        
+        if (width || height) {
+          // サイズ情報をdata属性としてタグに追加
+          let newImgTag = imgTag;
+          
+          // すでにdata属性がある場合は置き換え、なければ追加
+          if (width) {
+            if (newImgTag.includes('data-width=')) {
+              newImgTag = newImgTag.replace(/data-width="[^"]*"/, `data-width="${width}"`);
+            } else {
+              newImgTag = newImgTag.replace(/<img/, `<img data-width="${width}"`);
+            }
+            
+            // width属性も必ず設定
+            if (newImgTag.includes('width=')) {
+              newImgTag = newImgTag.replace(/width="[^"]*"/, `width="${width}"`);
+            } else {
+              newImgTag = newImgTag.replace(/<img/, `<img width="${width}"`);
+            }
+          }
+          
+          if (height) {
+            if (newImgTag.includes('data-height=')) {
+              newImgTag = newImgTag.replace(/data-height="[^"]*"/, `data-height="${height}"`);
+            } else {
+              newImgTag = newImgTag.replace(/<img/, `<img data-height="${height}"`);
+            }
+            
+            // height属性も必ず設定
+            if (newImgTag.includes('height=')) {
+              newImgTag = newImgTag.replace(/height="[^"]*"/, `height="${height}"`);
+            } else {
+              newImgTag = newImgTag.replace(/<img/, `<img height="${height}"`);
+            }
+          }
+          
+          // style属性にもサイズを確実に含める
+          let newStyle = style;
+          if (width && !newStyle.includes('width:')) {
+            newStyle += `; width: ${width}px`;
+          }
+          if (height && !newStyle.includes('height:')) {
+            newStyle += `; height: ${height}px`;
+          }
+          
+          if (newStyle !== style) {
+            if (styleMatch) {
+              newImgTag = newImgTag.replace(/style="[^"]*"/, `style="${newStyle}"`);
+            } else {
+              newImgTag = newImgTag.replace(/<img/, `<img style="${newStyle}"`);
+            }
+          }
+          
+          return newImgTag;
+        }
+        
+        return imgTag;
+      });
+    } catch (error) {
+      console.error('画像サイズ保持処理でエラーが発生しました:', error);
+      return html; // エラー時は元のHTMLをそのまま返す
     }
-    
-    // HTML文字列に変換して返す
-    return doc.body.innerHTML;
   };
   
   // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
@@ -289,44 +351,108 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
-  // 画像サイズ属性を復元する関数
+  // 送信前に画像サイズ属性を復元・強化する関数
   const restoreImageSizes = (content: string): string => {
     if (!content) return '';
     
-    // HTMLをパース
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, 'text/html');
-    const images = doc.getElementsByTagName('img');
-    
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
+    try {
+      // 正規表現を使って画像タグを直接操作（より確実）
+      const imgRegex = /<img[^>]*>/gi;
       
-      // data-属性から元のサイズを取得して復元
-      const dataWidth = img.getAttribute('data-width');
-      const dataHeight = img.getAttribute('data-height');
-      const dataStyle = img.getAttribute('data-style');
-      
-      // width/height属性の復元
-      if (dataWidth) img.setAttribute('width', dataWidth);
-      if (dataHeight) img.setAttribute('height', dataHeight);
-      if (dataStyle) img.setAttribute('style', dataStyle);
-      
-      // img要素のstyle属性に直接サイズ情報を追加
-      const style = img.getAttribute('style') || '';
-      const widthMatch = style.match(/width:\s*(\d+)px/);
-      const heightMatch = style.match(/height:\s*(\d+)px/);
-      
-      if (widthMatch && heightMatch) {
-        const width = widthMatch[1];
-        const height = heightMatch[1];
+      return content.replace(imgRegex, (imgTag) => {
+        // 各種属性から情報を取得
+        const widthAttrMatch = imgTag.match(/width=["'](\d+)["']/i);
+        const heightAttrMatch = imgTag.match(/height=["'](\d+)["']/i);
+        const dataWidthMatch = imgTag.match(/data-width=["'](\d+)["']/i);
+        const dataHeightMatch = imgTag.match(/data-height=["'](\d+)["']/i);
+        const styleMatch = imgTag.match(/style=["']([^"']*)["']/i);
         
-        // width/height属性も設定
-        img.setAttribute('width', width);
-        img.setAttribute('height', height);
-      }
+        let style = styleMatch ? styleMatch[1] : '';
+        const widthStyleMatch = style.match(/width:\s*(\d+)px/i);
+        const heightStyleMatch = style.match(/height:\s*(\d+)px/i);
+        
+        // 利用可能なすべてのソースから最も信頼性の高いサイズ情報を取得
+        const width = dataWidthMatch ? dataWidthMatch[1] : 
+                      widthAttrMatch ? widthAttrMatch[1] : 
+                      widthStyleMatch ? widthStyleMatch[1] : null;
+                      
+        const height = dataHeightMatch ? dataHeightMatch[1] : 
+                       heightAttrMatch ? heightAttrMatch[1] : 
+                       heightStyleMatch ? heightStyleMatch[1] : null;
+        
+        if (width || height) {
+          let newTag = imgTag;
+          
+          // 強制的にすべての属性を一度に追加（重複しても良い）
+          if (width) {
+            // width属性が存在するか確認し、なければ追加
+            if (!newTag.match(/\swidth=["']/i)) {
+              newTag = newTag.replace('<img', `<img width="${width}"`);
+            } else {
+              newTag = newTag.replace(/width=["'][^"']*["']/i, `width="${width}"`);
+            }
+            
+            // data-width属性も設定
+            if (!newTag.match(/\sdata-width=["']/i)) {
+              newTag = newTag.replace('<img', `<img data-width="${width}"`);
+            } else {
+              newTag = newTag.replace(/data-width=["'][^"']*["']/i, `data-width="${width}"`);
+            }
+          }
+          
+          if (height) {
+            // height属性が存在するか確認し、なければ追加
+            if (!newTag.match(/\sheight=["']/i)) {
+              newTag = newTag.replace('<img', `<img height="${height}"`);
+            } else {
+              newTag = newTag.replace(/height=["'][^"']*["']/i, `height="${height}"`);
+            }
+            
+            // data-height属性も設定
+            if (!newTag.match(/\sdata-height=["']/i)) {
+              newTag = newTag.replace('<img', `<img data-height="${height}"`);
+            } else {
+              newTag = newTag.replace(/data-height=["'][^"']*["']/i, `data-height="${height}"`);
+            }
+          }
+          
+          // スタイル属性を設定
+          let newStyle = style;
+          
+          // width をスタイルに追加
+          if (width) {
+            if (!newStyle.includes('width:')) {
+              newStyle += (newStyle ? '; ' : '') + `width: ${width}px`;
+            } else {
+              newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${width}px`);
+            }
+          }
+          
+          // height をスタイルに追加
+          if (height) {
+            if (!newStyle.includes('height:')) {
+              newStyle += (newStyle ? '; ' : '') + `height: ${height}px`;
+            } else {
+              newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${height}px`);
+            }
+          }
+          
+          // style属性を更新
+          if (styleMatch) {
+            newTag = newTag.replace(/style=["'][^"']*["']/i, `style="${newStyle}"`);
+          } else {
+            newTag = newTag.replace('<img', `<img style="${newStyle}"`);
+          }
+          
+          return newTag;
+        }
+        
+        return imgTag;
+      });
+    } catch (error) {
+      console.error('画像サイズ復元処理でエラーが発生しました:', error);
+      return content; // エラーの場合は元のコンテンツを返す
     }
-    
-    return doc.body.innerHTML;
   };
 
   const handleSubmit = useCallback(async (isDraft: boolean = false) => {
@@ -512,38 +638,83 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             formats={formats}
                             value={field.value}
                             onChange={(content) => {
-                              // Quillエディタの変更を処理
-                              field.onChange(content);
-                              
-                              // 画像サイズの変更を監視して保存
-                              if (quillRef.current) {
-                                const quill = quillRef.current.getEditor();
-                                const editorContainer = quill.root;
+                              try {
+                                // まず、画像サイズ情報を保持する処理を適用
+                                const processedContent = preserveImageSizes(content);
                                 
-                                // 画像要素にサイズ情報を保存
-                                const images = editorContainer.querySelectorAll('img');
-                                images.forEach((img: HTMLImageElement) => {
-                                  if (img.style.width || img.style.height) {
-                                    // width/height属性も設定
-                                    if (img.style.width) {
-                                      img.setAttribute('width', img.style.width.replace('px', ''));
-                                    }
-                                    if (img.style.height) {
-                                      img.setAttribute('height', img.style.height.replace('px', ''));
-                                    }
+                                // 処理済みのコンテンツでフォームを更新
+                                field.onChange(processedContent);
+                                
+                                // 画像サイズの変更を監視してDOMにも直接反映
+                                if (quillRef.current) {
+                                  const quill = quillRef.current.getEditor();
+                                  const editorContainer = quill.root;
+                                  
+                                  // すべての画像を処理
+                                  setTimeout(() => {
+                                    const images = editorContainer.querySelectorAll('img');
                                     
-                                    // data-属性にも保存
-                                    if (img.style.width) {
-                                      img.setAttribute('data-width', img.style.width.replace('px', ''));
-                                    }
-                                    if (img.style.height) {
-                                      img.setAttribute('data-height', img.style.height.replace('px', ''));
-                                    }
-                                    if (img.getAttribute('style')) {
-                                      img.setAttribute('data-style', img.getAttribute('style') || '');
-                                    }
-                                  }
-                                });
+                                    images.forEach((img: HTMLImageElement) => {
+                                      // data-属性からサイズ情報を取得
+                                      const dataWidth = img.getAttribute('data-width');
+                                      const dataHeight = img.getAttribute('data-height');
+                                      
+                                      // style属性から直接サイズを抽出
+                                      const style = img.getAttribute('style') || '';
+                                      const widthStyleMatch = style.match(/width:\s*(\d+)px/i);
+                                      const heightStyleMatch = style.match(/height:\s*(\d+)px/i);
+                                      
+                                      // width/height属性を取得
+                                      const width = img.getAttribute('width');
+                                      const height = img.getAttribute('height');
+                                      
+                                      // 最も信頼性の高い情報源からサイズを決定
+                                      const finalWidth = dataWidth || 
+                                                         (widthStyleMatch ? widthStyleMatch[1] : null) || 
+                                                         width;
+                                      
+                                      const finalHeight = dataHeight || 
+                                                          (heightStyleMatch ? heightStyleMatch[1] : null) || 
+                                                          height;
+                                      
+                                      // 確実にすべての属性とスタイルを設定
+                                      if (finalWidth) {
+                                        img.setAttribute('width', finalWidth);
+                                        img.setAttribute('data-width', finalWidth);
+                                        
+                                        // style属性を更新
+                                        let newStyle = img.getAttribute('style') || '';
+                                        if (!newStyle.includes('width:')) {
+                                          newStyle += `${newStyle ? '; ' : ''}width: ${finalWidth}px`;
+                                        } else {
+                                          newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${finalWidth}px`);
+                                        }
+                                        img.setAttribute('style', newStyle);
+                                      }
+                                      
+                                      if (finalHeight) {
+                                        img.setAttribute('height', finalHeight);
+                                        img.setAttribute('data-height', finalHeight);
+                                        
+                                        // style属性を更新
+                                        let newStyle = img.getAttribute('style') || '';
+                                        if (!newStyle.includes('height:')) {
+                                          newStyle += `${newStyle ? '; ' : ''}height: ${finalHeight}px`;
+                                        } else {
+                                          newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${finalHeight}px`);
+                                        }
+                                        img.setAttribute('style', newStyle);
+                                      }
+                                    });
+                                    
+                                    // Quillが画像を処理し直した後にフォーム値を更新
+                                    field.onChange(editorContainer.innerHTML);
+                                  }, 10);
+                                }
+                              } catch (error) {
+                                console.error('画像サイズ保持処理エラー:', error);
+                                // エラー時は通常の処理のみ
+                                field.onChange(content);
                               }
                             }}
                             className="min-h-[400px]"
