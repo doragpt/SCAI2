@@ -37,7 +37,9 @@ import {
   Eye, 
   PlusCircle, 
   Trash2, 
-  UploadCloud, 
+  UploadCloud,
+  Info,
+  X, 
   Image,
   PenLine
 } from "lucide-react";
@@ -415,15 +417,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     className="h-9"
                   >
                     <Clock className="mr-2 h-4 w-4" />
-                    {showScheduleSection ? "日時設定を閉じる" : "投稿日時設定"}
-                  </Button>
-                  <Button 
-                    type="button"
-                    onClick={addScheduleDate}
-                    className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    日時を追加
+                    投稿日時設定
                   </Button>
                 </div>
               </div>
@@ -445,10 +439,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       <option value="2">スタッフ紹介</option>
                       <option value="3">店舗の特徴</option>
                       <option value="4">福利厚生</option>
-                      <option value="5">メンバー募集</option>
-                      <option value="6">応募資格</option>
+                      <option value="5">キャストさん募集</option>
+                      <option value="6">採用条件</option>
                       <option value="7">お客様について</option>
-                      <option value="8">業務案内</option>
+                      <option value="8">お仕事内容</option>
                       <option value="9">日常の出来事</option>
                     </select>
                   </div>
@@ -669,82 +663,102 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </CardFooter>
           </Card>
           
-          {/* 日時設定セクション - ガールズヘブンスタイル改良版 */}
+          {/* 日時設定セクション - ガールズヘブンスタイル（UI改良版） */}
           {showScheduleSection && (
-            <Card className="mt-4">
-              <CardHeader className="pb-3 border-b">
+            <Card className="mt-4 border border-primary/20">
+              <CardHeader className="pb-3 border-b bg-primary/5">
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-xl">投稿日時設定</CardTitle>
                     <CardDescription className="mt-1.5">
-                      現在の日時に設定すると即時公開されます。複数の日時を指定すると、同じ記事が指定した日時にそれぞれ公開されます。
+                      予約投稿を設定します。複数の日時を指定すると同じ記事が指定した日時に公開されます。
                     </CardDescription>
                   </div>
-                  <Button 
-                    type="button"
-                    onClick={addScheduleDate}
-                    className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    日時を追加
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200">
+                      <Clock className="inline-block mr-1 h-3 w-3" />
+                      投稿日時: {scheduleDates.length}件
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={addScheduleDate}
+                      className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      日時を追加
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="py-5">
                 {scheduleDates.length === 0 ? (
-                  <div className="text-center p-8 border border-dashed rounded-md text-muted-foreground">
+                  <div className="text-center p-8 border border-dashed rounded-md text-muted-foreground bg-muted/5">
                     <Clock className="mx-auto h-10 w-10 mb-3 opacity-50" />
                     <p className="font-medium text-base">投稿日時が設定されていません</p>
                     <p className="text-sm mt-1">「日時を追加」ボタンをクリックして投稿日時を設定してください</p>
+                    <Button 
+                      type="button"
+                      onClick={addScheduleDate}
+                      className="mt-4 h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      日時を追加
+                    </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {scheduleDates.map((date, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
-                              {index + 1}
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
-                              <div className="flex items-center space-x-2 flex-1">
-                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                <input
-                                  type="datetime-local"
-                                  className="flex-1 border rounded-md px-3 py-2"
-                                  min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                                  value={format(date, "yyyy-MM-dd'T'HH:mm")}
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      updateScheduleDate(index, new Date(e.target.value));
-                                    }
-                                  }}
-                                />
+                  <div>
+                    <div className="mb-4 bg-blue-50 text-blue-800 rounded-md p-3 border border-blue-100 text-sm">
+                      <i className="inline-block mr-2">ℹ️</i>
+                      日時の設定が完了したら「予約投稿を確定」ボタンをクリックしてください。
+                    </div>
+                    <div className="space-y-4">
+                      {scheduleDates.map((date, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                                {index + 1}
                               </div>
-                              <div className="text-sm text-muted-foreground hidden sm:block">
-                                {format(date, "yyyy年MM月dd日 HH:mm")} に投稿
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                                <div className="flex items-center space-x-2 flex-1">
+                                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                  <input
+                                    type="datetime-local"
+                                    className="flex-1 border rounded-md px-3 py-2"
+                                    min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                                    value={format(date, "yyyy-MM-dd'T'HH:mm")}
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        updateScheduleDate(index, new Date(e.target.value));
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                <div className="text-sm font-medium text-primary hidden sm:block">
+                                  {format(date, "yyyy年MM月dd日 HH:mm")} に投稿
+                                </div>
                               </div>
                             </div>
                           </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeScheduleDate(index)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">削除</span>
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeScheduleDate(index)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">削除</span>
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="pt-1 border-t flex justify-between">
+              <CardFooter className="pt-4 pb-4 border-t flex justify-between bg-muted/5">
                 <div className="flex items-center">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm font-medium text-muted-foreground">
                     {scheduleDates.length > 0 ? 
                       `${scheduleDates.length}件の投稿スケジュールが設定されています` : 
                       '投稿スケジュールを設定してください'}
@@ -755,14 +769,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     type="button"
                     variant="outline"
                     onClick={toggleScheduleSection}
+                    className="border-muted-foreground/30"
                   >
+                    <span className="mr-2">✕</span>
                     閉じる
                   </Button>
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="default"
                     onClick={handleMultiSchedule}
                     disabled={scheduleDates.length === 0}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Calendar className="mr-2 h-4 w-4" />
                     予約投稿を確定
