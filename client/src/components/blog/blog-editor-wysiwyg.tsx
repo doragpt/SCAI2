@@ -418,19 +418,19 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     className={`h-9 ${showScheduleSection ? 'bg-primary/10 border-primary text-primary' : ''}`}
                   >
                     <Clock className="mr-2 h-4 w-4" />
-                    投稿日時設定
+                    予約投稿日時設定
                   </Button>
                 </div>
               </div>
             </CardHeader>
             
-            {/* 投稿日時設定 - ガールズヘブン風ドロップダウン方式 (ヘッダー直下に配置) */}
+            {/* 予約投稿日時設定 - ガールズヘブン風ドロップダウン方式 (ヘッダー直下に配置) */}
             {showScheduleSection && (
               <div className="border-b border-primary/20 bg-primary/5 px-6 py-4">
                 <div className="mb-3">
                   <h3 className="text-base font-medium flex items-center mb-1">
                     <Calendar className="mr-2 h-4 w-4 text-primary" />
-                    投稿日時設定
+                    予約投稿日時設定
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     設定した日時に自動で公開されます
@@ -486,7 +486,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       className="h-8 border-primary/30 text-primary hover:bg-primary/5"
                     >
                       <Plus className="mr-1 h-3.5 w-3.5" />
-                      追加
+                      +複数投稿追加
                     </Button>
                     
                     <Button
@@ -735,7 +735,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </CardFooter>
           </Card>
           
-          {/* 以前の投稿日時設定セクションは上部に移動しました */}
+          {/* 以前の予約投稿日時設定セクションは上部に移動しました */}
           
           {/* 従来の単一予約投稿モーダル */}
           {isScheduling && (
