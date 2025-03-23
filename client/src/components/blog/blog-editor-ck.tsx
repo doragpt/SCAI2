@@ -196,10 +196,8 @@ interface BlogEditorProps {
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
-  const [editorInstance, setEditorInstance] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const editorRef = useRef<any>(null);
 
   // デフォルト値を設定
   const defaultValues = initialData ? {
@@ -298,12 +296,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const onSubmit = (values: BlogPost) => {
     console.log('送信データ:', values);
 
-    // 最新のエディタ内容を取得して処理
-    if (editorInstance) {
-      const content = editorInstance.getData();
-      const processedContent = processEditorContent(content);
-      values.content = processedContent;
-    }
+    // HTMLコンテンツの簡易処理（必要に応じて）
+    values.content = processEditorContent(values.content || '');
 
     // 下書き保存の場合（status='draft'）
     saveMutation.mutate(values);
@@ -313,12 +307,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handlePublish = () => {
     const values = form.getValues();
     
-    // 最新のエディタ内容を取得して処理
-    if (editorInstance) {
-      const content = editorInstance.getData();
-      const processedContent = processEditorContent(content);
-      values.content = processedContent;
-    }
+    // HTMLコンテンツの簡易処理（必要に応じて）
+    values.content = processEditorContent(values.content || '');
     
     const data = { ...values, status: "published" as const };
     
@@ -335,12 +325,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const handleSchedule = (date: Date) => {
     const values = form.getValues();
     
-    // 最新のエディタ内容を取得して処理
-    if (editorInstance) {
-      const content = editorInstance.getData();
-      const processedContent = processEditorContent(content);
-      values.content = processedContent;
-    }
+    // HTMLコンテンツの簡易処理（必要に応じて）
+    values.content = processEditorContent(values.content || '');
     
     const data = {
       ...values,
@@ -524,43 +510,98 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormLabel>内容</FormLabel>
                     <FormControl>
                       <div className={isPreview ? "hidden" : ""}>
-                        <CKEditor
-                          editor={ClassicEditor}
-                          config={{
-                            ...editorConfig,
-                            // CKEditorプラグインをファクトリー関数で登録
-                            extraPlugins: [CustomUploadAdapterPlugin]
-                          }}
-                          data={field.value || ''}
-                          onReady={(editor: any) => {
-                            try {
-                              // エディターインスタンスを保存
-                              editorRef.current = editor;
-                              setEditorInstance(editor);
-                              
-                              // デバッグ情報
-                              console.log('CKEditor準備完了 - 利用可能なプラグイン:', 
-                                editor.plugins ? Array.from(editor.plugins.names()) : 'プラグイン情報なし');
-                              
-                              // バージョン情報出力
-                              if (editor.context && editor.context.version) {
-                                console.log('CKEditorバージョン:', editor.context.version);
-                              }
-                            } catch (error) {
-                              console.error('CKEditor準備エラー:', error);
-                            }
-                          }}
-                          onChange={(event: any, editor: any) => {
-                            try {
-                              // エディタ内容を取得
-                              const data = editor.getData();
-                              console.log('エディタ内容更新:', data.length, 'バイト');
-                              field.onChange(data);
-                            } catch (error) {
-                              console.error('エディタ内容更新エラー:', error);
-                            }
-                          }}
-                        />
+                        {/* CKEditorの代わりにシンプルなテキストエリアを使用 */}
+                        <div className="border rounded-md">
+                          <div className="bg-muted p-2 border-b flex items-center gap-2">
+                            <button 
+                              type="button"
+                              className="p-1 hover:bg-muted-foreground/20 rounded"
+                              onClick={() => {
+                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                if (textArea) {
+                                  const start = textArea.selectionStart;
+                                  const end = textArea.selectionEnd;
+                                  const text = textArea.value;
+                                  const beforeText = text.substring(0, start);
+                                  const selectedText = text.substring(start, end);
+                                  const afterText = text.substring(end);
+                                  
+                                  const newText = beforeText + '<strong>' + selectedText + '</strong>' + afterText;
+                                  field.onChange(newText);
+                                  
+                                  // カーソル位置を調整
+                                  setTimeout(() => {
+                                    textArea.focus();
+                                    textArea.setSelectionRange(start + 8, end + 8);
+                                  }, 0);
+                                }
+                              }}
+                              title="太字"
+                            >
+                              <strong>B</strong>
+                            </button>
+                            <button 
+                              type="button"
+                              className="p-1 hover:bg-muted-foreground/20 rounded"
+                              onClick={() => {
+                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                if (textArea) {
+                                  const start = textArea.selectionStart;
+                                  const end = textArea.selectionEnd;
+                                  const text = textArea.value;
+                                  const beforeText = text.substring(0, start);
+                                  const selectedText = text.substring(start, end);
+                                  const afterText = text.substring(end);
+                                  
+                                  const newText = beforeText + '<em>' + selectedText + '</em>' + afterText;
+                                  field.onChange(newText);
+                                  
+                                  // カーソル位置を調整
+                                  setTimeout(() => {
+                                    textArea.focus();
+                                    textArea.setSelectionRange(start + 4, end + 4);
+                                  }, 0);
+                                }
+                              }}
+                              title="斜体"
+                            >
+                              <em>I</em>
+                            </button>
+                            <button 
+                              type="button"
+                              className="p-1 hover:bg-muted-foreground/20 rounded"
+                              onClick={() => {
+                                const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
+                                if (textArea) {
+                                  const start = textArea.selectionStart;
+                                  const text = textArea.value;
+                                  const beforeText = text.substring(0, start);
+                                  const afterText = text.substring(start);
+                                  
+                                  const newText = beforeText + '<img src="" alt="画像" />' + afterText;
+                                  field.onChange(newText);
+                                  
+                                  // カーソル位置を調整（src=""の中に）
+                                  setTimeout(() => {
+                                    textArea.focus();
+                                    textArea.setSelectionRange(start + 10, start + 10);
+                                  }, 0);
+                                }
+                              }}
+                              title="画像挿入"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                            </button>
+                            <span className="text-sm text-muted-foreground ml-2">HTML記法が使用できます</span>
+                          </div>
+                          <textarea
+                            id="simple-editor"
+                            className="w-full min-h-[400px] p-4 outline-none resize-y"
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            placeholder="ここに記事を入力してください..."
+                          />
+                        </div>
                       </div>
                     </FormControl>
                     {isPreview && (
