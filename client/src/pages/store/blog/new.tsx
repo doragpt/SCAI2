@@ -1,4 +1,4 @@
-import { BlogEditor } from "@/components/blog/blog-editor-ck";
+import { BlogEditor } from "@/components/blog/blog-editor-wysiwyg";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
@@ -22,6 +22,6 @@ export default function NewBlogPost() {
     return <Redirect to="/store/dashboard" />;
   }
 
-  // CKEditorを直接使用
+  // WYSIWYGエディターを使用
   return <BlogEditor />;
 }

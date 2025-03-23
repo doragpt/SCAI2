@@ -1,11 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Redirect } from "wouter";
-import { BlogEditor } from "@/components/blog/blog-editor-ck";
+import { BlogEditor } from "@/components/blog/blog-editor-wysiwyg";
 import { useAuth } from "@/hooks/use-auth";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
-import { type BlogPost } from "@shared/schema";
 import { AlertCircle, Loader2 } from "lucide-react";
+
+// BlogPost型の定義
+interface BlogPost {
+  id?: number;
+  store_id?: number;
+  title: string;
+  content: string;
+  status: 'draft' | 'published' | 'scheduled';
+  published_at?: Date | null;
+  scheduled_at?: Date | null;
+  thumbnail?: string | null;
+  images?: string[] | null;
+  created_at?: Date;
+  updated_at?: Date;
+}
 
 export default function EditBlogPost() {
   const { user, isLoading: authLoading } = useAuth();
@@ -54,6 +68,6 @@ export default function EditBlogPost() {
     );
   }
 
-  // CKEditorを直接使用
+  // WYSIWYGエディターを使用
   return <BlogEditor postId={postId} initialData={post} />;
 }
