@@ -36,7 +36,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// CKEditorの設定
+/**
+ * CKEditorのカスタム設定
+ * エディター全体の振る舞いを制御します
+ */
 const editorConfig = {
   // 基本ツールバー
   toolbar: {
@@ -64,39 +67,15 @@ const editorConfig = {
   language: 'ja',
   // 画像関連設定
   image: {
-    // 画像スタイル
-    styles: [
-      'alignLeft', 
-      'alignCenter', 
-      'alignRight'
-    ],
     // 画像ツールバー
     toolbar: [
-      'imageStyle:alignLeft', 
-      'imageStyle:alignCenter', 
-      'imageStyle:alignRight',
-      '|',
       'imageTextAlternative',
       '|',
-      'resizeImage'
+      'toggleImageCaption',
+      'imageStyle:alignLeft',
+      'imageStyle:alignCenter',
+      'imageStyle:alignRight'
     ],
-    resizeOptions: [
-      {
-        name: 'resizeImage:original',
-        label: 'オリジナル',
-        value: null
-      },
-      {
-        name: 'resizeImage:50',
-        label: '50%',
-        value: '50'
-      },
-      {
-        name: 'resizeImage:75',
-        label: '75%',
-        value: '75'
-      }
-    ]
   },
   // テーブル設定
   table: {
