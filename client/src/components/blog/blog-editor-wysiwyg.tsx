@@ -626,7 +626,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           <div className="text-xs text-muted-foreground">
                             サムネイル画像は記事一覧に表示されます。
                             <br />
-                            最適なサイズは 800×450px です。
+                            最適なサイズは 240×320px です。
                           </div>
                         </div>
                         {thumbnailUrl && (
