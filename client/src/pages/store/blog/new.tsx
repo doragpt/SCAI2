@@ -1,5 +1,7 @@
+import { BlogEditor } from "@/components/blog/blog-editor-ck";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
+import { Loader2 } from "lucide-react";
 
 export default function NewBlogPost() {
   const { user, isLoading } = useAuth();
@@ -8,7 +10,7 @@ export default function NewBlogPost() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
           <p className="mt-2 text-sm text-muted-foreground">読み込み中...</p>
         </div>
       </div>
@@ -20,6 +22,6 @@ export default function NewBlogPost() {
     return <Redirect to="/store/dashboard" />;
   }
 
-  // CKEditorを使用する新しい記事作成ページにリダイレクト
-  return <Redirect to="/store/blog/new-ck" />;
+  // CKEditorを直接使用
+  return <BlogEditor />;
 }

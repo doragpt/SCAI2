@@ -295,7 +295,7 @@ export default function BlogManagement() {
             </div>
             <div className="flex gap-2">
               <Button asChild>
-                <Link href="/store/blog/new-ck">
+                <Link href="/store/blog/new">
                   <FilePlus className="h-4 w-4 mr-2" />
                   新規記事作成
                 </Link>
@@ -457,7 +457,7 @@ export default function BlogManagement() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => setLocation(`/store/blog/edit-ck/${post.id}`)}
+                              onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               編集
