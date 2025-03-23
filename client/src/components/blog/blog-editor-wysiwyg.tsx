@@ -190,7 +190,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     mutationFn: (data: BlogPost) =>
       apiRequest(
         postId ? "PUT" : "POST",
-        `/api/blog/posts${postId ? `/${postId}` : ""}`,
+        `/api/blog${postId ? `/${postId}` : ""}`,
         { ...data, status: "draft" }
       ),
     onSuccess: (data) => {
@@ -217,7 +217,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     mutationFn: (data: BlogPost) => 
       apiRequest(
         postId ? "PUT" : "POST",
-        `/api/blog/posts${postId ? `/${postId}` : ""}`,
+        `/api/blog${postId ? `/${postId}` : ""}`,
         { ...data, status: "published" }
       ),
     onSuccess: () => {
@@ -312,7 +312,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     
     apiRequest(
       postId ? "PUT" : "POST",
-      `/api/blog/posts${postId ? `/${postId}` : ""}`,
+      `/api/blog${postId ? `/${postId}` : ""}`,
       { 
         ...values, 
         status: "scheduled",
@@ -362,7 +362,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         // 最初の日時は既存の投稿を更新
         await apiRequest(
           "PUT",
-          `/api/blog/posts/${postId}`,
+          `/api/blog/${postId}`,
           { 
             ...basePost, 
             scheduled_at: scheduleDates[0].toISOString()
@@ -373,7 +373,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         for (let i = 1; i < scheduleDates.length; i++) {
           await apiRequest(
             "POST",
-            "/api/blog/posts",
+            "/api/blog",
             { 
               ...basePost, 
               scheduled_at: scheduleDates[i].toISOString()
@@ -385,7 +385,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         for (let i = 0; i < scheduleDates.length; i++) {
           await apiRequest(
             "POST",
-            "/api/blog/posts",
+            "/api/blog",
             { 
               ...basePost, 
               scheduled_at: scheduleDates[i].toISOString()
