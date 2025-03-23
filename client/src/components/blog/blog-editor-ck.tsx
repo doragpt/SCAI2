@@ -40,36 +40,49 @@ import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye
 /**
  * CKEditorのカスタム設定
  * エディター全体の振る舞いを制御します
+ * Classic buildのデフォルト機能に合わせて最適化
  */
 const editorConfig = {
-  // 基本ツールバー
-  toolbar: [
-    'heading',
-    '|',
-    'bold',
-    'italic',
-    'link',
-    'bulletedList',
-    'numberedList',
-    '|',
-    'indent',
-    'outdent',
-    '|',
-    'imageUpload',
-    'blockQuote',
-    'insertTable',
-    'undo',
-    'redo'
-  ],
+  // 基本ツールバー - ClassicEditorのビルドに含まれる機能のみ使用
+  toolbar: {
+    items: [
+      'heading',
+      '|',
+      'bold',
+      'italic',
+      'link',
+      'bulletedList',
+      'numberedList',
+      '|',
+      'indent',
+      'outdent',
+      '|',
+      'imageUpload',
+      'blockQuote',
+      'insertTable',
+      'undo',
+      'redo'
+    ]
+  },
   // 言語設定
   language: 'ja',
-  // 画像関連設定
+  // 画像関連設定 - ClassicEditorのデフォルトスタイルに合わせる
   image: {
+    styles: {
+      // ClassicEditorが対応している画像スタイル
+      options: [
+        'default', // デフォルト（フル幅）
+        'alignLeft', // 左寄せ
+        'alignCenter', // 中央寄せ
+        'alignRight' // 右寄せ
+      ]
+    },
     toolbar: [
-      'imageTextAlternative',
-      'imageStyle:inline',
-      'imageStyle:block',
-      'imageStyle:side'
+      'imageStyle:alignLeft',
+      'imageStyle:alignCenter',
+      'imageStyle:alignRight',
+      '|',
+      'imageTextAlternative'
     ]
   },
   // テーブル設定
@@ -515,27 +528,31 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           editor={ClassicEditor}
                           config={{
                             ...editorConfig,
-                            extraPlugins: [(editor: any) => {
-                              try {
-                                return CustomUploadAdapterPlugin(editor);
-                              } catch (error) {
-                                console.error('CustomUploadAdapterPlugin初期化エラー:', error);
-                                return null;
-                              }
-                            }]
+                            // CKEditorプラグインをファクトリー関数で登録
+                            extraPlugins: [CustomUploadAdapterPlugin]
                           }}
                           data={field.value || ''}
                           onReady={(editor: any) => {
                             try {
+                              // エディターインスタンスを保存
                               editorRef.current = editor;
                               setEditorInstance(editor);
-                              console.log('CKEditor準備完了:', editor);
+                              
+                              // デバッグ情報
+                              console.log('CKEditor準備完了 - 利用可能なプラグイン:', 
+                                editor.plugins ? Array.from(editor.plugins.names()) : 'プラグイン情報なし');
+                              
+                              // バージョン情報出力
+                              if (editor.context && editor.context.version) {
+                                console.log('CKEditorバージョン:', editor.context.version);
+                              }
                             } catch (error) {
                               console.error('CKEditor準備エラー:', error);
                             }
                           }}
-                          onChange={(_event: any, editor: any) => {
+                          onChange={(event: any, editor: any) => {
                             try {
+                              // エディタ内容を取得
                               const data = editor.getData();
                               console.log('エディタ内容更新:', data.length, 'バイト');
                               field.onChange(data);

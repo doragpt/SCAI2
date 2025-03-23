@@ -65,10 +65,20 @@ export class CustomUploadAdapter {
 
 /**
  * アップロードアダプタープラグイン
- * @param editor CKEditorインスタンス
+ * CKEditor5でのプラグイン登録に対応した形式
  */
 export function CustomUploadAdapterPlugin(editor: any) {
-  editor.plugins.get('FileRepository').createUploadAdapter = (loader: any) => {
-    return new CustomUploadAdapter(loader);
-  };
+  try {
+    // FileRepositoryプラグインが存在するか確認
+    if (editor.plugins && editor.plugins.has('FileRepository')) {
+      // アップロードアダプターファクトリーを登録
+      editor.plugins.get('FileRepository').createUploadAdapter = (loader: any) => {
+        return new CustomUploadAdapter(loader);
+      };
+    } else {
+      console.error('FileRepositoryプラグインが見つかりません');
+    }
+  } catch (error) {
+    console.error('カスタムアップロードアダプター登録エラー:', error);
+  }
 }
