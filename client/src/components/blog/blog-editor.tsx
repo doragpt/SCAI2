@@ -63,7 +63,12 @@ const modules = {
       minWidth: 50,
       maxWidth: 1200,
       // サイズ表示オプション
-      displaySize: true
+      displaySize: true,
+      // 属性の保存方法を指定
+      attributors: {
+        width: 'data-width',
+        height: 'data-height'
+      }
     }
   }
 };
