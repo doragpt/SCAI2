@@ -98,8 +98,117 @@ const editorConfig = {
 };
 
 /**
- * CKEditorの内容を処理する関数
- * 画像のサイズやスタイルを保持する
+ * マークダウンをHTMLに変換する関数
+ * シンプルなマークダウン記法をサポート
+ */
+const markdownToHtml = (markdown: string): string => {
+  if (!markdown) {
+    return '';
+  }
+  
+  console.log('マークダウン処理開始:', markdown.substring(0, 100) + '...');
+  
+  try {
+    let html = markdown;
+    
+    // 見出し変換 (## 見出し -> <h2>見出し</h2>)
+    html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    
+    // 太字変換 (**太字** -> <strong>太字</strong>)
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // 斜体変換 (*斜体* -> <em>斜体</em>)
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    // 箇条書きリスト変換
+    // 箇条書きブロックを検出
+    const ulBlocks = markdown.match(/(?:^\s*-\s+.+\n?)+/gm);
+    if (ulBlocks) {
+      ulBlocks.forEach(block => {
+        const listItems = block
+          .split('\n')
+          .filter(line => line.trim().startsWith('- '))
+          .map(line => {
+            const content = line.trim().substring(2);
+            return `<li>${content}</li>`;
+          })
+          .join('');
+        
+        html = html.replace(block, `<ul>${listItems}</ul>`);
+      });
+    }
+    
+    // 番号付きリスト変換
+    // 番号付きリストブロックを検出
+    const olBlocks = markdown.match(/(?:^\s*\d+\.\s+.+\n?)+/gm);
+    if (olBlocks) {
+      olBlocks.forEach(block => {
+        const listItems = block
+          .split('\n')
+          .filter(line => /^\s*\d+\.\s+/.test(line))
+          .map(line => {
+            const content = line.trim().replace(/^\d+\.\s+/, '');
+            return `<li>${content}</li>`;
+          })
+          .join('');
+        
+        html = html.replace(block, `<ol>${listItems}</ol>`);
+      });
+    }
+    
+    // リンク変換 ([リンクテキスト](URL) -> <a href="URL">リンクテキスト</a>)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    
+    // 画像変換 (![代替テキスト](画像URL) -> <img src="画像URL" alt="代替テキスト" />)
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" width="100%" />');
+    
+    // 水平線変換 (--- -> <hr />)
+    html = html.replace(/^---+$/gm, '<hr />');
+    
+    // 引用変換 (> 引用テキスト -> <blockquote>引用テキスト</blockquote>)
+    // 引用ブロックを検出
+    const quoteBlocks = markdown.match(/(?:^\s*>\s+.+\n?)+/gm);
+    if (quoteBlocks) {
+      quoteBlocks.forEach(block => {
+        const content = block
+          .split('\n')
+          .filter(line => line.trim().startsWith('> '))
+          .map(line => line.trim().substring(2))
+          .join('<br>');
+        
+        html = html.replace(block, `<blockquote>${content}</blockquote>`);
+      });
+    }
+    
+    // 段落変換（空行で区切られた部分）
+    const paragraphs = html.split(/\n\n+/);
+    html = paragraphs.map(p => {
+      const trimmed = p.trim();
+      // すでにHTMLタグで囲まれていないテキストのみ段落タグで囲む
+      if (!trimmed.startsWith('<') || !trimmed.endsWith('>')) {
+        // すでに対応済みの要素（見出し、リスト、引用など）でなければ段落にする
+        if (!/^<(h[1-6]|ul|ol|li|blockquote|hr)/.test(trimmed)) {
+          return `<p>${p}</p>`;
+        }
+      }
+      return p;
+    }).join('\n');
+    
+    // 改行をHTMLの改行に変換（マークダウンでは単一の改行は無視される仕様だが、ここでは見やすさのために変換）
+    // ES2018の後方否定先読みを使用しない方法で実装
+    html = html.replace(/([^\n])\n([^\n])/g, '$1<br>$2');
+    
+    return html;
+  } catch (error) {
+    console.error('マークダウン変換中にエラーが発生しました:', error);
+    return markdown; // エラーの場合は元のマークダウンを返す
+  }
+};
+
+/**
+ * HTMLを処理する関数
+ * 必要に応じて画像サイズなどを調整
  */
 const processEditorContent = (content: string): string => {
   if (!content) {
@@ -107,85 +216,13 @@ const processEditorContent = (content: string): string => {
     return '';
   }
   
-  console.log('processEditorContent: 処理開始', content.substring(0, 100) + '...');
-  
-  try {
-    // HTML解析のための一時的な要素を作成
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    
-    // 全ての画像を処理
-    const images = tempDiv.querySelectorAll('img');
-    console.log(`processEditorContent: ${images.length}枚の画像を検出`);
-    
-    images.forEach((img) => {
-      // CKEditorの図形コンテナ内にある可能性があるので確認
-      const figure = img.closest('figure');
-      
-      // すでにwidth/heightが指定されていればそれを維持、そうでなければstyle属性から抽出
-      const width = img.getAttribute('width');
-      const height = img.getAttribute('height');
-      const style = img.getAttribute('style') || '';
-      
-      // styleからwidth/heightを抽出
-      let styleWidth = null;
-      let styleHeight = null;
-      
-      if (style.includes('width')) {
-        const widthMatch = style.match(/width:\s*(\d+)px/);
-        if (widthMatch && widthMatch[1]) {
-          styleWidth = widthMatch[1];
-        }
-      }
-      
-      if (style.includes('height')) {
-        const heightMatch = style.match(/height:\s*(\d+)px/);
-        if (heightMatch && heightMatch[1]) {
-          styleHeight = heightMatch[1];
-        }
-      }
-      
-      // 最終的な幅と高さを決定
-      const finalWidth = width || styleWidth;
-      const finalHeight = height || styleHeight;
-      
-      // 属性を設定
-      if (finalWidth) {
-        img.setAttribute('width', finalWidth);
-        // styleにも設定
-        if (!style.includes('width')) {
-          img.style.width = `${finalWidth}px`;
-        }
-      }
-      
-      if (finalHeight) {
-        img.setAttribute('height', finalHeight);
-        // styleにも設定
-        if (!style.includes('height')) {
-          img.style.height = `${finalHeight}px`;
-        }
-      }
-      
-      // figureにもサイズ情報を伝播（CKEditorの動作をサポート）
-      if (figure && (finalWidth || finalHeight)) {
-        const figStyle = figure.getAttribute('style') || '';
-        let newFigStyle = figStyle;
-        
-        if (finalWidth && !figStyle.includes('width')) {
-          newFigStyle += `width: ${finalWidth}px;`;
-        }
-        
-        if (newFigStyle !== figStyle) {
-          figure.setAttribute('style', newFigStyle);
-        }
-      }
-    });
-    
-    return tempDiv.innerHTML;
-  } catch (error) {
-    console.error('processEditorContent処理中にエラーが発生しました:', error);
-    return content; // エラーの場合は元のコンテンツを返す
+  // 既にHTMLの場合は処理
+  if (content.includes('<') && content.includes('>')) {
+    return content;
   }
+  
+  // マークダウンとして処理
+  return markdownToHtml(content);
 };
 
 interface BlogEditorProps {
@@ -528,17 +565,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const selectedText = text.substring(start, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<strong>' + selectedText + '</strong>' + afterText;
+                                    const newText = beforeText + '**' + selectedText + '**' + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 8, end + 8);
+                                      textArea.setSelectionRange(start + 2, end + 2);
                                     }, 0);
                                   }
                                 }}
-                                title="太字"
+                                title="太字 (**テキスト**)"
                               >
                                 <strong>B</strong>
                               </button>
@@ -555,71 +592,48 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const selectedText = text.substring(start, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<em>' + selectedText + '</em>' + afterText;
+                                    const newText = beforeText + '*' + selectedText + '*' + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 4, end + 4);
+                                      textArea.setSelectionRange(start + 1, end + 1);
                                     }, 0);
                                   }
                                 }}
-                                title="斜体"
+                                title="斜体 (*テキスト*)"
                               >
                                 <em>I</em>
                               </button>
                               <button 
                                 type="button"
-                                className="p-1 hover:bg-muted-foreground/20 rounded"
+                                className="p-1 hover:bg-muted-foreground/20 rounded flex items-center"
                                 onClick={() => {
                                   const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
                                   if (textArea) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
+                                    const lines = text.substring(0, start).split("\n");
+                                    const currentLineStart = start - (lines[lines.length - 1] || "").length;
+                                    const beforeText = text.substring(0, currentLineStart);
+                                    const currentLine = text.substring(currentLineStart, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<u>' + selectedText + '</u>' + afterText;
+                                    const newLineStart = text.substring(0, start).lastIndexOf("\n") + 1;
+                                    const indentation = " ".repeat(start - newLineStart);
+                                    const newText = beforeText + "~~" + currentLine + "~~" + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 3, end + 3);
+                                      textArea.setSelectionRange(start + 2, end + 2);
                                     }, 0);
                                   }
                                 }}
-                                title="下線"
-                              >
-                                <u>U</u>
-                              </button>
-                              <button 
-                                type="button"
-                                className="p-1 hover:bg-muted-foreground/20 rounded"
-                                onClick={() => {
-                                  const textArea = document.getElementById('simple-editor') as HTMLTextAreaElement;
-                                  if (textArea) {
-                                    const start = textArea.selectionStart;
-                                    const end = textArea.selectionEnd;
-                                    const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
-                                    const afterText = text.substring(end);
-                                    
-                                    const newText = beforeText + '<s>' + selectedText + '</s>' + afterText;
-                                    field.onChange(newText);
-                                    
-                                    // カーソル位置を調整
-                                    setTimeout(() => {
-                                      textArea.focus();
-                                      textArea.setSelectionRange(start + 3, end + 3);
-                                    }, 0);
-                                  }
-                                }}
-                                title="取り消し線"
+                                title="取り消し線 (~~テキスト~~)"
                               >
                                 <s>S</s>
                               </button>
@@ -636,21 +650,23 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
+                                    const lines = text.substring(0, start).split("\n");
+                                    const currentLineStart = start - (lines[lines.length - 1] || "").length;
+                                    const beforeText = text.substring(0, currentLineStart);
+                                    const currentLine = text.substring(currentLineStart, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<h2>' + selectedText + '</h2>' + afterText;
+                                    const newText = beforeText + "## " + currentLine + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 4, end + 4);
+                                      textArea.setSelectionRange(start + 3, end + 3);
                                     }, 0);
                                   }
                                 }}
-                                title="見出し2"
+                                title="見出し2 (## 見出し)"
                               >
                                 <span className="font-bold text-sm">H2</span>
                               </button>
@@ -663,11 +679,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
+                                    const lines = text.substring(0, start).split("\n");
+                                    const currentLineStart = start - (lines[lines.length - 1] || "").length;
+                                    const beforeText = text.substring(0, currentLineStart);
+                                    const currentLine = text.substring(currentLineStart, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<h3>' + selectedText + '</h3>' + afterText;
+                                    const newText = beforeText + "### " + currentLine + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
@@ -677,7 +695,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     }, 0);
                                   }
                                 }}
-                                title="見出し3"
+                                title="見出し3 (### 見出し)"
                               >
                                 <span className="font-bold text-sm">H3</span>
                               </button>
@@ -694,24 +712,26 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
-                                    const afterText = text.substring(end);
                                     
-                                    // 行ごとに処理
+                                    // 選択範囲の各行に「- 」を追加
+                                    const selectedText = text.substring(start, end);
                                     const lines = selectedText.split('\n');
-                                    const processedLines = lines.map(line => `<li>${line}</li>`).join('\n');
-                                    const newText = beforeText + '<ul>\n' + processedLines + '\n</ul>' + afterText;
+                                    const processedLines = lines.map(line => `- ${line}`).join('\n');
+                                    
+                                    const beforeText = text.substring(0, start);
+                                    const afterText = text.substring(end);
+                                    const newText = beforeText + processedLines + afterText;
+                                    
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 4, start + 4 + processedLines.length + 6);
+                                      textArea.setSelectionRange(start + 2, start + processedLines.length);
                                     }, 0);
                                   }
                                 }}
-                                title="箇条書きリスト"
+                                title="箇条書きリスト (- 項目)"
                               >
                                 <span className="font-bold">•</span>
                               </button>
@@ -724,24 +744,26 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
-                                    const selectedText = text.substring(start, end);
-                                    const afterText = text.substring(end);
                                     
-                                    // 行ごとに処理
+                                    // 選択範囲の各行に番号を追加
+                                    const selectedText = text.substring(start, end);
                                     const lines = selectedText.split('\n');
-                                    const processedLines = lines.map(line => `<li>${line}</li>`).join('\n');
-                                    const newText = beforeText + '<ol>\n' + processedLines + '\n</ol>' + afterText;
+                                    const processedLines = lines.map((line, index) => `${index + 1}. ${line}`).join('\n');
+                                    
+                                    const beforeText = text.substring(0, start);
+                                    const afterText = text.substring(end);
+                                    const newText = beforeText + processedLines + afterText;
+                                    
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 4, start + 4 + processedLines.length + 6);
+                                      textArea.setSelectionRange(start + 3, start + processedLines.length);
                                     }, 0);
                                   }
                                 }}
-                                title="番号付きリスト"
+                                title="番号付きリスト (1. 項目)"
                               >
                                 <span className="font-bold">1.</span>
                               </button>
@@ -760,17 +782,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const beforeText = text.substring(0, start);
                                     const afterText = text.substring(start);
                                     
-                                    const newText = beforeText + '<img src="" alt="画像" width="100%" />' + afterText;
+                                    const newText = beforeText + '![画像の説明](画像URL)' + afterText;
                                     field.onChange(newText);
                                     
-                                    // カーソル位置を調整（src=""の中に）
+                                    // カーソル位置を調整（URL部分にカーソルを置く）
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 10, start + 10);
+                                      textArea.setSelectionRange(start + 8, start + 13);
                                     }, 0);
                                   }
                                 }}
-                                title="画像挿入"
+                                title="画像挿入 (![説明](URL))"
                               >
                                 <ImageIcon className="h-4 w-4" />
                               </button>
@@ -787,17 +809,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const selectedText = text.substring(start, end) || 'リンクテキスト';
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<a href="" target="_blank">' + selectedText + '</a>' + afterText;
+                                    const newText = beforeText + '[' + selectedText + '](URL)' + afterText;
                                     field.onChange(newText);
                                     
-                                    // カーソル位置を調整（href=""の中に）
+                                    // カーソル位置を調整（URL部分にカーソルを置く）
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 9, start + 9);
+                                      textArea.setSelectionRange(start + selectedText.length + 3, start + selectedText.length + 6);
                                     }, 0);
                                   }
                                 }}
-                                title="リンク挿入"
+                                title="リンク挿入 ([テキスト](URL))"
                               >
                                 <span className="underline">URL</span>
                               </button>
@@ -814,21 +836,27 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const start = textArea.selectionStart;
                                     const end = textArea.selectionEnd;
                                     const text = textArea.value;
-                                    const beforeText = text.substring(0, start);
+                                    const lines = text.substring(0, start).split("\n");
+                                    const currentLineStart = start - (lines[lines.length - 1] || "").length;
+                                    const beforeText = text.substring(0, currentLineStart);
                                     const selectedText = text.substring(start, end);
                                     const afterText = text.substring(end);
                                     
-                                    const newText = beforeText + '<blockquote>' + selectedText + '</blockquote>' + afterText;
+                                    // 選択範囲の各行に「> 」を追加
+                                    const blockLines = selectedText.split('\n');
+                                    const processedLines = blockLines.map(line => `> ${line}`).join('\n');
+                                    
+                                    const newText = beforeText + processedLines + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 12, end + 12);
+                                      textArea.setSelectionRange(beforeText.length + 2, beforeText.length + processedLines.length);
                                     }, 0);
                                   }
                                 }}
-                                title="引用"
+                                title="引用 (> 引用文)"
                               >
                                 <span className="font-bold text-sm">""</span>
                               </button>
@@ -843,23 +871,24 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                                     const beforeText = text.substring(0, start);
                                     const afterText = text.substring(start);
                                     
-                                    const newText = beforeText + '<hr />' + afterText;
+                                    // 前後に改行を追加して区切る
+                                    const newText = beforeText + '\n---\n' + afterText;
                                     field.onChange(newText);
                                     
                                     // カーソル位置を調整
                                     setTimeout(() => {
                                       textArea.focus();
-                                      textArea.setSelectionRange(start + 6, start + 6);
+                                      textArea.setSelectionRange(start + 5, start + 5);
                                     }, 0);
                                   }
                                 }}
-                                title="水平線"
+                                title="水平線 (---)"
                               >
                                 <span className="font-bold text-sm">—</span>
                               </button>
                             </div>
 
-                            <span className="text-xs text-muted-foreground ml-2">HTML記法が使用できます</span>
+                            <span className="text-xs text-muted-foreground ml-2">マークダウン記法が使用できます</span>
                           </div>
                           <textarea
                             id="simple-editor"
