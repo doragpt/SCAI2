@@ -123,6 +123,30 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   }, [initialData, form]);
   
+  // HTML内の画像サイズ属性を保持する機能
+  const preserveImageSizes = (html: string): string => {
+    // img要素のwidth/height属性またはstyle属性を保持する処理
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const images = doc.getElementsByTagName('img');
+    
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      // 元の属性を保持
+      const width = img.getAttribute('width');
+      const height = img.getAttribute('height');
+      const style = img.getAttribute('style');
+      
+      // 属性が存在する場合、data-属性として保存
+      if (width) img.setAttribute('data-width', width);
+      if (height) img.setAttribute('data-height', height);
+      if (style) img.setAttribute('data-style', style);
+    }
+    
+    // HTML文字列に変換して返す
+    return doc.body.innerHTML;
+  };
+  
   // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
   useEffect(() => {
     if (contentLoaded && initialData?.content) {
@@ -130,7 +154,20 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       
       // ReactQuillにコンテンツを強制的に設定
       setTimeout(() => {
-        form.setValue('content', initialData.content, { shouldDirty: true });
+        // 画像サイズ属性を保持したHTMLを設定
+        const processedContent = preserveImageSizes(initialData.content);
+        
+        if (quillRef.current) {
+          const quill = quillRef.current.getEditor();
+          // HTMLを直接インポート
+          quill.clipboard.dangerouslyPasteHTML(processedContent);
+          // フォーム値も同期
+          form.setValue('content', quill.root.innerHTML, { shouldDirty: true });
+        } else {
+          // フォールバック
+          form.setValue('content', processedContent, { shouldDirty: true });
+        }
+        
         console.log('ReactQuill コンテンツ更新完了');
       }, 300);
     }
@@ -252,6 +289,46 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
 
+  // 画像サイズ属性を復元する関数
+  const restoreImageSizes = (content: string): string => {
+    if (!content) return '';
+    
+    // HTMLをパース
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = doc.getElementsByTagName('img');
+    
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      
+      // data-属性から元のサイズを取得して復元
+      const dataWidth = img.getAttribute('data-width');
+      const dataHeight = img.getAttribute('data-height');
+      const dataStyle = img.getAttribute('data-style');
+      
+      // width/height属性の復元
+      if (dataWidth) img.setAttribute('width', dataWidth);
+      if (dataHeight) img.setAttribute('height', dataHeight);
+      if (dataStyle) img.setAttribute('style', dataStyle);
+      
+      // img要素のstyle属性に直接サイズ情報を追加
+      const style = img.getAttribute('style') || '';
+      const widthMatch = style.match(/width:\s*(\d+)px/);
+      const heightMatch = style.match(/height:\s*(\d+)px/);
+      
+      if (widthMatch && heightMatch) {
+        const width = widthMatch[1];
+        const height = heightMatch[1];
+        
+        // width/height属性も設定
+        img.setAttribute('width', width);
+        img.setAttribute('height', height);
+      }
+    }
+    
+    return doc.body.innerHTML;
+  };
+
   const handleSubmit = useCallback(async (isDraft: boolean = false) => {
     try {
       const values = form.getValues();
@@ -281,12 +358,16 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const newStatus = isDraft ? "draft" : isScheduling ? "scheduled" : "published";
       const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
       const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
+      
+      // 画像サイズ属性を保持したコンテンツを作成
+      const processedContent = restoreImageSizes(values.content);
+      console.log('画像サイズ属性を保持したコンテンツを処理しました');
 
       // 型アノテーションを使用してnewStatusを列挙型として明示的に型付け
       const submissionData: Omit<BlogPost, 'status'> & { status: "draft" | "published" | "scheduled" } = {
         ...values,
         title: values.title.trim(),
-        content: values.content.trim(),
+        content: processedContent.trim(), // 処理済みのコンテンツを使用
         status: newStatus as "draft" | "published" | "scheduled",
         scheduled_at: newScheduledAt,
         published_at: newPublishedAt,
@@ -430,7 +511,41 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             modules={modules}
                             formats={formats}
                             value={field.value}
-                            onChange={field.onChange}
+                            onChange={(content) => {
+                              // Quillエディタの変更を処理
+                              field.onChange(content);
+                              
+                              // 画像サイズの変更を監視して保存
+                              if (quillRef.current) {
+                                const quill = quillRef.current.getEditor();
+                                const editorContainer = quill.root;
+                                
+                                // 画像要素にサイズ情報を保存
+                                const images = editorContainer.querySelectorAll('img');
+                                images.forEach((img: HTMLImageElement) => {
+                                  if (img.style.width || img.style.height) {
+                                    // width/height属性も設定
+                                    if (img.style.width) {
+                                      img.setAttribute('width', img.style.width.replace('px', ''));
+                                    }
+                                    if (img.style.height) {
+                                      img.setAttribute('height', img.style.height.replace('px', ''));
+                                    }
+                                    
+                                    // data-属性にも保存
+                                    if (img.style.width) {
+                                      img.setAttribute('data-width', img.style.width.replace('px', ''));
+                                    }
+                                    if (img.style.height) {
+                                      img.setAttribute('data-height', img.style.height.replace('px', ''));
+                                    }
+                                    if (img.getAttribute('style')) {
+                                      img.setAttribute('data-style', img.getAttribute('style') || '');
+                                    }
+                                  }
+                                });
+                              }
+                            }}
                             className="min-h-[400px]"
                           />
                         </div>
