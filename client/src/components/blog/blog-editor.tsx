@@ -593,72 +593,107 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           img.style.height = `${finalHeight}px`;
                         }
                         
-                        // 4. エディタ内の画像を更新する魔法のトリック
+                        // 4. エディタ内の画像を更新する新しいアプローチ
                         try {
                           if (quillRef.current) {
                             const quill = quillRef.current.getEditor();
                             
-                            // 直接ReactQuillのHTMLを書き換えるのではなく、
-                            // 現在の画像サイズを取得してから、再度form.setValue()する
-                            const html = quill.root.innerHTML;
-                            
                             // 現在のカーソル位置を保存
                             const range = quill.getSelection();
                             
-                            // 画像を探して属性を確認
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = html;
-                            const imgElements = tempDiv.querySelectorAll('img');
-                            let resizedImage = null;
+                            // 直接Quillのドキュメント内の画像を探す（HTMLより信頼性が高い）
+                            const editorRoot = quill.root;
+                            const currentImages = editorRoot.querySelectorAll('img');
                             
-                            // imgが複数あった場合、現在操作中の画像を特定
-                            imgElements.forEach(imgEl => {
-                              if (imgEl.src === img.src) {
-                                // この画像が操作中のものなので、サイズを更新
-                                // TypeScriptの型エラーを回避するためにHTMLImageElementとして扱う
-                                const typedImgEl = imgEl as HTMLImageElement;
-                                typedImgEl.width = finalWidth;
-                                typedImgEl.height = finalHeight;
-                                typedImgEl.setAttribute('width', finalWidth.toString());
-                                if (finalHeight) {
-                                  typedImgEl.setAttribute('height', finalHeight.toString());
-                                }
-                                typedImgEl.setAttribute('data-width', finalWidth.toString());
-                                if (finalHeight) {
-                                  typedImgEl.setAttribute('data-height', finalHeight.toString());
-                                }
-                                typedImgEl.style.width = `${finalWidth}px`;
-                                typedImgEl.style.height = `${finalHeight}px`;
-                                resizedImage = typedImgEl;
+                            console.log(`マウスアップ時: エディタ内に${currentImages.length}枚の画像を検出`);
+                            
+                            // 操作された画像を特定し、強制的にサイズを適用
+                            let targetImage: HTMLImageElement | null = null;
+                            currentImages.forEach((currentImg: Element) => {
+                              const imgElement = currentImg as HTMLImageElement;
+                              if (imgElement.src === img.src) {
+                                targetImage = imgElement;
+                                console.log('操作された画像を特定しました:', imgElement.src);
                               }
                             });
                             
-                            if (resizedImage) {
-                              // 更新した画像を含む新しいHTMLを生成
-                              const updatedHtml = tempDiv.innerHTML;
+                            if (targetImage) {
+                              console.log('リサイズ前の画像サイズ:', {
+                                width: targetImage.width,
+                                height: targetImage.height,
+                                styleWidth: targetImage.style.width,
+                                dataWidth: targetImage.getAttribute('data-width')
+                              });
                               
-                              // form.setValue()を回避して直接エディタのコンテンツを更新
-                              // これにより、ハンドルが消える問題を回避
-                              quill.clipboard.dangerouslyPasteHTML(updatedHtml);
+                              // 画像に強制的に新しいサイズを設定
+                              // 1) style属性 - 最も優先度が高い
+                              targetImage.style.width = `${finalWidth}px`;
+                              targetImage.style.height = finalHeight ? `${finalHeight}px` : 'auto';
                               
-                              // カーソル位置を復元
+                              // 2) 標準属性
+                              targetImage.width = finalWidth;
+                              if (finalHeight) targetImage.height = finalHeight;
+                              
+                              // 3) data属性
+                              targetImage.setAttribute('data-width', finalWidth.toString());
+                              if (finalHeight) {
+                                targetImage.setAttribute('data-height', finalHeight.toString());
+                              }
+                              
+                              // 4) インライン width/height 属性
+                              targetImage.setAttribute('width', finalWidth.toString());
+                              if (finalHeight) {
+                                targetImage.setAttribute('height', finalHeight.toString());
+                              }
+                              
+                              console.log('リサイズ後の画像サイズを設定:', {
+                                width: finalWidth,
+                                height: finalHeight,
+                                styleWidth: `${finalWidth}px`,
+                                styleHeight: finalHeight ? `${finalHeight}px` : 'auto'
+                              });
+                              
+                              // 重要: マウスアップ後に現在のHTML全体を取得し、フォームに反映して永続化
+                              setTimeout(() => {
+                                if (quillRef.current) {
+                                  const currentHTML = quillRef.current.getEditor().root.innerHTML;
+                                  
+                                  // 処理前後のHTMLをデバッグのためログに出力
+                                  console.log('リサイズ直後のHTML:', currentHTML.substring(0, 100) + '...');
+                                  
+                                  // 画像サイズが保持されているか確認
+                                  const debugDiv = document.createElement('div');
+                                  debugDiv.innerHTML = currentHTML;
+                                  const debugImg = debugDiv.querySelector('img');
+                                  if (debugImg) {
+                                    console.log('HTML内の画像属性:', {
+                                      width: debugImg.getAttribute('width'),
+                                      height: debugImg.getAttribute('height'),
+                                      dataWidth: debugImg.getAttribute('data-width'),
+                                      dataHeight: debugImg.getAttribute('data-height'),
+                                      style: debugImg.getAttribute('style')
+                                    });
+                                  }
+                                  
+                                  // 最終確認のためにフォーム更新前のHTML処理を実行
+                                  const processedHTML = processQuillContent(currentHTML);
+                                  
+                                  // フォームの値を更新して永続化
+                                  form.setValue('content', processedHTML, {
+                                    shouldDirty: true,
+                                    shouldTouch: true
+                                  });
+                                  
+                                  console.log("フォーム値を更新して変更を永続化しました");
+                                }
+                              }, 50);
+                              
+                              // カーソル位置を復元して操作確定
                               if (range) {
                                 quill.setSelection(range);
                               }
-                              
-                              console.log("エディタ内の画像サイズを直接更新しました");
-                              
-                              // 重要: フォームの値を更新して永続化（ハンドルを維持したまま）
-                              // この方法では、リサイズが完了してから200ms待ってフォームを更新
-                              // これによりハンドルが消える前に操作完了できる
-                              setTimeout(() => {
-                                // 最新のエディタ内容をフォームに反映（永続化）
-                                form.setValue('content', quill.root.innerHTML, {
-                                  shouldDirty: true,  // フォームを変更済み状態にする
-                                  shouldTouch: true   // フォームにタッチ済み状態にする
-                                });
-                                console.log("フォーム値を更新して変更を永続化しました");
-                              }, 200);
+                            } else {
+                              console.warn('リサイズ対象の画像がエディタ内に見つかりませんでした');
                             }
                           }
                         } catch (error) {
