@@ -204,16 +204,56 @@ router.post("/", authenticate, async (req: any, res) => {
     // 手動で適切な形式に変換する
     let cleanedData = { ...req.body };
     
-    // 日付データの手動変換処理
-    if (typeof cleanedData.scheduled_at === 'string' && cleanedData.scheduled_at) {
-      cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
-    } else if (cleanedData.scheduled_at === null || cleanedData.scheduled_at === undefined) {
-      cleanedData.scheduled_at = null;
-    }
+    // 日付データ変換の厳密な処理
+    console.log('変換前データ:', {
+      scheduled_at_type: typeof cleanedData.scheduled_at,
+      scheduled_at_value: cleanedData.scheduled_at,
+      published_at_type: typeof cleanedData.published_at,
+      published_at_value: cleanedData.published_at
+    });
     
-    if (typeof cleanedData.published_at === 'string' && cleanedData.published_at) {
-      cleanedData.published_at = new Date(cleanedData.published_at);
-    } else if (cleanedData.published_at === null || cleanedData.published_at === undefined) {
+    try {
+      // scheduled_at の処理
+      if (cleanedData.scheduled_at) {
+        if (typeof cleanedData.scheduled_at === 'string') {
+          // 文字列から正しくDateオブジェクトに変換
+          cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+          console.log('文字列からDate変換 scheduled_at:', cleanedData.scheduled_at);
+        } else if (cleanedData.scheduled_at instanceof Date) {
+          // すでにDateオブジェクトの場合はそのまま
+          console.log('既存のDate scheduled_at:', cleanedData.scheduled_at);
+        } else {
+          // 不明な型の場合はnullに設定
+          console.log('不明な型の scheduled_at:', typeof cleanedData.scheduled_at);
+          cleanedData.scheduled_at = null;
+        }
+      } else {
+        // nullまたはundefinedの場合
+        cleanedData.scheduled_at = null;
+      }
+      
+      // published_at の処理
+      if (cleanedData.published_at) {
+        if (typeof cleanedData.published_at === 'string') {
+          // 文字列から正しくDateオブジェクトに変換
+          cleanedData.published_at = new Date(cleanedData.published_at);
+          console.log('文字列からDate変換 published_at:', cleanedData.published_at);
+        } else if (cleanedData.published_at instanceof Date) {
+          // すでにDateオブジェクトの場合はそのまま
+          console.log('既存のDate published_at:', cleanedData.published_at);
+        } else {
+          // 不明な型の場合はnullに設定
+          console.log('不明な型の published_at:', typeof cleanedData.published_at);
+          cleanedData.published_at = null;
+        }
+      } else {
+        // nullまたはundefinedの場合
+        cleanedData.published_at = null;
+      }
+    } catch (dateError) {
+      console.error('日付処理エラー:', dateError);
+      // 変換に失敗した場合は両方nullにする
+      cleanedData.scheduled_at = null;
       cleanedData.published_at = null;
     }
     
@@ -294,16 +334,56 @@ router.put("/:id", authenticate, async (req: any, res) => {
     // 手動で適切な形式に変換する
     let cleanedData = { ...req.body };
     
-    // 日付データの手動変換処理
-    if (typeof cleanedData.scheduled_at === 'string' && cleanedData.scheduled_at) {
-      cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
-    } else if (cleanedData.scheduled_at === null || cleanedData.scheduled_at === undefined) {
-      cleanedData.scheduled_at = null;
-    }
+    // 日付データ変換の厳密な処理
+    console.log('変換前データ:', {
+      scheduled_at_type: typeof cleanedData.scheduled_at,
+      scheduled_at_value: cleanedData.scheduled_at,
+      published_at_type: typeof cleanedData.published_at,
+      published_at_value: cleanedData.published_at
+    });
     
-    if (typeof cleanedData.published_at === 'string' && cleanedData.published_at) {
-      cleanedData.published_at = new Date(cleanedData.published_at);
-    } else if (cleanedData.published_at === null || cleanedData.published_at === undefined) {
+    try {
+      // scheduled_at の処理
+      if (cleanedData.scheduled_at) {
+        if (typeof cleanedData.scheduled_at === 'string') {
+          // 文字列から正しくDateオブジェクトに変換
+          cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+          console.log('文字列からDate変換 scheduled_at:', cleanedData.scheduled_at);
+        } else if (cleanedData.scheduled_at instanceof Date) {
+          // すでにDateオブジェクトの場合はそのまま
+          console.log('既存のDate scheduled_at:', cleanedData.scheduled_at);
+        } else {
+          // 不明な型の場合はnullに設定
+          console.log('不明な型の scheduled_at:', typeof cleanedData.scheduled_at);
+          cleanedData.scheduled_at = null;
+        }
+      } else {
+        // nullまたはundefinedの場合
+        cleanedData.scheduled_at = null;
+      }
+      
+      // published_at の処理
+      if (cleanedData.published_at) {
+        if (typeof cleanedData.published_at === 'string') {
+          // 文字列から正しくDateオブジェクトに変換
+          cleanedData.published_at = new Date(cleanedData.published_at);
+          console.log('文字列からDate変換 published_at:', cleanedData.published_at);
+        } else if (cleanedData.published_at instanceof Date) {
+          // すでにDateオブジェクトの場合はそのまま
+          console.log('既存のDate published_at:', cleanedData.published_at);
+        } else {
+          // 不明な型の場合はnullに設定
+          console.log('不明な型の published_at:', typeof cleanedData.published_at);
+          cleanedData.published_at = null;
+        }
+      } else {
+        // nullまたはundefinedの場合
+        cleanedData.published_at = null;
+      }
+    } catch (dateError) {
+      console.error('日付処理エラー:', dateError);
+      // 変換に失敗した場合は両方nullにする
+      cleanedData.scheduled_at = null;
       cleanedData.published_at = null;
     }
     
