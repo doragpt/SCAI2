@@ -42,40 +42,34 @@ import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye
  */
 const editorConfig = {
   // 基本ツールバー
-  toolbar: {
-    items: [
-      'heading',
-      '|',
-      'bold',
-      'italic',
-      'link',
-      'bulletedList',
-      'numberedList',
-      '|',
-      'indent',
-      'outdent',
-      '|',
-      'imageUpload',
-      'blockQuote',
-      'insertTable',
-      'mediaEmbed',
-      'undo',
-      'redo'
-    ]
-  },
+  toolbar: [
+    'heading',
+    '|',
+    'bold',
+    'italic',
+    'link',
+    'bulletedList',
+    'numberedList',
+    '|',
+    'indent',
+    'outdent',
+    '|',
+    'imageUpload',
+    'blockQuote',
+    'insertTable',
+    'undo',
+    'redo'
+  ],
   // 言語設定
   language: 'ja',
   // 画像関連設定
   image: {
-    // 画像ツールバー
     toolbar: [
       'imageTextAlternative',
-      '|',
-      'toggleImageCaption',
-      'imageStyle:alignLeft',
-      'imageStyle:alignCenter',
-      'imageStyle:alignRight'
-    ],
+      'imageStyle:inline',
+      'imageStyle:block',
+      'imageStyle:side'
+    ]
   },
   // テーブル設定
   table: {
@@ -523,12 +517,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             extraPlugins: [CustomUploadAdapterPlugin]
                           }}
                           data={field.value || ''}
-                          onReady={(editor) => {
+                          onReady={(editor: any) => {
                             editorRef.current = editor;
                             setEditorInstance(editor);
                             console.log('CKEditor準備完了:', editor);
                           }}
-                          onChange={(event, editor) => {
+                          onChange={(_event: any, editor: any) => {
                             const data = editor.getData();
                             console.log('エディタ内容更新:', data.length, 'バイト');
                             field.onChange(data);
