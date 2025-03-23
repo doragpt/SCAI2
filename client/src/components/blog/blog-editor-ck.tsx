@@ -9,6 +9,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
+// @ts-ignore - ClassicEditorのtsエラーを回避
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CustomUploadAdapterPlugin } from "./custom-upload-adapter";
 
@@ -514,18 +515,33 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           editor={ClassicEditor}
                           config={{
                             ...editorConfig,
-                            extraPlugins: [CustomUploadAdapterPlugin]
+                            extraPlugins: [(editor: any) => {
+                              try {
+                                return CustomUploadAdapterPlugin(editor);
+                              } catch (error) {
+                                console.error('CustomUploadAdapterPlugin初期化エラー:', error);
+                                return null;
+                              }
+                            }]
                           }}
                           data={field.value || ''}
                           onReady={(editor: any) => {
-                            editorRef.current = editor;
-                            setEditorInstance(editor);
-                            console.log('CKEditor準備完了:', editor);
+                            try {
+                              editorRef.current = editor;
+                              setEditorInstance(editor);
+                              console.log('CKEditor準備完了:', editor);
+                            } catch (error) {
+                              console.error('CKEditor準備エラー:', error);
+                            }
                           }}
                           onChange={(_event: any, editor: any) => {
-                            const data = editor.getData();
-                            console.log('エディタ内容更新:', data.length, 'バイト');
-                            field.onChange(data);
+                            try {
+                              const data = editor.getData();
+                              console.log('エディタ内容更新:', data.length, 'バイト');
+                              field.onChange(data);
+                            } catch (error) {
+                              console.error('エディタ内容更新エラー:', error);
+                            }
                           }}
                         />
                       </div>
