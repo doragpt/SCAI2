@@ -294,16 +294,10 @@ export default function BlogManagement() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button asChild variant="outline">
-                <Link href="/store/blog/new">
-                  <FilePlus className="h-4 w-4 mr-2" />
-                  新規作成
-                </Link>
-              </Button>
               <Button asChild>
                 <Link href="/store/blog/new-ck">
                   <FilePlus className="h-4 w-4 mr-2" />
-                  CKEditorで作成
+                  新規記事作成
                 </Link>
               </Button>
             </div>
