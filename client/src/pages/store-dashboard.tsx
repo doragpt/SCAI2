@@ -516,7 +516,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
   const MAX_POSTS_TO_SHOW = 5;
 
   // ブログ記事の取得
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.BLOG_POSTS_STORE],
     queryFn: async () => {
       if (!userId) return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0 } };
@@ -536,8 +536,11 @@ function BlogPostsList({ userId }: { userId?: number }) {
       }
     },
     enabled: !!userId,
-    staleTime: 30000, // 30秒
+    staleTime: 0, // キャッシュを無効化し、常に最新データを取得する
+    cacheTime: 0, // キャッシュを無効化
     retry: 2,
+    refetchOnMount: 'always', // コンポーネントがマウントされるたびに再取得
+    refetchOnWindowFocus: true, // ウィンドウにフォーカスが戻ったときに再取得
   });
 
   // タイトルを適切な長さにトリミングする

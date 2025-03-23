@@ -182,7 +182,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       toast({
         title: "記事を作成しました",
       });
+      // すべてのブログ記事関連のキャッシュを無効化する
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
+      
+      // キャッシュ更新について明示的にログ出力
+      console.log('ブログ記事キャッシュを無効化しました:', QUERY_KEYS.BLOG_POSTS, QUERY_KEYS.BLOG_POSTS_STORE);
+      
       window.history.back();
     },
     onError: (error) => {
@@ -202,7 +208,13 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       toast({
         title: "記事を更新しました",
       });
+      // すべてのブログ記事関連のキャッシュを無効化する
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
+      
+      // キャッシュ更新について明示的にログ出力
+      console.log('ブログ記事キャッシュを無効化しました:', QUERY_KEYS.BLOG_POSTS, QUERY_KEYS.BLOG_POSTS_STORE);
+      
       window.history.back();
     },
     onError: (error) => {
