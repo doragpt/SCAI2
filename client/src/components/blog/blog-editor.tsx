@@ -14,6 +14,7 @@ import Quill from 'quill';
 // カスタム画像リサイザー機能用CSS
 import './image-resize-simple.css';
 import { ThumbnailImage } from "./thumbnail-image";
+import { showImagePropertiesDialog } from "./image-property-dialog";
 import {
   Card,
   CardContent,
@@ -210,7 +211,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         img.classList.add('resizable-image');
       }
       
-      // クリックイベントを追加
+      // クリックイベントを追加（シングルクリック）
       img.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -418,6 +419,32 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           });
         });
       };
+      
+      // ダブルクリックイベントを追加（画像プロパティダイアログを表示）
+      img.ondblclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('画像がダブルクリックされました', img.src.substring(0, 30) + '...');
+        
+        // 画像プロパティダイアログを表示
+        showImagePropertiesDialog(img, (width, height) => {
+          // 新しいサイズで画像を更新
+          img.width = width;
+          img.height = height;
+          img.style.width = `${width}px`;
+          img.style.height = `${height}px`;
+          img.setAttribute('width', width.toString());
+          img.setAttribute('height', height.toString());
+          
+          // エディタの内容を更新してフォームに反映
+          if (quillRef.current) {
+            const content = quillRef.current.getEditor().root.innerHTML;
+            const processedContent = processQuillContent(content);
+            form.setValue('content', processedContent, { shouldDirty: true });
+          }
+        });
+      };
     });
   }, [form]);
 
@@ -429,477 +456,445 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       
       // クリックされた要素がエディタ内の要素でなく、ハンドルでもない場合
       if (quillRef.current) {
-        const quillElement = quillRef.current.getEditor().root;
+        const editorElement = quillRef.current.getEditor().root;
+        const isClickInEditor = editorElement.contains(target);
+        const isClickOnHandle = target.closest('.resize-handle') !== null;
+        const isClickOnDialog = target.closest('.image-properties-dialog') !== null;
         
-        if (!quillElement.contains(target) && 
-            !target.classList.contains('resize-handle')) {
-          // ハンドルを削除
-          const handles = document.querySelectorAll('.resize-handle');
-          console.log(`${handles.length}個のリサイズハンドルを削除します`);
-          handles.forEach(handle => handle.remove());
-          
-          // アクティブな画像の選択を解除
-          const activeImages = quillElement.querySelectorAll('img.active');
-          console.log(`${activeImages.length}個のアクティブ画像の選択を解除します`);
+        if (!isClickInEditor && !isClickOnHandle && !isClickOnDialog) {
+          // 全ての画像からアクティブクラスを削除
+          const activeImages = editorElement.querySelectorAll('img.active');
           activeImages.forEach((img: Element) => {
             img.classList.remove('active');
+          });
+          
+          // リサイズハンドルを削除
+          document.querySelectorAll('.resize-handle').forEach(handle => {
+            handle.remove();
           });
         }
       }
     };
     
-    // ドキュメント全体にクリックイベントリスナーを追加
-    console.log('グローバルクリックイベントリスナーを追加しました');
     document.addEventListener('click', handleDocumentClick);
     
     return () => {
-      console.log('グローバルクリックイベントリスナーを削除します');
       document.removeEventListener('click', handleDocumentClick);
-      
-      // クリーンアップ - ハンドルを削除
-      const handles = document.querySelectorAll('.resize-handle');
-      console.log(`クリーンアップ: ${handles.length}個のリサイズハンドルを削除します`);
-      handles.forEach(handle => handle.remove());
     };
   }, []);
 
-  // サムネイル画像アップロード
-  const uploadMutation = useMutation({
+  // 画像のアップロード機能
+  const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-
+      
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
-        credentials: 'include'
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'ファイルのアップロードに失敗しました');
+        throw new Error('画像のアップロードに失敗しました');
       }
       
-      return response.json();
+      return await response.json();
     },
     onSuccess: (data) => {
-      if (data?.url) {
-        form.setValue("thumbnail", data.url);
-        toast({
-          title: "サムネイル画像をアップロードしました",
-        });
-      } else {
-        throw new Error("アップロード結果のURLが見つかりません");
+      if (quillRef.current) {
+        // 画像URLをエディタに挿入
+        const editor = quillRef.current.getEditor();
+        const range = editor.getSelection(true);
+        
+        // クリックされた位置（またはカーソル位置）に画像を挿入
+        editor.insertEmbed(range.index, 'image', data.url);
+        
+        // 画像の後に空白を挿入してカーソルを移動
+        editor.setSelection(range.index + 1, 0);
+        
+        // フォームの値も更新
+        const content = editor.root.innerHTML;
+        form.setValue('content', content, { shouldDirty: true });
+        
+        // 画像リサイズハンドラを再セットアップ
+        setTimeout(() => {
+          setupImageResizingHandlers();
+        }, 200);
       }
-    },
-    onError: (error) => {
-      console.error('Upload error:', error);
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "画像のアップロードに失敗しました",
-      });
-    },
-  });
-
-  // 記事作成
-  const createMutation = useMutation({
-    mutationFn: (data: BlogPost) =>
-      apiRequest("POST", "/api/blog", data),
-    onSuccess: () => {
-      toast({
-        title: "記事を作成しました",
-      });
-      // すべてのブログ記事関連のキャッシュを無効化する
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
       
-      window.history.back();
-    },
-    onError: (error) => {
-      console.error('Create error:', error);
       toast({
-        variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "記事の作成に失敗しました",
+        title: '画像をアップロードしました',
+        variant: 'default',
       });
     },
+    onError: (error: Error) => {
+      console.error('画像アップロードエラー:', error);
+      toast({
+        title: '画像のアップロードに失敗しました',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   });
 
-  // 記事更新
-  const updateMutation = useMutation({
+  // 記事の保存（新規作成または更新）
+  const saveMutation = useMutation({
     mutationFn: (data: BlogPost) =>
-      apiRequest("PUT", `/api/blog/${postId}`, data),
+      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/${postId}` : "/api/blog", data),
     onSuccess: () => {
       toast({
-        title: "記事を更新しました",
+        title: postId ? "記事を更新しました" : "記事を作成しました",
+        variant: "default",
       });
-      // キャッシュを無効化
+      
+      // キャッシュを更新
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
-      
-      window.history.back();
     },
-    onError: (error) => {
-      console.error('Update error:', error);
+    onError: (error: Error) => {
+      console.error('保存エラー:', error);
       toast({
+        title: "保存に失敗しました",
+        description: error.message,
         variant: "destructive",
-        title: "エラー",
-        description: error instanceof Error ? error.message : "記事の更新に失敗しました",
       });
     },
   });
 
-  // 現在の状態を返す
-  const isDraft = form.watch('status') === 'draft';
+  // 記事の公開（公開/予約/下書き保存）
+  const publishMutation = useMutation({
+    mutationFn: (data: BlogPost) => 
+      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/${postId}` : "/api/blog", data),
+    onSuccess: () => {
+      toast({
+        title: "記事を公開しました",
+        variant: "default",
+      });
+      
+      // キャッシュを更新
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_BLOG_POSTS] });
+      
+      // 公開後は下書き一覧に戻る
+      window.location.href = "/store/blog";
+    },
+    onError: (error: Error) => {
+      console.error('公開エラー:', error);
+      toast({
+        title: "公開に失敗しました",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // フォーム送信ハンドラ
   const onSubmit = (values: BlogPost) => {
-    // フォームのバリデーションチェック
-    if (!values.title.trim() || !values.content.trim()) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "タイトルと本文は必須です",
-      });
-      return;
-    }
+    console.log('送信データ:', values);
 
-    // 予約投稿時の日時チェック
-    if (isScheduling && (!values.scheduled_at || new Date(values.scheduled_at) <= new Date())) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "予約日時は現在時刻より後に設定してください",
-      });
-      return;
-    }
-
-    // 明示的にステータスを設定
-    const newStatus = isDraft ? "draft" : isScheduling ? "scheduled" : "published";
-    const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
-    const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
-    
-    // 画像サイズ属性を保持したコンテンツを作成
-    const processedContent = processQuillContent(values.content);
-
-    // 送信用データを準備
-    const submissionData = {
-      ...values,
-      content: processedContent,
-      status: newStatus as "draft" | "published" | "scheduled",
-      published_at: newPublishedAt,
-      scheduled_at: newScheduledAt,
-    };
-
-    // 既存の記事の更新か新規作成かを判断
-    if (postId) {
-      updateMutation.mutate(submissionData);
-    } else {
-      createMutation.mutate(submissionData);
-    }
+    // 下書き保存の場合（status='draft'）
+    saveMutation.mutate(values);
   };
 
-  // プレビューモードの切り替え
+  // 公開ボタン押下時の処理
+  const handlePublish = () => {
+    const values = form.getValues();
+    const data = { ...values, status: "published" };
+    
+    console.log('公開データ:', data);
+    toast({
+      title: "記事を公開しています...",
+      variant: "default",
+    });
+    
+    publishMutation.mutate(data);
+  };
+
+  // 予約投稿ボタン押下時の処理
+  const handleSchedule = (date: Date) => {
+    const values = form.getValues();
+    const data = {
+      ...values,
+      status: "scheduled",
+      scheduled_at: date,
+    };
+    
+    console.log('予約投稿データ:', data);
+    toast({
+      title: `${format(date, 'yyyy年MM月dd日 HH:mm', { locale: ja })}に公開予約しました`,
+      variant: "default",
+    });
+    
+    setIsScheduling(false);
+    publishMutation.mutate(data);
+  };
+  
+  // 予約投稿モーダル切り替え
+  const toggleSchedulingModal = () => {
+    setIsScheduling(!isScheduling);
+  };
+  
+  // プレビュー切り替え
   const togglePreview = () => {
     setIsPreview(!isPreview);
   };
 
-  // ファイル選択ハンドラ
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    // ファイルタイプの確認
-    if (!file.type.startsWith('image/')) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "画像ファイルを選択してください",
-      });
-      return;
-    }
-    
-    // ファイルサイズの確認 (5MB以下)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "ファイルサイズは5MB以下にしてください",
-      });
-      return;
-    }
-    
-    // アップロード実行
-    uploadMutation.mutate(file);
+  // エディター内容の変更イベント
+  const handleEditorChange = (content: string) => {
+    form.setValue("content", content, { shouldDirty: true });
+    console.log('エディタ内容更新:', content.length, 'バイト');
   };
 
-  // 戻るボタンのハンドラ
-  const handleBack = () => {
-    window.history.back();
+  // サムネイル画像アップロード処理
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('サムネイル画像のアップロードに失敗しました');
+      }
+      
+      const data = await response.json();
+      console.log('サムネイルアップロード結果:', data);
+      
+      // フォームにサムネイルURLを設定
+      form.setValue('thumbnail', data.url, { shouldDirty: true });
+      
+      toast({
+        title: 'サムネイル画像をアップロードしました',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('サムネイルアップロードエラー:', error);
+      toast({
+        title: 'サムネイル画像のアップロードに失敗しました',
+        description: error instanceof Error ? error.message : '不明なエラー',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleBack}
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                戻る
-              </Button>
-              <CardTitle>{postId ? "記事の編集" : "新規記事作成"}</CardTitle>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={togglePreview}
-              >
-                <Eye className="mr-1 h-4 w-4" />
-                {isPreview ? "編集" : "プレビュー"}
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
-              >
-                {(form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                <Save className="mr-1 h-4 w-4" />
-                保存
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* タイトル入力 */}
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>タイトル</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* 投稿状態選択 */}
-            <div className="flex items-center space-x-4">
+    <div className="container py-6">
+      <div className="mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          className="mb-4"
+          onClick={() => window.history.back()}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          戻る
+        </Button>
+        <h1 className="text-2xl font-bold">
+          {postId ? "ブログ記事を編集" : "新規ブログ記事"}
+        </h1>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>記事の基本情報</CardTitle>
+              <CardDescription>
+                タイトルやサムネイルなど、記事の基本情報を入力してください。
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* タイトル */}
               <FormField
                 control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <input
-                        type="radio"
-                        id="status-draft"
-                        checked={field.value === "draft"}
-                        onChange={() => {
-                          field.onChange("draft");
-                          setIsScheduling(false);
-                        }}
-                      />
-                    </FormControl>
-                    <FormLabel htmlFor="status-draft" className="mb-0">下書き</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <input
-                        type="radio"
-                        id="status-published"
-                        checked={field.value === "published" && !isScheduling}
-                        onChange={() => {
-                          field.onChange("published");
-                          setIsScheduling(false);
-                        }}
-                      />
-                    </FormControl>
-                    <FormLabel htmlFor="status-published" className="mb-0">公開</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <input
-                        type="radio"
-                        id="status-scheduled"
-                        checked={isScheduling}
-                        onChange={() => {
-                          field.onChange("scheduled");
-                          setIsScheduling(true);
-                        }}
-                      />
-                    </FormControl>
-                    <FormLabel htmlFor="status-scheduled" className="mb-0">予約投稿</FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            {/* 予約投稿日時 */}
-            {isScheduling && (
-              <FormField
-                control={form.control}
-                name="scheduled_at"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>予約投稿日時</FormLabel>
+                    <FormLabel>タイトル</FormLabel>
                     <FormControl>
-                      <Input
-                        type="datetime-local"
-                        {...field}
-                        value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
-                        onChange={(e) => {
-                          const date = e.target.value ? new Date(e.target.value) : null;
-                          field.onChange(date);
-                        }}
-                        className="w-full"
-                      />
+                      <Input placeholder="記事のタイトル" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-            
-            {/* サムネイル画像 */}
-            <FormField
-              control={form.control}
-              name="thumbnail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>サムネイル画像</FormLabel>
-                  <div className="flex items-start space-x-4">
-                    <FormControl>
-                      <Input
-                        type="text"
-                        {...field}
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        placeholder="画像URL (自動設定されます)"
-                        className="flex-1"
-                      />
-                    </FormControl>
-                    <div className="relative">
-                      <Input
-                        id="thumbnail-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="sr-only"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('thumbnail-upload')?.click()}
-                        disabled={uploadMutation.isPending}
-                        className="whitespace-nowrap"
-                      >
-                        {uploadMutation.isPending ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <ImageIcon className="mr-2 h-4 w-4" />
-                        )}
-                        画像を選択
-                      </Button>
-                    </div>
-                  </div>
-                  {field.value && (
-                    <div className="mt-2">
-                      <ThumbnailImage
-                        src={field.value}
-                        alt="サムネイル"
-                        className="h-32 object-cover rounded-md"
-                      />
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* エディタ/プレビュー */}
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>本文</FormLabel>
-                  <FormControl>
-                    <div className="min-h-[400px] border rounded-md">
-                      {isPreview ? (
-                        <div 
-                          className="p-4 prose prose-sm max-w-none min-h-[400px] h-full overflow-auto"
-                          dangerouslySetInnerHTML={{ __html: field.value || '' }}
-                        />
-                      ) : (
-                        <ReactQuill 
-                          ref={quillRef}
-                          theme="snow" 
-                          value={field.value || ''}
-                          onChange={(content) => {
-                            field.onChange(content);
-                            // エディタ内容が変更されたら画像リサイズハンドラを再設定
-                            setTimeout(() => {
-                              setupImageResizingHandlers();
-                            }, 200);
-                          }}
-                          modules={modules}
-                          formats={formats}
-                          className="min-h-[370px]"
-                        />
+
+              {/* サムネイル */}
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>サムネイル画像</FormLabel>
+                    <div className="flex items-center gap-4">
+                      {field.value && (
+                        <div className="relative h-24 w-44 overflow-hidden rounded-md border">
+                          <ThumbnailImage
+                            src={field.value}
+                            alt="サムネイル"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                       )}
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <label
+                            htmlFor="thumbnail-upload"
+                            className="flex h-10 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                          >
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            サムネイル画像を選択
+                          </label>
+                          <input
+                            type="file"
+                            id="thumbnail-upload"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleThumbnailUpload}
+                          />
+                          {field.value && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                form.setValue("thumbnail", "", { shouldDirty: true })
+                              }
+                            >
+                              削除
+                            </Button>
+                          )}
+                        </div>
+                      </FormControl>
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleBack}
-            >
-              キャンセル
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
-              className="ml-auto"
-            >
-              {(form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {postId ? "更新" : "作成"}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
-    </Form>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>記事の内容</CardTitle>
+              <CardDescription>
+                記事の本文を入力してください。画像はファイルから挿入できます。
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className={`${isPreview ? 'hidden' : 'block'}`}>
+                <ReactQuill
+                  ref={quillRef}
+                  theme="snow"
+                  value={form.getValues().content}
+                  onChange={handleEditorChange}
+                  modules={modules}
+                  formats={formats}
+                  className="min-h-[400px]"
+                />
+              </div>
+              
+              <div className={`${isPreview ? 'block' : 'hidden'} prose max-w-none pt-4`}>
+                <div dangerouslySetInnerHTML={{ __html: form.getValues().content || '' }} />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+              <div className="flex w-full gap-2 sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={togglePreview}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  {isPreview ? 'エディターを表示' : 'プレビュー'}
+                </Button>
+              </div>
+              
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  <Save className={`${saveMutation.isPending ? 'opacity-0' : 'opacity-100'} mr-2 h-4 w-4`} />
+                  下書き保存
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={publishMutation.isPending}
+                >
+                  {publishMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  公開する
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={toggleSchedulingModal}
+                  disabled={isScheduling}
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  予約投稿
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
+      
+      {/* 予約投稿モーダル（この部分は簡略化しています - 実際には日時選択用のカレンダーUI等が必要） */}
+      {isScheduling && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>予約投稿</CardTitle>
+              <CardDescription>
+                記事を公開する日時を選択してください。
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  選択した日時になると、記事が自動的に公開されます。
+                </p>
+                {/* ここに日時選択UIを配置 */}
+                <div className="flex justify-center">
+                  <CalendarIcon className="h-12 w-12 text-muted-foreground" />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={toggleSchedulingModal}
+              >
+                キャンセル
+              </Button>
+              <Button
+                onClick={() => handleSchedule(new Date(Date.now() + 24 * 60 * 60 * 1000))}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                予約設定
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
