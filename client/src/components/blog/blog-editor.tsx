@@ -453,17 +453,140 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     handle.style.top = `${topPos}px`;
                     handle.style.left = `${leftPos}px`;
                     
-                    // ハンドルにリサイズイベントリスナーを追加
+                    // ハンドルにリサイズ用のドラッグイベントリスナーを追加
                     handle.addEventListener('mousedown', (e) => {
-                      console.log(`${pos}ハンドルがドラッグされました`);
-                      
-                      // リサイズの実装はまだ完了していませんが、
-                      // ハンドルがクリック可能であることを確認します
+                      console.log(`${pos}ハンドルがドラッグ開始されました`);
                       e.preventDefault();
                       e.stopPropagation();
                       
-                      // このイベント発生を通知
-                      alert(`${pos}コーナーのリサイズハンドルがクリックされました`);
+                      // 初期位置と画像の初期サイズを保存
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      const startWidth = img.width;
+                      const startHeight = img.height;
+                      const aspectRatio = startWidth / startHeight;
+                      
+                      // 画像の初期位置を保存
+                      const imgRect = img.getBoundingClientRect();
+                      
+                      // マウスの動きに合わせてリサイズする関数
+                      const handleResize = (moveEvent: MouseEvent) => {
+                        moveEvent.preventDefault();
+                        
+                        // マウス移動量を計算
+                        let deltaX = moveEvent.clientX - startX;
+                        let deltaY = moveEvent.clientY - startY;
+                        
+                        // ポジションごとに処理を変える
+                        let newWidth = startWidth;
+                        let newHeight = startHeight;
+                        
+                        switch (pos) {
+                          case 'ne':
+                            // 右上の場合：幅を増やし、高さはアスペクト比を維持
+                            newWidth = startWidth + deltaX;
+                            newHeight = newWidth / aspectRatio;
+                            break;
+                          case 'se':
+                            // 右下の場合：幅と高さを増やす
+                            newWidth = startWidth + deltaX;
+                            newHeight = startHeight + deltaY;
+                            break;
+                          case 'sw':
+                            // 左下の場合：幅を減らし、高さを増やす
+                            newWidth = startWidth - deltaX;
+                            newHeight = startHeight + deltaY;
+                            break;
+                          case 'nw':
+                            // 左上の場合：幅と高さを減らす
+                            newWidth = startWidth - deltaX;
+                            newHeight = startHeight - deltaY;
+                            break;
+                        }
+                        
+                        // 最小サイズを設定
+                        newWidth = Math.max(50, newWidth);
+                        newHeight = Math.max(50, newHeight);
+                        
+                        // 画像のサイズを更新
+                        img.width = newWidth;
+                        img.height = newHeight;
+                        
+                        // width属性も更新
+                        img.setAttribute('width', newWidth.toString());
+                        img.setAttribute('data-width', newWidth.toString());
+                        
+                        if (img.style) {
+                          img.style.width = `${newWidth}px`;
+                          img.style.height = `${newHeight}px`;
+                        }
+                        
+                        // ハンドルの位置も更新する
+                        updateHandlePositions();
+                        
+                        console.log(`リサイズ: ${newWidth}x${newHeight}`);
+                      };
+                      
+                      // マウスボタンを離した時の処理
+                      const handleMouseUp = () => {
+                        // イベントリスナーを削除
+                        document.removeEventListener('mousemove', handleResize);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                        
+                        // リサイズ後の最終サイズを保存
+                        const finalWidth = img.width;
+                        console.log(`リサイズ完了: ${finalWidth}px`);
+                        
+                        // ReactQuillのコンテンツを更新してサイズ変更を保存
+                        if (quillRef.current) {
+                          const quill = quillRef.current.getEditor();
+                          const html = quill.root.innerHTML;
+                          
+                          // 更新されたHTMLをQuillに設定（強制的にイベントを発火させる）
+                          form.setValue('content', html, { shouldDirty: true });
+                          
+                          // 画像のリサイズがエディタに反映されるように明示的に更新
+                          setTimeout(() => {
+                            if (quillRef.current) {
+                              // カーソル位置を変更して強制的に更新を促す
+                              const quill = quillRef.current.getEditor();
+                              const range = quill.getSelection() || { index: 0, length: 0 };
+                              quill.setSelection(range.index, range.length);
+                            }
+                          }, 100);
+                        }
+                      };
+                      
+                      // ハンドルの位置を更新する関数
+                      const updateHandlePositions = () => {
+                        // 画像の新しい位置を取得
+                        const newImgRect = img.getBoundingClientRect();
+                        
+                        // すべてのハンドルを取得
+                        const allHandles = document.querySelectorAll('.image-resize-handle');
+                        
+                        // 各ハンドルの位置を更新
+                        allHandles.forEach(h => {
+                          const handlePos = h.getAttribute('data-position');
+                          if (handlePos === 'nw') {
+                            h.style.top = `${newImgRect.top}px`;
+                            h.style.left = `${newImgRect.left}px`;
+                          } else if (handlePos === 'ne') {
+                            h.style.top = `${newImgRect.top}px`;
+                            h.style.left = `${newImgRect.right}px`;
+                          } else if (handlePos === 'sw') {
+                            h.style.top = `${newImgRect.bottom}px`;
+                            h.style.left = `${newImgRect.left}px`;
+                          } else if (handlePos === 'se') {
+                            h.style.top = `${newImgRect.bottom}px`;
+                            h.style.left = `${newImgRect.right}px`;
+                          }
+                        });
+                      };
+                      
+                      // ドキュメント全体にイベントリスナーを追加
+                      document.addEventListener('mousemove', handleResize);
+                      document.addEventListener('mouseup', handleMouseUp);
                     });
                     
                     console.log(`${pos}ハンドルを追加しました: top=${handle.style.top}, left=${handle.style.left}`);
