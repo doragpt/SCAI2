@@ -275,10 +275,49 @@ router.post("/", authenticate, async (req: any, res) => {
         : cleanedData.published_at
     });
     
+    // cleanedDataをDBで安全に使用できる形式に変換
+    // scheduled_atとpublished_atの最終確認
+    if (cleanedData.scheduled_at && !(cleanedData.scheduled_at instanceof Date)) {
+      try {
+        cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+      } catch (e) {
+        console.error('最終変換でエラー - scheduled_at:', cleanedData.scheduled_at);
+        cleanedData.scheduled_at = null;
+      }
+    }
+    
+    if (cleanedData.published_at && !(cleanedData.published_at instanceof Date)) {
+      try {
+        cleanedData.published_at = new Date(cleanedData.published_at);
+      } catch (e) {
+        console.error('最終変換でエラー - published_at:', cleanedData.published_at);
+        cleanedData.published_at = null;
+      }
+    }
+    
+    // 直接SQLパラメータとして使用する安全なオブジェクトを作成
+    const safeData = {
+      title: cleanedData.title,
+      content: cleanedData.content,
+      status: cleanedData.status,
+      store_id: cleanedData.store_id,
+      scheduled_at: cleanedData.scheduled_at,
+      published_at: cleanedData.published_at,
+      created_at: cleanedData.created_at,
+      updated_at: cleanedData.updated_at,
+      thumbnail: cleanedData.thumbnail,
+      images: cleanedData.images
+    };
+    
+    console.log('DB挿入用の安全なデータ型:', {
+      scheduled_at_type: safeData.scheduled_at ? (safeData.scheduled_at instanceof Date ? 'Date' : typeof safeData.scheduled_at) : 'null',
+      published_at_type: safeData.published_at ? (safeData.published_at instanceof Date ? 'Date' : typeof safeData.published_at) : 'null'
+    });
+    
     try {
       const [post] = await db
         .insert(blogPosts)
-        .values(cleanedData)
+        .values(safeData)
         .returning();
 
       log('info', 'ブログ記事作成成功', {
@@ -406,11 +445,48 @@ router.put("/:id", authenticate, async (req: any, res) => {
         : cleanedData.published_at
     });
     
+    // cleanedDataをDBで安全に使用できる形式に変換
+    // scheduled_atとpublished_atの最終確認
+    if (cleanedData.scheduled_at && !(cleanedData.scheduled_at instanceof Date)) {
+      try {
+        cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+      } catch (e) {
+        console.error('最終変換でエラー - scheduled_at:', cleanedData.scheduled_at);
+        cleanedData.scheduled_at = null;
+      }
+    }
+    
+    if (cleanedData.published_at && !(cleanedData.published_at instanceof Date)) {
+      try {
+        cleanedData.published_at = new Date(cleanedData.published_at);
+      } catch (e) {
+        console.error('最終変換でエラー - published_at:', cleanedData.published_at);
+        cleanedData.published_at = null;
+      }
+    }
+    
+    // 直接SQLパラメータとして使用する安全なオブジェクトを作成
+    const safeData = {
+      title: cleanedData.title,
+      content: cleanedData.content,
+      status: cleanedData.status,
+      scheduled_at: cleanedData.scheduled_at,
+      published_at: cleanedData.published_at,
+      updated_at: new Date(),
+      thumbnail: cleanedData.thumbnail,
+      images: cleanedData.images
+    };
+    
+    console.log('DB更新用の安全なデータ型:', {
+      scheduled_at_type: safeData.scheduled_at ? (safeData.scheduled_at instanceof Date ? 'Date' : typeof safeData.scheduled_at) : 'null',
+      published_at_type: safeData.published_at ? (safeData.published_at instanceof Date ? 'Date' : typeof safeData.published_at) : 'null'
+    });
+    
     // 記事の更新
     try {
       const [updatedPost] = await db
         .update(blogPosts)
-        .set(cleanedData)
+        .set(safeData)
         .where(and(
           eq(blogPosts.id, postId),
           eq(blogPosts.store_id, req.user.id)
