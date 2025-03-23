@@ -190,7 +190,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     mutationFn: (data: BlogPost) =>
       apiRequest(
         postId ? "PUT" : "POST",
-        `/api/blog/posts${postId ? `/${postId}` : ""}`,
+        `/api/blog${postId ? `/${postId}` : ""}`,
         { ...data, status: "draft" }
       ),
     onSuccess: (data) => {
@@ -275,7 +275,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     });
   };
 
-  // 予約投稿モーダルの表示切替
+  // 予約投稿モーダルの表示切替（削除する予定）
   const toggleSchedulingModal = () => {
     setIsScheduling(!isScheduling);
   };
@@ -727,15 +727,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={toggleSchedulingModal}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  予約投稿
-                </Button>
-                <Button
-                  type="button"
                   onClick={handlePublish}
                   disabled={publishMutation.isPending}
                   className="gap-2"
@@ -751,66 +742,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </CardFooter>
           </Card>
           
-          {/* 以前の予約投稿日時設定セクションは上部に移動しました */}
-          
-          {/* 従来の単一予約投稿モーダル */}
-          {isScheduling && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <Card className="w-full max-w-md">
-                <CardHeader>
-                  <CardTitle>予約投稿設定</CardTitle>
-                  <CardDescription>
-                    記事を公開する日時を選択してください。
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label>公開日時</Label>
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 opacity-50" />
-                        <input
-                          type="datetime-local"
-                          className="w-full rounded-md border px-3 py-2"
-                          min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                          defaultValue={format(
-                            new Date(
-                              new Date().getTime() + 24 * 60 * 60 * 1000
-                            ),
-                            "yyyy-MM-dd'T'HH:mm"
-                          )}
-                          id="schedule-date"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsScheduling(false)}
-                  >
-                    キャンセル
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const dateInput = document.getElementById(
-                        "schedule-date"
-                      ) as HTMLInputElement;
-                      if (dateInput && dateInput.value) {
-                        handleSchedule(new Date(dateInput.value));
-                      }
-                    }}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    予約する
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          )}
+          {/* 従来の単一予約投稿モーダルは削除 */}
         </form>
       </Form>
     </div>
