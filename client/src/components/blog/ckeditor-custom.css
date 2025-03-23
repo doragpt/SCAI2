@@ -1,0 +1,73 @@
+/* CKEditor 5 カスタムスタイル */
+
+/* エディタのメインコンテナ */
+.ck-editor__main {
+  min-height: 400px;
+  max-height: 800px;
+}
+
+/* エディタの内容領域 */
+.ck-editor__editable {
+  min-height: 400px;
+  max-height: 800px;
+  overflow-y: auto !important;
+}
+
+/* 画像ツールバーのスタイル調整 */
+.ck-toolbar {
+  border-radius: 4px !important;
+}
+
+/* 画像のスタイル */
+.ck-content .image {
+  margin: 1em 0;
+}
+
+/* 画像キャプションのスタイル */
+.ck-content .image > figcaption {
+  font-size: 0.9em;
+  color: #555;
+}
+
+/* 画像のリサイズハンドル */
+.ck-content .image.image_resized > img {
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
+/* 大型画像のツールバーが画面外にはみ出さないように */
+.ck.ck-sticky-panel {
+  z-index: 100;
+}
+
+/* 画像のアップロードプログレスバー */
+.ck-content .image.ck-appear {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 画像のアップロード待機中スタイル */
+.ck-content .image.ck-image-upload-placeholder > img {
+  filter: blur(5px);
+}
+
+/* ツールチップのスタイル調整 */
+.ck.ck-tooltip {
+  z-index: 1000;
+}
+
+/* モバイル向け調整 */
+@media (max-width: 768px) {
+  .ck-editor__main {
+    min-height: 300px;
+  }
+  
+  .ck-editor__editable {
+    min-height: 300px;
+  }
+}
