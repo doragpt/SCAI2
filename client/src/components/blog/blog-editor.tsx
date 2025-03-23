@@ -33,15 +33,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// モジュール登録（再試行とエラーログ付き）
-try {
-  // 既存の登録を削除してからやり直し
-  Quill.register('modules/imageResize', null, true);
-  // 新しく登録し直す
-  Quill.register('modules/imageResize', ImageResize, true);
-  console.log('ImageResizeモジュールを登録しました');
-} catch (err) {
-  console.error('ImageResizeモジュール登録エラー:', err);
+// クライアントサイドのみでモジュールを登録（サーバーサイドレンダリングを避ける）
+if (typeof window !== 'undefined') {
+  try {
+    // 登録の前にモジュールが正しいかチェック
+    if (!ImageResize || typeof ImageResize !== 'function') {
+      console.error('ImageResizeモジュールが正しくインポートされていません');
+    } else {
+      // 明示的にモジュールとして登録
+      Quill.register('modules/imageResize', ImageResize);
+      console.log('ImageResizeモジュールを登録しました');
+    }
+  } catch (err) {
+    console.error('ImageResizeモジュール登録エラー:', err);
+  }
 }
 
 // HTMLの解析関数を追加
@@ -857,21 +862,42 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             }}
                             className="min-h-[400px]"
                             onFocus={() => {
-                              // エディタがフォーカスを受け取ったときにImageResizeモジュールを再初期化
+                              // エディタがフォーカスを受け取ったときに画像のスタイルを直接適用する
                               try {
                                 if (quillRef.current) {
                                   const editor = quillRef.current.getEditor();
-                                  // imageResizeモジュールが存在するか確認
-                                  if (editor.getModule('imageResize')) {
-                                    console.log('ImageResizeモジュールは既に初期化されています');
-                                  } else {
-                                    console.log('ImageResizeモジュールの手動初期化を試行中...');
-                                    // 手動でモジュールを追加
-                                    editor.addModule('imageResize', modules.imageResize);
-                                  }
+                                  const images = editor.root.querySelectorAll('img');
+                                  
+                                  // 各画像に直接スタイルを設定 (リサイズできるように)
+                                  images.forEach((img: HTMLImageElement) => {
+                                    // リサイズ可能なクラスを追加
+                                    if (!img.classList.contains('resizable-image')) {
+                                      img.classList.add('resizable-image');
+                                    }
+                                    
+                                    // カーソルスタイルを設定（リサイズカーソルを表示）
+                                    if (!img.style.cursor || img.style.cursor === 'default') {
+                                      img.style.cursor = 'nwse-resize';
+                                    }
+                                    
+                                    // リサイズハンドル用のスタイルを追加
+                                    img.style.boxSizing = 'border-box';
+                                    img.style.border = '1px solid transparent';
+                                    
+                                    // ホバー時に境界線を表示
+                                    img.onmouseover = () => {
+                                      img.style.border = '1px dashed #999';
+                                    };
+                                    
+                                    img.onmouseout = () => {
+                                      img.style.border = '1px solid transparent';
+                                    };
+                                  });
+                                  
+                                  console.log(`${images.length}枚の画像にリサイズスタイルを適用しました`);
                                 }
                               } catch (err) {
-                                console.error('ImageResizeモジュール手動初期化エラー:', err);
+                                console.error('画像スタイル適用エラー:', err);
                               }
                             }}
                           />
