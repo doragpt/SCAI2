@@ -415,7 +415,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     type="button"
                     variant="outline"
                     onClick={toggleScheduleSection}
-                    className="h-9"
+                    className={`h-9 ${showScheduleSection ? 'bg-primary/10 border-primary text-primary' : ''}`}
                   >
                     <Clock className="mr-2 h-4 w-4" />
                     投稿日時設定
@@ -423,6 +423,102 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 </div>
               </div>
             </CardHeader>
+            
+            {/* 投稿日時設定 - ガールズヘブン風ドロップダウン方式 (ヘッダー直下に配置) */}
+            {showScheduleSection && (
+              <div className="border-b border-primary/20 bg-primary/5 px-6 py-4">
+                <div className="mb-3">
+                  <h3 className="text-base font-medium flex items-center mb-1">
+                    <Calendar className="mr-2 h-4 w-4 text-primary" />
+                    投稿日時設定
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    設定した日時に自動で公開されます
+                  </p>
+                </div>
+                
+                <div className="space-y-3 mb-3">
+                  {/* 日時リスト */}
+                  {scheduleDates.map((date, index) => (
+                    <div key={index} className="flex items-center bg-white border rounded-md overflow-hidden">
+                      <div className="p-2 bg-muted/10 border-r flex-shrink-0 w-8 flex justify-center">
+                        <span className="w-4 h-4 flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs">
+                          {index + 1}
+                        </span>
+                      </div>
+                      <div className="p-2 flex-grow flex items-center">
+                        <input
+                          type="datetime-local"
+                          className="flex-grow border rounded px-2 py-1 text-sm"
+                          min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                          value={format(date, "yyyy-MM-dd'T'HH:mm")}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              updateScheduleDate(index, new Date(e.target.value));
+                            }
+                          }}
+                        />
+                        <span className="mx-2 text-xs text-muted-foreground hidden sm:inline">
+                          {format(date, "yyyy年MM月dd日 HH:mm")}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeScheduleDate(index)}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">削除</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="flex space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addScheduleDate}
+                      className="h-8 border-primary/30 text-primary hover:bg-primary/5"
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      追加
+                    </Button>
+                    
+                    <Button
+                      type="button" 
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowScheduleSection(false)}
+                      className="h-8 text-muted-foreground"
+                    >
+                      閉じる
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-muted-foreground">
+                      {scheduleDates.length} 件設定中
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="default"
+                      onClick={handleMultiSchedule}
+                      disabled={scheduleDates.length === 0}
+                      className="h-8 bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Calendar className="mr-1 h-3.5 w-3.5" />
+                      予約投稿を確定
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <CardContent className="space-y-6 pt-5">
               {/* カテゴリと記事タイトル */}
@@ -639,110 +735,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </CardFooter>
           </Card>
           
-          {/* 投稿日時設定 - ガールズヘブン風ドロップダウン方式 */}
-          {showScheduleSection && (
-            <Card className="mt-4 border border-primary/20">
-              <CardHeader className="pb-3 border-b bg-muted/10">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base flex items-center">
-                      <Calendar className="mr-2 h-5 w-5" />
-                      投稿日時設定
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      設定した日時に自動で公開されます
-                    </CardDescription>
-                  </div>
-                  <Button 
-                    type="button" 
-                    onClick={() => setShowScheduleSection(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                  >
-                    <span className="mr-1">✕</span>
-                    閉じる
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-4 pb-3">
-                {/* 投稿日時設定メインUI */}
-                <div className="space-y-4">
-                  <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm border border-blue-100">
-                    <i className="inline-block mr-2">ℹ️</i>
-                    「追加」ボタンで投稿日時を追加できます。予約完了後は自動で公開されます。
-                  </div>
-                  
-                  {/* 日時リスト */}
-                  <div className="space-y-2 mb-3">
-                    {scheduleDates.map((date, index) => (
-                      <div key={index} className="flex items-center bg-card border rounded-md overflow-hidden">
-                        <div className="p-3 bg-muted/10 border-r flex-shrink-0 w-10 flex justify-center">
-                          <span className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs">
-                            {index + 1}
-                          </span>
-                        </div>
-                        <div className="p-2 flex-grow flex items-center">
-                          <input
-                            type="datetime-local"
-                            className="flex-grow border rounded px-2 py-1 text-sm"
-                            min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                            value={format(date, "yyyy-MM-dd'T'HH:mm")}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                updateScheduleDate(index, new Date(e.target.value));
-                              }
-                            }}
-                          />
-                          <span className="mx-2 text-xs text-muted-foreground hidden sm:inline">
-                            {format(date, "yyyy年MM月dd日 HH:mm")}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeScheduleDate(index)}
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">削除</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* 日時追加ボタン */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addScheduleDate}
-                    className="w-full border-primary/30 text-primary hover:bg-primary/5"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    追加
-                  </Button>
-                </div>
-              </CardContent>
-              
-              <CardFooter className="pt-2 pb-3 border-t flex justify-between bg-muted/5">
-                <div className="text-sm text-muted-foreground">
-                  {scheduleDates.length} 件の投稿日時が設定されています
-                </div>
-                <Button
-                  type="button"
-                  variant="default"
-                  onClick={handleMultiSchedule}
-                  disabled={scheduleDates.length === 0}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  予約投稿を確定
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
+          {/* 以前の投稿日時設定セクションは上部に移動しました */}
           
           {/* 従来の単一予約投稿モーダル */}
           {isScheduling && (
