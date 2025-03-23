@@ -10,8 +10,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import ImageResize from 'quill-image-resize-module-react';
 import Quill from 'quill';
+// カスタム画像リサイザーを使用
+import { ImageResizer } from './image-resizer';
+import './image-resizer.css';
 import { ThumbnailImage } from "./thumbnail-image";
 import {
   Card,
@@ -33,21 +35,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// クライアントサイドのみでモジュールを登録（サーバーサイドレンダリングを避ける）
-if (typeof window !== 'undefined') {
-  try {
-    // 登録の前にモジュールが正しいかチェック
-    if (!ImageResize || typeof ImageResize !== 'function') {
-      console.error('ImageResizeモジュールが正しくインポートされていません');
-    } else {
-      // 明示的にモジュールとして登録
-      Quill.register('modules/imageResize', ImageResize);
-      console.log('ImageResizeモジュールを登録しました');
-    }
-  } catch (err) {
-    console.error('ImageResizeモジュール登録エラー:', err);
-  }
-}
+// 独自の画像リサイズ機能を実装
+// モジュール登録は行わない（エラーの原因となるため）
 
 // HTMLの解析関数を追加
 const parseHtml = (html: string) => {
@@ -134,32 +123,8 @@ const modules = {
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
     ['link', 'image'],
     ['clean']
-  ],
-  imageResize: {
-    // 利用するモジュール（すべてのモジュールを有効化）
-    modules: ['Resize', 'DisplaySize', 'Toolbar', 'BaseModule'],
-    // 画像のリサイズハンドル設定
-    handleStyles: {
-      // 許可する最小・最大サイズ
-      minWidth: 50,
-      maxWidth: 1200,
-      // サイズ表示オプション
-      displaySize: true,
-      // 属性の保存方法を指定（すべての属性を保存）
-      attributors: {
-        // 標準のHTML属性
-        width: 'width',
-        height: 'height',
-        // カスタムデータ属性（バックアップ用）
-        dataWidth: 'data-width',
-        dataHeight: 'data-height',
-        // クラス名も設定
-        class: 'resizable-image'
-      },
-      // サイズ変更後は即座に適用
-      autoApply: true
-    }
-  }
+  ]
+  // ImageResizeモジュールは削除 (カスタム実装に置き換え)
 };
 
 const formats = [
@@ -319,6 +284,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
   
+  // カスタムImageResizerインスタンスへの参照
+  const resizer = useRef<ImageResizer | null>(null);
+
   // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
   useEffect(() => {
     if (contentLoaded && initialData?.content) {
@@ -404,6 +372,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   console.log(`画像の高さを設定: ${height}px`);
                 }
               });
+
+              // カスタムリサイザーを初期化
+              if (!resizer.current && quillElement) {
+                console.log('カスタム画像リサイザーを初期化します');
+                resizer.current = new ImageResizer(quillElement);
+              }
             } catch (error) {
               console.error('画像サイズ復元に失敗しました:', error);
             }
@@ -417,6 +391,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       }, 300);
     }
   }, [contentLoaded, initialData, form]);
+  
+  // コンポーネントのアンマウント時にリソースを解放
+  useEffect(() => {
+    return () => {
+      // リサイザーのクリーンアップ
+      if (resizer.current) {
+        resizer.current.destroy();
+        resizer.current = null;
+      }
+    };
+  }, []);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {

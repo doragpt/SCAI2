@@ -1,0 +1,49 @@
+/* 画像リサイズのスタイル */
+.quill-image-resizable {
+  position: relative;
+  box-sizing: border-box;
+  cursor: pointer;
+  max-width: 100%;
+  transition: border 0.2s;
+  border: 1px solid transparent;
+}
+
+.quill-image-resizable:hover {
+  border: 1px dashed #1e90ff;
+}
+
+.quill-image-resizable.resizing {
+  border: 1px dashed #ff5722;
+}
+
+.quill-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #1e90ff;
+  border-radius: 50%;
+}
+
+.quill-resize-handle.nw {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+
+.quill-resize-handle.ne {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+
+.quill-resize-handle.sw {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+
+.quill-resize-handle.se {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
