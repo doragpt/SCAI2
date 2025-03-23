@@ -43,6 +43,36 @@ const parseHtml = (html: string) => {
   return parser.parseFromString(html, 'text/html');
 };
 
+// QuillコンテンツのDOM操作用の統合関数
+const processQuillContent = (content: string): string => {
+  // HTML解析のための一時的な要素を作成
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = content;
+  
+  // 全ての画像を処理
+  const images = tempDiv.querySelectorAll('img');
+  images.forEach(img => {
+    // data-width属性またはwidth属性から情報を取得
+    const width = img.getAttribute('data-width') || img.getAttribute('width');
+    if (width) {
+      // 属性とスタイルの両方を設定
+      img.setAttribute('width', width);
+      img.setAttribute('data-width', width);
+      img.style.width = `${width}px`;
+    }
+    
+    // data-height属性またはheight属性から情報を取得
+    const height = img.getAttribute('data-height') || img.getAttribute('height');
+    if (height) {
+      img.setAttribute('height', height);
+      img.setAttribute('data-height', height);
+      img.style.height = `${height}px`;
+    }
+  });
+  
+  return tempDiv.innerHTML;
+};
+
 // エディタのモジュール設定
 const modules = {
   toolbar: [
@@ -604,7 +634,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
       
       // 画像サイズ属性を保持したコンテンツを作成
-      const processedContent = restoreImageSizes(values.content);
+      // 新しい統合関数とレガシー関数の両方を実行し、確実にサイズが保持されるようにする
+      const processedContent = processQuillContent(values.content);
       console.log('画像サイズ属性を保持したコンテンツを処理しました');
 
       // 型アノテーションを使用してnewStatusを列挙型として明示的に型付け
