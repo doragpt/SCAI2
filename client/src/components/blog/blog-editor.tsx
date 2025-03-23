@@ -36,6 +36,13 @@ import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye
 // モジュール登録 (エラーを無視)
 Quill.register('modules/imageResize', ImageResize, true);
 
+// HTMLの解析関数を追加
+const parseHtml = (html: string) => {
+  if (typeof document === 'undefined') return null;
+  const parser = new DOMParser();
+  return parser.parseFromString(html, 'text/html');
+};
+
 // エディタのモジュール設定
 const modules = {
   toolbar: [
@@ -223,7 +230,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     if (contentLoaded && initialData?.content) {
       console.log('ReactQuill のコンテンツを強制的に更新します');
       
-      // ReactQuillにコンテンツを強制的に設定
+      // ReactQuillにコンテンツを強制的に設定（画像サイズを復元）
       setTimeout(() => {
         // 画像サイズ属性を保持したHTMLを設定
         const processedContent = preserveImageSizes(initialData.content);
@@ -234,6 +241,76 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           quill.clipboard.dangerouslyPasteHTML(processedContent);
           // フォーム値も同期
           form.setValue('content', quill.root.innerHTML, { shouldDirty: true });
+          
+          // 画像の幅と高さを設定するための追加処理
+          setTimeout(() => {
+            try {
+              // quillRefが存在するかチェック
+              if (!quillRef.current) {
+                console.warn('quillRefがnullです');
+                return;
+              }
+              
+              // DOM内の画像を探して直接サイズを設定
+              const quillElement = quillRef.current.getEditor().root;
+              const images = quillElement.querySelectorAll('img');
+              
+              images.forEach((img: HTMLImageElement) => {
+                // さまざまな属性から幅を取得（特にdata-width属性を優先）
+                const widthFromData = img.getAttribute('data-width');
+                const widthFromAttr = img.getAttribute('width');
+                const heightFromData = img.getAttribute('data-height');
+                const heightFromAttr = img.getAttribute('height');
+                
+                // スタイル属性からも取得を試みる
+                const style = img.getAttribute('style') || '';
+                const styleWidthMatch = style.match(/width:\s*(\d+)px/);
+                const styleHeightMatch = style.match(/height:\s*(\d+)px/);
+                
+                // 優先順位を付けて幅と高さを決定
+                const width = widthFromData || widthFromAttr || (styleWidthMatch ? styleWidthMatch[1] : null);
+                const height = heightFromData || heightFromAttr || (styleHeightMatch ? styleHeightMatch[1] : null);
+                
+                console.log(`検出された画像サイズ: data-width=${widthFromData}, width=${widthFromAttr}, style width=${styleWidthMatch ? styleWidthMatch[1] : 'なし'}`);
+                
+                if (width) {
+                  const numWidth = parseInt(width);
+                  // DOM要素に直接設定
+                  img.width = numWidth;
+                  img.setAttribute('width', width);
+                  img.setAttribute('data-width', width);
+                  
+                  // インラインスタイルにも設定
+                  if (style.includes('width:')) {
+                    img.style.cssText = style.replace(/width:\s*\d+px/, `width: ${width}px`);
+                  } else {
+                    img.style.cssText = `${style}; width: ${width}px;`;
+                  }
+                  
+                  console.log(`画像の幅を設定: ${width}px`);
+                }
+                
+                if (height) {
+                  const numHeight = parseInt(height);
+                  // DOM要素に直接設定
+                  img.height = numHeight;
+                  img.setAttribute('height', height);
+                  img.setAttribute('data-height', height);
+                  
+                  // インラインスタイルにも設定
+                  if (style.includes('height:')) {
+                    img.style.cssText = img.style.cssText.replace(/height:\s*\d+px/, `height: ${height}px`);
+                  } else {
+                    img.style.cssText = `${img.style.cssText}; height: ${height}px;`;
+                  }
+                  
+                  console.log(`画像の高さを設定: ${height}px`);
+                }
+              });
+            } catch (error) {
+              console.error('画像サイズ復元に失敗しました:', error);
+            }
+          }, 500);
         } else {
           // フォールバック
           form.setValue('content', processedContent, { shouldDirty: true });
