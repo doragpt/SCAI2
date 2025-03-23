@@ -44,7 +44,7 @@ const parseHtml = (html: string) => {
   return parser.parseFromString(html, 'text/html');
 };
 
-// QuillコンテンツのDOM操作用の統合関数（改善版）
+// QuillコンテンツのDOM操作用の統合関数（最終強化版）
 const processQuillContent = (content: string): string => {
   // 内容が空の場合は空文字を返す
   if (!content) {
@@ -77,26 +77,56 @@ const processQuillContent = (content: string): string => {
       
       console.log(`画像[${index}]の属性 - data-width: ${dataWidth}, width: ${width}, style-width: ${styleWidthMatch ? styleWidthMatch[1] : 'なし'}`);
       
-      // サイズ情報の優先順位付け
-      const finalWidth = dataWidth || width || (styleWidthMatch ? styleWidthMatch[1] : null);
-      const finalHeight = dataHeight || height || (styleHeightMatch ? styleHeightMatch[1] : null);
+      // サイズ情報の優先順位付け（data-width属性を最優先）
+      // この順序が重要: data-width > width > style width
+      const finalWidth = dataWidth || width || (styleWidthMatch ? styleWidthMatch[1] : null) || img.width.toString();
+      const finalHeight = dataHeight || height || (styleHeightMatch ? styleHeightMatch[1] : null) || img.height.toString();
       
-      if (finalWidth) {
+      // 最終サイズを計算
+      const numericWidth = finalWidth ? parseInt(finalWidth, 10) : 0;
+      const numericHeight = finalHeight ? parseInt(finalHeight, 10) : 0;
+      
+      // 最終サイズが有効な数値か確認
+      const validWidth = !isNaN(numericWidth) && numericWidth > 0 ? numericWidth.toString() : null;
+      const validHeight = !isNaN(numericHeight) && numericHeight > 0 ? numericHeight.toString() : null;
+      
+      // 値をデバッグ出力
+      console.log(`画像[${index}]の最終サイズ - width:${validWidth}, height:${validHeight}`);
+      
+      if (validWidth) {
         // 全ての場所に幅を設定（冗長に）
-        img.setAttribute('width', finalWidth);
-        img.setAttribute('data-width', finalWidth);
+        img.setAttribute('width', validWidth);
+        img.setAttribute('data-width', validWidth);
         
-        // スタイル属性にも設定
-        img.style.width = `${finalWidth}px`;
+        // スタイル属性も設定（最も優先度が高い）
+        img.style.width = `${validWidth}px`;
+        
+        // インラインstyle属性を文字列として構築し適用
+        let newStyle = style;
+        if (newStyle.includes('width:')) {
+          newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${validWidth}px`);
+        } else {
+          newStyle += (newStyle ? '; ' : '') + `width: ${validWidth}px`;
+        }
+        img.setAttribute('style', newStyle);
       }
       
-      if (finalHeight) {
+      if (validHeight) {
         // 全ての場所に高さを設定（冗長に）
-        img.setAttribute('height', finalHeight);
-        img.setAttribute('data-height', finalHeight);
+        img.setAttribute('height', validHeight);
+        img.setAttribute('data-height', validHeight);
         
-        // スタイル属性にも設定
-        img.style.height = `${finalHeight}px`;
+        // スタイル属性も設定（最も優先度が高い）
+        img.style.height = `${validHeight}px`;
+        
+        // インラインstyle属性を文字列として構築し適用（widthとheight両方を含める）
+        let newStyle = img.getAttribute('style') || '';
+        if (newStyle.includes('height:')) {
+          newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${validHeight}px`);
+        } else {
+          newStyle += (newStyle ? '; ' : '') + `height: ${validHeight}px`;
+        }
+        img.setAttribute('style', newStyle);
       }
       
       // リサイズ可能なクラスを追加
@@ -106,7 +136,10 @@ const processQuillContent = (content: string): string => {
       }
     });
     
-    return tempDiv.innerHTML;
+    // 最終的なHTMLを返す前に確認ログ
+    const result = tempDiv.innerHTML;
+    console.log('エディタコンテンツ変更 - 画像サイズを処理しました');
+    return result;
   } catch (error) {
     console.error('processQuillContent処理中にエラーが発生しました:', error);
     return content; // エラーの場合は元のコンテンツを返す
@@ -972,12 +1005,26 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
 
   // 送信前に画像サイズ属性を復元・強化する関数（簡素化版）
+  // 送信前の画像サイズ属性を強化する関数（強化版）
   const restoreImageSizes = (content: string): string => {
     // 内容が空の場合は空文字を返す
     if (!content) return '';
     
     try {
-      // 処理中のエラーを防ぐためにDOMParserを使用せず、単純な文字列処理のみに依存する
+      console.log('画像サイズ復元処理開始 - コンテンツ長:', content.length);
+      
+      // 処理の前にHTML要素として解析して画像を確認
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = content;
+      const imgElements = tempDiv.querySelectorAll('img');
+      console.log(`リサイズ前処理: ${imgElements.length}枚の画像を検出`);
+      
+      // 各画像のサイズ情報をログ出力（デバッグ用）
+      imgElements.forEach((img, idx) => {
+        console.log(`画像[${idx}]のサイズ - width:${img.width}, height:${img.height}, style:${img.getAttribute('style')}, data-width:${img.getAttribute('data-width')}`);
+      });
+      
+      // 処理中のエラーを防ぐため、正規表現ベースの処理と要素操作の両方を実施
       const imgTagRegex = /<img\s[^>]*>/g;
       
       // 全ての画像タグを処理
@@ -996,11 +1043,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
           const styleHeightMatch = styleValue.match(/height:\s*(\d+)px/);
           
           // 優先順位に従ってサイズを決定
+          // 注: ここでは最も信頼性の高い数値を使用する（data-width > width > style width）
           const width = dataWidthMatch?.[1] || widthMatch?.[1] || styleWidthMatch?.[1] || null;
           const height = dataHeightMatch?.[1] || heightMatch?.[1] || styleHeightMatch?.[1] || null;
           
+          console.log(`画像タグ処理: 検出サイズ - width:${width}, height:${height}`);
+          
           // サイズ情報がない場合は元のタグを返す
-          if (!width && !height) return imgTag;
+          if (!width && !height) {
+            console.log('サイズ情報なし - 元のタグを維持');
+            return imgTag;
+          }
           
           // 修正したタグを構築
           let result = imgTag;
