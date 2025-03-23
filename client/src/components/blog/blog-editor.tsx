@@ -344,7 +344,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 記事の保存（新規作成または更新）
   const saveMutation = useMutation({
     mutationFn: (data: BlogPost) =>
-      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/${postId}` : "/api/blog", data),
+      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/post/${postId}` : "/api/blog/post", data),
     onSuccess: () => {
       toast({
         title: postId ? "記事を更新しました" : "記事を作成しました",
@@ -354,6 +354,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       // キャッシュを更新
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
+      queryClient.invalidateQueries({ queryKey: ["blog-management"] });
     },
     onError: (error: Error) => {
       console.error('保存エラー:', error);
@@ -368,7 +369,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 記事の公開（公開/予約/下書き保存）
   const publishMutation = useMutation({
     mutationFn: (data: BlogPost) => 
-      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/${postId}` : "/api/blog", data),
+      apiRequest(postId ? "PATCH" : "POST", postId ? `/api/blog/post/${postId}` : "/api/blog/post", data),
     onSuccess: () => {
       toast({
         title: "記事を公開しました",
@@ -379,6 +380,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
       queryClient.invalidateQueries({ queryKey: ['blog-management'] }); // 店舗ブログ一覧のキャッシュを無効化
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] }); // 店舗ブログ一覧のキャッシュを無効化
       
       // 公開後は下書き一覧に戻る
       window.location.href = "/store/blog";

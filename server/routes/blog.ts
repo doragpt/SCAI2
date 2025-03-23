@@ -4,6 +4,7 @@ import { db } from '../db';
 import { blogPosts, blogPostSchema } from '@shared/schema';
 import { eq, desc, and, like, sql, asc } from 'drizzle-orm';
 import { log } from '../utils/logger';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -563,6 +564,168 @@ router.delete("/:id", authenticate, async (req: any, res) => {
     });
     res.status(500).json({
       message: "ブログ記事の削除に失敗しました"
+    });
+  }
+});
+
+// [新規追加] ブログ記事作成/更新（クライアントからのAPI repath対応）
+router.post("/post", authenticate, async (req: any, res) => {
+  try {
+    if (req.user.role !== 'store') {
+      return res.status(403).json({ message: "店舗アカウントのみ記事を作成できます" });
+    }
+
+    // 既存のブログ作成APIエンドポイントと同様の処理
+    let cleanedData = { ...req.body };
+    
+    try {
+      // scheduled_atとpublished_atの処理
+      if (cleanedData.scheduled_at) {
+        cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+      } else {
+        cleanedData.scheduled_at = null;
+      }
+      
+      if (cleanedData.published_at) {
+        cleanedData.published_at = new Date(cleanedData.published_at);
+      } else {
+        cleanedData.published_at = null;
+      }
+    } catch (dateError) {
+      console.error('日付処理エラー:', dateError);
+      cleanedData.scheduled_at = null;
+      cleanedData.published_at = null;
+    }
+    
+    // 公開時は公開日時を設定
+    if (cleanedData.status === 'published' && !cleanedData.published_at) {
+      cleanedData.published_at = new Date();
+    }
+    
+    // その他の必須フィールド
+    cleanedData.store_id = req.user.id;
+    cleanedData.created_at = new Date();
+    cleanedData.updated_at = new Date();
+    
+    log('info', 'ブログ記事作成リクエスト(repath API)', {
+      userId: req.user.id,
+      status: cleanedData.status,
+      title: cleanedData.title
+    });
+
+    const [post] = await db
+      .insert(blogPosts)
+      .values(cleanedData)
+      .returning();
+
+    log('info', 'ブログ記事作成成功(repath API)', {
+      userId: req.user.id,
+      postId: post.id
+    });
+
+    res.status(201).json(post);
+  } catch (error) {
+    log('error', "ブログ記事作成エラー(repath API)", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: "ブログ記事の作成に失敗しました"
+    });
+  }
+});
+
+// [新規追加] ブログ記事更新（クライアントからのAPI repath対応）
+router.patch("/post/:id", authenticate, async (req: any, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ message: "無効な記事IDです" });
+    }
+
+    // 店舗ユーザーのみ更新可能
+    if (req.user.role !== 'store') {
+      return res.status(403).json({ message: "店舗アカウントのみ記事を更新できます" });
+    }
+
+    // 記事の存在確認と所有権チェック
+    const [existingPost] = await db
+      .select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.id, postId),
+        eq(blogPosts.store_id, req.user.id)
+      ));
+
+    if (!existingPost) {
+      return res.status(404).json({ message: "記事が見つからないか、アクセス権限がありません" });
+    }
+
+    let cleanedData = { ...req.body };
+    
+    try {
+      // scheduled_atとpublished_atの処理
+      if (cleanedData.scheduled_at) {
+        cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+      } else {
+        cleanedData.scheduled_at = null;
+      }
+      
+      if (cleanedData.published_at) {
+        cleanedData.published_at = new Date(cleanedData.published_at);
+      } else {
+        cleanedData.published_at = null;
+      }
+    } catch (dateError) {
+      console.error('日付処理エラー:', dateError);
+      cleanedData.scheduled_at = null;
+      cleanedData.published_at = null;
+    }
+    
+    // 公開時は公開日時を設定
+    if (cleanedData.status === 'published' && !cleanedData.published_at && (!existingPost.published_at || existingPost.status !== 'published')) {
+      cleanedData.published_at = new Date();
+    }
+    
+    // 更新日時を設定
+    cleanedData.updated_at = new Date();
+    
+    // 不要なフィールドを除去
+    delete cleanedData.id;
+    delete cleanedData.store_id;
+    delete cleanedData.created_at;
+    
+    log('info', 'ブログ記事更新リクエスト(repath API)', {
+      userId: req.user.id,
+      postId: postId,
+      status: cleanedData.status,
+      title: cleanedData.title
+    });
+
+    // 記事の更新
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set(cleanedData)
+      .where(and(
+        eq(blogPosts.id, postId),
+        eq(blogPosts.store_id, req.user.id)
+      ))
+      .returning();
+
+    log('info', 'ブログ記事更新成功(repath API)', {
+      userId: req.user.id,
+      postId: updatedPost.id
+    });
+
+    res.json(updatedPost);
+  } catch (error) {
+    log('error', "ブログ記事更新エラー(repath API)", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id,
+      postId: req.params.id
+    });
+    res.status(500).json({
+      message: "ブログ記事の更新に失敗しました"
     });
   }
 });
