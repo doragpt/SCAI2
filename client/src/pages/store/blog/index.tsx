@@ -468,7 +468,28 @@ export default function BlogManagement() {
                             
                             {post.status !== "published" && (
                               <DropdownMenuItem
-                                onClick={() => handleBulkAction("publish")}
+                                onClick={async () => {
+                                  try {
+                                    // 単一記事のステータス更新
+                                    await apiRequest("PATCH", `/api/blog/${post.id}`, {
+                                      ...post,
+                                      status: "published",
+                                      published_at: new Date()
+                                    });
+                                    toast({
+                                      title: "更新完了",
+                                      description: "記事を公開に設定しました"
+                                    });
+                                    refetch(); // 記事一覧を再読み込み
+                                  } catch (error) {
+                                    console.error("記事公開エラー:", error);
+                                    toast({
+                                      title: "エラー",
+                                      description: "記事の公開設定に失敗しました",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 公開に設定
@@ -477,7 +498,29 @@ export default function BlogManagement() {
                             
                             {post.status !== "draft" && (
                               <DropdownMenuItem
-                                onClick={() => handleBulkAction("draft")}
+                                onClick={async () => {
+                                  try {
+                                    // 単一記事のステータス更新
+                                    await apiRequest("PATCH", `/api/blog/${post.id}`, {
+                                      ...post,
+                                      status: "draft",
+                                      published_at: null,
+                                      scheduled_at: null
+                                    });
+                                    toast({
+                                      title: "更新完了",
+                                      description: "記事を下書きに設定しました"
+                                    });
+                                    refetch(); // 記事一覧を再読み込み
+                                  } catch (error) {
+                                    console.error("記事下書きエラー:", error);
+                                    toast({
+                                      title: "エラー",
+                                      description: "記事の下書き設定に失敗しました",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
                               >
                                 <FileEdit className="h-4 w-4 mr-2" />
                                 下書きに設定
