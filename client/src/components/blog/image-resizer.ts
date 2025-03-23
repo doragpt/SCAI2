@@ -89,14 +89,20 @@ export class ImageResizer {
     
     this.activeImage = img;
     
+    // アクティブ化されたことを示すクラスを追加
+    img.classList.add('active-image');
+    
     // リサイズハンドルを追加
     this.addResizeHandles();
+    
+    console.log('画像がアクティブ化されました - リサイズハンドルを表示します');
   }
 
   // アクティブな画像をクリア
   private clearActiveImage(): void {
     if (this.activeImage) {
       this.activeImage.classList.remove('resizing');
+      this.activeImage.classList.remove('active-image');
     }
     
     // ハンドルを削除
@@ -114,11 +120,24 @@ export class ImageResizer {
   private addResizeHandles(): void {
     if (!this.activeImage) return;
     
+    // エディタのルート要素を親として使用
+    const parentNode = this.editor; 
+    if (!parentNode) {
+      console.error('ハンドルを追加するための親要素が見つかりません');
+      return;
+    }
+    
+    // エディタに位置指定の基準となるクラスを追加
+    if (parentNode.style.position === '' || parentNode.style.position === 'static') {
+      parentNode.style.position = 'relative';
+    }
+    
     const positions = ['nw', 'ne', 'sw', 'se'];
     
     positions.forEach(pos => {
       const handle = document.createElement('div');
       handle.className = `quill-resize-handle ${pos}`;
+      handle.style.position = 'absolute';
       
       // ハンドルのマウスダウンイベント
       handle.addEventListener('mousedown', (e) => {
@@ -130,17 +149,14 @@ export class ImageResizer {
         this.startResize(e, pos);
       });
       
-      // 親要素が確実に存在する場合のみ追加
-      if (this.activeImage) {
-        const parentNode = this.activeImage.parentNode;
-        if (parentNode) {
-          parentNode.appendChild(handle);
-          this.handles.push(handle);
-          
-          // ハンドルの位置を調整
-          this.updateHandlePosition(handle, pos);
-        }
-      }
+      // エディタの直下に追加
+      parentNode.appendChild(handle);
+      this.handles.push(handle);
+      
+      // ハンドルの位置を調整
+      this.updateHandlePosition(handle, pos);
+      
+      console.log(`${pos}ハンドルを追加しました`);
     });
   }
 
@@ -148,34 +164,35 @@ export class ImageResizer {
   private updateHandlePosition(handle: HTMLDivElement, pos: string): void {
     if (!this.activeImage) return;
     
-    // 親要素が存在しない場合は処理をスキップ
-    const parentElement = this.activeImage.parentElement;
-    if (!parentElement) return;
+    // エディタのルート要素を基準にする
+    const editorRect = this.editor.getBoundingClientRect();
+    const imageRect = this.activeImage.getBoundingClientRect();
     
-    const rect = this.activeImage.getBoundingClientRect();
-    const parentRect = parentElement.getBoundingClientRect();
+    // エディタ座標系での画像の位置
+    const top = imageRect.top - editorRect.top;
+    const left = imageRect.left - editorRect.left;
     
-    const top = rect.top - parentRect.top;
-    const left = rect.left - parentRect.left;
-    
+    // ハンドルの位置を明示的に設定
     switch (pos) {
       case 'nw':
-        handle.style.top = `${top}px`;
-        handle.style.left = `${left}px`;
+        handle.style.top = `${top - 6}px`;
+        handle.style.left = `${left - 6}px`;
         break;
       case 'ne':
-        handle.style.top = `${top}px`;
-        handle.style.left = `${left + rect.width}px`;
+        handle.style.top = `${top - 6}px`;
+        handle.style.left = `${left + imageRect.width - 6}px`;
         break;
       case 'sw':
-        handle.style.top = `${top + rect.height}px`;
-        handle.style.left = `${left}px`;
+        handle.style.top = `${top + imageRect.height - 6}px`;
+        handle.style.left = `${left - 6}px`;
         break;
       case 'se':
-        handle.style.top = `${top + rect.height}px`;
-        handle.style.left = `${left + rect.width}px`;
+        handle.style.top = `${top + imageRect.height - 6}px`;
+        handle.style.left = `${left + imageRect.width - 6}px`;
         break;
     }
+    
+    console.log(`${pos}ハンドルの位置を更新: top=${handle.style.top}, left=${handle.style.left}`);
   }
 
   // リサイズ開始

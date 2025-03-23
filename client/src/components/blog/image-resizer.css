@@ -11,9 +11,10 @@
 }
 
 /* 画像がクリックされたときの状態 */
-.resizable-image:focus, .resizable-image:active {
+.resizable-image:focus, .resizable-image:active, .resizable-image.active-image {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+  position: relative !important;
 }
 
 /* リサイズ中の画像スタイル */
@@ -25,43 +26,44 @@
 
 /* リサイズハンドルの共通スタイル */
 .quill-resize-handle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background-color: white;
-  border: 1px solid #3b82f6;
-  border-radius: 2px;
-  z-index: 1000; /* より高いz-indexを使用 */
-  cursor: nwse-resize;
+  position: absolute !important;
+  width: 12px !important;
+  height: 12px !important;
+  background-color: white !important;
+  border: 1px solid #3b82f6 !important;
+  border-radius: 2px !important;
+  z-index: 9999 !important; /* より高いz-indexを使用 */
+  cursor: nwse-resize !important;
   display: block !important; /* 常に表示 */
+  pointer-events: auto !important; /* ポインターイベントを確実に有効化 */
 }
 
 /* 左上のハンドル */
 .quill-resize-handle.nw {
-  top: -6px;
-  left: -6px;
-  cursor: nwse-resize;
+  top: -6px !important;
+  left: -6px !important;
+  cursor: nwse-resize !important;
 }
 
 /* 右上のハンドル */
 .quill-resize-handle.ne {
-  top: -6px;
-  right: -6px;
-  cursor: nesw-resize;
+  top: -6px !important;
+  right: -6px !important;
+  cursor: nesw-resize !important;
 }
 
 /* 左下のハンドル */
 .quill-resize-handle.sw {
-  bottom: -6px;
-  left: -6px;
-  cursor: nesw-resize;
+  bottom: -6px !important;
+  left: -6px !important;
+  cursor: nesw-resize !important;
 }
 
 /* 右下のハンドル */
 .quill-resize-handle.se {
-  bottom: -6px;
-  right: -6px;
-  cursor: nwse-resize;
+  bottom: -6px !important;
+  right: -6px !important;
+  cursor: nwse-resize !important;
 }
 
 /* ハンドルのホバー状態 */
