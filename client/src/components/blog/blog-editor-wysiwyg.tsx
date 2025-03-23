@@ -10,21 +10,6 @@ import { apiRequest, uploadPhoto, getSignedPhotoUrl } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
-// BlogPost型の定義
-interface BlogPost {
-  id?: number;
-  store_id?: number;
-  title: string;
-  content: string;
-  status: 'draft' | 'published' | 'scheduled';
-  published_at?: Date | null;
-  scheduled_at?: Date | null;
-  thumbnail?: string | null;
-  images?: string[] | null;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
 // UI Components
 import {
   Card,
@@ -44,9 +29,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Save, Calendar, Clock, Eye, PlusCircle, Trash2 } from "lucide-react";
+import { 
+  Loader2, 
+  Save, 
+  Calendar, 
+  Clock, 
+  Eye, 
+  PlusCircle, 
+  Trash2, 
+  UploadCloud, 
+  Image
+} from "lucide-react";
 import { FormLabel as Label } from "@/components/ui/form";
 import { CalendarIcon } from "lucide-react";
+
+// BlogPost型の定義
+interface BlogPost {
+  id?: number;
+  store_id?: number;
+  title: string;
+  content: string;
+  status: 'draft' | 'published' | 'scheduled';
+  published_at?: Date | null;
+  scheduled_at?: Date | null;
+  thumbnail?: string | null;
+  images?: string[] | null;
+  created_at?: Date;
+  updated_at?: Date;
+}
 
 /**
  * Quillエディターのツールバーオプション
@@ -463,7 +473,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         
                         {!thumbnailUrl && (
                           <div className="border rounded-md p-4 text-center text-muted-foreground">
-                            <Image className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                            <div className="mx-auto w-8 h-8 mb-2 opacity-50 flex items-center justify-center">
+                              <Image size={24} />
+                            </div>
                             <p>サムネイル画像がありません</p>
                             <p className="text-xs mt-1">記事一覧やSNS共有時に表示される画像です</p>
                           </div>
