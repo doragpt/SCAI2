@@ -457,17 +457,10 @@ export default function BlogManagement() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              編集（旧エディター）
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem
                               onClick={() => setLocation(`/store/blog/edit-ck/${post.id}`)}
                             >
                               <Edit className="h-4 w-4 mr-2" />
-                              編集（CKEditor）
+                              編集
                             </DropdownMenuItem>
                             
                             {post.status === "published" && (

@@ -1,11 +1,10 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Edit, PenTool, Info } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit, PenTool, Info } from "lucide-react";
 
 /**
- * CKEditorナビゲーションコンポーネント
- * CKEditorを使用した編集画面へのリンクを表示します
+ * ブログエディターのヘルプ情報を表示するコンポーネント
  */
 export function CKEditorNavigation() {
   return (
@@ -13,56 +12,44 @@ export function CKEditorNavigation() {
       <CardHeader className="bg-blue-50">
         <CardTitle className="flex items-center text-blue-800">
           <Info className="mr-2 h-5 w-5" />
-          CKEditorを使用した新しいエディター
+          ブログエディターについて
         </CardTitle>
         <CardDescription className="text-blue-600">
-          より安定したブログ編集機能を試してみましょう
+          ブログ記事を簡単に作成・編集できます
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         <p className="mb-4">
-          CKEditorを使用した新しいブログエディターでは、以下の機能が改善されています：
+          当サイトのブログエディターには以下の機能があります：
         </p>
         <ul className="list-disc pl-5 space-y-1 mb-4">
-          <li>画像のサイズ変更が安定して動作</li>
-          <li>ドラッグ＆ドロップでの画像挿入をサポート</li>
+          <li>画像のサイズ変更と位置調整</li>
+          <li>ドラッグ＆ドロップでの画像挿入</li>
           <li>テーブルや整形されたリストなどの高度な機能</li>
           <li>日本語に最適化されたツールバー</li>
         </ul>
-        <div className="bg-yellow-50 p-3 rounded border border-yellow-200 mb-4">
+        <div className="bg-green-50 p-3 rounded border border-green-200 mb-4">
           <div className="flex items-start">
-            <AlertCircle className="text-yellow-600 mr-2 h-5 w-5 mt-0.5" />
-            <p className="text-yellow-800 text-sm">
-              このエディターは実験的なものです。問題が発生した場合は、従来のエディターを使用してください。
+            <Info className="text-green-600 mr-2 h-5 w-5 mt-0.5" />
+            <p className="text-green-800 text-sm">
+              画像を挿入した後、クリックして選択すると画像のサイズを変更できます。ツールバーの位置調整ボタンで画像の配置を変更できます。
             </p>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row gap-3">
-        <Link href="/store/blog/new-ck">
-          <Button className="w-full sm:w-auto" variant="default">
-            <PenTool className="mr-2 h-4 w-4" />
-            CKEditorで新規作成
-          </Button>
-        </Link>
-        {/* 現在編集中の記事がある場合、その記事IDを使用するリンクが別途必要 */}
-        <Button variant="outline" onClick={() => window.history.back()}>
-          従来のエディターを使用
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
 
 /**
- * 既存の記事をCKEditorで編集するためのリンクボタン
+ * 記事を編集するためのリンクボタン
  */
 export function CKEditorEditButton({ postId }: { postId: number }) {
   return (
     <Link href={`/store/blog/edit-ck/${postId}`}>
       <Button variant="outline" size="sm" className="ml-2">
         <Edit className="mr-2 h-4 w-4" />
-        CKEditorで編集
+        記事を編集
       </Button>
     </Link>
   );

@@ -1,4 +1,3 @@
-import { BlogEditor } from "@/components/blog/blog-editor";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 
@@ -21,5 +20,6 @@ export default function NewBlogPost() {
     return <Redirect to="/store/dashboard" />;
   }
 
-  return <BlogEditor />;
+  // CKEditorを使用する新しい記事作成ページにリダイレクト
+  return <Redirect to="/store/blog/new-ck" />;
 }
