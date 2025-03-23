@@ -7,6 +7,7 @@ import { type BlogPost } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
+import { CKEditorNavigation, CKEditorEditButton } from "@/components/blog/ckeditor-navigation";
 import {
   Table,
   TableBody,
@@ -300,6 +301,11 @@ export default function BlogManagement() {
             </Button>
           </div>
         </CardHeader>
+        
+        {/* CKEditorナビゲーション */}
+        <div className="px-6 mb-6">
+          <CKEditorNavigation />
+        </div>
         
         <CardContent>
           {/* フィルターとサーチバー */}
