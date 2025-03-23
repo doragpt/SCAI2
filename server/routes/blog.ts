@@ -65,12 +65,19 @@ router.get("/store-posts", authenticate, async (req: any, res) => {
     const totalItems = Number(totalCountResult[0].count);
     const totalPages = Math.ceil(totalItems / limit);
 
-    // 記事の取得
+    // 記事の取得 - 公開日時 > 予約投稿日時 > 作成日時の優先順でソート
     const posts = await db
       .select()
       .from(blogPosts)
       .where(and(...conditions))
-      .orderBy(desc(blogPosts.created_at))
+      // 複数条件での並び替え: 公開記事は公開日時、予約投稿は予定日時、下書きは作成日時で新しい順にソート
+      .orderBy(
+        sql`CASE 
+          WHEN ${blogPosts.status} = 'published' THEN ${blogPosts.published_at}
+          WHEN ${blogPosts.status} = 'scheduled' THEN ${blogPosts.scheduled_at}
+          ELSE ${blogPosts.created_at}
+        END DESC NULLS LAST`
+      )
       .limit(limit)
       .offset(offset);
     
