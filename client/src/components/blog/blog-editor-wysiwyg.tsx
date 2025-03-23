@@ -486,7 +486,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                       className="h-8 border-primary/30 text-primary hover:bg-primary/5"
                     >
                       <Plus className="mr-1 h-3.5 w-3.5" />
-                      +複数投稿追加
+                      複数投稿追加
                     </Button>
                     
                     <Button
