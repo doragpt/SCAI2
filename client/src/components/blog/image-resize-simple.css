@@ -22,7 +22,7 @@
 }
 
 /* リサイズハンドル - 高視認性設計 */
-.image-resize-handle {
+.resize-handle, .image-resize-handle {
   box-sizing: content-box !important;
   position: fixed !important; /* 全画面の位置に固定 */
   width: 18px !important;
@@ -43,18 +43,18 @@
   -webkit-user-select: none !important;
 }
 
-.image-resize-handle.nw {
+.resize-handle.nw, .image-resize-handle.nw {
   cursor: nwse-resize !important;
 }
 
-.image-resize-handle.ne {
+.resize-handle.ne, .image-resize-handle.ne {
   cursor: nesw-resize !important;
 }
 
-.image-resize-handle.se {
+.resize-handle.se, .image-resize-handle.se {
   cursor: nwse-resize !important;
 }
 
-.image-resize-handle.sw {
+.resize-handle.sw, .image-resize-handle.sw {
   cursor: nesw-resize !important;
 }

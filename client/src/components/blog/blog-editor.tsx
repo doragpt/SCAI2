@@ -215,6 +215,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         e.preventDefault();
         e.stopPropagation();
         
+        console.log('画像がクリックされました', img.src.substring(0, 30) + '...');
+        
         // 他の選択済み画像からアクティブクラスを削除
         editorRoot.querySelectorAll('img.active').forEach((activeImg: Element) => {
           if (activeImg !== img) {
@@ -224,18 +226,58 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         
         // この画像をアクティブにする
         img.classList.add('active');
+        console.log('アクティブクラスを追加しました');
         
         // 既存のリサイズハンドルを削除
-        document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+        document.querySelectorAll('.resize-handle').forEach(handle => {
+          console.log('既存のハンドルを削除: ', handle.className);
+          handle.remove();
+        });
         
         // リサイズハンドルを追加
         const imgRect = img.getBoundingClientRect();
+        console.log('画像の位置情報:', {
+          top: imgRect.top,
+          right: imgRect.right,
+          bottom: imgRect.bottom,
+          left: imgRect.left
+        });
         
         // 4つの角にハンドルを追加
         ['se', 'sw', 'ne', 'nw'].forEach(pos => {
           const handle = document.createElement('div');
+          // スタイルを直接設定してCSS継承の問題を回避
+          handle.style.position = 'fixed';
+          handle.style.width = '18px';
+          handle.style.height = '18px';
+          handle.style.backgroundColor = '#2563eb';
+          handle.style.border = '3px solid white';
+          handle.style.boxShadow = '0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 0, 0, 0.5)';
+          handle.style.zIndex = '10000';
+          handle.style.borderRadius = '50%';
+          handle.style.display = 'block';
+          handle.style.pointerEvents = 'auto';
+          handle.style.opacity = '1';
+          handle.style.transform = 'translate(-50%, -50%)';
+          handle.style.margin = '0';
+          handle.style.padding = '0';
+          handle.style.userSelect = 'none';
+          
+          // ポジション固有のスタイル
+          if (pos === 'nw') {
+            handle.style.cursor = 'nwse-resize';
+          } else if (pos === 'ne') {
+            handle.style.cursor = 'nesw-resize';
+          } else if (pos === 'se') {
+            handle.style.cursor = 'nwse-resize';
+          } else if (pos === 'sw') {
+            handle.style.cursor = 'nesw-resize';
+          }
+          
+          // クラス名も設定（デバッグとCSSセレクタのため）
           handle.className = 'resize-handle ' + pos;
           document.body.appendChild(handle);
+          console.log(`ハンドル(${pos})を追加しました`);
           
           // ハンドルの位置を設定
           if (pos === 'se') {
@@ -251,6 +293,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             handle.style.top = `${imgRect.top}px`;
             handle.style.left = `${imgRect.left}px`;
           }
+          console.log(`ハンドル(${pos})の位置: top=${handle.style.top}, left=${handle.style.left}`);
           
           // リサイズハンドルのマウスイベント
           handle.addEventListener('mousedown', (e) => {
@@ -382,6 +425,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      console.log('ドキュメントクリック:', target.tagName, target.className);
       
       // クリックされた要素がエディタ内の要素でなく、ハンドルでもない場合
       if (quillRef.current) {
@@ -390,10 +434,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         if (!quillElement.contains(target) && 
             !target.classList.contains('resize-handle')) {
           // ハンドルを削除
-          document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+          const handles = document.querySelectorAll('.resize-handle');
+          console.log(`${handles.length}個のリサイズハンドルを削除します`);
+          handles.forEach(handle => handle.remove());
           
           // アクティブな画像の選択を解除
-          quillElement.querySelectorAll('img.active').forEach((img: Element) => {
+          const activeImages = quillElement.querySelectorAll('img.active');
+          console.log(`${activeImages.length}個のアクティブ画像の選択を解除します`);
+          activeImages.forEach((img: Element) => {
             img.classList.remove('active');
           });
         }
@@ -401,13 +449,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     };
     
     // ドキュメント全体にクリックイベントリスナーを追加
+    console.log('グローバルクリックイベントリスナーを追加しました');
     document.addEventListener('click', handleDocumentClick);
     
     return () => {
+      console.log('グローバルクリックイベントリスナーを削除します');
       document.removeEventListener('click', handleDocumentClick);
       
       // クリーンアップ - ハンドルを削除
-      document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+      const handles = document.querySelectorAll('.resize-handle');
+      console.log(`クリーンアップ: ${handles.length}個のリサイズハンドルを削除します`);
+      handles.forEach(handle => handle.remove());
     };
   }, []);
 
