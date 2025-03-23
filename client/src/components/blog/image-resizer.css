@@ -1,49 +1,70 @@
-/* 画像リサイズのスタイル */
-.quill-image-resizable {
+/**
+ * 画像リサイズハンドル用のスタイル定義
+ */
+
+/* リサイズ可能な画像の基本スタイル */
+.resizable-image {
   position: relative;
-  box-sizing: border-box;
-  cursor: pointer;
+  display: inline-block;
   max-width: 100%;
-  transition: border 0.2s;
-  border: 1px solid transparent;
+  cursor: default;
 }
 
-.quill-image-resizable:hover {
-  border: 1px dashed #1e90ff;
+/* リサイズ中の画像スタイル */
+.resizable-image.resizing {
+  /* リサイズ中は点線で強調 */
+  outline: 2px dashed #3b82f6;
+  outline-offset: 2px;
 }
 
-.quill-image-resizable.resizing {
-  border: 1px dashed #ff5722;
-}
-
+/* リサイズハンドルの共通スタイル */
 .quill-resize-handle {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #1e90ff;
-  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border: 1px solid #3b82f6;
+  border-radius: 2px;
+  z-index: 100;
+  cursor: nwse-resize;
 }
 
+/* 左上のハンドル */
 .quill-resize-handle.nw {
-  top: -5px;
-  left: -5px;
+  top: -6px;
+  left: -6px;
   cursor: nwse-resize;
 }
 
+/* 右上のハンドル */
 .quill-resize-handle.ne {
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -6px;
   cursor: nesw-resize;
 }
 
+/* 左下のハンドル */
 .quill-resize-handle.sw {
-  bottom: -5px;
-  left: -5px;
+  bottom: -6px;
+  left: -6px;
   cursor: nesw-resize;
 }
 
+/* 右下のハンドル */
 .quill-resize-handle.se {
-  bottom: -5px;
-  right: -5px;
+  bottom: -6px;
+  right: -6px;
   cursor: nwse-resize;
+}
+
+/* ハンドルのホバー状態 */
+.quill-resize-handle:hover {
+  background-color: #3b82f6;
+  border-color: white;
+}
+
+/* リサイズ中のハンドル状態 */
+.quill-resize-handle.resizing {
+  background-color: #2563eb;
+  border-color: white;
 }

@@ -12,11 +12,19 @@ export class ImageResizer {
   private initialY: number = 0;
   private resizing: boolean = false;
   private corner: string = '';
-
   private handles: HTMLDivElement[] = [];
+  
+  // バインドされたイベントハンドラへの参照（クリーンアップ用）
+  private boundMouseMove: (e: MouseEvent) => void;
+  private boundMouseUp: (e: MouseEvent) => void;
   
   constructor(editorElement: HTMLElement) {
     this.editor = editorElement;
+    
+    // イベントハンドラをバインドして保存（メモリリーク防止のため）
+    this.boundMouseMove = this.handleMouseMove.bind(this);
+    this.boundMouseUp = this.handleMouseUp.bind(this);
+    
     this.init();
   }
 
@@ -45,8 +53,8 @@ export class ImageResizer {
     observer.observe(this.editor, { childList: true, subtree: true });
     
     // グローバルマウスイベントハンドラを追加
-    document.addEventListener('mousemove', this.handleMouseMove.bind(this));
-    document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+    document.addEventListener('mousemove', this.boundMouseMove);
+    document.addEventListener('mouseup', this.boundMouseUp);
   }
 
   // 既存の画像を処理
@@ -122,13 +130,16 @@ export class ImageResizer {
       });
       
       // 親要素が確実に存在する場合のみ追加
-      if (this.activeImage.parentNode) {
-        this.activeImage.parentNode.appendChild(handle);
+      if (this.activeImage) {
+        const parentNode = this.activeImage.parentNode;
+        if (parentNode) {
+          parentNode.appendChild(handle);
+          this.handles.push(handle);
+          
+          // ハンドルの位置を調整
+          this.updateHandlePosition(handle, pos);
+        }
       }
-      this.handles.push(handle);
-      
-      // ハンドルの位置を調整
-      this.updateHandlePosition(handle, pos);
     });
   }
 
@@ -136,8 +147,12 @@ export class ImageResizer {
   private updateHandlePosition(handle: HTMLDivElement, pos: string): void {
     if (!this.activeImage) return;
     
+    // 親要素が存在しない場合は処理をスキップ
+    const parentElement = this.activeImage.parentElement;
+    if (!parentElement) return;
+    
     const rect = this.activeImage.getBoundingClientRect();
-    const parentRect = this.activeImage.parentElement!.getBoundingClientRect();
+    const parentRect = parentElement.getBoundingClientRect();
     
     const top = rect.top - parentRect.top;
     const left = rect.left - parentRect.left;
@@ -287,7 +302,8 @@ export class ImageResizer {
   public destroy(): void {
     this.clearActiveImage();
     
-    document.removeEventListener('mousemove', this.handleMouseMove.bind(this));
-    document.removeEventListener('mouseup', this.handleMouseUp.bind(this));
+    // 保存しておいたバインド済み関数を使用してイベントリスナーを削除
+    document.removeEventListener('mousemove', this.boundMouseMove);
+    document.removeEventListener('mouseup', this.boundMouseUp);
   }
 }
