@@ -275,11 +275,17 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       };
 
       console.log('Submission data:', submissionData);
+      console.log('送信先URL:', postId ? `/api/blog/${postId}` : "/api/blog");
+      console.log('送信メソッド:', postId ? "PUT" : "POST");
 
-      if (postId) {
-        await updateMutation.mutateAsync(submissionData);
-      } else {
-        await createMutation.mutateAsync(submissionData);
+      try {
+        if (postId) {
+          await updateMutation.mutateAsync(submissionData);
+        } else {
+          await createMutation.mutateAsync(submissionData);
+        }
+      } catch (submitError) {
+        console.error('Submit mutation error details:', submitError);
       }
     } catch (error) {
       console.error('Form submission error:', error);
