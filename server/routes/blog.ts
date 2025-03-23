@@ -200,46 +200,57 @@ router.post("/", authenticate, async (req: any, res) => {
       return res.status(403).json({ message: "店舗アカウントのみ記事を作成できます" });
     }
 
-    // 日付データの適切な処理
-    let scheduled_at = null;
-    if (req.body.scheduled_at) {
-      try {
-        scheduled_at = new Date(req.body.scheduled_at);
-      } catch (e) {
-        console.error('Invalid scheduled_at date:', req.body.scheduled_at);
-      }
+    // ユーザーによってセットされた日付はstring型であることがほとんどなので、
+    // 手動で適切な形式に変換する
+    let cleanedData = { ...req.body };
+    
+    // 日付データの手動変換処理
+    if (typeof cleanedData.scheduled_at === 'string' && cleanedData.scheduled_at) {
+      cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+    } else if (cleanedData.scheduled_at === null || cleanedData.scheduled_at === undefined) {
+      cleanedData.scheduled_at = null;
     }
     
-    let published_at = null;
-    if (req.body.published_at) {
-      try {
-        published_at = new Date(req.body.published_at);
-      } catch (e) {
-        console.error('Invalid published_at date:', req.body.published_at);
-      }
+    if (typeof cleanedData.published_at === 'string' && cleanedData.published_at) {
+      cleanedData.published_at = new Date(cleanedData.published_at);
+    } else if (cleanedData.published_at === null || cleanedData.published_at === undefined) {
+      cleanedData.published_at = null;
     }
-
-    const validatedData = blogPostSchema.parse({
-      ...req.body,
-      store_id: req.user.id,
-      status: req.body.status || 'draft',
-      scheduled_at: scheduled_at,
-      published_at: published_at,
-      created_at: new Date(),
-      updated_at: new Date()
+    
+    // スタータス設定と必須フィールド
+    cleanedData.status = cleanedData.status || 'draft';
+    cleanedData.store_id = req.user.id;
+    cleanedData.created_at = new Date();
+    cleanedData.updated_at = new Date();
+    
+    // JSONデータをデバッグログに出力
+    console.log('作成用データ:', {
+      title: cleanedData.title,
+      status: cleanedData.status,
+      scheduled_at: cleanedData.scheduled_at instanceof Date 
+        ? cleanedData.scheduled_at.toISOString() 
+        : cleanedData.scheduled_at,
+      published_at: cleanedData.published_at instanceof Date 
+        ? cleanedData.published_at.toISOString() 
+        : cleanedData.published_at
     });
+    
+    try {
+      const [post] = await db
+        .insert(blogPosts)
+        .values(cleanedData)
+        .returning();
 
-    const [post] = await db
-      .insert(blogPosts)
-      .values(validatedData)
-      .returning();
+      log('info', 'ブログ記事作成成功', {
+        userId: req.user.id,
+        postId: post.id
+      });
 
-    log('info', 'ブログ記事作成成功', {
-      userId: req.user.id,
-      postId: post.id
-    });
-
-    res.status(201).json(post);
+      res.status(201).json(post);
+    } catch (dbError) {
+      console.error('データベース挿入エラー:', dbError);
+      throw dbError; // 外側のcatchで処理するために再スロー
+    }
   } catch (error) {
     log('error', "ブログ記事作成エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -279,58 +290,63 @@ router.put("/:id", authenticate, async (req: any, res) => {
       return res.status(404).json({ message: "記事が見つからないか、アクセス権限がありません" });
     }
 
-    // Zodスキーマを使用して正しく日付を扱う
-    // 入力データをスキーマ検証用に準備
-    const inputData = {
-      ...req.body,
-      store_id: req.user.id
-    };
-
+    // ユーザーによってセットされた日付はstring型であることがほとんどなので、
+    // 手動で適切な形式に変換する
+    let cleanedData = { ...req.body };
+    
+    // 日付データの手動変換処理
+    if (typeof cleanedData.scheduled_at === 'string' && cleanedData.scheduled_at) {
+      cleanedData.scheduled_at = new Date(cleanedData.scheduled_at);
+    } else if (cleanedData.scheduled_at === null || cleanedData.scheduled_at === undefined) {
+      cleanedData.scheduled_at = null;
+    }
+    
+    if (typeof cleanedData.published_at === 'string' && cleanedData.published_at) {
+      cleanedData.published_at = new Date(cleanedData.published_at);
+    } else if (cleanedData.published_at === null || cleanedData.published_at === undefined) {
+      cleanedData.published_at = null;
+    }
+    
+    // 更新日時を設定
+    cleanedData.updated_at = new Date();
+    
+    // 不要なフィールドを除去
+    delete cleanedData.id; // idはパラメータから取得するので除去
+    
+    // JSONデータをデバッグログに出力
+    console.log('更新用データ:', {
+      id: postId,
+      title: cleanedData.title,
+      status: cleanedData.status,
+      scheduled_at: cleanedData.scheduled_at instanceof Date 
+        ? cleanedData.scheduled_at.toISOString() 
+        : cleanedData.scheduled_at,
+      published_at: cleanedData.published_at instanceof Date 
+        ? cleanedData.published_at.toISOString() 
+        : cleanedData.published_at
+    });
+    
+    // 記事の更新
     try {
-      // スキーマでの検証（ここでDateオブジェクトへの変換も行われる）
-      const validatedData = blogPostSchema.parse(inputData);
-      
-      // 更新日時を設定
-      validatedData.updated_at = new Date();
-      
-      // デバッグ用ログ
-      console.log('スキーマ検証済み更新データ:', JSON.stringify({
-        id: postId,
-        title: validatedData.title,
-        status: validatedData.status,
-        scheduled_at: validatedData.scheduled_at,
-        published_at: validatedData.published_at
-      }, (key, value) => {
-        // Date型を文字列に変換
-        if (value instanceof Date) {
-          return value.toISOString();
-        }
-        return value;
-      }));
-
-      // 記事の更新
       const [updatedPost] = await db
         .update(blogPosts)
-        .set(validatedData)
+        .set(cleanedData)
         .where(and(
           eq(blogPosts.id, postId),
           eq(blogPosts.store_id, req.user.id)
         ))
         .returning();
-    } catch (validationError) {
-      console.error('バリデーションエラー:', validationError);
-      return res.status(400).json({ 
-        message: "入力データが不正です", 
-        details: validationError instanceof Error ? validationError.message : "Unknown validation error" 
+
+      log('info', 'ブログ記事更新成功', {
+        userId: req.user.id,
+        postId: updatedPost.id
       });
+
+      res.json(updatedPost);
+    } catch (dbError) {
+      console.error('データベース更新エラー:', dbError);
+      throw dbError; // 外側のcatchで処理するために再スロー
     }
-
-    log('info', 'ブログ記事更新成功', {
-      userId: req.user.id,
-      postId: updatedPost.id
-    });
-
-    res.json(updatedPost);
   } catch (error) {
     log('error', "ブログ記事更新エラー", {
       error: error instanceof Error ? error.message : 'Unknown error',
