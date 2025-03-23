@@ -505,20 +505,52 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         }
                         
                         // 最小サイズを設定
-                        newWidth = Math.max(50, newWidth);
-                        newHeight = Math.max(50, newHeight);
+                        newWidth = Math.max(50, Math.round(newWidth));
+                        newHeight = Math.max(50, Math.round(newHeight));
                         
-                        // 画像のサイズを更新
+                        // 画像のサイズを更新（HTMLElementのプロパティとして直接操作）
                         img.width = newWidth;
                         img.height = newHeight;
                         
-                        // width属性も更新
+                        // img要素の全ての属性と形式を更新
+                        // 1. width/height属性の更新
                         img.setAttribute('width', newWidth.toString());
-                        img.setAttribute('data-width', newWidth.toString());
+                        if (img.height) {
+                          img.setAttribute('height', newHeight.toString());
+                        }
                         
+                        // 2. data-width/data-height属性の更新
+                        img.setAttribute('data-width', newWidth.toString());
+                        if (img.height) {
+                          img.setAttribute('data-height', newHeight.toString());
+                        }
+                        
+                        // 3. style属性の更新（最も確実に反映される）
                         if (img.style) {
                           img.style.width = `${newWidth}px`;
                           img.style.height = `${newHeight}px`;
+                        }
+                        
+                        // 4. クエリエディタのimgタグのHTMLを強制的に書き換え
+                        try {
+                          if (quillRef.current) {
+                            const quill = quillRef.current.getEditor();
+                            // 現在のコンテンツからimg要素を検索するためにDOMから取得
+                            const editorRoot = quill.root;
+                            
+                            // 現在のエディタ内で選択されているimg要素を見つける
+                            // （active クラスが付いているものを探す）
+                            const activeImg = editorRoot.querySelector('img.resizable-image.active');
+                            if (activeImg === img) {
+                              // 現在のimg要素のstyle属性を設定
+                              activeImg.style.width = `${newWidth}px`;
+                              activeImg.style.height = `${newHeight}px`;
+                              activeImg.width = newWidth;
+                              activeImg.height = newHeight;
+                            }
+                          }
+                        } catch (error) {
+                          console.error('エディタ内の画像更新エラー:', error);
                         }
                         
                         // ハンドルの位置も更新する
@@ -535,29 +567,94 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         
                         // リサイズ後の最終サイズを保存
                         const finalWidth = img.width;
-                        console.log(`リサイズ完了: ${finalWidth}px`);
+                        const finalHeight = img.height;
+                        console.log(`リサイズ完了: ${finalWidth}x${finalHeight}px`);
                         
-                        // ReactQuillのコンテンツを更新してサイズ変更を保存 - フォームの更新は行わない
-                        // 直接ReactQuillのコンテンツを書き換えると内部状態が更新され、ハンドルが消える原因になる
-                        // 代わりに、画像自体の属性変更だけを行い、フォームの更新は一時停止する
-                        
-                        // 現在の画像情報をデータ属性として保存
-                        img.setAttribute('data-width', img.width.toString());
-                        if (img.height) {
-                          img.setAttribute('data-height', img.height.toString());
+                        // 画像の全属性を更新して変更を確実に反映
+                        // 1. 属性として設定
+                        img.setAttribute('width', finalWidth.toString());
+                        if (finalHeight) {
+                          img.setAttribute('height', finalHeight.toString());
                         }
                         
-                        // エディタへの反映は、マウスを離した時の1回だけに制限
-                        console.log(`サイズ変更を保存: ${img.width}x${img.height || 'auto'}`);
+                        // 2. data-属性としても設定
+                        img.setAttribute('data-width', finalWidth.toString());
+                        if (finalHeight) {
+                          img.setAttribute('data-height', finalHeight.toString());
+                        }
+                        
+                        // 3. styleとしても設定（最も優先度が高い）
+                        if (img.style) {
+                          img.style.width = `${finalWidth}px`;
+                          img.style.height = `${finalHeight}px`;
+                        }
+                        
+                        // 4. エディタ内の画像を更新する魔法のトリック
+                        try {
+                          if (quillRef.current) {
+                            const quill = quillRef.current.getEditor();
+                            
+                            // 直接ReactQuillのHTMLを書き換えるのではなく、
+                            // 現在の画像サイズを取得してから、再度form.setValue()する
+                            const html = quill.root.innerHTML;
+                            
+                            // 現在のカーソル位置を保存
+                            const range = quill.getSelection();
+                            
+                            // 画像を探して属性を確認
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            const imgElements = tempDiv.querySelectorAll('img');
+                            let resizedImage = null;
+                            
+                            // imgが複数あった場合、現在操作中の画像を特定
+                            imgElements.forEach(imgEl => {
+                              if (imgEl.src === img.src) {
+                                // この画像が操作中のものなので、サイズを更新
+                                // TypeScriptの型エラーを回避するためにHTMLImageElementとして扱う
+                                const typedImgEl = imgEl as HTMLImageElement;
+                                typedImgEl.width = finalWidth;
+                                typedImgEl.height = finalHeight;
+                                typedImgEl.setAttribute('width', finalWidth.toString());
+                                if (finalHeight) {
+                                  typedImgEl.setAttribute('height', finalHeight.toString());
+                                }
+                                typedImgEl.setAttribute('data-width', finalWidth.toString());
+                                if (finalHeight) {
+                                  typedImgEl.setAttribute('data-height', finalHeight.toString());
+                                }
+                                typedImgEl.style.width = `${finalWidth}px`;
+                                typedImgEl.style.height = `${finalHeight}px`;
+                                resizedImage = typedImgEl;
+                              }
+                            });
+                            
+                            if (resizedImage) {
+                              // 更新した画像を含む新しいHTMLを生成
+                              const updatedHtml = tempDiv.innerHTML;
+                              
+                              // form.setValue()を回避して直接エディタのコンテンツを更新
+                              // これにより、ハンドルが消える問題を回避
+                              quill.clipboard.dangerouslyPasteHTML(updatedHtml);
+                              
+                              // カーソル位置を復元
+                              if (range) {
+                                quill.setSelection(range);
+                              }
+                              
+                              console.log("エディタ内の画像サイズを直接更新しました");
+                            }
+                          }
+                        } catch (error) {
+                          console.error("エディタ内の画像サイズ更新エラー:", error);
+                        }
+                        
+                        console.log(`サイズ変更を保存: ${finalWidth}x${finalHeight || 'auto'}`);
                         
                         // ハンドルが消えないように明示的に位置を再設定
                         setTimeout(() => {
-                          // 画像の最新の位置情報を取得
-                          const finalRect = img.getBoundingClientRect();
-                          
-                          // ハンドルの位置を最終的なサイズに合わせて更新
+                          // 画像の最新の位置情報を取得して、ハンドルを再配置
                           updateHandlePositions();
-                          
                           console.log(`リサイズ完了後のハンドル位置を再設定しました`);
                         }, 50);
                       };
