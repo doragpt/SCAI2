@@ -537,24 +537,29 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         const finalWidth = img.width;
                         console.log(`リサイズ完了: ${finalWidth}px`);
                         
-                        // ReactQuillのコンテンツを更新してサイズ変更を保存
-                        if (quillRef.current) {
-                          const quill = quillRef.current.getEditor();
-                          const html = quill.root.innerHTML;
-                          
-                          // 更新されたHTMLをQuillに設定（強制的にイベントを発火させる）
-                          form.setValue('content', html, { shouldDirty: true });
-                          
-                          // 画像のリサイズがエディタに反映されるように明示的に更新
-                          setTimeout(() => {
-                            if (quillRef.current) {
-                              // カーソル位置を変更して強制的に更新を促す
-                              const quill = quillRef.current.getEditor();
-                              const range = quill.getSelection() || { index: 0, length: 0 };
-                              quill.setSelection(range.index, range.length);
-                            }
-                          }, 100);
+                        // ReactQuillのコンテンツを更新してサイズ変更を保存 - フォームの更新は行わない
+                        // 直接ReactQuillのコンテンツを書き換えると内部状態が更新され、ハンドルが消える原因になる
+                        // 代わりに、画像自体の属性変更だけを行い、フォームの更新は一時停止する
+                        
+                        // 現在の画像情報をデータ属性として保存
+                        img.setAttribute('data-width', img.width.toString());
+                        if (img.height) {
+                          img.setAttribute('data-height', img.height.toString());
                         }
+                        
+                        // エディタへの反映は、マウスを離した時の1回だけに制限
+                        console.log(`サイズ変更を保存: ${img.width}x${img.height || 'auto'}`);
+                        
+                        // ハンドルが消えないように明示的に位置を再設定
+                        setTimeout(() => {
+                          // 画像の最新の位置情報を取得
+                          const finalRect = img.getBoundingClientRect();
+                          
+                          // ハンドルの位置を最終的なサイズに合わせて更新
+                          updateHandlePositions();
+                          
+                          console.log(`リサイズ完了後のハンドル位置を再設定しました`);
+                        }, 50);
                       };
                       
                       // ハンドルの位置を更新する関数
@@ -567,19 +572,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                         
                         // 各ハンドルの位置を更新
                         allHandles.forEach(h => {
-                          const handlePos = h.getAttribute('data-position');
+                          // HTMLElementとして扱う
+                          const handle = h as HTMLElement;
+                          const handlePos = handle.getAttribute('data-position');
                           if (handlePos === 'nw') {
-                            h.style.top = `${newImgRect.top}px`;
-                            h.style.left = `${newImgRect.left}px`;
+                            handle.style.top = `${newImgRect.top}px`;
+                            handle.style.left = `${newImgRect.left}px`;
                           } else if (handlePos === 'ne') {
-                            h.style.top = `${newImgRect.top}px`;
-                            h.style.left = `${newImgRect.right}px`;
+                            handle.style.top = `${newImgRect.top}px`;
+                            handle.style.left = `${newImgRect.right}px`;
                           } else if (handlePos === 'sw') {
-                            h.style.top = `${newImgRect.bottom}px`;
-                            h.style.left = `${newImgRect.left}px`;
+                            handle.style.top = `${newImgRect.bottom}px`;
+                            handle.style.left = `${newImgRect.left}px`;
                           } else if (handlePos === 'se') {
-                            h.style.top = `${newImgRect.bottom}px`;
-                            h.style.left = `${newImgRect.right}px`;
+                            handle.style.top = `${newImgRect.bottom}px`;
+                            handle.style.left = `${newImgRect.right}px`;
                           }
                         });
                       };
