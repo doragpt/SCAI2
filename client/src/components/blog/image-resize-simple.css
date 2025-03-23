@@ -19,34 +19,38 @@
 /* リサイズハンドル */
 .resize-handle {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background-color: #3b82f6;
-  border: 2px solid white;
-  z-index: 100;
-  border-radius: 50%;
+  width: 14px !important;
+  height: 14px !important;
+  background-color: #3b82f6 !important;
+  border: 2px solid white !important;
+  z-index: 1000 !important;
+  border-radius: 50% !important;
+  display: block !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  transform: translate(0, 0) !important;
 }
 
 .resize-handle.nw {
-  top: -6px;
-  left: -6px;
-  cursor: nwse-resize;
+  top: -7px !important;
+  left: -7px !important;
+  cursor: nwse-resize !important;
 }
 
 .resize-handle.ne {
-  top: -6px;
-  right: -6px;
-  cursor: nesw-resize;
+  top: -7px !important;
+  right: -7px !important;
+  cursor: nesw-resize !important;
 }
 
 .resize-handle.se {
-  bottom: -6px;
-  right: -6px;
-  cursor: nwse-resize;
+  bottom: -7px !important;
+  right: -7px !important;
+  cursor: nwse-resize !important;
 }
 
 .resize-handle.sw {
-  bottom: -6px;
-  left: -6px;
-  cursor: nesw-resize;
+  bottom: -7px !important;
+  left: -7px !important;
+  cursor: nesw-resize !important;
 }

@@ -395,39 +395,47 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   // クリックした画像をアクティブに
                   img.classList.add('active');
                   
-                  // リサイズハンドルを追加
+                  // リサイズハンドルを追加（イベント付き）
                   const positions = ['nw', 'ne', 'sw', 'se'];
+                  
+                  // ドキュメントのbodyに直接ハンドルを追加する
+                  const imgRect = img.getBoundingClientRect();
+                  
                   positions.forEach(pos => {
                     const handle = document.createElement('div');
                     handle.className = `resize-handle ${pos}`;
-                    quillElement.appendChild(handle);
+                    handle.style.position = 'fixed';  // fixed positionで配置
                     
-                    // ハンドルの位置を設定
-                    const imgRect = img.getBoundingClientRect();
-                    const editorRect = quillElement.getBoundingClientRect();
+                    // ハンドルをページのbodyに直接追加
+                    document.body.appendChild(handle);
                     
-                    const top = imgRect.top - editorRect.top;
-                    const left = imgRect.left - editorRect.left;
-                    
-                    // ハンドルの位置を設定
-                    switch (pos) {
-                      case 'nw':
-                        handle.style.top = `${top - 6}px`;
-                        handle.style.left = `${left - 6}px`;
-                        break;
-                      case 'ne':
-                        handle.style.top = `${top - 6}px`;
-                        handle.style.left = `${left + imgRect.width - 6}px`;
-                        break;
-                      case 'sw':
-                        handle.style.top = `${top + imgRect.height - 6}px`;
-                        handle.style.left = `${left - 6}px`;
-                        break;
-                      case 'se':
-                        handle.style.top = `${top + imgRect.height - 6}px`;
-                        handle.style.left = `${left + imgRect.width - 6}px`;
-                        break;
+                    // ハンドルの位置を計算して設定
+                    if (pos === 'nw') {
+                      handle.style.top = `${imgRect.top - 7}px`;
+                      handle.style.left = `${imgRect.left - 7}px`;
+                    } else if (pos === 'ne') {
+                      handle.style.top = `${imgRect.top - 7}px`;
+                      handle.style.left = `${imgRect.right - 7}px`;
+                    } else if (pos === 'sw') {
+                      handle.style.top = `${imgRect.bottom - 7}px`;
+                      handle.style.left = `${imgRect.left - 7}px`;
+                    } else if (pos === 'se') {
+                      handle.style.top = `${imgRect.bottom - 7}px`;
+                      handle.style.left = `${imgRect.right - 7}px`;
                     }
+                    
+                    // ハンドルにリサイズイベントリスナーを追加
+                    handle.addEventListener('mousedown', (e) => {
+                      console.log(`${pos}ハンドルがドラッグされました`);
+                      
+                      // リサイズの実装はまだ完了していませんが、
+                      // ハンドルがクリック可能であることを確認します
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      // このイベント発生を通知
+                      alert(`${pos}コーナーのリサイズハンドルがクリックされました`);
+                    });
                     
                     console.log(`${pos}ハンドルを追加しました: top=${handle.style.top}, left=${handle.style.left}`);
                   });
@@ -450,17 +458,28 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // コンポーネントのアンマウント時にリソースを解放
   useEffect(() => {
     return () => {
-      // クリーンアップ - リサイズ関連の要素をすべて削除
-      if (quillRef.current) {
-        const quillElement = quillRef.current.getEditor().root;
-        const handles = quillElement.querySelectorAll('.resize-handle');
-        handles.forEach(handle => handle.remove());
-        
-        // イベントリスナもクリーンアップするとよいが、
-        // コンポーネントのアンマウント時にはDOM要素も削除されるため、
-        // イベントリスナは自動的にガベージコレクションされる
-      }
+      // クリーンアップ - document.bodyにあるリサイズハンドルをすべて削除
+      const handles = document.querySelectorAll('.resize-handle');
+      console.log(`クリーンアップ: ${handles.length}個のリサイズハンドルを削除します`);
+      handles.forEach(handle => handle.remove());
+      
+      // 画像をクリックした際の新しいハンドル表示中に画面遷移すると
+      // ハンドルが残ることがあるため、document.body全体からハンドルを削除する
     };
+  }, []);
+  
+  // 画像選択を解除する関数（他の画像をクリックするか、エディタ外をクリックした時）
+  const clearSelection = useCallback(() => {
+    // すべてのハンドルを削除
+    const handles = document.querySelectorAll('.resize-handle');
+    handles.forEach(handle => handle.remove());
+    
+    // アクティブな画像の選択を解除
+    if (quillRef.current) {
+      const quillElement = quillRef.current.getEditor().root;
+      const activeImages = quillElement.querySelectorAll('.resizable-image.active');
+      activeImages.forEach(img => img.classList.remove('active'));
+    }
   }, []);
 
   const uploadMutation = useMutation({
