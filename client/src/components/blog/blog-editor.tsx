@@ -265,27 +265,40 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         return;
       }
 
+      // 明示的にステータスを設定し、日付は必ずDate型で送信するように修正
+      const newStatus = isDraft ? "draft" : isScheduling ? "scheduled" : "published";
+      const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
+      const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
+
       const submissionData = {
         ...values,
         title: values.title.trim(),
         content: values.content.trim(),
-        status: isDraft ? "draft" as const : isScheduling ? "scheduled" as const : "published" as const,
-        scheduled_at: isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null,
-        published_at: !isDraft && !isScheduling ? new Date() : null,
+        status: newStatus,
+        scheduled_at: newScheduledAt,
+        published_at: newPublishedAt,
       };
 
       console.log('Submission data:', submissionData);
       console.log('送信先URL:', postId ? `/api/blog/${postId}` : "/api/blog");
       console.log('送信メソッド:', postId ? "PUT" : "POST");
+      console.log('ステータス:', newStatus);
+      console.log('公開日時:', newPublishedAt);
+      console.log('予約日時:', newScheduledAt);
 
       try {
         if (postId) {
           await updateMutation.mutateAsync(submissionData);
+          // 成功したらローカルのステータスも更新
+          form.setValue("status", newStatus);
+          form.setValue("published_at", newPublishedAt);
+          form.setValue("scheduled_at", newScheduledAt);
         } else {
           await createMutation.mutateAsync(submissionData);
         }
       } catch (submitError) {
         console.error('Submit mutation error details:', submitError);
+        throw submitError; // エラーを上位ハンドラに伝播させる
       }
     } catch (error) {
       console.error('Form submission error:', error);
