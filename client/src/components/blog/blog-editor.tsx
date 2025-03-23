@@ -33,9 +33,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// Quillの設定
-Quill.register('modules/imageResize', ImageResize);
+// モジュール登録 (エラーを無視)
+Quill.register('modules/imageResize', ImageResize, true);
 
+// エディタのモジュール設定
 const modules = {
   toolbar: [
     [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
@@ -47,8 +48,16 @@ const modules = {
     ['clean']
   ],
   imageResize: {
-    parchment: Quill.import('parchment'),
-    modules: ['Resize', 'DisplaySize']
+    // 利用するモジュール
+    modules: ['Resize', 'DisplaySize'],
+    // 画像のリサイズハンドル設定
+    handleStyles: {
+      // 許可する最小・最大サイズ
+      minWidth: 50,
+      maxWidth: 1200,
+      // サイズ表示オプション
+      displaySize: true
+    }
   }
 };
 
@@ -665,127 +674,11 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                             formats={formats}
                             value={field.value}
                             onChange={(content) => {
-                              // エラー処理のためにトライ/キャッチブロックで囲む
-                              try {
-                                // 内容が存在しない場合は処理しない
-                                if (!content) {
-                                  field.onChange(content);
-                                  return;
-                                }
-
-                                // ReactQuillインスタンスが存在するか確認
-                                if (!quillRef || !quillRef.current) {
-                                  // インスタンスがない場合は単純に内容を設定
-                                  field.onChange(content);
-                                  return;
-                                }
-                                
-                                // サイズ情報を保存するために単純な処理を使用
-                                field.onChange(content);
-                                
-                                // エディタの存在をチェック
-                                const editor = quillRef.current.getEditor();
-                                if (!editor || !editor.root) {
-                                  console.log('エディタが初期化されていないため処理をスキップします');
-                                  return;
-                                }
-                                
-                                // 安全なタイミングで画像処理を行う
-                                setTimeout(() => {
-                                  try {
-                                    // エディタが存在することを再確認
-                                    if (!quillRef.current || !quillRef.current.getEditor()) {
-                                      return;
-                                    }
-                                    
-                                    // 画像要素を取得
-                                    const rootElement = quillRef.current.getEditor().root;
-                                    if (!rootElement) {
-                                      return;
-                                    }
-                                    
-                                    // 画像要素を取得
-                                    const images = rootElement.querySelectorAll('img');
-                                    if (!images || images.length === 0) {
-                                      return; // 画像がなければ終了
-                                    }
-                                    
-                                    // 各画像を処理
-                                    let modified = false;
-                                    images.forEach((img) => {
-                                      if (!img) return;
-                                      
-                                      try {
-                                        // スタイル属性を取得
-                                        const styleAttr = img.getAttribute('style') || '';
-                                        
-                                        // 画像のwidth/heightを取得
-                                        const width = img.width;
-                                        const height = img.height;
-                                        
-                                        // width/heightが有効な場合、属性として設定
-                                        if (width && width > 0) {
-                                          img.setAttribute('width', String(width));
-                                          img.setAttribute('data-width', String(width));
-                                          modified = true;
-                                        }
-                                        
-                                        if (height && height > 0) {
-                                          img.setAttribute('height', String(height));
-                                          img.setAttribute('data-height', String(height));
-                                          modified = true;
-                                        }
-                                        
-                                        // 既存のスタイル属性にサイズ情報を追加
-                                        if (width > 0 || height > 0) {
-                                          let newStyle = styleAttr;
-                                          
-                                          if (width > 0) {
-                                            if (newStyle.includes('width:')) {
-                                              newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${width}px`);
-                                            } else {
-                                              newStyle += `${newStyle ? '; ' : ''}width: ${width}px`;
-                                            }
-                                          }
-                                          
-                                          if (height > 0) {
-                                            if (newStyle.includes('height:')) {
-                                              newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${height}px`);
-                                            } else {
-                                              newStyle += `${newStyle ? '; ' : ''}height: ${height}px`;
-                                            }
-                                          }
-                                          
-                                          if (newStyle !== styleAttr) {
-                                            img.setAttribute('style', newStyle);
-                                            modified = true;
-                                          }
-                                        }
-                                      } catch (imgError) {
-                                        console.error('画像処理中にエラーが発生しました:', imgError);
-                                      }
-                                    });
-                                    
-                                    // 画像が変更された場合のみ内容を更新
-                                    if (modified && rootElement) {
-                                      try {
-                                        const newContent = rootElement.innerHTML;
-                                        if (newContent && newContent.length > 0) {
-                                          field.onChange(newContent);
-                                        }
-                                      } catch (updateError) {
-                                        console.error('コンテンツ更新エラー:', updateError);
-                                      }
-                                    }
-                                  } catch (timeoutError) {
-                                    console.error('タイムアウト処理中にエラーが発生しました:', timeoutError);
-                                  }
-                                }, 50);
-                              } catch (globalError) {
-                                console.error('ReactQuill onChange処理エラー:', globalError);
-                                // エラー時は単純に内容を設定
-                                field.onChange(content);
-                              }
+                              // 基本的な変更はそのまま反映
+                              field.onChange(content);
+                              
+                              // これ以上の処理は行わない
+                              // 画像サイズはQuillのimageResizeモジュールが自動的に処理する
                             }}
                             className="min-h-[400px]"
                           />
