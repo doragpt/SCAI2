@@ -293,12 +293,20 @@ export default function BlogManagement() {
                 店舗情報やイベント告知などを投稿しましょう
               </CardDescription>
             </div>
-            <Button asChild>
-              <Link href="/store/blog/new">
-                <FilePlus className="h-4 w-4 mr-2" />
-                新規作成
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href="/store/blog/new">
+                  <FilePlus className="h-4 w-4 mr-2" />
+                  新規作成
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/store/blog/new-ck">
+                  <FilePlus className="h-4 w-4 mr-2" />
+                  CKEditorで作成
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         
@@ -458,7 +466,14 @@ export default function BlogManagement() {
                               onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
                             >
                               <Edit className="h-4 w-4 mr-2" />
-                              編集
+                              編集（旧エディター）
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem
+                              onClick={() => setLocation(`/store/blog/edit-ck/${post.id}`)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              編集（CKEditor）
                             </DropdownMenuItem>
                             
                             {post.status === "published" && (
