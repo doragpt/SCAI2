@@ -200,10 +200,31 @@ router.post("/", authenticate, async (req: any, res) => {
       return res.status(403).json({ message: "店舗アカウントのみ記事を作成できます" });
     }
 
+    // 日付データの適切な処理
+    let scheduled_at = null;
+    if (req.body.scheduled_at) {
+      try {
+        scheduled_at = new Date(req.body.scheduled_at);
+      } catch (e) {
+        console.error('Invalid scheduled_at date:', req.body.scheduled_at);
+      }
+    }
+    
+    let published_at = null;
+    if (req.body.published_at) {
+      try {
+        published_at = new Date(req.body.published_at);
+      } catch (e) {
+        console.error('Invalid published_at date:', req.body.published_at);
+      }
+    }
+
     const validatedData = blogPostSchema.parse({
       ...req.body,
       store_id: req.user.id,
       status: req.body.status || 'draft',
+      scheduled_at: scheduled_at,
+      published_at: published_at,
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -258,11 +279,41 @@ router.put("/:id", authenticate, async (req: any, res) => {
       return res.status(404).json({ message: "記事が見つからないか、アクセス権限がありません" });
     }
 
+    // 日付データの適切な処理
+    let scheduled_at = null;
+    if (req.body.scheduled_at) {
+      try {
+        scheduled_at = new Date(req.body.scheduled_at);
+      } catch (e) {
+        console.error('Invalid scheduled_at date:', req.body.scheduled_at);
+      }
+    }
+    
+    let published_at = null;
+    if (req.body.published_at) {
+      try {
+        published_at = new Date(req.body.published_at);
+      } catch (e) {
+        console.error('Invalid published_at date:', req.body.published_at);
+      }
+    }
+    
     // 更新データの検証
     const validatedData = {
       ...req.body,
+      scheduled_at: scheduled_at,
+      published_at: published_at,
       updated_at: new Date()
     };
+    
+    // デバッグ用ログ
+    console.log('更新データ:', JSON.stringify({
+      id: validatedData.id,
+      title: validatedData.title,
+      status: validatedData.status,
+      scheduled_at: validatedData.scheduled_at,
+      published_at: validatedData.published_at
+    }));
 
     // 記事の更新
     const [updatedPost] = await db
