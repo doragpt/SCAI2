@@ -1,0 +1,340 @@
+<form method="post" name="form1" action="/blog/edit/" enctype="multipart/form-data">
+      
+          <div id="contents">
+            <div id="contents" style="opacity: 1;">
+              <div id="articleWrap">
+                <dl>
+                <span id="cautiontext_date" class="cautionText" style="display: table;text-align: left;margin-left: 0px;"></span>
+                                <p class="btntimemore">
+                  <a href="javascript:void(0);" onclick="add_date_select();" id="dateAddBtn" class="btnDefault">日時を追加</a>
+                  
+                                    
+                </p>
+                                  <div class="boxDateLabel">
+                    <dt>投稿日時：</dt>
+                  </div>
+                                  <div class="boxDateSelect">
+                                        <dd class="dateSelect" id="dateSelect_0" style="width:440px;height:45px;text-align:left;">
+                      <select id="keisai_dt_y" name="keisai_dt_y[]" data-check="date term_next_month_3_withdate" data-name="投稿日時" label=".caution_date">
+                        <option value="2024">2024</option>
+<option value="2025" selected="">2025</option>
+<option value="2026">2026</option>
+<option value="2027">2027</option>
+
+                      </select>年
+                      <select id="keisai_dt_m" name="keisai_dt_m[]" data-check="" label=".caution_date">
+                        <option value="1">01</option>
+<option value="2">02</option>
+<option value="3" selected="">03</option>
+<option value="4">04</option>
+<option value="5">05</option>
+<option value="6">06</option>
+<option value="7">07</option>
+<option value="8">08</option>
+<option value="9">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+
+                      </select>月
+                      <select id="keisai_dt_d" name="keisai_dt_d[]" data-check="" label=".caution_date">
+                        <option value="1">01</option>
+<option value="2">02</option>
+<option value="3">03</option>
+<option value="4">04</option>
+<option value="5">05</option>
+<option value="6">06</option>
+<option value="7">07</option>
+<option value="8">08</option>
+<option value="9">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24" selected="">24</option>
+<option value="25">25</option>
+<option value="26">26</option>
+<option value="27">27</option>
+<option value="28">28</option>
+<option value="29">29</option>
+<option value="30">30</option>
+<option value="31">31</option>
+
+                      </select>日
+                      <select id="keisai_dt_h" name="keisai_dt_h[]" data-check="" label=".caution_date">
+                        <option value="0">00</option>
+<option value="1">01</option>
+<option value="2">02</option>
+<option value="3" selected="">03</option>
+<option value="4">04</option>
+<option value="5">05</option>
+<option value="6">06</option>
+<option value="7">07</option>
+<option value="8">08</option>
+<option value="9">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+
+                      </select>時
+                      <select id="keisai_dt_n" name="keisai_dt_n[]" data-check="" label=".caution_date">
+                        <option value="0">00</option>
+<option value="1">01</option>
+<option value="2">02</option>
+<option value="3">03</option>
+<option value="4">04</option>
+<option value="5">05</option>
+<option value="6">06</option>
+<option value="7">07</option>
+<option value="8">08</option>
+<option value="9">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24">24</option>
+<option value="25">25</option>
+<option value="26">26</option>
+<option value="27">27</option>
+<option value="28">28</option>
+<option value="29">29</option>
+<option value="30">30</option>
+<option value="31">31</option>
+<option value="32">32</option>
+<option value="33">33</option>
+<option value="34">34</option>
+<option value="35">35</option>
+<option value="36">36</option>
+<option value="37">37</option>
+<option value="38">38</option>
+<option value="39">39</option>
+<option value="40">40</option>
+<option value="41">41</option>
+<option value="42">42</option>
+<option value="43">43</option>
+<option value="44">44</option>
+<option value="45">45</option>
+<option value="46">46</option>
+<option value="47">47</option>
+<option value="48">48</option>
+<option value="49">49</option>
+<option value="50">50</option>
+<option value="51">51</option>
+<option value="52">52</option>
+<option value="53">53</option>
+<option value="54">54</option>
+<option value="55">55</option>
+<option value="56">56</option>
+<option value="57">57</option>
+<option value="58">58</option>
+<option value="59" selected="">59</option>
+
+                      </select>分
+                                            <span class="caution_date cautionText" style="float:left;margin-left:0px"></span>
+                    </dd>
+                                      </div>
+                                    
+                  
+                  
+                  
+                  
+                  
+                  
+                                    
+                                    <div class="displayTargetIcon" style="clear:both;">
+                    <p class="twitter_flg_wrap">
+                      <input type="checkbox" id="twitter_flg" name="twitter_flg" value="1" checked="">
+                      <label for="twitter_flg"><img src="https://manager.girlsheaven-job.net/img/manager/twitter.png">Twitterに投稿</label>
+                    </p>
+                    
+                                        
+                    
+                    <span class="twitter_warning_text">
+                    直近にTwitter投稿を行ったブログと内容が類似している場合、Twitterへの投稿ができないことがあります。
+                    <br>直近に類似したブログを投稿していないか確認後、Twitter投稿をご利用ください。
+                    </span>
+                    
+                  </div>
+                                    
+                                </dl>
+                <div id="articleTitle">
+                  
+                  <div class="category_select">
+                    
+                    <div class="boxCategoryLabel">
+                      <dt>ブログ記事カテゴリ：</dt>
+                    </div>
+                    <select name="category_list" id="category_list" data-check="category">
+                                              <option disabled="" selected="" value="" class="blog_category">選択してください</option>
+                                                                                              <option value="1" class="blog_category">お給料</option>
+                                                                                                <option value="2" class="blog_category">スタッフ</option>
+                                                                                                <option value="3" class="blog_category">お店の環境</option>
+                                                                                                <option value="4" class="blog_category">うれしい待遇</option>
+                                                                                                <option value="5" class="blog_category">キャスト紹介</option>
+                                                                                                <option value="6" class="blog_category">採用条件</option>
+                                                                                                <option value="7" class="blog_category">お客様層</option>
+                                                                                                <option value="8" class="blog_category">お仕事内容</option>
+                                                                                                <option value="9" class="blog_category">お店のつぶやき</option>
+                                                                  </select>
+                  </div>
+                  
+                  <input data-check="required max150" data-name="タイトル" name="title" data-length="150" size="40" value="" id="title" title="全角150文字以内" type="text" onkeydown="if(event.keyCode==13) return false;" placeholder="ここにタイトルを入力してください(150文字以内)">
+                  <span id="caution_title" class="cautionTextLine" style="display: inline;">あと150文字</span><div class="infotext" style="text-align: left;">(150文字)</div>
+                </div>
+              </div>
+              <span style="float:left;margin-top:10px;margin-left:10px">
+                <a href="/contents/editor/help.html" target="_blank">？使い方</a>
+              </span>
+              <div style="padding: 0px 10px 0px;clear:both;">
+                
+                
+                <textarea data-check="required max30000" data-name="内容" name="content" class="mpeditor" id="MpContent" style="visibility: hidden; display: none;"></textarea><div id="cke_MpContent" class="cke_1 cke cke_reset cke_chrome cke_editor_MpContent cke_ltr cke_browser_webkit" dir="ltr" lang="ja" role="application" aria-labelledby="cke_MpContent_arialbl"><span id="cke_MpContent_arialbl" class="cke_voice_label">リッチテキストエディタ, MpContent</span><div class="cke_inner cke_reset" role="presentation"><span id="cke_1_top" class="cke_top cke_reset_all" role="presentation" style="height: auto; user-select: none;"><span id="cke_8" class="cke_voice_label">編集ツールバー</span><span id="cke_1_toolbox" class="cke_toolbox" role="group" aria-labelledby="cke_8" onmousedown="return false;"><span id="cke_10" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span id="cke_9" class="cke_combo cke_combo__fontsize  cke_combo_off" role="presentation"><span id="cke_9_label" class="cke_combo_label">サイズ</span><a class="cke_combo_button" hidefocus="true" title="フォントサイズ" tabindex="-1" "="" href="javascript:void('フォントサイズ')" role="button" aria-labelledby="cke_9_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(2,event,this);" onmousedown="return CKEDITOR.tools.callFunction(4,event);" onfocus="return CKEDITOR.tools.callFunction(3,event);" onclick="CKEDITOR.tools.callFunction(1,this);return false;"><span id="cke_9_text" class="cke_combo_text cke_combo_inlinelabel">サイズ</span><span class="cke_combo_open"><span class="cke_combo_arrow"></span></span></a></span><span class="cke_toolgroup" role="presentation"><a id="cke_11" class="cke_button cke_button__bold cke_button_off" href="javascript:void('太字')" title="太字" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_11_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(5,event);" onfocus="return CKEDITOR.tools.callFunction(6,event);" onmousedown="return CKEDITOR.tools.callFunction(7,event);" onclick="CKEDITOR.tools.callFunction(8,this);return false;"><span class="cke_button_icon cke_button__bold_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -24px;background-size:auto;">&nbsp;</span><span id="cke_11_label" class="cke_button_label cke_button__bold_label" aria-hidden="false">太字</span></a><a id="cke_12" class="cke_button cke_button__italic  cke_button_off" href="javascript:void('斜体')" title="斜体" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_12_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(9,event);" onfocus="return CKEDITOR.tools.callFunction(10,event);" onmousedown="return CKEDITOR.tools.callFunction(11,event);" onclick="CKEDITOR.tools.callFunction(12,this);return false;"><span class="cke_button_icon cke_button__italic_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -48px;background-size:auto;">&nbsp;</span><span id="cke_12_label" class="cke_button_label cke_button__italic_label" aria-hidden="false">斜体</span></a><a id="cke_13" class="cke_button cke_button__underline  cke_button_off" href="javascript:void('下線')" title="下線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_13_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(13,event);" onfocus="return CKEDITOR.tools.callFunction(14,event);" onmousedown="return CKEDITOR.tools.callFunction(15,event);" onclick="CKEDITOR.tools.callFunction(16,this);return false;"><span class="cke_button_icon cke_button__underline_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -144px;background-size:auto;">&nbsp;</span><span id="cke_13_label" class="cke_button_label cke_button__underline_label" aria-hidden="false">下線</span></a><a id="cke_14" class="cke_button cke_button__strike  cke_button_off" href="javascript:void('打ち消し線')" title="打ち消し線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_14_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(17,event);" onfocus="return CKEDITOR.tools.callFunction(18,event);" onmousedown="return CKEDITOR.tools.callFunction(19,event);" onclick="CKEDITOR.tools.callFunction(20,this);return false;"><span class="cke_button_icon cke_button__strike_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -72px;background-size:auto;">&nbsp;</span><span id="cke_14_label" class="cke_button_label cke_button__strike_label" aria-hidden="false">打ち消し線</span></a><a id="cke_15" class="cke_button cke_button__justifycenter cke_button_off" href="javascript:void('中央揃え')" title="中央揃え" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_15_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(21,event);" onfocus="return CKEDITOR.tools.callFunction(22,event);" onmousedown="return CKEDITOR.tools.callFunction(23,event);" onclick="CKEDITOR.tools.callFunction(24,this);return false;"><span class="cke_button_icon cke_button__justifycenter_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -1104px;background-size:auto;">&nbsp;</span><span id="cke_15_label" class="cke_button_label cke_button__justifycenter_label" aria-hidden="false">中央揃え</span></a><a id="cke_16" class="cke_button cke_button__horizontalrule  cke_button_off" href="javascript:void('水平線')" title="水平線" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_16_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(25,event);" onfocus="return CKEDITOR.tools.callFunction(26,event);" onmousedown="return CKEDITOR.tools.callFunction(27,event);" onclick="CKEDITOR.tools.callFunction(28,this);return false;"><span class="cke_button_icon cke_button__horizontalrule_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -888px;background-size:auto;">&nbsp;</span><span id="cke_16_label" class="cke_button_label cke_button__horizontalrule_label" aria-hidden="false">水平線</span></a><a id="cke_17" class="cke_button cke_button__textcolor cke_button_off " href="javascript:void('文字色')" title="文字色" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_17_label" aria-haspopup="true" onkeydown="return CKEDITOR.tools.callFunction(29,event);" onfocus="return CKEDITOR.tools.callFunction(30,event);" onmousedown="return CKEDITOR.tools.callFunction(31,event);" onclick="CKEDITOR.tools.callFunction(32,this);return false;"><span class="cke_button_icon cke_button__textcolor_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -408px;background-size:auto;">&nbsp;</span><span id="cke_17_label" class="cke_button_label cke_button__textcolor_label" aria-hidden="false">文字色</span><span class="cke_button_arrow"></span></a><a id="cke_18" class="cke_button cke_button__link  cke_button_off" href="javascript:void('リンク挿入/編集')" title="リンク挿入/編集" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_18_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(33,event);" onfocus="return CKEDITOR.tools.callFunction(34,event);" onmousedown="return CKEDITOR.tools.callFunction(35,event);" onclick="CKEDITOR.tools.callFunction(36,this);return false;"><span class="cke_button_icon cke_button__link_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -1248px;background-size:auto;">&nbsp;</span><span id="cke_18_label" class="cke_button_label cke_button__link_label" aria-hidden="false">リンク挿入/編集</span></a><a id="cke_19" class="cke_button cke_button__source  cke_button_off" href="javascript:void('ソース')" title="ソース" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_19_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(37,event);" onfocus="return CKEDITOR.tools.callFunction(38,event);" onmousedown="return CKEDITOR.tools.callFunction(39,event);" onclick="CKEDITOR.tools.callFunction(40,this);return false;"><span class="cke_button_icon cke_button__source_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/icons.png?t=DBAA);background-position:0 -1824px;background-size:auto;">&nbsp;</span><span id="cke_19_label" class="cke_button_label cke_button__source_label" aria-hidden="false">ソース</span></a></span><span class="cke_toolbar_end"></span></span><span id="cke_20" class="cke_toolbar" role="toolbar"><span class="cke_toolbar_start"></span><span class="cke_toolgroup" role="presentation"><a id="cke_21" class="cke_button cke_button__imagedialog  cke_button_off" href="javascript:void('画像読込')" title="画像読込" tabindex="-1" hidefocus="true" role="button" aria-labelledby="cke_21_label" aria-haspopup="false" onkeydown="return CKEDITOR.tools.callFunction(41,event);" onfocus="return CKEDITOR.tools.callFunction(42,event);" onmousedown="return CKEDITOR.tools.callFunction(43,event);" onclick="CKEDITOR.tools.callFunction(44,this);return false;"><span class="cke_button_icon cke_button__imagedialog_icon" style="background-image:url(https://manager.girlsheaven-job.net/js/ckeditor/plugins/ImageDialog/images/imagedialog.png?t=DBAA);background-position:0 undefinedpx;background-size:16px;">&nbsp;</span><span id="cke_21_label" class="cke_button_label cke_button__imagedialog_label" aria-hidden="false">画像読込</span></a></span><span class="cke_toolbar_end"></span></span></span></span><div id="cke_1_contents" class="cke_contents cke_reset" role="presentation" style="height: 400px;"><iframe src="" frameborder="0" class="cke_wysiwyg_frame cke_reset" title="リッチテキストエディタ, MpContent" tabindex="0" allowtransparency="true" style="width: 100%; height: 100%;"></iframe></div></div></div>
+                <span id="caution_content" class="cautionTextLine"></span><span>(30000文字・半角も1文字にカウントします。タグも文字数にカウントします)</span>
+                
+                <div id="globalHeaderMsg" style="display:none; border:solid 4px #FF0000; text-align:left; width:650px; margin:0px 0px 30px 0px; padding: 30px 10px;">
+                    <span style="font-weight: bold; font-size: 16px;">店長ブログの本文を入力できないお客様は互換表示設定を解除して下さい。</span><br>
+                    ■互換表示設定解除方法<br>
+                    &nbsp;&nbsp;①ブラウザ上部にあるメニューバー内のツール(T)をクリック<br>
+                    &nbsp;&nbsp;②互換表示設定をクリック<br>
+                    &nbsp;&nbsp;③互換表示に追加したWebサイト(W)内にある「girlsheaven-job.net」を選択して、右の削除ボタンを押す
+                </div>
+
+              </div>
+              <p class="radioBtn" style="clear:both;">
+                <input data-check="required:group" data-name="状態" name="status" type="radio" id="radioPublic" value="1" checked="">
+                <label for="radioPublic">公開</label>/
+                <input name="status" type="radio" id="radioPrivate" value="2">
+                <label for="radioPrivate">非公開</label>
+                </p><div id="caution_status" class="cautionText"></div>
+              <p></p>
+
+              
+                                                                                    
+              
+                
+                
+                  
+                    
+                      
+                        
+                      
+                    
+                  
+                  
+                  
+                  
+                    
+                  
+                  
+                  
+                  
+                  
+                  
+                    
+                      
+                    
+                  
+                
+              
+              
+              
+              
+              
+
+              <div class="uploadBlock">
+                <div class="uploadTitle">画像：</div>
+                <div class="uploadBtn">
+                  
+                  
+                  
+                  <input type="file" name="upload_pic_pc" id="file_pic_pc" onchange="changeImageFile();return picCheckForm();">
+                  <div class="tittleLead cautionText">
+                    <p id="pic_error"></p>
+                  </div>
+                  
+                  
+                  
+                  
+                  
+                  <p>(推奨サイズ：横240px　縦320px　容量：1MB以下　ファイル形式：gif、jpg、pngのみ)</p>
+                  
+                  
+                                    <img class="prvImg" src="" style="display:none;">
+                  
+                                    <br>
+                  <div class="displayTargetIcon">
+                  <label id="display_target" class="iconNotChecked" style="margin:5px 0px 0px 0px;" for="del_pic_pc">
+                    <input type="checkbox" id="del_pic_pc" name="del_pic_pc" value="1" onclick="dispChange();">画像削除
+                  </label>
+                  </div>
+                </div>
+              </div>
+              <div style="background: #FFC; padding: 10px; margin: 10px; clear: both; text-align: left;">
+              ●画像・動画を掲載される際のお願い<br>
+              ・過度な性的表現や明らかに卑猥な画像は掲載をお控えください。<br>
+              ・使用の素材(画像、映像、音楽)が何らかの著作権または肖像権などを侵害していないことをご確認ください。（プライバシーの侵害も含む）<br>
+              ・その他、公序良俗に反する恐れのあるものは掲載をお控えください。<br>
+              以上をご理解のうえ、ご協力のほど宜しくお願い申し上げます。<br>
+              管理者が不適当と判断した場合は即時削除または掲載中止と致します。<br>
+              掲載内容におけるトラブル等については弊社は一切責任を負いません。
+              </div>
+              <p class="btnDefaultBlock" style="clear:both;margin-top:20px;">
+                
+                
+                
+                
+                <a href="javascript:void(0);" data-submit="" confirm="投稿します。よろしいですか？" value="updateFlag:::1" data-check="" class="btnDefault js-check-posts">投稿する</a>
+                
+                
+                
+                
+                
+                                    <a href="javascript:void(0);" data-submit="" confirm="一時保存します。よろしいですか？" value="updateFlag:::2" data-check="" class="btnDefault">一時保存</a>
+                                
+                
+                <a href="javascript:void(0);" class="btnDefault js-blogPreview">プレビュー</a>
+                
+              </p>
+            </div>
+        </div>
+      <input type="hidden" name="act" value="regist">
+      <input type="hidden" name="blogId" value="">
+      <input type="hidden" name="org_pic" value="">
+      <input type="hidden" name="temp_pic" value="">
+      
+      <textarea id="temp_content" style="display:none;"></textarea>
+      
+      
+      <input type="hidden" id="img_sel_view_type" name="img_sel_view_type" value="blog">
+      </form>

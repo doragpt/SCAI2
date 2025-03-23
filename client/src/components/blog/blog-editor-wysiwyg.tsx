@@ -6,9 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import 'react-quill/dist/quill.snow.css';
 import ReactQuill from 'react-quill';
 import { format } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, uploadPhoto, getSignedPhotoUrl } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { Image, UploadCloud } from "lucide-react";
 
 // BlogPost型の定義
 interface BlogPost {
@@ -82,6 +83,73 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isScheduling, setIsScheduling] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialData?.thumbnail || null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // サムネイル画像のアップロード処理
+  const uploadThumbnail = async (file: File) => {
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `thumbnail_${Date.now()}.${fileExt}`;
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        try {
+          const result = await uploadPhoto(base64Data, fileName);
+          console.log("Thumbnail uploaded:", result);
+          setThumbnailUrl(result.url);
+          form.setValue('thumbnail', result.url);
+          toast({
+            title: "サムネイル画像をアップロードしました",
+            description: "ブログのサムネイル画像を設定しました。",
+          });
+        } catch (error) {
+          console.error("Error uploading thumbnail:", error);
+          toast({
+            title: "エラー",
+            description: `サムネイル画像のアップロードに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+            variant: "destructive",
+          });
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error processing thumbnail:", error);
+      toast({
+        title: "エラー",
+        description: `サムネイル画像の処理に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  };
+
+  // サムネイル画像のURLが有効期限切れの場合に再取得
+  useEffect(() => {
+    const loadThumbnail = async () => {
+      if (initialData?.thumbnail) {
+        try {
+          // キーを抽出（URLからファイル名部分を取得）
+          const key = initialData.thumbnail.split('/').pop();
+          if (key) {
+            const signedUrl = await getSignedPhotoUrl(key);
+            setThumbnailUrl(signedUrl);
+          }
+        } catch (error) {
+          console.error("Error loading thumbnail:", error);
+        }
+      }
+    };
+    
+    loadThumbnail();
+  }, [initialData?.thumbnail]);
 
   // 下書き保存のミューテーション
   const saveMutation = useMutation({
@@ -152,12 +220,21 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   });
 
   const onSubmit = (values: BlogPost) => {
-    saveMutation.mutate(values);
+    // サムネイル画像のURLをフォーム値に含める
+    const formValues = {
+      ...values,
+      thumbnail: thumbnailUrl
+    };
+    saveMutation.mutate(formValues);
   };
 
   const handlePublish = () => {
     const values = form.getValues();
-    publishMutation.mutate(values);
+    // サムネイル画像のURLをフォーム値に含める
+    publishMutation.mutate({
+      ...values,
+      thumbnail: thumbnailUrl
+    });
   };
 
   const toggleSchedulingModal = () => {
@@ -173,7 +250,8 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       { 
         ...values, 
         status: "scheduled",
-        scheduled_at: date.toISOString()
+        scheduled_at: date.toISOString(),
+        thumbnail: thumbnailUrl
       }
     ).then(() => {
       setIsScheduling(false);
@@ -214,6 +292,80 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                     <FormLabel>タイトル</FormLabel>
                     <FormControl>
                       <Input placeholder="記事のタイトルを入力" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="thumbnail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>サムネイル画像</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (file) {
+                                  uploadThumbnail(file);
+                                }
+                              };
+                              input.click();
+                            }}
+                            disabled={isUploading}
+                            className="w-full md:w-auto"
+                          >
+                            {isUploading ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <UploadCloud className="mr-2 h-4 w-4" />
+                            )}
+                            サムネイル画像をアップロード
+                          </Button>
+                          {thumbnailUrl && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setThumbnailUrl(null);
+                                form.setValue('thumbnail', null);
+                              }}
+                              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              削除
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {thumbnailUrl && (
+                          <div className="relative border rounded-md p-2 max-w-md">
+                            <div className="text-sm text-muted-foreground mb-2">プレビュー:</div>
+                            <img 
+                              src={thumbnailUrl} 
+                              alt="サムネイル画像" 
+                              className="max-h-48 object-contain" 
+                            />
+                          </div>
+                        )}
+                        
+                        {!thumbnailUrl && (
+                          <div className="border rounded-md p-4 text-center text-muted-foreground">
+                            <Image className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                            <p>サムネイル画像がありません</p>
+                            <p className="text-xs mt-1">記事一覧やSNS共有時に表示される画像です</p>
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
