@@ -190,7 +190,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     mutationFn: (data: BlogPost) =>
       apiRequest(
         postId ? "PUT" : "POST",
-        `/api/blog${postId ? `/${postId}` : ""}`,
+        `/api/blog/posts${postId ? `/${postId}` : ""}`,
         { ...data, status: "draft" }
       ),
     onSuccess: (data) => {
