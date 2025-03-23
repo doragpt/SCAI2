@@ -93,11 +93,15 @@ export default function StoreDashboard() {
   const { data: profile, isLoading: profileLoading } = useQuery<StoreProfile>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/store/profile");
-      if (!response.ok) {
-        throw new Error("店舗情報の取得に失敗しました");
+      try {
+        const response = await apiRequest("GET", "/api/store/profile");
+        console.log('店舗プロフィールAPI応答:', response);
+        // レスポンスはすでにJSON解析済みなので直接返す
+        return response as StoreProfile;
+      } catch (error) {
+        console.error('店舗プロフィール取得エラー:', error);
+        throw error;
       }
-      return response.json();
     },
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
@@ -112,11 +116,14 @@ export default function StoreDashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: [QUERY_KEYS.STORE_STATS],
     queryFn: async () => {
-      const response = await apiRequest("GET", QUERY_KEYS.STORE_STATS);
-      if (!response.ok) {
-        throw new Error("統計情報の取得に失敗しました");
+      try {
+        const response = await apiRequest("GET", QUERY_KEYS.STORE_STATS);
+        console.log('API Response from /store/stats:', response);
+        return response as DashboardStats;
+      } catch (error) {
+        console.error('統計情報取得エラー:', error);
+        throw error;
       }
-      return response.json();
     },
     staleTime: 300000, // 5分
     enabled: !!user?.id && user?.role === "store",
