@@ -1,56 +1,60 @@
-/* シンプルな画像リサイズ用CSS */
+/* シンプルな画像リサイズ用CSS - 強化版 */
+
+/* アクティブな画像を強調表示 */
 .resizable-image {
-  position: relative;
-  max-width: 100%;
-  cursor: pointer;
-  display: inline-block;
-  border: 1px solid transparent;
-  transition: border-color 0.2s ease;
+  position: relative !important;
+  max-width: 100% !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s ease !important;
 }
 
 .resizable-image:hover {
-  border-color: #3b82f6;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5) !important;
 }
 
 .resizable-image.active {
-  border: 2px solid #3b82f6;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25) !important;
 }
 
-/* リサイズハンドル */
-.resize-handle {
-  position: absolute;
-  width: 14px !important;
-  height: 14px !important;
-  background-color: #3b82f6 !important;
-  border: 2px solid white !important;
-  z-index: 1000 !important;
+/* リサイズハンドル - 高視認性設計 */
+.image-resize-handle {
+  box-sizing: content-box !important;
+  position: fixed !important; /* 全画面の位置に固定 */
+  width: 18px !important;
+  height: 18px !important;
+  background-color: #2563eb !important;
+  border: 3px solid white !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 0, 0, 0.5) !important;
+  z-index: 10000 !important; /* 最前面に表示する非常に高いz-index */
   border-radius: 50% !important;
   display: block !important;
   pointer-events: auto !important;
   opacity: 1 !important;
-  transform: translate(0, 0) !important;
+  transform: translate(-50%, -50%) !important; /* 中央揃えでの配置 */
+  cursor: pointer !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
-.resize-handle.nw {
-  top: -7px !important;
-  left: -7px !important;
+.image-resize-handle.nw {
   cursor: nwse-resize !important;
 }
 
-.resize-handle.ne {
-  top: -7px !important;
-  right: -7px !important;
+.image-resize-handle.ne {
   cursor: nesw-resize !important;
 }
 
-.resize-handle.se {
-  bottom: -7px !important;
-  right: -7px !important;
+.image-resize-handle.se {
   cursor: nwse-resize !important;
 }
 
-.resize-handle.sw {
-  bottom: -7px !important;
-  left: -7px !important;
+.image-resize-handle.sw {
   cursor: nesw-resize !important;
 }

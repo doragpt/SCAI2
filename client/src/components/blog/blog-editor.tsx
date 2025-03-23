@@ -395,34 +395,63 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   // クリックした画像をアクティブに
                   img.classList.add('active');
                   
-                  // リサイズハンドルを追加（イベント付き）
+                  // まず既存のリサイズハンドルがあれば削除 (他の画像が選択されていた場合など)
+                  const existingHandles = document.querySelectorAll('.image-resize-handle');
+                  existingHandles.forEach(handle => handle.remove());
+                  
+                  // すでにアクティブな画像があれば、アクティブ状態を解除
+                  const activeImages = document.querySelectorAll('.resizable-image.active');
+                  activeImages.forEach(activeImg => activeImg.classList.remove('active'));
+                  
+                  // クリックした画像の正確な位置を取得
+                  const imgRect = img.getBoundingClientRect();
+                  console.log('画像の位置:', {
+                    top: imgRect.top,
+                    right: imgRect.right,
+                    bottom: imgRect.bottom,
+                    left: imgRect.left,
+                    width: imgRect.width,
+                    height: imgRect.height
+                  });
+                  
+                  // スクロール位置を考慮
+                  const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                  const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                  
+                  // リサイズハンドルを追加（イベント付き）- 新しいクラス名で作成
                   const positions = ['nw', 'ne', 'sw', 'se'];
                   
-                  // ドキュメントのbodyに直接ハンドルを追加する
-                  const imgRect = img.getBoundingClientRect();
-                  
                   positions.forEach(pos => {
+                    // 新しいハンドル要素を作成
                     const handle = document.createElement('div');
-                    handle.className = `resize-handle ${pos}`;
-                    handle.style.position = 'fixed';  // fixed positionで配置
+                    handle.className = `image-resize-handle ${pos}`;
+                    handle.setAttribute('data-position', pos);
+                    handle.style.position = 'fixed';
                     
                     // ハンドルをページのbodyに直接追加
                     document.body.appendChild(handle);
                     
-                    // ハンドルの位置を計算して設定
+                    // ハンドルの位置を計算（スクロール位置を加味）
+                    let topPos, leftPos;
+                    
+                    // 各コーナーの位置を計算
                     if (pos === 'nw') {
-                      handle.style.top = `${imgRect.top - 7}px`;
-                      handle.style.left = `${imgRect.left - 7}px`;
+                      topPos = imgRect.top;
+                      leftPos = imgRect.left;
                     } else if (pos === 'ne') {
-                      handle.style.top = `${imgRect.top - 7}px`;
-                      handle.style.left = `${imgRect.right - 7}px`;
+                      topPos = imgRect.top;
+                      leftPos = imgRect.right;
                     } else if (pos === 'sw') {
-                      handle.style.top = `${imgRect.bottom - 7}px`;
-                      handle.style.left = `${imgRect.left - 7}px`;
+                      topPos = imgRect.bottom;
+                      leftPos = imgRect.left;
                     } else if (pos === 'se') {
-                      handle.style.top = `${imgRect.bottom - 7}px`;
-                      handle.style.left = `${imgRect.right - 7}px`;
+                      topPos = imgRect.bottom;
+                      leftPos = imgRect.right;
                     }
+                    
+                    // CSSのtranslate(-50%, -50%)を使用しているため、ハンドルの中心が指定位置に来るようにする
+                    handle.style.top = `${topPos}px`;
+                    handle.style.left = `${leftPos}px`;
                     
                     // ハンドルにリサイズイベントリスナーを追加
                     handle.addEventListener('mousedown', (e) => {
@@ -459,9 +488,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   useEffect(() => {
     return () => {
       // クリーンアップ - document.bodyにあるリサイズハンドルをすべて削除
-      const handles = document.querySelectorAll('.resize-handle');
-      console.log(`クリーンアップ: ${handles.length}個のリサイズハンドルを削除します`);
-      handles.forEach(handle => handle.remove());
+      // 両方のクラス名のハンドルを検索して削除（後方互換性のため）
+      const oldHandles = document.querySelectorAll('.resize-handle');
+      const newHandles = document.querySelectorAll('.image-resize-handle');
+      
+      console.log(`クリーンアップ: ${oldHandles.length}個の古いリサイズハンドル、${newHandles.length}個の新しいリサイズハンドルを削除します`);
+      
+      oldHandles.forEach(handle => handle.remove());
+      newHandles.forEach(handle => handle.remove());
       
       // 画像をクリックした際の新しいハンドル表示中に画面遷移すると
       // ハンドルが残ることがあるため、document.body全体からハンドルを削除する
@@ -470,9 +504,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   
   // 画像選択を解除する関数（他の画像をクリックするか、エディタ外をクリックした時）
   const clearSelection = useCallback(() => {
-    // すべてのハンドルを削除
-    const handles = document.querySelectorAll('.resize-handle');
-    handles.forEach(handle => handle.remove());
+    // すべてのハンドルを削除（両方のクラス名に対応）
+    const oldHandles = document.querySelectorAll('.resize-handle');
+    const newHandles = document.querySelectorAll('.image-resize-handle');
+    
+    oldHandles.forEach(handle => handle.remove());
+    newHandles.forEach(handle => handle.remove());
     
     // アクティブな画像の選択を解除
     if (quillRef.current) {
@@ -481,6 +518,32 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       activeImages.forEach(img => img.classList.remove('active'));
     }
   }, []);
+  
+  // エディタ外がクリックされたときに選択を解除する
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      // クリックされた要素がエディタ内の要素でなく、ハンドルでもない場合
+      if (quillRef.current) {
+        const quillElement = quillRef.current.getEditor().root;
+        const target = e.target as HTMLElement;
+        
+        if (!quillElement.contains(target) && 
+            !target.classList.contains('image-resize-handle') &&
+            !target.classList.contains('resize-handle')) {
+          // 選択を解除
+          clearSelection();
+        }
+      }
+    };
+    
+    // ドキュメント全体にクリックイベントリスナーを追加
+    document.addEventListener('click', handleDocumentClick);
+    
+    // クリーンアップ関数
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [clearSelection]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
