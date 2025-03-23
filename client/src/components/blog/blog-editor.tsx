@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import Quill from 'quill';
-// カスタム画像リサイザー機能
+// カスタム画像リサイザー機能用CSS
 import './image-resize-simple.css';
 import { ThumbnailImage } from "./thumbnail-image";
 import {
@@ -34,9 +34,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, Image as ImageIcon, Loader2, Save, Eye, ArrowLeft, Calendar } from "lucide-react";
 
-// 独自の画像リサイズ機能を実装
-// モジュール登録は行わない（エラーの原因となるため）
-
 // HTMLの解析関数を追加
 const parseHtml = (html: string) => {
   if (typeof document === 'undefined') return null;
@@ -44,7 +41,7 @@ const parseHtml = (html: string) => {
   return parser.parseFromString(html, 'text/html');
 };
 
-// QuillコンテンツのDOM操作用の統合関数（最終強化版）
+// QuillコンテンツのDOM操作用の関数
 const processQuillContent = (content: string): string => {
   // 内容が空の場合は空文字を返す
   if (!content) {
@@ -64,82 +61,30 @@ const processQuillContent = (content: string): string => {
     console.log(`processQuillContent: ${images.length}枚の画像を検出`);
     
     images.forEach((img, index) => {
-      // すべての可能性のある属性からサイズ情報を取得
-      const dataWidth = img.getAttribute('data-width');
+      // サイズ情報を取得
       const width = img.getAttribute('width');
-      const dataHeight = img.getAttribute('data-height');
       const height = img.getAttribute('height');
-      
-      // スタイル属性からの情報取得
       const style = img.getAttribute('style') || '';
-      const styleWidthMatch = style.match(/width:\s*(\d+)px/);
-      const styleHeightMatch = style.match(/height:\s*(\d+)px/);
       
-      console.log(`画像[${index}]の属性 - data-width: ${dataWidth}, width: ${width}, style-width: ${styleWidthMatch ? styleWidthMatch[1] : 'なし'}`);
-      
-      // サイズ情報の優先順位付け（data-width属性を最優先）
-      // この順序が重要: data-width > width > style width
-      const finalWidth = dataWidth || width || (styleWidthMatch ? styleWidthMatch[1] : null) || img.width.toString();
-      const finalHeight = dataHeight || height || (styleHeightMatch ? styleHeightMatch[1] : null) || img.height.toString();
-      
-      // 最終サイズを計算
-      const numericWidth = finalWidth ? parseInt(finalWidth, 10) : 0;
-      const numericHeight = finalHeight ? parseInt(finalHeight, 10) : 0;
-      
-      // 最終サイズが有効な数値か確認
-      const validWidth = !isNaN(numericWidth) && numericWidth > 0 ? numericWidth.toString() : null;
-      const validHeight = !isNaN(numericHeight) && numericHeight > 0 ? numericHeight.toString() : null;
-      
-      // 値をデバッグ出力
-      console.log(`画像[${index}]の最終サイズ - width:${validWidth}, height:${validHeight}`);
-      
-      if (validWidth) {
-        // 全ての場所に幅を設定（冗長に）
-        img.setAttribute('width', validWidth);
-        img.setAttribute('data-width', validWidth);
-        
-        // スタイル属性も設定（最も優先度が高い）
-        img.style.width = `${validWidth}px`;
-        
-        // インラインstyle属性を文字列として構築し適用
-        let newStyle = style;
-        if (newStyle.includes('width:')) {
-          newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${validWidth}px`);
-        } else {
-          newStyle += (newStyle ? '; ' : '') + `width: ${validWidth}px`;
+      // サイズ情報があれば、それを保存
+      if (width || height || style.includes('width') || style.includes('height')) {
+        // リサイズ可能なクラスを追加
+        if (!img.classList.contains('resizable-image')) {
+          img.classList.add('resizable-image');
         }
-        img.setAttribute('style', newStyle);
-      }
-      
-      if (validHeight) {
-        // 全ての場所に高さを設定（冗長に）
-        img.setAttribute('height', validHeight);
-        img.setAttribute('data-height', validHeight);
         
-        // スタイル属性も設定（最も優先度が高い）
-        img.style.height = `${validHeight}px`;
-        
-        // インラインstyle属性を文字列として構築し適用（widthとheight両方を含める）
-        let newStyle = img.getAttribute('style') || '';
-        if (newStyle.includes('height:')) {
-          newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${validHeight}px`);
-        } else {
-          newStyle += (newStyle ? '; ' : '') + `height: ${validHeight}px`;
+        // data属性として保存
+        if (width) {
+          img.setAttribute('data-width', width);
         }
-        img.setAttribute('style', newStyle);
-      }
-      
-      // リサイズ可能なクラスを追加
-      if (!img.classList.contains('resizable-image')) {
-        img.classList.add('resizable-image');
-        console.log('画像にresizable-imageクラスを適用しました');
+        if (height) {
+          img.setAttribute('data-height', height);
+        }
       }
     });
     
-    // 最終的なHTMLを返す前に確認ログ
-    const result = tempDiv.innerHTML;
-    console.log('エディタコンテンツ変更 - 画像サイズを処理しました');
-    return result;
+    // 最終的なHTMLを返す
+    return tempDiv.innerHTML;
   } catch (error) {
     console.error('processQuillContent処理中にエラーが発生しました:', error);
     return content; // エラーの場合は元のコンテンツを返す
@@ -157,7 +102,6 @@ const modules = {
     ['link', 'image'],
     ['clean']
   ]
-  // ImageResizeモジュールは削除 (カスタム実装に置き換え)
 };
 
 const formats = [
@@ -196,7 +140,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   };
   
   console.log('BlogEditor初期化: initialData=', initialData);
-  console.log('BlogEditor初期化: defaultValues=', defaultValues);
   
   const form = useForm<BlogPost>({
     resolver: zodResolver(blogPostSchema),
@@ -208,9 +151,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
 
   // 初期データをコンソールに出力（デバッグ用）
   useEffect(() => {
-    console.log('BlogEditor: initialData更新', initialData);
-    
-    // 初期データがある場合にフォームの値を明示的に設定
     if (initialData) {
       console.log('BlogEditor: フォーム値を再設定します');
       const resetData = {
@@ -221,7 +161,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         published_at: initialData.published_at ? new Date(initialData.published_at) : null,
         status: initialData.status || "draft",
       };
-      console.log('BlogEditor: 設定するフォームデータ', resetData);
       
       // フォームをリセット
       form.reset(resetData);
@@ -230,651 +169,233 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       setContentLoaded(true);
     }
   }, [initialData, form]);
-  
-  // HTML内の画像サイズ属性を保持する機能
-  const preserveImageSizes = (html: string): string => {
-    try {
-      // 正規表現を使って画像タグを探し、サイズ情報を直接埋め込む
-      const imgPattern = /<img[^>]*>/gi;
-      
-      return html.replace(imgPattern, (imgTag) => {
-        // style属性からサイズ情報を抽出
-        const styleMatch = imgTag.match(/style="([^"]*?)"/i);
-        let style = styleMatch ? styleMatch[1] : '';
-        
-        // width/heightスタイルを抽出
-        const widthStyleMatch = style.match(/width:\s*(\d+)px/i);
-        const heightStyleMatch = style.match(/height:\s*(\d+)px/i);
-        
-        // width/height属性を抽出
-        const widthAttrMatch = imgTag.match(/width="(\d+)"/i);
-        const heightAttrMatch = imgTag.match(/height="(\d+)"/i);
-        
-        // サイズ情報を決定（スタイルか属性から）
-        const width = widthStyleMatch ? widthStyleMatch[1] : (widthAttrMatch ? widthAttrMatch[1] : null);
-        const height = heightStyleMatch ? heightStyleMatch[1] : (heightAttrMatch ? heightAttrMatch[1] : null);
-        
-        if (width || height) {
-          // サイズ情報をdata属性としてタグに追加
-          let newImgTag = imgTag;
-          
-          // すでにdata属性がある場合は置き換え、なければ追加
-          if (width) {
-            if (newImgTag.includes('data-width=')) {
-              newImgTag = newImgTag.replace(/data-width="[^"]*"/, `data-width="${width}"`);
-            } else {
-              newImgTag = newImgTag.replace(/<img/, `<img data-width="${width}"`);
-            }
-            
-            // width属性も必ず設定
-            if (newImgTag.includes('width=')) {
-              newImgTag = newImgTag.replace(/width="[^"]*"/, `width="${width}"`);
-            } else {
-              newImgTag = newImgTag.replace(/<img/, `<img width="${width}"`);
-            }
-          }
-          
-          if (height) {
-            if (newImgTag.includes('data-height=')) {
-              newImgTag = newImgTag.replace(/data-height="[^"]*"/, `data-height="${height}"`);
-            } else {
-              newImgTag = newImgTag.replace(/<img/, `<img data-height="${height}"`);
-            }
-            
-            // height属性も必ず設定
-            if (newImgTag.includes('height=')) {
-              newImgTag = newImgTag.replace(/height="[^"]*"/, `height="${height}"`);
-            } else {
-              newImgTag = newImgTag.replace(/<img/, `<img height="${height}"`);
-            }
-          }
-          
-          // style属性にもサイズを確実に含める
-          let newStyle = style;
-          if (width && !newStyle.includes('width:')) {
-            newStyle += `; width: ${width}px`;
-          }
-          if (height && !newStyle.includes('height:')) {
-            newStyle += `; height: ${height}px`;
-          }
-          
-          if (newStyle !== style) {
-            if (styleMatch) {
-              newImgTag = newImgTag.replace(/style="[^"]*"/, `style="${newStyle}"`);
-            } else {
-              newImgTag = newImgTag.replace(/<img/, `<img style="${newStyle}"`);
-            }
-          }
-          
-          return newImgTag;
-        }
-        
-        return imgTag;
-      });
-    } catch (error) {
-      console.error('画像サイズ保持処理でエラーが発生しました:', error);
-      return html; // エラー時は元のHTMLをそのまま返す
-    }
-  };
-  
-  // アクティブな画像要素への参照
-  const activeImageRef = useRef<HTMLImageElement | null>(null);
-  const [resizing, setResizing] = useState(false);
 
   // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
   useEffect(() => {
     if (contentLoaded && initialData?.content) {
-      console.log('ReactQuill のコンテンツを強制的に更新します');
+      console.log('ReactQuill のコンテンツを更新します');
       
-      // ReactQuillにコンテンツを強制的に設定（画像サイズを復元）
       setTimeout(() => {
-        // 画像サイズ属性を保持したHTMLを処理 (両方の処理方法を適用)
-        // 新しい処理関数で前処理
-        let processedContent = processQuillContent(initialData.content);
-        // 既存の処理関数でさらに処理
-        processedContent = preserveImageSizes(processedContent);
+        // 画像サイズ属性を保持したHTMLを処理
+        const processedContent = processQuillContent(initialData.content);
         
         if (quillRef.current) {
           const quill = quillRef.current.getEditor();
           // HTMLを直接インポート
           quill.clipboard.dangerouslyPasteHTML(processedContent);
-          // フォーム値も同期 (処理済みコンテンツを直接使用)
+          // フォーム値も同期
           form.setValue('content', processedContent, { shouldDirty: true });
           
-          // 画像の幅と高さを設定するための追加処理
+          // エディタの準備完了後、画像にクリックイベントを追加
           setTimeout(() => {
-            try {
-              // quillRefが存在するかチェック
-              if (!quillRef.current) {
-                console.warn('quillRefがnullです');
-                return;
-              }
-              
-              // DOM内の画像を探して直接サイズを設定
-              const quillElement = quillRef.current.getEditor().root;
-              const images = quillElement.querySelectorAll('img');
-              
-              images.forEach((img: HTMLImageElement) => {
-                // さまざまな属性から幅を取得（特にdata-width属性を優先）
-                const widthFromData = img.getAttribute('data-width');
-                const widthFromAttr = img.getAttribute('width');
-                const heightFromData = img.getAttribute('data-height');
-                const heightFromAttr = img.getAttribute('height');
-                
-                // スタイル属性からも取得を試みる
-                const style = img.getAttribute('style') || '';
-                const styleWidthMatch = style.match(/width:\s*(\d+)px/);
-                const styleHeightMatch = style.match(/height:\s*(\d+)px/);
-                
-                // 優先順位を付けて幅と高さを決定
-                const width = widthFromData || widthFromAttr || (styleWidthMatch ? styleWidthMatch[1] : null);
-                const height = heightFromData || heightFromAttr || (styleHeightMatch ? styleHeightMatch[1] : null);
-                
-                console.log(`検出された画像サイズ: data-width=${widthFromData}, width=${widthFromAttr}, style width=${styleWidthMatch ? styleWidthMatch[1] : 'なし'}`);
-                
-                if (width) {
-                  const numWidth = parseInt(width);
-                  // DOM要素に直接設定
-                  img.width = numWidth;
-                  img.setAttribute('width', width);
-                  img.setAttribute('data-width', width);
-                  
-                  // インラインスタイルにも設定
-                  if (style.includes('width:')) {
-                    img.style.cssText = style.replace(/width:\s*\d+px/, `width: ${width}px`);
-                  } else {
-                    img.style.cssText = `${style}; width: ${width}px;`;
-                  }
-                  
-                  console.log(`画像の幅を設定: ${width}px`);
-                }
-                
-                if (height) {
-                  const numHeight = parseInt(height);
-                  // DOM要素に直接設定
-                  img.height = numHeight;
-                  img.setAttribute('height', height);
-                  img.setAttribute('data-height', height);
-                  
-                  // インラインスタイルにも設定
-                  if (style.includes('height:')) {
-                    img.style.cssText = img.style.cssText.replace(/height:\s*\d+px/, `height: ${height}px`);
-                  } else {
-                    img.style.cssText = `${img.style.cssText}; height: ${height}px;`;
-                  }
-                  
-                  console.log(`画像の高さを設定: ${height}px`);
-                }
-              });
-
-              // シンプルな画像リサイズ機能の初期化
-              console.log('シンプルな画像リサイズ機能を初期化します');
-              // すべての画像をクリックしたときのイベントを設定
-              images.forEach((img: HTMLImageElement) => {
-                img.classList.add('resizable-image');
-                img.addEventListener('click', (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('画像がクリックされました');
-                  // 既存のアクティブな画像があれば非アクティブに
-                  const prevActive = quillElement.querySelector('.resizable-image.active');
-                  if (prevActive) {
-                    prevActive.classList.remove('active');
-                    // 既存のハンドルを削除
-                    const handles = quillElement.querySelectorAll('.resize-handle');
-                    handles.forEach(handle => handle.remove());
-                  }
-                  
-                  // クリックした画像をアクティブに
-                  img.classList.add('active');
-                  
-                  // まず既存のリサイズハンドルがあれば削除 (他の画像が選択されていた場合など)
-                  const existingHandles = document.querySelectorAll('.image-resize-handle');
-                  existingHandles.forEach(handle => handle.remove());
-                  
-                  // すでにアクティブな画像があれば、アクティブ状態を解除
-                  const activeImages = document.querySelectorAll('.resizable-image.active');
-                  activeImages.forEach(activeImg => activeImg.classList.remove('active'));
-                  
-                  // クリックした画像の正確な位置を取得
-                  const imgRect = img.getBoundingClientRect();
-                  console.log('画像の位置:', {
-                    top: imgRect.top,
-                    right: imgRect.right,
-                    bottom: imgRect.bottom,
-                    left: imgRect.left,
-                    width: imgRect.width,
-                    height: imgRect.height
-                  });
-                  
-                  // スクロール位置を考慮
-                  const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-                  const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-                  
-                  // リサイズハンドルを追加（イベント付き）- 新しいクラス名で作成
-                  const positions = ['nw', 'ne', 'sw', 'se'];
-                  
-                  positions.forEach(pos => {
-                    // 新しいハンドル要素を作成
-                    const handle = document.createElement('div');
-                    handle.className = `image-resize-handle ${pos}`;
-                    handle.setAttribute('data-position', pos);
-                    handle.style.position = 'fixed';
-                    
-                    // ハンドルをページのbodyに直接追加
-                    document.body.appendChild(handle);
-                    
-                    // ハンドルの位置を計算（スクロール位置を加味）
-                    let topPos, leftPos;
-                    
-                    // 各コーナーの位置を計算
-                    if (pos === 'nw') {
-                      topPos = imgRect.top;
-                      leftPos = imgRect.left;
-                    } else if (pos === 'ne') {
-                      topPos = imgRect.top;
-                      leftPos = imgRect.right;
-                    } else if (pos === 'sw') {
-                      topPos = imgRect.bottom;
-                      leftPos = imgRect.left;
-                    } else if (pos === 'se') {
-                      topPos = imgRect.bottom;
-                      leftPos = imgRect.right;
-                    }
-                    
-                    // CSSのtranslate(-50%, -50%)を使用しているため、ハンドルの中心が指定位置に来るようにする
-                    handle.style.top = `${topPos}px`;
-                    handle.style.left = `${leftPos}px`;
-                    
-                    // ハンドルにリサイズ用のドラッグイベントリスナーを追加
-                    handle.addEventListener('mousedown', (e) => {
-                      console.log(`${pos}ハンドルがドラッグ開始されました`);
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      // 初期位置と画像の初期サイズを保存
-                      const startX = e.clientX;
-                      const startY = e.clientY;
-                      const startWidth = img.width;
-                      const startHeight = img.height;
-                      const aspectRatio = startWidth / startHeight;
-                      
-                      // 画像の初期位置を保存
-                      const imgRect = img.getBoundingClientRect();
-                      
-                      // マウスの動きに合わせてリサイズする関数
-                      const handleResize = (moveEvent: MouseEvent) => {
-                        moveEvent.preventDefault();
-                        
-                        // マウス移動量を計算
-                        let deltaX = moveEvent.clientX - startX;
-                        let deltaY = moveEvent.clientY - startY;
-                        
-                        // アスペクト比固定モード（Shiftキーで切替）
-                        // Shiftキーを押すと自由リサイズ、通常はアスペクト比固定
-                        const maintainAspectRatio = !moveEvent.shiftKey;
-                        
-                        // ポジションごとに処理を変える
-                        let newWidth = startWidth;
-                        let newHeight = startHeight;
-                        
-                        switch (pos) {
-                          case 'ne':
-                            // 右上の場合
-                            newWidth = startWidth + deltaX;
-                            if (maintainAspectRatio) {
-                              // アスペクト比固定
-                              newHeight = newWidth / aspectRatio;
-                            } else {
-                              // 自由リサイズ
-                              newHeight = startHeight - deltaY;
-                            }
-                            break;
-                          case 'se':
-                            // 右下の場合
-                            newWidth = startWidth + deltaX;
-                            if (maintainAspectRatio) {
-                              // アスペクト比固定
-                              newHeight = newWidth / aspectRatio;
-                            } else {
-                              // 自由リサイズ
-                              newHeight = startHeight + deltaY;
-                            }
-                            break;
-                          case 'sw':
-                            // 左下の場合
-                            newWidth = startWidth - deltaX;
-                            if (maintainAspectRatio) {
-                              // アスペクト比固定
-                              newHeight = newWidth / aspectRatio;
-                            } else {
-                              // 自由リサイズ
-                              newHeight = startHeight + deltaY;
-                            }
-                            break;
-                          case 'nw':
-                            // 左上の場合
-                            newWidth = startWidth - deltaX;
-                            if (maintainAspectRatio) {
-                              // アスペクト比固定
-                              newHeight = newWidth / aspectRatio;
-                            } else {
-                              // 自由リサイズ
-                              newHeight = startHeight - deltaY;
-                            }
-                            break;
-                        }
-                        
-                        // リサイズモードをログに出力（デバッグ用）
-                        console.log(`リサイズモード: ${maintainAspectRatio ? 'アスペクト比固定' : '自由リサイズ'}`);
-                        
-                        
-                        // 最小サイズを設定
-                        newWidth = Math.max(50, Math.round(newWidth));
-                        newHeight = Math.max(50, Math.round(newHeight));
-                        
-                        // 画像のサイズを更新（HTMLElementのプロパティとして直接操作）
-                        img.width = newWidth;
-                        img.height = newHeight;
-                        
-                        // img要素の全ての属性と形式を更新
-                        // 1. width/height属性の更新
-                        img.setAttribute('width', newWidth.toString());
-                        if (img.height) {
-                          img.setAttribute('height', newHeight.toString());
-                        }
-                        
-                        // 2. data-width/data-height属性の更新
-                        img.setAttribute('data-width', newWidth.toString());
-                        if (img.height) {
-                          img.setAttribute('data-height', newHeight.toString());
-                        }
-                        
-                        // 3. style属性の更新（最も確実に反映される）
-                        if (img.style) {
-                          img.style.width = `${newWidth}px`;
-                          img.style.height = `${newHeight}px`;
-                        }
-                        
-                        // 4. クエリエディタのimgタグのHTMLを強制的に書き換え
-                        try {
-                          if (quillRef.current) {
-                            const quill = quillRef.current.getEditor();
-                            // 現在のコンテンツからimg要素を検索するためにDOMから取得
-                            const editorRoot = quill.root;
-                            
-                            // 現在のエディタ内で選択されているimg要素を見つける
-                            // （active クラスが付いているものを探す）
-                            const activeImg = editorRoot.querySelector('img.resizable-image.active') as HTMLImageElement;
-                            if (activeImg && activeImg === img) {
-                              try {
-                                // 現在のimg要素のstyle属性を設定
-                                activeImg.style.width = `${newWidth}px`;
-                                activeImg.style.height = `${newHeight}px`;
-                                activeImg.width = newWidth;
-                                activeImg.height = newHeight;
-                              } catch (error) {
-                                console.error('属性設定エラー:', error);
-                              }
-                            }
-                          }
-                        } catch (error) {
-                          console.error('エディタ内の画像更新エラー:', error);
-                        }
-                        
-                        // ハンドルの位置も更新する
-                        updateHandlePositions();
-                        
-                        console.log(`リサイズ: ${newWidth}x${newHeight}`);
-                      };
-                      
-                      // マウスボタンを離した時の処理
-                      const handleMouseUp = () => {
-                        // イベントリスナーを削除
-                        document.removeEventListener('mousemove', handleResize);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                        
-                        // リサイズ後の最終サイズを保存
-                        const finalWidth = img.width;
-                        const finalHeight = img.height;
-                        console.log(`リサイズ完了: ${finalWidth}x${finalHeight}px`);
-                        
-                        // 画像の全属性を更新して変更を確実に反映
-                        // 1. 属性として設定
-                        img.setAttribute('width', finalWidth.toString());
-                        if (finalHeight) {
-                          img.setAttribute('height', finalHeight.toString());
-                        }
-                        
-                        // 2. data-属性としても設定
-                        img.setAttribute('data-width', finalWidth.toString());
-                        if (finalHeight) {
-                          img.setAttribute('data-height', finalHeight.toString());
-                        }
-                        
-                        // 3. styleとしても設定（最も優先度が高い）
-                        if (img.style) {
-                          img.style.width = `${finalWidth}px`;
-                          img.style.height = `${finalHeight}px`;
-                        }
-                        
-                        // 4. エディタ内の画像を更新する新しいアプローチ
-                        try {
-                          if (quillRef.current) {
-                            const quill = quillRef.current.getEditor();
-                            
-                            // 現在のカーソル位置を保存
-                            const range = quill.getSelection();
-                            
-                            // 直接Quillのドキュメント内の画像を探す（HTMLより信頼性が高い）
-                            const editorRoot = quill.root;
-                            const currentImages = editorRoot.querySelectorAll('img');
-                            
-                            console.log(`マウスアップ時: エディタ内に${currentImages.length}枚の画像を検出`);
-                            
-                            // 操作された画像を特定し、強制的にサイズを適用
-                            let targetImage: HTMLImageElement | null = null;
-                            currentImages.forEach((currentImg: Element) => {
-                              const imgElement = currentImg as HTMLImageElement;
-                              if (imgElement.src === img.src) {
-                                targetImage = imgElement;
-                                console.log('操作された画像を特定しました:', imgElement.src);
-                              }
-                            });
-                            
-                            if (targetImage) {
-                              console.log('リサイズ前の画像サイズ:', {
-                                width: targetImage.width,
-                                height: targetImage.height,
-                                styleWidth: targetImage.style.width,
-                                dataWidth: targetImage.getAttribute('data-width')
-                              });
-                              
-                              // 画像に強制的に新しいサイズを設定
-                              // 1) style属性 - 最も優先度が高い
-                              targetImage.style.width = `${finalWidth}px`;
-                              targetImage.style.height = finalHeight ? `${finalHeight}px` : 'auto';
-                              
-                              // 2) 標準属性
-                              targetImage.width = finalWidth;
-                              if (finalHeight) targetImage.height = finalHeight;
-                              
-                              // 3) data属性
-                              targetImage.setAttribute('data-width', finalWidth.toString());
-                              if (finalHeight) {
-                                targetImage.setAttribute('data-height', finalHeight.toString());
-                              }
-                              
-                              // 4) インライン width/height 属性
-                              targetImage.setAttribute('width', finalWidth.toString());
-                              if (finalHeight) {
-                                targetImage.setAttribute('height', finalHeight.toString());
-                              }
-                              
-                              console.log('リサイズ後の画像サイズを設定:', {
-                                width: finalWidth,
-                                height: finalHeight,
-                                styleWidth: `${finalWidth}px`,
-                                styleHeight: finalHeight ? `${finalHeight}px` : 'auto'
-                              });
-                              
-                              // 重要: マウスアップ後に現在のHTML全体を取得し、フォームに反映して永続化
-                              setTimeout(() => {
-                                if (quillRef.current) {
-                                  const currentHTML = quillRef.current.getEditor().root.innerHTML;
-                                  
-                                  // 処理前後のHTMLをデバッグのためログに出力
-                                  console.log('リサイズ直後のHTML:', currentHTML.substring(0, 100) + '...');
-                                  
-                                  // 画像サイズが保持されているか確認
-                                  const debugDiv = document.createElement('div');
-                                  debugDiv.innerHTML = currentHTML;
-                                  const debugImg = debugDiv.querySelector('img');
-                                  if (debugImg) {
-                                    console.log('HTML内の画像属性:', {
-                                      width: debugImg.getAttribute('width'),
-                                      height: debugImg.getAttribute('height'),
-                                      dataWidth: debugImg.getAttribute('data-width'),
-                                      dataHeight: debugImg.getAttribute('data-height'),
-                                      style: debugImg.getAttribute('style')
-                                    });
-                                  }
-                                  
-                                  // 最終確認のためにフォーム更新前のHTML処理を実行
-                                  const processedHTML = processQuillContent(currentHTML);
-                                  
-                                  // フォームの値を更新して永続化
-                                  form.setValue('content', processedHTML, {
-                                    shouldDirty: true,
-                                    shouldTouch: true
-                                  });
-                                  
-                                  console.log("フォーム値を更新して変更を永続化しました");
-                                }
-                              }, 50);
-                              
-                              // カーソル位置を復元して操作確定
-                              if (range) {
-                                quill.setSelection(range);
-                              }
-                            } else {
-                              console.warn('リサイズ対象の画像がエディタ内に見つかりませんでした');
-                            }
-                          }
-                        } catch (error) {
-                          console.error("エディタ内の画像サイズ更新エラー:", error);
-                        }
-                        
-                        console.log(`サイズ変更を保存: ${finalWidth}x${finalHeight || 'auto'}`);
-                        
-                        // ハンドルが消えないように明示的に位置を再設定
-                        setTimeout(() => {
-                          // 画像の最新の位置情報を取得して、ハンドルを再配置
-                          updateHandlePositions();
-                          console.log(`リサイズ完了後のハンドル位置を再設定しました`);
-                        }, 50);
-                      };
-                      
-                      // ハンドルの位置を更新する関数
-                      const updateHandlePositions = () => {
-                        // 画像の新しい位置を取得
-                        const newImgRect = img.getBoundingClientRect();
-                        
-                        // すべてのハンドルを取得
-                        const allHandles = document.querySelectorAll('.image-resize-handle');
-                        
-                        // 各ハンドルの位置を更新
-                        allHandles.forEach(h => {
-                          // HTMLElementとして扱う
-                          const handle = h as HTMLElement;
-                          const handlePos = handle.getAttribute('data-position');
-                          if (handlePos === 'nw') {
-                            handle.style.top = `${newImgRect.top}px`;
-                            handle.style.left = `${newImgRect.left}px`;
-                          } else if (handlePos === 'ne') {
-                            handle.style.top = `${newImgRect.top}px`;
-                            handle.style.left = `${newImgRect.right}px`;
-                          } else if (handlePos === 'sw') {
-                            handle.style.top = `${newImgRect.bottom}px`;
-                            handle.style.left = `${newImgRect.left}px`;
-                          } else if (handlePos === 'se') {
-                            handle.style.top = `${newImgRect.bottom}px`;
-                            handle.style.left = `${newImgRect.right}px`;
-                          }
-                        });
-                      };
-                      
-                      // ドキュメント全体にイベントリスナーを追加
-                      document.addEventListener('mousemove', handleResize);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    });
-                    
-                    console.log(`${pos}ハンドルを追加しました: top=${handle.style.top}, left=${handle.style.left}`);
-                  });
-                });
-              });
-            } catch (error) {
-              console.error('画像サイズ復元に失敗しました:', error);
-            }
+            setupImageResizingHandlers();
           }, 500);
-        } else {
-          // フォールバック
-          form.setValue('content', processedContent, { shouldDirty: true });
         }
-        
-        console.log('ReactQuill コンテンツ更新完了');
       }, 300);
     }
   }, [contentLoaded, initialData, form]);
-  
-  // コンポーネントのアンマウント時にリソースを解放
-  useEffect(() => {
-    return () => {
-      // クリーンアップ - document.bodyにあるリサイズハンドルをすべて削除
-      // 両方のクラス名のハンドルを検索して削除（後方互換性のため）
-      const oldHandles = document.querySelectorAll('.resize-handle');
-      const newHandles = document.querySelectorAll('.image-resize-handle');
-      
-      console.log(`クリーンアップ: ${oldHandles.length}個の古いリサイズハンドル、${newHandles.length}個の新しいリサイズハンドルを削除します`);
-      
-      oldHandles.forEach(handle => handle.remove());
-      newHandles.forEach(handle => handle.remove());
-      
-      // 画像をクリックした際の新しいハンドル表示中に画面遷移すると
-      // ハンドルが残ることがあるため、document.body全体からハンドルを削除する
-    };
-  }, []);
-  
-  // 画像選択を解除する関数（他の画像をクリックするか、エディタ外をクリックした時）
-  const clearSelection = useCallback(() => {
-    // すべてのハンドルを削除（両方のクラス名に対応）
-    const oldHandles = document.querySelectorAll('.resize-handle');
-    const newHandles = document.querySelectorAll('.image-resize-handle');
+
+  // 画像リサイズハンドラを設定する関数
+  const setupImageResizingHandlers = useCallback(() => {
+    if (!quillRef.current) return;
     
-    oldHandles.forEach(handle => handle.remove());
-    newHandles.forEach(handle => handle.remove());
+    const editorRoot = quillRef.current.getEditor().root;
+    const images = editorRoot.querySelectorAll('img');
     
-    // アクティブな画像の選択を解除
-    if (quillRef.current) {
-      const quillElement = quillRef.current.getEditor().root;
-      const activeImages = quillElement.querySelectorAll('.resizable-image.active');
-      activeImages.forEach(img => img.classList.remove('active'));
-    }
-  }, []);
-  
-  // エディタ外がクリックされたときに選択を解除する
+    console.log(`画像リサイズハンドラを設定: ${images.length}枚の画像を検出`);
+    
+    images.forEach((img: HTMLImageElement) => {
+      // すでにリサイズ可能なクラスを持っていなければ追加
+      if (!img.classList.contains('resizable-image')) {
+        img.classList.add('resizable-image');
+      }
+      
+      // クリックイベントを追加
+      img.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 他の選択済み画像からアクティブクラスを削除
+        editorRoot.querySelectorAll('img.active').forEach((activeImg: Element) => {
+          if (activeImg !== img) {
+            activeImg.classList.remove('active');
+          }
+        });
+        
+        // この画像をアクティブにする
+        img.classList.add('active');
+        
+        // 既存のリサイズハンドルを削除
+        document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+        
+        // リサイズハンドルを追加
+        const imgRect = img.getBoundingClientRect();
+        
+        // 4つの角にハンドルを追加
+        ['se', 'sw', 'ne', 'nw'].forEach(pos => {
+          const handle = document.createElement('div');
+          handle.className = 'resize-handle ' + pos;
+          document.body.appendChild(handle);
+          
+          // ハンドルの位置を設定
+          if (pos === 'se') {
+            handle.style.top = `${imgRect.bottom}px`;
+            handle.style.left = `${imgRect.right}px`;
+          } else if (pos === 'sw') {
+            handle.style.top = `${imgRect.bottom}px`;
+            handle.style.left = `${imgRect.left}px`;
+          } else if (pos === 'ne') {
+            handle.style.top = `${imgRect.top}px`;
+            handle.style.left = `${imgRect.right}px`;
+          } else if (pos === 'nw') {
+            handle.style.top = `${imgRect.top}px`;
+            handle.style.left = `${imgRect.left}px`;
+          }
+          
+          // リサイズハンドルのマウスイベント
+          handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            
+            // 初期位置とサイズを記録
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startWidth = img.width;
+            const startHeight = img.height;
+            const aspectRatio = startWidth / startHeight;
+            
+            // ドキュメント全体のマウス移動を追跡
+            const handleMouseMove = (moveEvent: MouseEvent) => {
+              moveEvent.preventDefault();
+              
+              // マウスの移動量を計算
+              let deltaX = moveEvent.clientX - startX;
+              let deltaY = moveEvent.clientY - startY;
+              
+              // マウスの移動量からサイズ変更を計算
+              let newWidth = startWidth;
+              let newHeight = startHeight;
+              
+              // Shiftキーが押されている場合はアスペクト比を保持
+              const maintainAspectRatio = moveEvent.shiftKey;
+              
+              // ハンドル位置に基づいてサイズ調整
+              if (pos === 'se') {
+                newWidth = startWidth + deltaX;
+                if (maintainAspectRatio) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newHeight = startHeight + deltaY;
+                }
+              } else if (pos === 'sw') {
+                newWidth = startWidth - deltaX;
+                if (maintainAspectRatio) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newHeight = startHeight + deltaY;
+                }
+              } else if (pos === 'ne') {
+                newWidth = startWidth + deltaX;
+                if (maintainAspectRatio) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newHeight = startHeight - deltaY;
+                }
+              } else if (pos === 'nw') {
+                newWidth = startWidth - deltaX;
+                if (maintainAspectRatio) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newHeight = startHeight - deltaY;
+                }
+              }
+              
+              // 最小サイズを設定
+              newWidth = Math.max(50, newWidth);
+              newHeight = Math.max(50, newHeight);
+              
+              // 画像のサイズを更新
+              img.style.width = `${newWidth}px`;
+              img.style.height = `${newHeight}px`;
+              img.width = newWidth;
+              img.height = newHeight;
+              
+              // リサイズハンドルの位置を更新
+              const newRect = img.getBoundingClientRect();
+              document.querySelectorAll('.resize-handle').forEach((h: Element) => {
+                const handleElem = h as HTMLElement;
+                const handlePos = handleElem.classList.contains('se') ? 'se' :
+                                  handleElem.classList.contains('sw') ? 'sw' :
+                                  handleElem.classList.contains('ne') ? 'ne' : 'nw';
+                                  
+                if (handlePos === 'se') {
+                  handleElem.style.top = `${newRect.bottom}px`;
+                  handleElem.style.left = `${newRect.right}px`;
+                } else if (handlePos === 'sw') {
+                  handleElem.style.top = `${newRect.bottom}px`;
+                  handleElem.style.left = `${newRect.left}px`;
+                } else if (handlePos === 'ne') {
+                  handleElem.style.top = `${newRect.top}px`;
+                  handleElem.style.left = `${newRect.right}px`;
+                } else if (handlePos === 'nw') {
+                  handleElem.style.top = `${newRect.top}px`;
+                  handleElem.style.left = `${newRect.left}px`;
+                }
+              });
+            };
+            
+            // マウスボタンを離した時の処理
+            const handleMouseUp = () => {
+              // イベントリスナーを削除
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+              
+              // 最終サイズを保存
+              const finalWidth = img.width;
+              const finalHeight = img.height;
+              
+              // 画像の属性を更新
+              img.setAttribute('width', finalWidth.toString());
+              img.setAttribute('height', finalHeight.toString());
+              img.setAttribute('data-width', finalWidth.toString());
+              img.setAttribute('data-height', finalHeight.toString());
+              
+              // エディタの内容を更新してフォームに反映
+              setTimeout(() => {
+                if (quillRef.current) {
+                  const content = quillRef.current.getEditor().root.innerHTML;
+                  const processedContent = processQuillContent(content);
+                  form.setValue('content', processedContent, { shouldDirty: true });
+                }
+              }, 100);
+            };
+            
+            // ドキュメント全体にイベントリスナーを追加
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          });
+        });
+      };
+    });
+  }, [form]);
+
+  // エディタ外クリック時にリサイズハンドルを削除
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
       // クリックされた要素がエディタ内の要素でなく、ハンドルでもない場合
       if (quillRef.current) {
         const quillElement = quillRef.current.getEditor().root;
-        const target = e.target as HTMLElement;
         
         if (!quillElement.contains(target) && 
-            !target.classList.contains('image-resize-handle') &&
             !target.classList.contains('resize-handle')) {
-          // 選択を解除
-          clearSelection();
+          // ハンドルを削除
+          document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+          
+          // アクティブな画像の選択を解除
+          quillElement.querySelectorAll('img.active').forEach((img: Element) => {
+            img.classList.remove('active');
+          });
         }
       }
     };
@@ -882,18 +403,20 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     // ドキュメント全体にクリックイベントリスナーを追加
     document.addEventListener('click', handleDocumentClick);
     
-    // クリーンアップ関数
     return () => {
       document.removeEventListener('click', handleDocumentClick);
+      
+      // クリーンアップ - ハンドルを削除
+      document.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
     };
-  }, [clearSelection]);
+  }, []);
 
+  // サムネイル画像アップロード
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      // 通常のfetchを使用してContent-Typeを自動設定させる
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -927,6 +450,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  // 記事作成
   const createMutation = useMutation({
     mutationFn: (data: BlogPost) =>
       apiRequest("POST", "/api/blog", data),
@@ -937,9 +461,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       // すべてのブログ記事関連のキャッシュを無効化する
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
-      
-      // キャッシュ更新について明示的にログ出力
-      console.log('ブログ記事キャッシュを無効化しました:', QUERY_KEYS.BLOG_POSTS, QUERY_KEYS.BLOG_POSTS_STORE);
       
       window.history.back();
     },
@@ -953,6 +474,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
+  // 記事更新
   const updateMutation = useMutation({
     mutationFn: (data: BlogPost) =>
       apiRequest("PUT", `/api/blog/${postId}`, data),
@@ -960,12 +482,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       toast({
         title: "記事を更新しました",
       });
-      // すべてのブログ記事関連のキャッシュを無効化する
+      // キャッシュを無効化
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS_STORE] });
-      
-      // キャッシュ更新について明示的にログ出力
-      console.log('ブログ記事キャッシュを無効化しました:', QUERY_KEYS.BLOG_POSTS, QUERY_KEYS.BLOG_POSTS_STORE);
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
       
       window.history.back();
     },
@@ -979,483 +499,355 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     },
   });
 
-  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "ファイルサイズは5MB以下にしてください",
-        });
-        return;
-      }
+  // 現在の状態を返す
+  const isDraft = form.watch('status') === 'draft';
 
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "画像ファイルのみアップロード可能です",
-        });
-        return;
-      }
-
-      uploadMutation.mutate(file);
-    }
-  };
-
-  // 送信前に画像サイズ属性を復元・強化する関数（簡素化版）
-  // 送信前の画像サイズ属性を強化する関数（強化版）
-  const restoreImageSizes = (content: string): string => {
-    // 内容が空の場合は空文字を返す
-    if (!content) return '';
-    
-    try {
-      console.log('画像サイズ復元処理開始 - コンテンツ長:', content.length);
-      
-      // 処理の前にHTML要素として解析して画像を確認
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = content;
-      const imgElements = tempDiv.querySelectorAll('img');
-      console.log(`リサイズ前処理: ${imgElements.length}枚の画像を検出`);
-      
-      // 各画像のサイズ情報をログ出力（デバッグ用）
-      imgElements.forEach((img, idx) => {
-        console.log(`画像[${idx}]のサイズ - width:${img.width}, height:${img.height}, style:${img.getAttribute('style')}, data-width:${img.getAttribute('data-width')}`);
-      });
-      
-      // 処理中のエラーを防ぐため、正規表現ベースの処理と要素操作の両方を実施
-      const imgTagRegex = /<img\s[^>]*>/g;
-      
-      // 全ての画像タグを処理
-      const processedContent = content.replace(imgTagRegex, (imgTag) => {
-        try {
-          // 各種属性を探す
-          const widthMatch = imgTag.match(/width=["'](\d+)["']/);
-          const heightMatch = imgTag.match(/height=["'](\d+)["']/);
-          const dataWidthMatch = imgTag.match(/data-width=["'](\d+)["']/);
-          const dataHeightMatch = imgTag.match(/data-height=["'](\d+)["']/);
-          
-          // スタイル属性を解析
-          const styleMatch = imgTag.match(/style=["']([^"']*)["']/);
-          const styleValue = styleMatch ? styleMatch[1] : '';
-          const styleWidthMatch = styleValue.match(/width:\s*(\d+)px/);
-          const styleHeightMatch = styleValue.match(/height:\s*(\d+)px/);
-          
-          // 優先順位に従ってサイズを決定
-          // 注: ここでは最も信頼性の高い数値を使用する（data-width > width > style width）
-          const width = dataWidthMatch?.[1] || widthMatch?.[1] || styleWidthMatch?.[1] || null;
-          const height = dataHeightMatch?.[1] || heightMatch?.[1] || styleHeightMatch?.[1] || null;
-          
-          console.log(`画像タグ処理: 検出サイズ - width:${width}, height:${height}`);
-          
-          // サイズ情報がない場合は元のタグを返す
-          if (!width && !height) {
-            console.log('サイズ情報なし - 元のタグを維持');
-            return imgTag;
-          }
-          
-          // 修正したタグを構築
-          let result = imgTag;
-          
-          // width属性を設定
-          if (width) {
-            if (result.includes(' width=')) {
-              result = result.replace(/width=["'][^"']*["']/i, `width="${width}"`);
-            } else {
-              result = result.replace('<img ', `<img width="${width}" `);
-            }
-            
-            // data-width属性も設定
-            if (result.includes(' data-width=')) {
-              result = result.replace(/data-width=["'][^"']*["']/i, `data-width="${width}"`);
-            } else {
-              result = result.replace('<img ', `<img data-width="${width}" `);
-            }
-          }
-          
-          // height属性を設定
-          if (height) {
-            if (result.includes(' height=')) {
-              result = result.replace(/height=["'][^"']*["']/i, `height="${height}"`);
-            } else {
-              result = result.replace('<img ', `<img height="${height}" `);
-            }
-            
-            // data-height属性も設定
-            if (result.includes(' data-height=')) {
-              result = result.replace(/data-height=["'][^"']*["']/i, `data-height="${height}"`);
-            } else {
-              result = result.replace('<img ', `<img data-height="${height}" `);
-            }
-          }
-          
-          // スタイル属性を構築
-          let newStyle = styleValue || '';
-          
-          if (width) {
-            if (newStyle.includes('width:')) {
-              newStyle = newStyle.replace(/width:\s*\d+px/i, `width: ${width}px`);
-            } else {
-              newStyle += (newStyle ? '; ' : '') + `width: ${width}px`;
-            }
-          }
-          
-          if (height) {
-            if (newStyle.includes('height:')) {
-              newStyle = newStyle.replace(/height:\s*\d+px/i, `height: ${height}px`);
-            } else {
-              newStyle += (newStyle ? '; ' : '') + `height: ${height}px`;
-            }
-          }
-          
-          // スタイル属性を設定
-          if (styleMatch) {
-            result = result.replace(/style=["'][^"']*["']/i, `style="${newStyle}"`);
-          } else {
-            result = result.replace('<img ', `<img style="${newStyle}" `);
-          }
-          
-          // class属性を追加（リサイズ可能な画像として識別）
-          if (!result.includes(' class=')) {
-            result = result.replace('<img ', '<img class="resizable-image" ');
-          } else if (!result.includes('resizable-image')) {
-            result = result.replace(/class=["']([^"']*)["']/i, 'class="$1 resizable-image"');
-          }
-          
-          return result;
-        } catch (tagError) {
-          console.error('画像タグ処理中のエラー:', tagError);
-          return imgTag; // エラーが発生した場合は元のタグを返す
-        }
-      });
-      
-      return processedContent;
-    } catch (error) {
-      console.error('画像サイズ復元処理でエラーが発生しました:', error);
-      return content; // エラーの場合は元のコンテンツを返す
-    }
-  };
-
-  const handleSubmit = useCallback(async (isDraft: boolean = false) => {
-    try {
-      const values = form.getValues();
-      console.log('Form values:', values);
-
-      // 必須フィールドのチェック
-      if (!values.title.trim() || !values.content.trim()) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "タイトルと本文は必須です",
-        });
-        return;
-      }
-
-      // 予約投稿時の日時チェック
-      if (isScheduling && (!values.scheduled_at || new Date(values.scheduled_at) <= new Date())) {
-        toast({
-          variant: "destructive",
-          title: "エラー",
-          description: "予約日時は現在時刻より後に設定してください",
-        });
-        return;
-      }
-
-      // 明示的にステータスを設定し、日付は必ずDate型で送信するように修正
-      const newStatus = isDraft ? "draft" : isScheduling ? "scheduled" : "published";
-      const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
-      const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
-      
-      // 画像サイズ属性を保持したコンテンツを作成
-      // 新しい統合関数とレガシー関数の両方を実行し、確実にサイズが保持されるようにする
-      const processedContent = processQuillContent(values.content);
-      console.log('画像サイズ属性を保持したコンテンツを処理しました');
-
-      // 型アノテーションを使用してnewStatusを列挙型として明示的に型付け
-      const submissionData: Omit<BlogPost, 'status'> & { status: "draft" | "published" | "scheduled" } = {
-        ...values,
-        title: values.title.trim(),
-        content: processedContent.trim(), // 処理済みのコンテンツを使用
-        status: newStatus as "draft" | "published" | "scheduled",
-        scheduled_at: newScheduledAt,
-        published_at: newPublishedAt,
-      };
-
-      console.log('Submission data:', submissionData);
-      console.log('送信先URL:', postId ? `/api/blog/${postId}` : "/api/blog");
-      console.log('送信メソッド:', postId ? "PUT" : "POST");
-      console.log('ステータス:', newStatus);
-      console.log('公開日時:', newPublishedAt);
-      console.log('予約日時:', newScheduledAt);
-
-      try {
-        if (postId) {
-          await updateMutation.mutateAsync(submissionData);
-          // 成功したらローカルのステータスも更新
-          form.setValue("status", newStatus as "draft" | "published" | "scheduled");
-          form.setValue("published_at", newPublishedAt);
-          form.setValue("scheduled_at", newScheduledAt);
-        } else {
-          await createMutation.mutateAsync(submissionData);
-        }
-      } catch (submitError) {
-        console.error('Submit mutation error details:', submitError);
-        throw submitError; // エラーを上位ハンドラに伝播させる
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
+  // フォーム送信ハンドラ
+  const onSubmit = (values: BlogPost) => {
+    // フォームのバリデーションチェック
+    if (!values.title.trim() || !values.content.trim()) {
       toast({
         variant: "destructive",
         title: "エラー",
-        description: error instanceof Error ? error.message : "投稿に失敗しました",
+        description: "タイトルと本文は必須です",
       });
+      return;
     }
-  }, [form, isScheduling, postId, createMutation, updateMutation, toast]);
+
+    // 予約投稿時の日時チェック
+    if (isScheduling && (!values.scheduled_at || new Date(values.scheduled_at) <= new Date())) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "予約日時は現在時刻より後に設定してください",
+      });
+      return;
+    }
+
+    // 明示的にステータスを設定
+    const newStatus = isDraft ? "draft" : isScheduling ? "scheduled" : "published";
+    const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
+    const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
+    
+    // 画像サイズ属性を保持したコンテンツを作成
+    const processedContent = processQuillContent(values.content);
+
+    // 送信用データを準備
+    const submissionData = {
+      ...values,
+      content: processedContent,
+      status: newStatus as "draft" | "published" | "scheduled",
+      published_at: newPublishedAt,
+      scheduled_at: newScheduledAt,
+    };
+
+    // 既存の記事の更新か新規作成かを判断
+    if (postId) {
+      updateMutation.mutate(submissionData);
+    } else {
+      createMutation.mutate(submissionData);
+    }
+  };
+
+  // プレビューモードの切り替え
+  const togglePreview = () => {
+    setIsPreview(!isPreview);
+  };
+
+  // ファイル選択ハンドラ
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // ファイルタイプの確認
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "画像ファイルを選択してください",
+      });
+      return;
+    }
+    
+    // ファイルサイズの確認 (5MB以下)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "ファイルサイズは5MB以下にしてください",
+      });
+      return;
+    }
+    
+    // アップロード実行
+    uploadMutation.mutate(file);
+  };
+
+  // 戻るボタンのハンドラ
+  const handleBack = () => {
+    window.history.back();
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{postId ? "ブログ記事の編集" : "新規記事作成"}</CardTitle>
-              <CardDescription>
-                記事の内容を入力し、プレビューで確認してから公開できます
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => window.history.back()}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleBack}
+              >
+                <ArrowLeft className="mr-1 h-4 w-4" />
                 戻る
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsPreview(!isPreview)}
+              <CardTitle>{postId ? "記事の編集" : "新規記事作成"}</CardTitle>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={togglePreview}
               >
-                <Eye className="h-4 w-4 mr-2" />
-                {isPreview ? "編集に戻る" : "プレビュー"}
+                <Eye className="mr-1 h-4 w-4" />
+                {isPreview ? "編集" : "プレビュー"}
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
+              >
+                {(form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                <Save className="mr-1 h-4 w-4" />
+                保存
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isPreview ? (
-            <div className="prose prose-sm max-w-none">
-              {form.watch("thumbnail") && (
-                <div className="relative w-full mb-6">
-                  <ThumbnailImage 
-                    src={form.watch("thumbnail") || ''} 
-                    alt="サムネイル画像"
-                    className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
-                  />
-                </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* タイトル入力 */}
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>タイトル</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-              <h1>{form.watch("title")}</h1>
-              <div dangerouslySetInnerHTML={{ __html: form.watch("content") }} />
-            </div>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>タイトル</FormLabel>
-                      <FormControl>
-                        <Input placeholder="記事のタイトルを入力" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>サムネイル画像</FormLabel>
-                      <FormControl>
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-4">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleThumbnailUpload}
-                              className="flex-1"
-                            />
-                            {uploadMutation.isPending && (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            )}
-                          </div>
-                          {field.value && (
-                            <div className="relative w-full">
-                              <ThumbnailImage
-                                src={field.value || ''}
-                                alt="サムネイル"
-                                className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>本文</FormLabel>
-                      <FormControl>
-                        <div className="border rounded-md">
-                          <ReactQuill
-                            ref={quillRef}
-                            theme="snow"
-                            modules={modules}
-                            formats={formats}
-                            value={field.value}
-                            onChange={(content) => {
-                              // 基本的な変更を反映する前に画像サイズを処理
-                              // コンテンツを直接処理して画像サイズ属性を保持
-                              const processedContent = processQuillContent(content);
-                              field.onChange(processedContent);
-                              
-                              // 画像サイズはQuillのimageResizeモジュールとカスタム処理の両方で対応
-                              console.log('エディタコンテンツ変更 - 画像サイズを処理しました');
-                              
-                              // エディタが変更された後、画像にリサイズ機能を確実に適用
-                              setTimeout(() => {
-                                try {
-                                  if (quillRef.current) {
-                                    const editor = quillRef.current.getEditor();
-                                    const images = editor.root.querySelectorAll('img');
-                                    
-                                    // 各画像にリサイズ用のクラスを追加
-                                    images.forEach((img: HTMLImageElement) => {
-                                      if (!img.classList.contains('resizable-image')) {
-                                        img.classList.add('resizable-image');
-                                      }
-                                    });
-                                    
-                                    console.log(`エディタ内の${images.length}枚の画像にリサイズクラスを適用しました`);
-                                  }
-                                } catch (err) {
-                                  console.error('画像リサイズクラス適用エラー:', err);
-                                }
-                              }, 100);
-                            }}
-                            className="min-h-[400px]"
-                            onFocus={() => {
-                              // エディタがフォーカスを受け取ったときに画像のスタイルを直接適用する
-                              try {
-                                if (quillRef.current) {
-                                  const editor = quillRef.current.getEditor();
-                                  const images = editor.root.querySelectorAll('img');
-                                  
-                                  // 各画像に直接スタイルを設定 (リサイズできるように)
-                                  images.forEach((img: HTMLImageElement) => {
-                                    // リサイズ可能なクラスを追加
-                                    if (!img.classList.contains('resizable-image')) {
-                                      img.classList.add('resizable-image');
-                                    }
-                                    
-                                    // カーソルスタイルを設定（リサイズカーソルを表示）
-                                    if (!img.style.cursor || img.style.cursor === 'default') {
-                                      img.style.cursor = 'nwse-resize';
-                                    }
-                                    
-                                    // リサイズハンドル用のスタイルを追加
-                                    img.style.boxSizing = 'border-box';
-                                    img.style.border = '1px solid transparent';
-                                    
-                                    // ホバー時に境界線を表示
-                                    img.onmouseover = () => {
-                                      img.style.border = '1px dashed #999';
-                                    };
-                                    
-                                    img.onmouseout = () => {
-                                      img.style.border = '1px solid transparent';
-                                    };
-                                  });
-                                  
-                                  console.log(`${images.length}枚の画像にリサイズスタイルを適用しました`);
-                                }
-                              } catch (err) {
-                                console.error('画像スタイル適用エラー:', err);
-                              }
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {isScheduling && (
-                  <FormField
-                    control={form.control}
-                    name="scheduled_at"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>公開予定日時</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
-                            onChange={(e) => {
-                              const date = e.target.value ? new Date(e.target.value) : null;
-                              field.onChange(date);
-                            }}
-                            min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            />
+            
+            {/* 投稿状態選択 */}
+            <div className="flex items-center space-x-4">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <input
+                        type="radio"
+                        id="status-draft"
+                        checked={field.value === "draft"}
+                        onChange={() => {
+                          field.onChange("draft");
+                          setIsScheduling(false);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="status-draft" className="mb-0">下書き</FormLabel>
+                  </FormItem>
                 )}
-              </form>
-            </Form>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleSubmit(true)}
-            disabled={createMutation.isPending || updateMutation.isPending}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            下書き保存
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => setIsScheduling(!isScheduling)}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            予約投稿
-          </Button>
-
-          <Button
-            onClick={() => handleSubmit(false)}
-            disabled={createMutation.isPending || updateMutation.isPending}
-          >
-            {createMutation.isPending || updateMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <input
+                        type="radio"
+                        id="status-published"
+                        checked={field.value === "published" && !isScheduling}
+                        onChange={() => {
+                          field.onChange("published");
+                          setIsScheduling(false);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="status-published" className="mb-0">公開</FormLabel>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <input
+                        type="radio"
+                        id="status-scheduled"
+                        checked={isScheduling}
+                        onChange={() => {
+                          field.onChange("scheduled");
+                          setIsScheduling(true);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="status-scheduled" className="mb-0">予約投稿</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* 予約投稿日時 */}
+            {isScheduling && (
+              <FormField
+                control={form.control}
+                name="scheduled_at"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>予約投稿日時</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="datetime-local"
+                        {...field}
+                        value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : null;
+                          field.onChange(date);
+                        }}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-            {isScheduling ? "予約を確定" : "公開する"}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            
+            {/* サムネイル画像 */}
+            <FormField
+              control={form.control}
+              name="thumbnail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>サムネイル画像</FormLabel>
+                  <div className="flex items-start space-x-4">
+                    <FormControl>
+                      <Input
+                        type="text"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        placeholder="画像URL (自動設定されます)"
+                        className="flex-1"
+                      />
+                    </FormControl>
+                    <div className="relative">
+                      <Input
+                        id="thumbnail-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="sr-only"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                        disabled={uploadMutation.isPending}
+                        className="whitespace-nowrap"
+                      >
+                        {uploadMutation.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                        )}
+                        画像を選択
+                      </Button>
+                    </div>
+                  </div>
+                  {field.value && (
+                    <div className="mt-2">
+                      <ThumbnailImage
+                        src={field.value}
+                        alt="サムネイル"
+                        className="h-32 object-cover rounded-md"
+                      />
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* エディタ/プレビュー */}
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>本文</FormLabel>
+                  <FormControl>
+                    <div className="min-h-[400px] border rounded-md">
+                      {isPreview ? (
+                        <div 
+                          className="p-4 prose prose-sm max-w-none min-h-[400px] h-full overflow-auto"
+                          dangerouslySetInnerHTML={{ __html: field.value || '' }}
+                        />
+                      ) : (
+                        <ReactQuill 
+                          ref={quillRef}
+                          theme="snow" 
+                          value={field.value || ''}
+                          onChange={(content) => {
+                            field.onChange(content);
+                            // エディタ内容が変更されたら画像リサイズハンドラを再設定
+                            setTimeout(() => {
+                              setupImageResizingHandlers();
+                            }, 200);
+                          }}
+                          modules={modules}
+                          formats={formats}
+                          className="min-h-[370px]"
+                        />
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleBack}
+            >
+              キャンセル
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
+              className="ml-auto"
+            >
+              {(form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {postId ? "更新" : "作成"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </Form>
   );
 }
