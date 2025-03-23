@@ -833,8 +833,47 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                               
                               // 画像サイズはQuillのimageResizeモジュールとカスタム処理の両方で対応
                               console.log('エディタコンテンツ変更 - 画像サイズを処理しました');
+                              
+                              // エディタが変更された後、画像にリサイズ機能を確実に適用
+                              setTimeout(() => {
+                                try {
+                                  if (quillRef.current) {
+                                    const editor = quillRef.current.getEditor();
+                                    const images = editor.root.querySelectorAll('img');
+                                    
+                                    // 各画像にリサイズ用のクラスを追加
+                                    images.forEach((img: HTMLImageElement) => {
+                                      if (!img.classList.contains('resizable-image')) {
+                                        img.classList.add('resizable-image');
+                                      }
+                                    });
+                                    
+                                    console.log(`エディタ内の${images.length}枚の画像にリサイズクラスを適用しました`);
+                                  }
+                                } catch (err) {
+                                  console.error('画像リサイズクラス適用エラー:', err);
+                                }
+                              }, 100);
                             }}
                             className="min-h-[400px]"
+                            onFocus={() => {
+                              // エディタがフォーカスを受け取ったときにImageResizeモジュールを再初期化
+                              try {
+                                if (quillRef.current) {
+                                  const editor = quillRef.current.getEditor();
+                                  // imageResizeモジュールが存在するか確認
+                                  if (editor.getModule('imageResize')) {
+                                    console.log('ImageResizeモジュールは既に初期化されています');
+                                  } else {
+                                    console.log('ImageResizeモジュールの手動初期化を試行中...');
+                                    // 手動でモジュールを追加
+                                    editor.addModule('imageResize', modules.imageResize);
+                                  }
+                                }
+                              } catch (err) {
+                                console.error('ImageResizeモジュール手動初期化エラー:', err);
+                              }
+                            }}
                           />
                         </div>
                       </FormControl>
