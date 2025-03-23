@@ -5,6 +5,8 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import 'react-quill/dist/quill.snow.css';
 import ReactQuill from 'react-quill';
+import ImageResize from 'quill-image-resize-module-react';
+import Quill from 'quill';
 import { format } from "date-fns";
 import { apiRequest, uploadPhoto, getSignedPhotoUrl } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -86,12 +88,24 @@ const toolbarOptions = [
  */
 const modules = {
   toolbar: toolbarOptions,
+  // 画像リサイズモジュールを追加（画像をクリックすると周囲にリサイズハンドルが表示されます）
+  imageResize: {
+    modules: ['Resize', 'DisplaySize'], // リサイズおよびサイズ表示モジュールを有効化
+    displaySize: true,                  // 画像サイズを表示
+    handleStyles: {
+      backgroundColor: 'black',
+      border: 'none'
+    }
+  },
 };
 
 interface BlogEditorProps {
   postId?: number;
   initialData?: BlogPost;
 }
+
+// Quillプラグインの登録（画像リサイズ機能を有効化）
+Quill.register('modules/imageResize', ImageResize);
 
 export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   console.log("BlogEditor初期化: initialData=", initialData);
