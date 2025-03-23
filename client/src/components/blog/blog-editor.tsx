@@ -282,11 +282,12 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       const newPublishedAt = !isDraft && !isScheduling ? new Date() : null;
       const newScheduledAt = isScheduling && values.scheduled_at ? new Date(values.scheduled_at) : null;
 
-      const submissionData = {
+      // 型アノテーションを使用してnewStatusを列挙型として明示的に型付け
+      const submissionData: Omit<BlogPost, 'status'> & { status: "draft" | "published" | "scheduled" } = {
         ...values,
         title: values.title.trim(),
         content: values.content.trim(),
-        status: newStatus,
+        status: newStatus as "draft" | "published" | "scheduled",
         scheduled_at: newScheduledAt,
         published_at: newPublishedAt,
       };
@@ -302,7 +303,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         if (postId) {
           await updateMutation.mutateAsync(submissionData);
           // 成功したらローカルのステータスも更新
-          form.setValue("status", newStatus);
+          form.setValue("status", newStatus as "draft" | "published" | "scheduled");
           form.setValue("published_at", newPublishedAt);
           form.setValue("scheduled_at", newScheduledAt);
         } else {
@@ -354,7 +355,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
               {form.watch("thumbnail") && (
                 <div className="relative w-full mb-6">
                   <ThumbnailImage 
-                    src={form.watch("thumbnail")} 
+                    src={form.watch("thumbnail") || ''} 
                     alt="サムネイル画像"
                     className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
                   />
@@ -402,7 +403,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                           {field.value && (
                             <div className="relative w-full">
                               <ThumbnailImage
-                                src={field.value}
+                                src={field.value || ''}
                                 alt="サムネイル"
                                 className="w-full h-auto max-h-[400px] object-contain mx-auto rounded-lg"
                               />

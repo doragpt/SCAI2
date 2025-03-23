@@ -537,7 +537,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
     },
     enabled: !!userId,
     staleTime: 0, // キャッシュを無効化し、常に最新データを取得する
-    cacheTime: 0, // キャッシュを無効化
+    gcTime: 0, // v5ではcacheTimeの代わりにgcTimeを使用する
     retry: 2,
     refetchOnMount: 'always', // コンポーネントがマウントされるたびに再取得
     refetchOnWindowFocus: true, // ウィンドウにフォーカスが戻ったときに再取得
