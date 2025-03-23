@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { apiRequest, uploadPhoto, getSignedPhotoUrl } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { Image, UploadCloud } from "lucide-react";
 
 // BlogPost型の定義
 interface BlogPost {
@@ -45,7 +44,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Save, Calendar, Clock, Eye } from "lucide-react";
+import { Loader2, Save, Calendar, Clock, Eye, PlusCircle, Trash2 } from "lucide-react";
 import { FormLabel as Label } from "@/components/ui/form";
 import { CalendarIcon } from "lucide-react";
 
@@ -85,6 +84,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   const [isScheduling, setIsScheduling] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialData?.thumbnail || null);
   const [isUploading, setIsUploading] = useState(false);
+  // 複数の投稿日時を管理
+  const [scheduleDates, setScheduleDates] = useState<Date[]>([]);
+  // スケジュールの表示/非表示状態を管理
+  const [showScheduleSection, setShowScheduleSection] = useState(false);
 
   // サムネイル画像のアップロード処理
   const uploadThumbnail = async (file: File) => {
@@ -237,10 +240,38 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     });
   };
 
+  // 予約投稿モーダルの表示切替
   const toggleSchedulingModal = () => {
     setIsScheduling(!isScheduling);
   };
 
+  // 日時表示切替
+  const toggleScheduleSection = () => {
+    setShowScheduleSection(!showScheduleSection);
+  };
+
+  // 日時追加
+  const addScheduleDate = () => {
+    // 現在時刻の24時間後をデフォルトに設定
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + 1);
+    
+    setScheduleDates([...scheduleDates, newDate]);
+  };
+  
+  // 日時削除
+  const removeScheduleDate = (index: number) => {
+    setScheduleDates(scheduleDates.filter((_, i) => i !== index));
+  };
+  
+  // 日時更新
+  const updateScheduleDate = (index: number, newDate: Date) => {
+    const newDates = [...scheduleDates];
+    newDates[index] = newDate;
+    setScheduleDates(newDates);
+  };
+
+  // 予約投稿（単一の日時）
   const handleSchedule = (date: Date) => {
     const values = form.getValues();
     
@@ -268,6 +299,78 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         variant: "destructive",
       });
     });
+  };
+  
+  // 複数の日時での予約投稿
+  const handleMultiSchedule = async () => {
+    if (scheduleDates.length === 0) {
+      toast({
+        title: "日時が指定されていません",
+        description: "少なくとも1つの投稿日時を追加してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const values = form.getValues();
+    const basePost = {
+      ...values,
+      thumbnail: thumbnailUrl,
+      status: "scheduled"
+    };
+    
+    try {
+      // 投稿が既存のものか新規作成かで処理を分ける
+      if (postId) {
+        // 最初の日時は既存の投稿を更新
+        await apiRequest(
+          "PUT",
+          `/api/blog/posts/${postId}`,
+          { 
+            ...basePost, 
+            scheduled_at: scheduleDates[0].toISOString()
+          }
+        );
+        
+        // 2つ目以降は新規投稿として作成（コピー）
+        for (let i = 1; i < scheduleDates.length; i++) {
+          await apiRequest(
+            "POST",
+            "/api/blog/posts",
+            { 
+              ...basePost, 
+              scheduled_at: scheduleDates[i].toISOString()
+            }
+          );
+        }
+      } else {
+        // すべて新規投稿として作成
+        for (let i = 0; i < scheduleDates.length; i++) {
+          await apiRequest(
+            "POST",
+            "/api/blog/posts",
+            { 
+              ...basePost, 
+              scheduled_at: scheduleDates[i].toISOString()
+            }
+          );
+        }
+      }
+      
+      toast({
+        title: "複数の予約投稿を設定しました",
+        description: `${scheduleDates.length}件の投稿スケジュールを作成しました。`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
+      window.location.href = "/store/blog";
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: `予約投稿の設定中にエラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -410,10 +513,10 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={toggleSchedulingModal}
+                  onClick={toggleScheduleSection}
                 >
                   <Clock className="mr-2 h-4 w-4" />
-                  予約投稿
+                  {showScheduleSection ? "日時設定を閉じる" : "日時設定"}
                 </Button>
               </div>
               <Button
@@ -430,6 +533,84 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
             </CardFooter>
           </Card>
           
+          {/* 日時設定セクション - ガールズヘブンスタイル */}
+          {showScheduleSection && (
+            <Card className="mt-4">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-xl">投稿日時設定</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={addScheduleDate}
+                    className="h-9"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    日時を追加
+                  </Button>
+                </div>
+                <CardDescription>
+                  現在の日時に設定すると即時公開されます。複数の日時を指定すると、同じ記事が指定した日時にそれぞれ公開されます。
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {scheduleDates.length === 0 ? (
+                  <div className="text-center p-6 border rounded-md text-muted-foreground">
+                    <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p>投稿日時が設定されていません</p>
+                    <p className="text-xs mt-1">「日時を追加」ボタンをクリックして投稿日時を設定してください</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {scheduleDates.map((date, index) => (
+                      <div key={index} className="flex items-center space-x-2 p-3 border rounded-md">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                            <input
+                              type="datetime-local"
+                              className="flex-1 border rounded-md px-3 py-2"
+                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                              value={format(date, "yyyy-MM-dd'T'HH:mm")}
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  updateScheduleDate(index, new Date(e.target.value));
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeScheduleDate(index)}
+                          className="h-8 w-8 text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="pt-1">
+                <div className="w-full flex justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleMultiSchedule}
+                    disabled={scheduleDates.length === 0}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    予約投稿を確定
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          )}
+          
+          {/* 従来の単一予約投稿モーダル */}
           {isScheduling && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
               <Card className="w-full max-w-md">
