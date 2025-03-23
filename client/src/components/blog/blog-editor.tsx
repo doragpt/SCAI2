@@ -43,34 +43,67 @@ const parseHtml = (html: string) => {
   return parser.parseFromString(html, 'text/html');
 };
 
-// QuillコンテンツのDOM操作用の統合関数
+// QuillコンテンツのDOM操作用の統合関数（ログ強化版）
 const processQuillContent = (content: string): string => {
-  // HTML解析のための一時的な要素を作成
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = content;
+  // 内容が空の場合は空文字を返す
+  if (!content) {
+    console.log('processQuillContent: 空のコンテンツを処理しようとしました');
+    return '';
+  }
   
-  // 全ての画像を処理
-  const images = tempDiv.querySelectorAll('img');
-  images.forEach(img => {
-    // data-width属性またはwidth属性から情報を取得
-    const width = img.getAttribute('data-width') || img.getAttribute('width');
-    if (width) {
-      // 属性とスタイルの両方を設定
-      img.setAttribute('width', width);
-      img.setAttribute('data-width', width);
-      img.style.width = `${width}px`;
-    }
+  console.log('processQuillContent: 処理開始', content.substring(0, 100) + '...');
+  
+  try {
+    // HTML解析のための一時的な要素を作成
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
     
-    // data-height属性またはheight属性から情報を取得
-    const height = img.getAttribute('data-height') || img.getAttribute('height');
-    if (height) {
-      img.setAttribute('height', height);
-      img.setAttribute('data-height', height);
-      img.style.height = `${height}px`;
-    }
-  });
-  
-  return tempDiv.innerHTML;
+    // 全ての画像を処理
+    const images = tempDiv.querySelectorAll('img');
+    console.log(`processQuillContent: ${images.length}枚の画像を検出`);
+    
+    images.forEach((img, index) => {
+      // すべての可能性のある属性からサイズ情報を取得
+      const dataWidth = img.getAttribute('data-width');
+      const width = img.getAttribute('width');
+      const dataHeight = img.getAttribute('data-height');
+      const height = img.getAttribute('height');
+      
+      // スタイル属性からの情報取得
+      const style = img.getAttribute('style') || '';
+      const styleWidthMatch = style.match(/width:\s*(\d+)px/);
+      const styleHeightMatch = style.match(/height:\s*(\d+)px/);
+      
+      console.log(`画像[${index}]の属性 - data-width: ${dataWidth}, width: ${width}, style-width: ${styleWidthMatch ? styleWidthMatch[1] : 'なし'}`);
+      
+      // サイズ情報の優先順位付け
+      const finalWidth = dataWidth || width || (styleWidthMatch ? styleWidthMatch[1] : null);
+      const finalHeight = dataHeight || height || (styleHeightMatch ? styleHeightMatch[1] : null);
+      
+      if (finalWidth) {
+        // 全ての場所に幅を設定（冗長に）
+        img.setAttribute('width', finalWidth);
+        img.setAttribute('data-width', finalWidth);
+        
+        // スタイル属性にも設定
+        img.style.width = `${finalWidth}px`;
+      }
+      
+      if (finalHeight) {
+        // 全ての場所に高さを設定（冗長に）
+        img.setAttribute('height', finalHeight);
+        img.setAttribute('data-height', finalHeight);
+        
+        // スタイル属性にも設定
+        img.style.height = `${finalHeight}px`;
+      }
+    });
+    
+    return tempDiv.innerHTML;
+  } catch (error) {
+    console.error('processQuillContent処理中にエラーが発生しました:', error);
+    return content; // エラーの場合は元のコンテンツを返す
+  }
 };
 
 // エディタのモジュール設定
