@@ -1,0 +1,43 @@
+/* ReactQuillのカスタムCSSスタイル */
+
+/* エディタの全体サイズを調整 */
+.ql-container {
+  min-height: 400px !important;
+  height: 100% !important;
+}
+
+/* エディタ本体の領域を拡大 */
+.ql-editor {
+  min-height: 450px !important;
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+
+/* ツールバーが画面上部に固定されるように */
+.ql-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  border-bottom: 1px solid #ccc;
+}
+
+/* 画像リサイズハンドルのスタイルを改善 */
+.ql-container .image-resizer {
+  border: 1px dashed #3498db;
+}
+
+.ql-container .image-resizer-handle {
+  background-color: #3498db !important;
+  border: 1px solid white !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* 画像サイズ表示のスタイル */
+.ql-container .image-size-label {
+  background: rgba(0, 0, 0, 0.7) !important;
+  color: white !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+}

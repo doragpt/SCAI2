@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import 'react-quill/dist/quill.snow.css';
+import './quill-custom.css';
 import ReactQuill from 'react-quill';
 import ImageResize from 'quill-image-resize-module-react';
 import Quill from 'quill';
@@ -691,14 +692,15 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
                   <FormItem>
                     <FormLabel>記事内容</FormLabel>
                     <FormControl>
-                      <div className="border rounded-md overflow-hidden min-h-[400px]">
+                      <div className="border rounded-md overflow-hidden">
                         <ReactQuill
                           theme="snow"
                           value={field.value}
                           onChange={field.onChange}
                           modules={modules}
                           placeholder="ここに記事の内容を入力してください..."
-                          className="h-[360px] overflow-y-auto"
+                          className="h-[500px]"
+                          style={{ height: "500px" }}
                         />
                       </div>
                     </FormControl>
