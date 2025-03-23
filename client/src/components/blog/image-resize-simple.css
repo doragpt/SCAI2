@@ -1,0 +1,52 @@
+/* シンプルな画像リサイズ用CSS */
+.resizable-image {
+  position: relative;
+  max-width: 100%;
+  cursor: pointer;
+  display: inline-block;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.resizable-image:hover {
+  border-color: #3b82f6;
+}
+
+.resizable-image.active {
+  border: 2px solid #3b82f6;
+}
+
+/* リサイズハンドル */
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #3b82f6;
+  border: 2px solid white;
+  z-index: 100;
+  border-radius: 50%;
+}
+
+.resize-handle.nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.resize-handle.ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.resize-handle.se {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
+.resize-handle.sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}

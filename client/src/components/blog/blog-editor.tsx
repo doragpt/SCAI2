@@ -11,9 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import Quill from 'quill';
-// カスタム画像リサイザーを使用
-import { ImageResizer } from './image-resizer';
-import './image-resizer.css';
+// カスタム画像リサイザー機能
+import './image-resize-simple.css';
 import { ThumbnailImage } from "./thumbnail-image";
 import {
   Card,
@@ -285,8 +284,9 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   };
   
-  // カスタムImageResizerインスタンスへの参照
-  const resizer = useRef<ImageResizer | null>(null);
+  // アクティブな画像要素への参照
+  const activeImageRef = useRef<HTMLImageElement | null>(null);
+  const [resizing, setResizing] = useState(false);
 
   // ReactQuillの内容を更新（コンポーネントが完全に初期化された後）
   useEffect(() => {
