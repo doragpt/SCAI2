@@ -4,10 +4,16 @@
 
 /* リサイズ可能な画像の基本スタイル */
 .resizable-image {
-  position: relative;
-  display: inline-block;
+  position: relative !important;
+  display: inline-block !important;
   max-width: 100%;
   cursor: default;
+}
+
+/* 画像がクリックされたときの状態 */
+.resizable-image:focus, .resizable-image:active {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
 /* リサイズ中の画像スタイル */
@@ -25,8 +31,9 @@
   background-color: white;
   border: 1px solid #3b82f6;
   border-radius: 2px;
-  z-index: 100;
+  z-index: 1000; /* より高いz-indexを使用 */
   cursor: nwse-resize;
+  display: block !important; /* 常に表示 */
 }
 
 /* 左上のハンドル */

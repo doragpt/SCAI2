@@ -103,6 +103,7 @@ const processQuillContent = (content: string): string => {
       // リサイズ可能なクラスを追加
       if (!img.classList.contains('resizable-image')) {
         img.classList.add('resizable-image');
+        console.log('画像にresizable-imageクラスを適用しました');
       }
     });
     

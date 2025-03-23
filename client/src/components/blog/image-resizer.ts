@@ -70,13 +70,14 @@ export class ImageResizer {
     // リサイズ可能なマークを追加
     img.setAttribute('data-resizable', 'true');
     
-    // スタイルクラスを追加
-    img.classList.add('quill-image-resizable');
+    // スタイルクラスを追加（CSSとの整合性を保つ）
+    img.classList.add('resizable-image');
     
     // クリックイベントでアクティブにする
     img.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      console.log('画像がクリックされました - リサイズハンドルを表示します');
       this.activateImage(img);
     });
   }
