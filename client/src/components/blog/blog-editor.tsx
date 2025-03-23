@@ -196,14 +196,14 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     }
   }, [contentLoaded, initialData, form]);
 
-  // 画像リサイズハンドラを設定する関数
+  // 画像リサイズ機能の設定関数
   const setupImageResizingHandlers = useCallback(() => {
     if (!quillRef.current) return;
     
     const editorRoot = quillRef.current.getEditor().root;
     const images = editorRoot.querySelectorAll('img');
     
-    console.log(`画像リサイズハンドラを設定: ${images.length}枚の画像を検出`);
+    console.log(`画像リサイズ機能を設定: ${images.length}枚の画像を検出`);
     
     images.forEach((img: HTMLImageElement) => {
       // すでにリサイズ可能なクラスを持っていなければ追加
@@ -228,196 +228,6 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
         // この画像をアクティブにする
         img.classList.add('active');
         console.log('アクティブクラスを追加しました');
-        
-        // 既存のリサイズハンドルを削除
-        document.querySelectorAll('.resize-handle').forEach(handle => {
-          console.log('既存のハンドルを削除: ', handle.className);
-          handle.remove();
-        });
-        
-        // リサイズハンドルを追加
-        const imgRect = img.getBoundingClientRect();
-        console.log('画像の位置情報:', {
-          top: imgRect.top,
-          right: imgRect.right,
-          bottom: imgRect.bottom,
-          left: imgRect.left
-        });
-        
-        // 4つの角にハンドルを追加
-        ['se', 'sw', 'ne', 'nw'].forEach(pos => {
-          const handle = document.createElement('div');
-          // スタイルを直接設定してCSS継承の問題を回避
-          handle.style.position = 'fixed';
-          handle.style.width = '18px';
-          handle.style.height = '18px';
-          handle.style.backgroundColor = '#2563eb';
-          handle.style.border = '3px solid white';
-          handle.style.boxShadow = '0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 0, 0, 0.5)';
-          handle.style.zIndex = '10000';
-          handle.style.borderRadius = '50%';
-          handle.style.display = 'block';
-          handle.style.pointerEvents = 'auto';
-          handle.style.opacity = '1';
-          handle.style.transform = 'translate(-50%, -50%)';
-          handle.style.margin = '0';
-          handle.style.padding = '0';
-          handle.style.userSelect = 'none';
-          
-          // ポジション固有のスタイル
-          if (pos === 'nw') {
-            handle.style.cursor = 'nwse-resize';
-          } else if (pos === 'ne') {
-            handle.style.cursor = 'nesw-resize';
-          } else if (pos === 'se') {
-            handle.style.cursor = 'nwse-resize';
-          } else if (pos === 'sw') {
-            handle.style.cursor = 'nesw-resize';
-          }
-          
-          // クラス名も設定（デバッグとCSSセレクタのため）
-          handle.className = 'resize-handle ' + pos;
-          document.body.appendChild(handle);
-          console.log(`ハンドル(${pos})を追加しました`);
-          
-          // ハンドルの位置を設定
-          if (pos === 'se') {
-            handle.style.top = `${imgRect.bottom}px`;
-            handle.style.left = `${imgRect.right}px`;
-          } else if (pos === 'sw') {
-            handle.style.top = `${imgRect.bottom}px`;
-            handle.style.left = `${imgRect.left}px`;
-          } else if (pos === 'ne') {
-            handle.style.top = `${imgRect.top}px`;
-            handle.style.left = `${imgRect.right}px`;
-          } else if (pos === 'nw') {
-            handle.style.top = `${imgRect.top}px`;
-            handle.style.left = `${imgRect.left}px`;
-          }
-          console.log(`ハンドル(${pos})の位置: top=${handle.style.top}, left=${handle.style.left}`);
-          
-          // リサイズハンドルのマウスイベント
-          handle.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            
-            // 初期位置とサイズを記録
-            const startX = e.clientX;
-            const startY = e.clientY;
-            const startWidth = img.width;
-            const startHeight = img.height;
-            const aspectRatio = startWidth / startHeight;
-            
-            // ドキュメント全体のマウス移動を追跡
-            const handleMouseMove = (moveEvent: MouseEvent) => {
-              moveEvent.preventDefault();
-              
-              // マウスの移動量を計算
-              let deltaX = moveEvent.clientX - startX;
-              let deltaY = moveEvent.clientY - startY;
-              
-              // マウスの移動量からサイズ変更を計算
-              let newWidth = startWidth;
-              let newHeight = startHeight;
-              
-              // Shiftキーが押されている場合はアスペクト比を保持
-              const maintainAspectRatio = moveEvent.shiftKey;
-              
-              // ハンドル位置に基づいてサイズ調整
-              if (pos === 'se') {
-                newWidth = startWidth + deltaX;
-                if (maintainAspectRatio) {
-                  newHeight = newWidth / aspectRatio;
-                } else {
-                  newHeight = startHeight + deltaY;
-                }
-              } else if (pos === 'sw') {
-                newWidth = startWidth - deltaX;
-                if (maintainAspectRatio) {
-                  newHeight = newWidth / aspectRatio;
-                } else {
-                  newHeight = startHeight + deltaY;
-                }
-              } else if (pos === 'ne') {
-                newWidth = startWidth + deltaX;
-                if (maintainAspectRatio) {
-                  newHeight = newWidth / aspectRatio;
-                } else {
-                  newHeight = startHeight - deltaY;
-                }
-              } else if (pos === 'nw') {
-                newWidth = startWidth - deltaX;
-                if (maintainAspectRatio) {
-                  newHeight = newWidth / aspectRatio;
-                } else {
-                  newHeight = startHeight - deltaY;
-                }
-              }
-              
-              // 最小サイズを設定
-              newWidth = Math.max(50, newWidth);
-              newHeight = Math.max(50, newHeight);
-              
-              // 画像のサイズを更新
-              img.style.width = `${newWidth}px`;
-              img.style.height = `${newHeight}px`;
-              img.width = newWidth;
-              img.height = newHeight;
-              
-              // リサイズハンドルの位置を更新
-              const newRect = img.getBoundingClientRect();
-              document.querySelectorAll('.resize-handle').forEach((h: Element) => {
-                const handleElem = h as HTMLElement;
-                const handlePos = handleElem.classList.contains('se') ? 'se' :
-                                  handleElem.classList.contains('sw') ? 'sw' :
-                                  handleElem.classList.contains('ne') ? 'ne' : 'nw';
-                                  
-                if (handlePos === 'se') {
-                  handleElem.style.top = `${newRect.bottom}px`;
-                  handleElem.style.left = `${newRect.right}px`;
-                } else if (handlePos === 'sw') {
-                  handleElem.style.top = `${newRect.bottom}px`;
-                  handleElem.style.left = `${newRect.left}px`;
-                } else if (handlePos === 'ne') {
-                  handleElem.style.top = `${newRect.top}px`;
-                  handleElem.style.left = `${newRect.right}px`;
-                } else if (handlePos === 'nw') {
-                  handleElem.style.top = `${newRect.top}px`;
-                  handleElem.style.left = `${newRect.left}px`;
-                }
-              });
-            };
-            
-            // マウスボタンを離した時の処理
-            const handleMouseUp = () => {
-              // イベントリスナーを削除
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-              
-              // 最終サイズを保存
-              const finalWidth = img.width;
-              const finalHeight = img.height;
-              
-              // 画像の属性を更新
-              img.setAttribute('width', finalWidth.toString());
-              img.setAttribute('height', finalHeight.toString());
-              img.setAttribute('data-width', finalWidth.toString());
-              img.setAttribute('data-height', finalHeight.toString());
-              
-              // エディタの内容を更新してフォームに反映
-              setTimeout(() => {
-                if (quillRef.current) {
-                  const content = quillRef.current.getEditor().root.innerHTML;
-                  const processedContent = processQuillContent(content);
-                  form.setValue('content', processedContent, { shouldDirty: true });
-                }
-              }, 100);
-            };
-            
-            // ドキュメント全体にイベントリスナーを追加
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-          });
-        });
       };
       
       // ダブルクリックイベントを追加（画像プロパティダイアログを表示）
@@ -448,29 +258,23 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     });
   }, [form]);
 
-  // エディタ外クリック時にリサイズハンドルを削除
+  // エディタ外クリック時にアクティブクラスを削除
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       console.log('ドキュメントクリック:', target.tagName, target.className);
       
-      // クリックされた要素がエディタ内の要素でなく、ハンドルでもない場合
+      // クリックされた要素がエディタ内の要素でなく、ダイアログでもない場合
       if (quillRef.current) {
         const editorElement = quillRef.current.getEditor().root;
         const isClickInEditor = editorElement.contains(target);
-        const isClickOnHandle = target.closest('.resize-handle') !== null;
         const isClickOnDialog = target.closest('.image-properties-dialog') !== null;
         
-        if (!isClickInEditor && !isClickOnHandle && !isClickOnDialog) {
+        if (!isClickInEditor && !isClickOnDialog) {
           // 全ての画像からアクティブクラスを削除
           const activeImages = editorElement.querySelectorAll('img.active');
           activeImages.forEach((img: Element) => {
             img.classList.remove('active');
-          });
-          
-          // リサイズハンドルを削除
-          document.querySelectorAll('.resize-handle').forEach(handle => {
-            handle.remove();
           });
         }
       }
@@ -574,7 +378,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
       // キャッシュを更新
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POSTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOG_POST_DETAIL(postId?.toString() || '')] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_BLOG_POSTS] });
+      queryClient.invalidateQueries({ queryKey: ['blog-management'] }); // 店舗ブログ一覧のキャッシュを無効化
       
       // 公開後は下書き一覧に戻る
       window.location.href = "/store/blog";
@@ -600,7 +404,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
   // 公開ボタン押下時の処理
   const handlePublish = () => {
     const values = form.getValues();
-    const data = { ...values, status: "published" };
+    const data = { ...values, status: "published" as const };
     
     console.log('公開データ:', data);
     toast({
@@ -616,7 +420,7 @@ export function BlogEditor({ postId, initialData }: BlogEditorProps) {
     const values = form.getValues();
     const data = {
       ...values,
-      status: "scheduled",
+      status: "scheduled" as const,
       scheduled_at: date,
     };
     
