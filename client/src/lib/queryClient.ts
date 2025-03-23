@@ -219,7 +219,7 @@ export async function uploadPhoto(base64Data: string, fileName: string): Promise
 
     const result = await apiRequest<{url: string, fileName: string}>(
       "POST",
-      "/upload/photo",
+      "/api/upload/photo",
       { base64Data, fileName }
     );
     
@@ -250,7 +250,7 @@ export async function getSignedPhotoUrl(key: string): Promise<string> {
 
     const result = await apiRequest<{url: string}>(
       "GET",
-      `/upload/signed-url/${key}`
+      `/api/upload/signed-url/${key}`
     );
     
     log('info', '署名付きURL取得成功', {
