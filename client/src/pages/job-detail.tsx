@@ -93,12 +93,12 @@ export default function JobDetail() {
   }
 
   const calculateMonthlyIncome = () => {
-    // 時給方式の場合
+    // 勤務時間と一日あたりの日給を設定している場合
     if (job?.workingTimeHours && job.workingTimeHours > 0 && job?.averageHourlyPay && job.averageHourlyPay > 0) {
-      // 日給は時給そのもの（時間×時給ではない）
+      // 一日あたりの総支給額
       const dailyIncome = job.averageHourlyPay;
       const monthlyIncome = dailyIncome * workingDays;
-      // 時給方式の場合は最小値と最大値を同じにする
+      // 時給に関係なく月収は一定
       return { monthlyMin: monthlyIncome, monthlyMax: monthlyIncome };
     }
     
@@ -292,7 +292,7 @@ export default function JobDetail() {
                   {job?.workingTimeHours && job?.averageHourlyPay && 
                    job.workingTimeHours > 0 && job.averageHourlyPay > 0 && (
                     <div className="text-sm text-muted-foreground mt-2">
-                      1日{job.workingTimeHours}時間勤務 × {workingDays}日 = 平均 {job.averageHourlyPay.toLocaleString()}円/日
+                      1日{job.workingTimeHours}時間勤務 × {workingDays}日 = 平均時給 {Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円/時
                     </div>
                   )}
                 </div>

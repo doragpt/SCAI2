@@ -487,12 +487,12 @@ export default function StoreDashboard() {
                               {profile?.working_time_hours && profile?.average_hourly_pay && 
                               profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
                                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md">
-                                  <div className="text-sm text-muted-foreground mb-1">平均時給制</div>
+                                  <div className="text-sm text-muted-foreground mb-1">勤務時間と日給</div>
                                   <div className="text-2xl font-bold text-green-700 dark:text-green-500">
                                     {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
                                   </div>
                                   <div className="text-sm text-muted-foreground mt-2">
-                                    平均時給: {profile.average_hourly_pay.toLocaleString()}円/時
+                                    平均時給: {Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円/時
                                   </div>
                                 </div>
                               ) : null}
