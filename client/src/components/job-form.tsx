@@ -17,6 +17,7 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CustomUploadAdapterPlugin } from "@/components/blog/custom-upload-adapter";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
+import "@/components/blog/ckeditor-custom.css";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -53,7 +54,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     if (!file) return;
     
     // 画像サイズチェック - クライアント側で事前検証
-    const img = new Image();
+    const img = document.createElement('img');
     const objectUrl = URL.createObjectURL(file);
     
     img.onload = async () => {
@@ -257,7 +258,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                         'uploadImage', '|',
                         'undo', 'redo'
                       ],
-                      extraPlugins: [CustomUploadAdapterPlugin],
+                      extraPlugins: [(editor) => {
+                        CustomUploadAdapterPlugin(editor);
+                      }],
                     }}
                     onChange={(event, editor) => {
                       const data = editor.getData();
