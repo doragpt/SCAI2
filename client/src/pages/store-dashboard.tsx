@@ -408,6 +408,14 @@ export default function StoreDashboard() {
 
                         <div>
                           <h3 className="text-lg font-semibold mb-2">給与</h3>
+                          {/* 時給換算表示（優先） */}
+                          {profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
+                            <div className="text-xl font-bold mb-2">
+                              {profile.working_time_hours}時間勤務で平均給与{(profile.working_time_hours * profile.average_hourly_pay).toLocaleString()}円
+                            </div>
+                          ) : null}
+                          
+                          {/* 従来の最低・最高保証表示 */}
                           <div className="text-xl font-bold">
                             {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
                             {profile.maximum_guarantee ? ` ～ ${profile.maximum_guarantee.toLocaleString()}円` : ""}
