@@ -218,7 +218,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: StoreProfile) => {
-    mutate(data);
+    // ステート管理している値をフォームデータに統合
+    const formData = {
+      ...data,
+      phone_numbers: phoneNumbers.filter(phone => phone.trim() !== ''),
+      email_addresses: emailAddresses.filter(email => email.trim() !== ''),
+    };
+    mutate(formData);
   };
 
   return (
