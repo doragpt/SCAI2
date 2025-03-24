@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home, Sparkles } from "lucide-react";
+import { SpecialOfferEditor } from "./store/SpecialOfferEditor";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -159,6 +160,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           catch_phrase: data.catch_phrase || "",
           description: data.description || "",
           top_image: data.top_image || "",
+          special_offers: data.special_offers || [],
           
           // 給与・待遇情報
           benefits: data.benefits || [],
@@ -694,6 +696,32 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* カスタム特典エディター */}
+                <div className="mb-6 bg-white/90 p-4 rounded-md border border-purple-100">
+                  <h4 className="font-medium flex items-center mb-3 text-purple-800">
+                    <Sparkles className="h-4 w-4 mr-2 text-amber-500" />
+                    カスタム特典設定（自由に作成）
+                  </h4>
+                  <FormField
+                    control={form.control}
+                    name="special_offers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <SpecialOfferEditor
+                            value={field.value || []}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs mt-2">
+                          特典やキャンペーンを自由に作成できます。タイトル、説明、色、アイコンなどをカスタマイズできます。
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 
                 <div className="space-y-6">
