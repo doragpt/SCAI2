@@ -18,13 +18,17 @@ import {
   LogOut,
   Loader2,
   AlertCircle,
+  UserCircle,
+  Phone,
+  Mail,
+  PhoneCall,
+  User,
   Pencil,
   Eye,
   Clock,
   CheckCircle,
   MoreVertical,
   Calendar,
-  Mail,
   ExternalLink,
   Bell,
   BarChart3,
@@ -523,6 +527,89 @@ export default function StoreDashboard() {
                                   <span>{benefit}</span>
                                 </div>
                               ))}
+                              
+                              {profile.transportation_support && (
+                                <div className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                                  <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                  <span>交通費サポートあり</span>
+                                </div>
+                              )}
+                              
+                              {profile.housing_support && (
+                                <div className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                                  <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                  <span>住居サポートあり</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* 店舗連絡先情報 */}
+                        <div className="mt-6 grid md:grid-cols-2 gap-6">
+                          {/* 担当者情報 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <UserCircle className="h-5 w-5 mr-2 text-purple-500" />
+                              採用担当
+                            </h3>
+                            <div className="space-y-3">
+                              {profile.recruiter_name && (
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">
+                                    <User className="h-5 w-5 text-purple-500" />
+                                  </div>
+                                  <div>
+                                    <div className="text-sm text-muted-foreground">担当者</div>
+                                    <div className="font-medium">{profile.recruiter_name}</div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {profile.address && (
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">
+                                    <MapPin className="h-5 w-5 text-purple-500" />
+                                  </div>
+                                  <div>
+                                    <div className="text-sm text-muted-foreground">住所</div>
+                                    <div className="font-medium">{profile.address}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* 連絡先情報 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <PhoneCall className="h-5 w-5 mr-2 text-indigo-500" />
+                              連絡先情報
+                            </h3>
+                            <div className="space-y-3">
+                              {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                                <div className="space-y-2">
+                                  <div className="text-sm text-muted-foreground">電話番号</div>
+                                  {profile.phone_numbers.map((phone, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                      <Phone className="h-4 w-4 text-indigo-500" />
+                                      <span className="font-medium">{phone}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {profile.email_addresses && profile.email_addresses.length > 0 && (
+                                <div className="space-y-2 mt-4">
+                                  <div className="text-sm text-muted-foreground">メールアドレス</div>
+                                  {profile.email_addresses.map((email, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                      <Mail className="h-4 w-4 text-indigo-500" />
+                                      <span className="font-medium">{email}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
