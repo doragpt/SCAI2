@@ -38,6 +38,8 @@ import {
   Map,
   MoreVertical,
   Calendar,
+  Train,
+  Navigation,
   ExternalLink,
   Bell,
   BarChart3,
@@ -496,12 +498,17 @@ export default function StoreDashboard() {
                                 </div>
                               </div>
                               
-                              {/* キャッチコピー */}
+                              {/* キャッチコピー - ガールズヘブン風に強調表示 */}
                               {profile.catch_phrase && (
-                                <div className="bg-muted p-4 rounded-md border">
-                                  <p className="italic text-base">
-                                    「{profile.catch_phrase}」
-                                  </p>
+                                <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 to-fuchsia-500 p-0.5 rounded-md">
+                                  <div className="bg-white dark:bg-gray-900 rounded-sm p-5 relative z-10">
+                                    <div className="absolute top-0 left-0 w-12 h-12 bg-fuchsia-500/20 -translate-x-1/2 -translate-y-1/2 rounded-full"></div>
+                                    <div className="absolute bottom-0 right-0 w-20 h-20 bg-violet-500/20 translate-x-1/3 translate-y-1/3 rounded-full"></div>
+                                    <h3 className="text-base font-bold text-center mb-2 text-gray-700 dark:text-gray-200">店舗からのメッセージ</h3>
+                                    <p className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-violet-600 dark:from-fuchsia-400 dark:to-violet-400 text-center leading-relaxed">
+                                      『{profile.catch_phrase}』
+                                    </p>
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -571,31 +578,73 @@ export default function StoreDashboard() {
                             </div>
                           </div>
                           
-                          {/* 待遇 - ガールズヘブン風に改良 */}
-                          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/10 p-4 rounded-md border border-purple-100 dark:border-purple-900/30">
-                            <h3 className="flex items-center text-base font-medium text-purple-700 dark:text-purple-300 mb-3 pb-2 border-b border-purple-100 dark:border-purple-800/30">
+                          {/* 待遇 - ガールズヘブン風に大幅改良、特典バッジを強調 */}
+                          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/10 p-4 rounded-md border border-purple-100 dark:border-purple-900/30 relative overflow-hidden">
+                            <div className="absolute -top-5 -right-5 w-24 h-24 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
+                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
+                            
+                            <h3 className="flex items-center text-base font-medium text-purple-700 dark:text-purple-300 mb-3 pb-2 border-b border-purple-100 dark:border-purple-800/30 relative z-10">
                               <Award className="h-5 w-5 mr-2 text-purple-600" />
-                              待遇・福利厚生
+                              <span className="bg-gradient-to-r from-purple-700 to-violet-600 dark:from-purple-400 dark:to-violet-300 inline-block text-transparent bg-clip-text">待遇・福利厚生</span>
                             </h3>
-                            <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 p-3 rounded-md border border-purple-100 dark:border-purple-900/30">
-                              {profile.transportation_support && (
-                                <Badge className="bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50 font-normal py-1.5">
-                                  <Car className="h-3 w-3 mr-1" />交通費サポート
-                                </Badge>
-                              )}
-                              {profile.housing_support && (
-                                <Badge className="bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50 font-normal py-1.5">
-                                  <Home className="h-3 w-3 mr-1" />寮完備
-                                </Badge>
-                              )}
-                              {profile.benefits && profile.benefits.length > 0 && profile.benefits.map((benefit, index) => (
-                                <Badge key={index} className="bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900/50 font-normal py-1.5">
-                                  <CheckCircle className="h-3 w-3 mr-1" />{benefit}
-                                </Badge>
-                              ))}
-                              {!profile.transportation_support && !profile.housing_support && (!profile.benefits || profile.benefits.length === 0) && (
-                                <span className="text-sm text-muted-foreground italic">未設定</span>
-                              )}
+                            
+                            <div className="relative z-10">
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-md border border-purple-100 dark:border-purple-900/30 mb-3">
+                                <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-3">特別オファー</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  {profile.transportation_support && (
+                                    <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 shadow-sm">
+                                      <div className="flex items-center gap-2 mb-1.5">
+                                        <div className="p-1.5 bg-amber-200 dark:bg-amber-800/50 rounded-full">
+                                          <Car className="h-3.5 w-3.5 text-amber-600 dark:text-amber-300" />
+                                        </div>
+                                        <h5 className="font-bold text-amber-800 dark:text-amber-300 text-xs uppercase">交通費サポート</h5>
+                                      </div>
+                                      <p className="text-xs text-amber-700 dark:text-amber-400">最寄り駅から送迎あり・交通費全額支給</p>
+                                    </div>
+                                  )}
+                                  {profile.housing_support && (
+                                    <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800/30 shadow-sm">
+                                      <div className="flex items-center gap-2 mb-1.5">
+                                        <div className="p-1.5 bg-emerald-200 dark:bg-emerald-800/50 rounded-full">
+                                          <Home className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                                        </div>
+                                        <h5 className="font-bold text-emerald-800 dark:text-emerald-300 text-xs uppercase">寮完備</h5>
+                                      </div>
+                                      <p className="text-xs text-emerald-700 dark:text-emerald-400">マンション寮完備・家具家電付き</p>
+                                    </div>
+                                  )}
+                                  {profile.minimum_guarantee && (
+                                    <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-800/30 shadow-sm">
+                                      <div className="flex items-center gap-2 mb-1.5">
+                                        <div className="p-1.5 bg-pink-200 dark:bg-pink-800/50 rounded-full">
+                                          <Banknote className="h-3.5 w-3.5 text-pink-600 dark:text-pink-300" />
+                                        </div>
+                                        <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
+                                      </div>
+                                      <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {profile.minimum_guarantee.toLocaleString()}円 保証</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="bg-white dark:bg-gray-800 p-4 rounded-md border border-purple-100 dark:border-purple-900/30">
+                                <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-3">福利厚生・特典</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {profile.benefits && profile.benefits.length > 0 ? profile.benefits.map((benefit, index) => (
+                                    <Badge 
+                                      key={index} 
+                                      className="bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900/50 font-normal py-2 px-3 rounded-full text-sm"
+                                    >
+                                      <CheckCircle className="h-3.5 w-3.5 mr-1.5" />{benefit}
+                                    </Badge>
+                                  )) : (
+                                    <div className="w-full p-3 bg-muted rounded-md text-center text-sm text-muted-foreground">
+                                      特典情報が未設定です
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -643,28 +692,69 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
-                        {/* アクセス・所在地 */}
+                        {/* アクセス・所在地 - 地図表示を追加 */}
                         {(profile.address || profile.access_info) && (
                           <div className="py-6 px-1">
-                            <h3 className="text-base font-medium mb-4 flex items-center">
-                              <MapPin className="h-4 w-4 mr-1.5 text-blue-500" />
-                              アクセス・所在地
-                            </h3>
-                            
-                            <div className="space-y-4">
-                              {profile.address && (
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">所在地</div>
-                                  <div>{profile.address}</div>
-                                </div>
-                              )}
+                            <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/10 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
+                              <h3 className="flex items-center text-base font-medium text-blue-700 dark:text-blue-300 mb-3 pb-2 border-b border-blue-100 dark:border-blue-800/30">
+                                <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+                                アクセス・所在地
+                              </h3>
                               
-                              {profile.access_info && (
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">アクセス方法</div>
-                                  <div className="text-sm whitespace-pre-line">{profile.access_info}</div>
+                              <div className="space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
+                                    {profile.address && (
+                                      <div className="flex flex-col gap-2">
+                                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">所在地</div>
+                                        <div className="flex items-center gap-2">
+                                          <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                          <div>{profile.address}</div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {profile.access_info && (
+                                      <div className="flex flex-col gap-2 mt-4">
+                                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">アクセス方法</div>
+                                        <div className="flex gap-2">
+                                          <Train className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                                          <div className="text-sm whitespace-pre-line">{profile.access_info}</div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* 地図表示エリア */}
+                                  <div className="rounded-md overflow-hidden border border-blue-100 dark:border-blue-900/30 bg-white">
+                                    {profile.address && (
+                                      <div className="relative w-full h-0 pb-[75%]">
+                                        <iframe 
+                                          className="absolute inset-0 w-full h-full"
+                                          src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                          frameBorder="0"
+                                          scrolling="no"
+                                          title="店舗地図"
+                                          loading="lazy"
+                                        ></iframe>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+                                
+                                {/* モバイルでの優先表示、アクセス優先ボタン */}
+                                <div className="flex justify-center">
+                                  <a
+                                    href={`https://maps.google.com/maps?q=${encodeURIComponent(profile.address || profile.location)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full border border-blue-200 transition-colors"
+                                  >
+                                    <Navigation className="h-4 w-4" />
+                                    地図アプリで確認する
+                                  </a>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -794,6 +884,39 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
+                        {/* 応募ボタンの強調表示 */}
+                        <div className="py-6 px-1">
+                          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 rounded-lg shadow-lg text-white relative overflow-hidden">
+                            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/10 rounded-full"></div>
+                            
+                            <div className="text-center relative z-10 space-y-3">
+                              <h3 className="text-xl font-bold">今すぐ応募しませんか？</h3>
+                              <p className="text-white/80 text-sm max-w-md mx-auto">
+                                採用担当が丁寧にご対応いたします。お気軽にご連絡ください。
+                              </p>
+                              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                                {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                                  <a 
+                                    href={`tel:${profile.phone_numbers[0].replace(/[-\s]/g, '')}`}
+                                    className="inline-flex items-center justify-center gap-2 bg-white text-emerald-600 hover:bg-emerald-50 py-3 px-6 rounded-full font-bold shadow-sm transition-colors"
+                                  >
+                                    <Phone className="h-4 w-4" />
+                                    電話で応募
+                                  </a>
+                                )}
+                                <Button 
+                                  size="lg" 
+                                  className="bg-white hover:bg-emerald-50 text-emerald-600 border-none hover:text-emerald-700"
+                                >
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  メールで応募
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* 編集ボタン */}
                         <div className="py-6 px-1 flex justify-center">
                           <Button onClick={() => setShowProfileForm(true)} size="lg">
