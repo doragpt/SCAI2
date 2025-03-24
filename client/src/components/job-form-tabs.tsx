@@ -189,9 +189,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         // 必須項目
         working_hours: data.working_hours || "",
-        requirements: typeof data.requirements === 'string' 
-          ? { other_conditions: [data.requirements] } // 文字列の場合はオブジェクトに変換
-          : (data.requirements || { other_conditions: [] }),
+        requirements: data.requirements || "",
       };
       
       console.log("送信データ:", formattedData);
