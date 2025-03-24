@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
@@ -97,6 +97,30 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   };
   
+  // フォームデータの検証と初期化
+  useEffect(() => {
+    // フォームが初期化された後に追加の処理
+    if (initialData) {
+      // フォームに必須フィールドが入力されているか確認
+      if (!initialData.recruiter_name) {
+        console.log("採用担当者名が未設定です");
+      }
+      
+      // 電話番号が少なくとも1つ設定されているか確認
+      const validPhoneNumbers = initialData.phone_numbers?.filter(phone => phone && phone.trim() !== '') || [];
+      if (validPhoneNumbers.length === 0) {
+        console.log("有効な電話番号がありません");
+      }
+    }
+    
+    // デバッグ情報
+    console.log("フォーム状態:", {
+      isDirty: form.formState.isDirty,
+      isValid: form.formState.isValid,
+      errors: form.formState.errors
+    });
+  }, [form, initialData]);
+  
   // TOP画像アップロード処理
   const handleTopImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,19 +176,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfile) => {
-      // 電話番号とメールアドレスを明示的に処理
-      const validPhoneNumbers = Array.isArray(data.phone_numbers) 
-        ? data.phone_numbers.filter(phone => phone && phone.trim() !== '')
-        : [];
-      
-      const validEmailAddresses = Array.isArray(data.email_addresses) 
-        ? data.email_addresses.filter(email => email && email.trim() !== '')
-        : [];
-      
-      // 必須フィールドが存在することを確実にする
-      if (!data.recruiter_name || validPhoneNumbers.length === 0) {
-        throw new Error("採用担当者名と電話番号は必須です");
-      }
+      // この関数内でのバリデーションは行わない
+      // onSubmit関数内で既にバリデーション済み
       
       const formattedData = {
         // 必須項目を明示的に指定して型変換の問題を回避
@@ -181,8 +194,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         // ステータスと配列
         status: data.status || "draft",
         benefits: data.benefits || [],
-        phone_numbers: validPhoneNumbers,
-        email_addresses: validEmailAddresses,
+        phone_numbers: data.phone_numbers,  // phone_numbersはonSubmitでフィルタリング済み
+        email_addresses: data.email_addresses, // email_addressesもonSubmitでフィルタリング済み
         
         // その他のフィールド
         top_image: data.top_image || "",
@@ -229,6 +242,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const onSubmit = (data: StoreProfile) => {
     // フォームの値を一度ログに出力して確認（デバッグ用）
     console.log("Form values:", form.getValues());
+    console.log("Form state dirty:", form.formState.isDirty);
+    console.log("Form state valid:", form.formState.isValid);
+    console.log("Form state errors:", form.formState.errors);
     
     // 必須フィールドの確認
     if (!data.recruiter_name) {
@@ -256,11 +272,37 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       return;
     }
     
-    // 明示的にデータをコピーして不要なプロパティを削除
+    // 明示的にデータをコピーして整形
     const cleanedData = { ...data };
-    // 空の配列を正しく処理
+
+    // 配列データの処理
     cleanedData.phone_numbers = validPhoneNumbers;
     cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
+    
+    // URL関連のフィールドが空の場合、nullではなく空文字列に設定
+    if (cleanedData.sns_url === undefined || cleanedData.sns_url === null) {
+      cleanedData.sns_url = '';
+    }
+    if (cleanedData.pc_website_url === undefined || cleanedData.pc_website_url === null) {
+      cleanedData.pc_website_url = '';
+    }
+    if (cleanedData.mobile_website_url === undefined || cleanedData.mobile_website_url === null) {
+      cleanedData.mobile_website_url = '';
+    }
+
+    // その他の文字列フィールドが未定義の場合は空文字列に設定
+    if (cleanedData.sns_id === undefined || cleanedData.sns_id === null) {
+      cleanedData.sns_id = '';
+    }
+    if (cleanedData.sns_text === undefined || cleanedData.sns_text === null) {
+      cleanedData.sns_text = '';
+    }
+    if (cleanedData.address === undefined || cleanedData.address === null) {
+      cleanedData.address = '';
+    }
+    if (cleanedData.application_requirements === undefined || cleanedData.application_requirements === null) {
+      cleanedData.application_requirements = '';
+    }
     
     console.log("送信前の整形データ:", cleanedData);
     mutate(cleanedData);
