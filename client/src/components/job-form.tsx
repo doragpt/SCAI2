@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -28,59 +28,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
   const [isUploadingTopImage, setIsUploadingTopImage] = useState(false);
   
-  // 電話番号と電子メールの配列を管理
-  const [phoneNumbers, setPhoneNumbers] = useState<string[]>(
-    Array.isArray(initialData?.phone_numbers) ? initialData?.phone_numbers as string[] : ['']
-  );
-  
-  const [emailAddresses, setEmailAddresses] = useState<string[]>(
-    Array.isArray(initialData?.email_addresses) ? initialData?.email_addresses as string[] : []
-  );
-  
-  // 電話番号操作
-  const addPhoneNumber = () => {
-    if (phoneNumbers.length < 4) {
-      setPhoneNumbers([...phoneNumbers, '']);
-    }
-  };
-  
-  const removePhoneNumber = (index: number) => {
-    if (phoneNumbers.length > 1) {
-      const newPhoneNumbers = [...phoneNumbers];
-      newPhoneNumbers.splice(index, 1);
-      setPhoneNumbers(newPhoneNumbers);
-      form.setValue('phone_numbers', newPhoneNumbers);
-    }
-  };
-  
-  const updatePhoneNumber = (index: number, value: string) => {
-    const newPhoneNumbers = [...phoneNumbers];
-    newPhoneNumbers[index] = value;
-    setPhoneNumbers(newPhoneNumbers);
-    form.setValue('phone_numbers', newPhoneNumbers);
-  };
-  
-  // メールアドレス操作
-  const addEmailAddress = () => {
-    if (emailAddresses.length < 4) {
-      setEmailAddresses([...emailAddresses, '']);
-    }
-  };
-  
-  const removeEmailAddress = (index: number) => {
-    const newEmailAddresses = [...emailAddresses];
-    newEmailAddresses.splice(index, 1);
-    setEmailAddresses(newEmailAddresses);
-    form.setValue('email_addresses', newEmailAddresses);
-  };
-  
-  const updateEmailAddress = (index: number, value: string) => {
-    const newEmailAddresses = [...emailAddresses];
-    newEmailAddresses[index] = value;
-    setEmailAddresses(newEmailAddresses);
-    form.setValue('email_addresses', newEmailAddresses);
-  };
-
+  // フォームの初期化
   const form = useForm<StoreProfile>({
     resolver: zodResolver(storeProfileSchema),
     defaultValues: {
@@ -102,9 +50,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       address: initialData?.address || "",
       recruiter_name: initialData?.recruiter_name || "",
       
-      // 連絡先情報
-      phone_numbers: initialData?.phone_numbers || [],
-      email_addresses: initialData?.email_addresses || [],
+      // 連絡先情報 - 配列が空でないことを確認
+      phone_numbers: Array.isArray(initialData?.phone_numbers) && initialData.phone_numbers.length > 0 
+        ? initialData.phone_numbers 
+        : [''],
+      email_addresses: Array.isArray(initialData?.email_addresses) 
+        ? initialData.email_addresses 
+        : [],
       
       // SNS情報
       sns_id: initialData?.sns_id || "",
@@ -119,6 +71,31 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       application_requirements: initialData?.application_requirements || "",
     }
   });
+  
+  // フィールド配列の設定
+  const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
+    control: form.control,
+    name: "phone_numbers"
+  });
+  
+  const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
+    control: form.control,
+    name: "email_addresses"
+  });
+  
+  // 電話番号操作
+  const addPhoneNumber = () => {
+    if (phoneFields.length < 4) {
+      appendPhone("");
+    }
+  };
+  
+  // メールアドレス操作
+  const addEmailAddress = () => {
+    if (emailFields.length < 4) {
+      appendEmail("");
+    }
+  };
   
   // TOP画像アップロード処理
   const handleTopImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,12 +160,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         average_hourly_pay: Number(data.average_hourly_pay) || 0,
         status: data.status || "draft",
         benefits: data.benefits || [],
-        // 新しいフィールド
-        phone_numbers: Array.isArray(data.phone_numbers) ? data.phone_numbers : [],
-        email_addresses: Array.isArray(data.email_addresses) ? data.email_addresses : [],
+        // 空の文字列をフィルタリング
+        phone_numbers: Array.isArray(data.phone_numbers) 
+          ? data.phone_numbers.filter(phone => phone && phone.trim() !== '')
+          : [],
+        email_addresses: Array.isArray(data.email_addresses) 
+          ? data.email_addresses.filter(email => email && email.trim() !== '')
+          : [],
       };
 
-      // apiRequest関数は既にJSONレスポンスを返すため、直接返せる
+      console.log("送信データ:", formattedData);
       return await apiRequest("PATCH", "/api/store/profile", formattedData);
     },
     onSuccess: (data) => {
@@ -218,38 +199,33 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: StoreProfile) => {
-    // ステート管理している値をフォームデータに統合
-    const phoneArray = phoneNumbers.filter(phone => phone.trim() !== '');
-    const emailArray = emailAddresses.filter(email => email.trim() !== '');
-    
-    // 必須フィールドの存在確認
-    if (!data.recruiter_name || phoneArray.length === 0) {
-      if (!data.recruiter_name) {
-        form.setError('recruiter_name', { 
-          type: 'manual', 
-          message: '採用担当者名を入力してください' 
-        });
-      }
+    // 必須フィールドの確認
+    if (!data.recruiter_name) {
+      form.setError('recruiter_name', { 
+        type: 'manual', 
+        message: '採用担当者名を入力してください' 
+      });
       
-      if (phoneArray.length === 0) {
-        // 電話番号エラーをフォームに表示
-        toast({
-          title: "エラー",
-          description: "電話番号を少なくとも1つ入力してください",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "エラー",
+        description: "採用担当者名を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 電話番号の確認（少なくとも1つは必要）
+    const validPhoneNumbers = data.phone_numbers?.filter(phone => phone && phone.trim() !== '') || [];
+    if (validPhoneNumbers.length === 0) {
+      toast({
+        title: "エラー",
+        description: "電話番号を少なくとも1つ入力してください",
+        variant: "destructive",
+      });
       return;
     }
     
-    const formData = {
-      ...data,
-      phone_numbers: phoneArray,
-      email_addresses: emailArray,
-    };
-    
-    console.log("送信データ:", formData);
-    mutate(formData);
+    mutate(data);
   };
 
   return (
@@ -484,11 +460,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="例：東京都渋谷区〇〇町1-2-3 〇〇ビル5F"
-                      name={field.name}
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -507,11 +480,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="例：採用担当"
-                      name={field.name}
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -525,39 +495,47 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">連絡先情報</h2>
           
-          {/* 電話番号セクション - フォーム内に動的に増減できるフィールド */}
+          {/* 電話番号セクション - useFieldArrayを使用 */}
           <div className="mb-6">
             <FormLabel className="font-medium mb-2 block">電話番号 <span className="text-red-500">*</span></FormLabel>
             <p className="text-sm text-gray-500 mb-3">最低1つ、最大4つまで登録できます</p>
             
             <div className="grid grid-cols-1 gap-3">
-              {phoneNumbers.map((phoneNumber, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="tel"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="例：03-1234-5678"
-                    value={phoneNumber || ''}
-                    onChange={(e) => updatePhoneNumber(index, e.target.value)}
-                  />
-                  
-                  {/* 削除ボタン（1つ目の電話番号以外に表示） */}
-                  {index > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePhoneNumber(index)}
-                      className="h-8 w-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+              {phoneFields.map((field, index) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`phone_numbers.${index}`}
+                  render={({ field }) => (
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <input
+                          type="tel"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="例：03-1234-5678"
+                          {...field}
+                        />
+                      </FormControl>
+                      
+                      {/* 削除ボタン（1つ目の電話番号以外に表示） */}
+                      {index > 0 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePhone(index)}
+                          className="h-8 w-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
-                </div>
+                />
               ))}
               
               {/* 追加ボタン（4つまで） */}
-              {phoneNumbers.length < 4 && (
+              {phoneFields.length < 4 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -572,37 +550,44 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             </div>
           </div>
           
-          {/* メールアドレスセクション */}
+          {/* メールアドレスセクション - useFieldArrayを使用 */}
           <div className="mb-6">
             <FormLabel className="font-medium mb-2 block">メールアドレス（任意）</FormLabel>
             <p className="text-sm text-gray-500 mb-3">最大4つまで登録できます</p>
             
             <div className="grid grid-cols-1 gap-3">
-              {emailAddresses.map((email, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="email"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="例：recruit@example.com"
-                    value={email || ''}
-                    onChange={(e) => updateEmailAddress(index, e.target.value)}
-                  />
-                  
-                  {/* 削除ボタン */}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeEmailAddress(index)}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+              {emailFields.map((field, index) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`email_addresses.${index}`}
+                  render={({ field }) => (
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <input
+                          type="email"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="例：example@example.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeEmail(index)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                />
               ))}
               
-              {/* 追加ボタン（4つまで） */}
-              {emailAddresses.length < 4 && (
+              {/* メールアドレス追加ボタン（4つまで） */}
+              {emailFields.length < 4 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -616,36 +601,29 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               )}
             </div>
           </div>
-        </div>
-
-        {/* SNS・ウェブサイト情報 */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">SNS・ウェブサイト情報</h2>
           
+          {/* SNS情報 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <FormField
               control={form.control}
               name="sns_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">SNSアカウントID（任意）</FormLabel>
+                  <FormLabel className="font-medium">SNS ID（任意）</FormLabel>
                   <FormControl>
                     <input
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="例：@example"
-                      name={field.name}
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="sns_url"
@@ -657,11 +635,26 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="例：https://twitter.com/example"
-                      name={field.name}
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="sns_text"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel className="font-medium">SNS説明（任意）</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="SNSについての説明を入力してください"
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />
@@ -670,69 +663,41 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             />
           </div>
           
-          <FormField
-            control={form.control}
-            name="sns_text"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-medium">SNS表示テキスト（任意）</FormLabel>
-                <FormControl>
-                  <input
-                    type="text"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="例：公式Twitter"
-                    name={field.name}
-                    value={field.value || ''}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* ウェブサイト情報 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="pc_website_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">PC公式サイトURL（任意）</FormLabel>
+                  <FormLabel className="font-medium">PCサイトURL（任意）</FormLabel>
                   <FormControl>
                     <input
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="例：https://www.example.com"
-                      name={field.name}
+                      placeholder="例：https://example.com"
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="mobile_website_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">モバイル公式サイトURL（任意）</FormLabel>
+                  <FormLabel className="font-medium">モバイルサイトURL（任意）</FormLabel>
                   <FormControl>
                     <input
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="例：https://m.example.com"
-                      name={field.name}
+                      {...field}
                       value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -741,7 +706,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             />
           </div>
         </div>
-
+        
         {/* 応募要件 */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">応募要件</h2>
@@ -751,16 +716,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             name="application_requirements"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-medium">応募資格・条件（任意）</FormLabel>
+                <FormLabel className="font-medium">応募条件</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="例：18歳以上（高校生不可）、未経験者歓迎"
+                    {...field}
+                    placeholder="応募条件を入力してください（例：18歳以上（高校生不可）、未経験者歓迎、経験者優遇）"
                     className="min-h-[100px]"
-                    name={field.name}
                     value={field.value || ''}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
                   />
                 </FormControl>
                 <FormMessage />
@@ -768,22 +730,25 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             )}
           />
         </div>
-
-        {/* 福利厚生 */}
-        <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">福利厚生・特典</h2>
-        <FormField
-          control={form.control}
-          name="benefits"
-          render={() => (
-            <FormItem>
-              <div className="space-y-8">
-                {Object.entries(benefitTypes).map(([category, benefits]) => (
-                  <div key={category}>
-                    <h3 className="text-lg font-semibold mb-4">
-                      {benefitCategories[category as keyof typeof benefitCategories]}
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {benefits.map((benefit) => (
+        
+        {/* 特徴・待遇 */}
+        <div className="mb-10">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">特徴・待遇</h2>
+          
+          <FormField
+            control={form.control}
+            name="benefits"
+            render={() => (
+              <FormItem>
+                <div className="mb-4">
+                  <FormLabel className="font-medium">特徴・待遇（複数選択可）</FormLabel>
+                  <FormMessage />
+                </div>
+                {Object.entries(benefitCategories).map(([key, label]) => (
+                  <div key={key} className="mb-6">
+                    <h3 className="font-medium text-gray-700 mb-3">{label}</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {benefitTypes[key as keyof typeof benefitTypes].map((benefit) => (
                         <FormField
                           key={benefit}
                           control={form.control}
@@ -792,17 +757,19 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                             return (
                               <FormItem
                                 key={benefit}
-                                className="flex flex-row items-start space-x-3 space-y-0"
+                                className="flex flex-row items-start space-x-2 space-y-0"
                               >
                                 <FormControl>
                                   <Checkbox
                                     checked={field.value?.includes(benefit)}
                                     onCheckedChange={(checked) => {
-                                      const currentValue = field.value || [];
-                                      const newValue = checked
-                                        ? [...currentValue, benefit]
-                                        : currentValue.filter((value) => value !== benefit);
-                                      field.onChange(newValue);
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (item) => item !== benefit
+                                            )
+                                          )
                                     }}
                                   />
                                 </FormControl>
@@ -810,37 +777,70 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                                   {benefit}
                                 </FormLabel>
                               </FormItem>
-                            );
+                            )
                           }}
                         />
                       ))}
                     </div>
-                    {category !== Object.keys(benefitTypes).slice(-1)[0] && (
-                      <Separator className="my-6" />
-                    )}
                   </div>
                 ))}
-              </div>
-              <FormMessage />
-            </FormItem>
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        {/* 公開ステータス */}
+        <div className="mb-10">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">公開設定</h2>
+          
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-medium">公開ステータス</FormLabel>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <Button
+                    type="button"
+                    variant={field.value === "draft" ? "default" : "outline"}
+                    onClick={() => field.onChange("draft")}
+                    className="flex items-center justify-center"
+                  >
+                    下書き
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={field.value === "published" ? "default" : "outline"}
+                    onClick={() => field.onChange("published")}
+                    className="flex items-center justify-center"
+                  >
+                    公開
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  「公開」に設定すると、すぐにサイト上に表示されます。「下書き」の場合は、あなただけが見ることができます。
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        {/* 送信ボタン */}
+        <div className="mt-10 flex justify-end gap-4">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isPending}
+            >
+              キャンセル
+            </Button>
           )}
-        />
-
-        <div className="flex items-center justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-          >
-            キャンセル
-          </Button>
-          <Button
-            type="submit"
-            disabled={isPending}
-          >
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            保存する
+            {isPending ? "保存中..." : "保存する"}
           </Button>
         </div>
       </form>
