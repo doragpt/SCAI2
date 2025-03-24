@@ -35,23 +35,41 @@ import {
   Shield,
   MapPin,
   Briefcase,
+  Map,
+  MoreVertical,
+  Calendar,
   ExternalLink,
   Bell,
   BarChart3,
   Newspaper,
+  Info,
   Award,
-  Link,
-  ChevronRight
+  ChevronRight,
+  CreditCard
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
+import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
+import { SalaryDisplay } from "@/components/store/SalaryDisplay";
+import { LocationDisplay } from "@/components/store/LocationDisplay";
+import { ContactDisplay } from "@/components/store/ContactDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { StoreApplicationView } from "@/components/store-application-view";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 // プロフィールのステータスラベル
 const profileStatusLabels = {
@@ -65,6 +83,12 @@ const blogStatusLabels = {
   draft: "下書き",
   published: "公開中",
   scheduled: "予約投稿"
+} as const;
+
+// プランのラベル
+const planLabels = {
+  free: "無料プラン",
+  premium: "有料プラン"
 } as const;
 
 // 統計情報の型定義
@@ -87,12 +111,91 @@ interface DashboardStats {
   totalApplicationsCount: number;
 }
 
+// ダッシュボードカードコンポーネント
+interface DashboardCardProps {
+  icon: LucideIcon;
+  title: string;
+  value: number | string;
+  description?: string;
+  trend?: number;
+  color?: "default" | "primary" | "success" | "warning" | "danger";
+  onClick?: () => void;
+}
+
+const DashboardCard = ({ 
+  icon: Icon, 
+  title, 
+  value, 
+  description, 
+  trend, 
+  color = "default",
+  onClick
+}: DashboardCardProps) => {
+  const colorStyles = {
+    default: "bg-card",
+    primary: "bg-primary/10 border-primary/20",
+    success: "bg-green-500/10 border-green-500/20",
+    warning: "bg-yellow-500/10 border-yellow-500/20",
+    danger: "bg-red-500/10 border-red-500/20",
+  };
+
+  const iconStyles = {
+    default: "text-foreground",
+    primary: "text-primary",
+    success: "text-green-600",
+    warning: "text-yellow-600",
+    danger: "text-red-600",
+  };
+
+  return (
+    <Card 
+      className={cn(
+        "transition-all duration-200 ease-in-out border overflow-hidden", 
+        colorStyles[color],
+        onClick && "cursor-pointer hover:shadow-md"
+      )}
+      onClick={onClick}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+            <div className="text-2xl font-bold">{value}</div>
+            {description && (
+              <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            )}
+          </div>
+          <div className={cn(
+            "p-2 rounded-full", 
+            color === "primary" ? "bg-primary/20" : 
+            color === "success" ? "bg-green-500/20" :
+            color === "warning" ? "bg-yellow-500/20" :
+            color === "danger" ? "bg-red-500/20" : 
+            "bg-muted"
+          )}>
+            <Icon className={cn("h-5 w-5", iconStyles[color])} />
+          </div>
+        </div>
+        {trend !== undefined && (
+          <div className={cn(
+            "text-xs font-medium mt-2",
+            trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-muted-foreground"
+          )}>
+            {trend > 0 ? "+" : ""}{trend}% {trend >= 0 ? "増加" : "減少"}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [showProfileForm, setShowProfileForm] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("profile");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // 店舗プロフィール情報の取得
@@ -102,6 +205,7 @@ export default function StoreDashboard() {
       try {
         const response = await apiRequest("GET", "/api/store/profile");
         console.log('店舗プロフィールAPI応答:', response);
+        // レスポンスはすでにJSON解析済みなので直接返す
         return response as StoreProfile;
       } catch (error) {
         console.error('店舗プロフィール取得エラー:', error);
@@ -177,7 +281,7 @@ export default function StoreDashboard() {
     }
   });
 
-  if (profileLoading || statsLoading) {
+  if (statsLoading || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -190,7 +294,7 @@ export default function StoreDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ヘッダー */}
+      {/* モダンなヘッダー */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
@@ -202,7 +306,7 @@ export default function StoreDashboard() {
                 <h1 className="text-xl font-bold flex items-center gap-2">
                   {user?.display_name}
                   <Badge variant={profile?.status === "published" ? "default" : "secondary"} className="ml-2">
-                    {profileStatusLabels[profile?.status as keyof typeof profileStatusLabels || "draft"]}
+                    {profileStatusLabels[profile?.status || "draft"]}
                   </Badge>
                 </h1>
                 <p className="text-xs text-muted-foreground">
@@ -246,391 +350,589 @@ export default function StoreDashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* メイン */}
-        <div className="space-y-8">
-          {/* 公開設定 */}
-          <Card className="border shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>公開設定</CardTitle>
-                  <CardDescription>
-                    店舗情報の公開状態を管理します
-                  </CardDescription>
-                </div>
-                <Button onClick={() => setShowProfileForm(true)}>
-                  <FileEdit className="h-4 w-4 mr-2" />
-                  編集する
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
-                <div>
-                  <h3 className="font-medium">店舗情報公開設定</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {profile?.status === "published" ? "現在求人情報を公開中です" : "求人情報は非公開になっています"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={profile?.status === "published"}
-                    onCheckedChange={(checked) => {
-                      updateStatusMutation.mutate(checked ? "published" : "draft");
-                    }}
-                    disabled={isUpdatingStatus || updateStatusMutation.isPending}
-                  />
-                  {isUpdatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* ダッシュボードサマリー */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <DashboardCard 
+            icon={Users} 
+            title="新規問い合わせ" 
+            value={stats?.newInquiriesCount || 0} 
+            color="primary"
+            onClick={() => setSelectedTab("applications")}
+          />
+          <DashboardCard 
+            icon={BarChart3} 
+            title="本日のアクセス" 
+            value={stats?.todayPageViews || 0} 
+            description={`ユニークユーザー: ${stats?.todayUniqueVisitors || 0}`}
+            trend={5}
+            color="success"
+          />
+          <DashboardCard 
+            icon={Newspaper} 
+            title="ブログ投稿数" 
+            value={5} 
+            description={"最終投稿: 本日"}
+            onClick={() => setSelectedTab("blog")}
+          />
+          <DashboardCard 
+            icon={Calendar} 
+            title="予約投稿" 
+            value={1} 
+            description={"次回: 3/25 00:20"}
+            color="warning"
+          />
+        </div>
 
-          {/* 基本情報 */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Briefcase className="h-5 w-5 mr-2 text-primary" />
-                基本情報
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* 店舗画像とプロフィール */}
-              <div className="flex flex-col sm:flex-row gap-6 items-start">
-                {/* プロフィールアイコン/TOP画像 */}
-                {profile?.top_image ? (
-                  <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border shadow-sm">
-                    <ThumbnailImage
-                      src={profile.top_image}
-                      alt={profile.business_name || "店舗画像"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg">
-                    <Building2 className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                )}
-                
-                {/* 店舗名と基本情報 */}
-                <div className="flex-grow">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <h2 className="text-2xl font-bold">{profile?.business_name}</h2>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span>{profile?.location}</span>
+        <div className="grid grid-cols-12 gap-6">
+          {/* メインコンテンツ */}
+          <div className="col-span-12 lg:col-span-8">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+              <TabsList className="grid grid-cols-4 h-auto p-1 bg-muted/80 backdrop-blur-sm rounded-xl">
+                <TabsTrigger value="profile" className="py-2 rounded-lg">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  店舗情報
+                </TabsTrigger>
+                <TabsTrigger value="applications" className="py-2 rounded-lg">
+                  <Users className="h-4 w-4 mr-2" />
+                  応募一覧
+                </TabsTrigger>
+                <TabsTrigger value="blog" className="py-2 rounded-lg">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  ブログ管理
+                </TabsTrigger>
+                <TabsTrigger value="freeSpace" className="py-2 rounded-lg">
+                  <PenBox className="h-4 w-4 mr-2" />
+                  フリースペース
+                </TabsTrigger>
+              </TabsList>
+
+              {/* 店舗情報タブ */}
+              <TabsContent value="profile">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>店舗プロフィール</CardTitle>
+                      <CardDescription>
+                        店舗の基本情報を管理できます
+                      </CardDescription>
                     </div>
-                    <div className="flex items-center">
-                      <Briefcase className="h-4 w-4 mr-1" />
-                      <span>{profile?.service_type}</span>
+                    <Button onClick={() => setShowProfileForm(true)}>
+                      <FileEdit className="h-4 w-4 mr-2" />
+                      編集する
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {!profile ? (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          店舗情報が未設定です
+                        </p>
+                        <Button variant="outline" className="mt-4" onClick={() => setShowProfileForm(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          店舗情報を設定する
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* ヘッダー部分 */}
+                        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/10">
+                          <div className="flex flex-col md:flex-row gap-6 items-start">
+                            {/* プロフィールアイコン/TOP画像 */}
+                            {profile.top_image ? (
+                              <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 rounded-lg overflow-hidden border-2 border-primary/20 shadow-md">
+                                <ThumbnailImage
+                                  src={profile.top_image}
+                                  alt={profile.business_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="bg-primary/10 rounded-full p-6 flex-shrink-0">
+                                <Building2 className="h-12 w-12 text-primary" />
+                              </div>
+                            )}
+                            
+                            {/* 基本情報 */}
+                            <div className="flex-grow space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-2xl font-bold">{profile.business_name}</h2>
+                                <Badge variant={profile.status === "published" ? "default" : "secondary"} className="ml-0 md:ml-3">
+                                  {profileStatusLabels[profile.status]}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center">
+                                  <MapPin className="h-4 w-4 mr-1 text-primary/70" />
+                                  <span>{profile.location}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Briefcase className="h-4 w-4 mr-1 text-primary/70" />
+                                  <span>{profile.service_type}</span>
+                                </div>
+                              </div>
+                              {/* キャッチコピー */}
+                              {profile.catch_phrase && (
+                                <div className="mt-3 bg-background p-4 rounded-md border font-medium italic text-lg">
+                                  "{profile.catch_phrase}"
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 給与・待遇セクションはグリッドレイアウト内に統合 */}
+                        
+
+
+                        {/* オンラインサービス情報（ContactDisplayに統合） */}
+
+                        {/* クイック情報セクション - 3カラムグリッド */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* 給与カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Banknote className="h-4 w-4 mr-2 text-emerald-500" />
+                              <span>給与</span>
+                            </h3>
+                            <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-md">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">日給</p>
+                              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {profile.minimum_guarantee && profile.maximum_guarantee 
+                                  ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
+                                  : profile.minimum_guarantee 
+                                    ? `${profile.minimum_guarantee.toLocaleString()}円〜`
+                                    : profile.maximum_guarantee 
+                                      ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
+                                      : "要相談"}
+                              </p>
+                              {(profile.working_time_hours && profile.minimum_guarantee) && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  時給換算: 約{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円〜
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* 勤務時間カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                              <span>勤務時間</span>
+                            </h3>
+                            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-md">
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {profile.working_hours || <span className="text-gray-500 italic">未設定</span>}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* サポート・待遇カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Home className="h-4 w-4 mr-2 text-blue-500" />
+                              <span>待遇</span>
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {profile.transportation_support && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  <Car className="h-3 w-3 mr-1" />交通費サポート
+                                </Badge>
+                              )}
+                              {profile.housing_support && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  <Home className="h-3 w-3 mr-1" />寮完備
+                                </Badge>
+                              )}
+                              {profile.benefits && profile.benefits.length > 0 && profile.benefits.slice(0, 2).map((benefit, index) => (
+                                <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  {benefit}
+                                </Badge>
+                              ))}
+                              {profile.benefits && profile.benefits.length > 2 && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  他{profile.benefits.length - 2}件
+                                </Badge>
+                              )}
+                              {!profile.transportation_support && !profile.housing_support && (!profile.benefits || profile.benefits.length === 0) && (
+                                <span className="text-sm text-gray-500 italic">待遇情報が未設定です</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* メインコンテンツ - 2カラムレイアウト */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* 左側カラム - 求人情報と応募条件 */}
+                          <div className="lg:col-span-2 space-y-6">
+                            {/* 仕事内容セクション - JobDescriptionDisplayコンポーネント */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <Briefcase className="h-5 w-5 mr-2 text-primary" />
+                                <span>仕事内容</span>
+                              </h3>
+                              
+                              <JobDescriptionDisplay 
+                                businessName={profile.business_name}
+                                location={profile.location}
+                                serviceType={profile.service_type}
+                                description={profile.description || ''}
+                              />
+                            </div>
+                            
+                            {/* 応募資格セクション */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <CheckCircle className="h-5 w-5 mr-2 text-yellow-500" />
+                                <span>応募資格・条件</span>
+                              </h3>
+                              
+                              <div className="space-y-4">
+                                {profile.requirements && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
+                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">基本応募条件</h4>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{profile.requirements}</p>
+                                  </div>
+                                )}
+                                
+                                {profile.application_requirements && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
+                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">詳細応募資格</h4>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{profile.application_requirements}</p>
+                                  </div>
+                                )}
+                                
+                                {(!profile.requirements && !profile.application_requirements) && (
+                                  <div className="p-4 text-center">
+                                    <p className="text-sm text-gray-500 italic">応募資格・条件が設定されていません</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* 詳細な給与・待遇情報 */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
+                                <span>詳細な給与・待遇情報</span>
+                              </h3>
+                              
+                              <SalaryDisplay 
+                                minimumGuarantee={profile.minimum_guarantee || undefined} 
+                                maximumGuarantee={profile.maximum_guarantee || undefined}
+                                workingTimeHours={profile.working_time_hours || undefined}
+                                averageHourlyPay={profile.average_hourly_pay || undefined}
+                                transportationSupport={profile.transportation_support || undefined}
+                                housingSupport={profile.housing_support || undefined}
+                                benefits={profile.benefits || undefined}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* 右側カラム - アクセス情報と連絡先 */}
+                          <div className="space-y-6">
+                            {/* アクセス情報カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                                <span>アクセス情報</span>
+                              </h3>
+                              
+                              <LocationDisplay 
+                                address={profile.address || undefined}
+                                accessInfo={profile.access_info || undefined}
+                              />
+                            </div>
+                            
+                            {/* 安全対策カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <Shield className="h-4 w-4 mr-2 text-green-500" />
+                                <span>安全対策</span>
+                              </h3>
+                              
+                              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-4 border border-indigo-100 dark:border-indigo-800">
+                                {profile.security_measures ? (
+                                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                                    {profile.security_measures}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic text-center">
+                                    安全対策情報が登録されていません
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* 連絡先カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <UserCircle className="h-4 w-4 mr-2 text-purple-500" />
+                                <span>お問い合わせ</span>
+                              </h3>
+                              
+                              <ContactDisplay 
+                                recruiterName={profile.recruiter_name || undefined}
+                                phoneNumbers={profile.phone_numbers || undefined}
+                                emailAddresses={profile.email_addresses || undefined}
+                                pcWebsiteUrl={profile.pc_website_url || undefined}
+                                mobileWebsiteUrl={profile.mobile_website_url || undefined}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 編集ボタン */}
+                        <div className="flex justify-end">
+                          <Button onClick={() => setShowProfileForm(true)} className="w-full md:w-auto">
+                            <FileEdit className="h-4 w-4 mr-2" />
+                            プロフィールを編集する
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* 応募一覧タブ */}
+              <TabsContent value="applications">
+                <Card>
+                  <CardContent className="p-6">
+                    <StoreApplicationView />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* ブログ管理タブ */}
+              <TabsContent value="blog">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>ブログ記事一覧</CardTitle>
+                      <CardDescription>
+                        ブログの投稿・管理ができます
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setLocation('/store/blog')}>
+                        <FileEdit className="h-4 w-4 mr-2" />
+                        詳細管理
+                      </Button>
+                      <Button onClick={() => setLocation('/store/blog/new')}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        新規作成
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <BlogPostsList userId={user?.id} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* フリースペースタブ */}
+              <TabsContent value="freeSpace">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>フリースペース編集</CardTitle>
+                    <CardDescription>
+                      店舗紹介や特徴を自由に編集できます
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <Button variant="outline" className="w-full">
+                        <PenBox className="h-4 w-4 mr-2" />
+                        フリースペースを編集
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* サイドバー */}
+          <div className="col-span-12 lg:col-span-4 space-y-6">
+            {/* 店舗プロフィール */}
+            <Card className="border border-primary/20 overflow-hidden">
+              <div className="bg-primary/5 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{user?.display_name || "未設定"}</h3>
+                    <p className="text-xs text-muted-foreground">{profile?.location || "未設定"}</p>
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-6 pt-5">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg bg-muted/30 p-3 text-center">
+                      <div className="text-lg font-semibold text-primary">{stats?.totalApplicationsCount || 0}</div>
+                      <div className="text-xs text-muted-foreground mt-1">応募総数</div>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 p-3 text-center">
+                      <div className="text-lg font-semibold text-primary">{stats?.monthlyPageViews || 0}</div>
+                      <div className="text-xs text-muted-foreground mt-1">月間アクセス</div>
                     </div>
                   </div>
-                  
-                  {profile?.catch_phrase && (
-                    <div className="p-3 bg-muted/50 rounded-md border italic">
-                      "{profile.catch_phrase}"
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 仕事内容 */}
-              <div>
-                <h3 className="text-md font-medium mb-3">仕事内容</h3>
-                <div className="prose prose-sm max-w-none border rounded-md p-4">
-                  {profile?.description ? (
-                    <HtmlContent html={profile.description} />
-                  ) : (
-                    <p className="text-muted-foreground italic text-center py-4">
-                      仕事内容が未設定です
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 給与・待遇 */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Banknote className="h-5 w-5 mr-2 text-primary" />
-                給与・待遇
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* 給与情報 */}
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900/30">
-                    <h4 className="text-sm text-muted-foreground mb-1">日給</h4>
-                    <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {profile?.minimum_guarantee && profile?.maximum_guarantee 
-                        ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
-                        : profile?.minimum_guarantee 
-                          ? `${profile.minimum_guarantee.toLocaleString()}円〜`
-                          : profile?.maximum_guarantee 
-                            ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
-                            : "要相談"}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm text-muted-foreground mb-1">勤務時間</h4>
-                    <p className="font-medium">
-                      {profile?.working_hours || "未設定"}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <h4 className="text-sm text-muted-foreground mb-1">平均時給</h4>
-                    <p className="font-medium">
-                      {(profile?.working_time_hours && profile?.minimum_guarantee) 
-                        ? `約${Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円〜` 
-                        : "未設定"}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm text-muted-foreground mb-1">平均勤務時間</h4>
-                    <p className="font-medium">
-                      {profile?.working_time_hours ? `${profile.working_time_hours}時間` : "未設定"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 待遇 */}
-              <div>
-                <h3 className="text-md font-medium mb-3">待遇</h3>
-                <div className="flex flex-wrap gap-2">
-                  {profile?.transportation_support && (
-                    <Badge variant="secondary" className="px-3 py-1">
-                      <Car className="h-3 w-3 mr-1" />
-                      交通費サポート
-                    </Badge>
-                  )}
-                  
-                  {profile?.housing_support && (
-                    <Badge variant="secondary" className="px-3 py-1">
-                      <Home className="h-3 w-3 mr-1" />
-                      寮完備
-                    </Badge>
-                  )}
-                  
-                  {profile?.benefits && profile.benefits.map((benefit, index) => (
-                    <Badge key={index} variant="secondary" className="px-3 py-1">
-                      {benefit}
-                    </Badge>
-                  ))}
-                  
-                  {!profile?.transportation_support && !profile?.housing_support && 
-                    (!profile?.benefits || profile.benefits.length === 0) && (
-                    <p className="text-muted-foreground italic">
-                      待遇情報が未設定です
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 応募資格 */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-primary" />
-                応募資格
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="text-md font-medium mb-3">基本応募条件</h3>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  {profile?.requirements ? (
-                    <p className="whitespace-pre-line">{profile.requirements}</p>
-                  ) : (
-                    <p className="text-muted-foreground italic text-center">
-                      基本応募条件が未設定です
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {profile?.application_requirements && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">詳細応募資格</h3>
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="whitespace-pre-line">{profile.application_requirements}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* アクセス情報 */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-primary" />
-                アクセス情報
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {profile?.address && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">住所</h3>
-                  <p>{profile.address}</p>
-                </div>
-              )}
-              
-              {profile?.access_info && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">アクセス方法</h3>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="whitespace-pre-line">{profile.access_info}</p>
-                  </div>
-                </div>
-              )}
-              
-              {!profile?.address && !profile?.access_info && (
-                <p className="text-muted-foreground italic text-center">
-                  アクセス情報が未設定です
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 安全対策 */}
-          {profile?.security_measures && (
-            <Card className="border shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2 text-primary" />
-                  安全対策
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="whitespace-pre-line">{profile.security_measures}</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-primary/30 text-primary hover:bg-primary/5" 
+                    onClick={() => window.open('/store/settings', '_blank')}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    プロフィール設定
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* 連絡先 */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-primary" />
-                連絡先
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {profile?.recruiter_name && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">担当者名</h3>
-                  <p>{profile.recruiter_name}</p>
+            {/* アクセス状況 */}
+            <Card className="overflow-hidden border-none shadow-sm">
+              <CardHeader className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10 border-b">
+                <CardTitle className="text-base flex items-center gap-2 font-medium">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  アクセス分析
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">今日のアクセス</h3>
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        +12% <span className="text-muted-foreground ml-1">前日比</span>
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
+                          {stats?.todayPageViews || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">総アクセス数</span>
+                      </div>
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
+                          {stats?.todayUniqueVisitors || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">ユニークユーザー</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">今月の統計</h3>
+                      <span className="text-xs text-muted-foreground">全期間</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
+                          {stats?.monthlyPageViews || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">月間アクセス</span>
+                      </div>
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
+                          {stats?.monthlyUniqueVisitors || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">ユニークユーザー</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-              
-              {profile?.phone_numbers && profile.phone_numbers.length > 0 && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">電話番号</h3>
-                  <ul className="space-y-1">
-                    {profile.phone_numbers.map((phone, index) => (
-                      <li key={index} className="flex items-center">
-                        <PhoneCall className="h-4 w-4 mr-2 text-primary/60" />
-                        <span>{phone}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {profile?.email_addresses && profile.email_addresses.length > 0 && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">メールアドレス</h3>
-                  <ul className="space-y-1">
-                    {profile.email_addresses.map((email, index) => (
-                      <li key={index} className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-primary/60" />
-                        <span>{email}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {profile?.pc_website_url && (
-                <div>
-                  <h3 className="text-md font-medium mb-3">ウェブサイト</h3>
-                  <p className="flex items-center">
-                    <Link className="h-4 w-4 mr-2 text-primary/60" />
-                    <a 
-                      href={profile.pc_website_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {profile.pc_website_url}
-                    </a>
-                  </p>
-                </div>
-              )}
-              
-              {!profile?.recruiter_name && 
-               (!profile?.phone_numbers || profile.phone_numbers.length === 0) && 
-               (!profile?.email_addresses || profile.email_addresses.length === 0) && 
-               !profile?.pc_website_url && (
-                <p className="text-muted-foreground italic text-center">
-                  連絡先情報が未設定です
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* ブログ記事 */}
-          <Card className="border shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center">
-                    <Newspaper className="h-5 w-5 mr-2 text-primary" />
-                    ブログ記事
+              </CardContent>
+            </Card>
+
+            {/* 掲載状況 */}
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/10 border-b pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-base flex items-center gap-2 font-medium">
+                    <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                      <ExternalLink className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    掲載情報
                   </CardTitle>
-                  <CardDescription>
-                    店舗ブログの管理と投稿を行います
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setLocation('/store/blog')}
-                    className="text-sm"
+                  <Badge 
+                    variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'} 
+                    className={stats?.storePlan === 'premium' ? 'bg-purple-500' : ''}
                   >
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    詳細管理
-                  </Button>
-                  <Button 
-                    onClick={() => setLocation('/store/blog/new')}
-                    className="text-sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    新規作成
-                  </Button>
+                    {planLabels[stats?.storePlan || 'free']}
+                  </Badge>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <BlogPostsList userId={user?.id} />
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="pt-5 pb-5">
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm font-medium">掲載エリア</span>
+                      <span className="font-medium text-sm">{stats?.storeArea || '未設定'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm font-medium">表示順位</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{stats?.displayRank || '-'}位</span>
+                        {stats?.displayRank && stats.displayRank <= 3 && (
+                          <Badge variant="default" className="bg-amber-500">上位表示</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm font-medium">公開ステータス</span>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={profile?.status === "published" ? "default" : "secondary"} className={profile?.status === "published" ? "bg-green-500" : ""}>
+                          {profileStatusLabels[profile?.status || "draft"]}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* 公開/非公開切り替えスイッチ */}
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">店舗情報公開設定</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {profile?.status === "published" 
+                              ? "現在、応募者に店舗情報が公開されています" 
+                              : "現在、応募者に店舗情報が公開されていません"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={profile?.status === "published"}
+                            onCheckedChange={(checked) => {
+                              // 確認メッセージを表示
+                              if (confirm(checked 
+                                ? "店舗情報を公開しますか？公開すると求職者に表示されます。" 
+                                : "店舗情報を非公開にしますか？非公開にすると求職者に表示されなくなります。")) {
+                                updateStatusMutation.mutate(checked ? "published" : "draft");
+                              }
+                            }}
+                            disabled={isUpdatingStatus || !profile}
+                          />
+                          {isUpdatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-muted/20 p-4 flex justify-center">
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setShowProfileForm(true)}>
+                  <FileEdit className="h-4 w-4 mr-2" />
+                  プラン情報を編集
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -644,13 +946,14 @@ export default function StoreDashboard() {
   );
 }
 
-// ブログ投稿一覧コンポーネント
+// ブログ記事一覧コンポーネント
 function BlogPostsList({ userId }: { userId?: number }) {
   const [, setLocation] = useLocation();
+  const MAX_TITLE_LENGTH = 30;
   const MAX_POSTS_TO_SHOW = 5;
 
   // ブログ記事の取得
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.BLOG_POSTS_STORE],
     queryFn: async () => {
       if (!userId) return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0 } };
@@ -660,6 +963,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
       params.append("limit", MAX_POSTS_TO_SHOW.toString());
       
       try {
+        // apiRequestを直接使用し、JSONを返すように修正
         const data = await apiRequest("GET", `${QUERY_KEYS.BLOG_POSTS_STORE}?${params.toString()}`);
         console.log("Blog posts fetch result:", data);
         return data;
@@ -669,12 +973,18 @@ function BlogPostsList({ userId }: { userId?: number }) {
       }
     },
     enabled: !!userId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 0, // キャッシュを無効化し、常に最新データを取得する
+    gcTime: 0, // v5ではcacheTimeの代わりにgcTimeを使用する
     retry: 2,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    refetchOnMount: 'always', // コンポーネントがマウントされるたびに再取得
+    refetchOnWindowFocus: true, // ウィンドウにフォーカスが戻ったときに再取得
   });
+
+  // タイトルを適切な長さにトリミングする
+  const trimTitle = (title: string) => {
+    if (title.length <= MAX_TITLE_LENGTH) return title;
+    return `${title.substring(0, MAX_TITLE_LENGTH)}...`;
+  };
 
   // 日付のフォーマット - ブログ記事のステータスを考慮
   const formatDate = (post: BlogPost) => {
@@ -711,15 +1021,15 @@ function BlogPostsList({ userId }: { userId?: number }) {
     switch (status) {
       case "published":
         return <Badge variant="default" className="bg-green-500/90 hover:bg-green-500/80">
-                <CheckCircle className="h-3 w-3 mr-1" />公開中
+                <CheckCircle className="h-3 w-3 mr-1" />{blogStatusLabels.published}
                </Badge>;
       case "scheduled":
         return <Badge variant="outline" className="border-amber-500 text-amber-500">
-                <Clock className="h-3 w-3 mr-1" />予約投稿
+                <Clock className="h-3 w-3 mr-1" />{blogStatusLabels.scheduled}
                </Badge>;
       default:
         return <Badge variant="secondary" className="bg-slate-200">
-                <Pencil className="h-3 w-3 mr-1" />下書き
+                <Pencil className="h-3 w-3 mr-1" />{blogStatusLabels.draft}
                </Badge>;
     }
   };
@@ -737,26 +1047,35 @@ function BlogPostsList({ userId }: { userId?: number }) {
     return (
       <div className="py-8 text-center">
         <AlertCircle className="h-8 w-8 mx-auto mb-4 text-destructive" />
-        <p className="text-muted-foreground">
-          ブログ記事の読み込みに失敗しました
-        </p>
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+        <p className="text-muted-foreground">ブログ記事の取得中にエラーが発生しました</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
           再読み込み
         </Button>
       </div>
     );
   }
 
-  if (!data || !data.posts || data.posts.length === 0) {
+  if (!data?.posts || data.posts.length === 0) {
     return (
-      <div className="py-8 text-center border rounded-md">
-        <Newspaper className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-        <p className="text-muted-foreground mb-4">
-          まだブログ記事がありません
+      <div className="text-center py-8 bg-muted/20 rounded-lg border border-dashed border-muted-foreground/30 p-8">
+        <div className="bg-muted/40 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+          <Newspaper className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-medium mb-2">まだブログ記事がありません</h3>
+        <p className="text-muted-foreground mb-6">
+          ブログ記事を作成して、お店の魅力をアピールしましょう。
         </p>
-        <Button onClick={() => setLocation('/store/blog/new')}>
+        <Button
+          onClick={() => setLocation('/store/blog/new')}
+          className="bg-primary/90 hover:bg-primary shadow-sm"
+        >
           <Plus className="h-4 w-4 mr-2" />
-          新規作成
+          記事を作成する
         </Button>
       </div>
     );
@@ -764,7 +1083,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
+      <div className="grid gap-4">
         {data.posts.map((post: BlogPost) => (
           <div key={post.id} className="flex items-center gap-3 p-3 bg-card hover:bg-muted/10 rounded-lg border transition-colors group">
             <div className="flex-shrink-0">
