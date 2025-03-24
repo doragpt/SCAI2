@@ -628,6 +628,55 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <p className="text-sm text-gray-500">※ 最低給与・最高給与の入力がある場合は従来の表示形式も併用されます</p>
           </div>
           
+          {/* 勤務時間帯 */}
+          <div className="p-5 border border-blue-200 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-3">勤務時間・シフト</h3>
+            <FormField
+              control={form.control}
+              name="working_hours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">勤務可能時間帯</FormLabel>
+                  <FormControl>
+                    <input
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="例：12:00～22:00、週末のみ可、自由出勤OK"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-blue-700 mt-2">※ 「早番/遅番」「週〇日〜OK」などシフトに関する情報も記載できます</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          {/* 応募条件 */}
+          <div className="p-5 border border-purple-200 bg-purple-50 rounded-lg">
+            <h3 className="font-semibold text-purple-900 mb-3">応募条件</h3>
+            <FormField
+              control={form.control}
+              name="requirements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">応募資格・条件</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="例：18歳以上（高校生不可）、未経験者歓迎、経験者優遇"
+                      className="min-h-[80px]"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-purple-700 mt-2">※ 年齢制限や必要な資格などを明記してください</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
           <div className="flex gap-4">
             <FormField
               control={form.control}
@@ -717,6 +766,54 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                       value={field.value || ''}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          {/* アクセス情報 */}
+          <div className="mt-6 p-5 border border-green-200 bg-green-50 rounded-lg">
+            <h3 className="font-semibold text-green-900 mb-3">アクセス情報</h3>
+            <FormField
+              control={form.control}
+              name="access_info"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">最寄り駅・アクセス</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="例：JR渋谷駅西口から徒歩5分、車・バイク通勤OK、送迎あり"
+                      className="min-h-[80px]"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-green-700 mt-2">※ 最寄り駅や交通手段など、アクセスに関する情報を記載してください</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          {/* セキュリティ・プライバシー対策 */}
+          <div className="mt-6 p-5 border border-indigo-200 bg-indigo-50 rounded-lg">
+            <h3 className="font-semibold text-indigo-900 mb-3">セキュリティ・プライバシー対策</h3>
+            <FormField
+              control={form.control}
+              name="security_measures"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">セキュリティ体制</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="例：個室待機、鍵付きロッカー完備、防犯カメラ設置、顔出しNG対応"
+                      className="min-h-[80px]"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-indigo-700 mt-2">※ 防犯対策や顔出しNGなどのプライバシー配慮について記載してください</p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1017,6 +1114,43 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     </div>
                   </div>
                 ))}
+
+                {/* 交通費と住居サポートのチェックボックス */}
+                <div className="mt-6 border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <h3 className="font-medium text-gray-700 mb-3 col-span-full">その他のサポート</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="transportation_support"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={!!field.value}
+                            onCheckedChange={(checked) => field.onChange(checked)}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">交通費支給あり</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="housing_support"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={!!field.value}
+                            onCheckedChange={(checked) => field.onChange(checked)}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">寮・住宅支援あり</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </FormItem>
             )}
           />
