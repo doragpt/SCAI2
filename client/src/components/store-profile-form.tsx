@@ -612,9 +612,18 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     <FormItem>
                       <FormLabel className="font-medium">勤務時間</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="例: 12:00～翌0:00（実働8時間）" 
+                        <Controller
+                          name="working_hours"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Input 
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="例: 12:00～翌0:00（実働8時間）" 
+                            />
+                          )}
                         />
                       </FormControl>
                       <FormDescription>
@@ -694,9 +703,15 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                          <Controller
+                            name="transportation_support"
+                            control={form.control}
+                            render={({ field }) => (
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                              />
+                            )}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
@@ -717,9 +732,15 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                          <Controller
+                            name="housing_support"
+                            control={form.control}
+                            render={({ field }) => (
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                              />
+                            )}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
@@ -763,7 +784,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                         <Badge variant="destructive" className="ml-2 text-[10px]">必須</Badge>
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="採用担当者の名前" />
+                        <Controller
+                          name="recruiter_name"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Input 
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="採用担当者の名前" 
+                            />
+                          )}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -888,7 +921,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                         <FormControl>
                           <div className="flex items-center">
                             <Link className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <Input {...field} placeholder="例: https://www.example.com" />
+                            <Controller
+                              name="pc_website_url"
+                              control={form.control}
+                              render={({ field }) => (
+                                <Input 
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                  ref={field.ref}
+                                  placeholder="例: https://www.example.com" 
+                                />
+                              )}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -905,7 +950,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                         <FormControl>
                           <div className="flex items-center">
                             <Link className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <Input {...field} placeholder="例: https://m.example.com" />
+                            <Controller
+                              name="mobile_website_url"
+                              control={form.control}
+                              render={({ field }) => (
+                                <Input 
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                  ref={field.ref}
+                                  placeholder="例: https://m.example.com" 
+                                />
+                              )}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -932,10 +989,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     <FormItem>
                       <FormLabel className="font-medium">所在地</FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="例: 東京都新宿区歌舞伎町1-1-1 〇〇ビル5F"
-                          className="min-h-[80px]"
+                        <Controller
+                          name="address"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Textarea
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="例: 東京都新宿区歌舞伎町1-1-1 〇〇ビル5F"
+                              className="min-h-[80px]"
+                            />
+                          )}
                         />
                       </FormControl>
                       <FormMessage />
@@ -950,10 +1016,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     <FormItem>
                       <FormLabel className="font-medium">アクセス情報</FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="例: JR新宿駅東口から徒歩5分"
-                          className="min-h-[80px]"
+                        <Controller
+                          name="access_info"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Textarea
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="例: JR新宿駅東口から徒歩5分"
+                              className="min-h-[80px]"
+                            />
+                          )}
                         />
                       </FormControl>
                       <FormMessage />
@@ -979,10 +1054,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     <FormItem>
                       <FormLabel className="font-medium">応募資格・メッセージ</FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="応募に必要な条件や、応募者へのメッセージを記入してください"
-                          className="min-h-[120px]"
+                        <Controller
+                          name="application_requirements"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Textarea
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="応募に必要な条件や、応募者へのメッセージを記入してください"
+                              className="min-h-[120px]"
+                            />
+                          )}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1008,10 +1092,19 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
                     <FormItem>
                       <FormLabel className="font-medium">セキュリティ対策・プライバシー配慮</FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="プライバシー保護や安全対策について記入してください"
-                          className="min-h-[120px]"
+                        <Controller
+                          name="security_measures"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Textarea
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              placeholder="プライバシー保護や安全対策について記入してください"
+                              className="min-h-[120px]"
+                            />
+                          )}
                         />
                       </FormControl>
                       <FormMessage />
