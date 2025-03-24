@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -993,6 +993,74 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                         </Button>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* SNS情報セクション */}
+                <div className="border border-slate-200 p-4 rounded-md mt-4">
+                  <h4 className="font-medium flex items-center mb-4">
+                    <MessageSquare className="h-4 w-4 mr-2" /> SNS情報（任意）
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="sns_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">LINE ID</FormLabel>
+                          <FormControl>
+                            <input
+                              type="text"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="例：line_id123"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sns_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">LINE URL</FormLabel>
+                          <FormControl>
+                            <input
+                              type="text"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="例：https://line.me/ti/p/～"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sns_text"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">LINE 案内テキスト</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="例：LINEで気軽にお問い合わせください！24時間受付中です。"
+                              className="min-h-[80px]"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
               </div>
