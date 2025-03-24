@@ -52,13 +52,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         benefits: data.benefits || [],
       };
 
-      const response = await apiRequest("PATCH", "/api/store/profile", formattedData);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "店舗情報の保存に失敗しました");
-      }
-
-      return response.json();
+      // apiRequest関数は既にJSONレスポンスを返すため、直接返せる
+      return await apiRequest("PATCH", "/api/store/profile", formattedData);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ 
