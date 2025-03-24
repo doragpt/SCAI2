@@ -12,7 +12,14 @@ export function getServiceTypeLabel(serviceType: ServiceType | "all"): string {
   return serviceTypeLabels[serviceType] || serviceType;
 }
 
-// 給与表示のフォーマット
+/**
+ * 給与情報を計算・フォーマットする関数
+ * 
+ * @param min 最低日給保証
+ * @param max 最高日給保証
+ * @param workingTimeHours 勤務時間（時間）
+ * @param averageHourlyPay 平均時給
+ */
 export function formatSalary(
   min?: number | null, 
   max?: number | null, 
@@ -20,33 +27,50 @@ export function formatSalary(
   averageHourlyPay?: number | null
 ): string {
   // 給与表示のロジックを統一
+  const hasHourlyInfo = workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0;
+  const hasGuaranteeInfo = (min && min > 0) || (max && max > 0);
 
-  // 1. 時給換算情報がある場合のフォーマット
-  if (workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0) {
-    // 時給を計算
+  // 完全な給与情報がある場合（時給換算可能 + 日給保証あり）
+  if (hasHourlyInfo && hasGuaranteeInfo) {
     const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
-    
-    // 最低・最高保証もある場合は、両方の情報を表示
-    if ((min && min > 0) || (max && max > 0)) {
-      const guaranteeText = formatGuaranteeRange(min, max);
-      return `${guaranteeText}（${workingTimeHours}時間勤務 / 時給換算${hourlyRate.toLocaleString()}円）`;
-    }
-    
-    // 時給換算のみの場合
-    return `${workingTimeHours}時間勤務で${averageHourlyPay.toLocaleString()}円（時給換算${hourlyRate.toLocaleString()}円）`;
+    const guaranteeText = formatGuaranteeRange(min, max);
+    return `日給${guaranteeText} / ${workingTimeHours}時間勤務 / 時給換算${hourlyRate.toLocaleString()}円`;
   }
   
-  // 2. 従来の最低保証・最高保証のみの場合
-  return formatGuaranteeRange(min, max);
+  // 時給換算情報のみの場合
+  if (hasHourlyInfo) {
+    const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
+    return `${workingTimeHours}時間で${averageHourlyPay.toLocaleString()}円 (時給換算: ${hourlyRate.toLocaleString()}円)`;
+  }
+  
+  // 日給保証のみの場合
+  if (hasGuaranteeInfo) {
+    return `日給${formatGuaranteeRange(min, max)}`;
+  }
+  
+  // どちらの情報もない場合
+  return "給与応相談";
 }
 
-// 最低保証・最高保証の範囲を整形する補助関数
+/**
+ * 最低保証・最高保証の範囲を整形する関数
+ * 
+ * @param min 最低日給保証
+ * @param max 最高日給保証
+ */
 function formatGuaranteeRange(min?: number | null, max?: number | null): string {
-  if (min === null && max === null) return "応相談";
-  if (min === 0 && max === 0) return "応相談";
-  if (max === null || max === 0) return `${min?.toLocaleString()}円〜`;
-  if (min === null || min === 0) return `〜${max?.toLocaleString()}円`;
-  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
+  if (!min && !max) return "応相談";
+  if ((min === 0 || min === null) && (max === 0 || max === null)) return "応相談";
+  
+  if (!max || max === 0) {
+    return `${min?.toLocaleString()}円〜`;
+  }
+  
+  if (!min || min === 0) {
+    return `〜${max.toLocaleString()}円`;
+  }
+  
+  return `${min.toLocaleString()}円〜${max.toLocaleString()}円`;
 }
 
 // 日付フォーマットのユーティリティ
