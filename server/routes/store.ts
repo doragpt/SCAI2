@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db, pool } from '../db';
-import { store_profiles, storeProfileSchema, applications } from '@shared/schema';
+import { store_profiles, storeProfileSchema, applications, allBenefitTypes, BenefitType } from '@shared/schema';
 import { eq, and, gte, sql, count } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
@@ -9,6 +9,15 @@ import { authenticate, authorize } from '../middleware/auth';
 function validateArrayField(field: any): string[] {
   if (Array.isArray(field)) {
     return field.filter((item): item is string => typeof item === 'string');
+  }
+  return [];
+}
+function validateBenefits(benefits: any): BenefitType[] {
+  if (Array.isArray(benefits)) {
+    // 有効なbenefit項目のみをフィルタリング
+    return benefits.filter((benefit): benefit is BenefitType => 
+      typeof benefit === 'string' && allBenefitTypes.includes(benefit as any)
+    );
   }
   return [];
 }
@@ -150,7 +159,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           service_type: fullData.service_type,
           catch_phrase: fullData.catch_phrase,
           description: fullData.description,
-          benefits: validateArrayField(fullData.benefits),
+          benefits: validateBenefits(fullData.benefits),
           minimum_guarantee: fullData.minimum_guarantee,
           maximum_guarantee: fullData.maximum_guarantee,
           working_time_hours: fullData.working_time_hours,
@@ -277,7 +286,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       .set({
         catch_phrase: fullUpdateData.catch_phrase,
         description: fullUpdateData.description,
-        benefits: validateArrayField(fullUpdateData.benefits),
+        benefits: validateBenefits(fullUpdateData.benefits),
         minimum_guarantee: fullUpdateData.minimum_guarantee,
         maximum_guarantee: fullUpdateData.maximum_guarantee,
         working_time_hours: fullUpdateData.working_time_hours,
