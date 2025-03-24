@@ -189,7 +189,9 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         // 必須項目
         working_hours: data.working_hours || "",
-        requirements: data.requirements || "",
+        requirements: typeof data.requirements === 'string' 
+          ? { other_conditions: [data.requirements] } // 文字列の場合はオブジェクトに変換
+          : (data.requirements || { other_conditions: [] }),
       };
       
       console.log("送信データ:", formattedData);
@@ -636,6 +638,256 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     </FormItem>
                   )}
                 />
+              </div>
+              
+              {/* 特典・待遇セクションの追加 */}
+              <div className="p-5 border border-green-200 bg-green-50 rounded-lg mt-4">
+                <h3 className="font-semibold text-green-900 mb-3">特典・待遇</h3>
+                <p className="text-sm text-green-700 mb-4">
+                  様々な特典・待遇のオプションから選択して、求職者に分かりやすくアピールしましょう。
+                </p>
+                
+                <div className="space-y-6">
+                  {/* 面接・入店前 */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">面接・入店前</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.interview).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* 働き方自由 */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">働き方自由</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.workStyle).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* お給料目安 */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">お給料目安</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.salary).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* お給料+α */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">お給料+α</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.bonus).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* お店の環境 */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">お店の環境</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.facility).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* 採用について */}
+                  <div>
+                    <h4 className="font-medium text-green-800 mb-2">採用について</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {Object.values(benefitTypes.requirements).map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={benefit}
+                                className="flex flex-row items-start space-x-2 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(benefit) || false}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, benefit])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== benefit
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {benefit}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </TabsContent>
