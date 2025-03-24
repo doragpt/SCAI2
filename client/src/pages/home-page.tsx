@@ -97,13 +97,8 @@ const areaStats: AreaStats = {
   "九州・沖縄": 234,
 };
 
-// 給与表示のフォーマッター
-const formatSalary = (min?: number | null, max?: number | null): string => {
-  if (!min && !max) return "応相談";
-  if (!max) return `${min?.toLocaleString()}円〜`;
-  if (!min) return `〜${max?.toLocaleString()}円`;
-  return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
-};
+// 共通のユーティリティ関数を使用
+import { formatSalary } from "@/lib/utils";
 
 // お仕事ガイド
 const workGuides = [
@@ -175,7 +170,12 @@ const JobCard = ({ job }: { job: JobResponse }) => {
           <div className="space-y-4">
             <div className="flex items-center text-primary font-semibold">
               <Banknote className="h-5 w-5 mr-2" />
-              <span>日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}</span>
+              <span>日給 {formatSalary(
+                job.minimumGuarantee, 
+                job.maximumGuarantee,
+                job.workingTimeHours,
+                job.averageHourlyPay
+              )}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {job.transportationSupport && (
