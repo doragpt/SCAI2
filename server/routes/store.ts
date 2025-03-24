@@ -155,6 +155,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       status: req.body.status || existingProfile.status,
       top_image: req.body.top_image || existingProfile.top_image,
       
+      // 勤務時間と応募条件
+      working_hours: req.body.working_hours || existingProfile.working_hours || "",
+      requirements: req.body.requirements || existingProfile.requirements || "",
+      
       // 追加フィールド
       recruiter_name: req.body.recruiter_name,
       phone_numbers: req.body.phone_numbers || [],
@@ -172,6 +176,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 応募要件
       application_requirements: req.body.application_requirements || existingProfile.application_requirements || "",
+      
+      // アクセス情報とセキュリティ対策
+      access_info: req.body.access_info || existingProfile.access_info || "",
+      security_measures: req.body.security_measures || existingProfile.security_measures || "",
       
       // 各種サポート情報
       transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : (existingProfile.transportation_support || false),
@@ -194,6 +202,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       status: updateData.status,
       top_image: updateData.top_image,
       
+      // 勤務時間と応募条件
+      working_hours: updateData.working_hours,
+      requirements: updateData.requirements,
+      
       // 追加フィールド
       recruiter_name: updateData.recruiter_name,
       phone_numbers: updateData.phone_numbers,
@@ -211,6 +223,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 応募要件
       application_requirements: updateData.application_requirements,
+      
+      // アクセス情報とセキュリティ対策
+      access_info: updateData.access_info,
+      security_measures: updateData.security_measures,
       
       // 各種サポート情報
       transportation_support: updateData.transportation_support,
@@ -236,6 +252,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               status = ${fullUpdateData.status},
               top_image = ${fullUpdateData.top_image},
 
+              -- 勤務時間とrequirementsフィールドを追加
+              working_hours = ${req.body.working_hours || existingProfile.working_hours || ""},
+              requirements = ${req.body.requirements || existingProfile.requirements || ""},
+
               -- 追加フィールド
               recruiter_name = ${fullUpdateData.recruiter_name},
               phone_numbers = ${JSON.stringify(fullUpdateData.phone_numbers)},
@@ -253,6 +273,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
 
               -- 応募要件
               application_requirements = ${fullUpdateData.application_requirements},
+              
+              -- アクセス情報とセキュリティ情報
+              access_info = ${req.body.access_info || existingProfile.access_info || ""},
+              security_measures = ${req.body.security_measures || existingProfile.security_measures || ""},
 
               -- 各種サポート情報
               transportation_support = ${fullUpdateData.transportation_support},
