@@ -604,41 +604,15 @@ export default function BlogManagement() {
                       <TableCell className="hidden md:table-cell">
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            {format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
+                            {formatBlogDate(post.created_at, "yyyy/MM/dd")}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {format(new Date(post.created_at || new Date()), "HH:mm", { locale: ja })}
+                            {formatBlogDate(post.created_at, "HH:mm")}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {post.status === 'published' ? (
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">
-                              {post.published_at 
-                                ? format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })
-                                : format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {post.published_at 
-                                ? format(new Date(post.published_at), "HH:mm", { locale: ja })
-                                : format(new Date(post.created_at || new Date()), "HH:mm", { locale: ja })}
-                              {!post.published_at && <span className="ml-1">(作成日時)</span>}
-                            </span>
-                          </div>
-                        ) : post.status === 'scheduled' && post.scheduled_at ? (
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">
-                              {format(new Date(post.scheduled_at), "yyyy/MM/dd", { locale: ja })}
-                            </span>
-                            <span className="text-xs text-amber-600 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {format(new Date(post.scheduled_at), "HH:mm", { locale: ja })}（予定）
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                        <BlogDateDisplay post={post} />
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
