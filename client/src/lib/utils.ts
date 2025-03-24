@@ -25,7 +25,7 @@ export function formatSalary(
     return `${workingTimeHours}時間勤務の平均給与${totalPay.toLocaleString()}円`;
   }
   
-  // 従来の最低保証・最高保証表示
+  // 従来の最低保証・最高保証表示（後方互換性のため残しておく）
   if (min === null && max === null) return "応相談";
   if (max === null) return `${min?.toLocaleString()}円〜`;
   if (min === null) return `〜${max?.toLocaleString()}円`;
