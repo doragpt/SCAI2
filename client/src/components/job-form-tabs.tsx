@@ -153,51 +153,49 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       try {
         // データを整形
         const formattedData = {
-          // 基本項目
+          // 基本情報
           catch_phrase: data.catch_phrase || "",
           description: data.description || "",
           top_image: data.top_image || "",
-          recruiter_name: data.recruiter_name || "",
           
-          // 数値項目
+          // 給与・待遇情報
+          benefits: data.benefits || [],
           minimum_guarantee: Number(data.minimum_guarantee) || 0,
           maximum_guarantee: Number(data.maximum_guarantee) || 0,
           working_time_hours: Number(data.working_time_hours) || 0,
           average_hourly_pay: Number(data.average_hourly_pay) || 0,
-          
-          // 配列と特別な項目
           status: data.status || "draft",
-          benefits: data.benefits || [],
-          phone_numbers: data.phone_numbers,
-          email_addresses: data.email_addresses,
+          requirements: data.requirements || "",
+          working_hours: data.working_hours || "",
+          transportation_support: data.transportation_support || false,
+          housing_support: data.housing_support || false,
           
-          // 文字列項目
+          // 連絡先情報（必須項目）
           address: data.address || "",
+          recruiter_name: data.recruiter_name || "", // 必須項目
+          phone_numbers: data.phone_numbers.filter(p => p.trim() !== ''), // 必須項目、最低1つ
+          email_addresses: data.email_addresses?.filter(e => e.trim() !== '') || [],
+          
+          // SNS情報
           sns_id: data.sns_id || "",
           sns_url: data.sns_url || "",
           sns_text: data.sns_text || "",
+          
+          // ウェブサイト情報
           pc_website_url: data.pc_website_url || "",
           mobile_website_url: data.mobile_website_url || "",
-          application_requirements: data.application_requirements || "",
           
-          // 新規追加項目
+          // 応募要件・アクセス情報
+          application_requirements: data.application_requirements || "",
           access_info: data.access_info || "",
           security_measures: data.security_measures || "",
-          
-          // benefits内に含まれるため削除（交通費支給、寮完備）
-          transportation_support: false,
-          housing_support: false,
-          
-          // 必須項目
-          working_hours: data.working_hours || "",
-          requirements: data.requirements || "",
         };
         
         console.log("送信データ:", formattedData);
         
         // フェッチAPIを直接使用して詳細なエラーハンドリングを実装
         // app.tsでは /api/store のエンドポイント設定があり、store.tsでは /profile を処理
-        const response = await fetch('/store/profile', {
+        const response = await fetch('/api/store/profile', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
