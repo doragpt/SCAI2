@@ -5,6 +5,14 @@ import { eq, and, gte, sql, count } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
 
+// 配列フィールドを安全に処理するヘルパー関数
+function validateArrayField(field: any): string[] {
+  if (Array.isArray(field)) {
+    return field.filter((item): item is string => typeof item === 'string');
+  }
+  return [];
+}
+
 const router = Router();
 
 // ルータレベルのミドルウェアでリクエストをログ出力
@@ -132,41 +140,27 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         updated_at: insertData.updated_at
       };
 
-      // 安全なJSON文字列に変換
-      const benefitsStr = JSON.stringify(fullData.benefits || []);
-      
-      // insert処理を実行
-      const insertQuery = `
-        INSERT INTO store_profiles 
-        (user_id, business_name, location, service_type, catch_phrase, description, 
-         benefits, minimum_guarantee, maximum_guarantee, working_time_hours, average_hourly_pay, 
-         status, top_image, created_at, updated_at)
-        VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        RETURNING *
-      `;
-      
-      const insertParams = [
-        fullData.user_id, 
-        fullData.business_name, 
-        fullData.location, 
-        fullData.service_type, 
-        fullData.catch_phrase, 
-        fullData.description, 
-        benefitsStr,
-        fullData.minimum_guarantee, 
-        fullData.maximum_guarantee, 
-        fullData.working_time_hours, 
-        fullData.average_hourly_pay, 
-        fullData.status, 
-        fullData.top_image, 
-        fullData.created_at, 
-        fullData.updated_at
-      ];
-      
-      // poolを直接使用
-      const insertResult = await pool.query(insertQuery, insertParams);
-      const newProfile = insertResult.rows[0];
+      // Drizzleを使用して直接挿入
+      const [newProfile] = await db
+        .insert(store_profiles)
+        .values({
+          user_id: fullData.user_id,
+          business_name: fullData.business_name,
+          location: fullData.location,
+          service_type: fullData.service_type,
+          catch_phrase: fullData.catch_phrase,
+          description: fullData.description,
+          benefits: validateArrayField(fullData.benefits),
+          minimum_guarantee: fullData.minimum_guarantee,
+          maximum_guarantee: fullData.maximum_guarantee,
+          working_time_hours: fullData.working_time_hours,
+          average_hourly_pay: fullData.average_hourly_pay,
+          status: fullData.status,
+          top_image: fullData.top_image,
+          created_at: fullData.created_at,
+          updated_at: fullData.updated_at
+        })
+        .returning();
 
       log('info', '店舗プロフィール作成成功', {
         userId: req.user.id,
@@ -241,8 +235,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 追加フィールド
       recruiter_name: updateData.recruiter_name,
-      phone_numbers: updateData.phone_numbers,
-      email_addresses: updateData.email_addresses,
+      phone_numbers: updateData.phone_numbers || [],
+      email_addresses: updateData.email_addresses || [],
       address: updateData.address,
       
       // SNS情報
@@ -283,7 +277,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       .set({
         catch_phrase: fullUpdateData.catch_phrase,
         description: fullUpdateData.description,
-        benefits: fullUpdateData.benefits,
+        benefits: validateArrayField(fullUpdateData.benefits),
         minimum_guarantee: fullUpdateData.minimum_guarantee,
         maximum_guarantee: fullUpdateData.maximum_guarantee,
         working_time_hours: fullUpdateData.working_time_hours,
@@ -293,8 +287,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         working_hours: fullUpdateData.working_hours,
         requirements: fullUpdateData.requirements,
         recruiter_name: fullUpdateData.recruiter_name,
-        phone_numbers: fullUpdateData.phone_numbers,
-        email_addresses: fullUpdateData.email_addresses,
+        phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
+        email_addresses: validateArrayField(fullUpdateData.email_addresses),
         address: fullUpdateData.address,
         sns_id: fullUpdateData.sns_id,
         sns_url: fullUpdateData.sns_url,
