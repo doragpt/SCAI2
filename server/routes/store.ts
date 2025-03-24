@@ -27,6 +27,8 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
         benefits: store_profiles.benefits,
         minimum_guarantee: store_profiles.minimum_guarantee,
         maximum_guarantee: store_profiles.maximum_guarantee,
+        working_time_hours: store_profiles.working_time_hours,
+        average_hourly_pay: store_profiles.average_hourly_pay,
         status: store_profiles.status,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
@@ -133,12 +135,14 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       const result = await db.execute(
         sql`INSERT INTO store_profiles 
             (user_id, business_name, location, service_type, catch_phrase, description, 
-             benefits, minimum_guarantee, maximum_guarantee, status, created_at, updated_at)
+             benefits, minimum_guarantee, maximum_guarantee, working_time_hours, average_hourly_pay, 
+             status, created_at, updated_at)
             VALUES 
             (${fullData.user_id}, ${fullData.business_name}, ${fullData.location}, ${fullData.service_type}, 
              ${fullData.catch_phrase}, ${fullData.description}, ${JSON.stringify(fullData.benefits)}, 
-             ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, ${fullData.status},
-             ${fullData.created_at}, ${fullData.updated_at})
+             ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, 
+             ${fullData.working_time_hours}, ${fullData.average_hourly_pay}, 
+             ${fullData.status}, ${fullData.created_at}, ${fullData.updated_at})
             RETURNING *`
       );
       
@@ -193,6 +197,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               benefits = ${JSON.stringify(fullUpdateData.benefits)},
               minimum_guarantee = ${fullUpdateData.minimum_guarantee},
               maximum_guarantee = ${fullUpdateData.maximum_guarantee},
+              working_time_hours = ${fullUpdateData.working_time_hours},
+              average_hourly_pay = ${fullUpdateData.average_hourly_pay},
               status = ${fullUpdateData.status},
               updated_at = ${fullUpdateData.updated_at}
           WHERE user_id = ${req.user.id}
@@ -247,6 +253,8 @@ router.get("/stats", authenticate, authorize("store"), async (req: any, res) => 
         benefits: store_profiles.benefits,
         minimum_guarantee: store_profiles.minimum_guarantee,
         maximum_guarantee: store_profiles.maximum_guarantee,
+        working_time_hours: store_profiles.working_time_hours,
+        average_hourly_pay: store_profiles.average_hourly_pay,
         status: store_profiles.status,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
