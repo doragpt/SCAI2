@@ -831,6 +831,8 @@ export interface JobResponse {
   housingSupport: boolean;
   minimumGuarantee: number | null;
   maximumGuarantee: number | null;
+  workingTimeHours?: number | null;    // 勤務時間（時間単位）
+  averageHourlyPay?: number | null;    // 時給平均（円）
   workingHours: string;
   requirements: string;
   benefits: BenefitType[];

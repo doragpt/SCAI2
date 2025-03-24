@@ -93,6 +93,15 @@ export default function JobDetail() {
   }
 
   const calculateMonthlyIncome = () => {
+    // 時給方式の場合
+    if (job.workingTimeHours && job.workingTimeHours > 0 && job.averageHourlyPay && job.averageHourlyPay > 0) {
+      const dailyIncome = job.workingTimeHours * job.averageHourlyPay;
+      const monthlyIncome = dailyIncome * workingDays;
+      // 時給方式の場合は最小値と最大値を同じにする
+      return { monthlyMin: monthlyIncome, monthlyMax: monthlyIncome };
+    }
+    
+    // 従来の最低保証・最高保証方式
     const dailyMin = job.minimumGuarantee || 0;
     const dailyMax = job.maximumGuarantee || 0;
     const monthlyMin = dailyMin * workingDays;
@@ -110,7 +119,12 @@ export default function JobDetail() {
 
   const seoData: SEOProps = {
     title: `${job.businessName}の求人情報`,
-    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。日給${formatSalary(job.minimumGuarantee, job.maximumGuarantee)}。交通費支給、寮完備など充実した待遇をご用意。`,
+    description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。日給${formatSalary(
+      job.minimumGuarantee, 
+      job.maximumGuarantee,
+      job.workingTimeHours,
+      job.averageHourlyPay
+    )}。交通費支給、寮完備など充実した待遇をご用意。`,
     jobPosting: {
       title: `${job.businessName}スタッフ募集`,
       description: `${job.location}エリアの${getServiceTypeLabel(job.serviceType as ServiceType)}求人。未経験者歓迎、充実した待遇をご用意しています。`,
@@ -127,11 +141,17 @@ export default function JobDetail() {
         addressLocality: job.location,
         addressRegion: "東京都",
       },
-      baseSalary: {
-        minValue: job.minimumGuarantee || 0,
-        maxValue: job.maximumGuarantee || 0,
-        currency: "JPY",
-      },
+      baseSalary: job.workingTimeHours && job.averageHourlyPay 
+        ? { 
+            minValue: job.workingTimeHours * job.averageHourlyPay, 
+            maxValue: job.workingTimeHours * job.averageHourlyPay, 
+            currency: "JPY" 
+          }
+        : {
+            minValue: job.minimumGuarantee || 0,
+            maxValue: job.maximumGuarantee || 0,
+            currency: "JPY",
+          },
     },
   };
 

@@ -67,7 +67,12 @@ const JobCard = ({ job }: { job: JobResponse }) => {
             <div className="space-y-4">
               <div className="flex items-center text-primary font-semibold">
                 <Banknote className="h-5 w-5 mr-2" />
-                日給 {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
+                日給 {formatSalary(
+                  job.minimumGuarantee, 
+                  job.maximumGuarantee,
+                  job.workingTimeHours,
+                  job.averageHourlyPay
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {job.transportationSupport && (
