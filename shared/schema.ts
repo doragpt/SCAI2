@@ -232,6 +232,8 @@ export const store_profiles = pgTable("store_profiles", {
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
   minimum_guarantee: integer("minimum_guarantee").default(0),
   maximum_guarantee: integer("maximum_guarantee").default(0),
+  working_time_hours: integer("working_time_hours").default(0),
+  average_hourly_pay: integer("average_hourly_pay").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
   requirements: jsonb("requirements").$type<any>().default({}),
   working_hours: text("working_hours"),
