@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { store_profiles, storeProfileSchema, applications } from '@shared/schema';
 import { eq, and, gte, sql, count } from 'drizzle-orm';
 import { log } from '../utils/logger';
@@ -277,78 +277,39 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       profileId: existingProfile.id
     });
     
-    // JSON配列データを安全に処理
-    const benefitsStr = JSON.stringify(fullUpdateData.benefits || []);
-    const phoneNumbersStr = JSON.stringify(fullUpdateData.phone_numbers || []);
-    const emailAddressesStr = JSON.stringify(fullUpdateData.email_addresses || []);
-    
-    // PostgreSQL用のSQL文で直接実行（jsonb型の処理を明示的に行う）
-    const updateQuery = `
-      UPDATE store_profiles
-      SET catch_phrase = $1,
-          description = $2,
-          benefits = $3::jsonb,
-          minimum_guarantee = $4,
-          maximum_guarantee = $5,
-          working_time_hours = $6,
-          average_hourly_pay = $7,
-          status = $8,
-          top_image = $9,
-          working_hours = $10,
-          requirements = $11,
-          recruiter_name = $12,
-          phone_numbers = $13::jsonb,
-          email_addresses = $14::jsonb,
-          address = $15,
-          sns_id = $16,
-          sns_url = $17,
-          sns_text = $18,
-          pc_website_url = $19,
-          mobile_website_url = $20,
-          application_requirements = $21,
-          access_info = $22,
-          security_measures = $23,
-          transportation_support = $24,
-          housing_support = $25,
-          updated_at = $26
-      WHERE user_id = $27
-      RETURNING *
-    `;
-    
-    // パラメーターを配列として準備
-    const params = [
-      fullUpdateData.catch_phrase,
-      fullUpdateData.description,
-      benefitsStr,
-      fullUpdateData.minimum_guarantee,
-      fullUpdateData.maximum_guarantee,
-      fullUpdateData.working_time_hours,
-      fullUpdateData.average_hourly_pay,
-      fullUpdateData.status,
-      fullUpdateData.top_image,
-      fullUpdateData.working_hours,
-      fullUpdateData.requirements,
-      fullUpdateData.recruiter_name,
-      phoneNumbersStr,
-      emailAddressesStr,
-      fullUpdateData.address,
-      fullUpdateData.sns_id,
-      fullUpdateData.sns_url,
-      fullUpdateData.sns_text,
-      fullUpdateData.pc_website_url,
-      fullUpdateData.mobile_website_url,
-      fullUpdateData.application_requirements,
-      fullUpdateData.access_info,
-      fullUpdateData.security_measures,
-      fullUpdateData.transportation_support,
-      fullUpdateData.housing_support,
-      fullUpdateData.updated_at,
-      req.user.id
-    ];
-    
-    // Drizzleのsql.rawの代わりにpoolを直接使用
-    const updateResult = await pool.query(updateQuery, params);
-    const updatedProfile = updateResult.rows[0];
+    // DrizzleのupdateOne操作を使用
+    const [updatedProfile] = await db
+      .update(store_profiles)
+      .set({
+        catch_phrase: fullUpdateData.catch_phrase,
+        description: fullUpdateData.description,
+        benefits: fullUpdateData.benefits,
+        minimum_guarantee: fullUpdateData.minimum_guarantee,
+        maximum_guarantee: fullUpdateData.maximum_guarantee,
+        working_time_hours: fullUpdateData.working_time_hours,
+        average_hourly_pay: fullUpdateData.average_hourly_pay,
+        status: fullUpdateData.status,
+        top_image: fullUpdateData.top_image,
+        working_hours: fullUpdateData.working_hours,
+        requirements: fullUpdateData.requirements,
+        recruiter_name: fullUpdateData.recruiter_name,
+        phone_numbers: fullUpdateData.phone_numbers,
+        email_addresses: fullUpdateData.email_addresses,
+        address: fullUpdateData.address,
+        sns_id: fullUpdateData.sns_id,
+        sns_url: fullUpdateData.sns_url,
+        sns_text: fullUpdateData.sns_text,
+        pc_website_url: fullUpdateData.pc_website_url,
+        mobile_website_url: fullUpdateData.mobile_website_url,
+        application_requirements: fullUpdateData.application_requirements,
+        access_info: fullUpdateData.access_info,
+        security_measures: fullUpdateData.security_measures,
+        transportation_support: fullUpdateData.transportation_support,
+        housing_support: fullUpdateData.housing_support,
+        updated_at: fullUpdateData.updated_at
+      })
+      .where(eq(store_profiles.user_id, req.user.id))
+      .returning();
     
     log('info', '店舗プロフィール更新成功', {
       userId: req.user.id,
