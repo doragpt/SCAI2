@@ -240,6 +240,17 @@ export const store_profiles = pgTable("store_profiles", {
   working_hours: text("working_hours"),
   transportation_support: boolean("transportation_support").default(false),
   housing_support: boolean("housing_support").default(false),
+  // 新規追加項目
+  address: text("address"), // 住所（任意）
+  recruiter_name: text("recruiter_name"), // 採用担当者名（必須）
+  phone_numbers: jsonb("phone_numbers").$type<string[]>().default([]).notNull(), // 電話番号（最大4つ、最低1つ必須）
+  email_addresses: jsonb("email_addresses").$type<string[]>().default([]).notNull(), // メールアドレス（最大4つ、任意）
+  sns_id: text("sns_id"), // SNS ID（任意）
+  sns_url: text("sns_url"), // SNS追加用URL（任意）
+  sns_text: text("sns_text"), // SNSテキスト（任意）
+  pc_website_url: text("pc_website_url"), // PCオフィシャルサイト（任意）
+  mobile_website_url: text("mobile_website_url"), // スマホオフィシャルサイト（任意）
+  application_requirements: text("application_requirements"), // 応募資格（任意）
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -375,6 +386,7 @@ export const jobRequirementsSchema = z.object({
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
 export const storeProfileSchema = z.object({
+  // 基本情報
   catch_phrase: z.string()
     .min(1, "キャッチコピーを入力してください")
     .max(300, "キャッチコピーは300文字以内で入力してください"),
@@ -382,6 +394,8 @@ export const storeProfileSchema = z.object({
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
   top_image: z.string().optional(), // 店舗TOP画像のURL
+  
+  // 待遇情報
   benefits: z.array(z.enum(allBenefitTypes)).default([]),
   minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
   maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
@@ -392,6 +406,33 @@ export const storeProfileSchema = z.object({
   working_hours: z.string().optional(),
   transportation_support: z.boolean().default(false),
   housing_support: z.boolean().default(false),
+  
+  // 新規追加項目
+  address: z.string().optional(), // 住所（任意）
+  recruiter_name: z.string().min(1, "採用担当者名を入力してください"), // 採用担当者名（必須）
+  
+  // 連絡先情報
+  phone_numbers: z.array(z.string())
+    .min(1, "電話番号を少なくとも1つ入力してください")
+    .max(4, "電話番号は最大4つまで登録できます")
+    .default([]), // 電話番号（最大4つ、最低1つ必須）
+  
+  email_addresses: z.array(z.string()
+    .email("有効なメールアドレスを入力してください"))
+    .max(4, "メールアドレスは最大4つまで登録できます")
+    .default([]), // メールアドレス（最大4つ、任意）
+  
+  // SNS情報
+  sns_id: z.string().optional(), // SNS ID（任意）
+  sns_url: z.string().url("有効なURLを入力してください").optional(), // SNS追加用URL（任意）
+  sns_text: z.string().max(100, "SNSテキストは100文字以内で入力してください").optional(), // SNSテキスト（任意）
+  
+  // ウェブサイト情報
+  pc_website_url: z.string().url("有効なURLを入力してください").optional(), // PCオフィシャルサイト（任意）
+  mobile_website_url: z.string().url("有効なURLを入力してください").optional(), // スマホオフィシャルサイト（任意）
+  
+  // 応募要件
+  application_requirements: z.string().max(1000, "応募資格は1000文字以内で入力してください").optional(), // 応募資格（任意）
 });
 
 export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
