@@ -890,4 +890,16 @@ export interface JobResponse {
   status: JobStatus;
   createdAt: Date;
   updatedAt: Date;
+  
+  // 店舗詳細ページ用の追加フィールド
+  top_image?: string;             // トップ画像
+  address?: string;               // 住所
+  access_info?: string;           // アクセス情報
+  security_measures?: string;     // セキュリティ対策
+  recruiter_name?: string;        // 採用担当者名
+  phone_numbers?: string[];       // 電話番号リスト
+  email_addresses?: string[];     // メールアドレスリスト
+  pc_website_url?: string;        // PCサイトURL
+  mobile_website_url?: string;    // モバイルサイトURL
+  application_requirements?: string; // 応募条件
 }
