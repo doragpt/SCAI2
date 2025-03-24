@@ -49,8 +49,6 @@ import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
-
-// 店舗情報表示用コンポーネントインポート
 import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
 import { LocationDisplay } from "@/components/store/LocationDisplay";
@@ -723,201 +721,78 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 給与・待遇・勤務時間 */}
+                        {/* 給与・待遇・福利厚生（コンポーネント化） */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* 給与・待遇情報 */}
+                          {/* 給与・待遇情報 - SalaryDisplayコンポーネントを使用 */}
                           <div className="bg-card rounded-lg border shadow-sm p-6">
                             <h3 className="text-lg font-semibold flex items-center mb-4">
                               <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
                               <span>給与・待遇</span>
                             </h3>
                             
-                            <div className="space-y-4">
-                              {/* 給与情報 */}
-                              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-                                <h4 className="font-medium text-emerald-700 mb-3 text-sm flex items-center">
-                                  <div className="p-1 bg-white rounded-full mr-2 border border-emerald-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                                      <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                                      <line x1="2" y1="10" x2="22" y2="10"></line>
-                                    </svg>
-                                  </div>
-                                  給与
-                                </h4>
-                                
-                                {/* 勤務時間に対しての平均日給 */}
-                                {profile.working_time_hours && profile.average_hourly_pay ? (
-                                  <div className="mb-4 border-b border-emerald-100 pb-3">
-                                    <div className="font-medium text-sm text-emerald-800 mb-1">勤務時間に対しての平均日給</div>
-                                    <div className="font-bold text-lg text-emerald-800">
-                                      {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
-                                    </div>
-                                    
-                                    <div className="mt-2 pt-2 border-t border-emerald-100/50">
-                                      <div className="font-medium text-sm text-emerald-800 mb-1">時給換算:</div>
-                                      <div className="font-bold">
-                                        {Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : null}
-                                
-                                {/* 日給 */}
-                                <div className="mt-3">
-                                  <div className="font-medium text-sm text-emerald-800 mb-1">日給</div>
-                                  {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
-                                    <div className="font-bold text-lg text-emerald-800">
-                                      {profile.minimum_guarantee && profile.maximum_guarantee 
-                                        ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円` 
-                                        : profile.minimum_guarantee 
-                                          ? `${profile.minimum_guarantee.toLocaleString()}円〜` 
-                                          : `〜${profile.maximum_guarantee?.toLocaleString()}円`}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-gray-500 italic">未設定</span>
-                                  )}
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    経験やスキルに応じて給与は異なります
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {/* 福利厚生・サポート */}
-                              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                                <h4 className="font-medium text-blue-700 mb-3 text-sm flex items-center">
-                                  <div className="p-1 bg-white rounded-full mr-2 border border-blue-200">
-                                    <Award className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  福利厚生・サポート
-                                </h4>
-                                <div>
-                                  {/* カテゴリー別に福利厚生を表示 */}
-                                  <div className="flex flex-col gap-3">
-                                    {/* 交通・住居サポート */}
-                                    <div className="flex flex-wrap gap-2">
-                                      <Badge variant={profile.transportation_support ? "default" : "outline"} 
-                                             className={profile.transportation_support 
-                                                      ? "bg-blue-500 hover:bg-blue-600" 
-                                                      : "text-gray-400 bg-gray-100"}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                                          <rect x="1" y="3" width="15" height="13"></rect>
-                                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                                          <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                                          <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                                        </svg>
-                                        交通費サポート
-                                      </Badge>
-                                      <Badge variant={profile.housing_support ? "default" : "outline"} 
-                                             className={profile.housing_support 
-                                                      ? "bg-indigo-500 hover:bg-indigo-600" 
-                                                      : "text-gray-400 bg-gray-100"}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                        </svg>
-                                        寮完備
-                                      </Badge>
-                                    </div>
-                                    
-                                    {/* その他の福利厚生 */}
-                                    {profile.benefits && profile.benefits.length > 0 && (
-                                      <div className="flex flex-wrap gap-2 pt-2 border-t border-blue-100">
-                                        {profile.benefits.map((benefit, idx) => (
-                                          <Badge key={idx} variant="outline" className="bg-white text-blue-700 border-blue-200">
-                                            {benefit}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                  
-                                  {/* 福利厚生が全く設定されていない場合 */}
-                                  {(!profile.benefits || profile.benefits.length === 0) && 
-                                   !profile.transportation_support && 
-                                   !profile.housing_support && (
-                                    <div className="text-center py-2">
-                                      <span className="text-sm text-gray-500 italic">特典情報が未設定です</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            <SalaryDisplay 
+                              minimumGuarantee={profile.minimum_guarantee} 
+                              maximumGuarantee={profile.maximum_guarantee}
+                              workingTimeHours={profile.working_time_hours}
+                              averageHourlyPay={profile.average_hourly_pay}
+                              transportationSupport={profile.transportation_support ? true : undefined}
+                              housingSupport={profile.housing_support ? true : undefined}
+                              benefits={profile.benefits}
+                            />
                           </div>
                           
-                          {/* 勤務時間・アクセス */}
+                          {/* 勤務時間・アクセス情報 - LocationDisplayとJobDescriptionDisplayを使用 */}
                           <div className="bg-card rounded-lg border shadow-sm p-6">
                             <h3 className="text-lg font-semibold flex items-center mb-4">
                               <Clock className="h-5 w-5 mr-2 text-orange-500" />
                               <span>勤務時間・アクセス</span>
                             </h3>
                             
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                               {/* 勤務時間 */}
-                              <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
-                                <h4 className="font-medium text-orange-700 mb-3 text-sm flex items-center">
-                                  <div className="p-1 bg-white rounded-full mr-2 border border-orange-200">
-                                    <Clock className="w-4 h-4 text-orange-600" />
-                                  </div>
+                              <div>
+                                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                                  <Clock className="h-4 w-4 mr-2 text-orange-500" />
                                   勤務時間・シフト
                                 </h4>
-                                <p className="text-sm whitespace-pre-line">
-                                  {profile.working_hours || <span className="text-gray-500 italic">勤務時間が未設定です</span>}
-                                </p>
-                              </div>
-                              
-                              {/* アクセス情報 */}
-                              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                                <h4 className="font-medium text-blue-700 mb-3 text-sm flex items-center">
-                                  <div className="p-1 bg-white rounded-full mr-2 border border-blue-200">
-                                    <MapPin className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  所在地・アクセス
-                                </h4>
-                                
-                                {profile.address && (
-                                  <div className="flex items-start mb-3 pb-3 border-b border-blue-100">
-                                    <div className="bg-white p-1.5 rounded-full border border-blue-200 mr-2">
-                                      <MapPin className="h-4 w-4 text-blue-500" />
-                                    </div>
-                                    <div>
-                                      <div className="text-xs text-blue-700 font-medium">所在地</div>
-                                      <div className="font-medium">{profile.address}</div>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                <div className="text-sm">
-                                  {profile.access_info ? (
-                                    <p className="whitespace-pre-line">{profile.access_info}</p>
-                                  ) : (
-                                    <p className="text-gray-500 italic">アクセス情報が登録されていません</p>
-                                  )}
+                                <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
+                                  <p className="text-sm whitespace-pre-line">
+                                    {profile.working_hours || <span className="text-gray-500 italic">勤務時間が未設定です</span>}
+                                  </p>
                                 </div>
                               </div>
+                              
+                              {/* アクセス情報 - LocationDisplayコンポーネントを使用 */}
+                              <LocationDisplay 
+                                address={profile.address || undefined}
+                                accessInfo={profile.access_info || undefined}
+                                securityMeasures={profile.security_measures || undefined}
+                              />
                             </div>
                           </div>
                         </div>
                         
                         {/* 安全対策と連絡先情報 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* 安全対策 */}
+                          {/* 安全対策 - パラメータは既にLocationDisplayに含まれている */}
                           <div className="bg-card rounded-lg border shadow-sm p-6">
                             <h3 className="text-lg font-semibold flex items-center mb-4">
                               <AlertCircle className="h-5 w-5 mr-2 text-green-500" />
                               <span>安全対策</span>
                             </h3>
-                            <div className="bg-green-50 border border-green-100 rounded-md p-4">
+                            {/* LocationDisplayコンポーネントのsecurityMeasuresパラメータが安全対策情報を表示 */}
+                            <div>
                               {profile.security_measures ? (
-                                <div className="text-sm whitespace-pre-line">
-                                  <div className="flex items-center mb-3">
-                                    <div className="bg-white p-1.5 rounded-full border border-green-200 mr-2">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                      </svg>
+                                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                                  <h4 className="font-medium text-indigo-700 mb-3 text-sm flex items-center">
+                                    <div className="p-1 bg-white rounded-full mr-2 border border-indigo-200">
+                                      <Shield className="w-4 h-4 text-indigo-600" />
                                     </div>
-                                    <span className="font-medium text-green-800">安心・安全への取り組み</span>
-                                  </div>
-                                  <p className="text-gray-700">{profile.security_measures}</p>
+                                    安心・安全への取り組み
+                                  </h4>
+                                  <p className="text-sm whitespace-pre-line">
+                                    {profile.security_measures}
+                                  </p>
                                 </div>
                               ) : (
                                 <div className="text-center py-6">
@@ -930,96 +805,20 @@ export default function StoreDashboard() {
                             </div>
                           </div>
                           
-                          {/* 店舗連絡先情報 */}
+                          {/* 店舗連絡先情報 - ContactDisplayコンポーネントを使用 */}
                           <div className="bg-card rounded-lg border shadow-sm p-6">
                             <h3 className="text-lg font-semibold flex items-center mb-4">
                               <UserCircle className="h-5 w-5 mr-2 text-purple-500" />
                               <span>お問い合わせ</span>
                             </h3>
                             
-                            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-100">
-                              {/* 担当者情報 */}
-                              {profile.recruiter_name ? (
-                                <div className="flex items-start mb-4 pb-4 border-b border-purple-100">
-                                  <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
-                                    <User className="h-5 w-5 text-purple-500" />
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-purple-700 font-medium">採用担当者</div>
-                                    <div className="font-medium text-base">{profile.recruiter_name}</div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-start mb-4 pb-4 border-b border-purple-100 opacity-70">
-                                  <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
-                                    <User className="h-5 w-5 text-purple-500" />
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-purple-700 font-medium">採用担当者</div>
-                                    <div className="font-medium text-base text-gray-500 italic">未設定</div>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* 連絡先情報 */}
-                              <div className="space-y-4">
-                                {profile.phone_numbers && profile.phone_numbers.length > 0 ? (
-                                  <div>
-                                    <div className="text-xs text-purple-700 font-medium mb-2">電話でのお問い合わせ</div>
-                                    <div className="space-y-2">
-                                      {profile.phone_numbers.map((phone, idx) => (
-                                        <div key={idx} className="flex items-center">
-                                          <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
-                                            <Phone className="h-4 w-4 text-purple-500" />
-                                          </div>
-                                          <a href={`tel:${phone.replace(/-/g, '')}`} className="font-medium text-purple-800 hover:text-purple-600 transition-colors">
-                                            {phone}
-                                          </a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="opacity-70">
-                                    <div className="text-xs text-purple-700 font-medium mb-2">電話でのお問い合わせ</div>
-                                    <div className="flex items-center">
-                                      <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
-                                        <Phone className="h-4 w-4 text-purple-500" />
-                                      </div>
-                                      <span className="font-medium text-gray-500 italic">電話番号未設定</span>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {profile.email_addresses && profile.email_addresses.length > 0 ? (
-                                  <div>
-                                    <div className="text-xs text-purple-700 font-medium mb-2">メールでのお問い合わせ</div>
-                                    <div className="space-y-2">
-                                      {profile.email_addresses.map((email, idx) => (
-                                        <div key={idx} className="flex items-center">
-                                          <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
-                                            <Mail className="h-4 w-4 text-purple-500" />
-                                          </div>
-                                          <a href={`mailto:${email}`} className="font-medium text-purple-800 hover:text-purple-600 transition-colors">
-                                            {email}
-                                          </a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="opacity-70">
-                                    <div className="text-xs text-purple-700 font-medium mb-2">メールでのお問い合わせ</div>
-                                    <div className="flex items-center">
-                                      <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
-                                        <Mail className="h-4 w-4 text-purple-500" />
-                                      </div>
-                                      <span className="font-medium text-gray-500 italic">メールアドレス未設定</span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            <ContactDisplay 
+                              recruiterName={profile.recruiter_name || undefined}
+                              phoneNumbers={profile.phone_numbers || undefined}
+                              emailAddresses={profile.email_addresses || undefined}
+                              pcWebsiteUrl={profile.pc_website_url || undefined}
+                              mobileWebsiteUrl={profile.mobile_website_url || undefined}
+                            />
                           </div>
                         </div>
 
