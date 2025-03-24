@@ -175,7 +175,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 name="average_hourly_pay"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel className="font-medium">時給単価（円）</FormLabel>
+                    <FormLabel className="font-medium">平均給与（円）</FormLabel>
                     <FormControl>
                       <input
                         type="number"
@@ -193,7 +193,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 )}
               />
             </div>
-            <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務の平均給与〇円」という形式で表示されます</p>
+            <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務で平均給与〇円」という形式で表示されます</p>
             <p className="text-sm text-gray-500">※ 最低給与・最高給与の入力がある場合は従来の表示形式も併用されます</p>
           </div>
           

@@ -22,10 +22,10 @@ export function formatSalary(
   // 時給換算形式が設定されている場合、そちらを優先表示
   if (workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0) {
     const totalPay = workingTimeHours * averageHourlyPay;
-    return `${workingTimeHours}時間勤務の平均給与${totalPay.toLocaleString()}円`;
+    return `${workingTimeHours}時間勤務で平均給与${totalPay.toLocaleString()}円`;
   }
   
-  // 従来の最低保証・最高保証表示
+  // 従来の最低給与・最高給与表示
   if (min === null && max === null) return "応相談";
   if (max === null) return `${min?.toLocaleString()}円〜`;
   if (min === null) return `〜${max?.toLocaleString()}円`;
