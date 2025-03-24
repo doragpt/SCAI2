@@ -508,69 +508,70 @@ export default function StoreDashboard() {
                           </div>
                         </div>
                         
-                        {/* 重要事項: 日給・勤務時間・待遇 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6 px-1">
+                        {/* 重要事項: 日給・勤務時間・待遇 - 1カラムレイアウト */}
+                        <div className="space-y-5 py-6 px-1">
                           {/* 日給 - ガールズヘブン風に改良 */}
-                          <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/10 p-3 rounded-md border border-pink-100 dark:border-pink-900/30">
-                            <h3 className="flex items-center text-sm font-medium text-pink-700 dark:text-pink-300 mb-2">
-                              <Banknote className="h-4 w-4 mr-1.5 text-pink-600" />
+                          <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/10 p-4 rounded-md border border-pink-100 dark:border-pink-900/30">
+                            <h3 className="flex items-center text-base font-medium text-pink-700 dark:text-pink-300 mb-3 pb-2 border-b border-pink-100 dark:border-pink-800/30">
+                              <Banknote className="h-5 w-5 mr-2 text-pink-600" />
                               給与情報
                             </h3>
                             
-                            {/* 最低・最高給与の表示 - 強調表示 */}
-                            <div className="text-2xl font-bold text-pink-800 dark:text-pink-300">
-                              {profile.minimum_guarantee && profile.maximum_guarantee 
-                                ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
-                                : profile.minimum_guarantee 
-                                  ? `${profile.minimum_guarantee.toLocaleString()}円〜`
-                                  : profile.maximum_guarantee 
-                                    ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
-                                    : "要相談"}
+                            <div className="flex flex-col md:flex-row md:items-center gap-4">
+                              {/* 最低・最高給与の表示 - 強調表示 */}
+                              <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
+                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">日給</div>
+                                <div className="text-2xl font-bold text-pink-800 dark:text-pink-300">
+                                  {profile.minimum_guarantee && profile.maximum_guarantee 
+                                    ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
+                                    : profile.minimum_guarantee 
+                                      ? `${profile.minimum_guarantee.toLocaleString()}円〜`
+                                      : profile.maximum_guarantee 
+                                        ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
+                                        : "要相談"}
+                                </div>
+                              </div>
+                              
+                              {/* 時給換算の表示 */}
+                              <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
+                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">時給換算</div>
+                                {(profile.working_time_hours && profile.average_hourly_pay) && (
+                                  <div className="text-gray-700 dark:text-gray-300">
+                                    {profile.working_time_hours}時間勤務で平均給与<span className="font-bold text-pink-700 dark:text-pink-300">{profile.average_hourly_pay.toLocaleString()}</span>円
+                                  </div>
+                                )}
+                                {(!profile.average_hourly_pay && profile.working_time_hours && profile.minimum_guarantee) && (
+                                  <div className="text-gray-700 dark:text-gray-300">
+                                    約<span className="font-bold text-pink-700 dark:text-pink-300">{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}</span>円
+                                  </div>
+                                )}
+                                {(!profile.working_time_hours || (!profile.average_hourly_pay && !profile.minimum_guarantee)) && (
+                                  <span className="text-sm text-muted-foreground italic">未設定</span>
+                                )}
+                              </div>
                             </div>
-                            
-                            {/* 時給換算の表示 - 入力フォームに合わせた形式 */}
-                            {(profile.working_time_hours && profile.average_hourly_pay) && (
-                              <div className="mt-2 py-2 px-3 bg-white dark:bg-gray-800 rounded-md text-sm border border-pink-200 dark:border-pink-900/20 flex items-center">
-                                <div className="py-1 px-2 bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded font-medium mr-2 text-xs">
-                                  時給換算
-                                </div>
-                                <span className="text-gray-700 dark:text-gray-300">
-                                  {profile.working_time_hours}時間勤務で平均給与<span className="font-bold text-pink-700 dark:text-pink-300">{profile.average_hourly_pay.toLocaleString()}</span>円
-                                </span>
-                              </div>
-                            )}
-                            
-                            {/* 従来の時給換算表示（時間と平均給与入力がない場合のフォールバック） */}
-                            {(!profile.average_hourly_pay && profile.working_time_hours && profile.minimum_guarantee) && (
-                              <div className="mt-2 py-2 px-3 bg-white dark:bg-gray-800 rounded-md text-sm border border-pink-200 dark:border-pink-900/20 flex items-center">
-                                <div className="py-1 px-2 bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded font-medium mr-2 text-xs">
-                                  時給換算
-                                </div>
-                                <span className="text-gray-700 dark:text-gray-300">
-                                  約<span className="font-bold text-pink-700 dark:text-pink-300">{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}</span>円
-                                </span>
-                              </div>
-                            )}
                           </div>
                           
                           {/* 勤務時間 */}
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 p-3 rounded-md border border-blue-100 dark:border-blue-900/30">
-                            <h3 className="flex items-center text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                              <Clock className="h-4 w-4 mr-1.5 text-blue-600" />
+                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
+                            <h3 className="flex items-center text-base font-medium text-blue-700 dark:text-blue-300 mb-3 pb-2 border-b border-blue-100 dark:border-blue-800/30">
+                              <Clock className="h-5 w-5 mr-2 text-blue-600" />
                               勤務時間
                             </h3>
-                            <div className="text-base bg-white dark:bg-gray-800 p-2 rounded border border-blue-100 dark:border-blue-900/30 font-medium">
-                              {profile.working_hours || <span className="text-muted-foreground italic">未設定</span>}
+                            <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-blue-100 dark:border-blue-900/30">
+                              <div className="text-lg font-medium">
+                                {profile.working_hours || <span className="text-muted-foreground italic">未設定</span>}
+                              </div>
                             </div>
                           </div>
                           
                           {/* 待遇 - ガールズヘブン風に改良 */}
-                          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/10 p-3 rounded-md border border-purple-100 dark:border-purple-900/30">
-                            <h3 className="flex items-center text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">
-                              <Award className="h-4 w-4 mr-1.5 text-purple-600" />
+                          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/10 p-4 rounded-md border border-purple-100 dark:border-purple-900/30">
+                            <h3 className="flex items-center text-base font-medium text-purple-700 dark:text-purple-300 mb-3 pb-2 border-b border-purple-100 dark:border-purple-800/30">
+                              <Award className="h-5 w-5 mr-2 text-purple-600" />
                               待遇・福利厚生
                             </h3>
-                            <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 p-2 rounded border border-purple-100 dark:border-purple-900/30">
+                            <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 p-3 rounded-md border border-purple-100 dark:border-purple-900/30">
                               {profile.transportation_support && (
                                 <Badge className="bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50 font-normal py-1.5">
                                   <Car className="h-3 w-3 mr-1" />交通費サポート
