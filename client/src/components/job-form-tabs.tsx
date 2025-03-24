@@ -150,65 +150,97 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfile) => {
-      // データを整形
-      const formattedData = {
-        // 基本項目
-        catch_phrase: data.catch_phrase || "",
-        description: data.description || "",
-        top_image: data.top_image || "",
-        recruiter_name: data.recruiter_name || "",
+      try {
+        // データを整形
+        const formattedData = {
+          // 基本項目
+          catch_phrase: data.catch_phrase || "",
+          description: data.description || "",
+          top_image: data.top_image || "",
+          recruiter_name: data.recruiter_name || "",
+          
+          // 数値項目
+          minimum_guarantee: Number(data.minimum_guarantee) || 0,
+          maximum_guarantee: Number(data.maximum_guarantee) || 0,
+          working_time_hours: Number(data.working_time_hours) || 0,
+          average_hourly_pay: Number(data.average_hourly_pay) || 0,
+          
+          // 配列と特別な項目
+          status: data.status || "draft",
+          benefits: data.benefits || [],
+          phone_numbers: data.phone_numbers,
+          email_addresses: data.email_addresses,
+          
+          // 文字列項目
+          address: data.address || "",
+          sns_id: data.sns_id || "",
+          sns_url: data.sns_url || "",
+          sns_text: data.sns_text || "",
+          pc_website_url: data.pc_website_url || "",
+          mobile_website_url: data.mobile_website_url || "",
+          application_requirements: data.application_requirements || "",
+          
+          // 新規追加項目
+          access_info: data.access_info || "",
+          security_measures: data.security_measures || "",
+          
+          // benefits内に含まれるため削除（交通費支給、寮完備）
+          transportation_support: false,
+          housing_support: false,
+          
+          // 必須項目
+          working_hours: data.working_hours || "",
+          requirements: data.requirements || "",
+        };
         
-        // 数値項目
-        minimum_guarantee: Number(data.minimum_guarantee) || 0,
-        maximum_guarantee: Number(data.maximum_guarantee) || 0,
-        working_time_hours: Number(data.working_time_hours) || 0,
-        average_hourly_pay: Number(data.average_hourly_pay) || 0,
+        console.log("送信データ:", formattedData);
         
-        // 配列と特別な項目
-        status: data.status || "draft",
-        benefits: data.benefits || [],
-        phone_numbers: data.phone_numbers,
-        email_addresses: data.email_addresses,
+        // フェッチAPIを直接使用して詳細なエラーハンドリングを実装
+        // app.tsでは /api/store のエンドポイント設定があり、store.tsでは /profile を処理
+        const response = await fetch('/store/profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+          credentials: 'include' // 認証情報（Cookie）を含める
+        });
         
-        // 文字列項目
-        address: data.address || "",
-        sns_id: data.sns_id || "",
-        sns_url: data.sns_url || "",
-        sns_text: data.sns_text || "",
-        pc_website_url: data.pc_website_url || "",
-        mobile_website_url: data.mobile_website_url || "",
-        application_requirements: data.application_requirements || "",
+        console.log("リクエスト結果:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          // ヘッダー情報を単純化して表示
+          headers: {
+            contentType: response.headers.get('content-type'),
+            server: response.headers.get('server')
+          }
+        });
         
-        // 新規追加項目
-        access_info: data.access_info || "",
-        security_measures: data.security_measures || "",
+        if (!response.ok) {
+          // エラーレスポンスの場合は詳細情報を出力
+          const errorText = await response.text();
+          console.error("エラーレスポンス:", {
+            status: response.status,
+            text: errorText
+          });
+          
+          try {
+            // JSONパースを試みる
+            const errorJson = JSON.parse(errorText);
+            throw new Error(errorJson.message || `エラー: ${response.status} ${response.statusText}`);
+          } catch (parseError) {
+            // JSONパースに失敗した場合はテキストそのままを表示
+            throw new Error(`エラー: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
+          }
+        }
         
-        // benefits内に含まれるため削除（交通費支給、寮完備）
-        transportation_support: false,
-        housing_support: false,
-        
-        // 必須項目
-        working_hours: data.working_hours || "",
-        requirements: data.requirements || "",
-      };
-      
-      console.log("送信データ:", formattedData);
-      
-      // APIリクエスト
-      const response = await fetch('/api/store/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '店舗情報の保存に失敗しました');
+        // 成功した場合はJSONレスポンスをパース
+        return await response.json();
+      } catch (error) {
+        console.error("送信処理中のエラー:", error);
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: (data) => {
       // キャッシュをクリア

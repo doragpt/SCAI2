@@ -7,6 +7,14 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
+// ルータレベルのミドルウェアでリクエストをログ出力
+router.use((req, res, next) => {
+  console.log(`[STORE ROUTER] ${req.method} ${req.path} が呼び出されました`);
+  console.log(`[STORE ROUTER] 認証情報: User=${req.user?.id}, Role=${req.user?.role}`);
+  console.log(`[STORE ROUTER] リクエストボディのキー: ${Object.keys(req.body || {}).join(', ')}`);
+  next();
+});
+
 // 店舗プロフィール取得
 router.get("/profile", authenticate, authorize("store"), async (req: any, res) => {
   try {
@@ -43,9 +51,15 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
 // 店舗プロフィール更新
 router.patch("/profile", authenticate, authorize("store"), async (req: any, res) => {
   try {
-    log('info', '店舗プロフィール更新開始', {
-      userId: req.user.id,
-      displayName: req.user.display_name,
+    console.log("PATCH /profile エンドポイントが呼び出されました");
+    log('info', '店舗プロフィール更新開始 - 詳細ログ', {
+      userId: req.user?.id,
+      displayName: req.user?.display_name,
+      requestHeaders: req.headers,
+      requestPath: req.path,
+      requestMethod: req.method,
+      bodyKeys: Object.keys(req.body || {}),
+      isAuthenticated: !!req.user,
       requestBody: req.body
     });
 
