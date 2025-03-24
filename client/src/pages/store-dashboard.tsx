@@ -480,62 +480,7 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 採用・連絡先情報セクション */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <UserCircle className="h-5 w-5 mr-2 text-indigo-500" />
-                            採用・連絡先情報
-                          </h3>
-                          <div className="space-y-4">
-                            {profile.recruiter_name && (
-                              <div className="flex items-start">
-                                <User className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-sm text-muted-foreground">採用担当者</p>
-                                  <p className="font-medium">{profile.recruiter_name}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {profile.address && (
-                              <div className="flex items-start">
-                                <MapPin className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-sm text-muted-foreground">住所</p>
-                                  <p className="font-medium">{profile.address}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {profile.phone_numbers && profile.phone_numbers.length > 0 && (
-                              <div className="flex items-start">
-                                <Phone className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-sm text-muted-foreground">電話番号</p>
-                                  <div className="space-y-1 mt-1">
-                                    {profile.phone_numbers.map((phone, index) => (
-                                      phone && <p key={index} className="font-medium">{phone}</p>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {profile.email_addresses && profile.email_addresses.length > 0 && (
-                              <div className="flex items-start">
-                                <Mail className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-sm text-muted-foreground">メールアドレス</p>
-                                  <div className="space-y-1 mt-1">
-                                    {profile.email_addresses.map((email, index) => (
-                                      email && <p key={index} className="font-medium">{email}</p>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+
 
                         {/* オンライン情報セクション (メッセージアプリ・ウェブサイト) */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
