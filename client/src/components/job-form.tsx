@@ -452,8 +452,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：東京都渋谷区〇〇町1-2-3 〇〇ビル5F"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -471,8 +475,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：採用担当"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -688,8 +696,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：https://m.example.com"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -711,9 +723,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                 <FormLabel className="font-medium">応募資格・条件（任意）</FormLabel>
                 <FormControl>
                   <Textarea
-                    {...field}
                     placeholder="例：18歳以上（高校生不可）、未経験者歓迎"
                     className="min-h-[100px]"
+                    name={field.name}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
                   />
                 </FormControl>
                 <FormMessage />
