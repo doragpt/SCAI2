@@ -164,7 +164,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         fullData.updated_at
       ];
       
-      const insertResult = await db.execute(sql.raw(insertQuery, insertParams));
+      // poolを直接使用
+      const insertResult = await pool.query(insertQuery, insertParams);
       const newProfile = insertResult.rows[0];
 
       log('info', '店舗プロフィール作成成功', {
@@ -281,12 +282,12 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     const phoneNumbersStr = JSON.stringify(fullUpdateData.phone_numbers || []);
     const emailAddressesStr = JSON.stringify(fullUpdateData.email_addresses || []);
     
-    // PostgreSQL用のSQL文で直接実行
+    // PostgreSQL用のSQL文で直接実行（jsonb型の処理を明示的に行う）
     const updateQuery = `
       UPDATE store_profiles
       SET catch_phrase = $1,
           description = $2,
-          benefits = $3,
+          benefits = $3::jsonb,
           minimum_guarantee = $4,
           maximum_guarantee = $5,
           working_time_hours = $6,
@@ -296,8 +297,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           working_hours = $10,
           requirements = $11,
           recruiter_name = $12,
-          phone_numbers = $13,
-          email_addresses = $14,
+          phone_numbers = $13::jsonb,
+          email_addresses = $14::jsonb,
           address = $15,
           sns_id = $16,
           sns_url = $17,
@@ -345,7 +346,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       req.user.id
     ];
     
-    const updateResult = await db.execute(sql.raw(updateQuery, params));
+    // Drizzleのsql.rawの代わりにpoolを直接使用
+    const updateResult = await pool.query(updateQuery, params);
     const updatedProfile = updateResult.rows[0];
     
     log('info', '店舗プロフィール更新成功', {
@@ -357,18 +359,39 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     return res.json(updatedProfile);
 
   } catch (error) {
-    log('error', '店舗プロフィール更新エラー', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userId: req.user?.id,
-      requestBody: req.body
-    });
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return res.status(400).json({
-        message: '入力内容に誤りがあります',
-        details: error.message
+    console.error('詳細エラー情報:', error);
+    
+    if (error instanceof Error) {
+      log('error', '店舗プロフィール更新エラー - 詳細', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        userId: req.user?.id,
+        requestBody: JSON.stringify(req.body)
       });
+
+      if (error.name === 'ZodError') {
+        return res.status(400).json({
+          message: '入力内容に誤りがあります',
+          details: error.message
+        });
+      }
+      
+      if (error.message.includes('relation') || error.message.includes('column') || error.message.includes('syntax')) {
+        // SQL関連のエラー
+        return res.status(500).json({ 
+          message: "データベースエラーが発生しました", 
+          sqlError: error.message 
+        });
+      }
     }
+
+    // 詳細なエラー情報をログに記録
+    console.error('店舗プロフィール更新時のエラー詳細:', {
+      error,
+      userId: req.user?.id,
+      body: req.body
+    });
 
     return res.status(500).json({ message: "店舗プロフィールの更新に失敗しました" });
   }
