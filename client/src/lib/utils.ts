@@ -21,8 +21,9 @@ export function formatSalary(
 ): string {
   // 時給換算形式が設定されている場合、そちらを優先表示
   if (workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0) {
-    // 平均時給を表示（時間×時給ではない）
-    return `${workingTimeHours}時間勤務で平均${averageHourlyPay.toLocaleString()}円`;
+    // 日給と勤務時間から平均時給を計算して表示
+    const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
+    return `${workingTimeHours}時間勤務で${averageHourlyPay.toLocaleString()}円（時給約${hourlyRate.toLocaleString()}円）`;
   }
   
   // 従来の最低給与・最高給与表示
