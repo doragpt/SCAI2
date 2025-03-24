@@ -26,24 +26,25 @@ export async function publishScheduledPosts() {
     }
 
     // 該当する記事を公開状態に更新
-    const result = await db
-      .update(blogPosts)
-      .set({
-        status: "published",
-        published_at: now,
-        updated_at: now
-      })
-      .where(
-        and(
-          eq(blogPosts.status, "scheduled"),
-          sql`${blogPosts.scheduled_at} <= ${now}`
-        )
-      )
-      .returning();
+    // 予約投稿時間をそのまま公開日時に設定
+    let publishedPosts = [];
+    for (const post of postsToPublish) {
+      const [updatedPost] = await db
+        .update(blogPosts)
+        .set({
+          status: "published",
+          published_at: post.scheduled_at, // 予約時間を公開日時に設定
+          updated_at: now
+        })
+        .where(eq(blogPosts.id, post.id))
+        .returning();
+      
+      publishedPosts.push(updatedPost);
+    }
 
     console.log('Scheduled posts publishing completed:', {
-      publishedCount: result.length,
-      posts: result.map(post => ({
+      publishedCount: publishedPosts.length,
+      posts: publishedPosts.map(post => ({
         id: post.id,
         title: post.title,
         scheduled_at: post.scheduled_at,
@@ -52,7 +53,7 @@ export async function publishScheduledPosts() {
       timestamp: now.toISOString()
     });
 
-    return result;
+    return publishedPosts;
   } catch (error) {
     console.error('Scheduled posts publishing error:', {
       error: error instanceof Error ? error.message : 'Unknown error',

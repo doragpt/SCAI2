@@ -223,10 +223,27 @@ export default function BlogManagement() {
         for (const postId of selectedPosts) {
           const post = posts.find(p => p.id === postId);
           if (post) {
-            await apiRequest("PATCH", `/api/blog/${postId}`, {
-              ...post,
-              status: newStatus,
-            });
+            // 公開に設定する場合
+            if (newStatus === "published") {
+              // 予約投稿の場合は予約日時を公開日時に、それ以外は現在時刻を公開日時に設定
+              const publishedAt = post.status === "scheduled" && post.scheduled_at
+                ? post.scheduled_at
+                : new Date();
+                
+              await apiRequest("PATCH", `/api/blog/${postId}`, {
+                ...post,
+                status: newStatus,
+                published_at: publishedAt
+              });
+            } else {
+              // 下書きに設定する場合
+              await apiRequest("PATCH", `/api/blog/${postId}`, {
+                ...post,
+                status: newStatus,
+                published_at: null,
+                scheduled_at: null
+              });
+            }
           }
         }
         
@@ -591,7 +608,10 @@ export default function BlogManagement() {
                                     await apiRequest("PATCH", `/api/blog/${post.id}`, {
                                       ...post,
                                       status: "published",
-                                      published_at: new Date()
+                                      // 予約投稿の場合は予約日時を公開日時に、それ以外は現在時刻を公開日時に設定
+                                      published_at: post.status === "scheduled" && post.scheduled_at 
+                                        ? post.scheduled_at 
+                                        : new Date()
                                     });
                                     toast({
                                       title: "更新完了",
