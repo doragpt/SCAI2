@@ -139,13 +139,13 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         sql`INSERT INTO store_profiles 
             (user_id, business_name, location, service_type, catch_phrase, description, 
              benefits, minimum_guarantee, maximum_guarantee, working_time_hours, average_hourly_pay, 
-             status, created_at, updated_at)
+             status, top_image, created_at, updated_at)
             VALUES 
             (${fullData.user_id}, ${fullData.business_name}, ${fullData.location}, ${fullData.service_type}, 
              ${fullData.catch_phrase}, ${fullData.description}, ${JSON.stringify(fullData.benefits)}, 
              ${fullData.minimum_guarantee}, ${fullData.maximum_guarantee}, 
              ${fullData.working_time_hours}, ${fullData.average_hourly_pay}, 
-             ${fullData.status}, ${fullData.created_at}, ${fullData.updated_at})
+             ${fullData.status}, ${fullData.top_image}, ${fullData.created_at}, ${fullData.updated_at})
             RETURNING *`
       );
       
