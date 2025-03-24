@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { type BlogPost } from "@shared/schema";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { isValid } from "date-fns";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { CKEditorNavigation, CKEditorEditButton } from "@/components/blog/ckeditor-navigation";
 import {
@@ -78,6 +79,71 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+
+// 日付フォーマット用ユーティリティ関数
+// 日付の型安全な処理を行い、無効な日付の場合は代替値を返す
+const formatBlogDate = (dateValue: string | Date | null, formatStr: string = "yyyy/MM/dd HH:mm"): string => {
+  if (!dateValue) return "-";
+  
+  try {
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (!isValid(date)) return "-";
+    return format(date, formatStr, { locale: ja });
+  } catch (error) {
+    console.error("日付フォーマットエラー:", error);
+    return "-";
+  }
+};
+
+// ブログ記事の日付表示コンポーネント
+// ステータスに基づいて適切な日付と表示形式を返す
+const BlogDateDisplay = ({ post }: { post: BlogPost }) => {
+  // 公開記事の場合
+  if (post.status === 'published') {
+    if (post.published_at) {
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">
+            {formatBlogDate(post.published_at, "yyyy/MM/dd")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatBlogDate(post.published_at, "HH:mm")}
+          </span>
+        </div>
+      );
+    } else if (post.created_at) {
+      // 公開日時がない場合は作成日時を表示
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">
+            {formatBlogDate(post.created_at, "yyyy/MM/dd")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatBlogDate(post.created_at, "HH:mm")} (作成日時)
+          </span>
+        </div>
+      );
+    }
+  }
+  
+  // 予約投稿の場合
+  else if (post.status === 'scheduled' && post.scheduled_at) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-sm font-medium">
+          {formatBlogDate(post.scheduled_at, "yyyy/MM/dd")}
+        </span>
+        <span className="text-xs text-amber-600 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {formatBlogDate(post.scheduled_at, "HH:mm")}（予定）
+        </span>
+      </div>
+    );
+  }
+  
+  // それ以外の場合（下書きなど）
+  return <span className="text-muted-foreground">-</span>;
+};
 
 // ブログ記事のステータスに応じたバッジの表示
 const StatusBadge = ({ status }: { status: string }) => {
