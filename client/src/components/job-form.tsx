@@ -227,6 +227,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   });
 
   const onSubmit = (data: StoreProfile) => {
+    // フォームの値を一度ログに出力して確認（デバッグ用）
+    console.log("Form values:", form.getValues());
+    
     // 必須フィールドの確認
     if (!data.recruiter_name) {
       form.setError('recruiter_name', { 
@@ -253,7 +256,14 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       return;
     }
     
-    mutate(data);
+    // 明示的にデータをコピーして不要なプロパティを削除
+    const cleanedData = { ...data };
+    // 空の配列を正しく処理
+    cleanedData.phone_numbers = validPhoneNumbers;
+    cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
+    
+    console.log("送信前の整形データ:", cleanedData);
+    mutate(cleanedData);
   };
 
   return (
