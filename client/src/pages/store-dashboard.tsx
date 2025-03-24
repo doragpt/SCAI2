@@ -760,6 +760,36 @@ export default function StoreDashboard() {
                                   </div>
                                 </div>
                               )}
+                              
+                              {/* SNS連絡先（LINE） */}
+                              {profile.sns_id && (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">SNS連絡先</div>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <div className="bg-[#06C755] p-1 rounded-md inline-flex items-center justify-center">
+                                        <MessageCircle className="h-3.5 w-3.5 text-white" />
+                                      </div>
+                                      {profile.sns_url ? (
+                                        <a 
+                                          href={profile.sns_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="hover:underline flex items-center space-x-1"
+                                        >
+                                          <span className="font-medium">{profile.sns_id}</span>
+                                          {profile.sns_text && <span className="text-sm text-muted-foreground">（{profile.sns_text}）</span>}
+                                        </a>
+                                      ) : (
+                                        <div className="flex items-center space-x-1">
+                                          <span className="font-medium">{profile.sns_id}</span>
+                                          {profile.sns_text && <span className="text-sm text-muted-foreground">（{profile.sns_text}）</span>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
