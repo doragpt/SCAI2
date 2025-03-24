@@ -15,25 +15,9 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
       displayName: req.user.display_name
     });
 
+    // 全てのフィールドを取得するようにSELECT *を使用
     const [profile] = await db
-      .select({
-        id: store_profiles.id,
-        user_id: store_profiles.user_id,
-        business_name: store_profiles.business_name,
-        location: store_profiles.location,
-        service_type: store_profiles.service_type,
-        catch_phrase: store_profiles.catch_phrase,
-        description: store_profiles.description,
-        benefits: store_profiles.benefits,
-        minimum_guarantee: store_profiles.minimum_guarantee,
-        maximum_guarantee: store_profiles.maximum_guarantee,
-        working_time_hours: store_profiles.working_time_hours,
-        average_hourly_pay: store_profiles.average_hourly_pay,
-        status: store_profiles.status,
-        top_image: store_profiles.top_image,
-        created_at: store_profiles.created_at,
-        updated_at: store_profiles.updated_at
-      })
+      .select()
       .from(store_profiles)
       .where(eq(store_profiles.user_id, req.user.id));
 
@@ -314,26 +298,9 @@ router.get("/stats", authenticate, authorize("store"), async (req: any, res) => 
       displayName: req.user.display_name
     });
 
-    // 店舗プロフィール情報を取得
+    // 店舗プロフィール情報を取得（全てのフィールドを取得するようにSELECT *を使用）
     const [profile] = await db
-      .select({
-        id: store_profiles.id,
-        user_id: store_profiles.user_id,
-        business_name: store_profiles.business_name,
-        location: store_profiles.location,
-        service_type: store_profiles.service_type,
-        catch_phrase: store_profiles.catch_phrase,
-        description: store_profiles.description,
-        benefits: store_profiles.benefits,
-        minimum_guarantee: store_profiles.minimum_guarantee,
-        maximum_guarantee: store_profiles.maximum_guarantee,
-        working_time_hours: store_profiles.working_time_hours,
-        average_hourly_pay: store_profiles.average_hourly_pay,
-        status: store_profiles.status,
-        top_image: store_profiles.top_image,
-        created_at: store_profiles.created_at,
-        updated_at: store_profiles.updated_at
-      })
+      .select()
       .from(store_profiles)
       .where(eq(store_profiles.user_id, req.user.id));
 
