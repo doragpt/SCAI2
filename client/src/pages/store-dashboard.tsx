@@ -517,6 +517,7 @@ export default function StoreDashboard() {
                               日給
                             </h3>
                             <div className="text-lg font-bold">
+                              {/* 最低・最高給与の表示 */}
                               {profile.minimum_guarantee && profile.maximum_guarantee 
                                 ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
                                 : profile.minimum_guarantee 
@@ -525,7 +526,15 @@ export default function StoreDashboard() {
                                     ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
                                     : "要相談"}
                             </div>
-                            {(profile.working_time_hours && profile.minimum_guarantee) && (
+                            
+                            {/* 時給換算の表示 - 入力フォームに合わせた形式 */}
+                            {(profile.working_time_hours && profile.average_hourly_pay) && (
+                              <div className="mt-2 py-2 px-3 bg-green-50 dark:bg-green-900/20 rounded-md text-sm">
+                                {profile.working_time_hours}時間勤務で平均給与{profile.average_hourly_pay.toLocaleString()}円
+                              </div>
+                            )}
+                            {/* 従来の時給換算表示（時間と平均給与入力がない場合のフォールバック） */}
+                            {(!profile.average_hourly_pay && profile.working_time_hours && profile.minimum_guarantee) && (
                               <div className="text-xs text-muted-foreground mt-1">
                                 時給換算: 約{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円
                               </div>
