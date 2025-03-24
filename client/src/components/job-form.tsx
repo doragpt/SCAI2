@@ -12,12 +12,7 @@ import { Loader2, Upload, Image } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
-import { CKEditor } from "@ckeditor/ckeditor5-react";
-// @ts-ignore - ClassicEditorのtsエラーを回避
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import { CustomUploadAdapterPlugin } from "@/components/blog/custom-upload-adapter";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
-import "@/components/blog/ckeditor-custom.css";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -245,27 +240,13 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               <FormLabel className="font-medium">お仕事の内容</FormLabel>
               <FormControl>
                 <div className="border rounded-md overflow-hidden">
-                  <CKEditor
-                    editor={ClassicEditor}
-                    data={field.value}
-                    config={{
-                      language: 'ja',
-                      toolbar: [
-                        'heading', '|',
-                        'bold', 'italic', 'link', '|',
-                        'bulletedList', 'numberedList', '|',
-                        'insertTable', '|',
-                        'uploadImage', '|',
-                        'undo', 'redo'
-                      ],
-                      extraPlugins: [(editor) => {
-                        CustomUploadAdapterPlugin(editor);
-                      }],
-                    }}
-                    onChange={(event, editor) => {
-                      const data = editor.getData();
-                      field.onChange(data);
-                      setDescriptionLength(data.length);
+                  <textarea
+                    {...field}
+                    placeholder="お仕事の内容を入力してください（9000文字以内）"
+                    className="min-h-[200px] w-full p-4"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setDescriptionLength(e.target.value.length);
                     }}
                   />
                 </div>
