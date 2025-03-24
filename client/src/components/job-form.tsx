@@ -538,23 +538,43 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <FormLabel className="font-medium mb-2 block">メールアドレス（任意）</FormLabel>
             <p className="text-sm text-gray-500 mb-3">最大4つまで登録できます</p>
             
-            {/* メールアドレスフィールド - 実装予定 */}
             <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="email"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="例：recruit@example.com"
-                />
+              {emailAddresses.map((email, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="例：recruit@example.com"
+                    value={email || ''}
+                    onChange={(e) => updateEmailAddress(index, e.target.value)}
+                  />
+                  
+                  {/* 削除ボタン */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeEmailAddress(index)}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              
+              {/* 追加ボタン（4つまで） */}
+              {emailAddresses.length < 4 && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="min-w-[100px]"
+                  onClick={addEmailAddress}
+                  className="w-full mt-2"
                 >
-                  追加
+                  <Plus className="h-4 w-4 mr-2" />
+                  メールアドレスを追加
                 </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -574,8 +594,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="text"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：@example"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -593,8 +617,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：https://twitter.com/example"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
@@ -613,8 +641,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                   <input
                     type="text"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    {...field}
                     placeholder="例：公式Twitter"
+                    name={field.name}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
                   />
                 </FormControl>
                 <FormMessage />
@@ -633,8 +665,12 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
                     <input
                       type="url"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
                       placeholder="例：https://www.example.com"
+                      name={field.name}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />
