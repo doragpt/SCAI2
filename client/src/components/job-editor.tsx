@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactQuill from 'react-quill';
+import Quill from 'quill';
+import ImageResize from 'quill-image-resize-module-react';
 import 'react-quill/dist/quill.snow.css';
 import { Button } from "@/components/ui/button";
 import { Loader2 } from 'lucide-react';
+
+// Quillプラグインの登録（画像リサイズ機能を有効化）
+Quill.register('modules/imageResize', ImageResize);
 
 // Quillエディターのツールバーオプション
 const TOOLBAR_OPTIONS = [
@@ -24,6 +29,15 @@ const MODULES = {
   },
   clipboard: {
     matchVisual: false
+  },
+  // 画像リサイズモジュールを追加（画像をクリックすると周囲にリサイズハンドルが表示されます）
+  imageResize: {
+    modules: ['Resize', 'DisplaySize'], // リサイズおよびサイズ表示モジュールを有効化
+    displaySize: true,                  // 画像サイズを表示
+    handleStyles: {
+      backgroundColor: 'black',
+      border: 'none'
+    }
   }
 };
 
@@ -67,12 +81,22 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
         margin: 0.5rem 0;
         display: block;
       }
-      .image-resizer {
-        box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.3);
-        background-color: #ffffff;
+      /* 画像リサイズハンドルのスタイル */
+      .job-editor .image-resizer {
+        border: 1px dashed #3498db;
       }
-      .image-resizer:hover {
-        background-color: #1e88e5;
+      .job-editor .image-resizer-handle {
+        background-color: #3498db !important;
+        border: 1px solid white !important;
+        width: 8px !important;
+        height: 8px !important;
+      }
+      /* 画像サイズ表示のスタイル */
+      .job-editor .image-size-label {
+        background: rgba(0, 0, 0, 0.7) !important;
+        color: white !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
       }
       .job-editor .ql-editor p {
         margin-bottom: 0.5rem;
@@ -119,124 +143,6 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
     }
   }, [initialValue]);
 
-  // 画像をリサイズする機能
-  const setupImageResizer = () => {
-    if (!quillRef.current) return;
-    
-    const editorContainer = quillRef.current.getEditor().root;
-    
-    // 既存のリサイザーを削除
-    const existingResizers = editorContainer.querySelectorAll('.image-resizer');
-    existingResizers.forEach(resizer => resizer.remove());
-    
-    // 全ての画像に対してリサイザーを設定
-    const images = editorContainer.querySelectorAll('img');
-    images.forEach((img: HTMLImageElement) => {
-      setupImageControls(img);
-    });
-  };
-
-  // 画像用のリサイズコントロールを追加
-  const setupImageControls = (img: HTMLImageElement) => {
-    // 画像がすでにリサイザーを持っている場合はスキップ
-    if (img.parentElement?.querySelector('.image-resizer')) return;
-    
-    // 画像の親要素に相対位置設定
-    if (img.parentElement) {
-      img.parentElement.style.position = 'relative';
-      img.parentElement.style.display = 'inline-block';
-    }
-    
-    // リサイズハンドルを追加
-    const resizeHandle = document.createElement('div');
-    resizeHandle.className = 'image-resizer';
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '14px';
-    resizeHandle.style.height = '14px';
-    resizeHandle.style.border = '2px solid #1e88e5';
-    resizeHandle.style.borderTop = 'none';
-    resizeHandle.style.borderLeft = 'none';
-    resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '2';
-    resizeHandle.title = '画像のサイズを変更できます';
-    
-    // 画像クリック時のコントロール表示
-    img.onclick = () => {
-      // 他の画像のリサイズハンドルを非表示
-      const allResizers = quillRef.current?.getEditor().root.querySelectorAll('.image-resizer') as NodeListOf<HTMLElement>;
-      allResizers?.forEach(r => r.style.display = 'none');
-      
-      // この画像のリサイズハンドルを表示
-      if (img.parentElement?.querySelector('.image-resizer')) {
-        (img.parentElement.querySelector('.image-resizer') as HTMLElement).style.display = 'block';
-      }
-    };
-    
-    // ドラッグでリサイズするイベント設定
-    let startX: number, startY: number, startWidth: number, startHeight: number;
-    
-    const startResize = (e: MouseEvent) => {
-      e.preventDefault();
-      startX = e.clientX;
-      startY = e.clientY;
-      startWidth = img.width;
-      startHeight = img.height;
-      document.addEventListener('mousemove', resize);
-      document.addEventListener('mouseup', stopResize);
-    };
-    
-    const resize = (e: MouseEvent) => {
-      const width = startWidth + (e.clientX - startX);
-      const height = startHeight + (e.clientY - startY);
-      
-      // 最小サイズを設定
-      if (width > 50 && height > 50) {
-        img.width = width;
-        img.height = height;
-      }
-    };
-    
-    const stopResize = () => {
-      document.removeEventListener('mousemove', resize);
-      document.removeEventListener('mouseup', stopResize);
-    };
-    
-    resizeHandle.addEventListener('mousedown', startResize);
-    
-    // 画像の親要素にリサイズハンドルを追加
-    if (img.parentElement) {
-      img.parentElement.appendChild(resizeHandle);
-    }
-    
-    // 初期状態ではリサイズハンドルを非表示
-    resizeHandle.style.display = 'none';
-  };
-
-  // クリック以外の場所をクリックしたときにリサイズハンドルを非表示
-  useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      if (quillRef.current) {
-        const editorElement = quillRef.current.getEditor().root;
-        const target = e.target as HTMLElement;
-        
-        // 画像やリサイザー以外をクリックした場合、すべてのリサイザーを非表示
-        if (!target.closest('img') && !target.closest('.image-resizer')) {
-          const allResizers = editorElement.querySelectorAll('.image-resizer') as NodeListOf<HTMLElement>;
-          allResizers.forEach(r => {
-            r.style.display = 'none';
-          });
-        }
-      }
-    };
-    
-    document.addEventListener('click', handleDocumentClick);
-    return () => {
-      document.removeEventListener('click', handleDocumentClick);
-    };
-  }, []);
-
   useEffect(() => {
     if (quillRef.current) {
       const quill = quillRef.current.getEditor();
@@ -278,11 +184,7 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
                 const rangeIndex = range.index as number;
                 quill.insertEmbed(rangeIndex, 'image', data.url);
                 quill.setSelection(rangeIndex + 1, 0);
-                
-                // 少し遅延させてから画像リサイザーをセットアップ
-                setTimeout(() => {
-                  setupImageResizer();
-                }, 100);
+                // プラグインが自動でリサイズハンドルを設定
               }
             } catch (error) {
               console.error('画像アップロードエラー:', error);
@@ -292,20 +194,6 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
           }
         };
       });
-      
-      // エディターの内容変更時に画像リサイザーをセットアップ
-      quill.on('text-change', () => {
-        setTimeout(() => {
-          setupImageResizer();
-        }, 100);
-      });
-      
-      // 初期ロード時にも画像リサイザーをセットアップ
-      if (initialValue) {
-        setTimeout(() => {
-          setupImageResizer();
-        }, 100);
-      }
     }
   }, []);
 
