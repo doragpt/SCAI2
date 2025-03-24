@@ -144,8 +144,8 @@ export default function JobDetail() {
       },
       baseSalary: job?.workingTimeHours && job?.averageHourlyPay && job.workingTimeHours > 0 && job.averageHourlyPay > 0
         ? { 
-            minValue: job.workingTimeHours * job.averageHourlyPay, 
-            maxValue: job.workingTimeHours * job.averageHourlyPay, 
+            minValue: job.averageHourlyPay, 
+            maxValue: job.averageHourlyPay, 
             currency: "JPY" 
           }
         : {
