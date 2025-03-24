@@ -99,6 +99,7 @@ const areaStats: AreaStats = {
 
 // 共通のユーティリティ関数を使用
 import { formatSalary } from "@/lib/utils";
+import { HtmlContent } from "@/components/html-content";
 
 // お仕事ガイド
 const workGuides = [
@@ -177,6 +178,14 @@ const JobCard = ({ job }: { job: JobResponse }) => {
                 job.averageHourlyPay
               )}</span>
             </div>
+            {job.catchPhrase && (
+              <div className="text-sm">
+                <HtmlContent 
+                  html={job.catchPhrase} 
+                  className="prose prose-sm max-w-none line-clamp-2" 
+                />
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {job.transportationSupport && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
