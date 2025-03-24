@@ -170,6 +170,29 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       average_hourly_pay: Number(req.body.average_hourly_pay) || existingProfile.average_hourly_pay || 0,
       status: req.body.status || existingProfile.status,
       top_image: req.body.top_image || existingProfile.top_image,
+      
+      // 追加フィールド
+      recruiter_name: req.body.recruiter_name,
+      phone_numbers: req.body.phone_numbers || [],
+      email_addresses: req.body.email_addresses || [],
+      address: req.body.address || existingProfile.address || "",
+      
+      // SNS情報
+      sns_id: req.body.sns_id || existingProfile.sns_id || "",
+      sns_url: req.body.sns_url || existingProfile.sns_url || "",
+      sns_text: req.body.sns_text || existingProfile.sns_text || "",
+      
+      // ウェブサイト情報
+      pc_website_url: req.body.pc_website_url || existingProfile.pc_website_url || "",
+      mobile_website_url: req.body.mobile_website_url || existingProfile.mobile_website_url || "",
+      
+      // 応募要件
+      application_requirements: req.body.application_requirements || existingProfile.application_requirements || "",
+      
+      // 各種サポート情報
+      transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : (existingProfile.transportation_support || false),
+      housing_support: req.body.housing_support !== undefined ? req.body.housing_support : (existingProfile.housing_support || false),
+      
       updated_at: new Date()
     };
 
@@ -185,7 +208,29 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       working_time_hours: updateData.working_time_hours,
       average_hourly_pay: updateData.average_hourly_pay,
       status: updateData.status,
-      top_image: updateData.top_image
+      top_image: updateData.top_image,
+      
+      // 追加フィールド
+      recruiter_name: updateData.recruiter_name,
+      phone_numbers: updateData.phone_numbers,
+      email_addresses: updateData.email_addresses,
+      address: updateData.address,
+      
+      // SNS情報
+      sns_id: updateData.sns_id,
+      sns_url: updateData.sns_url,
+      sns_text: updateData.sns_text,
+      
+      // ウェブサイト情報
+      pc_website_url: updateData.pc_website_url,
+      mobile_website_url: updateData.mobile_website_url,
+      
+      // 応募要件
+      application_requirements: updateData.application_requirements,
+      
+      // 各種サポート情報
+      transportation_support: updateData.transportation_support,
+      housing_support: updateData.housing_support
     });
 
     // 更新用のオブジェクトを作成
@@ -206,6 +251,29 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               average_hourly_pay = ${fullUpdateData.average_hourly_pay},
               status = ${fullUpdateData.status},
               top_image = ${fullUpdateData.top_image},
+
+              -- 追加フィールド
+              recruiter_name = ${fullUpdateData.recruiter_name},
+              phone_numbers = ${JSON.stringify(fullUpdateData.phone_numbers)},
+              email_addresses = ${JSON.stringify(fullUpdateData.email_addresses)},
+              address = ${fullUpdateData.address},
+
+              -- SNS情報
+              sns_id = ${fullUpdateData.sns_id},
+              sns_url = ${fullUpdateData.sns_url},
+              sns_text = ${fullUpdateData.sns_text},
+
+              -- ウェブサイト情報
+              pc_website_url = ${fullUpdateData.pc_website_url},
+              mobile_website_url = ${fullUpdateData.mobile_website_url},
+
+              -- 応募要件
+              application_requirements = ${fullUpdateData.application_requirements},
+
+              -- 各種サポート情報
+              transportation_support = ${fullUpdateData.transportation_support},
+              housing_support = ${fullUpdateData.housing_support},
+              
               updated_at = ${fullUpdateData.updated_at}
           WHERE user_id = ${req.user.id}
           RETURNING *`
