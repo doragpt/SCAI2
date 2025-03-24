@@ -14,6 +14,7 @@ import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { HtmlContent } from "@/components/html-content";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -216,6 +217,20 @@ export default function JobDetail() {
                     </div>
                   </CardContent>
                 </Card>
+                
+                {job.description && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>店舗紹介</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <HtmlContent 
+                        html={job.description}
+                        className="prose prose-sm max-w-none"
+                      />
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="requirements">
