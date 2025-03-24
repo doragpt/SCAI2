@@ -480,6 +480,173 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
+                        {/* 採用・連絡先情報セクション */}
+                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                          <h3 className="text-lg font-semibold flex items-center mb-4">
+                            <UserCircle className="h-5 w-5 mr-2 text-indigo-500" />
+                            採用・連絡先情報
+                          </h3>
+                          <div className="space-y-4">
+                            {profile.recruiter_name && (
+                              <div className="flex items-start">
+                                <User className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">採用担当者</p>
+                                  <p className="font-medium">{profile.recruiter_name}</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {profile.address && (
+                              <div className="flex items-start">
+                                <MapPin className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">住所</p>
+                                  <p className="font-medium">{profile.address}</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                              <div className="flex items-start">
+                                <Phone className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">電話番号</p>
+                                  <div className="space-y-1 mt-1">
+                                    {profile.phone_numbers.map((phone, index) => (
+                                      phone && <p key={index} className="font-medium">{phone}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {profile.email_addresses && profile.email_addresses.length > 0 && (
+                              <div className="flex items-start">
+                                <Mail className="h-5 w-5 mr-3 text-primary/70 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">メールアドレス</p>
+                                  <div className="space-y-1 mt-1">
+                                    {profile.email_addresses.map((email, index) => (
+                                      email && <p key={index} className="font-medium">{email}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* オンライン情報セクション (SNS・ウェブサイト) */}
+                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                          <h3 className="text-lg font-semibold flex items-center mb-4">
+                            <ExternalLink className="h-5 w-5 mr-2 text-cyan-500" />
+                            オンラインリンク
+                          </h3>
+                          
+                          <div className="space-y-5">
+                            {/* SNS情報 */}
+                            {(profile.sns_id || profile.sns_url || profile.sns_text) && (
+                              <div>
+                                <h4 className="font-medium text-primary mb-3 flex items-center">
+                                  <span className="bg-blue-100 p-1 rounded-full mr-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                                      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                                    </svg>
+                                  </span>
+                                  SNS情報
+                                </h4>
+                                <div className="ml-7 space-y-2">
+                                  {profile.sns_id && (
+                                    <div>
+                                      <span className="text-sm text-muted-foreground mr-2">ID:</span>
+                                      <span className="text-sm font-medium">{profile.sns_id}</span>
+                                    </div>
+                                  )}
+                                  {profile.sns_url && (
+                                    <a 
+                                      href={profile.sns_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center text-sm"
+                                    >
+                                      <span>SNSリンク</span>
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  )}
+                                  {profile.sns_text && (
+                                    <div className="text-sm mt-2 bg-muted p-3 rounded-md">
+                                      {profile.sns_text}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ウェブサイト情報 */}
+                            {(profile.pc_website_url || profile.mobile_website_url) && (
+                              <div>
+                                <h4 className="font-medium text-primary mb-3 flex items-center">
+                                  <span className="bg-green-100 p-1 rounded-full mr-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                  </span>
+                                  オフィシャルサイト
+                                </h4>
+                                <div className="ml-7 space-y-3">
+                                  {profile.pc_website_url && (
+                                    <a 
+                                      href={profile.pc_website_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center text-sm"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-green-600">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                      </svg>
+                                      <span>PC公式サイト</span>
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  )}
+                                  {profile.mobile_website_url && (
+                                    <a 
+                                      href={profile.mobile_website_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center text-sm"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-green-600">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                        <line x1="12" y1="18" x2="12" y2="18"></line>
+                                      </svg>
+                                      <span>スマホ公式サイト</span>
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 応募要件セクション */}
+                        {profile.application_requirements && (
+                          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <CheckCircle className="h-5 w-5 mr-2 text-yellow-500" />
+                              応募資格
+                            </h3>
+                            <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4">
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.application_requirements}</p>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 給与・待遇セクション */}
                         <div className="grid md:grid-cols-2 gap-6">
                           {/* 給与情報 */}
