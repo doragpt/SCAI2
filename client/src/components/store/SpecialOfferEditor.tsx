@@ -114,7 +114,8 @@ export function SpecialOfferEditor() {
   
   // テンプレートから追加
   const handleAddTemplate = (template: typeof OFFER_TEMPLATES[0]) => {
-    append({
+    // ダイアログを表示せずに直接追加
+    const newOffer = {
       id: uuidv4(),
       title: template.title,
       description: template.description,
@@ -122,7 +123,8 @@ export function SpecialOfferEditor() {
       backgroundColor: template.backgroundColor,
       textColor: template.textColor,
       order: fields.length,
-    });
+    };
+    append(newOffer);
   };
   
   // 保存
@@ -131,8 +133,7 @@ export function SpecialOfferEditor() {
     
     if (editIndex !== null) {
       // 既存のオファーを更新
-      const updatedFields = [...fields];
-      updatedFields[editIndex] = editingOffer;
+      // まず古いものを削除して新しいものを追加
       remove(editIndex);
       append(editingOffer);
     } else {
@@ -140,6 +141,7 @@ export function SpecialOfferEditor() {
       append(editingOffer);
     }
     
+    // ダイアログを閉じてフォーム状態をリセット
     setIsOpen(false);
     setEditingOffer(null);
     setEditIndex(null);
@@ -245,7 +247,19 @@ export function SpecialOfferEditor() {
       </div>
       
       {/* 編集ダイアログ */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog 
+        open={isOpen} 
+        onOpenChange={(open) => {
+          // ダイアログが閉じられる時だけ状態をリセット
+          if (!open) {
+            setIsOpen(false);
+            setEditingOffer(null);
+            setEditIndex(null);
+          } else {
+            setIsOpen(true);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editIndex !== null ? '特別オファーを編集' : '新規特別オファー'}</DialogTitle>
@@ -356,10 +370,22 @@ export function SpecialOfferEditor() {
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                setEditingOffer(null);
+                setEditIndex(null);
+              }}
+            >
               キャンセル
             </Button>
-            <Button onClick={handleSaveOffer} disabled={!editingOffer?.title}>
+            <Button 
+              type="button"
+              onClick={handleSaveOffer} 
+              disabled={!editingOffer?.title}
+            >
               保存
             </Button>
           </DialogFooter>
