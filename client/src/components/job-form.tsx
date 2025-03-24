@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Plus, X } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { JobEditor } from "@/components/job-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -69,6 +70,10 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       
       // 応募要件
       application_requirements: initialData?.application_requirements || "",
+      
+      // 追加フィールド
+      access_info: initialData?.access_info || "",
+      security_measures: initialData?.security_measures || "",
     }
   });
   
@@ -206,6 +211,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         pc_website_url: data.pc_website_url || "",
         mobile_website_url: data.mobile_website_url || "",
         application_requirements: data.application_requirements || "",
+        access_info: data.access_info || "",
+        security_measures: data.security_measures || "",
         transportation_support: Boolean(data.transportation_support),
         housing_support: Boolean(data.housing_support),
         
