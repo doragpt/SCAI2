@@ -48,11 +48,11 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
-import { apiRequest } from "@/lib/queryClient";
-import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
+import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { LocationDisplay } from "@/components/store/LocationDisplay";
 import { ContactDisplay } from "@/components/store/ContactDisplay";
+import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
@@ -688,10 +688,10 @@ export default function StoreDashboard() {
                             businessName={profile.business_name}
                             location={profile.location}
                             serviceType={profile.service_type}
-                            catchPhrase={profile.catch_phrase}
+                            catchPhrase={profile.catch_phrase || undefined}
                             description={profile.description || ''}
-                            workingHours={profile.working_hours}
-                            requirements={profile.requirements}
+                            workingHours={profile.working_hours || undefined}
+                            requirements={profile.requirements || undefined}
                           />
                         </div>
                         
@@ -735,13 +735,13 @@ export default function StoreDashboard() {
                             </h3>
                             
                             <SalaryDisplay 
-                              minimumGuarantee={profile.minimum_guarantee} 
-                              maximumGuarantee={profile.maximum_guarantee}
-                              workingTimeHours={profile.working_time_hours}
-                              averageHourlyPay={profile.average_hourly_pay}
-                              transportationSupport={profile.transportation_support ? true : undefined}
-                              housingSupport={profile.housing_support ? true : undefined}
-                              benefits={profile.benefits}
+                              minimumGuarantee={profile.minimum_guarantee || undefined} 
+                              maximumGuarantee={profile.maximum_guarantee || undefined}
+                              workingTimeHours={profile.working_time_hours || undefined}
+                              averageHourlyPay={profile.average_hourly_pay || undefined}
+                              transportationSupport={profile.transportation_support || undefined}
+                              housingSupport={profile.housing_support || undefined}
+                              benefits={profile.benefits || undefined}
                             />
                           </div>
                           
