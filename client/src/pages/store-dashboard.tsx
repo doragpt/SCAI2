@@ -749,6 +749,32 @@ export default function StoreDashboard() {
                             </div>
                           </div>
                         </div>
+                        
+                        {/* アクセス情報 */}
+                        {profile.access_info && (
+                          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <MapPin className="h-5 w-5 mr-2 text-blue-500" />
+                              <span>アクセス情報</span>
+                            </h3>
+                            <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.access_info}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 安全対策 */}
+                        {profile.security_measures && (
+                          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <AlertCircle className="h-5 w-5 mr-2 text-green-500" />
+                              <span>安全対策</span>
+                            </h3>
+                            <div className="bg-green-50 border border-green-100 rounded-md p-4">
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.security_measures}</p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* 編集ボタン */}
                         <div className="flex justify-end">
