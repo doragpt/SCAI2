@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { HtmlContent } from "@/components/html-content";
 import {
   Building2,
   PenBox,
@@ -470,8 +471,8 @@ export default function StoreDashboard() {
                             <Info className="h-5 w-5 mr-2 text-primary/80" />
                             店舗紹介
                           </h3>
-                          <div className="whitespace-pre-wrap leading-relaxed text-card-foreground/90">
-                            {profile.description}
+                          <div className="leading-relaxed text-card-foreground/90">
+                            <HtmlContent html={profile.description} />
                           </div>
                         </div>
 
