@@ -417,19 +417,20 @@ export const storeProfileSchema = z.object({
     .max(4, "電話番号は最大4つまで登録できます")
     .default([]), // 電話番号（最大4つ、最低1つ必須）
   
-  email_addresses: z.array(z.string()
-    .email("有効なメールアドレスを入力してください"))
+  email_addresses: z.array(
+    z.string().optional().or(z.string().email("有効なメールアドレスを入力してください"))
+  )
     .max(4, "メールアドレスは最大4つまで登録できます")
     .default([]), // メールアドレス（最大4つ、任意）
   
   // SNS情報
   sns_id: z.string().optional(), // SNS ID（任意）
-  sns_url: z.string().url("有効なURLを入力してください").optional(), // SNS追加用URL（任意）
+  sns_url: z.string().optional().or(z.string().url("有効なURLを入力してください")), // SNS追加用URL（任意）
   sns_text: z.string().max(100, "SNSテキストは100文字以内で入力してください").optional(), // SNSテキスト（任意）
   
   // ウェブサイト情報
-  pc_website_url: z.string().url("有効なURLを入力してください").optional(), // PCオフィシャルサイト（任意）
-  mobile_website_url: z.string().url("有効なURLを入力してください").optional(), // スマホオフィシャルサイト（任意）
+  pc_website_url: z.string().optional().or(z.string().url("有効なURLを入力してください")), // PCオフィシャルサイト（任意）
+  mobile_website_url: z.string().optional().or(z.string().url("有効なURLを入力してください")), // スマホオフィシャルサイト（任意）
   
   // 応募要件
   application_requirements: z.string().max(1000, "応募資格は1000文字以内で入力してください").optional(), // 応募資格（任意）
