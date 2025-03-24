@@ -42,6 +42,8 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
     style.innerHTML = `
       .job-editor .ql-editor {
         min-height: 200px;
+        max-height: 500px;
+        overflow-y: auto;
         font-size: 1rem;
         line-height: 1.5;
         padding: 0.75rem;
@@ -64,6 +66,13 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
         height: auto;
         margin: 0.5rem 0;
         display: block;
+      }
+      .image-resizer {
+        box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.3);
+        background-color: #ffffff;
+      }
+      .image-resizer:hover {
+        background-color: #1e88e5;
       }
       .job-editor .ql-editor p {
         margin-bottom: 0.5rem;
@@ -110,6 +119,124 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
     }
   }, [initialValue]);
 
+  // 画像をリサイズする機能
+  const setupImageResizer = () => {
+    if (!quillRef.current) return;
+    
+    const editorContainer = quillRef.current.getEditor().root;
+    
+    // 既存のリサイザーを削除
+    const existingResizers = editorContainer.querySelectorAll('.image-resizer');
+    existingResizers.forEach(resizer => resizer.remove());
+    
+    // 全ての画像に対してリサイザーを設定
+    const images = editorContainer.querySelectorAll('img');
+    images.forEach((img: HTMLImageElement) => {
+      setupImageControls(img);
+    });
+  };
+
+  // 画像用のリサイズコントロールを追加
+  const setupImageControls = (img: HTMLImageElement) => {
+    // 画像がすでにリサイザーを持っている場合はスキップ
+    if (img.parentElement?.querySelector('.image-resizer')) return;
+    
+    // 画像の親要素に相対位置設定
+    if (img.parentElement) {
+      img.parentElement.style.position = 'relative';
+      img.parentElement.style.display = 'inline-block';
+    }
+    
+    // リサイズハンドルを追加
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'image-resizer';
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '14px';
+    resizeHandle.style.height = '14px';
+    resizeHandle.style.border = '2px solid #1e88e5';
+    resizeHandle.style.borderTop = 'none';
+    resizeHandle.style.borderLeft = 'none';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.zIndex = '2';
+    resizeHandle.title = '画像のサイズを変更できます';
+    
+    // 画像クリック時のコントロール表示
+    img.onclick = () => {
+      // 他の画像のリサイズハンドルを非表示
+      const allResizers = quillRef.current?.getEditor().root.querySelectorAll('.image-resizer') as NodeListOf<HTMLElement>;
+      allResizers?.forEach(r => r.style.display = 'none');
+      
+      // この画像のリサイズハンドルを表示
+      if (img.parentElement?.querySelector('.image-resizer')) {
+        (img.parentElement.querySelector('.image-resizer') as HTMLElement).style.display = 'block';
+      }
+    };
+    
+    // ドラッグでリサイズするイベント設定
+    let startX: number, startY: number, startWidth: number, startHeight: number;
+    
+    const startResize = (e: MouseEvent) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      startWidth = img.width;
+      startHeight = img.height;
+      document.addEventListener('mousemove', resize);
+      document.addEventListener('mouseup', stopResize);
+    };
+    
+    const resize = (e: MouseEvent) => {
+      const width = startWidth + (e.clientX - startX);
+      const height = startHeight + (e.clientY - startY);
+      
+      // 最小サイズを設定
+      if (width > 50 && height > 50) {
+        img.width = width;
+        img.height = height;
+      }
+    };
+    
+    const stopResize = () => {
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResize);
+    };
+    
+    resizeHandle.addEventListener('mousedown', startResize);
+    
+    // 画像の親要素にリサイズハンドルを追加
+    if (img.parentElement) {
+      img.parentElement.appendChild(resizeHandle);
+    }
+    
+    // 初期状態ではリサイズハンドルを非表示
+    resizeHandle.style.display = 'none';
+  };
+
+  // クリック以外の場所をクリックしたときにリサイズハンドルを非表示
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (quillRef.current) {
+        const editorElement = quillRef.current.getEditor().root;
+        const target = e.target as HTMLElement;
+        
+        // 画像やリサイザー以外をクリックした場合、すべてのリサイザーを非表示
+        if (!target.closest('img') && !target.closest('.image-resizer')) {
+          const allResizers = editorElement.querySelectorAll('.image-resizer') as NodeListOf<HTMLElement>;
+          allResizers.forEach(r => {
+            r.style.display = 'none';
+          });
+        }
+      }
+    };
+    
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, []);
+
   useEffect(() => {
     if (quillRef.current) {
       const quill = quillRef.current.getEditor();
@@ -151,6 +278,11 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
                 const rangeIndex = range.index as number;
                 quill.insertEmbed(rangeIndex, 'image', data.url);
                 quill.setSelection(rangeIndex + 1, 0);
+                
+                // 少し遅延させてから画像リサイザーをセットアップ
+                setTimeout(() => {
+                  setupImageResizer();
+                }, 100);
               }
             } catch (error) {
               console.error('画像アップロードエラー:', error);
@@ -160,6 +292,20 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
           }
         };
       });
+      
+      // エディターの内容変更時に画像リサイザーをセットアップ
+      quill.on('text-change', () => {
+        setTimeout(() => {
+          setupImageResizer();
+        }, 100);
+      });
+      
+      // 初期ロード時にも画像リサイザーをセットアップ
+      if (initialValue) {
+        setTimeout(() => {
+          setupImageResizer();
+        }, 100);
+      }
     }
   }, []);
 
@@ -197,7 +343,7 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
           {charCount}/{maxLength}文字
         </div>
         <div className="text-muted-foreground italic">
-          画像やフォーマットを活用して店舗の魅力を表現できます
+          画像やフォーマットを活用して店舗の魅力を表現できます（画像をクリックするとリサイズ可能）
         </div>
       </div>
     </div>
