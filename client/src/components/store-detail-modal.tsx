@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { HtmlContent } from "@/components/html-content";
 
 interface StoreDetailModalProps {
   isOpen: boolean;
@@ -148,7 +149,9 @@ export function StoreDetailModal({
               {store.description && (
                 <div className="space-y-2">
                   <h3 className="font-medium">店舗について</h3>
-                  <p className="text-sm whitespace-pre-wrap">{store.description}</p>
+                  <div className="text-sm">
+                    <HtmlContent html={store.description} />
+                  </div>
                 </div>
               )}
 
@@ -197,9 +200,9 @@ export function StoreDetailModal({
               {store.workEnvironment && (
                 <div className="space-y-2">
                   <h3 className="font-medium">職場環境</h3>
-                  <p className="text-sm whitespace-pre-wrap">
-                    {store.workEnvironment}
-                  </p>
+                  <div className="text-sm">
+                    <HtmlContent html={store.workEnvironment} />
+                  </div>
                 </div>
               )}
 
@@ -211,9 +214,9 @@ export function StoreDetailModal({
                     {store.matchingPoints.map((point, index) => (
                       <div key={index} className="space-y-1">
                         <h4 className="text-sm font-medium">{point.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {point.description}
-                        </p>
+                        <div className="text-sm text-muted-foreground">
+                          <HtmlContent html={point.description} />
+                        </div>
                       </div>
                     ))}
                   </div>
