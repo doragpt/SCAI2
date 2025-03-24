@@ -53,6 +53,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 // プロフィールのステータスラベル
@@ -180,6 +181,7 @@ export default function StoreDashboard() {
   const queryClient = useQueryClient();
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [selectedTab, setSelectedTab] = useState("profile");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // 店舗プロフィール情報の取得
   const { data: profile, isLoading: profileLoading } = useQuery<StoreProfile>({
@@ -221,6 +223,47 @@ export default function StoreDashboard() {
     enabled: !!user?.id && user?.role === "store",
     retry: 2,
     retryDelay: 1000,
+  });
+  
+  // 公開ステータス変更処理
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: "draft" | "published") => {
+      setIsUpdatingStatus(true);
+      // 現在のプロフィールデータを使って必要なフィールドだけ更新
+      const updateData = {
+        catch_phrase: profile?.catch_phrase || "",
+        description: profile?.description || "",
+        benefits: profile?.benefits || [],
+        minimum_guarantee: profile?.minimum_guarantee || 0,
+        maximum_guarantee: profile?.maximum_guarantee || 0,
+        working_time_hours: profile?.working_time_hours || 0,
+        average_hourly_pay: profile?.average_hourly_pay || 0,
+        status: newStatus
+      };
+      
+      return await apiRequest("PATCH", "/api/store/profile", updateData);
+    },
+    onSuccess: () => {
+      // キャッシュを更新してUIを再描画
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+      
+      toast({
+        title: profile?.status === "published" ? "店舗情報を非公開にしました" : "店舗情報を公開しました",
+        description: profile?.status === "published" 
+          ? "求職者には表示されなくなりました"
+          : "求職者に店舗情報が表示されるようになりました",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "ステータスの変更に失敗しました",
+        description: error.message || "もう一度お試しください",
+      });
+    },
+    onSettled: () => {
+      setIsUpdatingStatus(false);
+    }
   });
 
   if (statsLoading || profileLoading) {
@@ -380,16 +423,26 @@ export default function StoreDashboard() {
                         {/* ヘッダー部分 */}
                         <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/10">
                           <div className="flex flex-col md:flex-row gap-6 items-start">
-                            {/* プロフィールアイコン */}
-                            <div className="bg-primary/10 rounded-full p-6 flex-shrink-0">
-                              <Building2 className="h-12 w-12 text-primary" />
-                            </div>
+                            {/* プロフィールアイコン/TOP画像 */}
+                            {profile.top_image ? (
+                              <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 rounded-lg overflow-hidden border-2 border-primary/20 shadow-md">
+                                <ThumbnailImage
+                                  src={profile.top_image}
+                                  alt={profile.business_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="bg-primary/10 rounded-full p-6 flex-shrink-0">
+                                <Building2 className="h-12 w-12 text-primary" />
+                              </div>
+                            )}
                             
                             {/* 基本情報 */}
                             <div className="flex-grow space-y-2">
-                              <div className="flex items-center">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-2xl font-bold">{profile.business_name}</h2>
-                                <Badge variant={profile.status === "published" ? "default" : "secondary"} className="ml-3">
+                                <Badge variant={profile.status === "published" ? "default" : "secondary"} className="ml-0 md:ml-3">
                                   {profileStatusLabels[profile.status]}
                                 </Badge>
                               </div>
@@ -678,9 +731,40 @@ export default function StoreDashboard() {
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-sm font-medium">公開ステータス</span>
-                      <Badge variant={profile?.status === "published" ? "default" : "secondary"} className={profile?.status === "published" ? "bg-green-500" : ""}>
-                        {profileStatusLabels[profile?.status || "draft"]}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={profile?.status === "published" ? "default" : "secondary"} className={profile?.status === "published" ? "bg-green-500" : ""}>
+                          {profileStatusLabels[profile?.status || "draft"]}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* 公開/非公開切り替えスイッチ */}
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">店舗情報公開設定</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {profile?.status === "published" 
+                              ? "現在、応募者に店舗情報が公開されています" 
+                              : "現在、応募者に店舗情報が公開されていません"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={profile?.status === "published"}
+                            onCheckedChange={(checked) => {
+                              // 確認メッセージを表示
+                              if (confirm(checked 
+                                ? "店舗情報を公開しますか？公開すると求職者に表示されます。" 
+                                : "店舗情報を非公開にしますか？非公開にすると求職者に表示されなくなります。")) {
+                                updateStatusMutation.mutate(checked ? "published" : "draft");
+                              }
+                            }}
+                            disabled={isUpdatingStatus || !profile}
+                          />
+                          {isUpdatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
