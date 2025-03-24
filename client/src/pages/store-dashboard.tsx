@@ -45,7 +45,9 @@ import {
   Info,
   Award,
   ChevronRight,
-  CreditCard
+  CreditCard,
+  Globe,
+  Smartphone
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -409,105 +411,112 @@ export default function StoreDashboard() {
               {/* 店舗情報タブ */}
               <TabsContent value="profile">
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div>
                       <CardTitle>店舗プロフィール</CardTitle>
                       <CardDescription>
                         店舗の基本情報を管理できます
                       </CardDescription>
                     </div>
-                    <Button onClick={() => setShowProfileForm(true)}>
-                      <FileEdit className="h-4 w-4 mr-2" />
-                      編集する
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      {profile && (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={profile.status === "published"}
+                            disabled={isUpdatingStatus}
+                            onCheckedChange={(checked) => 
+                              updateStatusMutation.mutate(checked ? "published" : "draft")
+                            }
+                          />
+                          <span className="text-sm font-medium">
+                            {profile?.status === "published" ? "公開中" : "非公開"}
+                          </span>
+                        </div>
+                      )}
+                      <Button onClick={() => setShowProfileForm(true)} variant="outline" size="sm">
+                        <FileEdit className="h-4 w-4 mr-2" />
+                        編集
+                      </Button>
+                    </div>
                   </CardHeader>
+
                   <CardContent>
                     {!profile ? (
-                      <div className="text-center py-8">
-                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">
-                          店舗情報が未設定です
+                      <div className="text-center py-10">
+                        <div className="bg-muted p-6 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                          <Building2 className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-medium mb-2">店舗情報が未設定です</h3>
+                        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                          店舗情報を設定して、求職者に魅力的な情報を提供しましょう。
                         </p>
-                        <Button variant="outline" className="mt-4" onClick={() => setShowProfileForm(true)}>
+                        <Button onClick={() => setShowProfileForm(true)} size="lg">
                           <Plus className="h-4 w-4 mr-2" />
                           店舗情報を設定する
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-6">
-                        {/* ヘッダー: 基本情報とステータス */}
-                        <div className="flex flex-col sm:flex-row gap-6 items-start border-b pb-6">
-                          {/* 店舗画像 */}
-                          <div className="mx-auto sm:mx-0">
-                            {profile.top_image ? (
-                              <div className="w-32 h-32 rounded-xl overflow-hidden border shadow-md">
-                                <ThumbnailImage
-                                  src={profile.top_image}
-                                  alt={profile.business_name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-xl">
-                                <Building2 className="h-12 w-12 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* 店舗基本情報 */}
-                          <div className="flex-grow space-y-3 text-center sm:text-left">
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                              <h2 className="text-2xl font-bold">{profile.business_name}</h2>
-                              <Badge variant={profile.status === "published" ? "default" : "secondary"}>
-                                {profileStatusLabels[profile.status]}
-                              </Badge>
+                      <div className="divide-y">
+                        {/* 店舗基本情報 */}
+                        <div className="py-6 px-1">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* 左側: 店舗画像 */}
+                            <div>
+                              {profile.top_image ? (
+                                <div className="aspect-square rounded-lg overflow-hidden border">
+                                  <ThumbnailImage
+                                    src={profile.top_image}
+                                    alt={profile.business_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="aspect-square flex items-center justify-center bg-muted rounded-lg border">
+                                  <Building2 className="h-16 w-16 text-muted-foreground/50" />
+                                </div>
+                              )}
                             </div>
                             
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-1.5 text-primary/70" />
-                                <span>{profile.location}</span>
+                            {/* 中央と右側: プロフィール情報 */}
+                            <div className="md:col-span-2 space-y-6">
+                              {/* 店舗名とステータス */}
+                              <div>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <h2 className="text-2xl font-bold">{profile.business_name}</h2>
+                                  <Badge variant="outline" className="mt-0.5">
+                                    {profile.service_type}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center">
+                                    <MapPin className="h-4 w-4 mr-1.5" />
+                                    <span>{profile.location}</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center">
-                                <Briefcase className="h-4 w-4 mr-1.5 text-primary/70" />
-                                <span>{profile.service_type}</span>
-                              </div>
+                              
+                              {/* キャッチコピー */}
+                              {profile.catch_phrase && (
+                                <div className="bg-muted p-4 rounded-md border">
+                                  <p className="italic text-base">
+                                    「{profile.catch_phrase}」
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                            
-                            {/* キャッチコピー */}
-                            {profile.catch_phrase && (
-                              <div className="bg-accent/30 p-3 rounded-md font-medium italic text-base">
-                                "{profile.catch_phrase}"
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* 公開ステータス切り替えスイッチ */}
-                          <div className="flex items-center gap-2 self-start ml-auto mt-0 sm:mt-1">
-                            <Switch
-                              checked={profile.status === "published"}
-                              disabled={isUpdatingStatus}
-                              onCheckedChange={(checked) => 
-                                updateStatusMutation.mutate(checked ? "published" : "draft")
-                              }
-                            />
-                            <span className="text-sm font-medium">
-                              {profile.status === "published" ? "公開中" : "非公開"}
-                            </span>
                           </div>
                         </div>
                         
-                        {/* ハイライト情報カード */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {/* 給与カード */}
-                          <div className="bg-card rounded-lg border p-4 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-full">
-                                <Banknote className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-                              </div>
-                              <h3 className="font-medium">日給</h3>
-                            </div>
-                            <div className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                        {/* 重要事項: 日給・勤務時間・待遇 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6 px-1">
+                          {/* 日給 */}
+                          <div>
+                            <h3 className="flex items-center text-sm font-medium text-muted-foreground mb-2">
+                              <Banknote className="h-4 w-4 mr-1.5 text-green-500" />
+                              日給
+                            </h3>
+                            <div className="text-lg font-bold">
                               {profile.minimum_guarantee && profile.maximum_guarantee 
                                 ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
                                 : profile.minimum_guarantee 
@@ -518,53 +527,44 @@ export default function StoreDashboard() {
                             </div>
                             {(profile.working_time_hours && profile.minimum_guarantee) && (
                               <div className="text-xs text-muted-foreground mt-1">
-                                時給換算: 約{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円〜
+                                時給換算: 約{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円
                               </div>
                             )}
                           </div>
                           
-                          {/* 勤務時間カード */}
-                          <div className="bg-card rounded-lg border p-4 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-full">
-                                <Clock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-                              </div>
-                              <h3 className="font-medium">勤務時間</h3>
-                            </div>
-                            <div className="font-medium">
+                          {/* 勤務時間 */}
+                          <div>
+                            <h3 className="flex items-center text-sm font-medium text-muted-foreground mb-2">
+                              <Clock className="h-4 w-4 mr-1.5 text-blue-500" />
+                              勤務時間
+                            </h3>
+                            <div className="text-base">
                               {profile.working_hours || <span className="text-muted-foreground italic">未設定</span>}
                             </div>
                           </div>
                           
-                          {/* 待遇カード */}
-                          <div className="bg-card rounded-lg border p-4 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                                <Award className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                              </div>
-                              <h3 className="font-medium">待遇</h3>
-                            </div>
+                          {/* 待遇 */}
+                          <div>
+                            <h3 className="flex items-center text-sm font-medium text-muted-foreground mb-2">
+                              <Award className="h-4 w-4 mr-1.5 text-purple-500" />
+                              待遇
+                            </h3>
                             <div className="flex flex-wrap gap-1.5">
                               {profile.transportation_support && (
-                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                                  <Car className="h-3 w-3 mr-1" />交通費
+                                <Badge variant="secondary" className="font-normal">
+                                  <Car className="h-3 w-3 mr-1" />交通費サポート
                                 </Badge>
                               )}
                               {profile.housing_support && (
-                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                <Badge variant="secondary" className="font-normal">
                                   <Home className="h-3 w-3 mr-1" />寮完備
                                 </Badge>
                               )}
-                              {profile.benefits && profile.benefits.length > 0 && profile.benefits.slice(0, 2).map((benefit, index) => (
-                                <Badge key={index} variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                              {profile.benefits && profile.benefits.length > 0 && profile.benefits.map((benefit, index) => (
+                                <Badge key={index} variant="secondary" className="font-normal">
                                   {benefit}
                                 </Badge>
                               ))}
-                              {profile.benefits && profile.benefits.length > 2 && (
-                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                                  他{profile.benefits.length - 2}件
-                                </Badge>
-                              )}
                               {!profile.transportation_support && !profile.housing_support && (!profile.benefits || profile.benefits.length === 0) && (
                                 <span className="text-sm text-muted-foreground italic">未設定</span>
                               )}
@@ -572,156 +572,168 @@ export default function StoreDashboard() {
                           </div>
                         </div>
                         
-                        {/* 主要情報のアコーディオンリスト */}
-                        <div className="space-y-4">
-                          {/* 仕事内容セクション */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Briefcase className="h-5 w-5 mr-2 text-primary" />
-                                <h3 className="font-semibold">仕事内容</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <div className="prose prose-sm max-w-none dark:prose-invert">
-                                <JobDescriptionDisplay 
-                                  businessName={profile.business_name}
-                                  location={profile.location}
-                                  serviceType={profile.service_type}
-                                  description={profile.description || ''}
-                                />
-                              </div>
-                            </div>
-                          </div>
+                        {/* 仕事内容 */}
+                        <div className="py-6 px-1">
+                          <h3 className="text-base font-medium mb-4 flex items-center">
+                            <Briefcase className="h-4 w-4 mr-1.5 text-primary" />
+                            仕事内容
+                          </h3>
                           
-                          {/* 応募条件セクション */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <CheckCircle className="h-5 w-5 mr-2 text-yellow-500" />
-                                <h3 className="font-semibold">応募資格・条件</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <div className="space-y-4">
-                                {profile.requirements && (
-                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
-                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">基本応募条件</h4>
-                                    <p className="text-sm whitespace-pre-line">{profile.requirements}</p>
-                                  </div>
-                                )}
-                                
-                                {profile.application_requirements && (
-                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
-                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">詳細応募資格</h4>
-                                    <p className="text-sm whitespace-pre-line">{profile.application_requirements}</p>
-                                  </div>
-                                )}
-                                
-                                {(!profile.requirements && !profile.application_requirements) && (
-                                  <div className="p-4 text-center">
-                                    <p className="text-sm text-muted-foreground italic">応募資格・条件が設定されていません</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* 詳細な給与・待遇情報 */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
-                                <h3 className="font-semibold">詳細な給与・待遇情報</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <SalaryDisplay 
-                                minimumGuarantee={profile.minimum_guarantee || undefined} 
-                                maximumGuarantee={profile.maximum_guarantee || undefined}
-                                workingTimeHours={profile.working_time_hours || undefined}
-                                averageHourlyPay={profile.average_hourly_pay || undefined}
-                                transportationSupport={profile.transportation_support || undefined}
-                                housingSupport={profile.housing_support || undefined}
-                                benefits={profile.benefits || undefined}
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* アクセス情報 */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <MapPin className="h-5 w-5 mr-2 text-blue-500" />
-                                <h3 className="font-semibold">アクセス情報</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <LocationDisplay 
-                                address={profile.address || undefined}
-                                accessInfo={profile.access_info || undefined}
-                                className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-md p-4"
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* セキュリティ対策 */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Shield className="h-5 w-5 mr-2 text-green-500" />
-                                <h3 className="font-semibold">セキュリティ対策</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <div className="bg-green-50 dark:bg-green-900/10 rounded-md p-4 border border-green-100 dark:border-green-900/30">
-                                {profile.security_measures ? (
-                                  <p className="text-sm whitespace-pre-line">
-                                    {profile.security_measures}
-                                  </p>
-                                ) : (
-                                  <p className="text-sm text-muted-foreground italic text-center">
-                                    セキュリティ対策情報が登録されていません
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* 連絡先情報 */}
-                          <div className="bg-card rounded-lg border overflow-hidden">
-                            <div className="bg-muted/40 p-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <PhoneCall className="h-5 w-5 mr-2 text-purple-500" />
-                                <h3 className="font-semibold">連絡先・問い合わせ先</h3>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="p-5">
-                              <ContactDisplay 
-                                recruiterName={profile.recruiter_name || undefined}
-                                phoneNumbers={profile.phone_numbers || undefined}
-                                emailAddresses={profile.email_addresses || undefined}
-                                pcWebsiteUrl={profile.pc_website_url || undefined}
-                                mobileWebsiteUrl={profile.mobile_website_url || undefined}
-                                className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-md p-4"
-                              />
-                            </div>
+                          <div className="prose prose-sm max-w-none">
+                            <HtmlContent html={profile.description} />
                           </div>
                         </div>
                         
+                        {/* 応募資格・条件 */}
+                        {(profile.requirements || profile.application_requirements) && (
+                          <div className="py-6 px-1">
+                            <h3 className="text-base font-medium mb-4 flex items-center">
+                              <CheckCircle className="h-4 w-4 mr-1.5 text-amber-500" />
+                              応募資格・条件
+                            </h3>
+                            
+                            <div className="space-y-4">
+                              {profile.requirements && (
+                                <div className="px-4 py-3 bg-muted rounded-md">
+                                  <h4 className="text-sm font-medium mb-1.5">基本応募条件</h4>
+                                  <p className="text-sm whitespace-pre-line">{profile.requirements}</p>
+                                </div>
+                              )}
+                              
+                              {profile.application_requirements && (
+                                <div className="px-4 py-3 bg-muted rounded-md">
+                                  <h4 className="text-sm font-medium mb-1.5">詳細応募資格</h4>
+                                  <p className="text-sm whitespace-pre-line">{profile.application_requirements}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* アクセス・所在地 */}
+                        {(profile.address || profile.access_info) && (
+                          <div className="py-6 px-1">
+                            <h3 className="text-base font-medium mb-4 flex items-center">
+                              <MapPin className="h-4 w-4 mr-1.5 text-blue-500" />
+                              アクセス・所在地
+                            </h3>
+                            
+                            <div className="space-y-4">
+                              {profile.address && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">所在地</div>
+                                  <div>{profile.address}</div>
+                                </div>
+                              )}
+                              
+                              {profile.access_info && (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">アクセス方法</div>
+                                  <div className="text-sm whitespace-pre-line">{profile.access_info}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* セキュリティ対策 */}
+                        {profile.security_measures && (
+                          <div className="py-6 px-1">
+                            <h3 className="text-base font-medium mb-4 flex items-center">
+                              <Shield className="h-4 w-4 mr-1.5 text-green-500" />
+                              セキュリティ対策
+                            </h3>
+                            
+                            <div className="px-4 py-3 bg-muted rounded-md">
+                              <p className="text-sm whitespace-pre-line">{profile.security_measures}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 連絡先情報 */}
+                        {(profile.recruiter_name || (profile.phone_numbers && profile.phone_numbers.length > 0) || 
+                          (profile.email_addresses && profile.email_addresses.length > 0) || 
+                          profile.pc_website_url || profile.mobile_website_url) && (
+                          <div className="py-6 px-1">
+                            <h3 className="text-base font-medium mb-4 flex items-center">
+                              <Phone className="h-4 w-4 mr-1.5 text-rose-500" />
+                              連絡先情報
+                            </h3>
+                            
+                            <div className="space-y-3">
+                              {/* 採用担当者 */}
+                              {profile.recruiter_name && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">採用担当者</div>
+                                  <div>{profile.recruiter_name}</div>
+                                </div>
+                              )}
+                              
+                              {/* 電話番号 */}
+                              {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">電話番号</div>
+                                  <div className="space-y-1">
+                                    {profile.phone_numbers.map((phone, index) => (
+                                      <div key={index} className="flex items-center gap-2">
+                                        <Phone className="h-3.5 w-3.5 text-green-500" />
+                                        <a href={`tel:${phone.replace(/[-\s]/g, '')}`} className="hover:underline">
+                                          {phone}
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* メールアドレス */}
+                              {profile.email_addresses && profile.email_addresses.length > 0 && (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">メールアドレス</div>
+                                  <div className="space-y-1">
+                                    {profile.email_addresses.map((email, index) => (
+                                      <div key={index} className="flex items-center gap-2">
+                                        <Mail className="h-3.5 w-3.5 text-blue-500" />
+                                        <a href={`mailto:${email}`} className="hover:underline">
+                                          {email}
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Webサイト */}
+                              {(profile.pc_website_url || profile.mobile_website_url) && (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
+                                  <div className="text-sm font-medium min-w-24">Webサイト</div>
+                                  <div className="space-y-1">
+                                    {profile.pc_website_url && (
+                                      <div className="flex items-center gap-2">
+                                        <Globe className="h-3.5 w-3.5 text-indigo-500" />
+                                        <a href={profile.pc_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                          公式サイト
+                                        </a>
+                                      </div>
+                                    )}
+                                    {profile.mobile_website_url && (
+                                      <div className="flex items-center gap-2">
+                                        <Smartphone className="h-3.5 w-3.5 text-purple-500" />
+                                        <a href={profile.mobile_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                          モバイルサイト
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 編集ボタン */}
-                        <div className="flex justify-center mt-8">
-                          <Button 
-                            onClick={() => setShowProfileForm(true)} 
-                            size="lg"
-                            className="w-full sm:w-auto"
-                          >
+                        <div className="py-6 px-1 flex justify-center">
+                          <Button onClick={() => setShowProfileForm(true)} size="lg">
                             <FileEdit className="h-4 w-4 mr-2" />
                             プロフィールを編集する
                           </Button>
