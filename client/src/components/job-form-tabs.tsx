@@ -183,9 +183,9 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         access_info: data.access_info || "",
         security_measures: data.security_measures || "",
         
-        // ブール値項目
-        transportation_support: Boolean(data.transportation_support),
-        housing_support: Boolean(data.housing_support),
+        // benefits内に含まれるため削除（交通費支給、寮完備）
+        transportation_support: false,
+        housing_support: false,
         
         // 必須項目
         working_hours: data.working_hours || "",
@@ -592,53 +592,6 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
             </div>
             
             <div className="space-y-4">
-              <div className="flex gap-4">
-                <FormField
-                  control={form.control}
-                  name="transportation_support"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value || false}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          交通費サポート
-                        </FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          ※ 交通費の支給があることを示します
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="housing_support"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value || false}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          寮・住居サポート
-                        </FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          ※ 寮完備または住居手当があることを示します
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
               
               {/* 特典・待遇セクションの追加 */}
               <div className="p-5 border border-green-200 bg-green-50 rounded-lg mt-4">
