@@ -549,10 +549,34 @@ function BlogPostsList({ userId }: { userId?: number }) {
     return `${title.substring(0, MAX_TITLE_LENGTH)}...`;
   };
 
-  // 日付のフォーマット
-  const formatDate = (dateString: string | null | Date) => {
-    if (!dateString) return "-";
-    return format(new Date(dateString), "yyyy-MM-dd HH:mm", { locale: ja });
+  // 日付のフォーマット - ブログ記事のステータスを考慮
+  const formatDate = (post: BlogPost) => {
+    // 公開記事の場合
+    if (post.status === 'published') {
+      // published_atがある場合はそれを表示、なければ作成日時を表示
+      if (post.published_at) {
+        const pubDate = typeof post.published_at === 'string' ? new Date(post.published_at) : post.published_at;
+        return format(pubDate, "yyyy/MM/dd HH:mm", { locale: ja });
+      } else if (post.created_at) {
+        const createDate = typeof post.created_at === 'string' ? new Date(post.created_at) : post.created_at;
+        return format(createDate, "yyyy/MM/dd HH:mm", { locale: ja }) + " (作成日時)";
+      }
+    }
+    
+    // 予約投稿の場合は予定日時を表示
+    else if (post.status === 'scheduled' && post.scheduled_at) {
+      const schedDate = typeof post.scheduled_at === 'string' ? new Date(post.scheduled_at) : post.scheduled_at;
+      return format(schedDate, "yyyy/MM/dd HH:mm", { locale: ja }) + " (予定)";
+    }
+    
+    // それ以外の場合は作成日時を表示
+    else if (post.created_at) {
+      const createDate = typeof post.created_at === 'string' ? new Date(post.created_at) : post.created_at;
+      return format(createDate, "yyyy/MM/dd HH:mm", { locale: ja });
+    }
+    
+    // どの日時情報もない場合
+    return "-";
   };
 
   // ステータスに応じたバッジの表示
@@ -640,7 +664,7 @@ function BlogPostsList({ userId }: { userId?: number }) {
               </TableCell>
               <TableCell className="font-medium">{trimTitle(post.title)}</TableCell>
               <TableCell>{getStatusBadge(post.status)}</TableCell>
-              <TableCell>{formatDate(post.published_at)}</TableCell>
+              <TableCell>{formatDate(post)}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
