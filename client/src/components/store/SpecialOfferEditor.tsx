@@ -78,11 +78,7 @@ const OFFER_TEMPLATES = [
   },
 ];
 
-interface SpecialOfferEditorProps {
-  value?: SpecialOffer[];
-  onChange?: (offers: SpecialOffer[]) => void;
-}
-
+// 現在はコンポーネントがFormのコンテキスト内で使われるため、propsは不要
 export function SpecialOfferEditor() {
   const { control, watch } = useFormContext();
   const { fields, append, remove, move } = useFieldArray({

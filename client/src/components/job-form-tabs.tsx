@@ -684,17 +684,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       </div>
                     )}
                     
-                    {(form.watch("minimum_guarantee") || 0) > 0 && (
-                      <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-800/30 shadow-sm">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div className="p-1.5 bg-pink-200 dark:bg-pink-800/50 rounded-full">
-                            <Banknote className="h-3.5 w-3.5 text-pink-600 dark:text-pink-300" />
-                          </div>
-                          <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
-                        </div>
-                        <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {(form.watch("minimum_guarantee") || 0).toLocaleString()}円 保証</p>
-                      </div>
-                    )}
+                    {/* カスタム特典機能に置き換えのため、最低保証の個別表示は削除 */}
                   </div>
                 </div>
 
@@ -710,10 +700,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <SpecialOfferEditor
-                            value={field.value || []}
-                            onChange={field.onChange}
-                          />
+                          <SpecialOfferEditor />
                         </FormControl>
                         <FormDescription className="text-xs mt-2">
                           特典やキャンペーンを自由に作成できます。タイトル、説明、色、アイコンなどをカスタマイズできます。
