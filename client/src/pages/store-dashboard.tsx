@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { HtmlContent } from "@/components/html-content";
+import { type LucideIcon } from "lucide-react";
 import {
   Building2,
   PenBox,
@@ -28,21 +29,23 @@ import {
   Eye,
   Clock,
   CheckCircle,
+  Banknote,
+  Home,
+  Car,
+  Shield,
+  MapPin,
+  Briefcase,
+  Map,
   MoreVertical,
   Calendar,
   ExternalLink,
   Bell,
   BarChart3,
   Newspaper,
-  MapPin,
-  Briefcase,
   Info,
-  Banknote,
   Award,
   ChevronRight,
-  LucideIcon,
-  CreditCard,
-  Shield
+  CreditCard
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -484,134 +487,198 @@ export default function StoreDashboard() {
 
                         {/* オンラインサービス情報（ContactDisplayに統合） */}
 
-                        {/* 仕事内容セクション - JobDescriptionDisplayコンポーネントを使用 */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <Briefcase className="h-5 w-5 mr-2 text-primary" />
-                            <span>仕事内容</span>
-                          </h3>
-                          
-                          <JobDescriptionDisplay 
-                            businessName={profile.business_name}
-                            location={profile.location}
-                            serviceType={profile.service_type}
-                            catchPhrase={profile.catch_phrase || undefined}
-                            description={profile.description || ''}
-                            workingHours={profile.working_hours || undefined}
-                            requirements={profile.requirements || undefined}
-                          />
-                        </div>
-                        
-                        {/* 応募要件セクション (統合) */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <CheckCircle className="h-5 w-5 mr-2 text-yellow-500" />
-                            <span>応募資格・条件</span>
-                          </h3>
-                          
-                          <div className="space-y-4">
-                            {profile.requirements && (
-                              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4">
-                                <h4 className="font-medium text-yellow-700 mb-2 text-sm">基本応募条件</h4>
-                                <p className="text-sm whitespace-pre-line">{profile.requirements}</p>
-                              </div>
-                            )}
-                            
-                            {profile.application_requirements && (
-                              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4">
-                                <h4 className="font-medium text-yellow-700 mb-2 text-sm">詳細応募資格</h4>
-                                <p className="text-sm text-gray-700 whitespace-pre-line">{profile.application_requirements}</p>
-                              </div>
-                            )}
-                            
-                            {(!profile.requirements && !profile.application_requirements) && (
-                              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-center">
-                                <p className="text-sm text-gray-500 italic">応募資格・条件が設定されていません</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* 給与・待遇・福利厚生（コンポーネント化） */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* 給与・待遇情報 - SalaryDisplayコンポーネントを使用 */}
-                          <div className="bg-card rounded-lg border shadow-sm p-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
-                              <span>給与・待遇</span>
+                        {/* クイック情報セクション - 3カラムグリッド */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* 給与カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Banknote className="h-4 w-4 mr-2 text-emerald-500" />
+                              <span>給与</span>
                             </h3>
-                            
-                            <SalaryDisplay 
-                              minimumGuarantee={profile.minimum_guarantee || undefined} 
-                              maximumGuarantee={profile.maximum_guarantee || undefined}
-                              workingTimeHours={profile.working_time_hours || undefined}
-                              averageHourlyPay={profile.average_hourly_pay || undefined}
-                              transportationSupport={profile.transportation_support || undefined}
-                              housingSupport={profile.housing_support || undefined}
-                              benefits={profile.benefits || undefined}
-                            />
+                            <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-md">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">日給</p>
+                              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {profile.minimum_guarantee && profile.maximum_guarantee 
+                                  ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
+                                  : profile.minimum_guarantee 
+                                    ? `${profile.minimum_guarantee.toLocaleString()}円〜`
+                                    : profile.maximum_guarantee 
+                                      ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
+                                      : "要相談"}
+                              </p>
+                              {(profile.working_time_hours && profile.minimum_guarantee) && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  時給換算: 約{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円〜
+                                </p>
+                              )}
+                            </div>
                           </div>
                           
-                          {/* 勤務時間・アクセス情報 - LocationDisplayとJobDescriptionDisplayを使用 */}
-                          <div className="bg-card rounded-lg border shadow-sm p-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <Clock className="h-5 w-5 mr-2 text-orange-500" />
-                              <span>勤務時間・アクセス</span>
+                          {/* 勤務時間カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                              <span>勤務時間</span>
                             </h3>
-                            
-                            <div className="space-y-6">
-                              {/* 勤務時間 */}
-                              <div>
-                                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                                  <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                                  勤務時間・シフト
-                                </h4>
-                                <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
-                                  <p className="text-sm whitespace-pre-line">
-                                    {profile.working_hours || <span className="text-gray-500 italic">勤務時間が未設定です</span>}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* アクセス情報 - LocationDisplayコンポーネントを使用 */}
-                              <LocationDisplay 
-                                address={profile.address || undefined}
-                                accessInfo={profile.access_info || undefined}
-                                securityMeasures={profile.security_measures || undefined}
-                              />
+                            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-md">
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {profile.working_hours || <span className="text-gray-500 italic">未設定</span>}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* サポート・待遇カード */}
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border p-4 shadow-sm">
+                            <h3 className="text-md font-semibold flex items-center mb-3">
+                              <Home className="h-4 w-4 mr-2 text-blue-500" />
+                              <span>待遇</span>
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {profile.transportation_support && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  <Car className="h-3 w-3 mr-1" />交通費サポート
+                                </Badge>
+                              )}
+                              {profile.housing_support && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  <Home className="h-3 w-3 mr-1" />寮完備
+                                </Badge>
+                              )}
+                              {profile.benefits && profile.benefits.length > 0 && profile.benefits.slice(0, 2).map((benefit, index) => (
+                                <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  {benefit}
+                                </Badge>
+                              ))}
+                              {profile.benefits && profile.benefits.length > 2 && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  他{profile.benefits.length - 2}件
+                                </Badge>
+                              )}
+                              {!profile.transportation_support && !profile.housing_support && (!profile.benefits || profile.benefits.length === 0) && (
+                                <span className="text-sm text-gray-500 italic">待遇情報が未設定です</span>
+                              )}
                             </div>
                           </div>
                         </div>
-                        
-                        {/* 安全対策と連絡先情報 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* 安全対策 - LocationDisplayコンポーネントを使用して情報表示を統一 */}
-                          <div className="bg-card rounded-lg border shadow-sm p-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <Shield className="h-5 w-5 mr-2 text-green-500" />
-                              <span>安全対策</span>
-                            </h3>
-                            {/* LocationDisplayコンポーネントのsecurityMeasuresパラメータで共通表示 */}
-                            <LocationDisplay 
-                              securityMeasures={profile.security_measures || undefined}
-                              className="bg-indigo-50 p-3 rounded-md"
-                            />
+
+                        {/* メインコンテンツ - 2カラムレイアウト */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* 左側カラム - 求人情報と応募条件 */}
+                          <div className="lg:col-span-2 space-y-6">
+                            {/* 仕事内容セクション - JobDescriptionDisplayコンポーネント */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <Briefcase className="h-5 w-5 mr-2 text-primary" />
+                                <span>仕事内容</span>
+                              </h3>
+                              
+                              <JobDescriptionDisplay 
+                                businessName={profile.business_name}
+                                location={profile.location}
+                                serviceType={profile.service_type}
+                                description={profile.description || ''}
+                              />
+                            </div>
+                            
+                            {/* 応募資格セクション */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <CheckCircle className="h-5 w-5 mr-2 text-yellow-500" />
+                                <span>応募資格・条件</span>
+                              </h3>
+                              
+                              <div className="space-y-4">
+                                {profile.requirements && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
+                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">基本応募条件</h4>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{profile.requirements}</p>
+                                  </div>
+                                )}
+                                
+                                {profile.application_requirements && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-md p-4">
+                                    <h4 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2 text-sm">詳細応募資格</h4>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{profile.application_requirements}</p>
+                                  </div>
+                                )}
+                                
+                                {(!profile.requirements && !profile.application_requirements) && (
+                                  <div className="p-4 text-center">
+                                    <p className="text-sm text-gray-500 italic">応募資格・条件が設定されていません</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* 詳細な給与・待遇情報 */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-lg font-semibold flex items-center mb-4">
+                                <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
+                                <span>詳細な給与・待遇情報</span>
+                              </h3>
+                              
+                              <SalaryDisplay 
+                                minimumGuarantee={profile.minimum_guarantee || undefined} 
+                                maximumGuarantee={profile.maximum_guarantee || undefined}
+                                workingTimeHours={profile.working_time_hours || undefined}
+                                averageHourlyPay={profile.average_hourly_pay || undefined}
+                                transportationSupport={profile.transportation_support || undefined}
+                                housingSupport={profile.housing_support || undefined}
+                                benefits={profile.benefits || undefined}
+                              />
+                            </div>
                           </div>
                           
-                          {/* 店舗連絡先情報 - ContactDisplayコンポーネントを使用 */}
-                          <div className="bg-card rounded-lg border shadow-sm p-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <UserCircle className="h-5 w-5 mr-2 text-purple-500" />
-                              <span>お問い合わせ</span>
-                            </h3>
+                          {/* 右側カラム - アクセス情報と連絡先 */}
+                          <div className="space-y-6">
+                            {/* アクセス情報カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                                <span>アクセス情報</span>
+                              </h3>
+                              
+                              <LocationDisplay 
+                                address={profile.address || undefined}
+                                accessInfo={profile.access_info || undefined}
+                              />
+                            </div>
                             
-                            <ContactDisplay 
-                              recruiterName={profile.recruiter_name || undefined}
-                              phoneNumbers={profile.phone_numbers || undefined}
-                              emailAddresses={profile.email_addresses || undefined}
-                              pcWebsiteUrl={profile.pc_website_url || undefined}
-                              mobileWebsiteUrl={profile.mobile_website_url || undefined}
-                            />
+                            {/* 安全対策カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <Shield className="h-4 w-4 mr-2 text-green-500" />
+                                <span>安全対策</span>
+                              </h3>
+                              
+                              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-4 border border-indigo-100 dark:border-indigo-800">
+                                {profile.security_measures ? (
+                                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                                    {profile.security_measures}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic text-center">
+                                    安全対策情報が登録されていません
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* 連絡先カード */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-5">
+                              <h3 className="text-md font-semibold flex items-center mb-3">
+                                <UserCircle className="h-4 w-4 mr-2 text-purple-500" />
+                                <span>お問い合わせ</span>
+                              </h3>
+                              
+                              <ContactDisplay 
+                                recruiterName={profile.recruiter_name || undefined}
+                                phoneNumbers={profile.phone_numbers || undefined}
+                                emailAddresses={profile.email_addresses || undefined}
+                                pcWebsiteUrl={profile.pc_website_url || undefined}
+                                mobileWebsiteUrl={profile.mobile_website_url || undefined}
+                              />
+                            </div>
                           </div>
                         </div>
 
