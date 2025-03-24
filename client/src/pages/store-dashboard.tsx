@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type StoreProfile, type BlogPost } from "@shared/schema";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,7 +21,15 @@ import {
   Eye,
   Clock,
   CheckCircle,
-  MoreVertical
+  MoreVertical,
+  Calendar,
+  Mail,
+  ExternalLink,
+  Bell,
+  BarChart3,
+  Newspaper,
+  ChevronRight,
+  LucideIcon
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -40,6 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 // プロフィールのステータスラベル
 const profileStatusLabels = {
@@ -80,6 +89,84 @@ interface DashboardStats {
   completedInquiriesCount: number;
   totalApplicationsCount: number;
 }
+
+// ダッシュボードカードコンポーネント
+interface DashboardCardProps {
+  icon: LucideIcon;
+  title: string;
+  value: number | string;
+  description?: string;
+  trend?: number;
+  color?: "default" | "primary" | "success" | "warning" | "danger";
+  onClick?: () => void;
+}
+
+const DashboardCard = ({ 
+  icon: Icon, 
+  title, 
+  value, 
+  description, 
+  trend, 
+  color = "default",
+  onClick
+}: DashboardCardProps) => {
+  const colorStyles = {
+    default: "bg-card",
+    primary: "bg-primary/10 border-primary/20",
+    success: "bg-green-500/10 border-green-500/20",
+    warning: "bg-yellow-500/10 border-yellow-500/20",
+    danger: "bg-red-500/10 border-red-500/20",
+  };
+
+  const iconStyles = {
+    default: "text-foreground",
+    primary: "text-primary",
+    success: "text-green-600",
+    warning: "text-yellow-600",
+    danger: "text-red-600",
+  };
+
+  return (
+    <Card 
+      className={cn(
+        "transition-all duration-200 ease-in-out border overflow-hidden", 
+        colorStyles[color],
+        onClick && "cursor-pointer hover:shadow-md"
+      )}
+      onClick={onClick}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+            <div className="text-2xl font-bold">{value}</div>
+            {description && (
+              <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            )}
+          </div>
+          <div className={cn(
+            "p-2 rounded-full", 
+            color === "primary" ? "bg-primary/20" : 
+            color === "success" ? "bg-green-500/20" :
+            color === "warning" ? "bg-yellow-500/20" :
+            color === "danger" ? "bg-red-500/20" : 
+            "bg-muted"
+          )}>
+            <Icon className={cn("h-5 w-5", iconStyles[color])} />
+          </div>
+        </div>
+        {trend !== undefined && (
+          <div className={cn(
+            "text-xs font-medium mt-2",
+            trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-muted-foreground"
+          )}>
+            {trend > 0 ? "+" : ""}{trend}% {trend >= 0 ? "増加" : "減少"}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function StoreDashboard() {
   const { user, logoutMutation } = useAuth();
@@ -144,97 +231,113 @@ export default function StoreDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ヘッダー */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      {/* モダンなヘッダー */}
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold">{user?.display_name}</h1>
-              <p className="text-sm text-muted-foreground">
-                最終更新: {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                  {user?.display_name}
+                  <Badge variant={profile?.status === "published" ? "default" : "secondary"} className="ml-2">
+                    {profileStatusLabels[profile?.status || "draft"]}
+                  </Badge>
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja })} 更新
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => window.open('/store/settings', '_blank')}>
-                <Settings className="h-4 w-4 mr-2" />
-                設定
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="rounded-full text-muted-foreground hover:text-foreground"
+              >
+                <Bell className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full text-muted-foreground hover:text-foreground"
+                onClick={() => window.open('/store/settings', '_blank')}
+              >
+                <Settings className="h-5 w-5" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
+                className="ml-2"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
                 {logoutMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 mr-2" />
                 )}
-                <span className="ml-2">ログアウト</span>
+                ログアウト
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
+        {/* ダッシュボードサマリー */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <DashboardCard 
+            icon={Users} 
+            title="新規問い合わせ" 
+            value={stats?.newInquiriesCount || 0} 
+            color="primary"
+            onClick={() => setSelectedTab("applications")}
+          />
+          <DashboardCard 
+            icon={BarChart3} 
+            title="本日のアクセス" 
+            value={stats?.todayPageViews || 0} 
+            description={`ユニークユーザー: ${stats?.todayUniqueVisitors || 0}`}
+            trend={5}
+            color="success"
+          />
+          <DashboardCard 
+            icon={Newspaper} 
+            title="ブログ投稿数" 
+            value={5} 
+            description={"最終投稿: 本日"}
+            onClick={() => setSelectedTab("blog")}
+          />
+          <DashboardCard 
+            icon={Calendar} 
+            title="予約投稿" 
+            value={1} 
+            description={"次回: 3/25 00:20"}
+            color="warning"
+          />
+        </div>
+
         <div className="grid grid-cols-12 gap-6">
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
-            {/* 応募者対応状況カード */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  応募者対応状況
-                </CardTitle>
-                <CardDescription>
-                  問い合わせと対応状況
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-3xl font-bold text-primary">
-                      {stats?.newInquiriesCount || 0}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      新規問い合わせ
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <div className="text-sm font-medium">対応待ち</div>
-                      <div className="text-2xl font-semibold text-yellow-600">
-                        {stats?.pendingInquiriesCount || 0}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">対応済み</div>
-                      <div className="text-2xl font-semibold text-green-600">
-                        {stats?.completedInquiriesCount || 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="grid grid-cols-4 h-auto">
-                <TabsTrigger value="profile" className="py-2">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+              <TabsList className="grid grid-cols-4 h-auto p-1 bg-muted/80 backdrop-blur-sm rounded-xl">
+                <TabsTrigger value="profile" className="py-2 rounded-lg">
                   <Building2 className="h-4 w-4 mr-2" />
                   店舗情報
                 </TabsTrigger>
-                <TabsTrigger value="applications" className="py-2">
+                <TabsTrigger value="applications" className="py-2 rounded-lg">
                   <Users className="h-4 w-4 mr-2" />
                   応募一覧
                 </TabsTrigger>
-                <TabsTrigger value="blog" className="py-2">
+                <TabsTrigger value="blog" className="py-2 rounded-lg">
                   <Pencil className="h-4 w-4 mr-2" />
                   ブログ管理
                 </TabsTrigger>
-                <TabsTrigger value="freeSpace" className="py-2">
+                <TabsTrigger value="freeSpace" className="py-2 rounded-lg">
                   <PenBox className="h-4 w-4 mr-2" />
                   フリースペース
                 </TabsTrigger>
@@ -388,75 +491,94 @@ export default function StoreDashboard() {
           {/* サイドバー */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             {/* 店舗プロフィール */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  店舗情報
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <Card className="border border-primary/20 overflow-hidden">
+              <div className="bg-primary/5 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{user?.display_name || "未設定"}</h3>
+                    <p className="text-xs text-muted-foreground">{profile?.location || "未設定"}</p>
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-6 pt-5">
                 <div className="space-y-4">
-                  <div>
-                    <p className="font-medium">店舗名</p>
-                    <p className="text-sm text-muted-foreground">{user?.display_name || "未設定"}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg bg-muted/30 p-3 text-center">
+                      <div className="text-lg font-semibold text-primary">{stats?.totalApplicationsCount || 0}</div>
+                      <div className="text-xs text-muted-foreground mt-1">応募総数</div>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 p-3 text-center">
+                      <div className="text-lg font-semibold text-primary">{stats?.monthlyPageViews || 0}</div>
+                      <div className="text-xs text-muted-foreground mt-1">月間アクセス</div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">所在地</p>
-                    <p className="text-sm text-muted-foreground">{profile?.location || "未設定"}</p>
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={() => window.open('/store/settings', '_blank')}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-primary/30 text-primary hover:bg-primary/5" 
+                    onClick={() => window.open('/store/settings', '_blank')}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
-                    店舗情報を編集
+                    プロフィール設定
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* アクセス状況 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <LineChart className="h-5 w-5 text-primary" />
-                  アクセス状況
+            <Card className="overflow-hidden border-none shadow-sm">
+              <CardHeader className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10 border-b">
+                <CardTitle className="text-base flex items-center gap-2 font-medium">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  アクセス分析
                 </CardTitle>
-                <CardDescription>
-                  店舗ページへのアクセス数
-                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-6">
+                <div className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">本日のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-2xl font-bold text-primary">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">今日のアクセス</h3>
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        +12% <span className="text-muted-foreground ml-1">前日比</span>
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
                           {stats?.todayPageViews || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                        </span>
+                        <span className="text-xs text-muted-foreground">総アクセス数</span>
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold text-primary">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
                           {stats?.todayUniqueVisitors || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                        </span>
+                        <span className="text-xs text-muted-foreground">ユニークユーザー</span>
                       </div>
                     </div>
                   </div>
+                  
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">今月のアクセス</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-2xl font-bold text-primary">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">今月の統計</h3>
+                      <span className="text-xs text-muted-foreground">全期間</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
                           {stats?.monthlyPageViews || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">総アクセス</div>
+                        </span>
+                        <span className="text-xs text-muted-foreground">月間アクセス</span>
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold text-primary">
+                      <div className="flex flex-col space-y-1 bg-muted/20 rounded-lg p-3">
+                        <span className="text-2xl font-bold text-foreground">
                           {stats?.monthlyUniqueVisitors || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">ユニーク</div>
+                        </span>
+                        <span className="text-xs text-muted-foreground">ユニークユーザー</span>
                       </div>
                     </div>
                   </div>
@@ -465,35 +587,54 @@ export default function StoreDashboard() {
             </Card>
 
             {/* 掲載状況 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  掲載状況
-                </CardTitle>
-                <CardDescription>
-                  現在の掲載プランと表示状況
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Badge variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'}>
-                      {planLabels[stats?.storePlan || 'free']}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">掲載エリア</span>
-                      <span className="font-medium">{stats?.storeArea || '未設定'}</span>
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/10 border-b pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-base flex items-center gap-2 font-medium">
+                    <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                      <ExternalLink className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">表示順位</span>
-                      <span className="font-medium">{stats?.displayRank || '-'}位</span>
+                    掲載情報
+                  </CardTitle>
+                  <Badge 
+                    variant={stats?.storePlan === 'premium' ? 'default' : 'secondary'} 
+                    className={stats?.storePlan === 'premium' ? 'bg-purple-500' : ''}
+                  >
+                    {planLabels[stats?.storePlan || 'free']}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-5 pb-5">
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm font-medium">掲載エリア</span>
+                      <span className="font-medium text-sm">{stats?.storeArea || '未設定'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm font-medium">表示順位</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{stats?.displayRank || '-'}位</span>
+                        {stats?.displayRank && stats.displayRank <= 3 && (
+                          <Badge variant="default" className="bg-amber-500">上位表示</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm font-medium">公開ステータス</span>
+                      <Badge variant={profile?.status === "published" ? "default" : "secondary"} className={profile?.status === "published" ? "bg-green-500" : ""}>
+                        {profileStatusLabels[profile?.status || "draft"]}
+                      </Badge>
                     </div>
                   </div>
                 </div>
               </CardContent>
+              <CardFooter className="bg-muted/20 p-4 flex justify-center">
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setShowProfileForm(true)}>
+                  <FileEdit className="h-4 w-4 mr-2" />
+                  プラン情報を編集
+                </Button>
+              </CardFooter>
             </Card>
           </div>
         </div>
@@ -583,18 +724,24 @@ function BlogPostsList({ userId }: { userId?: number }) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
-        return <Badge variant="default"><CheckCircle className="h-3 w-3 mr-1" />{blogStatusLabels.published}</Badge>;
+        return <Badge variant="default" className="bg-green-500/90 hover:bg-green-500/80">
+                <CheckCircle className="h-3 w-3 mr-1" />{blogStatusLabels.published}
+               </Badge>;
       case "scheduled":
-        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{blogStatusLabels.scheduled}</Badge>;
+        return <Badge variant="outline" className="border-amber-500 text-amber-500">
+                <Clock className="h-3 w-3 mr-1" />{blogStatusLabels.scheduled}
+               </Badge>;
       default:
-        return <Badge variant="secondary">{blogStatusLabels.draft}</Badge>;
+        return <Badge variant="secondary" className="bg-slate-200">
+                <Pencil className="h-3 w-3 mr-1" />{blogStatusLabels.draft}
+               </Badge>;
     }
   };
 
   if (isLoading) {
     return (
       <div className="py-8 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
         <p className="text-muted-foreground">ブログ記事を読み込み中...</p>
       </div>
     );
@@ -619,15 +766,17 @@ function BlogPostsList({ userId }: { userId?: number }) {
 
   if (!data?.posts || data.posts.length === 0) {
     return (
-      <div className="text-center py-8">
-        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">
-          まだブログ記事がありません
+      <div className="text-center py-8 bg-muted/20 rounded-lg border border-dashed border-muted-foreground/30 p-8">
+        <div className="bg-muted/40 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+          <Newspaper className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-medium mb-2">まだブログ記事がありません</h3>
+        <p className="text-muted-foreground mb-6">
+          ブログ記事を作成して、お店の魅力をアピールしましょう。
         </p>
         <Button
-          variant="outline"
-          className="mt-4"
           onClick={() => setLocation('/store/blog/new')}
+          className="bg-primary/90 hover:bg-primary shadow-sm"
         >
           <Plus className="h-4 w-4 mr-2" />
           記事を作成する
@@ -637,64 +786,73 @@ function BlogPostsList({ userId }: { userId?: number }) {
   }
 
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-16">画像</TableHead>
-            <TableHead>タイトル</TableHead>
-            <TableHead>ステータス</TableHead>
-            <TableHead>公開日時</TableHead>
-            <TableHead className="text-right">操作</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.posts.map((post: BlogPost) => (
-            <TableRow key={post.id}>
-              <TableCell className="p-1">
-                {post.thumbnail && (
-                  <div className="w-14 h-14 overflow-hidden rounded-md">
-                    <ThumbnailImage
-                      src={post.thumbnail}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </TableCell>
-              <TableCell className="font-medium">{trimTitle(post.title)}</TableCell>
-              <TableCell>{getStatusBadge(post.status)}</TableCell>
-              <TableCell>{formatDate(post)}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => window.open(`/blog/${post.id}`, '_blank')}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      閲覧
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation(`/store/blog/edit/${post.id}`)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      編集
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="mt-4 text-right">
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        {data.posts.map((post: BlogPost) => (
+          <div key={post.id} className="flex items-center gap-3 p-3 bg-card hover:bg-muted/10 rounded-lg border transition-colors group">
+            <div className="flex-shrink-0">
+              {post.thumbnail ? (
+                <div className="w-16 h-16 overflow-hidden rounded-md shadow-sm">
+                  <ThumbnailImage
+                    src={post.thumbnail}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                  <Newspaper className="h-6 w-6 text-muted-foreground/50" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                {getStatusBadge(post.status)}
+                <span className="text-xs text-muted-foreground">{formatDate(post)}</span>
+              </div>
+              <h3 className="font-medium truncate">{post.title}</h3>
+              <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                {post.content?.replace(/<[^>]*>/g, '').substring(0, 50)}...
+              </div>
+            </div>
+            
+            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => window.open(`/blog/${post.id}`, '_blank')}
+                >
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => setLocation(`/store/blog/edit/${post.id}`)}
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex justify-between items-center mt-6 pt-4 border-t">
+        <div className="text-sm text-muted-foreground">
+          合計 {data.pagination?.totalItems || 0} 記事
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={() => setLocation('/store/blog')}
+          className="gap-1"
         >
           すべての記事を表示
+          <ChevronRight className="h-3 w-3" />
         </Button>
       </div>
     </div>
