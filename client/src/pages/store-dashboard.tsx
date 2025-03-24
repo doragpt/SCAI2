@@ -481,7 +481,7 @@ export default function StoreDashboard() {
                             {profile?.working_time_hours && profile?.average_hourly_pay && 
                             profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
                               <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 p-5 rounded-lg border border-green-200 shadow-sm">
-                                <div className="text-sm text-muted-foreground mb-1">勤務時間と平均日給</div>
+                                <div className="text-sm text-muted-foreground mb-1">勤務時間に対しての平均日給</div>
                                 <div className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1">
                                   {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
                                 </div>
