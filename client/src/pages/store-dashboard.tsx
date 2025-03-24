@@ -677,18 +677,22 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 仕事内容セクション - 最も重要な情報を最初に表示 */}
+                        {/* 仕事内容セクション - JobDescriptionDisplayコンポーネントを使用 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
                             <Briefcase className="h-5 w-5 mr-2 text-primary" />
                             <span>仕事内容</span>
                           </h3>
                           
-                          <div className="bg-primary/5 p-5 rounded-lg border border-primary/20">
-                            <div className="prose prose-sm max-w-none">
-                              <HtmlContent html={profile.description || "仕事内容の詳細が設定されていません"} />
-                            </div>
-                          </div>
+                          <JobDescriptionDisplay 
+                            businessName={profile.business_name}
+                            location={profile.location}
+                            serviceType={profile.service_type}
+                            catchPhrase={profile.catch_phrase}
+                            description={profile.description || ''}
+                            workingHours={profile.working_hours}
+                            requirements={profile.requirements}
+                          />
                         </div>
                         
                         {/* 応募要件セクション (統合) */}
