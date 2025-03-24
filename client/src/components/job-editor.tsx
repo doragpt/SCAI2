@@ -35,6 +35,61 @@ interface JobEditorProps {
 }
 
 export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕事の内容を入力してください', maxLength = 9000 }: JobEditorProps) {
+  // カスタムCSS - ReactQuillのスタイルを調整
+  useEffect(() => {
+    // エディタのスタイルカスタマイズ
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .job-editor .ql-editor {
+        min-height: 200px;
+        font-size: 1rem;
+        line-height: 1.5;
+        padding: 0.75rem;
+      }
+      .job-editor .ql-toolbar {
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+        background-color: #f9fafb;
+        border-color: #e5e7eb;
+        padding: 0.5rem;
+      }
+      .job-editor .ql-container {
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+        border-color: #e5e7eb;
+        font-family: inherit;
+      }
+      .job-editor .ql-editor img {
+        max-width: 100%;
+        height: auto;
+        margin: 0.5rem 0;
+        display: block;
+      }
+      .job-editor .ql-editor p {
+        margin-bottom: 0.5rem;
+      }
+      .job-editor .ql-editor h1, .job-editor .ql-editor h2, .job-editor .ql-editor h3 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+      .job-editor .ql-editor ul, .job-editor .ql-editor ol {
+        padding-left: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .job-editor .ql-snow.ql-toolbar button:hover, 
+      .job-editor .ql-snow .ql-toolbar button:hover, 
+      .job-editor .ql-snow.ql-toolbar button.ql-active, 
+      .job-editor .ql-snow .ql-toolbar button.ql-active {
+        background-color: rgba(0, 0, 0, 0.06);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   const [value, setValue] = useState(initialValue);
   const [charCount, setCharCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,10 +144,13 @@ export function JobEditor({ initialValue = '', onChange, placeholder = 'お仕�
               }
               
               const data = await response.json();
+              // Quillのエディタ位置を取得して画像を挿入
               const range = quill.getSelection();
               if (range) {
-                quill.insertEmbed(range.index, 'image', data.url);
-                quill.setSelection(range.index + 1);
+                // TS型エラー回避のため型アサーション使用
+                const rangeIndex = range.index as number;
+                quill.insertEmbed(rangeIndex, 'image', data.url);
+                quill.setSelection(rangeIndex + 1, 0);
               }
             } catch (error) {
               console.error('画像アップロードエラー:', error);
