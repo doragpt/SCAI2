@@ -228,7 +228,8 @@ export const store_profiles = pgTable("store_profiles", {
   location: text("location", { enum: prefectures }).notNull(),
   service_type: text("service_type", { enum: serviceTypes }).notNull(),
   catch_phrase: text("catch_phrase").notNull(),
-  description: text("description").notNull(),
+  description: text("description").notNull(), // HTMLコンテンツとして保存
+  top_image: text("top_image"), // 店舗TOP画像のURL
   benefits: jsonb("benefits").$type<BenefitType[]>().default([]).notNull(),
   minimum_guarantee: integer("minimum_guarantee").default(0),
   maximum_guarantee: integer("maximum_guarantee").default(0),
@@ -380,6 +381,7 @@ export const storeProfileSchema = z.object({
   description: z.string()
     .min(1, "仕事内容を入力してください")
     .max(9000, "仕事内容は9000文字以内で入力してください"),
+  top_image: z.string().optional(), // 店舗TOP画像のURL
   benefits: z.array(z.enum(allBenefitTypes)).default([]),
   minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
   maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
