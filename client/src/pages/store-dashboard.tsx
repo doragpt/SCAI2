@@ -40,7 +40,8 @@ import {
   Award,
   ChevronRight,
   LucideIcon,
-  CreditCard
+  CreditCard,
+  Shield
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -48,6 +49,12 @@ import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { apiRequest } from "@/lib/queryClient";
+
+// 店舗情報表示用コンポーネントインポート
+import { SalaryDisplay } from "@/components/store/SalaryDisplay";
+import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
+import { LocationDisplay } from "@/components/store/LocationDisplay";
+import { ContactDisplay } from "@/components/store/ContactDisplay";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
