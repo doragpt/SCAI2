@@ -290,8 +290,11 @@ export default function BlogManagement() {
             <div>
               <CardTitle className="text-2xl">ブログ管理</CardTitle>
               <CardDescription className="mt-1">
-                <p className="mb-1">お店の情報やイベント告知、キャスト紹介などを投稿できます</p>
-                <div className="flex flex-wrap gap-2 text-xs mt-2">
+                お店の情報やイベント告知、キャスト紹介などを投稿できます
+              </CardDescription>
+              <div className="mt-3">
+                <div className="text-sm text-muted-foreground mb-2">ステータスの説明：</div>
+                <div className="flex flex-wrap gap-2 text-xs">
                   <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
                     <CheckCircle className="h-3 w-3" />
                     公開中
@@ -310,7 +313,7 @@ export default function BlogManagement() {
                   </Badge>
                   <span className="text-muted-foreground">：非公開の編集中記事</span>
                 </div>
-              </CardDescription>
+              </div>
             </div>
             <div className="flex gap-2 mt-2 md:mt-0">
               <Button asChild>

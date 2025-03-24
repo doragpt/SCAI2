@@ -24,7 +24,7 @@ export function CKEditorNavigation() {
         </p>
         <ul className="list-disc pl-5 space-y-1 mb-4">
           <li>画像のサイズ変更と位置調整</li>
-          <li>ドラッグ＆ドロップでの画像挿入</li>
+          <li>ファイル選択ボタンからの画像アップロード</li>
           <li>テーブルや整形されたリストなどの高度な機能</li>
           <li>日本語に最適化されたツールバー</li>
         </ul>
@@ -32,7 +32,7 @@ export function CKEditorNavigation() {
           <div className="flex items-start">
             <Info className="text-green-600 mr-2 h-5 w-5 mt-0.5" />
             <p className="text-green-800 text-sm">
-              画像を挿入した後、クリックして選択すると画像のサイズを変更できます。ツールバーの位置調整ボタンで画像の配置を変更できます。
+              画像はツールバーの「画像を挿入」ボタンをクリックしてアップロードできます。挿入後、画像をクリックして選択するとサイズ変更ハンドルが表示されます。ツールバーの位置調整ボタンで画像の配置を変更できます。
             </p>
           </div>
         </div>
