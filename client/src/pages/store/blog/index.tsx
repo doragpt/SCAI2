@@ -500,16 +500,21 @@ export default function BlogManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {post.published_at ? (
+                        {post.status === 'published' ? (
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">
-                              {format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })}
+                              {post.published_at 
+                                ? format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })
+                                : format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(post.published_at), "HH:mm", { locale: ja })}
+                              {post.published_at 
+                                ? format(new Date(post.published_at), "HH:mm", { locale: ja })
+                                : format(new Date(post.created_at || new Date()), "HH:mm", { locale: ja })}
+                              {!post.published_at && <span className="ml-1">(作成日時)</span>}
                             </span>
                           </div>
-                        ) : post.scheduled_at ? (
+                        ) : post.status === 'scheduled' && post.scheduled_at ? (
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">
                               {format(new Date(post.scheduled_at), "yyyy/MM/dd", { locale: ja })}

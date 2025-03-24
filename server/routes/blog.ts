@@ -8,6 +8,65 @@ import { z } from 'zod';
 
 const router = Router();
 
+// 公開状態の記事でpublished_atが設定されていないレコードを修正するユーティリティエンドポイント
+router.post("/fix-published-dates", authenticate, async (req: any, res) => {
+  try {
+    // 店舗ユーザーのみアクセス可能
+    if (req.user.role !== 'store') {
+      return res.status(403).json({ message: "店舗アカウントのみアクセスできます" });
+    }
+
+    // 公開状態だけどpublished_atがnullの記事を検索
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(and(
+        eq(blogPosts.store_id, req.user.id),
+        eq(blogPosts.status, 'published'),
+        sql`${blogPosts.published_at} IS NULL`
+      ));
+
+    log('info', '公開日未設定の記事検索結果', {
+      userId: req.user.id,
+      postsCount: posts.length
+    });
+
+    if (posts.length === 0) {
+      return res.json({ message: "修正が必要な記事はありません", fixedCount: 0 });
+    }
+
+    // それぞれの記事を修正
+    const now = new Date();
+    const results = await Promise.all(posts.map(async (post) => {
+      const [updated] = await db
+        .update(blogPosts)
+        .set({ published_at: now })
+        .where(eq(blogPosts.id, post.id))
+        .returning();
+      return updated;
+    }));
+
+    log('info', '公開日未設定記事の修正完了', {
+      userId: req.user.id,
+      fixedCount: results.length
+    });
+
+    res.json({
+      message: `${results.length}件の記事の公開日を修正しました`,
+      fixedCount: results.length,
+      fixedPosts: results
+    });
+  } catch (error) {
+    log('error', "公開日修正エラー", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: "記事の公開日修正に失敗しました"
+    });
+  }
+});
+
 // 店舗ユーザー向け：自分のブログ記事一覧取得（フィルター/ページネーション機能付き）
 // このエンドポイントを最初に配置して、:id パラメータと競合しないようにする
 // リクエストパスは `/api/blog/store-posts` となる
@@ -473,6 +532,11 @@ router.put("/:id", authenticate, async (req: any, res) => {
       }
     }
     
+    // 公開状態の場合は必ず公開日時を設定
+    if (cleanedData.status === 'published' && !cleanedData.published_at) {
+      cleanedData.published_at = new Date();
+    }
+
     // 直接SQLパラメータとして使用する安全なオブジェクトを作成
     const safeData = {
       title: cleanedData.title,
@@ -689,8 +753,8 @@ router.patch("/post/:id", authenticate, async (req: any, res) => {
       cleanedData.published_at = null;
     }
     
-    // 公開時は公開日時を設定
-    if (cleanedData.status === 'published' && !cleanedData.published_at && (!existingPost.published_at || existingPost.status !== 'published')) {
+    // 公開時は必ず公開日時を設定
+    if (cleanedData.status === 'published' && !cleanedData.published_at) {
       cleanedData.published_at = new Date();
     }
     
