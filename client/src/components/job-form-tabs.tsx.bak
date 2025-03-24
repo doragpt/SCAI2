@@ -691,15 +691,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                             </div>
                             <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
                           </div>
-                          <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {form.watch("minimum_guarantee")?.toLocaleString() || 0}円 保証</p>
+                          <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {form.watch("minimum_guarantee").toLocaleString()}円 保証</p>
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
-                
-                <div className="space-y-6">
-                  {/* 面接・入店前 */}
+                  
+                  <div className="space-y-6">
+                    {/* 面接・入店前 */}
                   <div>
                     <h4 className="font-medium text-purple-800 mb-2">面接・入店前</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
