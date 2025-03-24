@@ -358,9 +358,112 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
     }
   };
 
+  // 手動送信用の関数
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // フォームデータを取得
+      const formData = form.getValues();
+      
+      // 基本的なバリデーション
+      if (!formData.recruiter_name) {
+        toast({
+          title: "エラー",
+          description: "採用担当者名を入力してください",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 電話番号の確認
+      const validPhoneNumbers = formData.phone_numbers?.filter(phone => phone && phone.trim() !== '') || [];
+      if (validPhoneNumbers.length === 0) {
+        toast({
+          title: "エラー",
+          description: "電話番号を少なくとも1つ入力してください",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 送信データを整形
+      const submitData = {
+        ...formData,
+        phone_numbers: validPhoneNumbers,
+        email_addresses: formData.email_addresses?.filter(email => email && email.trim() !== '') || [],
+        working_hours: formData.working_hours || "",
+        requirements: formData.requirements || "",
+        // 数値項目
+        minimum_guarantee: Number(formData.minimum_guarantee) || 0,
+        maximum_guarantee: Number(formData.maximum_guarantee) || 0,
+        working_time_hours: Number(formData.working_time_hours) || 0,
+        average_hourly_pay: Number(formData.average_hourly_pay) || 0,
+      };
+      
+      console.log("手動送信データ:", submitData);
+      
+      // 送信処理
+      toast({
+        title: "保存中...",
+        description: "店舗情報を保存しています",
+      });
+      
+      // 直接APIリクエスト
+      fetch('/api/store/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('店舗情報の保存に失敗しました');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 成功通知
+        toast({
+          title: "店舗情報を保存しました",
+          description: "変更内容が保存されました。",
+        });
+        
+        // キャッシュを更新
+        queryClient.invalidateQueries({ 
+          queryKey: [QUERY_KEYS.STORE_PROFILE],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.STORE_STATS],
+        });
+        
+        // 成功コールバック
+        if (onSuccess) {
+          onSuccess();
+        }
+      })
+      .catch(error => {
+        console.error('保存エラー:', error);
+        toast({
+          variant: "destructive",
+          title: "エラーが発生しました",
+          description: error.message || "店舗情報の保存に失敗しました",
+        });
+      });
+    } catch (error) {
+      console.error("送信前エラー:", error);
+      toast({
+        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "データの整形中にエラーが発生しました。もう一度お試しください。",
+      });
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleManualSubmit} className="space-y-8">
         <FormField
           control={form.control}
           name="catch_phrase"
@@ -968,7 +1071,15 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
               キャンセル
             </Button>
           )}
-          <Button type="submit" disabled={isPending}>
+          <Button 
+            type="submit" 
+            disabled={isPending}
+            onClick={(e) => {
+              // エラーをコンソールに出力（デバッグ用）
+              console.log("Submit button clicked");
+              console.log("Form errors:", form.formState.errors);
+            }}
+          >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isPending ? "保存中..." : "保存する"}
           </Button>
