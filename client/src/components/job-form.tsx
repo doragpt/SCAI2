@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
@@ -8,10 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, Image } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+// @ts-ignore - ClassicEditorのtsエラーを回避
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import { CustomUploadAdapterPlugin } from "@/components/blog/custom-upload-adapter";
+import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -24,6 +29,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const queryClient = useQueryClient();
   const [catchPhraseLength, setCatchPhraseLength] = useState(initialData?.catch_phrase?.length || 0);
   const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
+  const [isUploadingTopImage, setIsUploadingTopImage] = useState(false);
 
   const form = useForm<StoreProfile>({
     resolver: zodResolver(storeProfileSchema),
@@ -31,6 +37,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       ...initialData,
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
+      top_image: initialData?.top_image || "",
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
@@ -39,6 +46,59 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       status: initialData?.status || "draft",
     }
   });
+  
+  // TOP画像アップロード処理
+  const handleTopImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // 画像サイズチェック - クライアント側で事前検証
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      // メモリリーク防止のためにURL解放
+      URL.revokeObjectURL(objectUrl);
+      
+      try {
+        setIsUploadingTopImage(true);
+        
+        // FormDataを準備
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // ファイルをアップロード
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || '画像のアップロードに失敗しました');
+        }
+        
+        const data = await response.json();
+        form.setValue('top_image', data.url);
+        
+        toast({
+          title: "店舗TOP画像をアップロードしました",
+          description: "画像が正常にアップロードされました。"
+        });
+      } catch (error) {
+        console.error('TOP画像アップロードエラー:', error);
+        toast({
+          variant: "destructive",
+          title: "エラーが発生しました",
+          description: error instanceof Error ? error.message : "画像のアップロードに失敗しました"
+        });
+      } finally {
+        setIsUploadingTopImage(false);
+      }
+    };
+    
+    img.src = objectUrl;
+  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfile) => {
@@ -113,6 +173,69 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           )}
         />
 
+        {/* TOP画像アップロード */}
+        <FormField
+          control={form.control}
+          name="top_image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-medium">店舗TOP画像（640×640px推奨）</FormLabel>
+              <div className="flex items-center gap-6">
+                {field.value && (
+                  <div className="relative h-64 w-64 overflow-hidden rounded-md border">
+                    <ThumbnailImage
+                      src={field.value}
+                      alt="店舗TOP画像"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-3">
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="top-image-upload"
+                        className="flex h-10 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                      >
+                        <Image className="mr-2 h-4 w-4" />
+                        {field.value
+                          ? "TOP画像を変更"
+                          : "TOP画像をアップロード"}
+                        <input
+                          id="top-image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleTopImageUpload}
+                          disabled={isUploadingTopImage}
+                        />
+                      </label>
+                      {isUploadingTopImage && (
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground ml-2" />
+                      )}
+                    </div>
+                  </FormControl>
+                  {field.value && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => form.setValue('top_image', '')}
+                    >
+                      TOP画像を削除
+                    </Button>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    店舗TOP画像は640×640pxのサイズで表示されます
+                  </p>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 店舗説明 - CKEditor */}
         <FormField
           control={form.control}
           name="description"
@@ -120,18 +243,37 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <FormItem>
               <FormLabel className="font-medium">お仕事の内容</FormLabel>
               <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="お仕事の内容を入力してください（9000文字以内）"
-                  className="min-h-[200px]"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setDescriptionLength(e.target.value.length);
-                  }}
-                />
+                <div className="border rounded-md overflow-hidden">
+                  <CKEditor
+                    editor={ClassicEditor}
+                    data={field.value}
+                    config={{
+                      language: 'ja',
+                      toolbar: [
+                        'heading', '|',
+                        'bold', 'italic', 'link', '|',
+                        'bulletedList', 'numberedList', '|',
+                        'insertTable', '|',
+                        'uploadImage', '|',
+                        'undo', 'redo'
+                      ],
+                      extraPlugins: [CustomUploadAdapterPlugin],
+                    }}
+                    onChange={(event, editor) => {
+                      const data = editor.getData();
+                      field.onChange(data);
+                      setDescriptionLength(data.length);
+                    }}
+                  />
+                </div>
               </FormControl>
-              <div className="text-sm text-muted-foreground">
-                {descriptionLength}/9000文字
+              <div className="flex justify-between text-sm mt-2">
+                <div className="text-muted-foreground">
+                  {descriptionLength}/9000文字
+                </div>
+                <div className="text-muted-foreground italic">
+                  リッチテキストエディタで店舗の魅力を表現できます
+                </div>
               </div>
               <FormMessage />
             </FormItem>
