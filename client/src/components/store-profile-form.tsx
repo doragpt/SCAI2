@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -44,17 +44,20 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
     resolver: zodResolver(storeProfileSchema),
     defaultValues: {
       ...initialData,
-      // Basic information
+      // Basic information 
+      business_name: initialData?.business_name || "",
+      location: initialData?.location as any || "",
+      service_type: initialData?.service_type as any || "",
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       top_image: initialData?.top_image || "",
       
       // Salary & benefits
       benefits: initialData?.benefits || [],
-      minimum_guarantee: initialData?.minimum_guarantee || 0,
-      maximum_guarantee: initialData?.maximum_guarantee || 0,
-      working_time_hours: initialData?.working_time_hours || 0,
-      average_hourly_pay: initialData?.average_hourly_pay || 0,
+      minimum_guarantee: initialData?.minimum_guarantee ?? 0,
+      maximum_guarantee: initialData?.maximum_guarantee ?? 0,
+      working_time_hours: initialData?.working_time_hours ?? 0,
+      average_hourly_pay: initialData?.average_hourly_pay ?? 0,
       status: initialData?.status || "draft",
       working_hours: initialData?.working_hours || "",
       
@@ -81,8 +84,8 @@ export function StoreProfileForm({ initialData, onSuccess, onCancel }: StoreProf
       security_measures: initialData?.security_measures || "",
       
       // Support information
-      transportation_support: initialData?.transportation_support || false,
-      housing_support: initialData?.housing_support || false,
+      transportation_support: initialData?.transportation_support ?? false,
+      housing_support: initialData?.housing_support ?? false,
     }
   });
   

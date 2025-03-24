@@ -51,7 +51,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { JobFormDialog } from "@/components/job-form-dialog";
+import { StoreProfileDialog } from "@/components/store-profile-dialog";
 import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
 import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { LocationDisplay } from "@/components/store/LocationDisplay";
@@ -937,7 +937,7 @@ export default function StoreDashboard() {
       </div>
 
       {/* 店舗情報編集ダイアログ */}
-      <JobFormDialog
+      <StoreProfileDialog
         open={showProfileForm}
         onOpenChange={setShowProfileForm}
         initialData={profile}
