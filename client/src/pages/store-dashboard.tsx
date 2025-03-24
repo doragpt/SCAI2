@@ -21,6 +21,7 @@ import {
   UserCircle,
   Phone,
   Mail,
+  MessageCircle,
   PhoneCall,
   User,
   Pencil,
@@ -477,112 +478,27 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 給与・待遇セクション（統合版） */}
+                        {/* 給与・待遇セクション - SalaryDisplayコンポーネント使用 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
                             <Banknote className="h-5 w-5 mr-2 text-green-500" />
                             給与とサポート
                           </h3>
                           
-                          <div className="space-y-6">
-                            {/* 給与情報 */}
-                            <div>
-                              <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                                <CreditCard className="h-4 w-4 mr-2 text-green-600" />
-                                給与情報
-                              </h4>
-                              
-                              <div className="grid md:grid-cols-2 gap-4">
-                                {/* 勤務時間に対しての平均日給 */}
-                                {profile?.working_time_hours && profile?.average_hourly_pay && 
-                                profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
-                                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 p-5 rounded-lg border border-green-200 shadow-sm">
-                                    <div className="text-sm text-muted-foreground mb-1">勤務時間に対しての平均日給</div>
-                                    <div className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1">
-                                      {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
-                                    </div>
-                                    <div className="flex items-center mt-3 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-green-200">
-                                      <span className="text-sm font-medium text-green-800 dark:text-green-400">時給換算:</span>
-                                      <span className="ml-2 text-lg font-bold text-green-700 dark:text-green-300">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>
-                                    </div>
-                                  </div>
-                                ) : null}
-                                
-                                {/* 日給 */}
-                                {(profile.minimum_guarantee || profile.maximum_guarantee) && (
-                                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 p-5 rounded-lg border border-amber-200 shadow-sm flex flex-col">
-                                    <div className="text-sm text-muted-foreground">日給</div>
-                                    <div className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1 flex-grow flex items-center">
-                                      {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
-                                      {profile.minimum_guarantee && profile.maximum_guarantee ? <span className="mx-2 text-amber-500">〜</span> : ""}
-                                      {profile.maximum_guarantee ? `${profile.maximum_guarantee.toLocaleString()}円` : ""}
-                                    </div>
-                                    {profile.minimum_guarantee && profile.maximum_guarantee && (
-                                      <div className="mt-3 text-xs text-amber-700 dark:text-amber-400 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-amber-200">
-                                        経験やスキルに応じて給与は異なります
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* 福利厚生・サポート */}
-                            <div>
-                              <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                                <Award className="h-4 w-4 mr-2 text-blue-500" />
-                                福利厚生・サポート
-                              </h4>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                {/* 交通・住居サポート */}
-                                <div className="flex flex-wrap gap-2 col-span-2 md:col-span-3 lg:col-span-4">
-                                  {profile.transportation_support && (
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 py-1.5">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-blue-500">
-                                        <rect x="1" y="3" width="15" height="13"></rect>
-                                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                                      </svg>
-                                      交通費サポート
-                                    </Badge>
-                                  )}
-                                  
-                                  {profile.housing_support && (
-                                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 py-1.5">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-purple-500">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                      </svg>
-                                      寮完備
-                                    </Badge>
-                                  )}
-                                </div>
-                                
-                                {/* その他の福利厚生 */}
-                                {profile.benefits?.map((benefit) => (
-                                  <div key={benefit} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md border border-blue-100">
-                                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                    <span className="text-blue-800 dark:text-blue-200">{benefit}</span>
-                                  </div>
-                                ))}
-                              </div>
-                              
-                              {(!profile.benefits || profile.benefits.length === 0) && 
-                               !profile.transportation_support && 
-                               !profile.housing_support && (
-                                <div className="text-center py-2 bg-gray-50 rounded-md border">
-                                  <span className="text-sm text-gray-500 italic">福利厚生情報が未設定です</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <SalaryDisplay 
+                            minimumGuarantee={profile.minimum_guarantee}
+                            maximumGuarantee={profile.maximum_guarantee}
+                            workingTimeHours={profile.working_time_hours}
+                            averageHourlyPay={profile.average_hourly_pay}
+                            transportationSupport={profile.transportation_support ?? undefined}
+                            housingSupport={profile.housing_support ?? undefined}
+                            benefits={profile.benefits}
+                          />
                         </div>
                         
 
 
-                        {/* オンライン情報セクション (メッセージアプリ・ウェブサイト) */}
+                        {/* オンライン情報セクション - ContactDisplayコンポーネントを使用 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
                             <ExternalLink className="h-5 w-5 mr-2 text-cyan-500" />
@@ -595,9 +511,7 @@ export default function StoreDashboard() {
                               <div className="bg-green-50 rounded-lg p-4 border border-green-100">
                                 <h4 className="font-medium text-green-800 mb-3 flex items-center">
                                   <span className="bg-white p-1.5 rounded-full mr-2 border border-green-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-                                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                                    </svg>
+                                    <Mail className="w-4 h-4 text-green-500" />
                                   </span>
                                   メッセージアプリ
                                 </h4>
@@ -615,9 +529,7 @@ export default function StoreDashboard() {
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center px-3 py-1.5 bg-white rounded-md text-green-600 text-sm font-medium hover:bg-green-100 transition-colors border border-green-200"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
-                                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                                      </svg>
+                                      <Mail className="w-3.5 h-3.5 mr-1.5 text-green-500" />
                                       <span>友だち追加</span>
                                     </a>
                                   )}
@@ -630,52 +542,12 @@ export default function StoreDashboard() {
                               </div>
                             )}
 
-                            {/* ウェブサイト情報 */}
-                            {(profile.pc_website_url || profile.mobile_website_url) && (
-                              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                                <h4 className="font-medium text-blue-800 mb-3 flex items-center">
-                                  <span className="bg-white p-1.5 rounded-full mr-2 border border-blue-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
-                                      <circle cx="12" cy="12" r="10"></circle>
-                                      <line x1="2" y1="12" x2="22" y2="12"></line>
-                                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                    </svg>
-                                  </span>
-                                  オフィシャルサイト
-                                </h4>
-                                <div className="flex flex-col md:flex-row gap-3 mt-3">
-                                  {profile.pc_website_url && (
-                                    <a 
-                                      href={profile.pc_website_url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center px-3 py-2 bg-white rounded-md text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
-                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                                        <line x1="8" y1="21" x2="16" y2="21"></line>
-                                        <line x1="12" y1="17" x2="12" y2="21"></line>
-                                      </svg>
-                                      <span>PC公式サイト</span>
-                                    </a>
-                                  )}
-                                  {profile.mobile_website_url && (
-                                    <a 
-                                      href={profile.mobile_website_url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center px-3 py-2 bg-white rounded-md text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
-                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                                        <line x1="12" y1="18" x2="12" y2="18"></line>
-                                      </svg>
-                                      <span>スマホ公式サイト</span>
-                                    </a>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                            {/* ウェブサイト情報（ContactDisplayの一部として統合可能） */}
+                            <ContactDisplay 
+                              pcWebsiteUrl={profile.pc_website_url || undefined}
+                              mobileWebsiteUrl={profile.mobile_website_url || undefined}
+                              className="bg-blue-50 rounded-lg p-4 border border-blue-100"
+                            />
                           </div>
                         </div>
 
