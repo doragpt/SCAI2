@@ -362,16 +362,45 @@ export default function BlogManagement() {
               </div>
             </div>
             
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearch("");
-                setStatus(null);
-                setPage(1);
-              }}
-            >
-              フィルターをリセット
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearch("");
+                  setStatus(null);
+                  setPage(1);
+                }}
+              >
+                フィルターをリセット
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="gap-1 border-amber-500 text-amber-600 hover:bg-amber-50"
+                onClick={async () => {
+                  try {
+                    const result = await apiRequest("POST", "/api/blog/fix-published-dates");
+                    toast({
+                      title: "日付修正完了",
+                      description: result.message || `${result.fixedCount}件の記事の公開日時を修正しました`,
+                    });
+                    if (result.fixedCount > 0) {
+                      refetch(); // 記事一覧を再読み込み
+                    }
+                  } catch (error) {
+                    console.error("記事日付修正エラー:", error);
+                    toast({
+                      title: "エラー",
+                      description: "記事の公開日時修正に失敗しました",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+              >
+                <Clock className="h-4 w-4" />
+                公開日時を修正
+              </Button>
+            </div>
           </div>
 
           {/* 一括操作メニュー */}
