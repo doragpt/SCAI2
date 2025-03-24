@@ -19,11 +19,11 @@ export function formatSalary(
   workingTimeHours?: number | null,
   averageHourlyPay?: number | null
 ): string {
-  // 時給換算形式が設定されている場合、そちらを優先表示
+  // 勤務時間と一日あたりの日給が設定されている場合、それを優先表示
   if (workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0) {
-    // 日給と勤務時間から平均時給を計算して表示
+    // 日給と勤務時間から時給を計算して表示
     const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
-    return `${workingTimeHours}時間勤務で${averageHourlyPay.toLocaleString()}円（時給約${hourlyRate.toLocaleString()}円）`;
+    return `${workingTimeHours}時間勤務で${averageHourlyPay.toLocaleString()}円（時給換算${hourlyRate.toLocaleString()}円）`;
   }
   
   // 従来の最低給与・最高給与表示

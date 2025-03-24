@@ -292,7 +292,7 @@ export default function JobDetail() {
                   {job?.workingTimeHours && job?.averageHourlyPay && 
                    job.workingTimeHours > 0 && job.averageHourlyPay > 0 && (
                     <div className="text-sm text-muted-foreground mt-2">
-                      1日{job.workingTimeHours}時間勤務 × {workingDays}日 = 平均時給 {Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円/時
+                      1日{job.workingTimeHours}時間勤務 × {workingDays}日 = 時給換算 {Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円
                     </div>
                   )}
                 </div>
