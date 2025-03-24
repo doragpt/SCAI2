@@ -620,81 +620,78 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               </div>
             </div>
             
-            <div className="space-y-4">
+            {/* 特典・待遇セクション */}
+            <div className="p-5 border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg mt-4 relative overflow-hidden">
+              <div className="absolute -top-5 -right-5 w-24 h-24 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
+              <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
               
-              {/* 特典・待遇セクションの改良版 */}
-              <div className="p-5 border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg mt-4 relative overflow-hidden">
-                <div className="absolute -top-5 -right-5 w-24 h-24 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
+              <div className="relative z-10">
+                <h3 className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-violet-600 mb-3 text-lg flex items-center">
+                  <Award className="h-5 w-5 mr-2 text-purple-600" />
+                  特典・待遇
+                </h3>
+                <p className="text-sm text-purple-700 mb-4">
+                  様々な特典・待遇のオプションから選択して、求職者に分かりやすくアピールしましょう。
+                </p>
                 
-                <div className="relative z-10">
-                  <h3 className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-violet-600 mb-3 text-lg flex items-center">
-                    <Award className="h-5 w-5 mr-2 text-purple-600" />
-                    特典・待遇
-                  </h3>
-                  <p className="text-sm text-purple-700 mb-4">
-                    様々な特典・待遇のオプションから選択して、求職者に分かりやすくアピールしましょう。
-                  </p>
+                {/* プレビューカード - 選択した特典を表示 */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-md border border-purple-100 dark:border-purple-900/30 mb-6">
+                  <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-3">選択した特典（プレビュー）</h4>
                   
-                  {/* プレビューカード - 選択した特典を表示 */}
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-md border border-purple-100 dark:border-purple-900/30 mb-6">
-                    <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-3">選択した特典（プレビュー）</h4>
-                    
-                    <div className="grid grid-cols-1 gap-4 mb-4">
-                      <div className="flex flex-wrap gap-2">
-                        {form.watch("benefits")?.length > 0 ? form.watch("benefits").map((benefit, index) => (
-                          <Badge 
-                            key={index} 
-                            className="bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900/50 font-normal py-2 px-3 rounded-full text-sm"
-                          >
-                            <CheckCircle className="h-3.5 w-3.5 mr-1.5" />{benefit}
-                          </Badge>
-                        )) : (
-                          <div className="w-full p-3 bg-muted rounded-md text-center text-sm text-muted-foreground">
-                            特典を選択するとここにプレビューが表示されます
+                  <div className="grid grid-cols-1 gap-4 mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {form.watch("benefits")?.length > 0 ? form.watch("benefits").map((benefit, index) => (
+                        <Badge 
+                          key={index} 
+                          className="bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900/50 font-normal py-2 px-3 rounded-full text-sm"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5 mr-1.5" />{benefit}
+                        </Badge>
+                      )) : (
+                        <div className="w-full p-3 bg-muted rounded-md text-center text-sm text-muted-foreground">
+                          特典を選択するとここにプレビューが表示されます
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* 特別オファープレビュー */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {form.watch("transportation_support") && (
+                      <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="p-1.5 bg-amber-200 dark:bg-amber-800/50 rounded-full">
+                            <Car className="h-3.5 w-3.5 text-amber-600 dark:text-amber-300" />
                           </div>
-                        )}
+                          <h5 className="font-bold text-amber-800 dark:text-amber-300 text-xs uppercase">交通費サポート</h5>
+                        </div>
+                        <p className="text-xs text-amber-700 dark:text-amber-400">最寄り駅から送迎あり・交通費全額支給</p>
                       </div>
-                    </div>
+                    )}
                     
-                    {/* 特別オファープレビュー */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {form.watch("transportation_support") && (
-                        <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 shadow-sm">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className="p-1.5 bg-amber-200 dark:bg-amber-800/50 rounded-full">
-                              <Car className="h-3.5 w-3.5 text-amber-600 dark:text-amber-300" />
-                            </div>
-                            <h5 className="font-bold text-amber-800 dark:text-amber-300 text-xs uppercase">交通費サポート</h5>
+                    {form.watch("housing_support") && (
+                      <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800/30 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="p-1.5 bg-emerald-200 dark:bg-emerald-800/50 rounded-full">
+                            <Home className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
                           </div>
-                          <p className="text-xs text-amber-700 dark:text-amber-400">最寄り駅から送迎あり・交通費全額支給</p>
+                          <h5 className="font-bold text-emerald-800 dark:text-emerald-300 text-xs uppercase">寮完備</h5>
                         </div>
-                      )}
-                      
-                      {form.watch("housing_support") && (
-                        <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800/30 shadow-sm">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className="p-1.5 bg-emerald-200 dark:bg-emerald-800/50 rounded-full">
-                              <Home className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
-                            </div>
-                            <h5 className="font-bold text-emerald-800 dark:text-emerald-300 text-xs uppercase">寮完備</h5>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400">マンション寮完備・家具家電付き</p>
+                      </div>
+                    )}
+                    
+                    {(form.watch("minimum_guarantee") || 0) > 0 && (
+                      <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-800/30 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="p-1.5 bg-pink-200 dark:bg-pink-800/50 rounded-full">
+                            <Banknote className="h-3.5 w-3.5 text-pink-600 dark:text-pink-300" />
                           </div>
-                          <p className="text-xs text-emerald-700 dark:text-emerald-400">マンション寮完備・家具家電付き</p>
+                          <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
                         </div>
-                      )}
-                      
-                      {form.watch("minimum_guarantee") > 0 && (
-                        <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-800/30 shadow-sm">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className="p-1.5 bg-pink-200 dark:bg-pink-800/50 rounded-full">
-                              <Banknote className="h-3.5 w-3.5 text-pink-600 dark:text-pink-300" />
-                            </div>
-                            <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
-                          </div>
-                          <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {form.watch("minimum_guarantee")?.toLocaleString() || 0}円 保証</p>
-                        </div>
-                      )}
-                    </div>
+                        <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {(form.watch("minimum_guarantee") || 0).toLocaleString()}円 保証</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
