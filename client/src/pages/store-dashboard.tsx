@@ -760,33 +760,23 @@ export default function StoreDashboard() {
                                 </div>
                               </div>
                               
-                              {/* 福利厚生 */}
+                              {/* 福利厚生・サポート */}
                               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                                 <h4 className="font-medium text-blue-700 mb-3 text-sm flex items-center">
                                   <div className="p-1 bg-white rounded-full mr-2 border border-blue-200">
                                     <Award className="w-4 h-4 text-blue-600" />
                                   </div>
-                                  特典・サポート
+                                  福利厚生・サポート
                                 </h4>
                                 <div>
-                                  <div className="flex flex-wrap gap-2 mb-3">
-                                    {profile.benefits && profile.benefits.length > 0 ? (
-                                      profile.benefits.map((benefit, idx) => (
-                                        <Badge key={idx} variant="outline" className="bg-white text-blue-700 border-blue-200">
-                                          {benefit}
-                                        </Badge>
-                                      ))
-                                    ) : (
-                                      <span className="text-sm text-gray-500 italic">特典情報が未設定です</span>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-blue-100">
-                                    <div className="flex items-center">
+                                  {/* カテゴリー別に福利厚生を表示 */}
+                                  <div className="flex flex-col gap-3">
+                                    {/* 交通・住居サポート */}
+                                    <div className="flex flex-wrap gap-2">
                                       <Badge variant={profile.transportation_support ? "default" : "outline"} 
                                              className={profile.transportation_support 
-                                                        ? "bg-blue-500 hover:bg-blue-600" 
-                                                        : "text-gray-400 bg-gray-100"}>
+                                                      ? "bg-blue-500 hover:bg-blue-600" 
+                                                      : "text-gray-400 bg-gray-100"}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                                           <rect x="1" y="3" width="15" height="13"></rect>
                                           <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
@@ -795,12 +785,10 @@ export default function StoreDashboard() {
                                         </svg>
                                         交通費サポート
                                       </Badge>
-                                    </div>
-                                    <div className="flex items-center">
                                       <Badge variant={profile.housing_support ? "default" : "outline"} 
                                              className={profile.housing_support 
-                                                        ? "bg-indigo-500 hover:bg-indigo-600" 
-                                                        : "text-gray-400 bg-gray-100"}>
+                                                      ? "bg-indigo-500 hover:bg-indigo-600" 
+                                                      : "text-gray-400 bg-gray-100"}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                                           <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -808,7 +796,27 @@ export default function StoreDashboard() {
                                         寮完備
                                       </Badge>
                                     </div>
+                                    
+                                    {/* その他の福利厚生 */}
+                                    {profile.benefits && profile.benefits.length > 0 && (
+                                      <div className="flex flex-wrap gap-2 pt-2 border-t border-blue-100">
+                                        {profile.benefits.map((benefit, idx) => (
+                                          <Badge key={idx} variant="outline" className="bg-white text-blue-700 border-blue-200">
+                                            {benefit}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
+                                  
+                                  {/* 福利厚生が全く設定されていない場合 */}
+                                  {(!profile.benefits || profile.benefits.length === 0) && 
+                                   !profile.transportation_support && 
+                                   !profile.housing_support && (
+                                    <div className="text-center py-2">
+                                      <span className="text-sm text-gray-500 italic">特典情報が未設定です</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>

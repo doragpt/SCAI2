@@ -19,17 +19,33 @@ export function formatSalary(
   workingTimeHours?: number | null,
   averageHourlyPay?: number | null
 ): string {
-  // 勤務時間と一日あたりの日給が設定されている場合、それを優先表示
+  // 給与表示のロジックを統一
+
+  // 1. 時給換算情報がある場合のフォーマット
   if (workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0) {
-    // 日給と勤務時間から時給を計算して表示
+    // 時給を計算
     const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
+    
+    // 最低・最高保証もある場合は、両方の情報を表示
+    if ((min && min > 0) || (max && max > 0)) {
+      const guaranteeText = formatGuaranteeRange(min, max);
+      return `${guaranteeText}（${workingTimeHours}時間勤務 / 時給換算${hourlyRate.toLocaleString()}円）`;
+    }
+    
+    // 時給換算のみの場合
     return `${workingTimeHours}時間勤務で${averageHourlyPay.toLocaleString()}円（時給換算${hourlyRate.toLocaleString()}円）`;
   }
   
-  // 従来の最低給与・最高給与表示
+  // 2. 従来の最低保証・最高保証のみの場合
+  return formatGuaranteeRange(min, max);
+}
+
+// 最低保証・最高保証の範囲を整形する補助関数
+function formatGuaranteeRange(min?: number | null, max?: number | null): string {
   if (min === null && max === null) return "応相談";
-  if (max === null) return `${min?.toLocaleString()}円〜`;
-  if (min === null) return `〜${max?.toLocaleString()}円`;
+  if (min === 0 && max === 0) return "応相談";
+  if (max === null || max === 0) return `${min?.toLocaleString()}円〜`;
+  if (min === null || min === 0) return `〜${max?.toLocaleString()}円`;
   return `${min?.toLocaleString()}円 〜 ${max?.toLocaleString()}円`;
 }
 
