@@ -236,9 +236,10 @@ export default function JobDetail() {
               <TabsContent value="requirements">
                 <Card>
                   <CardContent className="p-6">
-                    <div className="whitespace-pre-wrap">
-                      {job.requirements || "18歳以上（高校生不可）\n経験不問\n未経験者歓迎"}
-                    </div>
+                    <HtmlContent 
+                      html={job.requirements || "18歳以上（高校生不可）<br>経験不問<br>未経験者歓迎"}
+                      className="prose prose-sm max-w-none"
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -247,9 +248,10 @@ export default function JobDetail() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      <div className="whitespace-pre-wrap">
-                        {Array.isArray(job.benefits) ? job.benefits.join(', ') : typeof job.benefits === 'string' ? job.benefits : ''}
-                      </div>
+                      <HtmlContent 
+                        html={Array.isArray(job.benefits) ? job.benefits.join(', ') : typeof job.benefits === 'string' ? job.benefits : ''}
+                        className="prose prose-sm max-w-none"
+                      />
                       <div className="flex flex-wrap gap-2 pt-2">
                         {job.transportationSupport && (
                           <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">

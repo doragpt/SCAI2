@@ -24,6 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { HtmlContent } from "@/components/html-content";
 
 // Animation variants
 const container = {
@@ -74,6 +75,14 @@ const JobCard = ({ job }: { job: JobResponse }) => {
                   job.averageHourlyPay
                 )}
               </div>
+              {job.catchPhrase && (
+                <div className="text-sm">
+                  <HtmlContent 
+                    html={job.catchPhrase} 
+                    className="prose prose-sm max-w-none line-clamp-2" 
+                  />
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {job.transportationSupport && (
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
