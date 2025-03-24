@@ -1,9 +1,9 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, MapPin, Banknote, Check, Building2 } from "lucide-react";
+import { Loader2, Filter, MapPin, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import {
   Select,
@@ -15,16 +15,17 @@ import {
 import {
   prefectures,
   serviceTypes,
-  type ServiceType,
   type JobResponse
 } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { getServiceTypeLabel, formatSalary, formatDate } from "@/lib/utils";
+import { getServiceTypeLabel } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { HtmlContent } from "@/components/html-content";
+
+// 新しいJobCardコンポーネントをインポート
+import { JobCard } from "@/components/store/JobCard";
 
 // Animation variants
 const container = {
@@ -35,77 +36,6 @@ const container = {
       staggerChildren: 0.1
     }
   }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
-
-// 求人カードコンポーネント
-const JobCard = ({ job }: { job: JobResponse }) => {
-  return (
-    <motion.div variants={item}>
-      <Link href={`/jobs/${job.id}`}>
-        <Card className="h-full hover:shadow-lg transition-all cursor-pointer group">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-lg line-clamp-2">
-                  {job.businessName}
-                </CardTitle>
-                <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {job.location}
-                </div>
-              </div>
-              <Badge variant="outline" className="bg-primary/5">
-                {job.serviceType}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center text-primary font-semibold">
-                <Banknote className="h-5 w-5 mr-2" />
-                日給 {formatSalary(
-                  job.minimumGuarantee, 
-                  job.maximumGuarantee,
-                  job.workingTimeHours,
-                  job.averageHourlyPay
-                )}
-              </div>
-              {job.catchPhrase && (
-                <div className="text-sm">
-                  <HtmlContent 
-                    html={job.catchPhrase} 
-                    className="prose prose-sm max-w-none line-clamp-2" 
-                  />
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {job.transportationSupport && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <Check className="h-3.5 w-3.5 mr-1" />
-                    交通費支給
-                  </Badge>
-                )}
-                {job.housingSupport && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    <Building2 className="h-3.5 w-3.5 mr-1" />
-                    寮完備
-                  </Badge>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                {formatDate(job.createdAt)}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-    </motion.div>
-  );
 };
 
 export default function Jobs() {

@@ -1,25 +1,27 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { type JobResponse, type ServiceType } from "@shared/schema";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Clock, Building, Calendar, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
 import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { HtmlContent } from "@/components/html-content";
+
+// 新しく作成したコンポーネントをインポート
+import { SalaryDisplay } from "@/components/store/SalaryDisplay";
+import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
+import { LocationDisplay } from "@/components/store/LocationDisplay";
+import { ContactDisplay } from "@/components/store/ContactDisplay";
 
 export default function JobDetail() {
   const { id } = useParams();
   const { user } = useAuth();
-  const [workingHours, setWorkingHours] = useState<number>(8);
   const [workingDays, setWorkingDays] = useState<number>(20);
   
   // IDが確実に存在する場合のみ処理を進めるための安全対策
@@ -37,11 +39,8 @@ export default function JobDetail() {
       try {
         console.log('Fetching job detail...', { id });
         const url = `/api${QUERY_KEYS.JOB_DETAIL(jobId)}`;
-        console.log('Requesting URL:', url);
         
         const response = await fetch(url);
-        console.log('API Response:', response);
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error('API Error Response:', errorText);
@@ -49,7 +48,6 @@ export default function JobDetail() {
         }
 
         const result = await response.json();
-        console.log('Job Detail API Response:', result);
         return result as JobResponse;
       } catch (error) {
         console.error("求人詳細取得エラー:", error);
@@ -93,25 +91,24 @@ export default function JobDetail() {
     );
   }
 
+  // 月収シミュレーション計算
   const calculateMonthlyIncome = () => {
-    // 勤務時間と一日あたりの日給を設定している場合
     if (job?.workingTimeHours && job.workingTimeHours > 0 && job?.averageHourlyPay && job.averageHourlyPay > 0) {
-      // 一日あたりの総支給額
       const dailyIncome = job.averageHourlyPay;
       const monthlyIncome = dailyIncome * workingDays;
-      // 時給に関係なく月収は一定
-      return { monthlyMin: monthlyIncome, monthlyMax: monthlyIncome };
+      return monthlyIncome;
+    } else if (job?.minimumGuarantee || job?.maximumGuarantee) {
+      // 最低保証と最高保証の平均値を計算
+      const minGuarantee = job.minimumGuarantee || 0;
+      const maxGuarantee = job.maximumGuarantee || minGuarantee;
+      const avgGuarantee = (minGuarantee + maxGuarantee) / 2;
+      return avgGuarantee * workingDays;
     }
     
-    // 従来の最低保証・最高保証方式
-    const dailyMin = job?.minimumGuarantee || 0;
-    const dailyMax = job?.maximumGuarantee || 0;
-    const monthlyMin = dailyMin * workingDays;
-    const monthlyMax = dailyMax * workingDays;
-    return { monthlyMin, monthlyMax };
+    return 0;
   };
 
-  const { monthlyMin, monthlyMax } = calculateMonthlyIncome();
+  const monthlyIncome = calculateMonthlyIncome();
 
   const breadcrumbItems = [
     { label: "求人一覧", href: "/jobs" },
@@ -163,175 +160,162 @@ export default function JobDetail() {
       <main className="container mx-auto px-4 py-8">
         <Breadcrumb items={breadcrumbItems} />
 
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex justify-between items-start">
+        {/* ヘッダー部分 - 店舗名、場所、ボタン */}
+        <Card className="mb-8 overflow-hidden">
+          <CardHeader className="pb-0 md:pb-0 relative">
+            {job.top_image && (
+              <div className="absolute inset-0 opacity-10 overflow-hidden h-full">
+                <img 
+                  src={job.top_image} 
+                  alt={job.businessName} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90" />
+              </div>
+            )}
+            
+            <div className="flex flex-col md:flex-row justify-between items-start relative z-10">
               <div>
-                <CardTitle className="text-3xl mb-2">{job.businessName}</CardTitle>
-                <div className="flex items-center text-muted-foreground">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <span>{job.location}</span>
+                <h1 className="text-3xl font-bold mb-2">{job.businessName}</h1>
+                <div className="text-muted-foreground">
+                  <span>{job.location}</span> - <span>{getServiceTypeLabel(job.serviceType as ServiceType)}</span>
+                </div>
+                
+                <div className="mt-2">
+                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                    {formatSalary(
+                      job.minimumGuarantee,
+                      job.maximumGuarantee,
+                      job.workingTimeHours,
+                      job.averageHourlyPay
+                    )}
+                  </span>
                 </div>
               </div>
-              <Button asChild>
-                {user ? (
-                  <Link href={`/jobs/${id}/apply`}>面接予約をする</Link>
-                ) : (
-                  <Link href="/auth">会員登録して面接予約</Link>
-                )}
-              </Button>
+              
+              <div className="mt-4 md:mt-0">
+                <Button size="lg" asChild>
+                  {user ? (
+                    <Link href={`/jobs/${id}/apply`}>面接予約をする</Link>
+                  ) : (
+                    <Link href="/auth">会員登録して面接予約</Link>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardHeader>
+          
+          <CardContent className="pb-6 pt-4 relative z-10">
+            {job.catchPhrase && (
+              <p className="text-lg italic text-muted-foreground">{job.catchPhrase}</p>
+            )}
+            
+            <div className="flex flex-wrap gap-2 mt-4">
+              {job.transportationSupport && (
+                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100">
+                  交通費支給
+                </span>
+              )}
+              {job.housingSupport && (
+                <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-100">
+                  寮完備
+                </span>
+              )}
+              {job.benefits && job.benefits.slice(0, 3).map((benefit, index) => (
+                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-100">
+                  {benefit}
+                </span>
+              ))}
+            </div>
+          </CardContent>
         </Card>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <Tabs defaultValue="details">
-              <TabsList>
-                <TabsTrigger value="details">店舗情報</TabsTrigger>
-                <TabsTrigger value="requirements">応募資格</TabsTrigger>
-                <TabsTrigger value="benefits">待遇</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="details" className="space-y-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="grid gap-4">
-                      <div className="flex items-center">
-                        <Building className="h-4 w-4 mr-2" />
-                        <span className="font-medium">業種:</span>
-                        <span className="ml-2">
-                          {getServiceTypeLabel(job.serviceType as ServiceType)}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span className="font-medium">営業時間:</span>
-                        <span className="ml-2">{job.workingHours || "10:00 - 翌5:00"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span className="font-medium">更新日:</span>
-                        <span className="ml-2">{formatDate(job.updatedAt)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {job.description && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>店舗紹介</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <HtmlContent 
-                        html={job.description}
-                        className="prose prose-sm max-w-none"
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value="requirements">
-                <Card>
-                  <CardContent className="p-6">
-                    <HtmlContent 
-                      html={job.requirements || "18歳以上（高校生不可）<br>経験不問<br>未経験者歓迎"}
-                      className="prose prose-sm max-w-none"
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="benefits">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <HtmlContent 
-                        html={Array.isArray(job.benefits) ? job.benefits.join(', ') : typeof job.benefits === 'string' ? job.benefits : ''}
-                        className="prose prose-sm max-w-none"
-                      />
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {job.transportationSupport && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                            交通費支給
-                          </span>
-                        )}
-                        {job.housingSupport && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                            寮完備
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+          {/* 左側のメインコンテンツ - 仕事内容と応募条件 */}
+          <div className="md:col-span-2 space-y-8">
+            {/* 仕事内容コンポーネント */}
+            <JobDescriptionDisplay
+              businessName={job.businessName}
+              location={job.location}
+              serviceType={job.serviceType as ServiceType}
+              catchPhrase={job.catchPhrase}
+              description={job.description}
+              workingHours={job.workingHours}
+              requirements={job.requirements}
+            />
+            
+            {/* アクセス・所在地情報 */}
+            <LocationDisplay
+              address={job.address}
+              accessInfo={job.access_info}
+              securityMeasures={job.security_measures}
+            />
+            
+            {/* 連絡先情報 */}
+            <ContactDisplay
+              recruiterName={job.recruiter_name}
+              phoneNumbers={job.phone_numbers}
+              emailAddresses={job.email_addresses}
+              pcWebsiteUrl={job.pc_website_url}
+              mobileWebsiteUrl={job.mobile_website_url}
+            />
           </div>
 
-          <div>
+          {/* 右側のサイドバー - 給与情報と月収計算 */}
+          <div className="space-y-8">
+            {/* 給与情報コンポーネント */}
+            <SalaryDisplay
+              minimumGuarantee={job.minimumGuarantee}
+              maximumGuarantee={job.maximumGuarantee}
+              workingTimeHours={job.workingTimeHours}
+              averageHourlyPay={job.averageHourlyPay}
+              transportationSupport={job.transportationSupport}
+              housingSupport={job.housingSupport}
+              benefits={job.benefits}
+            />
+            
+            {/* 月収シミュレーター */}
             <Card>
               <CardHeader>
-                <CardTitle>給与シミュレーション</CardTitle>
+                <h3 className="text-lg font-medium">月収シミュレーション</h3>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
-                  <div className="font-medium text-primary mb-2">勤務時間に対しての平均日給</div>
-                  <div className="text-xl font-bold mb-1">
-                    {job?.workingTimeHours && job?.averageHourlyPay && 
-                     job.workingTimeHours > 0 && job.averageHourlyPay > 0
-                      ? `${job.workingTimeHours}時間勤務で${job.averageHourlyPay.toLocaleString()}円`
-                      : "未設定"
-                    }
+                <div className="flex items-center space-x-2">
+                  <label htmlFor="workingDays" className="text-sm">月の勤務日数:</label>
+                  <Input
+                    id="workingDays"
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={workingDays}
+                    onChange={(e) => setWorkingDays(parseInt(e.target.value) || 1)}
+                    className="w-20"
+                  />
+                  <span className="text-sm">日</span>
+                </div>
+                
+                <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-1">1ヶ月の想定収入</div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {monthlyIncome > 0 
+                      ? `${monthlyIncome.toLocaleString()}円`
+                      : "収入情報がありません"}
                   </div>
-                  
-                  <div className="pt-2 border-t border-primary/10 mt-2">
-                    <div className="font-medium text-primary mb-1">時給換算:</div>
-                    <div className="text-lg font-bold">
-                      {job?.workingTimeHours && job?.averageHourlyPay && 
-                       job.workingTimeHours > 0 && job.averageHourlyPay > 0
-                        ? `${Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円`
-                        : "未設定"
-                      }
-                    </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    ※実際の収入は経験や勤務状況により異なります
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border">
-                  <div className="font-medium mb-2">日給</div>
-                  <div className="text-lg font-bold">
-                    {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-2">
-                    経験やスキルに応じて給与は異なります
-                  </div>
-                </div>
-                
-                <div className="pt-3 border-t">
-                  <div className="text-sm text-muted-foreground mb-2">月収シミュレーション</div>
-                  <div className="flex space-x-2 mb-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={31}
-                      value={workingDays}
-                      onChange={(e) => setWorkingDays(parseInt(e.target.value))}
-                      className="w-24"
-                    />
-                    <span className="py-2">日勤務の場合</span>
-                  </div>
-                  <div className="text-xl font-bold">
-                    {job?.workingTimeHours && job?.averageHourlyPay && 
-                     job.workingTimeHours > 0 && job.averageHourlyPay > 0
-                      ? `${(job.averageHourlyPay * workingDays).toLocaleString()}円`
-                      : formatSalary(monthlyMin, monthlyMax)
-                    }
-                  </div>
+                <div className="text-sm text-gray-500 italic">
+                  <p>詳しい給与条件や待遇については、面接時にお気軽にお問い合わせください。</p>
                 </div>
               </CardContent>
             </Card>
+            
+            {/* 更新日情報 */}
+            <div className="text-xs text-muted-foreground text-right">
+              最終更新日: {formatDate(job.updatedAt)}
+            </div>
           </div>
         </div>
       </main>
