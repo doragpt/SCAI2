@@ -672,6 +672,136 @@ export default function StoreDashboard() {
                         )}
                         
 
+                        {/* 給与・待遇情報セクション */}
+                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                          <h3 className="text-lg font-semibold flex items-center mb-4">
+                            <Banknote className="h-5 w-5 mr-2 text-emerald-500" />
+                            <span>給与・待遇情報</span>
+                          </h3>
+                          
+                          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-lg border border-emerald-100">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* 給与情報 */}
+                              <div className="bg-white rounded-lg p-4 border border-emerald-100 shadow-sm">
+                                <h4 className="font-medium text-emerald-700 mb-2 text-sm flex items-center">
+                                  <div className="p-1 bg-emerald-100 rounded-full mr-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                                      <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                      <line x1="2" y1="10" x2="22" y2="10"></line>
+                                    </svg>
+                                  </div>
+                                  給与
+                                </h4>
+                                <div className="space-y-2">
+                                  {(profile.minimum_guarantee || profile.maximum_guarantee) && (
+                                    <div className="flex flex-col">
+                                      <span className="text-xs text-gray-500">日給保証</span>
+                                      <span className="font-bold text-lg">
+                                        {profile.minimum_guarantee && profile.maximum_guarantee 
+                                          ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円` 
+                                          : profile.minimum_guarantee 
+                                            ? `${profile.minimum_guarantee.toLocaleString()}円〜` 
+                                            : `〜${profile.maximum_guarantee?.toLocaleString()}円`}
+                                      </span>
+                                    </div>
+                                  )}
+                                  
+                                  {profile.average_hourly_pay && (
+                                    <div className="flex flex-col mt-2">
+                                      <span className="text-xs text-gray-500">時給換算</span>
+                                      <span className="font-semibold">{profile.average_hourly_pay.toLocaleString()}円</span>
+                                    </div>
+                                  )}
+                                  
+                                  {profile.working_time_hours && (
+                                    <div className="flex flex-col mt-2">
+                                      <span className="text-xs text-gray-500">勤務時間</span>
+                                      <span className="font-semibold">{profile.working_time_hours}時間</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* 福利厚生 */}
+                              <div className="bg-white rounded-lg p-4 border border-emerald-100 shadow-sm">
+                                <h4 className="font-medium text-emerald-700 mb-2 text-sm flex items-center">
+                                  <div className="p-1 bg-emerald-100 rounded-full mr-2">
+                                    <Award className="w-4 h-4 text-emerald-600" />
+                                  </div>
+                                  特典・待遇
+                                </h4>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {profile.benefits && profile.benefits.length > 0 ? (
+                                    profile.benefits.map((benefit, idx) => (
+                                      <Badge key={idx} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                        {benefit}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <span className="text-sm text-gray-500">特典情報はありません</span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {profile.transportation_support && (
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                      交通費サポート
+                                    </Badge>
+                                  )}
+                                  {profile.housing_support && (
+                                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                                      寮完備
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {profile.working_hours && (
+                              <div className="mt-4 bg-white rounded-lg p-4 border border-emerald-100 shadow-sm">
+                                <h4 className="font-medium text-emerald-700 mb-2 text-sm flex items-center">
+                                  <div className="p-1 bg-emerald-100 rounded-full mr-2">
+                                    <Clock className="w-4 h-4 text-emerald-600" />
+                                  </div>
+                                  勤務時間・シフト
+                                </h4>
+                                <p className="text-sm">{profile.working_hours}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* アクセス情報と安全対策 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          {/* アクセス情報 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <MapPin className="h-5 w-5 mr-2 text-blue-500" />
+                              <span>アクセス情報</span>
+                            </h3>
+                            <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
+                              {profile.access_info ? (
+                                <p className="text-sm text-gray-700 whitespace-pre-line">{profile.access_info}</p>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">アクセス情報が登録されていません</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 安全対策 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <AlertCircle className="h-5 w-5 mr-2 text-green-500" />
+                              <span>安全対策</span>
+                            </h3>
+                            <div className="bg-green-50 border border-green-100 rounded-md p-4">
+                              {profile.security_measures ? (
+                                <p className="text-sm text-gray-700 whitespace-pre-line">{profile.security_measures}</p>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">安全対策情報が登録されていません</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
                         {/* 店舗連絡先情報 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
@@ -683,7 +813,7 @@ export default function StoreDashboard() {
                             <div className="flex flex-col md:flex-row gap-6">
                               {/* 担当者情報 */}
                               <div className="flex-1">
-                                {profile.recruiter_name && (
+                                {profile.recruiter_name ? (
                                   <div className="flex items-start mb-4">
                                     <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
                                       <User className="h-5 w-5 text-purple-500" />
@@ -693,9 +823,19 @@ export default function StoreDashboard() {
                                       <div className="font-medium text-base">{profile.recruiter_name}</div>
                                     </div>
                                   </div>
+                                ) : (
+                                  <div className="flex items-start mb-4 opacity-50">
+                                    <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
+                                      <User className="h-5 w-5 text-purple-500" />
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-purple-700 font-medium">採用担当者</div>
+                                      <div className="font-medium text-base text-gray-500 italic">未設定</div>
+                                    </div>
+                                  </div>
                                 )}
                                 
-                                {profile.address && (
+                                {profile.address ? (
                                   <div className="flex items-start">
                                     <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
                                       <MapPin className="h-5 w-5 text-purple-500" />
@@ -705,12 +845,22 @@ export default function StoreDashboard() {
                                       <div className="font-medium">{profile.address}</div>
                                     </div>
                                   </div>
+                                ) : (
+                                  <div className="flex items-start opacity-50">
+                                    <div className="bg-white p-2 rounded-full border border-purple-200 mr-3">
+                                      <MapPin className="h-5 w-5 text-purple-500" />
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-purple-700 font-medium">所在地</div>
+                                      <div className="font-medium text-gray-500 italic">未設定</div>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                               
                               {/* 連絡先情報 */}
                               <div className="border-t md:border-t-0 md:border-l border-purple-200 pt-4 md:pt-0 md:pl-6 flex-1">
-                                {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                                {profile.phone_numbers && profile.phone_numbers.length > 0 ? (
                                   <div className="mb-4">
                                     <div className="text-xs text-purple-700 font-medium mb-2">電話でのお問い合わせ</div>
                                     <div className="space-y-2">
@@ -726,9 +876,19 @@ export default function StoreDashboard() {
                                       ))}
                                     </div>
                                   </div>
+                                ) : (
+                                  <div className="mb-4 opacity-50">
+                                    <div className="text-xs text-purple-700 font-medium mb-2">電話でのお問い合わせ</div>
+                                    <div className="flex items-center">
+                                      <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
+                                        <Phone className="h-4 w-4 text-purple-500" />
+                                      </div>
+                                      <span className="font-medium text-gray-500 italic">電話番号未設定</span>
+                                    </div>
+                                  </div>
                                 )}
                                 
-                                {profile.email_addresses && profile.email_addresses.length > 0 && (
+                                {profile.email_addresses && profile.email_addresses.length > 0 ? (
                                   <div>
                                     <div className="text-xs text-purple-700 font-medium mb-2">メールでのお問い合わせ</div>
                                     <div className="space-y-2">
@@ -744,37 +904,21 @@ export default function StoreDashboard() {
                                       ))}
                                     </div>
                                   </div>
+                                ) : (
+                                  <div className="opacity-50">
+                                    <div className="text-xs text-purple-700 font-medium mb-2">メールでのお問い合わせ</div>
+                                    <div className="flex items-center">
+                                      <div className="bg-white p-1.5 rounded-full border border-purple-200 mr-2">
+                                        <Mail className="h-4 w-4 text-purple-500" />
+                                      </div>
+                                      <span className="font-medium text-gray-500 italic">メールアドレス未設定</span>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                             </div>
                           </div>
                         </div>
-                        
-                        {/* アクセス情報 */}
-                        {profile.access_info && (
-                          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <MapPin className="h-5 w-5 mr-2 text-blue-500" />
-                              <span>アクセス情報</span>
-                            </h3>
-                            <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
-                              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.access_info}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* 安全対策 */}
-                        {profile.security_measures && (
-                          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                            <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <AlertCircle className="h-5 w-5 mr-2 text-green-500" />
-                              <span>安全対策</span>
-                            </h3>
-                            <div className="bg-green-50 border border-green-100 rounded-md p-4">
-                              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.security_measures}</p>
-                            </div>
-                          </div>
-                        )}
 
                         {/* 編集ボタン */}
                         <div className="flex justify-end">
