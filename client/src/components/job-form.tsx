@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
+import { JobEditor } from "@/components/job-editor";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -231,7 +232,7 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           )}
         />
 
-        {/* 店舗説明 - CKEditor */}
+        {/* 店舗説明 - リッチテキストエディター */}
         <FormField
           control={form.control}
           name="description"
@@ -239,26 +240,16 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
             <FormItem>
               <FormLabel className="font-medium">お仕事の内容</FormLabel>
               <FormControl>
-                <div className="border rounded-md overflow-hidden">
-                  <textarea
-                    {...field}
-                    placeholder="お仕事の内容を入力してください（9000文字以内）"
-                    className="min-h-[200px] w-full p-4"
-                    onChange={(e) => {
-                      field.onChange(e);
-                      setDescriptionLength(e.target.value.length);
-                    }}
-                  />
-                </div>
+                <JobEditor
+                  initialValue={field.value}
+                  onChange={(content) => {
+                    field.onChange(content);
+                    setDescriptionLength(content.replace(/<[^>]*>/g, '').length);
+                  }}
+                  placeholder="お仕事の内容を入力してください（9000文字以内）"
+                  maxLength={9000}
+                />
               </FormControl>
-              <div className="flex justify-between text-sm mt-2">
-                <div className="text-muted-foreground">
-                  {descriptionLength}/9000文字
-                </div>
-                <div className="text-muted-foreground italic">
-                  リッチテキストエディタで店舗の魅力を表現できます
-                </div>
-              </div>
               <FormMessage />
             </FormItem>
           )}
