@@ -97,6 +97,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         benefits: req.body.benefits || [],
         minimum_guarantee: Number(req.body.minimum_guarantee) || 0,
         maximum_guarantee: Number(req.body.maximum_guarantee) || 0,
+        working_time_hours: Number(req.body.working_time_hours) || 0,
+        average_hourly_pay: Number(req.body.average_hourly_pay) || 0,
         status: req.body.status || "draft",
         created_at: new Date(),
         updated_at: new Date()
@@ -111,6 +113,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         benefits: insertData.benefits,
         minimum_guarantee: insertData.minimum_guarantee,
         maximum_guarantee: insertData.maximum_guarantee,
+        working_time_hours: insertData.working_time_hours,
+        average_hourly_pay: insertData.average_hourly_pay,
         status: insertData.status
       });
 
@@ -155,6 +159,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       benefits: req.body.benefits || existingProfile.benefits,
       minimum_guarantee: Number(req.body.minimum_guarantee) || existingProfile.minimum_guarantee,
       maximum_guarantee: Number(req.body.maximum_guarantee) || existingProfile.maximum_guarantee,
+      working_time_hours: Number(req.body.working_time_hours) || existingProfile.working_time_hours || 0,
+      average_hourly_pay: Number(req.body.average_hourly_pay) || existingProfile.average_hourly_pay || 0,
       status: req.body.status || existingProfile.status,
       updated_at: new Date()
     };
@@ -168,6 +174,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       benefits: updateData.benefits,
       minimum_guarantee: updateData.minimum_guarantee,
       maximum_guarantee: updateData.maximum_guarantee,
+      working_time_hours: updateData.working_time_hours,
+      average_hourly_pay: updateData.average_hourly_pay,
       status: updateData.status
     });
 
