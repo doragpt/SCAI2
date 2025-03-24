@@ -383,6 +383,8 @@ export const storeProfileSchema = z.object({
   benefits: z.array(z.enum(allBenefitTypes)).default([]),
   minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
   maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
+  working_time_hours: z.coerce.number().nonnegative("勤務時間は0以上の値を入力してください").default(0),
+  average_hourly_pay: z.coerce.number().nonnegative("時給単価は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
   requirements: jobRequirementsSchema.optional(),
   working_hours: z.string().optional(),

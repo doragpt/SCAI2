@@ -34,6 +34,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
+      working_time_hours: initialData?.working_time_hours || 0,
+      average_hourly_pay: initialData?.average_hourly_pay || 0,
       status: initialData?.status || "draft",
     }
   });
@@ -44,6 +46,8 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         ...data,
         minimum_guarantee: Number(data.minimum_guarantee) || 0,
         maximum_guarantee: Number(data.maximum_guarantee) || 0,
+        working_time_hours: Number(data.working_time_hours) || 0,
+        average_hourly_pay: Number(data.average_hourly_pay) || 0,
         status: data.status || "draft",
         benefits: data.benefits || [],
       };
@@ -139,52 +143,106 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           )}
         />
 
-        <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="minimum_guarantee"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel className="font-medium">最低保証（円）</FormLabel>
-                <FormControl>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-                    value={field.value === 0 ? "" : field.value}
-                    placeholder="例：30000"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="flex flex-col gap-6">
+          <div className="p-5 border border-amber-200 bg-amber-50 rounded-lg">
+            <h3 className="font-semibold text-amber-900 mb-3">時給換算で表示</h3>
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="working_time_hours"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="font-medium">勤務時間（時間）</FormLabel>
+                    <FormControl>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                        value={field.value === 0 ? "" : field.value?.toString()}
+                        placeholder="例：6"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="maximum_guarantee"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel className="font-medium">最高保証（円）</FormLabel>
-                <FormControl>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-                    value={field.value === 0 ? "" : field.value}
-                    placeholder="例：50000"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="average_hourly_pay"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="font-medium">時給単価（円）</FormLabel>
+                    <FormControl>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                        value={field.value === 0 ? "" : field.value?.toString()}
+                        placeholder="例：5000"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務の平均給与〇円」という形式で表示されます</p>
+          </div>
+          
+          <div className="flex gap-4">
+            <FormField
+              control={form.control}
+              name="minimum_guarantee"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel className="font-medium">最低保証（円）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                      value={field.value === 0 ? "" : field.value?.toString()}
+                      placeholder="例：30000"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="maximum_guarantee"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel className="font-medium">最高保証（円）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                      value={field.value === 0 ? "" : field.value?.toString()}
+                      placeholder="例：50000"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <FormField
