@@ -30,6 +30,7 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
         working_time_hours: store_profiles.working_time_hours,
         average_hourly_pay: store_profiles.average_hourly_pay,
         status: store_profiles.status,
+        top_image: store_profiles.top_image,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
       })
@@ -102,6 +103,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         working_time_hours: Number(req.body.working_time_hours) || 0,
         average_hourly_pay: Number(req.body.average_hourly_pay) || 0,
         status: req.body.status || "draft",
+        top_image: req.body.top_image || "",
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -117,7 +119,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         maximum_guarantee: insertData.maximum_guarantee,
         working_time_hours: insertData.working_time_hours,
         average_hourly_pay: insertData.average_hourly_pay,
-        status: insertData.status
+        status: insertData.status,
+        top_image: insertData.top_image
       });
 
       // 必須フィールドとvalidatedDataを結合
@@ -166,6 +169,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       working_time_hours: Number(req.body.working_time_hours) || existingProfile.working_time_hours || 0,
       average_hourly_pay: Number(req.body.average_hourly_pay) || existingProfile.average_hourly_pay || 0,
       status: req.body.status || existingProfile.status,
+      top_image: req.body.top_image || existingProfile.top_image,
       updated_at: new Date()
     };
 
@@ -180,7 +184,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       maximum_guarantee: updateData.maximum_guarantee,
       working_time_hours: updateData.working_time_hours,
       average_hourly_pay: updateData.average_hourly_pay,
-      status: updateData.status
+      status: updateData.status,
+      top_image: updateData.top_image
     });
 
     // 更新用のオブジェクトを作成
@@ -200,6 +205,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
               working_time_hours = ${fullUpdateData.working_time_hours},
               average_hourly_pay = ${fullUpdateData.average_hourly_pay},
               status = ${fullUpdateData.status},
+              top_image = ${fullUpdateData.top_image},
               updated_at = ${fullUpdateData.updated_at}
           WHERE user_id = ${req.user.id}
           RETURNING *`
@@ -256,6 +262,7 @@ router.get("/stats", authenticate, authorize("store"), async (req: any, res) => 
         working_time_hours: store_profiles.working_time_hours,
         average_hourly_pay: store_profiles.average_hourly_pay,
         status: store_profiles.status,
+        top_image: store_profiles.top_image,
         created_at: store_profiles.created_at,
         updated_at: store_profiles.updated_at
       })
