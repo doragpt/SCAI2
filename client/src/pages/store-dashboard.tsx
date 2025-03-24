@@ -478,78 +478,11 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 給与・待遇セクション - SalaryDisplayコンポーネント使用 */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <Banknote className="h-5 w-5 mr-2 text-green-500" />
-                            給与とサポート
-                          </h3>
-                          
-                          <SalaryDisplay 
-                            minimumGuarantee={profile.minimum_guarantee}
-                            maximumGuarantee={profile.maximum_guarantee}
-                            workingTimeHours={profile.working_time_hours}
-                            averageHourlyPay={profile.average_hourly_pay}
-                            transportationSupport={profile.transportation_support ?? undefined}
-                            housingSupport={profile.housing_support ?? undefined}
-                            benefits={profile.benefits}
-                          />
-                        </div>
+                        {/* 給与・待遇セクションはグリッドレイアウト内に統合 */}
                         
 
 
-                        {/* オンライン情報セクション - ContactDisplayコンポーネントを使用 */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <ExternalLink className="h-5 w-5 mr-2 text-cyan-500" />
-                            オンラインサービス
-                          </h3>
-                          
-                          <div className="grid gap-5">
-                            {/* メッセージアプリ情報 */}
-                            {(profile.sns_id || profile.sns_url || profile.sns_text) && (
-                              <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-                                <h4 className="font-medium text-green-800 mb-3 flex items-center">
-                                  <span className="bg-white p-1.5 rounded-full mr-2 border border-green-200">
-                                    <Mail className="w-4 h-4 text-green-500" />
-                                  </span>
-                                  メッセージアプリ
-                                </h4>
-                                <div className="ml-2 space-y-3">
-                                  {profile.sns_id && (
-                                    <div className="flex items-center">
-                                      <span className="bg-white rounded-md px-2 py-1 text-xs text-green-700 font-medium border border-green-200">ID</span>
-                                      <span className="ml-2 text-sm font-medium">{profile.sns_id}</span>
-                                    </div>
-                                  )}
-                                  {profile.sns_url && (
-                                    <a 
-                                      href={profile.sns_url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center px-3 py-1.5 bg-white rounded-md text-green-600 text-sm font-medium hover:bg-green-100 transition-colors border border-green-200"
-                                    >
-                                      <Mail className="w-3.5 h-3.5 mr-1.5 text-green-500" />
-                                      <span>友だち追加</span>
-                                    </a>
-                                  )}
-                                  {profile.sns_text && (
-                                    <div className="text-sm mt-2 bg-white p-3 rounded-md border border-green-200">
-                                      {profile.sns_text}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* ウェブサイト情報（ContactDisplayの一部として統合可能） */}
-                            <ContactDisplay 
-                              pcWebsiteUrl={profile.pc_website_url || undefined}
-                              mobileWebsiteUrl={profile.mobile_website_url || undefined}
-                              className="bg-blue-50 rounded-lg p-4 border border-blue-100"
-                            />
-                          </div>
-                        </div>
+                        {/* オンラインサービス情報（ContactDisplayに統合） */}
 
                         {/* 仕事内容セクション - JobDescriptionDisplayコンポーネントを使用 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
@@ -652,35 +585,17 @@ export default function StoreDashboard() {
                         
                         {/* 安全対策と連絡先情報 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* 安全対策 - パラメータは既にLocationDisplayに含まれている */}
+                          {/* 安全対策 - LocationDisplayコンポーネントを使用して情報表示を統一 */}
                           <div className="bg-card rounded-lg border shadow-sm p-6">
                             <h3 className="text-lg font-semibold flex items-center mb-4">
-                              <AlertCircle className="h-5 w-5 mr-2 text-green-500" />
+                              <Shield className="h-5 w-5 mr-2 text-green-500" />
                               <span>安全対策</span>
                             </h3>
-                            {/* LocationDisplayコンポーネントのsecurityMeasuresパラメータが安全対策情報を表示 */}
-                            <div>
-                              {profile.security_measures ? (
-                                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
-                                  <h4 className="font-medium text-indigo-700 mb-3 text-sm flex items-center">
-                                    <div className="p-1 bg-white rounded-full mr-2 border border-indigo-200">
-                                      <Shield className="w-4 h-4 text-indigo-600" />
-                                    </div>
-                                    安心・安全への取り組み
-                                  </h4>
-                                  <p className="text-sm whitespace-pre-line">
-                                    {profile.security_measures}
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="text-center py-6">
-                                  <div className="bg-white p-2 rounded-full border border-green-200 inline-flex mx-auto mb-3">
-                                    <AlertCircle className="h-6 w-6 text-green-500" />
-                                  </div>
-                                  <p className="text-gray-500 italic">安全対策情報が登録されていません</p>
-                                </div>
-                              )}
-                            </div>
+                            {/* LocationDisplayコンポーネントのsecurityMeasuresパラメータで共通表示 */}
+                            <LocationDisplay 
+                              securityMeasures={profile.security_measures || undefined}
+                              className="bg-indigo-50 p-3 rounded-md"
+                            />
                           </div>
                           
                           {/* 店舗連絡先情報 - ContactDisplayコンポーネントを使用 */}
