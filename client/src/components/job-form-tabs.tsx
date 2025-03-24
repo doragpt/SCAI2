@@ -38,6 +38,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 基本情報
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
+      special_offers: initialData?.special_offers || [],
       top_image: initialData?.top_image || "",
       
       // 給与情報

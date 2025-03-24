@@ -253,6 +253,7 @@ export const store_profiles = pgTable("store_profiles", {
   working_hours: text("working_hours"),
   transportation_support: boolean("transportation_support").default(false),
   housing_support: boolean("housing_support").default(false),
+  special_offers: jsonb("special_offers").$type<SpecialOffer[]>().default([]),
   // 新規追加項目
   address: text("address"), // 住所（任意）
   recruiter_name: text("recruiter_name"), // 採用担当者名（必須）
