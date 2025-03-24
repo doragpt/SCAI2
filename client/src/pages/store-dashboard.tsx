@@ -719,43 +719,40 @@ export default function StoreDashboard() {
                                   </div>
                                   給与
                                 </h4>
-                                <div>
-                                  {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
-                                    <div className="flex justify-between items-baseline border-b border-emerald-100 pb-2 mb-2">
-                                      <span className="text-sm font-medium">日給保証</span>
-                                      <span className="font-bold text-lg text-emerald-800">
-                                        {profile.minimum_guarantee && profile.maximum_guarantee 
-                                          ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円` 
-                                          : profile.minimum_guarantee 
-                                            ? `${profile.minimum_guarantee.toLocaleString()}円〜` 
-                                            : `〜${profile.maximum_guarantee?.toLocaleString()}円`}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex justify-between items-baseline border-b border-emerald-100 pb-2 mb-2">
-                                      <span className="text-sm font-medium">日給保証</span>
-                                      <span className="text-gray-500 italic">未設定</span>
-                                    </div>
-                                  )}
-                                  
-                                  <div className="grid grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                      <span className="text-xs text-emerald-800 font-medium">時給換算</span>
-                                      <div className="font-semibold mt-1">
-                                        {profile.average_hourly_pay 
-                                          ? `${profile.average_hourly_pay.toLocaleString()}円` 
-                                          : <span className="text-sm text-gray-500 italic">未設定</span>}
-                                      </div>
+                                
+                                {/* 勤務時間に対しての平均日給 */}
+                                {profile.working_time_hours && profile.average_hourly_pay ? (
+                                  <div className="mb-4 border-b border-emerald-100 pb-3">
+                                    <div className="font-medium text-sm text-emerald-800 mb-1">勤務時間に対しての平均日給</div>
+                                    <div className="font-bold text-lg text-emerald-800">
+                                      {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
                                     </div>
                                     
-                                    <div>
-                                      <span className="text-xs text-emerald-800 font-medium">勤務時間</span>
-                                      <div className="font-semibold mt-1">
-                                        {profile.working_time_hours 
-                                          ? `${profile.working_time_hours}時間` 
-                                          : <span className="text-sm text-gray-500 italic">未設定</span>}
+                                    <div className="mt-2 pt-2 border-t border-emerald-100/50">
+                                      <div className="font-medium text-sm text-emerald-800 mb-1">時給換算:</div>
+                                      <div className="font-bold">
+                                        {Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円
                                       </div>
                                     </div>
+                                  </div>
+                                ) : null}
+                                
+                                {/* 日給 */}
+                                <div className="mt-3">
+                                  <div className="font-medium text-sm text-emerald-800 mb-1">日給</div>
+                                  {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
+                                    <div className="font-bold text-lg text-emerald-800">
+                                      {profile.minimum_guarantee && profile.maximum_guarantee 
+                                        ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円` 
+                                        : profile.minimum_guarantee 
+                                          ? `${profile.minimum_guarantee.toLocaleString()}円〜` 
+                                          : `〜${profile.maximum_guarantee?.toLocaleString()}円`}
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-gray-500 italic">未設定</span>
+                                  )}
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    経験やスキルに応じて給与は異なります
                                   </div>
                                 </div>
                               </div>

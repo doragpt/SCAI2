@@ -277,41 +277,58 @@ export default function JobDetail() {
                 <CardTitle>給与シミュレーション</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>1日の勤務時間</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={24}
-                    value={workingHours}
-                    onChange={(e) => setWorkingHours(parseInt(e.target.value))}
-                  />
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                  <div className="font-medium text-primary mb-2">勤務時間に対しての平均日給</div>
+                  <div className="text-xl font-bold mb-1">
+                    {job?.workingTimeHours && job?.averageHourlyPay && 
+                     job.workingTimeHours > 0 && job.averageHourlyPay > 0
+                      ? `${job.workingTimeHours}時間勤務で${job.averageHourlyPay.toLocaleString()}円`
+                      : "未設定"
+                    }
+                  </div>
+                  
+                  <div className="pt-2 border-t border-primary/10 mt-2">
+                    <div className="font-medium text-primary mb-1">時給換算:</div>
+                    <div className="text-lg font-bold">
+                      {job?.workingTimeHours && job?.averageHourlyPay && 
+                       job.workingTimeHours > 0 && job.averageHourlyPay > 0
+                        ? `${Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円`
+                        : "未設定"
+                      }
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>月の勤務日数</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={workingDays}
-                    onChange={(e) => setWorkingDays(parseInt(e.target.value))}
-                  />
+                
+                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border">
+                  <div className="font-medium mb-2">日給</div>
+                  <div className="text-lg font-bold">
+                    {formatSalary(job.minimumGuarantee, job.maximumGuarantee)}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-2">
+                    経験やスキルに応じて給与は異なります
+                  </div>
                 </div>
-                <div className="pt-4 border-t">
+                
+                <div className="pt-3 border-t">
                   <div className="text-sm text-muted-foreground mb-2">月収シミュレーション</div>
-                  <div className="text-2xl font-bold">
+                  <div className="flex space-x-2 mb-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={workingDays}
+                      onChange={(e) => setWorkingDays(parseInt(e.target.value))}
+                      className="w-24"
+                    />
+                    <span className="py-2">日勤務の場合</span>
+                  </div>
+                  <div className="text-xl font-bold">
                     {job?.workingTimeHours && job?.averageHourlyPay && 
                      job.workingTimeHours > 0 && job.averageHourlyPay > 0
                       ? `${(job.averageHourlyPay * workingDays).toLocaleString()}円`
                       : formatSalary(monthlyMin, monthlyMax)
                     }
                   </div>
-                  {job?.workingTimeHours && job?.averageHourlyPay && 
-                   job.workingTimeHours > 0 && job.averageHourlyPay > 0 && (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      1日{job.workingTimeHours}時間勤務 × {workingDays}日 = 時給換算 {Math.round(job.averageHourlyPay / job.workingTimeHours).toLocaleString()}円
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
