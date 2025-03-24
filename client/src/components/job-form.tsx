@@ -219,11 +219,36 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const onSubmit = (data: StoreProfile) => {
     // ステート管理している値をフォームデータに統合
+    const phoneArray = phoneNumbers.filter(phone => phone.trim() !== '');
+    const emailArray = emailAddresses.filter(email => email.trim() !== '');
+    
+    // 必須フィールドの存在確認
+    if (!data.recruiter_name || phoneArray.length === 0) {
+      if (!data.recruiter_name) {
+        form.setError('recruiter_name', { 
+          type: 'manual', 
+          message: '採用担当者名を入力してください' 
+        });
+      }
+      
+      if (phoneArray.length === 0) {
+        // 電話番号エラーをフォームに表示
+        toast({
+          title: "エラー",
+          description: "電話番号を少なくとも1つ入力してください",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+    
     const formData = {
       ...data,
-      phone_numbers: phoneNumbers.filter(phone => phone.trim() !== ''),
-      email_addresses: emailAddresses.filter(email => email.trim() !== ''),
+      phone_numbers: phoneArray,
+      email_addresses: emailArray,
     };
+    
+    console.log("送信データ:", formData);
     mutate(formData);
   };
 
