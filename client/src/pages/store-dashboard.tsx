@@ -28,6 +28,11 @@ import {
   Bell,
   BarChart3,
   Newspaper,
+  MapPin,
+  Briefcase,
+  Info,
+  Banknote,
+  Award,
   ChevronRight,
   LucideIcon
 } from "lucide-react";
@@ -371,67 +376,109 @@ export default function StoreDashboard() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">基本情報</h3>
-                          <div className="grid gap-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">店舗名</span>
-                              <span className="font-medium">{profile.business_name}</span>
+                      <div className="space-y-8">
+                        {/* ヘッダー部分 */}
+                        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/10">
+                          <div className="flex flex-col md:flex-row gap-6 items-start">
+                            {/* プロフィールアイコン */}
+                            <div className="bg-primary/10 rounded-full p-6 flex-shrink-0">
+                              <Building2 className="h-12 w-12 text-primary" />
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">所在地</span>
-                              <span className="font-medium">{profile.location}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">業種</span>
-                              <span className="font-medium">{profile.service_type}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">公開状態</span>
-                              <Badge variant={profile.status === "published" ? "default" : "secondary"}>
-                                {profileStatusLabels[profile.status]}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">キャッチコピー</h3>
-                          <p className="whitespace-pre-wrap">{profile.catch_phrase}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">店舗紹介</h3>
-                          <p className="whitespace-pre-wrap">{profile.description}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">給与</h3>
-                          {/* 時給換算表示（優先） */}
-                          {profile?.working_time_hours && profile?.average_hourly_pay && 
-                           profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
-                            <div className="text-xl font-bold mb-2">
-                              {profile.working_time_hours}時間勤務で平均給与{(profile.working_time_hours * profile.average_hourly_pay).toLocaleString()}円
-                            </div>
-                          ) : null}
-                          
-                          {/* 従来の最低・最高保証表示 */}
-                          <div className="text-xl font-bold">
-                            {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
-                            {profile.maximum_guarantee ? ` ～ ${profile.maximum_guarantee.toLocaleString()}円` : ""}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">待遇・福利厚生</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {profile.benefits?.map((benefit) => (
-                              <div key={benefit} className="flex items-center gap-2 text-sm">
-                                <span>・{benefit}</span>
+                            
+                            {/* 基本情報 */}
+                            <div className="flex-grow space-y-2">
+                              <div className="flex items-center">
+                                <h2 className="text-2xl font-bold">{profile.business_name}</h2>
+                                <Badge variant={profile.status === "published" ? "default" : "secondary"} className="ml-3">
+                                  {profileStatusLabels[profile.status]}
+                                </Badge>
                               </div>
-                            ))}
+                              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center">
+                                  <MapPin className="h-4 w-4 mr-1 text-primary/70" />
+                                  <span>{profile.location}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <Briefcase className="h-4 w-4 mr-1 text-primary/70" />
+                                  <span>{profile.service_type}</span>
+                                </div>
+                              </div>
+                              {/* キャッチコピー */}
+                              <div className="mt-3 bg-background p-4 rounded-md border font-medium italic text-lg">
+                                "{profile.catch_phrase}"
+                              </div>
+                            </div>
                           </div>
+                        </div>
+
+                        {/* 店舗紹介セクション */}
+                        <div className="bg-card rounded-lg border shadow-sm p-6">
+                          <h3 className="text-lg font-semibold flex items-center mb-4">
+                            <Info className="h-5 w-5 mr-2 text-primary/80" />
+                            店舗紹介
+                          </h3>
+                          <div className="whitespace-pre-wrap leading-relaxed text-card-foreground/90">
+                            {profile.description}
+                          </div>
+                        </div>
+
+                        {/* 給与・待遇セクション */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* 給与情報 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <Banknote className="h-5 w-5 mr-2 text-green-500" />
+                              給与詳細
+                            </h3>
+                            <div className="space-y-4">
+                              {profile?.working_time_hours && profile?.average_hourly_pay && 
+                              profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
+                                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md">
+                                  <div className="text-sm text-muted-foreground mb-1">平均時給制</div>
+                                  <div className="text-2xl font-bold text-green-700 dark:text-green-500">
+                                    {profile.working_time_hours}時間勤務で{(profile.working_time_hours * profile.average_hourly_pay).toLocaleString()}円
+                                  </div>
+                                  <div className="text-sm text-muted-foreground mt-2">
+                                    平均時給: {profile.average_hourly_pay.toLocaleString()}円/時
+                                  </div>
+                                </div>
+                              ) : null}
+                              
+                              {(profile.minimum_guarantee || profile.maximum_guarantee) && (
+                                <div className="bg-card p-4 rounded-md border">
+                                  <div className="text-sm text-muted-foreground mb-1">日給</div>
+                                  <div className="text-xl font-bold">
+                                    {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
+                                    {profile.maximum_guarantee ? ` ～ ${profile.maximum_guarantee.toLocaleString()}円` : ""}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 待遇・福利厚生 */}
+                          <div className="bg-card rounded-lg border shadow-sm p-6">
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                              <Award className="h-5 w-5 mr-2 text-blue-500" />
+                              待遇・福利厚生
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {profile.benefits?.map((benefit) => (
+                                <div key={benefit} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                                  <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                  <span>{benefit}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 編集ボタン */}
+                        <div className="flex justify-end">
+                          <Button onClick={() => setShowProfileForm(true)} className="w-full md:w-auto">
+                            <FileEdit className="h-4 w-4 mr-2" />
+                            プロフィールを編集する
+                          </Button>
                         </div>
                       </div>
                     )}
