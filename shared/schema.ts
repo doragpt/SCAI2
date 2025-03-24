@@ -195,6 +195,19 @@ export type JobStatus = typeof jobStatusTypes[number];
 export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
+// カスタムオファー用の型定義
+export const specialOfferSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  icon: z.string(), // Lucideアイコン名
+  backgroundColor: z.string(), // テーマカラー
+  textColor: z.string(),
+  order: z.number().default(0),
+});
+
+export type SpecialOffer = z.infer<typeof specialOfferSchema>;
+
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
   "デリヘル": "デリヘル",
@@ -409,6 +422,7 @@ export const storeProfileSchema = z.object({
   working_hours: z.string().optional(),
   transportation_support: z.boolean().default(false),
   housing_support: z.boolean().default(false),
+  special_offers: z.array(specialOfferSchema).optional(),
   
   // 新規追加項目
   address: z.string().optional(), // 住所（任意）
