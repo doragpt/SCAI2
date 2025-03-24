@@ -405,7 +405,7 @@ export const storeProfileSchema = z.object({
   working_time_hours: z.coerce.number().nonnegative("勤務時間は0以上の値を入力してください").default(0),
   average_hourly_pay: z.coerce.number().nonnegative("時給単価は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
-  requirements: jobRequirementsSchema.optional(),
+  requirements: z.union([z.string(), jobRequirementsSchema]).optional(),
   working_hours: z.string().optional(),
   transportation_support: z.boolean().default(false),
   housing_support: z.boolean().default(false),
