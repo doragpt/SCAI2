@@ -469,8 +469,87 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
+                        {/* 給与・待遇セクション */}
+                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+                          <h3 className="text-lg font-semibold flex items-center mb-4">
+                            <Banknote className="h-5 w-5 mr-2 text-green-500" />
+                            給与詳細
+                          </h3>
+                          
+                          {/* 給与情報カード */}
+                          <div className="grid md:grid-cols-2 gap-4">
+                            {profile?.working_time_hours && profile?.average_hourly_pay && 
+                            profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
+                              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 p-5 rounded-lg border border-green-200 shadow-sm">
+                                <div className="text-sm text-muted-foreground mb-1">勤務時間と平均日給</div>
+                                <div className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1">
+                                  {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
+                                </div>
+                                <div className="flex items-center mt-3 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-green-200">
+                                  <span className="text-sm font-medium text-green-800 dark:text-green-400">時給換算:</span>
+                                  <span className="ml-2 text-lg font-bold text-green-700 dark:text-green-300">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>
+                                </div>
+                              </div>
+                            ) : null}
+                            
+                            {(profile.minimum_guarantee || profile.maximum_guarantee) && (
+                              <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 p-5 rounded-lg border border-amber-200 shadow-sm flex flex-col">
+                                <div className="text-sm text-muted-foreground">日給</div>
+                                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1 flex-grow flex items-center">
+                                  {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
+                                  {profile.minimum_guarantee && profile.maximum_guarantee ? <span className="mx-2 text-amber-500">〜</span> : ""}
+                                  {profile.maximum_guarantee ? `${profile.maximum_guarantee.toLocaleString()}円` : ""}
+                                </div>
+                                {profile.minimum_guarantee && profile.maximum_guarantee && (
+                                  <div className="mt-3 text-xs text-amber-700 dark:text-amber-400 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-amber-200">
+                                    経験やスキルに応じて給与は異なります
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* 待遇・福利厚生 */}
+                          <div className="mt-6">
+                            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                              <Award className="h-4 w-4 mr-2 text-blue-500" />
+                              待遇・福利厚生
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                              {profile.benefits?.map((benefit) => (
+                                <div key={benefit} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md border border-blue-100">
+                                  <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                  <span className="text-blue-800 dark:text-blue-200">{benefit}</span>
+                                </div>
+                              ))}
+                              
+                              {profile.transportation_support && (
+                                <div className="flex items-center gap-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-md border border-indigo-100">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500 flex-shrink-0">
+                                    <rect x="1" y="3" width="15" height="13"></rect>
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                                  </svg>
+                                  <span className="text-indigo-800 dark:text-indigo-200">交通費サポート</span>
+                                </div>
+                              )}
+                              
+                              {profile.housing_support && (
+                                <div className="flex items-center gap-2 text-sm bg-purple-50 dark:bg-purple-900/20 px-3 py-2 rounded-md border border-purple-100">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 flex-shrink-0">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                  </svg>
+                                  <span className="text-purple-800 dark:text-purple-200">住居サポート</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
                         {/* 店舗紹介セクション */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6">
+                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
                             <Info className="h-5 w-5 mr-2 text-primary/80" />
                             店舗紹介
@@ -592,85 +671,7 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
-                        {/* 給与・待遇セクション */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <Banknote className="h-5 w-5 mr-2 text-green-500" />
-                            給与詳細
-                          </h3>
-                          
-                          {/* 給与情報カード */}
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {profile?.working_time_hours && profile?.average_hourly_pay && 
-                            profile.working_time_hours > 0 && profile.average_hourly_pay > 0 ? (
-                              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 p-5 rounded-lg border border-green-200 shadow-sm">
-                                <div className="text-sm text-muted-foreground mb-1">勤務時間と平均日給</div>
-                                <div className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1">
-                                  {profile.working_time_hours}時間勤務で{profile.average_hourly_pay.toLocaleString()}円
-                                </div>
-                                <div className="flex items-center mt-3 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-green-200">
-                                  <span className="text-sm font-medium text-green-800 dark:text-green-400">時給換算:</span>
-                                  <span className="ml-2 text-lg font-bold text-green-700 dark:text-green-300">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>
-                                </div>
-                              </div>
-                            ) : null}
-                            
-                            {(profile.minimum_guarantee || profile.maximum_guarantee) && (
-                              <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20 p-5 rounded-lg border border-amber-200 shadow-sm flex flex-col">
-                                <div className="text-sm text-muted-foreground">日給</div>
-                                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1 flex-grow flex items-center">
-                                  {profile.minimum_guarantee ? `${profile.minimum_guarantee.toLocaleString()}円` : ""}
-                                  {profile.minimum_guarantee && profile.maximum_guarantee ? <span className="mx-2 text-amber-500">〜</span> : ""}
-                                  {profile.maximum_guarantee ? `${profile.maximum_guarantee.toLocaleString()}円` : ""}
-                                </div>
-                                {profile.minimum_guarantee && profile.maximum_guarantee && (
-                                  <div className="mt-3 text-xs text-amber-700 dark:text-amber-400 bg-white/70 dark:bg-black/10 px-3 py-2 rounded-md border border-amber-200">
-                                    経験やスキルに応じて給与は異なります
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* 待遇・福利厚生 */}
-                          <div className="mt-6">
-                            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                              <Award className="h-4 w-4 mr-2 text-blue-500" />
-                              待遇・福利厚生
-                            </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                              {profile.benefits?.map((benefit) => (
-                                <div key={benefit} className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md border border-blue-100">
-                                  <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                  <span className="text-blue-800 dark:text-blue-200">{benefit}</span>
-                                </div>
-                              ))}
-                              
-                              {profile.transportation_support && (
-                                <div className="flex items-center gap-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-md border border-indigo-100">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500 flex-shrink-0">
-                                    <rect x="1" y="3" width="15" height="13"></rect>
-                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                                  </svg>
-                                  <span className="text-indigo-800 dark:text-indigo-200">交通費サポート</span>
-                                </div>
-                              )}
-                              
-                              {profile.housing_support && (
-                                <div className="flex items-center gap-2 text-sm bg-purple-50 dark:bg-purple-900/20 px-3 py-2 rounded-md border border-purple-100">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 flex-shrink-0">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                  </svg>
-                                  <span className="text-purple-800 dark:text-purple-200">住居サポート</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
+
                         {/* 店舗連絡先情報 */}
                         <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
                           <h3 className="text-lg font-semibold flex items-center mb-4">
