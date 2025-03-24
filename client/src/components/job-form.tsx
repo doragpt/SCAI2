@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { apiRequest } from "@/lib/queryClient";
@@ -27,20 +27,96 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
   const [catchPhraseLength, setCatchPhraseLength] = useState(initialData?.catch_phrase?.length || 0);
   const [descriptionLength, setDescriptionLength] = useState(initialData?.description?.length || 0);
   const [isUploadingTopImage, setIsUploadingTopImage] = useState(false);
+  
+  // 電話番号と電子メールの配列を管理
+  const [phoneNumbers, setPhoneNumbers] = useState<string[]>(
+    Array.isArray(initialData?.phone_numbers) ? initialData?.phone_numbers as string[] : ['']
+  );
+  
+  const [emailAddresses, setEmailAddresses] = useState<string[]>(
+    Array.isArray(initialData?.email_addresses) ? initialData?.email_addresses as string[] : []
+  );
+  
+  // 電話番号操作
+  const addPhoneNumber = () => {
+    if (phoneNumbers.length < 4) {
+      setPhoneNumbers([...phoneNumbers, '']);
+    }
+  };
+  
+  const removePhoneNumber = (index: number) => {
+    if (phoneNumbers.length > 1) {
+      const newPhoneNumbers = [...phoneNumbers];
+      newPhoneNumbers.splice(index, 1);
+      setPhoneNumbers(newPhoneNumbers);
+      form.setValue('phone_numbers', newPhoneNumbers);
+    }
+  };
+  
+  const updatePhoneNumber = (index: number, value: string) => {
+    const newPhoneNumbers = [...phoneNumbers];
+    newPhoneNumbers[index] = value;
+    setPhoneNumbers(newPhoneNumbers);
+    form.setValue('phone_numbers', newPhoneNumbers);
+  };
+  
+  // メールアドレス操作
+  const addEmailAddress = () => {
+    if (emailAddresses.length < 4) {
+      setEmailAddresses([...emailAddresses, '']);
+    }
+  };
+  
+  const removeEmailAddress = (index: number) => {
+    const newEmailAddresses = [...emailAddresses];
+    newEmailAddresses.splice(index, 1);
+    setEmailAddresses(newEmailAddresses);
+    form.setValue('email_addresses', newEmailAddresses);
+  };
+  
+  const updateEmailAddress = (index: number, value: string) => {
+    const newEmailAddresses = [...emailAddresses];
+    newEmailAddresses[index] = value;
+    setEmailAddresses(newEmailAddresses);
+    form.setValue('email_addresses', newEmailAddresses);
+  };
 
   const form = useForm<StoreProfile>({
     resolver: zodResolver(storeProfileSchema),
     defaultValues: {
       ...initialData,
+      // 基本情報
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
       top_image: initialData?.top_image || "",
+      
+      // 給与情報
       benefits: initialData?.benefits || [],
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
       working_time_hours: initialData?.working_time_hours || 0,
       average_hourly_pay: initialData?.average_hourly_pay || 0,
       status: initialData?.status || "draft",
+      
+      // 住所・担当者情報
+      address: initialData?.address || "",
+      recruiter_name: initialData?.recruiter_name || "",
+      
+      // 連絡先情報
+      phone_numbers: initialData?.phone_numbers || [],
+      email_addresses: initialData?.email_addresses || [],
+      
+      // SNS情報
+      sns_id: initialData?.sns_id || "",
+      sns_url: initialData?.sns_url || "",
+      sns_text: initialData?.sns_text || "",
+      
+      // ウェブサイト情報
+      pc_website_url: initialData?.pc_website_url || "",
+      mobile_website_url: initialData?.mobile_website_url || "",
+      
+      // 応募要件
+      application_requirements: initialData?.application_requirements || "",
     }
   });
   
@@ -107,6 +183,9 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
         average_hourly_pay: Number(data.average_hourly_pay) || 0,
         status: data.status || "draft",
         benefits: data.benefits || [],
+        // 新しいフィールド
+        phone_numbers: Array.isArray(data.phone_numbers) ? data.phone_numbers : [],
+        email_addresses: Array.isArray(data.email_addresses) ? data.email_addresses : [],
       };
 
       // apiRequest関数は既にJSONレスポンスを返すため、直接返せる
@@ -358,6 +437,257 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
           </div>
         </div>
 
+        {/* 住所・担当者情報 */}
+        <div className="mt-12 mb-8">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">店舗基本情報</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">住所（任意）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：東京都渋谷区〇〇町1-2-3 〇〇ビル5F"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="recruiter_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">採用担当者名 <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <input
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：採用担当"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* 連絡先情報 */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">連絡先情報</h2>
+          
+          {/* 電話番号セクション - フォーム内に動的に増減できるフィールド */}
+          <div className="mb-6">
+            <FormLabel className="font-medium mb-2 block">電話番号 <span className="text-red-500">*</span></FormLabel>
+            <p className="text-sm text-gray-500 mb-3">最低1つ、最大4つまで登録できます</p>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {phoneNumbers.map((phoneNumber, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="tel"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="例：03-1234-5678"
+                    value={phoneNumber || ''}
+                    onChange={(e) => updatePhoneNumber(index, e.target.value)}
+                  />
+                  
+                  {/* 削除ボタン（1つ目の電話番号以外に表示） */}
+                  {index > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePhoneNumber(index)}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              
+              {/* 追加ボタン（4つまで） */}
+              {phoneNumbers.length < 4 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addPhoneNumber}
+                  className="w-full mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  電話番号を追加
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* メールアドレスセクション */}
+          <div className="mb-6">
+            <FormLabel className="font-medium mb-2 block">メールアドレス（任意）</FormLabel>
+            <p className="text-sm text-gray-500 mb-3">最大4つまで登録できます</p>
+            
+            {/* メールアドレスフィールド - 実装予定 */}
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="例：recruit@example.com"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[100px]"
+                >
+                  追加
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SNS・ウェブサイト情報 */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">SNS・ウェブサイト情報</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <FormField
+              control={form.control}
+              name="sns_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">SNSアカウントID（任意）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：@example"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="sns_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">SNS URL（任意）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="url"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：https://twitter.com/example"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="sns_text"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-medium">SNS表示テキスト（任意）</FormLabel>
+                <FormControl>
+                  <input
+                    type="text"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    {...field}
+                    placeholder="例：公式Twitter"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <FormField
+              control={form.control}
+              name="pc_website_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">PC公式サイトURL（任意）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="url"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：https://www.example.com"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mobile_website_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium">モバイル公式サイトURL（任意）</FormLabel>
+                  <FormControl>
+                    <input
+                      type="url"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                      placeholder="例：https://m.example.com"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* 応募要件 */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">応募要件</h2>
+          
+          <FormField
+            control={form.control}
+            name="application_requirements"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-medium">応募資格・条件（任意）</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="例：18歳以上（高校生不可）、未経験者歓迎"
+                    className="min-h-[100px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* 福利厚生 */}
+        <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">福利厚生・特典</h2>
         <FormField
           control={form.control}
           name="benefits"
