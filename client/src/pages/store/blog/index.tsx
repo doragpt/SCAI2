@@ -84,14 +84,14 @@ const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
     case "published":
       return (
-        <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
+        <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600 whitespace-nowrap font-medium">
           <CheckCircle className="h-3 w-3" />
           公開中
         </Badge>
       );
     case "scheduled":
       return (
-        <Badge variant="outline" className="gap-1">
+        <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600 whitespace-nowrap font-medium">
           <Clock className="h-3 w-3" />
           予約投稿
         </Badge>
@@ -99,7 +99,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     case "draft":
     default:
       return (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="secondary" className="gap-1 whitespace-nowrap font-medium">
           <FileEdit className="h-3 w-3" />
           下書き
         </Badge>
@@ -286,14 +286,33 @@ export default function BlogManagement() {
     <div className="container mx-auto p-6">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <CardTitle className="text-2xl">ブログ管理</CardTitle>
-              <CardDescription>
-                店舗情報やイベント告知などを投稿しましょう
+              <CardDescription className="mt-1">
+                <p className="mb-1">お店の情報やイベント告知、キャスト紹介などを投稿できます</p>
+                <div className="flex flex-wrap gap-2 text-xs mt-2">
+                  <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
+                    <CheckCircle className="h-3 w-3" />
+                    公開中
+                  </Badge>
+                  <span className="text-muted-foreground">：すぐに閲覧可能な記事</span>
+                  
+                  <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600 ml-2">
+                    <Clock className="h-3 w-3" />
+                    予約投稿
+                  </Badge>
+                  <span className="text-muted-foreground">：指定日時に自動公開される記事</span>
+                  
+                  <Badge variant="secondary" className="gap-1 ml-2">
+                    <FileEdit className="h-3 w-3" />
+                    下書き
+                  </Badge>
+                  <span className="text-muted-foreground">：非公開の編集中記事</span>
+                </div>
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-2 md:mt-0">
               <Button asChild>
                 <Link href="/store/blog/new">
                   <FilePlus className="h-4 w-4 mr-2" />
@@ -399,12 +418,32 @@ export default function BlogManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[30px]"></TableHead>
-                    <TableHead className="w-[60px]">画像</TableHead>
-                    <TableHead className="w-[280px]">タイトル</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead className="hidden md:table-cell">作成日</TableHead>
-                    <TableHead className="hidden md:table-cell">公開日</TableHead>
-                    <TableHead className="w-[100px] text-right">操作</TableHead>
+                    <TableHead className="w-[60px]">サムネイル</TableHead>
+                    <TableHead className="w-[300px]">
+                      <div className="flex items-center gap-1">
+                        <span>タイトル・内容</span>
+                        <Settings className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <span>状態</span>
+                        <Filter className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      <div className="flex items-center gap-1">
+                        <span>作成日時</span>
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      <div className="flex items-center gap-1">
+                        <span>公開日時</span>
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-[70px] text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -432,21 +471,54 @@ export default function BlogManagement() {
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="truncate">{post.title}</span>
+                          <span className="font-semibold text-sm truncate">{post.title}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              {post.content?.replace(/<[^>]*>/g, '').slice(0, 50)}
+                              {post.content && post.content.length > 50 ? '...' : ''}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] py-0 h-5 px-1.5">
+                              {post.content ? `${post.content.length}文字` : '0文字'}
+                            </Badge>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={post.status} />
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {format(new Date(post.created_at || new Date()), "yyyy/MM/dd", { locale: ja })}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(post.created_at || new Date()), "HH:mm", { locale: ja })}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {post.published_at
-                          ? format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })
-                          : post.scheduled_at
-                          ? `${format(new Date(post.scheduled_at), "yyyy/MM/dd", { locale: ja })} (予定)`
-                          : "-"}
+                        {post.published_at ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {format(new Date(post.published_at), "yyyy/MM/dd", { locale: ja })}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(post.published_at), "HH:mm", { locale: ja })}
+                            </span>
+                          </div>
+                        ) : post.scheduled_at ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {format(new Date(post.scheduled_at), "yyyy/MM/dd", { locale: ja })}
+                            </span>
+                            <span className="text-xs text-amber-600 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {format(new Date(post.scheduled_at), "HH:mm", { locale: ja })}（予定）
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
