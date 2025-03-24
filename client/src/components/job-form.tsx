@@ -152,21 +152,49 @@ export function JobForm({ initialData, onSuccess, onCancel }: JobFormProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfile) => {
+      // 電話番号とメールアドレスを明示的に処理
+      const validPhoneNumbers = Array.isArray(data.phone_numbers) 
+        ? data.phone_numbers.filter(phone => phone && phone.trim() !== '')
+        : [];
+      
+      const validEmailAddresses = Array.isArray(data.email_addresses) 
+        ? data.email_addresses.filter(email => email && email.trim() !== '')
+        : [];
+      
+      // 必須フィールドが存在することを確実にする
+      if (!data.recruiter_name || validPhoneNumbers.length === 0) {
+        throw new Error("採用担当者名と電話番号は必須です");
+      }
+      
       const formattedData = {
-        ...data,
+        // 必須項目を明示的に指定して型変換の問題を回避
+        catch_phrase: data.catch_phrase || "",
+        description: data.description || "",
+        recruiter_name: data.recruiter_name || "",
+        
+        // 数値項目
         minimum_guarantee: Number(data.minimum_guarantee) || 0,
         maximum_guarantee: Number(data.maximum_guarantee) || 0,
         working_time_hours: Number(data.working_time_hours) || 0,
         average_hourly_pay: Number(data.average_hourly_pay) || 0,
+        
+        // ステータスと配列
         status: data.status || "draft",
         benefits: data.benefits || [],
-        // 空の文字列をフィルタリング
-        phone_numbers: Array.isArray(data.phone_numbers) 
-          ? data.phone_numbers.filter(phone => phone && phone.trim() !== '')
-          : [],
-        email_addresses: Array.isArray(data.email_addresses) 
-          ? data.email_addresses.filter(email => email && email.trim() !== '')
-          : [],
+        phone_numbers: validPhoneNumbers,
+        email_addresses: validEmailAddresses,
+        
+        // その他のフィールド
+        top_image: data.top_image || "",
+        address: data.address || "",
+        sns_id: data.sns_id || "",
+        sns_url: data.sns_url || "",
+        sns_text: data.sns_text || "",
+        pc_website_url: data.pc_website_url || "",
+        mobile_website_url: data.mobile_website_url || "",
+        application_requirements: data.application_requirements || "",
+        transportation_support: Boolean(data.transportation_support),
+        housing_support: Boolean(data.housing_support),
       };
 
       console.log("送信データ:", formattedData);
