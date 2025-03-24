@@ -573,17 +573,6 @@ export default function StoreDashboard() {
                           </div>
                         </div>
                         
-                        {/* 店舗紹介セクション */}
-                        <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-                          <h3 className="text-lg font-semibold flex items-center mb-4">
-                            <Info className="h-5 w-5 mr-2 text-primary/80" />
-                            店舗紹介
-                          </h3>
-                          <div className="leading-relaxed text-card-foreground/90">
-                            <HtmlContent html={profile.description} />
-                          </div>
-                        </div>
-
 
 
                         {/* オンライン情報セクション (メッセージアプリ・ウェブサイト) */}
