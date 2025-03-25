@@ -303,8 +303,8 @@ export default function StoreDashboard() {
         Array.isArray(profile.requirements.cup_size_conditions) &&
         profile.requirements.cup_size_conditions.length > 0;
       
-      setShowCupSizeConditions(hasCupConditions);
-      setEnableCupSizeConditions(hasCupConditions);
+      setShowCupSizeConditions(hasCupConditions ? true : false);
+      setEnableCupSizeConditions(hasCupConditions ? true : false);
       
       console.log("カップサイズ条件の状態を更新:", {
         hasCupConditions,
@@ -1604,44 +1604,55 @@ export default function StoreDashboard() {
                               </div>
                               
                               {/* 新規条件入力フォーム */}
-                              <div className="grid grid-cols-2 gap-3 p-3 bg-background/80 rounded-md border">
-                                <div>
-                                  <label className="text-xs font-medium mb-1 block">カップサイズ</label>
-                                  <div className="flex items-center">
-                                    <select
-                                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                      value={newCupSizeCondition.cup_size}
-                                      onChange={(e) => setNewCupSizeCondition({
-                                        ...newCupSizeCondition,
-                                        cup_size: e.target.value as CupSize
-                                      })}
-                                    >
-                                      {cupSizes.map((size) => (
-                                        <option key={size} value={size}>{size}カップ</option>
-                                      ))}
-                                    </select>
+                              <div className="space-y-3 p-3 bg-background/80 rounded-md border">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs font-medium mb-1 block">カップサイズ</label>
+                                    <div className="flex items-center">
+                                      <select
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        value={newCupSizeCondition.cup_size}
+                                        onChange={(e) => setNewCupSizeCondition({
+                                          ...newCupSizeCondition,
+                                          cup_size: e.target.value as CupSize
+                                        })}
+                                      >
+                                        {cupSizes.map((size) => (
+                                          <option key={size} value={size}>{size}カップ</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      指定カップサイズ以上が対象
+                                    </p>
                                   </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    指定カップサイズ以上が対象
-                                  </p>
+                                  <div>
+                                    <label className="text-xs font-medium mb-1 block">最低スペック値</label>
+                                    <div className="flex items-center">
+                                      <input
+                                        type="number"
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        placeholder="例: 80（半角数字）"
+                                        value={newCupSizeCondition.spec_min}
+                                        onChange={(e) => setNewCupSizeCondition({
+                                          ...newCupSizeCondition,
+                                          spec_min: parseInt(e.target.value) || 0
+                                        })}
+                                      />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      ※半角数字で入力してください
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <label className="text-xs font-medium mb-1 block">最低スペック値</label>
-                                  <div className="flex items-center">
-                                    <input
-                                      type="number"
-                                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                      placeholder="例: 80（半角数字）"
-                                      value={newCupSizeCondition.spec_min}
-                                      onChange={(e) => setNewCupSizeCondition({
-                                        ...newCupSizeCondition,
-                                        spec_min: parseInt(e.target.value) || 0
-                                      })}
-                                    />
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    ※半角数字で入力してください
-                                  </p>
+                                <div className="flex justify-end">
+                                  <Button 
+                                    size="sm"
+                                    onClick={handleAddCupSizeCondition}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    条件を追加
+                                  </Button>
                                 </div>
                               </div>
                             </div>
