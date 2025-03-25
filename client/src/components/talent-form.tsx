@@ -39,8 +39,10 @@ import {
   hairColorTypes,
   lookTypes,
   tattooAcceptanceLevels,
+  bodyMarkTypeOptions,
   type TalentProfileData,
   type Photo,
+  type BodyMarkType,
   talentProfileSchema,
 } from "@shared/schema";
 import { calculateAge } from "@/utils/date";
@@ -590,10 +592,10 @@ const defaultValues: TalentProfileData = {
   ng_locations: [],
   body_mark: {
     has_body_mark: false,
+    type: undefined,
     details: "",
     location: "",
     size: "",
-    others: [],
   },
 };
 
@@ -859,38 +861,26 @@ export function TalentForm({ initialData }: TalentFormProps) {
     form.setValue("smoking.others", updated);
   };
 
-  const handleAddBodyMark = useCallback((value: string) => {
+  // タトゥー・傷の情報の更新処理
+  const handleUpdateBodyMarkType = useCallback((value: BodyMarkType | undefined) => {
     const bodyMark = form.getValues()?.body_mark;
     if (!bodyMark) {
       form.setValue("body_mark", { 
-        has_body_mark: false, 
+        has_body_mark: true, 
+        type: value,
         details: "",
         location: "",
         size: "",
-        others: [value] 
       });
       return;
     }
     
-    const updated = [...(bodyMark.others || []), value];
-    form.setValue("body_mark.others", updated, {
+    form.setValue("body_mark.type", value, {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
     });
   }, [form]);
-
-  const handleRemoveBodyMark = (index: number) => {
-    const bodyMark = form.getValues()?.body_mark;
-    if (!bodyMark || !bodyMark.others) return;
-    
-    const updated = [...bodyMark.others].filter((_, i) => i !== index);
-    form.setValue("body_mark.others", updated, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
-    });
-  };
 
   const handleRemoveIdType = useCallback((index: number) => {
     const availableIds = form.getValues()?.available_ids;
