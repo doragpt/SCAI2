@@ -990,7 +990,7 @@ export default function StoreDashboard() {
                           <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/10 p-4 rounded-md border border-pink-100 dark:border-pink-900/30">
                             <h3 className="flex items-center text-base font-medium text-pink-700 dark:text-pink-300 mb-3 pb-2 border-b border-pink-100 dark:border-pink-800/30">
                               <Banknote className="h-5 w-5 mr-2 text-pink-600" />
-                              給与情報
+                              参考給与例
                             </h3>
                             
                             <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -1010,7 +1010,7 @@ export default function StoreDashboard() {
                               
                               {/* 平均給与の表示（削除されたフィールドのため、簡略化）*/}
                               <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
-                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">給与</div>
+                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">時給換算</div>
                                 {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
                                   <div className="text-gray-700 dark:text-gray-300">
                                     {profile.minimum_guarantee && profile.maximum_guarantee ? (
