@@ -223,7 +223,7 @@ export default function StoreDashboard() {
     cup_size: "E" as CupSize,
     spec_min: 80
   });
-  // カップサイズ条件の表示/非表示状態（初期値）
+  // カップサイズ条件の表示/非表示状態（初期値）- プロフィールデータに基づいて設定
   const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
@@ -1368,7 +1368,14 @@ export default function StoreDashboard() {
                             <Switch 
                               id="enable-cup-size-conditions"
                               checked={showCupSizeConditions}
-                              onCheckedChange={setShowCupSizeConditions}
+                              onCheckedChange={(checked) => {
+                                setShowCupSizeConditions(checked);
+                                // カップサイズ条件スイッチの状態が変更された時に保存
+                                if (!checked && profile?.requirements?.cup_size_conditions?.length) {
+                                  // カップサイズ条件をクリア（スイッチがオフの場合）
+                                  saveRequirementsMutation.mutate();
+                                }
+                              }}
                             />
                             <div>
                               <label htmlFor="enable-cup-size-conditions" className="text-sm font-medium cursor-pointer">
