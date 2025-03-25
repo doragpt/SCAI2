@@ -440,9 +440,9 @@ export default function StoreDashboard() {
                   <Pencil className="h-4 w-4 mr-2" />
                   ブログ管理
                 </TabsTrigger>
-                <TabsTrigger value="freeSpace" className="py-2 rounded-lg">
-                  <PenBox className="h-4 w-4 mr-2" />
-                  フリースペース
+                <TabsTrigger value="recruitmentLogic" className="py-2 rounded-lg">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  採用設定
                 </TabsTrigger>
               </TabsList>
 
@@ -1007,21 +1007,181 @@ export default function StoreDashboard() {
                 </Card>
               </TabsContent>
 
-              {/* フリースペースタブ */}
-              <TabsContent value="freeSpace">
+              {/* 採用設定タブ */}
+              <TabsContent value="recruitmentLogic">
                 <Card>
                   <CardHeader>
-                    <CardTitle>フリースペース編集</CardTitle>
+                    <CardTitle>採用ロジック設定</CardTitle>
                     <CardDescription>
-                      店舗紹介や特徴を自由に編集できます
+                      採用条件や適性マッチングの設定ができます
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <Button variant="outline" className="w-full">
-                        <PenBox className="h-4 w-4 mr-2" />
-                        フリースペースを編集
-                      </Button>
+                    <div className="space-y-6">
+                      {/* 年齢要件設定 */}
+                      <div className="border rounded-lg p-4">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <User className="h-5 w-5 mr-2 text-blue-500" />
+                          年齢条件
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium mb-1 block">最低年齢</label>
+                            <div className="flex items-center">
+                              <input 
+                                type="number" 
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                placeholder="例: 18" 
+                                min={18}
+                                max={99}
+                                defaultValue={profile?.requirements?.age_min || 18}
+                              />
+                              <span className="ml-2">歳</span>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium mb-1 block">最高年齢</label>
+                            <div className="flex items-center">
+                              <input 
+                                type="number" 
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                placeholder="例: 35" 
+                                min={18}
+                                max={99}
+                                defaultValue={profile?.requirements?.age_max || ""}
+                              />
+                              <span className="ml-2">歳</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* スペック要件設定 */}
+                      <div className="border rounded-lg p-4">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <Ruler className="h-5 w-5 mr-2 text-pink-500" />
+                          スペック条件 <span className="text-xs text-muted-foreground ml-2">(身長-体重=スペック)</span>
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium mb-1 block">最低スペック</label>
+                            <div className="flex items-center">
+                              <input 
+                                type="number" 
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                placeholder="例: 90" 
+                                defaultValue={profile?.requirements?.spec_min || ""}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium mb-1 block">最高スペック</label>
+                            <div className="flex items-center">
+                              <input 
+                                type="number" 
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                placeholder="例: 120" 
+                                defaultValue={profile?.requirements?.spec_max || ""}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* カップサイズ特別条件 */}
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-medium">カップサイズ別特別条件</label>
+                            <Button variant="outline" size="sm">
+                              <Plus className="h-4 w-4 mr-1" />
+                              条件を追加
+                            </Button>
+                          </div>
+                          <div className="bg-muted/40 rounded-md p-3 border">
+                            <div className="text-sm text-muted-foreground">
+                              例: Eカップ以上なら最低スペック100からでも可能
+                            </div>
+                            {/* カップサイズ条件リスト */}
+                            <div className="space-y-2 mt-2">
+                              {profile?.requirements?.cup_size_conditions?.map((condition, index) => (
+                                <div key={index} className="flex items-center p-2 bg-background rounded border">
+                                  <div className="font-medium">{condition.cup_size}カップ以上</div>
+                                  <div className="mx-2">→</div>
+                                  <div>最低スペック: <span className="font-medium">{condition.spec_min}</span></div>
+                                  <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 出稼ぎ関連設定 */}
+                      <div className="border rounded-lg p-4">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <Briefcase className="h-5 w-5 mr-2 text-violet-500" />
+                          出稼ぎ関連設定
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex items-start space-x-2">
+                            <Switch 
+                              id="accepts-temp-workers"
+                              defaultChecked={profile?.requirements?.accepts_temporary_workers !== false}
+                            />
+                            <div>
+                              <label htmlFor="accepts-temp-workers" className="text-sm font-medium cursor-pointer">
+                                出稼ぎ受け入れ
+                              </label>
+                              <p className="text-xs text-muted-foreground">
+                                出稼ぎ希望の応募者を受け入れる場合はオンにしてください
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start space-x-2">
+                            <Switch 
+                              id="arrival-day-before"
+                              defaultChecked={profile?.requirements?.requires_arrival_day_before === true}
+                            />
+                            <div>
+                              <label htmlFor="arrival-day-before" className="text-sm font-medium cursor-pointer">
+                                前日入り必須
+                              </label>
+                              <p className="text-xs text-muted-foreground">
+                                勤務開始日の前日に到着が必要な場合はオンにしてください
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* その他条件 */}
+                      <div className="border rounded-lg p-4">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <ListPlus className="h-5 w-5 mr-2 text-green-500" />
+                          その他条件
+                        </h3>
+                        <div>
+                          <textarea
+                            className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                            placeholder="その他の採用条件があれば入力してください"
+                            defaultValue={
+                              Array.isArray(profile?.requirements?.other_conditions) 
+                                ? profile.requirements.other_conditions.join("\n") 
+                                : ""
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {/* 保存ボタン */}
+                      <div className="flex justify-end">
+                        <Button>
+                          <Save className="h-4 w-4 mr-2" />
+                          採用条件を保存
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
