@@ -215,7 +215,13 @@ export default function StoreDashboard() {
   
   // 採用設定関連のステート
   const [isSavingRequirements, setIsSavingRequirements] = useState(false);
-  const [newCupSizeCondition, setNewCupSizeCondition] = useState({ cup_size: "E", spec_min: 100 });
+  const [newCupSizeCondition, setNewCupSizeCondition] = useState<{
+    cup_size: CupSize;
+    spec_min: number;
+  }>({
+    cup_size: "E" as CupSize,
+    spec_min: 80
+  });
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
