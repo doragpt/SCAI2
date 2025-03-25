@@ -267,12 +267,16 @@ export const photoSchema = z.object({
   order: z.number().optional(),
 });
 
+// タトゥー・傷のタイプ
+export const bodyMarkTypeOptions = ["タトゥー", "傷", "両方"] as const;
+export type BodyMarkType = typeof bodyMarkTypeOptions[number];
+
 export const bodyMarkSchema = z.object({
   has_body_mark: z.boolean().default(false),
+  type: z.enum(bodyMarkTypeOptions).optional(),
   details: z.string().optional(),
   location: z.string().optional(),
   size: z.string().optional(),
-  others: z.array(z.string()).default([]),
 });
 
 // Tables
@@ -422,10 +426,10 @@ export const talentProfiles = pgTable("talent_profiles", {
   ng_locations: jsonb("ng_locations").$type<Prefecture[]>().default([]).notNull(),
   body_mark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
     has_body_mark: false,
+    type: undefined,
     details: "",
     location: "",
-    size: "",
-    others: []
+    size: ""
   }).notNull(),
   photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
 });
@@ -658,16 +662,16 @@ export const talentProfileSchema = z.object({
   ng_locations: z.array(z.enum(prefectures)).default([]),
   body_mark: z.object({
     has_body_mark: z.boolean().default(false),
+    type: z.enum(bodyMarkTypeOptions).optional(),
     details: z.string().optional(),
     location: z.string().optional(),
     size: z.string().optional(),
-    others: z.array(z.string()).default([]),
   }).default({
     has_body_mark: false,
+    type: undefined,
     details: "",
     location: "",
-    size: "",
-    others: []
+    size: ""
   }),
   photos: z.array(photoSchema)
     .min(1, "少なくとも1枚の写真が必要です")
