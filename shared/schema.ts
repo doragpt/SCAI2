@@ -48,12 +48,10 @@ export const bodyTypesBySpec = [
   { name: "太め", maxSpec: 89 }
 ] as const;
 
-// タトゥー・傷の受け入れレベル
+// タトゥー・傷の目立ち具合
 export const tattooAcceptanceLevels = [
-  "なし",
   "目立ちにくい",  // 古傷/ワンポイント程度
-  "目立つ",       // 生傷/2ヶ所以上
-  "応相談"
+  "目立つ"       // 生傷/2ヶ所以上
 ] as const;
 
 // 髪色系統
