@@ -8,15 +8,18 @@ import { log } from '../utils/logger';
  */
 const WEIGHTS = {
   AGE: 25,                 // 年齢要件の重み
-  LOCATION: 20,            // 地域の重み
-  BODY_TYPE: 10,           // 体型の重み
-  CUP_SIZE: 10,            // カップサイズの重み
+  LOCATION: 18,            // 地域の重み
+  BODY_TYPE: 8,            // 体型の重み
+  CUP_SIZE: 8,             // カップサイズの重み
   GUARANTEE: 15,           // 最低保証の重み
   SERVICE: 10,             // サービスタイプの重み
   TATTOO: 3,               // タトゥー許容レベルの重み
   HAIR_COLOR: 3,           // 髪色の重み
   APPEARANCE: 4,           // 外見スタイルの重み
   TITLES: 0,               // タイトル（特別経験）の重み - 基本スコアには含めず、必要な場合にのみ使用
+  BODY_MEASUREMENTS: 3,    // バスト/ウエスト/ヒップ測定値の重み
+  WORK_PREFERENCES: 2,     // 勤務希望条件の重み
+  EXPERIENCE: 2,           // 業種経験・特技の重み
 };
 
 /**
@@ -351,6 +354,328 @@ function calculateServiceTypeScore(talentServiceTypes: string[], storeServiceTyp
 }
 
 /**
+ * 3サイズ（バスト/ウエスト/ヒップ）によるマッチングスコア計算
+ */
+function calculateBodyMeasurementsScore(
+  talentMeasurements: { bust: number, waist: number, hip: number },
+  storeRequirements?: { 
+    minBust?: number | null, 
+    maxBust?: number | null,
+    minWaist?: number | null,
+    maxWaist?: number | null,
+    minHip?: number | null,
+    maxHip?: number | null
+  } | null
+): number {
+  if (!storeRequirements) return 1.0; // 条件なしは満点
+  
+  let bustScore = 1.0;
+  let waistScore = 1.0;
+  let hipScore = 1.0;
+  
+  // バストのチェック
+  if (storeRequirements.minBust && storeRequirements.maxBust) {
+    if (talentMeasurements.bust >= storeRequirements.minBust && 
+        talentMeasurements.bust <= storeRequirements.maxBust) {
+      bustScore = 1.0;
+    } else {
+      const bustRange = storeRequirements.maxBust - storeRequirements.minBust;
+      const distanceFromRange = talentMeasurements.bust < storeRequirements.minBust
+        ? storeRequirements.minBust - talentMeasurements.bust
+        : talentMeasurements.bust - storeRequirements.maxBust;
+      bustScore = Math.max(0.3, 1 - (distanceFromRange / (bustRange * 0.5)));
+    }
+  } else if (storeRequirements.minBust) {
+    bustScore = talentMeasurements.bust >= storeRequirements.minBust 
+      ? 1.0 
+      : Math.max(0.3, 1 - ((storeRequirements.minBust - talentMeasurements.bust) / 10));
+  } else if (storeRequirements.maxBust) {
+    bustScore = talentMeasurements.bust <= storeRequirements.maxBust
+      ? 1.0
+      : Math.max(0.3, 1 - ((talentMeasurements.bust - storeRequirements.maxBust) / 10));
+  }
+  
+  // ウエストのチェック
+  if (storeRequirements.minWaist && storeRequirements.maxWaist) {
+    if (talentMeasurements.waist >= storeRequirements.minWaist && 
+        talentMeasurements.waist <= storeRequirements.maxWaist) {
+      waistScore = 1.0;
+    } else {
+      const waistRange = storeRequirements.maxWaist - storeRequirements.minWaist;
+      const distanceFromRange = talentMeasurements.waist < storeRequirements.minWaist
+        ? storeRequirements.minWaist - talentMeasurements.waist
+        : talentMeasurements.waist - storeRequirements.maxWaist;
+      waistScore = Math.max(0.3, 1 - (distanceFromRange / (waistRange * 0.5)));
+    }
+  } else if (storeRequirements.minWaist) {
+    waistScore = talentMeasurements.waist >= storeRequirements.minWaist 
+      ? 1.0 
+      : Math.max(0.3, 1 - ((storeRequirements.minWaist - talentMeasurements.waist) / 10));
+  } else if (storeRequirements.maxWaist) {
+    waistScore = talentMeasurements.waist <= storeRequirements.maxWaist
+      ? 1.0
+      : Math.max(0.3, 1 - ((talentMeasurements.waist - storeRequirements.maxWaist) / 10));
+  }
+  
+  // ヒップのチェック
+  if (storeRequirements.minHip && storeRequirements.maxHip) {
+    if (talentMeasurements.hip >= storeRequirements.minHip && 
+        talentMeasurements.hip <= storeRequirements.maxHip) {
+      hipScore = 1.0;
+    } else {
+      const hipRange = storeRequirements.maxHip - storeRequirements.minHip;
+      const distanceFromRange = talentMeasurements.hip < storeRequirements.minHip
+        ? storeRequirements.minHip - talentMeasurements.hip
+        : talentMeasurements.hip - storeRequirements.maxHip;
+      hipScore = Math.max(0.3, 1 - (distanceFromRange / (hipRange * 0.5)));
+    }
+  } else if (storeRequirements.minHip) {
+    hipScore = talentMeasurements.hip >= storeRequirements.minHip 
+      ? 1.0 
+      : Math.max(0.3, 1 - ((storeRequirements.minHip - talentMeasurements.hip) / 10));
+  } else if (storeRequirements.maxHip) {
+    hipScore = talentMeasurements.hip <= storeRequirements.maxHip
+      ? 1.0
+      : Math.max(0.3, 1 - ((talentMeasurements.hip - storeRequirements.maxHip) / 10));
+  }
+  
+  // 3つのスコアの平均値を返す
+  return (bustScore + waistScore + hipScore) / 3;
+}
+
+/**
+ * ボディマーク（タトゥー/傷）の詳細情報によるマッチングスコア計算
+ */
+function calculateBodyMarkDetailScore(
+  talentBodyMark: { 
+    type: "タトゥー" | "傷" | "両方",
+    size: string,
+    location: string,
+    details: string,
+    has_body_mark: boolean
+  } | null,
+  storeRequirements?: {
+    tattooAcceptance?: string | null,
+    bodyMarkSizeLimit?: string | null,
+    allowedBodyMarkLocations?: string[] | null
+  } | null
+): number {
+  // ボディマークがない場合
+  if (!talentBodyMark || !talentBodyMark.has_body_mark) {
+    return 1.0; // 条件なしは満点
+  }
+  
+  if (!storeRequirements || !storeRequirements.tattooAcceptance) {
+    return 1.0; // 店舗側に条件がない場合も満点
+  }
+  
+  // ここから先はボディマークがあり、店舗側にも条件がある場合
+  
+  // 許容レベル
+  let acceptanceScore = 0.0;
+  
+  // タトゥーレベル順序
+  const tattooLevels = ["なし", "目立たない", "目立つ", "要相談"];
+  const talentLevel = talentBodyMark.type === "タトゥー" || talentBodyMark.type === "両方" 
+    ? talentBodyMark.size === "小さい" ? "目立たない" : "目立つ"
+    : "なし"; // 傷のみの場合
+  const storeAcceptance = storeRequirements.tattooAcceptance;
+  
+  const talentIndex = tattooLevels.indexOf(talentLevel);
+  const storeIndex = tattooLevels.indexOf(storeAcceptance);
+  
+  if (talentIndex === -1 || storeIndex === -1) {
+    acceptanceScore = 0.5; // 不明な場合は中間値
+  } else if (talentIndex <= storeIndex) {
+    acceptanceScore = 1.0; // 許容範囲内
+  } else {
+    // 許容範囲を超える場合、距離に応じてスコア減少
+    const distance = talentIndex - storeIndex;
+    acceptanceScore = Math.max(0, 1 - (distance * 0.3)); // 許容範囲を1つ超えるごとに0.3下がる
+  }
+  
+  // サイズ制限
+  let sizeScore = 1.0;
+  if (storeRequirements.bodyMarkSizeLimit && talentBodyMark.size) {
+    const sizeLevels = ["小さい", "中くらい", "大きい"];
+    const talentSizeIndex = sizeLevels.indexOf(talentBodyMark.size);
+    const storeSizeIndex = sizeLevels.indexOf(storeRequirements.bodyMarkSizeLimit);
+    
+    if (talentSizeIndex === -1 || storeSizeIndex === -1) {
+      sizeScore = 0.5; // 不明な場合は中間値
+    } else if (talentSizeIndex <= storeSizeIndex) {
+      sizeScore = 1.0; // サイズ制限内
+    } else {
+      // サイズ制限を超える場合、差分に応じてスコア減少
+      const distance = talentSizeIndex - storeSizeIndex;
+      sizeScore = Math.max(0, 1 - (distance * 0.4)); // サイズレベルが1つ上がるごとに0.4下がる
+    }
+  }
+  
+  // 場所の制限
+  let locationScore = 1.0;
+  if (storeRequirements.allowedBodyMarkLocations && 
+      storeRequirements.allowedBodyMarkLocations.length > 0 && 
+      talentBodyMark.location) {
+    // 指定された場所に該当するかチェック
+    const isAllowedLocation = storeRequirements.allowedBodyMarkLocations.some(
+      location => talentBodyMark.location.includes(location)
+    );
+    locationScore = isAllowedLocation ? 1.0 : 0.3;
+  }
+  
+  // 総合スコア（各要素に重み付け）
+  return (acceptanceScore * 0.5) + (sizeScore * 0.3) + (locationScore * 0.2);
+}
+
+/**
+ * 勤務希望条件によるマッチングスコア計算
+ */
+function calculateWorkPreferenceScore(
+  talentPreferences: {
+    workTypes: string[],
+    workPeriodStart?: string,
+    workPeriodEnd?: string,
+    canArrivePreviousDay?: boolean,
+    desiredGuarantee?: number,
+    preferredWorkHours?: string[],
+    waitingHours?: number,
+    ngOptions?: string[]
+  },
+  storeRequirements?: {
+    acceptsTemporaryWorkers?: boolean,
+    requiresArrivalDayBefore?: boolean,
+    workingHours?: string,
+    ngOptions?: string[],
+    workType?: string
+  } | null
+): number {
+  if (!storeRequirements) return 1.0; // 条件なしは満点
+  
+  let workTypeScore = 1.0;
+  let arrivalScore = 1.0;
+  let workHoursScore = 1.0;
+  let ngOptionsScore = 1.0;
+  
+  // 出稼ぎ対応
+  if (talentPreferences.workTypes.includes("出稼ぎ") && 
+      storeRequirements.acceptsTemporaryWorkers === false) {
+    workTypeScore = 0.3; // 出稼ぎ希望だが店舗が受け入れない場合
+  } else if (!talentPreferences.workTypes.includes("出稼ぎ") && 
+             storeRequirements.workType === "出稼ぎのみ") {
+    workTypeScore = 0.3; // 在籍希望だが店舗が出稼ぎのみの場合
+  }
+  
+  // 前日到着対応
+  if (storeRequirements.requiresArrivalDayBefore === true && 
+      talentPreferences.canArrivePreviousDay === false) {
+    arrivalScore = 0.5; // 前日到着必須だが対応不可の場合
+  }
+  
+  // 勤務時間帯の適合度
+  if (storeRequirements.workingHours && talentPreferences.preferredWorkHours) {
+    const storeHours = storeRequirements.workingHours.toLowerCase();
+    let timeMatch = false;
+    
+    for (const preferredTime of talentPreferences.preferredWorkHours) {
+      if (storeHours.includes(preferredTime.toLowerCase())) {
+        timeMatch = true;
+        break;
+      }
+    }
+    
+    workHoursScore = timeMatch ? 1.0 : 0.6;
+  }
+  
+  // NGオプションの重複チェック
+  if (talentPreferences.ngOptions && storeRequirements.ngOptions) {
+    const conflictCount = talentPreferences.ngOptions.filter(
+      ng => storeRequirements.ngOptions?.includes(ng)
+    ).length;
+    
+    if (conflictCount > 0) {
+      // 重複するNGオプションの数に応じてスコア減少
+      ngOptionsScore = Math.max(0.3, 1 - (conflictCount * 0.2));
+    }
+  }
+  
+  // 総合スコア（各要素に重み付け）
+  return (workTypeScore * 0.4) + (arrivalScore * 0.2) + 
+         (workHoursScore * 0.3) + (ngOptionsScore * 0.1);
+}
+
+/**
+ * 経験・スキルによるマッチングスコア計算
+ */
+function calculateExperienceScore(
+  talentExperience: {
+    serviceTypeExperience?: string[],
+    specialSkills?: string[],
+    certifications?: string[]
+  },
+  storeRequirements?: {
+    preferredExperience?: string[],
+    requiredSkills?: string[],
+    preferredCertifications?: string[]
+  } | null
+): number {
+  if (!storeRequirements) return 1.0; // 条件なしは満点
+  
+  let experienceScore = 1.0;
+  let skillsScore = 1.0;
+  let certificationsScore = 1.0;
+  
+  // 業種経験
+  if (storeRequirements.preferredExperience && storeRequirements.preferredExperience.length > 0 &&
+      talentExperience.serviceTypeExperience) {
+    
+    let hasMatchingExperience = false;
+    for (const exp of talentExperience.serviceTypeExperience) {
+      if (storeRequirements.preferredExperience.includes(exp)) {
+        hasMatchingExperience = true;
+        break;
+      }
+    }
+    
+    experienceScore = hasMatchingExperience ? 1.0 : 0.5;
+  }
+  
+  // 特技・スキル
+  if (storeRequirements.requiredSkills && storeRequirements.requiredSkills.length > 0 &&
+      talentExperience.specialSkills) {
+    
+    const matchCount = talentExperience.specialSkills.filter(
+      skill => storeRequirements.requiredSkills?.includes(skill)
+    ).length;
+    
+    if (matchCount > 0) {
+      // マッチする特技の数に応じてスコア上昇（最大1.0）
+      skillsScore = Math.min(1.0, 0.6 + (matchCount * 0.1));
+    } else {
+      skillsScore = 0.6;
+    }
+  }
+  
+  // 資格
+  if (storeRequirements.preferredCertifications && storeRequirements.preferredCertifications.length > 0 &&
+      talentExperience.certifications) {
+    
+    let hasMatchingCertification = false;
+    for (const cert of talentExperience.certifications) {
+      if (storeRequirements.preferredCertifications.includes(cert)) {
+        hasMatchingCertification = true;
+        break;
+      }
+    }
+    
+    certificationsScore = hasMatchingCertification ? 1.0 : 0.7;
+  }
+  
+  // 総合スコア（各要素に重み付け）
+  return (experienceScore * 0.4) + (skillsScore * 0.4) + (certificationsScore * 0.2);
+}
+
+/**
  * 総合マッチングスコアの計算
  * 
  * @param scores 各項目のスコア
@@ -505,6 +830,20 @@ function generateMatchReasons(scores: Record<string, number>, storeProfile: any)
   if (scores.APPEARANCE === 1.0) reasons.push("希望の外見タイプに完全一致");
   else if (scores.APPEARANCE > 0.8) reasons.push("希望の外見タイプに合致");
   else if (scores.APPEARANCE > 0.6) reasons.push("外見タイプが近いです");
+  
+  // 3サイズによるマッチング
+  if (scores.BODY_MEASUREMENTS > 0.9) reasons.push("あなたの体型に最適な店舗です");
+  else if (scores.BODY_MEASUREMENTS > 0.8) reasons.push("スリーサイズ条件に合致しています");
+  else if (scores.BODY_MEASUREMENTS > 0.6) reasons.push("スリーサイズがほぼ条件に合致");
+  
+  // 勤務条件によるマッチング
+  if (scores.WORK_PREFERENCES > 0.9) reasons.push("希望勤務条件に完全一致");
+  else if (scores.WORK_PREFERENCES > 0.8) reasons.push("勤務条件に合致しています");
+  else if (scores.WORK_PREFERENCES > 0.6) reasons.push("勤務条件にほぼ合致");
+  
+  // 経験・スキルによるマッチング
+  if (scores.EXPERIENCE > 0.9) reasons.push("経験・スキルを活かせる店舗です");
+  else if (scores.EXPERIENCE > 0.7) reasons.push("あなたの経験を評価する店舗です");
   
   // タイトル（特別経験）によるボーナス
   if (scores.TITLES === 1.0) reasons.push("芸能/モデル経験者優遇店舗");
@@ -709,6 +1048,20 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
         scores.BODY_TYPE = calculateBodyTypeScore(spec, store.requirements.preferred_body_types);
       }
       
+      // 3サイズ（バスト/ウエスト/ヒップ）によるスコア計算
+      if (talentResult.bust && talentResult.waist && talentResult.hip) {
+        scores.BODY_MEASUREMENTS = calculateBodyMeasurementsScore(
+          {
+            bust: talentResult.bust,
+            waist: talentResult.waist,
+            hip: talentResult.hip
+          },
+          store.requirements?.body_measurements
+        );
+      } else {
+        scores.BODY_MEASUREMENTS = 0.5; // 3サイズ情報が不十分な場合は中間スコア
+      }
+      
       // カップサイズスコア計算 - talentProfileからカップサイズを取得
       if (talentResult.cup_size && cupSizeValue[talentResult.cup_size]) {
         // カップサイズ特別条件があれば、そちらを優先的にチェック
@@ -733,7 +1086,7 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
         scores.CUP_SIZE = 0.5; // カップサイズ情報がなければ中間スコア
       }
       
-      // タトゥー許容レベルスコア計算
+      // タトゥー許容レベルスコア計算（基本）
       if (talentResult.body_mark?.has_body_mark && store.requirements?.tattoo_acceptance) {
         // 体のマークがある場合、タトゥーありとして判定
         // 詳細に応じてタトゥーレベルを判定（目立つか目立たないか）
@@ -744,6 +1097,22 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
         );
       } else {
         scores.TATTOO = 1.0; // 条件がなければ満点または体のマークがない場合
+      }
+      
+      // ボディマーク詳細情報によるスコア計算（より詳細）
+      if (talentResult.body_mark) {
+        // ボディマーク詳細スコアを計算し、既存のタトゥースコアと平均を取る
+        const detailScore = calculateBodyMarkDetailScore(
+          talentResult.body_mark,
+          {
+            tattooAcceptance: store.requirements?.tattoo_acceptance,
+            bodyMarkSizeLimit: store.requirements?.body_mark_size_limit,
+            allowedBodyMarkLocations: store.requirements?.allowed_body_mark_locations
+          }
+        );
+        
+        // 既存のスコアと詳細スコアの平均値を取る（詳細情報の方が重み付けを高くする）
+        scores.TATTOO = (scores.TATTOO * 0.4) + (detailScore * 0.6);
       }
       
       // 髪色スコア計算
@@ -863,10 +1232,55 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       // サービスタイプスコア計算
       scores.SERVICE = calculateServiceTypeScore(serviceTypes, store.service_type);
       
+      // 勤務希望条件スコア計算
+      if (talentResult.work_preferences) {
+        scores.WORK_PREFERENCES = calculateWorkPreferenceScore(
+          {
+            workTypes: talentResult.work_preferences.work_types || [],
+            workPeriodStart: talentResult.work_preferences.work_period_start,
+            workPeriodEnd: talentResult.work_preferences.work_period_end,
+            canArrivePreviousDay: talentResult.work_preferences.can_arrive_previous_day,
+            desiredGuarantee: talentResult.work_preferences.desired_guarantee,
+            preferredWorkHours: talentResult.work_preferences.preferred_work_hours,
+            waitingHours: talentResult.work_preferences.waiting_hours,
+            ngOptions: talentResult.work_preferences.ng_options
+          },
+          {
+            acceptsTemporaryWorkers: store.requirements?.accepts_temporary_workers,
+            requiresArrivalDayBefore: store.requirements?.requires_arrival_day_before,
+            workingHours: store.working_hours,
+            ngOptions: store.requirements?.ng_options,
+            workType: store.requirements?.work_type
+          }
+        );
+      } else {
+        scores.WORK_PREFERENCES = 0.5; // 勤務希望情報がない場合は中間スコア
+      }
+      
+      // 経験・スキルスコア計算
+      if (talentResult.experience) {
+        scores.EXPERIENCE = calculateExperienceScore(
+          {
+            serviceTypeExperience: talentResult.experience.service_type_experience,
+            specialSkills: talentResult.experience.special_skills,
+            certifications: talentResult.experience.certifications
+          },
+          {
+            preferredExperience: store.requirements?.preferred_experience,
+            requiredSkills: store.requirements?.required_skills,
+            preferredCertifications: store.requirements?.preferred_certifications
+          }
+        );
+      } else {
+        scores.EXPERIENCE = 0.6; // 経験情報がない場合は中間よりやや高めのスコア（未経験可考慮）
+      }
+      
       // 総合スコア計算（重み付けオプション適用）
       const scoreOptions = {
         prioritizeLocation: searchOptions?.prioritizeLocation === true,
         prioritizeGuarantee: searchOptions?.prioritizeGuarantee === true,
+        prioritizeAppearance: searchOptions?.prioritizeAppearance === true,
+        prioritizeWorkConditions: searchOptions?.prioritizeWorkConditions === true,
       };
       const totalScore = calculateTotalScore(scores, scoreOptions);
       
