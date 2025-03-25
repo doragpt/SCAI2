@@ -1,15 +1,12 @@
-import React, { useState } from "react";
-import { useFieldArray, useFormContext, FieldArrayWithId } from "react-hook-form";
+import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Trash, Plus, Check, Pencil, MoveVertical, Flag, Star, Award, Gift, Ticket, Zap, DollarSign, Banknote, Home, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import type { SpecialOffer } from "@shared/schema";
 
 // 利用可能なアイコンのリスト
@@ -85,13 +82,18 @@ interface SpecialOfferEditorProps {
 
 export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorProps) {
   // 渡されたpropsを使用するための状態管理
-  const [fields, setFields] = useState<SpecialOffer[]>(value);
+  const [fields, setFields] = useState<SpecialOffer[]>(value || []);
   
   // 値の変更をトラッキングし親コンポーネントに通知
   useEffect(() => {
-    // 初期値設定時やプロップ更新時のみ状態を更新
     setFields(value || []);
-  }, [value]); // 重要: valueが変更された時のみ、再設定する
+  }, [value]);
+  
+  // 値が変更されたときに親コンポーネントに通知
+  const updateFields = (newFields: SpecialOffer[]) => {
+    setFields(newFields);
+    onChange(newFields);
+  };
   
   const [isOpen, setIsOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<SpecialOffer | null>(null);
@@ -114,17 +116,13 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
   
   // 編集
   const handleEditOffer = (offer: SpecialOffer, index: number) => {
-    // オブジェクトの参照ではなく、新しいオブジェクトを作成して編集
-    // オブジェクトのディープコピーを作成して編集する
     setEditingOffer(JSON.parse(JSON.stringify(offer)));
     setEditIndex(index);
     setIsOpen(true);
-    console.log('編集開始:', offer, 'インデックス:', index);
   };
   
   // テンプレートから追加
   const handleAddTemplate = (template: typeof OFFER_TEMPLATES[0]) => {
-    // ダイアログを表示せずに直接追加
     const newOffer = {
       id: uuidv4(),
       title: template.title,
@@ -134,22 +132,25 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
       textColor: template.textColor,
       order: fields.length,
     };
-    append(newOffer);
+    const newFields = [...fields, newOffer];
+    updateFields(newFields);
   };
   
   // 保存
   const handleSaveOffer = () => {
     if (!editingOffer) return;
     
-    console.log('保存中のオファー:', editingOffer, '編集インデックス:', editIndex);
+    let newFields = [...fields];
     
     if (editIndex !== null && editIndex >= 0 && editIndex < fields.length) {
-      // React Hook Formのupdateメソッドを使用して特定のインデックスの項目を更新
-      update(editIndex, {...editingOffer});
+      // 既存オファーを更新
+      newFields[editIndex] = {...editingOffer};
     } else {
       // 新規オファーを追加
-      append({...editingOffer});
+      newFields = [...newFields, {...editingOffer}];
     }
+    
+    updateFields(newFields);
     
     // ダイアログを閉じてフォーム状態をリセット
     setIsOpen(false);
@@ -157,11 +158,22 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
     setEditIndex(null);
   };
   
+  // 削除
+  const handleRemove = (index: number) => {
+    const newFields = [...fields];
+    newFields.splice(index, 1);
+    updateFields(newFields);
+  };
+  
   // 並び替え
   const handleMoveOffer = (index: number, direction: 'up' | 'down') => {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex >= 0 && newIndex < fields.length) {
-      move(index, newIndex);
+      const newFields = [...fields];
+      const temp = newFields[index];
+      newFields[index] = newFields[newIndex];
+      newFields[newIndex] = temp;
+      updateFields(newFields);
     }
   };
   
@@ -216,7 +228,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
       {/* 特別オファープレビュー */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {fields.length > 0 ? (
-          fields.map((offer: any, index) => (
+          fields.map((offer, index) => (
             <div key={offer.id} className="relative group">
               <div className={`flex flex-col p-4 rounded-md bg-gradient-to-br ${offer.backgroundColor} border ${COLOR_PRESETS.find(c => c.bg === offer.backgroundColor)?.border || 'border-gray-200'} shadow-sm`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -256,7 +268,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    remove(index);
+                    handleRemove(index);
                   }}
                 >
                   <Trash className="h-3 w-3" />
@@ -376,7 +388,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
                         {COLOR_PRESETS.map((color) => (
                           <SelectItem key={color.name} value={color.bg}>
                             <div className="flex items-center">
-                              <span className={`w-4 h-4 rounded-full mr-2 inline-block ${color.bg.replace('from-', 'bg-').replace('to-', '')}`}></span>
+                              <span className={`w-4 h-4 rounded-full mr-2 inline-block bg-gradient-to-br ${color.bg}`}></span>
                               {color.name}
                             </div>
                           </SelectItem>

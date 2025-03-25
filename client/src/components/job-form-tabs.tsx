@@ -705,7 +705,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                         <FormItem>
                           <FormControl>
                             <SpecialOfferEditor 
-                              value={field.value} 
+                              value={field.value || []} 
                               onChange={field.onChange}
                             />
                           </FormControl>
