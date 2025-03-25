@@ -441,8 +441,12 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       // サービスタイプスコア計算
       scores.SERVICE = calculateServiceTypeScore(serviceTypes, store.service_type);
       
-      // 総合スコア計算
-      const totalScore = calculateTotalScore(scores);
+      // 総合スコア計算（重み付けオプション適用）
+      const scoreOptions = {
+        prioritizeLocation: searchOptions?.prioritizeLocation === true,
+        prioritizeGuarantee: searchOptions?.prioritizeGuarantee === true,
+      };
+      const totalScore = calculateTotalScore(scores, scoreOptions);
       
       // マッチング理由生成
       const matchReasons = generateMatchReasons(scores, store);
