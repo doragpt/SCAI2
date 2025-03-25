@@ -489,7 +489,7 @@ export async function getTalentActivityAnalytics(userId: number) {
       .from(viewHistory)
       .innerJoin(store_profiles, eq(viewHistory.store_profile_id, store_profiles.id))
       .where(eq(viewHistory.user_id, userId))
-      .orderBy(desc(viewHistory.created_at))
+      .orderBy(desc(viewHistory.viewed_at))
       .limit(20);
     
     // キープリストを取得
@@ -505,7 +505,7 @@ export async function getTalentActivityAnalytics(userId: number) {
       .from(keepList)
       .innerJoin(store_profiles, eq(keepList.store_profile_id, store_profiles.id))
       .where(eq(keepList.user_id, userId))
-      .orderBy(desc(keepList.created_at));
+      .orderBy(desc(keepList.added_at));
     
     // 申し込み結果の集計
     const applicationStatuses = {
@@ -527,18 +527,18 @@ export async function getTalentActivityAnalytics(userId: number) {
     // 月ごとの閲覧数
     const monthlyViewsResult = await db
       .select({
-        month: sql`DATE_TRUNC('month', ${viewHistory.created_at})`,
+        month: sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`,
         count: sql`count(*)`
       })
       .from(viewHistory)
       .where(
         and(
           eq(viewHistory.user_id, userId),
-          gte(viewHistory.created_at, threeMonthsAgo)
+          gte(viewHistory.viewed_at, threeMonthsAgo)
         )
       )
-      .groupBy(sql`DATE_TRUNC('month', ${viewHistory.created_at})`)
-      .orderBy(sql`DATE_TRUNC('month', ${viewHistory.created_at})`);
+      .groupBy(sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`)
+      .orderBy(sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`);
     
     // 月ごとの申し込み数
     const monthlyApplicationsResult = await db
@@ -567,7 +567,7 @@ export async function getTalentActivityAnalytics(userId: number) {
       .leftJoin(
         viewHistory, 
         and(
-          eq(store_profiles.id, viewHistory.store_id),
+          eq(store_profiles.id, viewHistory.store_profile_id),
           eq(viewHistory.user_id, userId)
         )
       )
