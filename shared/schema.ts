@@ -249,7 +249,16 @@ export const store_profiles = pgTable("store_profiles", {
   working_time_hours: integer("working_time_hours").default(0),
   average_hourly_pay: integer("average_hourly_pay").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
-  requirements: jsonb("requirements").$type<any>().default({}),
+  requirements: jsonb("requirements").$type<JobRequirements>().default({
+    age_min: null,
+    age_max: null,
+    spec_min: null,
+    spec_max: null,
+    cup_size_conditions: [],
+    accepts_temporary_workers: true,
+    requires_arrival_day_before: false,
+    other_conditions: []
+  }),
   working_hours: text("working_hours"),
   transportation_support: boolean("transportation_support").default(false),
   housing_support: boolean("housing_support").default(false),
@@ -389,14 +398,25 @@ export type InsertStoreProfile = typeof store_profiles.$inferInsert;
 // スキーマの追加（フォームで扱う項目のみを定義）
 // 先に型定義を行い、参照できるようにする
 export const jobRequirementsSchema = z.object({
+  // 年齢条件
   age_min: z.number().min(18).max(99).optional(),
   age_max: z.number().min(18).max(99).optional(),
+  
+  // スペック条件（身長-体重=スペック）
   spec_min: z.number().optional(),
   spec_max: z.number().optional(),
+  
+  // カップサイズ別特別条件
   cup_size_conditions: z.array(z.object({
     cup_size: z.enum(cupSizes),
     spec_min: z.number(),
   })).optional(),
+  
+  // 出稼ぎ関連条件
+  accepts_temporary_workers: z.boolean().default(true), // 出稼ぎ受け入れ可否
+  requires_arrival_day_before: z.boolean().default(false), // 前日入り必須かどうか
+  
+  // その他条件
   other_conditions: z.array(z.string()).default([]),
 });
 
