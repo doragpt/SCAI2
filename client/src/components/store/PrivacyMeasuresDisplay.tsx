@@ -1,122 +1,119 @@
 import React from 'react';
 import { privacyMeasureSchema } from '@shared/schema';
 import type { z } from 'zod';
-import { Badge } from '@/components/ui/badge';
-import { Shield, ShieldCheck, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Eye, Lock, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface PrivacyMeasuresDisplayProps {
   measures?: z.infer<typeof privacyMeasureSchema>[];
+  compact?: boolean;
   className?: string;
-  limit?: number;
 }
 
 /**
  * 身バレ対策表示コンポーネント
  */
-export function PrivacyMeasuresDisplay({ measures, className, limit }: PrivacyMeasuresDisplayProps) {
+export function PrivacyMeasuresDisplay({ measures, compact = false, className }: PrivacyMeasuresDisplayProps) {
   if (!measures || measures.length === 0) {
     return null;
   }
 
-  const displayMeasures = limit ? measures.slice(0, limit) : measures;
-  const hasMore = limit && measures.length > limit;
+  // アイコンを取得
+  const getIcon = (type?: string) => {
+    switch (type) {
+      case 'face':
+        return <Eye className="h-5 w-5 text-indigo-500" />;
+      case 'location':
+        return <Lock className="h-5 w-5 text-purple-500" />;
+      case 'online':
+        return <AlertCircle className="h-5 w-5 text-orange-500" />;
+      default:
+        return <ShieldCheck className="h-5 w-5 text-green-500" />;
+    }
+  };
+
+  // 対策レベルのラベルを取得
+  const getLevelLabel = (level?: number) => {
+    if (!level) return null;
+    
+    switch (level) {
+      case 1:
+        return (
+          <span className="text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded">
+            基本
+          </span>
+        );
+      case 2:
+        return (
+          <span className="text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded">
+            標準
+          </span>
+        );
+      case 3:
+        return (
+          <span className="text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded">
+            高度
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className={cn("space-y-3", className)}>
-      <h3 className="text-lg font-bold flex items-center gap-2">
-        <ShieldCheck className="h-5 w-5" />
-        <span>身バレ対策・プライバシー保護</span>
-      </h3>
+    <div className={className}>
+      {!compact && (
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5" />
+          <span>身バレ対策</span>
+        </h3>
+      )}
       
-      <div className="space-y-4">
-        {displayMeasures.map((measure) => (
-          <div key={measure.id} className="flex gap-3">
-            <div className="mt-1">
-              {measure.icon ? getPrivacyIconByName(measure.icon) : getPrivacyIconByCategory(measure.category || 'other')}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold">{measure.title}</h4>
-                {measure.level && (
-                  <Badge variant={getVariantByLevel(measure.level)}>{getLevelLabel(measure.level)}</Badge>
-                )}
+      <div className={cn(
+        "grid gap-4",
+        compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+      )}>
+        {measures.map((measure) => (
+          <Card key={measure.id} className="overflow-hidden border">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex-shrink-0">
+                  {getIcon(measure.type)}
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="font-semibold text-base">
+                      {measure.title || '対策項目'}
+                    </h4>
+                    {getLevelLabel(measure.level)}
+                  </div>
+                  
+                  {measure.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {measure.description}
+                    </p>
+                  )}
+                  
+                  {measure.steps && measure.steps.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {measure.steps.map((step, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm flex-1">{step}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{measure.description}</p>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
-        
-        {hasMore && (
-          <div className="text-center pt-2">
-            <Badge variant="outline" className="cursor-pointer">
-              他{measures.length - limit!}件の対策を表示
-            </Badge>
-          </div>
-        )}
       </div>
     </div>
   );
-}
-
-// プライバシーレベルに応じたラベル
-function getLevelLabel(level: string): string {
-  switch (level) {
-    case 'high':
-      return '最高レベル';
-    case 'medium':
-      return '標準対策';
-    case 'low':
-      return '基本対策';
-    default:
-      return '対策あり';
-  }
-}
-
-// プライバシーレベルに応じたバッジバリアント
-function getVariantByLevel(level: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (level) {
-    case 'high':
-      return 'default';
-    case 'medium':
-      return 'secondary';
-    case 'low':
-      return 'outline';
-    default:
-      return 'outline';
-  }
-}
-
-// アイコン名からアイコンを取得
-function getPrivacyIconByName(iconName: string) {
-  switch (iconName) {
-    case 'eye-off':
-      return <EyeOff className="h-5 w-5 text-indigo-500" />;
-    case 'shield':
-      return <Shield className="h-5 w-5 text-green-500" />;
-    case 'shield-check':
-      return <ShieldCheck className="h-5 w-5 text-blue-500" />;
-    case 'shield-alert':
-      return <ShieldAlert className="h-5 w-5 text-red-500" />;
-    case 'eye':
-      return <Eye className="h-5 w-5 text-gray-500" />;
-    default:
-      return <ShieldCheck className="h-5 w-5 text-gray-500" />;
-  }
-}
-
-// カテゴリに応じたアイコン
-function getPrivacyIconByCategory(category: string) {
-  switch (category) {
-    case 'face':
-      return <EyeOff className="h-5 w-5 text-indigo-500" />;
-    case 'location':
-      return <Shield className="h-5 w-5 text-green-500" />;
-    case 'data':
-      return <ShieldCheck className="h-5 w-5 text-blue-500" />;
-    case 'emergency':
-      return <ShieldAlert className="h-5 w-5 text-red-500" />;
-    default:
-      return <Eye className="h-5 w-5 text-gray-500" />;
-  }
 }

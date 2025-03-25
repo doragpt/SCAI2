@@ -8,7 +8,6 @@ import {
   Building, Clock, Banknote, ShieldCheck, CalendarDays
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SEO, type SEOProps } from "@/lib/seo";
@@ -17,12 +16,8 @@ import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
 // コンポーネントをインポート
-import { SalaryDisplay } from "@/components/store/SalaryDisplay";
-import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
-import { LocationDisplay } from "@/components/store/LocationDisplay";
-import { ContactDisplay } from "@/components/store/ContactDisplay";
-import { StoreDetailsDisplay } from "@/components/store/StoreDetailsDisplay";
 import { SpecialOffersDisplay } from "@/components/store/SpecialOffersDisplay";
+import { JobDetailExpanded } from "@/components/store/JobDetailExpanded";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -289,136 +284,39 @@ export default function JobDetail() {
             className="mb-8"
           />
         )}
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* 左側のメインコンテンツ - 仕事内容と応募条件 */}
-          <div className="md:col-span-2 space-y-8">
-            {/* 仕事内容コンポーネント */}
-            <JobDescriptionDisplay
-              serviceType={job.serviceType as ServiceType}
-              catchPhrase={job.catchPhrase}
-              description={job.description}
-              workingHours={job.workingHours}
-              requirements={job.requirements}
-            />
-            
-            {/* 店舗詳細情報 */}
-            <StoreDetailsDisplay
-              address={job.address}
-              accessInfo={job.access_info}
-              securityMeasures={job.security_measures}
-              applicationRequirements={job.application_requirements}
-            />
-            
-            {/* 連絡先情報 */}
-            <ContactDisplay
-              recruiterName={job.recruiter_name}
-              phoneNumbers={job.phone_numbers}
-              emailAddresses={job.email_addresses}
-              pcWebsiteUrl={job.pc_website_url}
-              mobileWebsiteUrl={job.mobile_website_url}
-            />
-          </div>
-
-          {/* 右側のサイドバー - 給与情報と月収計算 */}
-          <div className="space-y-8">
-            {/* 応募ボタン（スティッキー） */}
-            <div className="sticky top-4 z-10 p-5 bg-white dark:bg-gray-950 border-0 rounded-lg shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
-              <div className="mb-2">
-                <div className="inline-flex items-center px-3 py-1 mb-2 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                  <p>SCAI（スカイ）採用サポート</p>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">今すぐ面接予約をしませんか？</h3>
-              </div>
-              
-              <Button className="w-full mb-3 bg-blue-600 hover:bg-blue-700" size="lg" asChild>
-                {user ? (
-                  <Link href={`/jobs/${id}/apply`}>
-                    <Phone className="mr-2 h-4 w-4" />
-                    面接予約をする
-                  </Link>
-                ) : (
-                  <Link href="/auth">会員登録して面接予約</Link>
-                )}
-              </Button>
-              
-              <div className="flex items-center justify-center mt-3 text-sm text-gray-500 dark:text-gray-400">
-                <Phone className="h-4 w-4 mr-2 text-blue-500" />
-                <p>求人の詳細はお気軽にお問い合わせください</p>
-              </div>
-            </div>
-            
-            {/* 給与情報カード */}
-            <Card className="border-0 shadow-md overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b">
-                <div className="flex items-center">
-                  <Banknote className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                  <h3 className="text-lg font-bold text-green-800 dark:text-green-400">参考給与例</h3>
-                </div>
-              </CardHeader>
-              <CardContent className="p-5">
-                <SalaryDisplay
-                  minimumGuarantee={job.minimumGuarantee}
-                  maximumGuarantee={job.maximumGuarantee}
-                  workingTimeHours={job.workingTimeHours}
-                  averageHourlyPay={job.averageHourlyPay}
-                  transportationSupport={job.transportationSupport}
-                  housingSupport={job.housingSupport}
-                  benefits={job.benefits}
-                />
-              </CardContent>
-            </Card>
-            
-            {/* 月収シミュレーター */}
-            <Card className="border-0 shadow-md overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b">
-                <div className="flex items-center">
-                  <CalendarDays className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">月収シミュレーション</h3>
-                </div>
-              </CardHeader>
-              <CardContent className="p-5 space-y-5">
-                <div className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
-                  <div className="flex items-center space-x-3 w-full">
-                    <label htmlFor="workingDays" className="font-medium">月の勤務日数:</label>
-                    <Input
-                      id="workingDays"
-                      type="number"
-                      min={1}
-                      max={31}
-                      value={workingDays}
-                      onChange={(e) => setWorkingDays(parseInt(e.target.value) || 1)}
-                      className="w-20 bg-white dark:bg-gray-900"
-                    />
-                    <span className="text-sm">日</span>
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-100 dark:border-green-800">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium">あなたの予想月収</div>
-                  <div className="text-3xl font-extrabold text-green-700 dark:text-green-400">
-                    {monthlyIncome > 0 
-                      ? `${monthlyIncome.toLocaleString()}円`
-                      : "収入情報がありません"}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    ※実際の収入は経験や勤務状況により異なります
-                  </div>
-                </div>
-                
-                <div className="flex items-center p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg text-sm text-gray-600 dark:text-gray-300">
-                  <Info className="h-4 w-4 mr-2 text-yellow-500" />
-                  <p>詳しい給与条件や待遇については、面接時にお気軽にお問い合わせください。</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* 更新日情報 */}
-            <div className="flex items-center justify-end text-xs text-gray-500 dark:text-gray-400">
-              <Clock className="h-3 w-3 mr-1" />
-              最終更新日: {formatDate(job.updatedAt)}
-            </div>
-          </div>
+        
+        {/* バニラ風の拡張機能を持つ詳細コンポーネント */}
+        <JobDetailExpanded 
+          job={job} 
+          onApply={() => {
+            if (user) {
+              window.location.href = `/jobs/${id}/apply`;
+            } else {
+              window.location.href = '/auth';
+            }
+          }}
+          onKeep={() => {
+            // キープ機能の実装
+            toast({
+              title: "キープしました",
+              description: `${job.businessName}の求人をキープリストに追加しました`,
+            });
+          }}
+          className="mt-6"
+        />
+        
+        {/* スティッキーな応募ボタン */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-50 md:hidden">
+          <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg" asChild>
+            {user ? (
+              <Link href={`/jobs/${id}/apply`}>
+                <Phone className="mr-2 h-4 w-4" />
+                面接予約をする
+              </Link>
+            ) : (
+              <Link href="/auth">会員登録して面接予約</Link>
+            )}
+          </Button>
         </div>
       </main>
     </div>
