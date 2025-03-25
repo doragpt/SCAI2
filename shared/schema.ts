@@ -311,16 +311,44 @@ export type SpecialOffer = z.infer<typeof specialOfferSchema>;
 
 // Service Type Labels
 export const serviceTypeLabels: Record<ServiceType, string> = {
-  "デリヘル": "デリヘル",
-  "ホテヘル": "ホテヘル",
+  "デリヘル": "デリバリーヘルス",
+  "ホテヘル": "ホテルヘルス",
   "箱ヘル": "店舗型ヘルス",
-  "風俗エステ": "風俗エステ",
-  "オナクラ": "オナクラ",
-  "M性感": "M性感",
+  "風俗エステ": "風俗エステ・メンズエステ",
+  "オナクラ": "オナクラ・手コキ",
+  "M性感": "M性感・前立腺",
   "ソープランド": "ソープランド",
   "ピンサロ": "ピンサロ",
-  "ファッションヘルス": "ファッションヘルス",
+  "ファッションヘルス": "ヘルス",
   "イメクラ": "イメクラ",
+} as const;
+
+// Service Type Descriptions
+export const serviceTypeDescriptions: Record<ServiceType, string> = {
+  "デリヘル": "女性がホテルや自宅に派遣されるサービス。幅広いサービス内容が特徴です。",
+  "ホテヘル": "客がホテルを確保し、そこで女性とサービスを受けられるタイプの風俗店です。",
+  "箱ヘル": "お店の施設内でサービスを受けられる店舗型の風俗店です。",
+  "風俗エステ": "マッサージやオイルトリートメントをメインとした大人向けエステサービスです。",
+  "オナクラ": "手コキや会話を中心としたライトなサービスを提供する風俗店です。",
+  "M性感": "男性の前立腺や性感帯を刺激するサービスを提供する特殊な性感マッサージです。",
+  "ソープランド": "湯船やマットを使ったサービスなど、特殊な設備を備えた高級風俗店です。",
+  "ピンサロ": "個室でのオーラルサービスを中心とした風俗店です。",
+  "ファッションヘルス": "コスプレや制服などを着用した女性がサービスを提供する風俗店です。",
+  "イメクラ": "様々なシチュエーションやロールプレイを楽しめる風俗店です。",
+} as const;
+
+// Service Type Icons
+export const serviceTypeIcons: Record<ServiceType, string> = {
+  "デリヘル": "Hotel",
+  "ホテヘル": "Bed",
+  "箱ヘル": "Building2",
+  "風俗エステ": "HandHeart",
+  "オナクラ": "Hand",
+  "M性感": "Sparkles",
+  "ソープランド": "Droplets",
+  "ピンサロ": "HeartHandshake",
+  "ファッションヘルス": "Shirt",
+  "イメクラ": "Theater",
 } as const;
 
 // Zod schemas for validation

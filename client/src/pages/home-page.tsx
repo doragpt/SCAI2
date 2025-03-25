@@ -600,19 +600,19 @@ export default function HomePage() {
                     asChild
                   >
                     <Link href={`/jobs?serviceType=${type}`}>
-                      <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-1">
-                        {type === "デリヘル" && <Hotel className="h-5 w-5 text-primary" />}
-                        {type === "ホテヘル" && <Hotel className="h-5 w-5 text-primary" />}
-                        {type === "箱ヘル" && <Building2 className="h-5 w-5 text-primary" />}
-                        {type === "風俗エステ" && <HandHeart className="h-5 w-5 text-primary" />}
-                        {type === "オナクラ" && <Heart className="h-5 w-5 text-primary" />}
-                        {type === "M性感" && <Sparkles className="h-5 w-5 text-primary" />}
-                        {type === "ソープランド" && <Hotel className="h-5 w-5 text-primary" />}
-                        {type === "ピンサロ" && <HandHeart className="h-5 w-5 text-primary" />}
-                        {type === "ファッションヘルス" && <Gem className="h-5 w-5 text-primary" />}
-                        {type === "イメクラ" && <Star className="h-5 w-5 text-primary" />}
+                      <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
+                        {type === "デリヘル" && <Hotel className="h-6 w-6 text-primary" />}
+                        {type === "ホテヘル" && <Bed className="h-6 w-6 text-primary" />}
+                        {type === "箱ヘル" && <Building2 className="h-6 w-6 text-primary" />}
+                        {type === "風俗エステ" && <HandHeart className="h-6 w-6 text-primary" />}
+                        {type === "オナクラ" && <Hand className="h-6 w-6 text-primary" />}
+                        {type === "M性感" && <Sparkles className="h-6 w-6 text-primary" />}
+                        {type === "ソープランド" && <Droplets className="h-6 w-6 text-primary" />}
+                        {type === "ピンサロ" && <HeartHandshake className="h-6 w-6 text-primary" />}
+                        {type === "ファッションヘルス" && <Shirt className="h-6 w-6 text-primary" />}
+                        {type === "イメクラ" && <Theater className="h-6 w-6 text-primary" />}
                       </div>
-                      {type}
+                      <span className="text-center font-medium">{getServiceTypeLabel(type)}</span>
                     </Link>
                   </Button>
                 </motion.div>
