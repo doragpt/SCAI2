@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories } from "@shared/schema";
+import { storeProfileSchema, type StoreProfile, type JobStatus, benefitTypes, benefitCategories, cupSizes } from "@shared/schema";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -501,6 +501,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     <FormControl>
                       <Textarea
                         {...field}
+                        value={field.value || ""}
                         placeholder="例：18歳以上（高校生不可）、未経験者歓迎、経験者優遇"
                         className="min-h-[80px]"
                       />
@@ -629,14 +630,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       <FormItem>
                         <FormLabel className="text-sm font-medium">希望する体型</FormLabel>
                         <div className="grid grid-cols-3 gap-2 mt-2">
-                          {["スレンダー", "やや細め", "普通", "ややぽっちゃり", "ぽっちゃり", "太め"].map((type) => (
+                          {["スレンダー", "やや細め", "普通", "ややぽっちゃり", "ぽっちゃり", "太め"].map((type: string) => (
                             <FormItem key={type} className="flex items-center space-x-2 space-y-0">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(type)}
+                                  checked={field.value?.includes(type as any)}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      field.onChange([...(field.value || []), type]);
+                                      field.onChange([...(field.value || []), type as any]);
                                     } else {
                                       field.onChange(field.value?.filter(t => t !== type) || []);
                                     }
@@ -692,14 +693,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       <FormItem>
                         <FormLabel className="text-sm font-medium">希望する髪色</FormLabel>
                         <div className="grid grid-cols-2 gap-2 mt-2">
-                          {["黒髪", "暗めの茶髪", "明るめの茶髪", "金髪・インナーカラー・派手髪"].map((color) => (
+                          {["黒髪", "暗めの茶髪", "明るめの茶髪", "金髪・インナーカラー・派手髪"].map((color: string) => (
                             <FormItem key={color} className="flex items-center space-x-2 space-y-0">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(color)}
+                                  checked={field.value?.includes(color as any)}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      field.onChange([...(field.value || []), color]);
+                                      field.onChange([...(field.value || []), color as any]);
                                     } else {
                                       field.onChange(field.value?.filter(c => c !== color) || []);
                                     }
@@ -733,14 +734,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                             "人妻系",
                             "熟女系",
                             "ぽっちゃり系"
-                          ].map((type) => (
+                          ].map((type: string) => (
                             <FormItem key={type} className="flex items-center space-x-2 space-y-0">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(type)}
+                                  checked={field.value?.includes(type as any)}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      field.onChange([...(field.value || []), type]);
+                                      field.onChange([...(field.value || []), type as any]);
                                     } else {
                                       field.onChange(field.value?.filter(t => t !== type) || []);
                                     }
@@ -804,6 +805,101 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   />
                 </div>
                 
+                {/* カップサイズ条件 */}
+                <div className="mb-6 pt-4 border-t border-gray-200">
+                  <h5 className="text-sm font-medium mb-3">カップサイズ条件</h5>
+                  <div className="bg-gray-50 p-3 rounded-md mb-3">
+                    <p className="text-xs text-gray-600">
+                      カップサイズとスペック条件を組み合わせて設定できます。
+                      例：「Dカップ以上で、スペック100以上」など
+                    </p>
+                  </div>
+                  
+                  {/* カップサイズ条件のリスト */}
+                  {cupSizeFields.length > 0 ? (
+                    <div className="space-y-2 mb-3">
+                      {cupSizeFields.map((item, index) => (
+                        <div key={item.id} className="flex items-center gap-2 p-2 border rounded-md bg-white">
+                          <div className="flex-1 flex items-center gap-3">
+                            <FormField
+                              control={form.control}
+                              name={`requirements.cup_size_conditions.${index}.cup_size`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    value={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="w-24">
+                                        <SelectValue placeholder="カップ" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {cupSizes.map((size) => (
+                                        <SelectItem key={size} value={size as string}>{size}カップ</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </FormItem>
+                              )}
+                            />
+                            <span className="text-xs">かつ</span>
+                            <FormField
+                              control={form.control}
+                              name={`requirements.cup_size_conditions.${index}.spec_min`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <FormControl>
+                                      <input
+                                        type="number"
+                                        className="flex h-9 w-24 rounded-md border bg-background px-3 py-1 text-sm"
+                                        min={80}
+                                        max={150}
+                                        placeholder="スペック"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                      />
+                                    </FormControl>
+                                    <span className="text-xs">以上</span>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeCupSize(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-4 text-center text-sm text-gray-500 bg-gray-50 rounded-md mb-3">
+                      カップサイズ条件が設定されていません
+                    </div>
+                  )}
+                  
+                  {/* 追加ボタン */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => appendCupSize({ cup_size: "D", spec_min: 100 })}
+                    disabled={cupSizeFields.length >= 5}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    カップサイズ条件を追加
+                  </Button>
+                </div>
+
                 {/* 前日入り設定 */}
                 <div className="mb-4">
                   <FormField
