@@ -119,6 +119,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         average_hourly_pay: Number(req.body.average_hourly_pay) || 0,
         status: req.body.status || "draft",
         top_image: req.body.top_image || "",
+        special_offers: req.body.special_offers || [],
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -135,7 +136,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         working_time_hours: insertData.working_time_hours,
         average_hourly_pay: insertData.average_hourly_pay,
         status: insertData.status,
-        top_image: insertData.top_image
+        top_image: insertData.top_image,
+        special_offers: insertData.special_offers
       });
 
       // 必須フィールドとvalidatedDataを結合
@@ -166,6 +168,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
+          special_offers: fullData.special_offers || [],
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -221,6 +224,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : (existingProfile.transportation_support || false),
       housing_support: req.body.housing_support !== undefined ? req.body.housing_support : (existingProfile.housing_support || false),
       
+      // カスタム特典
+      special_offers: req.body.special_offers || existingProfile.special_offers || [],
+      
       updated_at: new Date()
     };
 
@@ -266,7 +272,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 各種サポート情報
       transportation_support: updateData.transportation_support,
-      housing_support: updateData.housing_support
+      housing_support: updateData.housing_support,
+      
+      // カスタム特典
+      special_offers: updateData.special_offers
     });
 
     // 更新用のオブジェクトを作成
@@ -309,6 +318,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         security_measures: fullUpdateData.security_measures,
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
+        special_offers: fullUpdateData.special_offers || [],
         updated_at: fullUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))
