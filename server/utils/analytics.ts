@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { eq, and, desc, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, desc, gte, lte, sql, or } from 'drizzle-orm';
 import { applications, store_profiles, talentProfiles, users, keepList, viewHistory } from '../../shared/schema';
 import { log } from './logger';
 
@@ -344,14 +344,14 @@ export async function getStorePerformanceAnalytics(storeId: number) {
     const viewsResult = await db
       .select({ count: sql`count(*)` })
       .from(viewHistory)
-      .where(eq(viewHistory.store_id, storeId));
+      .where(eq(viewHistory.store_profile_id, storeId));
     const totalViews = Number(viewsResult[0]?.count || 0);
     
     // キープリスト登録数
     const keepsResult = await db
       .select({ count: sql`count(*)` })
       .from(keepList)
-      .where(eq(keepList.store_id, storeId));
+      .where(eq(keepList.store_profile_id, storeId));
     const totalKeeps = Number(keepsResult[0]?.count || 0);
     
     // 月間の閲覧数推移（直近3ヶ月）
@@ -360,14 +360,14 @@ export async function getStorePerformanceAnalytics(storeId: number) {
     
     const monthlyViewsResult = await db
       .select({
-        month: sql`DATE_TRUNC('month', ${viewHistory.created_at})`,
+        month: sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`,
         count: sql`count(*)`
       })
       .from(viewHistory)
       .where(
         and(
-          eq(viewHistory.store_id, storeId),
-          gte(viewHistory.created_at, threeMonthsAgo)
+          eq(viewHistory.store_profile_id, storeId),
+          gte(viewHistory.viewed_at, threeMonthsAgo)
         )
       )
       .groupBy(sql`DATE_TRUNC('month', ${viewHistory.created_at})`)
@@ -480,14 +480,14 @@ export async function getTalentActivityAnalytics(userId: number) {
     const viewsResult = await db
       .select({
         id: viewHistory.id,
-        storeId: viewHistory.store_id,
-        createdAt: viewHistory.created_at,
+        storeId: viewHistory.store_profile_id,
+        viewedAt: viewHistory.viewed_at,
         businessName: store_profiles.business_name,
         location: store_profiles.location,
         serviceType: store_profiles.service_type
       })
       .from(viewHistory)
-      .innerJoin(store_profiles, eq(viewHistory.store_id, store_profiles.id))
+      .innerJoin(store_profiles, eq(viewHistory.store_profile_id, store_profiles.id))
       .where(eq(viewHistory.user_id, userId))
       .orderBy(desc(viewHistory.created_at))
       .limit(20);
@@ -496,14 +496,14 @@ export async function getTalentActivityAnalytics(userId: number) {
     const keepsResult = await db
       .select({
         id: keepList.id,
-        storeId: keepList.store_id,
-        createdAt: keepList.created_at,
+        storeId: keepList.store_profile_id,
+        addedAt: keepList.added_at,
         businessName: store_profiles.business_name,
         location: store_profiles.location,
         serviceType: store_profiles.service_type
       })
       .from(keepList)
-      .innerJoin(store_profiles, eq(keepList.store_id, store_profiles.id))
+      .innerJoin(store_profiles, eq(keepList.store_profile_id, store_profiles.id))
       .where(eq(keepList.user_id, userId))
       .orderBy(desc(keepList.created_at));
     
