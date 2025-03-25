@@ -591,6 +591,8 @@ const defaultValues: TalentProfileData = {
   body_mark: {
     has_body_mark: false,
     details: "",
+    location: "",
+    size: "",
     others: [],
   },
 };
@@ -860,7 +862,13 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const handleAddBodyMark = useCallback((value: string) => {
     const bodyMark = form.getValues()?.body_mark;
     if (!bodyMark) {
-      form.setValue("body_mark", { has_body_mark: false, others: [value] });
+      form.setValue("body_mark", { 
+        has_body_mark: false, 
+        details: "",
+        location: "",
+        size: "",
+        others: [value] 
+      });
       return;
     }
     
@@ -1982,7 +1990,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
               )}
             </div>
 
-            <div>
+            <div className="bg-slate-50 p-4 rounded-lg border">
               <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
               <FormField
                 control={form.control}
@@ -1999,8 +2007,118 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 )}
               />
               {form.watch("body_mark.has_body_mark") && (
-                <div className="mt-4 space-y-4">
+                <div className="mt-6 space-y-6">
+                  {/* タトゥーレベル選択フィールド */}
+                  <FormField
+                    control={form.control}
+                    name="tattoo_level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>タトゥーの目立ち具合</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="選択してください" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tattooAcceptanceLevels.map(level => (
+                              <SelectItem key={level} value={level}>
+                                {level === "なし" && "タトゥーなし"}
+                                {level === "目立ちにくい" && "目立ちにくい（ワンポイント・小さいもの）"}
+                                {level === "目立つ" && "目立つ（大きいもの・複数）"}
+                                {level === "応相談" && "応相談"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          タトゥーの大きさや目立ち具合を選択してください
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* 部位の選択 */}
+                    <FormField
+                      control={form.control}
+                      name="body_mark.location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>部位</FormLabel>
+                          <Select
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="選択してください" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["顔", "首", "胸", "背中", "腕", "手", "足", "その他"].map(location => (
+                                <SelectItem key={location} value={location}>
+                                  {location}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* 大きさの選択 */}
+                    <FormField
+                      control={form.control}
+                      name="body_mark.size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>大きさ</FormLabel>
+                          <Select
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="選択してください" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["1cm以下", "1〜3cm", "3〜5cm", "5〜10cm", "10cm以上"].map(size => (
+                                <SelectItem key={size} value={size}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* 詳細情報 */}
+                  <FormField
+                    control={form.control}
+                    name="body_mark.details"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>詳細情報</FormLabel>
+                        <Textarea 
+                          {...field} 
+                          placeholder="タトゥー・傷・アトピーなどの詳細情報を入力してください"
+                          className="min-h-[80px]"
+                        />
+                        <FormDescription>
+                          タトゥーのデザイン、傷の状態、アトピーの症状などについて詳細に記入してください。
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <div className="space-y-2">
+                    <FormLabel>タグ</FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {form.watch("body_mark.others").map((mark, index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
@@ -2019,10 +2137,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     <OtherItemInput
                       ref={bodyMarkInputRef}
                       onAdd={handleAddBodyMark}
-                      placeholder="傷・タトゥー・アトピーの情報を入力"
+                      placeholder="タグを追加（例：タトゥー、傷跡、アトピーなど）"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードしタグ付けしてください。
+                  </div>
+                  
+                  <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm">
+                    <p className="font-medium text-amber-800">写真アップロードのお願い</p>
+                    <p className="text-amber-700 mt-1">
+                      ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードし「タトゥー」「傷」「アトピー」のいずれかでタグ付けしてください。写真が確認できない場合、お仕事の紹介ができない場合があります。
                     </p>
                   </div>
                 </div>

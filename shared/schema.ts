@@ -272,6 +272,8 @@ export const photoSchema = z.object({
 export const bodyMarkSchema = z.object({
   has_body_mark: z.boolean().default(false),
   details: z.string().optional(),
+  location: z.string().optional(),
+  size: z.string().optional(),
   others: z.array(z.string()).default([]),
 });
 
@@ -423,6 +425,8 @@ export const talentProfiles = pgTable("talent_profiles", {
   body_mark: jsonb("body_mark").$type<typeof bodyMarkSchema._type>().default({
     has_body_mark: false,
     details: "",
+    location: "",
+    size: "",
     others: []
   }).notNull(),
   photos: jsonb("photos").$type<typeof photoSchema._type[]>().default([]).notNull(),
@@ -657,10 +661,14 @@ export const talentProfileSchema = z.object({
   body_mark: z.object({
     has_body_mark: z.boolean().default(false),
     details: z.string().optional(),
+    location: z.string().optional(),
+    size: z.string().optional(),
     others: z.array(z.string()).default([]),
   }).default({
     has_body_mark: false,
     details: "",
+    location: "",
+    size: "",
     others: []
   }),
   photos: z.array(photoSchema)
