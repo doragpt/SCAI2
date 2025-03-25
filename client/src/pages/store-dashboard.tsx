@@ -288,13 +288,19 @@ export default function StoreDashboard() {
   
   // プロフィールデータが読み込まれたときにカップサイズ条件の表示状態を更新
   useEffect(() => {
-    // cup_size_conditionsが配列であり、要素が存在する場合のみ表示する
-    if (profile?.requirements?.cup_size_conditions && 
-        Array.isArray(profile.requirements.cup_size_conditions) &&
-        profile.requirements.cup_size_conditions.length > 0) {
-      setShowCupSizeConditions(true);
+    if (profile?.requirements) {
+      // cup_size_conditionsが配列であり、要素が存在する場合はスイッチをオンにする
+      if (profile.requirements.cup_size_conditions && 
+          Array.isArray(profile.requirements.cup_size_conditions) &&
+          profile.requirements.cup_size_conditions.length > 0) {
+        setShowCupSizeConditions(true);
+        setEnableCupSizeConditions(true);
+      } else {
+        // 条件が空の場合はスイッチの状態のみ維持（表示/非表示は別途制御）
+        setEnableCupSizeConditions(false);
+      }
     }
-  }, [profile?.requirements?.cup_size_conditions]);
+  }, [profile?.requirements]);
   
   // 採用設定を保存するミューテーション
   const saveRequirementsMutation = useMutation({
