@@ -1461,6 +1461,15 @@ export default function StoreDashboard() {
                           <User className="h-5 w-5 mr-2 text-blue-500" />
                           年齢条件
                         </h3>
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-blue-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-blue-700">
+                            年齢条件はAIマッチングで最も重要な要素の一つです（重み付け：25%）。条件に近いほどマッチングスコアが高くなります。最低年齢のみ設定の場合はその年齢以上、最高年齢のみ設定の場合はその年齢以下の人材がマッチング対象になります。
+                          </p>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium mb-1 block">最低年齢</label>
@@ -1476,6 +1485,9 @@ export default function StoreDashboard() {
                               />
                               <span className="ml-2">歳</span>
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              18歳未満は設定できません
+                            </p>
                           </div>
                           <div>
                             <label className="text-sm font-medium mb-1 block">最高年齢</label>
@@ -1496,9 +1508,6 @@ export default function StoreDashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground mt-2">
-                          ※ AIマッチングで年齢による絞り込みを行う際に使用されます
-                        </div>
                       </div>
 
                       {/* スペック要件設定 */}
@@ -1507,6 +1516,23 @@ export default function StoreDashboard() {
                           <Ruler className="h-5 w-5 mr-2 text-pink-500" />
                           スペック条件 <span className="text-xs text-muted-foreground ml-2">(身長-体重=スペック)</span>
                         </h3>
+                        <div className="bg-pink-50 border border-pink-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-pink-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-pink-700">
+                            スペック値はAIマッチングの重要要素の一つです（重み付け：10%）。スペック値は「身長-体重」の計算で、値が大きいほどスリムな体型を意味します。例えば身長165cm・体重50kgの場合、スペックは「115」となります。スペック値は以下のように体型分類に対応します：
+                          </p>
+                          <div className="grid grid-cols-3 mt-2 gap-1 text-xs text-pink-700">
+                            <div>・スレンダー：110以上</div>
+                            <div>・やや細め：105～109</div>
+                            <div>・普通：100～104</div>
+                            <div>・ややぽっちゃり：95～99</div>
+                            <div>・ぽっちゃり：90～94</div>
+                            <div>・太め：89以下</div>
+                          </div>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium mb-1 block">最低スペック</label>
@@ -1520,7 +1546,7 @@ export default function StoreDashboard() {
                               />
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              空白の場合は下限なしとして扱われます
+                              例：105以上（やや細め〜スレンダー）
                             </p>
                           </div>
                           <div>
@@ -1535,7 +1561,7 @@ export default function StoreDashboard() {
                               />
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              空白の場合は上限なしとして扱われます
+                              例：120以下（極端に痩せていない）
                             </p>
                           </div>
                         </div>
@@ -1728,6 +1754,15 @@ export default function StoreDashboard() {
                           <Scissors className="h-5 w-5 mr-2 text-violet-500" />
                           髪色条件
                         </h3>
+                        <div className="bg-violet-50 border border-violet-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-violet-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-violet-700">
+                            髪色条件はAIマッチングの補助要素です（重み付け：3%）。スイッチをオフにすると髪色による絞り込みは行いません。設定すると、選択した髪色の人材がマッチングで優先されます。複数選択可能で、選択しない場合はすべての髪色が対象となります。
+                          </p>
+                        </div>
                         <div className="flex items-center space-x-2 mb-3">
                           <Switch 
                             id="enable-hair-color-settings"
@@ -1744,7 +1779,7 @@ export default function StoreDashboard() {
                               髪色条件を設定する
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              求職者の髪色に関する条件を設定できます
+                              オフ：髪色による絞り込みを行いません
                             </p>
                           </div>
                         </div>
@@ -1789,6 +1824,25 @@ export default function StoreDashboard() {
                           <UserCheck className="h-5 w-5 mr-2 text-indigo-500" />
                           外見タイプ条件
                         </h3>
+                        <div className="bg-indigo-50 border border-indigo-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-indigo-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-indigo-700">
+                            外見タイプはAIマッチングの要素の一つです（重み付け：4%）。スイッチをオフにすると全タイプが対象となります。設定すると、選択したタイプの人材がマッチングで優先されます。複数選択可能で、以下8タイプから選べます：
+                          </p>
+                          <div className="grid grid-cols-2 mt-2 gap-1 text-xs text-indigo-700">
+                            <div>・ロリ/かわいい系</div>
+                            <div>・清楚系</div>
+                            <div>・モデル系</div>
+                            <div>・ギャル系</div>
+                            <div>・若妻系</div>
+                            <div>・お姉さん系（30代）</div>
+                            <div>・熟女系（40代～）</div>
+                            <div>・ぽっちゃり系</div>
+                          </div>
+                        </div>
                         <div className="flex items-center space-x-2 mb-3">
                           <Switch 
                             id="enable-look-type-settings"
@@ -1805,7 +1859,7 @@ export default function StoreDashboard() {
                               外見タイプ条件を設定する
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              求職者の外見タイプに関する条件を設定できます
+                              オフ：タイプによる絞り込みを行いません
                             </p>
                           </div>
                         </div>
@@ -1935,6 +1989,15 @@ export default function StoreDashboard() {
                           <Briefcase className="h-5 w-5 mr-2 text-violet-500" />
                           出稼ぎ関連設定
                         </h3>
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-blue-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-blue-700">
+                            出稼ぎ設定はAIマッチングの重要要素です（重み付け：10%）。出稼ぎを受け入れるかどうか、また保証額の設定により、マッチングスコアが大きく変動します。スイッチをオフにすると、出稼ぎ希望者は自動的にマッチングされなくなります。保証額は高いほど求職者にとって魅力的ですが、必ず支払い可能な範囲で設定してください。
+                          </p>
+                        </div>
                         <div className="space-y-4">
                           <div className="flex items-start space-x-2">
                             <Switch 
@@ -1947,7 +2010,7 @@ export default function StoreDashboard() {
                                 出稼ぎ受け入れ
                               </label>
                               <p className="text-xs text-muted-foreground">
-                                出稼ぎ希望の応募者を受け入れる場合はオンにしてください
+                                オフ：出稼ぎ希望の求職者はマッチングから除外されます
                               </p>
                             </div>
                           </div>
@@ -1966,6 +2029,9 @@ export default function StoreDashboard() {
                                     defaultValue={profile?.minimum_guarantee || ""}
                                   />
                                 </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  最低でも保証できる金額を入力してください
+                                </p>
                               </div>
                               <div>
                                 <label className="text-sm font-medium mb-1 block">最高保証額（円/日）</label>
@@ -1978,6 +2044,9 @@ export default function StoreDashboard() {
                                     defaultValue={profile?.maximum_guarantee || ""}
                                   />
                                 </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  高設定ほどマッチング率が向上します
+                                </p>
                               </div>
                             </div>
                             
