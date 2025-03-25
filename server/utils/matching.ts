@@ -488,7 +488,8 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
     // 年齢計算
     const birthDate = new Date(userResult.birth_date);
     const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear() - 
+    // 他の場所で再宣言を避けるため、letを使用
+    let talentAge = today.getFullYear() - birthDate.getFullYear() - 
       (today.getMonth() < birthDate.getMonth() || 
         (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate()) ? 1 : 0);
     
@@ -526,10 +527,11 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       // 型の問題を回避するために型アサーションを使用
       locationParam.forEach((loc: any) => {
         if (typeof loc === 'string') {
-          uniqueLocations.add(loc);
+          // 型安全に処理するために明示的に型をキャスト
+          uniqueLocations.add(loc as any);
         }
       });
-      preferredLocations = Array.from(uniqueLocations);
+      preferredLocations = Array.from(uniqueLocations) as string[];
     }
     
     // 店舗情報の取得 - フィルター条件を適用
@@ -581,8 +583,8 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
     for (const store of storeResults) {
       const scores: Record<string, number> = {};
       
-      // 年齢スコア計算
-      scores.AGE = calculateAgeScore(age, store.requirements?.age_min, store.requirements?.age_max);
+      // 年齢スコア計算 - 既に計算済みのtalentAgeを使用
+      scores.AGE = calculateAgeScore(talentAge, store.requirements?.age_min, store.requirements?.age_max);
       
       // スペックスコア計算
       scores.BODY_TYPE = calculateSpecScore(
@@ -662,23 +664,23 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       // 外見スタイルスコア計算
       // 基本情報から外見スタイルを推定
       let estimatedLookType = "普通系";
-      const age = today.getFullYear() - birthDate.getFullYear();
+      // ageは既に計算済みなので再計算しない
       const height = talentResult.height || 0;
       const weight = talentResult.weight || 0;
       
-      if (age < 23) {
+      if (talentAge < 23) {
         estimatedLookType = "ロリ系・素人系・素朴系・可愛い系";
-      } else if (age >= 23 && age < 28) {
+      } else if (talentAge >= 23 && talentAge < 28) {
         if (talentResult.notes?.includes("モデル") || talentResult.notes?.includes("美人")) {
           estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
         } else if (height > 165 && weight < 50) {
           estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
         }
-      } else if (age >= 28 && age < 35) {
+      } else if (talentAge >= 28 && talentAge < 35) {
         estimatedLookType = "お姉さん系（20代後半〜30代前半）";
-      } else if (age >= 35 && age < 40) {
+      } else if (talentAge >= 35 && talentAge < 40) {
         estimatedLookType = "大人系（30代〜）";
-      } else if (age >= 40) {
+      } else if (talentAge >= 40) {
         estimatedLookType = "熟女系（40代〜）";
       }
       
