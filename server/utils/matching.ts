@@ -263,10 +263,62 @@ function calculateLocationScore(talentLocation: string, storeLocation: string, t
   // 希望エリアに含まれている
   if (talentPreferredLocations.includes(storeLocation)) return 0.8;
   
-  // エリアグループによる近接スコア（必要に応じて実装）
-  // 例: 関東圏内、関西圏内など
+  // 地域グループによる近接度スコア
+  const areaGroups = {
+    // 関東圏
+    kanto: ["東京都", "神奈川県", "埼玉県", "千葉県", "茨城県", "栃木県", "群馬県"],
+    // 関西圏
+    kansai: ["大阪府", "京都府", "兵庫県", "滋賀県", "奈良県", "和歌山県"],
+    // 東海圏
+    tokai: ["愛知県", "静岡県", "岐阜県", "三重県"],
+    // 九州圏
+    kyushu: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県"],
+    // 東北圏
+    tohoku: ["青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"],
+    // 北海道
+    hokkaido: ["北海道"],
+    // 中国・四国圏
+    chugoku_shikoku: ["鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県"],
+    // 北陸・甲信越
+    hokuriku_koshinetsu: ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県"]
+  };
   
-  return 0.2; // デフォルト値（マッチしない）
+  // 同じエリアグループ内かどうかチェック
+  let talentGroup = "";
+  let storeGroup = "";
+  
+  for (const [group, prefectures] of Object.entries(areaGroups)) {
+    if (prefectures.includes(talentLocation)) {
+      talentGroup = group;
+    }
+    if (prefectures.includes(storeLocation)) {
+      storeGroup = group;
+    }
+  }
+  
+  // 同じグループ内なら0.6
+  if (talentGroup && storeGroup && talentGroup === storeGroup) {
+    return 0.6;
+  }
+  
+  // 特別な近接関係（例：関東と東海など）
+  const neighborGroups: Record<string, string[]> = {
+    kanto: ["tokai", "hokuriku_koshinetsu"],
+    kansai: ["tokai", "chugoku_shikoku"],
+    tokai: ["kanto", "kansai", "hokuriku_koshinetsu"],
+    kyushu: ["chugoku_shikoku"],
+    tohoku: ["kanto", "hokkaido", "hokuriku_koshinetsu"],
+    hokkaido: ["tohoku"],
+    chugoku_shikoku: ["kansai", "kyushu"],
+    hokuriku_koshinetsu: ["kanto", "tokai", "tohoku"]
+  };
+  
+  // 隣接グループなら0.4
+  if (talentGroup && storeGroup && neighborGroups[talentGroup]?.includes(storeGroup)) {
+    return 0.4;
+  }
+  
+  return 0.2; // デフォルト値（関連性が低い）
 }
 
 /**
@@ -303,13 +355,26 @@ function calculateServiceTypeScore(talentServiceTypes: string[], storeServiceTyp
  * 
  * @param scores 各項目のスコア
  * @param options カスタマイズオプション
+ * @param userPreferences ユーザーの選好データ
  */
 function calculateTotalScore(
   scores: Record<string, number>,
   options?: {
     prioritizeLocation?: boolean;
     prioritizeGuarantee?: boolean;
+    prioritizeAppearance?: boolean;
+    prioritizeWorkConditions?: boolean;
+    learningFactor?: number; // 学習係数 (0.0 〜 1.0)
     customWeights?: Partial<Record<keyof typeof WEIGHTS, number>>;
+  },
+  userPreferences?: {
+    previousMatches?: Array<{
+      storeId: number;
+      interactionType: 'applied' | 'viewed' | 'kept' | 'rejected';
+      timestamp: Date;
+    }>;
+    preferredStoreTypes?: string[];
+    weightAdjustments?: Partial<Record<keyof typeof WEIGHTS, number>>;
   }
 ): number {
   // 基本の重み付けをコピー
@@ -321,27 +386,71 @@ function calculateTotalScore(
     if (options.prioritizeLocation) {
       weights.LOCATION = 35; // 地域の重みを増加
       // 他の項目を相対的に調整
-      weights.AGE = 20;
+      weights.AGE = 15;
       weights.BODY_TYPE = 10;
       weights.CUP_SIZE = 10;
       weights.GUARANTEE = 15;
       weights.SERVICE = 10;
+      weights.TATTOO = 2;
+      weights.HAIR_COLOR = 2;
+      weights.APPEARANCE = 1;
     }
     
     // 給与優先
     if (options.prioritizeGuarantee) {
       weights.GUARANTEE = 35; // 給与の重みを増加
       // 他の項目を相対的に調整
-      weights.AGE = 20;
+      weights.AGE = 15;
       weights.BODY_TYPE = 10;
       weights.CUP_SIZE = 10;
       weights.LOCATION = 15;
       weights.SERVICE = 10;
+      weights.TATTOO = 2;
+      weights.HAIR_COLOR = 2;
+      weights.APPEARANCE = 1;
+    }
+    
+    // 外見優先
+    if (options.prioritizeAppearance) {
+      weights.APPEARANCE = 25;
+      weights.HAIR_COLOR = 15;
+      weights.BODY_TYPE = 20;
+      weights.CUP_SIZE = 15;
+      weights.AGE = 15;
+      weights.LOCATION = 5;
+      weights.GUARANTEE = 5;
+      weights.SERVICE = 0;
+    }
+    
+    // 勤務条件優先
+    if (options.prioritizeWorkConditions) {
+      weights.SERVICE = 25;
+      weights.GUARANTEE = 25;
+      weights.LOCATION = 20;
+      weights.AGE = 10;
+      weights.BODY_TYPE = 5;
+      weights.CUP_SIZE = 5;
+      weights.APPEARANCE = 5;
+      weights.HAIR_COLOR = 2.5;
+      weights.TATTOO = 2.5;
     }
     
     // カスタム重み付けがあれば上書き
     if (options.customWeights) {
       Object.assign(weights, options.customWeights);
+    }
+  }
+  
+  // ユーザーの過去の行動に基づく重み付け調整
+  if (userPreferences && userPreferences.weightAdjustments) {
+    const learningFactor = options?.learningFactor || 0.3; // デフォルト学習係数
+    
+    // ユーザー個別の重み付け調整を適用（学習係数で影響度を調整）
+    for (const [key, adjustment] of Object.entries(userPreferences.weightAdjustments)) {
+      const weightKey = key as keyof typeof WEIGHTS;
+      const currentWeight = weights[weightKey] || 0;
+      // 現在の重みに学習係数で調整した個別調整を加える
+      weights[weightKey] = currentWeight + (adjustment * learningFactor);
     }
   }
   

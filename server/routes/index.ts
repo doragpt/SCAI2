@@ -4,6 +4,7 @@ import authRoutes from './auth';
 import talentRoutes from './talent';
 import applicationsRoutes from './applications';
 import uploadRoutes from './upload';
+import analyticsRoutes from './analytics';
 import { log } from '../utils/logger';
 import { authenticate } from '../middleware/auth';
 
@@ -28,6 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/auth', authRoutes);
   app.use('/applications', applicationsRoutes);
   app.use('/upload', uploadRoutes);
+  app.use('/analytics', analyticsRoutes);
   // 注意: /talent のルーティングは app.ts で /api/talent として登録されているため、
   // ここでは登録しません。
   
