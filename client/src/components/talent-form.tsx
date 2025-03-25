@@ -880,6 +880,13 @@ export function TalentForm({ initialData }: TalentFormProps) {
       shouldDirty: true,
       shouldTouch: true
     });
+    
+    // body_mark.has_body_markをtrueに設定する
+    form.setValue("body_mark.has_body_mark", true, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
   }, [form]);
 
   const handleRemoveIdType = useCallback((index: number) => {
