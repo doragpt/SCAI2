@@ -388,7 +388,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
                         {COLOR_PRESETS.map((color) => (
                           <SelectItem key={color.name} value={color.bg}>
                             <div className="flex items-center">
-                              <span className={`w-4 h-4 rounded-full mr-2 inline-block bg-gradient-to-br ${color.bg}`}></span>
+                              <span className={`w-4 h-4 rounded-full mr-2 inline-block bg-gradient-to-br ${color.bg.replace('from-', 'bg-').split(' ')[0]}`}></span>
                               {color.name}
                             </div>
                           </SelectItem>
