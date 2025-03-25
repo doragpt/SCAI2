@@ -257,10 +257,14 @@ export default function StoreDashboard() {
       setIsUpdatingStatus(true);
       console.log("ステータス更新中:", { 現在のステータス: profile?.status, 新しいステータス: newStatus });
       
-      // Zodバリデーションに必要なフィールドを全て含める
+      // すべての必須フィールドを含めるため、既存のプロフィールデータを複製
       const updateData = {
+        // 必須フィールド (storeProfileSchemaで.min(1)が設定されている)
         catch_phrase: profile?.catch_phrase || "",
         description: profile?.description || "",
+        recruiter_name: profile?.recruiter_name || "担当者", // スキーマ上で必須項目
+        
+        // 必須ではないが送信が必要なフィールド
         benefits: profile?.benefits || [],
         minimum_guarantee: profile?.minimum_guarantee || 0,
         maximum_guarantee: profile?.maximum_guarantee || 0,
@@ -272,8 +276,20 @@ export default function StoreDashboard() {
         transportation_support: profile?.transportation_support || false,
         housing_support: profile?.housing_support || false,
         special_offers: profile?.special_offers || [],
+        
+        // 追加フィールド
+        phone_numbers: profile?.phone_numbers || [],
+        email_addresses: profile?.email_addresses || [],
+        address: profile?.address || "",
+        access_info: profile?.access_info || "",
+        security_measures: profile?.security_measures || "",
+        application_requirements: profile?.application_requirements || "",
+        
+        // 更新するステータス
         status: newStatus
       };
+      
+      console.log("送信データ:", updateData);
       
       try {
         return await apiRequest("PATCH", "/api/store/profile", updateData);
