@@ -323,56 +323,80 @@ export default function JobDetail() {
           {/* 右側のサイドバー - 給与情報と月収計算 */}
           <div className="space-y-8">
             {/* 応募ボタン（スティッキー） */}
-            <div className="sticky top-4 z-10 p-4 bg-white dark:bg-gray-950 border rounded-lg shadow-sm">
-              <Button className="w-full mb-3" size="lg" asChild>
+            <div className="sticky top-4 z-10 p-5 bg-white dark:bg-gray-950 border-0 rounded-lg shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
+              <div className="mb-2">
+                <div className="inline-flex items-center px-3 py-1 mb-2 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                  <p>SCAI（スカイ）採用サポート</p>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">今すぐ面接予約をしませんか？</h3>
+              </div>
+              
+              <Button className="w-full mb-3 bg-blue-600 hover:bg-blue-700" size="lg" asChild>
                 {user ? (
                   <Link href={`/jobs/${id}/apply`}>
                     <Phone className="mr-2 h-4 w-4" />
-                    今すぐ応募する
+                    面接予約をする
                   </Link>
                 ) : (
-                  <Link href="/auth">会員登録して応募</Link>
+                  <Link href="/auth">会員登録して面接予約</Link>
                 )}
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                ※ 求人の詳細は採用担当にお気軽にお問い合わせください
-              </p>
+              
+              <div className="flex items-center justify-center mt-3 text-sm text-gray-500 dark:text-gray-400">
+                <Phone className="h-4 w-4 mr-2 text-blue-500" />
+                <p>求人の詳細はお気軽にお問い合わせください</p>
+              </div>
             </div>
             
-            {/* 給与情報コンポーネント */}
-            <SalaryDisplay
-              minimumGuarantee={job.minimumGuarantee}
-              maximumGuarantee={job.maximumGuarantee}
-              workingTimeHours={job.workingTimeHours}
-              averageHourlyPay={job.averageHourlyPay}
-              transportationSupport={job.transportationSupport}
-              housingSupport={job.housingSupport}
-              benefits={job.benefits}
-            />
+            {/* 給与情報カード */}
+            <Card className="border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b">
+                <div className="flex items-center">
+                  <Banknote className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
+                  <h3 className="text-lg font-bold text-green-800 dark:text-green-400">給与情報</h3>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5">
+                <SalaryDisplay
+                  minimumGuarantee={job.minimumGuarantee}
+                  maximumGuarantee={job.maximumGuarantee}
+                  workingTimeHours={job.workingTimeHours}
+                  averageHourlyPay={job.averageHourlyPay}
+                  transportationSupport={job.transportationSupport}
+                  housingSupport={job.housingSupport}
+                  benefits={job.benefits}
+                />
+              </CardContent>
+            </Card>
             
             {/* 月収シミュレーター */}
-            <Card>
-              <CardHeader className="pb-2">
-                <h3 className="text-lg font-medium">月収シミュレーション</h3>
+            <Card className="border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b">
+                <div className="flex items-center">
+                  <CalendarDays className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">月収シミュレーション</h3>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="workingDays" className="text-sm">月の勤務日数:</label>
-                  <Input
-                    id="workingDays"
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={workingDays}
-                    onChange={(e) => setWorkingDays(parseInt(e.target.value) || 1)}
-                    className="w-20"
-                  />
-                  <span className="text-sm">日</span>
+              <CardContent className="p-5 space-y-5">
+                <div className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                  <div className="flex items-center space-x-3 w-full">
+                    <label htmlFor="workingDays" className="font-medium">月の勤務日数:</label>
+                    <Input
+                      id="workingDays"
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={workingDays}
+                      onChange={(e) => setWorkingDays(parseInt(e.target.value) || 1)}
+                      className="w-20 bg-white dark:bg-gray-900"
+                    />
+                    <span className="text-sm">日</span>
+                  </div>
                 </div>
                 
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900 rounded-lg">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">1ヶ月の想定収入</div>
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-100 dark:border-green-800">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1 font-medium">あなたの予想月収</div>
+                  <div className="text-3xl font-extrabold text-green-700 dark:text-green-400">
                     {monthlyIncome > 0 
                       ? `${monthlyIncome.toLocaleString()}円`
                       : "収入情報がありません"}
@@ -382,14 +406,16 @@ export default function JobDetail() {
                   </div>
                 </div>
                 
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                <div className="flex items-center p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg text-sm text-gray-600 dark:text-gray-300">
+                  <Info className="h-4 w-4 mr-2 text-yellow-500" />
                   <p>詳しい給与条件や待遇については、面接時にお気軽にお問い合わせください。</p>
                 </div>
               </CardContent>
             </Card>
             
             {/* 更新日情報 */}
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="flex items-center justify-end text-xs text-gray-500 dark:text-gray-400">
+              <Clock className="h-3 w-3 mr-1" />
               最終更新日: {formatDate(job.updatedAt)}
             </div>
           </div>

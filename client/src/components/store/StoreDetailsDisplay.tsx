@@ -1,4 +1,4 @@
-import { Store, MapPin, Shield, Info } from "lucide-react";
+import { Store, MapPin, Shield, Info, Map, Train, Bus, PersonStanding } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface StoreDetailsDisplayProps {
@@ -27,38 +27,44 @@ export function StoreDetailsDisplay({
   }
   
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <h3 className="text-xl font-semibold flex items-center">
-          <Store className="mr-2 h-5 w-5 text-primary" />
+    <Card className={`border-0 shadow-md overflow-hidden ${className}`}>
+      <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white">
+        <h3 className="text-xl font-bold flex items-center">
+          <Store className="mr-2 h-5 w-5 text-purple-100" />
           店舗詳細情報
         </h3>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className="p-5 space-y-8">
         {/* アクセス・所在地情報 */}
         {(address || accessInfo) && (
           <div>
-            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-rose-500" />
-              アクセス・所在地
-            </h4>
+            <div className="flex items-center mb-3">
+              <MapPin className="h-5 w-5 mr-2 text-rose-600 dark:text-rose-400" />
+              <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200">アクセス・所在地</h4>
+            </div>
             
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div className="grid md:grid-cols-2 gap-4">
               {/* 所在地 */}
               {address && (
-                <div className="bg-gray-50 dark:bg-gray-900 p-4">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">所在地</div>
-                  <div className="text-gray-900 dark:text-gray-100">{address}</div>
+                <div className="flex items-start p-4 bg-rose-50/50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-800/30">
+                  <Map className="h-5 w-5 mr-3 text-rose-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">所在地</p>
+                    <p className="text-gray-900 dark:text-gray-100">{address}</p>
+                  </div>
                 </div>
               )}
               
               {/* アクセス方法 */}
               {accessInfo && (
-                <div className={`p-4 ${address ? 'border-t border-gray-200 dark:border-gray-800' : ''}`}>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">アクセス方法</div>
-                  <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
-                    {accessInfo}
+                <div className="flex items-start p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-800/30 md:col-span-2">
+                  <Train className="h-5 w-5 mr-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">アクセス方法</p>
+                    <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line">
+                      {accessInfo}
+                    </div>
                   </div>
                 </div>
               )}
@@ -69,14 +75,18 @@ export function StoreDetailsDisplay({
         {/* セキュリティ対策 */}
         {securityMeasures && (
           <div>
-            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              安全対策
-            </h4>
+            <div className="flex items-center mb-3">
+              <Shield className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200">安全対策</h4>
+            </div>
             
-            <div className="p-4 rounded-lg border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30">
-              <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
-                {securityMeasures}
+            <div className="flex items-start p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-800/30">
+              <Shield className="h-5 w-5 mr-3 text-indigo-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-indigo-700 dark:text-indigo-300 mb-1">店舗のセキュリティ・安全面</p>
+                <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line">
+                  {securityMeasures}
+                </div>
               </div>
             </div>
           </div>
@@ -85,14 +95,22 @@ export function StoreDetailsDisplay({
         {/* 応募条件 */}
         {applicationRequirements && (
           <div>
-            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-              <Info className="h-4 w-4 mr-2 text-blue-500" />
-              応募条件
-            </h4>
+            <div className="flex items-center mb-3">
+              <PersonStanding className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+              <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200">応募条件</h4>
+            </div>
             
-            <div className="p-4 rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
-              <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
-                {applicationRequirements}
+            <div className="flex items-start p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800/30">
+              <Info className="h-5 w-5 mr-3 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-blue-700 dark:text-blue-300 mb-1">採用について</p>
+                <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line">
+                  {applicationRequirements}
+                </div>
+                
+                <div className="mt-3 px-3 py-2 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 rounded text-sm text-blue-800 dark:text-blue-200">
+                  SCAI（スカイ）からの応募で特別対応あり
+                </div>
               </div>
             </div>
           </div>
