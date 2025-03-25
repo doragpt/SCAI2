@@ -74,6 +74,21 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       
       // 応募要件
       application_requirements: initialData?.application_requirements || "",
+      requirements: initialData?.requirements || {
+        age_min: 18,
+        age_max: undefined,
+        spec_min: undefined,
+        spec_max: undefined,
+        cup_size_conditions: [],
+        preferred_body_types: [],
+        tattoo_acceptance: undefined,
+        preferred_hair_colors: [],
+        preferred_look_types: [],
+        prioritize_titles: false,
+        accepts_temporary_workers: true,
+        requires_arrival_day_before: false,
+        other_conditions: []
+      },
       
       // 追加フィールド
       access_info: initialData?.access_info || "",
@@ -88,12 +103,18 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
   // フィールド配列の設定
   const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
     control: form.control,
-    name: "phone_numbers"
+    name: "phone_numbers" as any // typescriptエラー回避のためにany型を使用
   });
   
   const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
     control: form.control,
-    name: "email_addresses"
+    name: "email_addresses" as any // typescriptエラー回避のためにany型を使用
+  });
+  
+  // カップサイズ条件の配列
+  const { fields: cupSizeFields, append: appendCupSize, remove: removeCupSize } = useFieldArray({
+    control: form.control,
+    name: "requirements.cup_size_conditions"
   });
   
   // 電話番号操作
@@ -170,7 +191,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           working_time_hours: Number(data.working_time_hours) || 0,
           average_hourly_pay: Number(data.average_hourly_pay) || 0,
           status: data.status || "draft",
-          requirements: data.requirements || "",
+          requirements: data.requirements,
           working_hours: data.working_hours || "",
           transportation_support: data.transportation_support || false,
           housing_support: data.housing_support || false,
@@ -473,14 +494,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               {/* 基本的な応募条件テキスト */}
               <FormField
                 control={form.control}
-                name="requirements"
+                name="application_requirements"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-medium">応募資格・条件</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
-                        value={field.value || ''}
                         placeholder="例：18歳以上（高校生不可）、未経験者歓迎、経験者優遇"
                         className="min-h-[80px]"
                       />
