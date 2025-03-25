@@ -302,6 +302,7 @@ export default function StoreDashboard() {
       const otherConditions = otherConditionsText.split('\n').filter(line => line.trim() !== '');
       
       // 現在のカップサイズ条件リスト
+      // profileの状態が最新になるように、cup_size_conditionsを参照する
       const cupSizeConditions = profile?.requirements?.cup_size_conditions || [];
       
       // 採用要件オブジェクト
@@ -388,12 +389,8 @@ export default function StoreDashboard() {
   const handleAddCupSizeCondition = () => {
     if (!profile?.requirements) return;
     
-    // カップサイズと最低スペックの入力ダイアログを表示
-    const cupSize = window.prompt("カップサイズを入力してください (A～K):", "E");
-    if (!cupSize) return; // キャンセル時
-    
     // 有効なカップサイズかチェック（大文字変換）
-    const normalizedCupSize = cupSize.toUpperCase();
+    const normalizedCupSize = newCupSizeCondition.cup_size.toUpperCase();
     if (!cupSizes.includes(normalizedCupSize as CupSize)) {
       toast({
         variant: "destructive",
@@ -403,15 +400,13 @@ export default function StoreDashboard() {
       return;
     }
     
-    const specMinInput = window.prompt(`${normalizedCupSize}カップ以上の場合の最低スペック値を入力してください:`, "100");
-    if (!specMinInput) return; // キャンセル時
-    
-    const specMin = parseInt(specMinInput);
+    // スペック値が数値かチェック
+    const specMin = parseInt(String(newCupSizeCondition.spec_min));
     if (isNaN(specMin) || specMin < 0) {
       toast({
         variant: "destructive",
         title: "無効な値",
-        description: "最低スペックは0以上の数値を入力してください"
+        description: "最低スペックは0以上の半角数値を入力してください"
       });
       return;
     }
@@ -445,6 +440,16 @@ export default function StoreDashboard() {
       cup_size_conditions: updatedConditions
     };
     
+    // 注：ここではプロフィールの状態を直接更新せず、APIから再取得します
+    // profile.requirementsはすでにカップサイズ条件を含むように更新されているので
+    // 保存ミューテーションの中で処理されます
+    
+    // 入力フォームをリセット
+    setNewCupSizeCondition({
+      cup_size: "E" as CupSize,
+      spec_min: 80
+    });
+    
     // 採用要件の更新と保存
     saveRequirementsMutation.mutate();
   };
@@ -462,6 +467,9 @@ export default function StoreDashboard() {
       ...profile.requirements,
       cup_size_conditions: updatedConditions
     };
+    
+    // 注：ここではプロフィールの状態を直接更新せず、APIから再取得します
+    // saveRequirementsMutation内でupdatedRequirementsが使用されます
     
     // 採用要件の更新と保存
     saveRequirementsMutation.mutate();
@@ -1366,7 +1374,7 @@ export default function StoreDashboard() {
                             <label className="text-sm font-medium">カップサイズ別特別条件</label>
                           </div>
                           <div className="bg-muted/40 rounded-md p-4 border">
-                            <div className="text-sm mb-2">
+                            <div className="text-sm mb-3">
                               例: Eカップ以上なら最低スペック80からでも可能など
                             </div>
                             
@@ -1389,15 +1397,57 @@ export default function StoreDashboard() {
                               ))}
                             </div>
                             
-                            {/* 新規条件追加ボタン */}
+                            {/* 新規条件入力フォーム */}
+                            <div className="grid grid-cols-2 gap-3 p-3 bg-background/80 rounded-md border mb-3">
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">カップサイズ</label>
+                                <div className="flex items-center">
+                                  <select
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                    value={newCupSizeCondition.cup_size}
+                                    onChange={(e) => setNewCupSizeCondition({
+                                      ...newCupSizeCondition,
+                                      cup_size: e.target.value as CupSize
+                                    })}
+                                  >
+                                    {cupSizes.map((size) => (
+                                      <option key={size} value={size}>{size}カップ</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  指定カップサイズ以上が対象
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">最低スペック値</label>
+                                <div className="flex items-center">
+                                  <input
+                                    type="number"
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                    placeholder="例: 80（半角数字）"
+                                    value={newCupSizeCondition.spec_min}
+                                    onChange={(e) => setNewCupSizeCondition({
+                                      ...newCupSizeCondition,
+                                      spec_min: parseInt(e.target.value) || 0
+                                    })}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  ※半角数字で入力してください
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* 条件追加ボタン */}
                             <Button 
                               variant="outline" 
                               size="sm"
-                              className="w-full border-dashed"
+                              className="w-full"
                               onClick={() => handleAddCupSizeCondition()}
                             >
                               <Plus className="h-4 w-4 mr-1" />
-                              カップサイズ条件を追加
+                              この条件を追加
                             </Button>
                           </div>
                         </div>
