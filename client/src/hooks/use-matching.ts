@@ -42,13 +42,23 @@ export async function startMatching(conditions: MatchingConditions): Promise<Mat
     // クエリパラメータを構築
     const queryParams = new URLSearchParams();
     
-    // 条件があれば追加
+    // 希望エリアの追加（複数の場合は全て追加）
     if (conditions.preferredLocations.length > 0) {
-      queryParams.append('location', conditions.preferredLocations[0]);
+      conditions.preferredLocations.forEach(location => {
+        queryParams.append('location', location);
+      });
     }
     
+    // 現在地も希望エリアとして追加
+    if (conditions.departureLocation) {
+      queryParams.append('location', conditions.departureLocation);
+    }
+    
+    // 希望業種の追加（複数の場合は全て追加）
     if (conditions.workTypes.length > 0) {
-      queryParams.append('serviceType', conditions.workTypes[0]);
+      conditions.workTypes.forEach(type => {
+        queryParams.append('serviceType', type);
+      });
     }
     
     // 最低希望保証額がある場合
@@ -57,6 +67,44 @@ export async function startMatching(conditions: MatchingConditions): Promise<Mat
       const guaranteeValue = conditions.desiredGuarantee.replace(/[^0-9]/g, '');
       if (guaranteeValue) {
         queryParams.append('minGuarantee', guaranteeValue);
+      }
+    }
+    
+    // フィルタリング条件
+    // 特定のエリアに限定する場合
+    if (conditions.preferredLocations.length === 1) {
+      queryParams.append('filterByLocation', conditions.preferredLocations[0]);
+    }
+    
+    // 特定の業種に限定する場合
+    if (conditions.workTypes.length === 1) {
+      queryParams.append('filterByService', conditions.workTypes[0]);
+    }
+    
+    // 待機時間が指定されている場合（スケジュール情報）
+    if (conditions.waitingHours) {
+      queryParams.append('waitingHours', conditions.waitingHours.toString());
+    }
+    
+    // 特定項目の重み付け変更
+    if (conditions.preferredLocations.length > 0) {
+      queryParams.append('prioritizeLocation', 'true');
+    }
+    
+    if (conditions.desiredGuarantee) {
+      queryParams.append('prioritizeGuarantee', 'true');
+    }
+    
+    // 結果数の制限
+    queryParams.append('limit', '20'); // 最大20件に制限
+    
+    // 出稼ぎの場合は、出発地と帰宅地の両方を希望エリアに追加
+    if (conditions.workTypes.includes('出稼ぎ')) {
+      if (conditions.departureLocation) {
+        queryParams.append('location', conditions.departureLocation);
+      }
+      if (conditions.returnLocation && conditions.returnLocation !== conditions.departureLocation) {
+        queryParams.append('location', conditions.returnLocation);
       }
     }
     
@@ -74,7 +122,8 @@ export async function startMatching(conditions: MatchingConditions): Promise<Mat
     
     // AIマッチングレスポンスの形式に合わせて変換
     if (data && Array.isArray(data.matches)) {
-      return data.matches;
+      // マッチスコアでソートして返却
+      return data.matches.sort((a, b) => b.matchScore - a.matchScore);
     } else {
       console.warn('Unexpected API response format:', data);
       return [];

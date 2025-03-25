@@ -132,11 +132,42 @@ router.get('/ai-matching', requireAuth, async (req, res) => {
       query: req.query
     });
 
-    // オプションのクエリパラメータ
+    // クエリパラメータの処理
+    // 文字列の安全な数値変換関数
+    const safeParseInt = (value: any): number | undefined => {
+      if (value === undefined || value === null || value === '') return undefined;
+      const parsed = parseInt(value as string, 10);
+      return isNaN(parsed) ? undefined : parsed;
+    };
+
+    // 配列パラメータを処理する関数
+    const parseArrayParam = (param: any): string[] => {
+      if (!param) return [];
+      if (Array.isArray(param)) return param as string[];
+      return [param as string];
+    };
+
+    // 検索オプションの構築
     const searchOptions = {
-      // 検索条件の追加は必要に応じて実装
-      filterByLocation: req.query.location,
-      filterByService: req.query.serviceType,
+      // 基本検索条件
+      minGuarantee: safeParseInt(req.query.minGuarantee),
+      location: parseArrayParam(req.query.location),
+      serviceType: parseArrayParam(req.query.serviceType),
+      
+      // 追加フィルタリング条件
+      filterByLocation: req.query.filterByLocation as string,
+      filterByService: req.query.filterByService as string,
+      filterByMinGuarantee: safeParseInt(req.query.filterByMinGuarantee),
+      
+      // 特定項目でのマッチング重視
+      prioritizeLocation: req.query.prioritizeLocation === 'true',
+      prioritizeGuarantee: req.query.prioritizeGuarantee === 'true',
+      
+      // 検索結果の制限
+      limit: safeParseInt(req.query.limit) || 50,
+      
+      // デバッグ用フラグ
+      includeScores: req.query.includeScores === 'true',
     };
 
     // マッチング処理の実行
@@ -149,12 +180,20 @@ router.get('/ai-matching', requireAuth, async (req, res) => {
       });
     }
 
+    // 検索結果の制限（デフォルトでは上限50件）
+    const limitedResults = {
+      ...matchResults,
+      matches: matchResults.matches.slice(0, searchOptions.limit)
+    };
+
     log('info', 'AIマッチング結果', { 
       userId: req.user.id,
-      totalMatches: matchResults.totalMatches || 0
+      totalMatches: matchResults.totalMatches || 0,
+      returnedMatches: limitedResults.matches.length,
+      topScore: limitedResults.matches.length > 0 ? limitedResults.matches[0].matchScore : 0
     });
 
-    res.json(matchResults);
+    res.json(limitedResults);
   } catch (error) {
     log('error', 'AIマッチングエラー', { error });
     res.status(500).json({ 
