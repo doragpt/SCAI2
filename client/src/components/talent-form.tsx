@@ -1991,14 +1991,14 @@ export function TalentForm({ initialData }: TalentFormProps) {
             </div>
 
             <div className="bg-slate-50 p-4 rounded-lg border">
-              <h3 className="text-lg font-semibold mb-4">傷・タトゥー・アトピー</h3>
+              <h3 className="text-lg font-semibold mb-4">タトゥー・傷の情報</h3>
               <FormField
                 control={form.control}
                 name="body_mark.has_body_mark"
                 render={({ field }) => (
                   <FormItem>
                     <SwitchField
-                      label="傷・タトゥー・アトピーの有無"
+                      label="タトゥー・傷の有無"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -2014,7 +2014,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     name="tattoo_level"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>タトゥーの目立ち具合</FormLabel>
+                        <FormLabel>タトゥー・傷の目立ち具合</FormLabel>
                         <Select
                           value={field.value || ""}
                           onValueChange={field.onChange}
@@ -2032,7 +2032,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          タトゥーの大きさや目立ち具合を選択してください
+                          タトゥー・傷の目立ち具合を選択してください
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -2104,11 +2104,11 @@ export function TalentForm({ initialData }: TalentFormProps) {
                         <FormLabel>詳細情報</FormLabel>
                         <Textarea 
                           {...field} 
-                          placeholder="タトゥー・傷・アトピーなどの詳細情報を入力してください"
+                          placeholder="タトゥー・傷の詳細情報を入力してください"
                           className="min-h-[80px]"
                         />
                         <FormDescription>
-                          タトゥーのデザイン、傷の状態、アトピーの症状などについて詳細に記入してください。
+                          タトゥーのデザイン、傷の状態、見た目などについて詳細に記入してください。
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -2142,7 +2142,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm">
                     <p className="font-medium text-amber-800">写真アップロードのお願い</p>
                     <p className="text-amber-700 mt-1">
-                      ※傷、タトゥー、アトピーなどがある場合、必ずその部位の写真をアップロードし「タトゥー」「傷」「アトピー」のいずれかでタグ付けしてください。写真が確認できない場合、お仕事の紹介ができない場合があります。
+                      ※タトゥー・傷などがある場合、必ずその部位の写真をアップロードし「タトゥー」「傷」のいずれかでタグ付けしてください。写真が確認できない場合、お仕事の紹介ができない場合があります。
                     </p>
                   </div>
                 </div>
