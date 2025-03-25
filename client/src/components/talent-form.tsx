@@ -2034,35 +2034,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                   />
                   
                   {/* タトゥーレベル選択フィールド */}
-                  <FormField
-                    control={form.control}
-                    name="tattoo_level"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>タトゥー・傷の目立ち具合</FormLabel>
-                        <Select
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {tattooAcceptanceLevels.map(level => (
-                              <SelectItem key={level} value={level}>
-                                {level === "目立ちにくい" && "目立ちにくい（ワンポイント・小さいもの）"}
-                                {level === "目立つ" && "目立つ（大きいもの・複数）"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          タトゥー・傷の目立ち具合を選択してください
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* 注: 古いtattoo_levelフィールドは削除し、代わりにbody_mark構造体を使用します */}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* 部位の選択 */}
