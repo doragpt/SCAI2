@@ -612,10 +612,7 @@ export default function HomePage() {
                         {type === "ホテヘル" && <Bed className="h-6 w-6 text-primary" />}
                         {type === "ピンサロ" && <Hand className="h-6 w-6 text-primary" />}
                         {type === "オナクラ" && <Hand className="h-6 w-6 text-primary" />}
-                        {type === "ソープ" && <Droplets className="h-6 w-6 text-primary" />}
-                        {type === "エステ" && <HeartHandshake className="h-6 w-6 text-primary" />}
-                        {type === "メンズエステ" && <Shirt className="h-6 w-6 text-primary" />}
-                        {type === "SM" && <Theater className="h-6 w-6 text-primary" />}
+
                         {type === "箱ヘル" && <Building2 className="h-6 w-6 text-primary" />}
                         {type === "風俗エステ" && <HandHeart className="h-6 w-6 text-primary" />}
                         {type === "M性感" && <Sparkles className="h-6 w-6 text-primary" />}
