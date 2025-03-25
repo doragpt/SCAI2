@@ -334,8 +334,7 @@ export default function StoreDashboard() {
         benefits: profile?.benefits || [],
         minimum_guarantee: profile?.minimum_guarantee || 0,
         maximum_guarantee: profile?.maximum_guarantee || 0,
-        working_time_hours: profile?.working_time_hours || 0,
-        average_hourly_pay: profile?.average_hourly_pay || 0,
+        // 削除されたフィールド（勤務時間と平均時給）は送信データに含めない
         top_image: profile?.top_image || "",
         working_hours: profile?.working_hours || "",
         requirements: requirements,
@@ -529,8 +528,7 @@ export default function StoreDashboard() {
         benefits: profile?.benefits || [],
         minimum_guarantee: profile?.minimum_guarantee || 0,
         maximum_guarantee: profile?.maximum_guarantee || 0,
-        working_time_hours: profile?.working_time_hours || 0,
-        average_hourly_pay: profile?.average_hourly_pay || 0,
+        // 削除されたフィールドを送信データから除外
         top_image: profile?.top_image || "",
         working_hours: profile?.working_hours || "",
         requirements: profile?.requirements || {},
@@ -835,11 +833,13 @@ export default function StoreDashboard() {
                                 {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
                                   <div className="text-gray-700 dark:text-gray-300">
                                     {profile.minimum_guarantee && profile.maximum_guarantee ? (
-                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee.toLocaleString()}〜{profile.maximum_guarantee.toLocaleString()}</span>円</div>
+                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee?.toLocaleString() || '0'}〜{profile.maximum_guarantee?.toLocaleString() || '0'}</span>円</div>
                                     ) : profile.minimum_guarantee ? (
-                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee.toLocaleString()}</span>円〜</div>
+                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee?.toLocaleString() || '0'}</span>円〜</div>
+                                    ) : profile.maximum_guarantee ? (
+                                      <div>〜<span className="font-bold text-pink-700 dark:text-pink-300">{profile.maximum_guarantee?.toLocaleString() || '要相談'}</span>円</div>
                                     ) : (
-                                      <div>〜<span className="font-bold text-pink-700 dark:text-pink-300">{profile.maximum_guarantee.toLocaleString()}</span>円</div>
+                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">要相談</span></div>
                                     )}
                                   </div>
                                 ) : (

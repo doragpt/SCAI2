@@ -351,7 +351,11 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       // 既存のpreferredLocationsとマージ（重複は除去）
       const uniqueLocations = new Set([...preferredLocations]);
       // 型の問題を回避するために型アサーションを使用
-      locationParam.forEach((loc: unknown) => uniqueLocations.add(loc as string));
+      locationParam.forEach((loc: any) => {
+        if (typeof loc === 'string') {
+          uniqueLocations.add(loc);
+        }
+      });
       preferredLocations = Array.from(uniqueLocations);
     }
     
@@ -417,20 +421,22 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       
       // カップサイズスコア計算 - talentProfileからカップサイズを取得
       if (talentResult.cup_size && cupSizeValue[talentResult.cup_size]) {
-        // 店舗側の希望カップサイズ条件があれば比較
-        if (store.requirements?.cup_size_min && store.requirements?.cup_size_max) {
-          const minCup = cupSizeValue[store.requirements.cup_size_min] || 0;
-          const maxCup = cupSizeValue[store.requirements.cup_size_max] || 11;
-          const talentCup = cupSizeValue[talentResult.cup_size];
+        // カップサイズ特別条件があれば、そちらを優先的にチェック
+        if (store.requirements?.cup_size_conditions && store.requirements.cup_size_conditions.length > 0) {
+          // カップサイズ特別条件から該当するものを探す
+          const matchingCondition = store.requirements.cup_size_conditions.find(
+            (condition: any) => condition.cup_size === talentResult.cup_size
+          );
           
-          if (talentCup >= minCup && talentCup <= maxCup) {
-            scores.CUP_SIZE = 1.0; // 完全マッチ
+          if (matchingCondition) {
+            // 該当する特別条件が見つかった場合
+            scores.CUP_SIZE = 1.0; // 完全一致
           } else {
-            // 範囲外の場合、近さで評価
-            const distFromRange = talentCup < minCup ? minCup - talentCup : talentCup - maxCup;
-            scores.CUP_SIZE = Math.max(0, 1 - (distFromRange / 5)); // 5段階以上離れると0点
+            // 特別条件はあるが、該当しない場合
+            scores.CUP_SIZE = 0.6; // 中間値
           }
         } else {
+          // カップサイズ特別条件がない場合は、一般的な評価
           scores.CUP_SIZE = 0.8; // 店舗側に条件がなければ高めのスコア
         }
       } else {
