@@ -430,7 +430,7 @@ export default function StoreDashboard() {
     }
     
     // 現在の条件リストを取得（必ず配列であることを確保）
-    let currentConditions = [];
+    let currentConditions: Array<{cup_size: CupSize, spec_min: number}> = [];
     if (profile.requirements.cup_size_conditions && 
         Array.isArray(profile.requirements.cup_size_conditions)) {
       currentConditions = [...profile.requirements.cup_size_conditions];
@@ -1485,7 +1485,68 @@ export default function StoreDashboard() {
                                 setShowCupSizeConditions(checked);
                                 
                                 // カップサイズ条件スイッチの状態が変更された時の処理
-                                if (!checked && profile?.requirements) {
+                                if (checked && profile?.requirements) {
+                                  // スイッチがオンになった場合の処理
+                                  // カップサイズ条件が空の場合は初期値を設定
+                                  if (!profile.requirements.cup_size_conditions || 
+                                      !Array.isArray(profile.requirements.cup_size_conditions) ||
+                                      profile.requirements.cup_size_conditions.length === 0) {
+                                    // 初期値のカップサイズ条件を作成（Eカップ以上が最低スペック80の例）
+                                    const initialCondition = { 
+                                      cup_size: "E" as CupSize, 
+                                      spec_min: 80 
+                                    };
+                                    
+                                    // 採用要件を更新
+                                    const updatedRequirements = {
+                                      ...profile.requirements,
+                                      cup_size_conditions: [initialCondition]
+                                    };
+                                    
+                                    // リクエストデータを作成
+                                    const updateData = {
+                                      catch_phrase: profile?.catch_phrase || "",
+                                      description: profile?.description || "",
+                                      recruiter_name: profile?.recruiter_name || "担当者",
+                                      benefits: profile?.benefits || [],
+                                      minimum_guarantee: profile?.minimum_guarantee || 0,
+                                      maximum_guarantee: profile?.maximum_guarantee || 0,
+                                      top_image: profile?.top_image || "",
+                                      working_hours: profile?.working_hours || "",
+                                      requirements: updatedRequirements,
+                                      transportation_support: profile?.transportation_support || false,
+                                      housing_support: profile?.housing_support || false,
+                                      special_offers: profile?.special_offers || [],
+                                      phone_numbers: profile?.phone_numbers || [],
+                                      email_addresses: profile?.email_addresses || [],
+                                      address: profile?.address || "",
+                                      access_info: profile?.access_info || "",
+                                      security_measures: profile?.security_measures || "",
+                                      application_requirements: profile?.application_requirements || "",
+                                      status: profile?.status || "draft"
+                                    };
+                                    
+                                    // APIリクエストを直接送信
+                                    apiRequest("PATCH", "/api/store/profile", updateData)
+                                      .then(() => {
+                                        // 成功したらキャッシュを更新
+                                        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+                                        
+                                        toast({
+                                          title: "カップサイズ条件を有効化しました",
+                                          description: "初期条件として「Eカップ以上は最低スペック80」が設定されました",
+                                        });
+                                      })
+                                      .catch((error) => {
+                                        console.error("カップサイズ条件有効化エラー:", error);
+                                        toast({
+                                          variant: "destructive",
+                                          title: "設定の保存に失敗しました",
+                                          description: error.message || "もう一度お試しください",
+                                        });
+                                      });
+                                  }
+                                } else if (!checked && profile?.requirements) {
                                   // スイッチがオフになった場合、カップサイズ条件を直接クリアして保存する
                                   const updatedRequirements = {
                                     ...profile.requirements,
