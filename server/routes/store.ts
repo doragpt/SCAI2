@@ -266,7 +266,13 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       updated_at: new Date()
     };
 
-    log('info', '更新データ', { updateData });
+    log('info', '更新データ', { 
+      updateData,
+      requirementsType: typeof updateData.requirements,
+      requirementsValue: updateData.requirements,
+      hasCupSizeConditions: updateData.requirements && typeof updateData.requirements === 'object' && 'cup_size_conditions' in updateData.requirements,
+      cupSizeConditions: updateData.requirements && typeof updateData.requirements === 'object' && 'cup_size_conditions' in updateData.requirements ? updateData.requirements.cup_size_conditions : 'none'
+    });
 
     // バリデーション（更新用）
     const validatedData = storeProfileSchema.parse({
