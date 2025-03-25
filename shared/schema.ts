@@ -250,6 +250,45 @@ export const specialOfferSchema = z.object({
   order: z.number().default(0),
 });
 
+// 求人動画コンテンツの型定義
+export const jobVideoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  url: z.string(), // 動画URL
+  thumbnail: z.string(), // サムネイル画像URL
+  duration: z.string(), // "PT0H1M30S"形式の動画時間
+  uploadDate: z.string(), // ISO-8601形式の日付
+  featured: z.boolean().default(false), // フィーチャー表示するかどうか
+});
+
+// 給与例・体験保証のケース
+export const salaryExampleSchema = z.object({
+  id: z.string(),
+  title: z.string(), // 例: "1日体験入店", "週3回勤務", "月20日勤務"
+  hours: z.number(), // 勤務時間
+  amount: z.number(), // 金額
+  description: z.string().optional(), // 追加説明
+  isGuaranteed: z.boolean().default(false), // 保証か目安か
+  conditions: z.string().optional(), // 条件説明
+});
+
+// 身バレ対策項目
+export const privacyMeasureSchema = z.object({
+  id: z.string(),
+  title: z.string(), // 例: "顔出し不要", "写メ日記不要"
+  description: z.string(),
+  icon: z.string(), // アイコン名
+});
+
+// 店舗設備項目
+export const facilityFeatureSchema = z.object({
+  id: z.string(),
+  title: z.string(), // 例: "個室待機", "Wi-Fi完備"
+  description: z.string().optional(),
+  icon: z.string(), // アイコン名
+});
+
 export type SpecialOffer = z.infer<typeof specialOfferSchema>;
 
 // Service Type Labels
@@ -324,6 +363,21 @@ export const store_profiles = pgTable("store_profiles", {
   // 新規追加項目
   access_info: text("access_info"), // アクセス情報（最寄り駅・交通手段）
   security_measures: text("security_measures"), // セキュリティ対策・プライバシー配慮
+  
+  // バニラ風の拡張項目
+  job_videos: jsonb("job_videos").$type<z.infer<typeof jobVideoSchema>[]>().default([]), // 求人動画コンテンツ
+  salary_examples: jsonb("salary_examples").$type<z.infer<typeof salaryExampleSchema>[]>().default([]), // 給与例・体験保証ケース
+  privacy_measures: jsonb("privacy_measures").$type<z.infer<typeof privacyMeasureSchema>[]>().default([]), // 身バレ対策
+  facility_features: jsonb("facility_features").$type<z.infer<typeof facilityFeatureSchema>[]>().default([]), // 店舗設備
+  testimonials: jsonb("testimonials").$type<{
+    user_name: string;
+    age: number;
+    content: string;
+    rating: number;
+    verified: boolean;
+    date: string;
+  }[]>().default([]), // 口コミ・体験談
+  
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -548,6 +602,22 @@ export const storeProfileSchema = z.object({
   // 追加項目
   access_info: z.string().max(1000, "アクセス情報は1000文字以内で入力してください").optional(), // アクセス情報
   security_measures: z.string().max(1000, "セキュリティ対策は1000文字以内で入力してください").optional(), // セキュリティ対策
+  
+  // バニラ風の拡張項目
+  job_videos: z.array(jobVideoSchema).optional(), // 求人動画コンテンツ
+  salary_examples: z.array(salaryExampleSchema).optional(), // 給与例・体験保証ケース
+  privacy_measures: z.array(privacyMeasureSchema).optional(), // 身バレ対策
+  facility_features: z.array(facilityFeatureSchema).optional(), // 店舗設備
+  testimonials: z.array(
+    z.object({
+      user_name: z.string(),
+      age: z.number(),
+      content: z.string(),
+      rating: z.number().min(1).max(5),
+      verified: z.boolean().default(false),
+      date: z.string(),
+    })
+  ).optional(), // 口コミ・体験談
 });
 
 export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
