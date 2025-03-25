@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { type JobResponse, type ServiceType, serviceTypes } from "@shared/schema";
+import { getServiceTypeLabel } from "@/lib/utils";
 import {
   Loader2,
   MapPin,
@@ -36,6 +37,12 @@ import {
   BadgeCheck,
   Gift,
   Bell,
+  Bed,
+  Hand,
+  Droplets,
+  HeartHandshake,
+  Shirt,
+  Theater,
 } from "lucide-react";
 import {
   Select,
@@ -603,14 +610,16 @@ export default function HomePage() {
                       <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
                         {type === "デリヘル" && <Hotel className="h-6 w-6 text-primary" />}
                         {type === "ホテヘル" && <Bed className="h-6 w-6 text-primary" />}
+                        {type === "ピンサロ" && <Hand className="h-6 w-6 text-primary" />}
+                        {type === "オナクラ" && <Hand className="h-6 w-6 text-primary" />}
+                        {type === "ソープ" && <Droplets className="h-6 w-6 text-primary" />}
+                        {type === "エステ" && <HeartHandshake className="h-6 w-6 text-primary" />}
+                        {type === "メンズエステ" && <Shirt className="h-6 w-6 text-primary" />}
+                        {type === "SM" && <Theater className="h-6 w-6 text-primary" />}
                         {type === "箱ヘル" && <Building2 className="h-6 w-6 text-primary" />}
                         {type === "風俗エステ" && <HandHeart className="h-6 w-6 text-primary" />}
-                        {type === "オナクラ" && <Hand className="h-6 w-6 text-primary" />}
                         {type === "M性感" && <Sparkles className="h-6 w-6 text-primary" />}
                         {type === "ソープランド" && <Droplets className="h-6 w-6 text-primary" />}
-                        {type === "ピンサロ" && <HeartHandshake className="h-6 w-6 text-primary" />}
-                        {type === "ファッションヘルス" && <Shirt className="h-6 w-6 text-primary" />}
-                        {type === "イメクラ" && <Theater className="h-6 w-6 text-primary" />}
                       </div>
                       <span className="text-center font-medium">{getServiceTypeLabel(type)}</span>
                     </Link>
