@@ -288,7 +288,9 @@ export default function StoreDashboard() {
   
   // プロフィールデータが読み込まれたときにカップサイズ条件の表示状態を更新
   useEffect(() => {
+    // cup_size_conditionsが配列であり、要素が存在する場合のみ表示する
     if (profile?.requirements?.cup_size_conditions && 
+        Array.isArray(profile.requirements.cup_size_conditions) &&
         profile.requirements.cup_size_conditions.length > 0) {
       setShowCupSizeConditions(true);
     }
@@ -419,12 +421,18 @@ export default function StoreDashboard() {
       return;
     }
     
-    // 現在の条件リストを取得
-    const currentConditions = profile.requirements.cup_size_conditions || [];
+    // 現在の条件リストを取得（必ず配列であることを確保）
+    let currentConditions = [];
+    if (profile.requirements.cup_size_conditions && 
+        Array.isArray(profile.requirements.cup_size_conditions)) {
+      currentConditions = [...profile.requirements.cup_size_conditions];
+    }
+    
+    console.log("現在のカップサイズ条件:", currentConditions);
     
     // 重複チェック
     const exists = currentConditions.some(
-      condition => condition.cup_size === normalizedCupSize
+      condition => condition && condition.cup_size === normalizedCupSize
     );
     
     if (exists) {
@@ -436,11 +444,14 @@ export default function StoreDashboard() {
       return;
     }
     
-    // 条件を追加
-    const updatedConditions = [
-      ...currentConditions,
-      { cup_size: normalizedCupSize as CupSize, spec_min: specMin }
-    ];
+    // 条件を追加（シンプルなオブジェクトとして）
+    const newCondition = { 
+      cup_size: normalizedCupSize as CupSize, 
+      spec_min: specMin 
+    };
+    
+    const updatedConditions = [...currentConditions, newCondition];
+    console.log("更新後のカップサイズ条件:", updatedConditions);
     
     // プロフィールの採用要件を更新
     const updatedRequirements = {
@@ -502,10 +513,18 @@ export default function StoreDashboard() {
   const handleRemoveCupSizeCondition = (index: number) => {
     if (!profile?.requirements?.cup_size_conditions) return;
     
+    // 必ず配列であることを確保
+    if (!Array.isArray(profile.requirements.cup_size_conditions)) {
+      console.error("カップサイズ条件が配列ではありません:", profile.requirements.cup_size_conditions);
+      return;
+    }
+    
     // 条件を削除
     const updatedConditions = [...profile.requirements.cup_size_conditions];
     const removedCondition = updatedConditions[index];
     updatedConditions.splice(index, 1);
+    
+    console.log("削除後のカップサイズ条件:", updatedConditions);
     
     // プロフィールの採用要件を更新
     const updatedRequirements = {

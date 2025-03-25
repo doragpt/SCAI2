@@ -226,7 +226,13 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // 勤務時間と応募条件
       working_hours: req.body.working_hours || existingProfile.working_hours || "",
       requirements: typeof req.body.requirements === 'object' 
-        ? req.body.requirements 
+        ? {
+            ...req.body.requirements,
+            // cup_size_conditionsが配列であることを保証
+            cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions) 
+              ? req.body.requirements.cup_size_conditions 
+              : []
+          }
         : existingProfile.requirements || {
             accepts_temporary_workers: false,
             requires_arrival_day_before: false,
@@ -346,7 +352,13 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         top_image: fullUpdateData.top_image,
         working_hours: fullUpdateData.working_hours,
         requirements: typeof fullUpdateData.requirements === 'object' 
-          ? fullUpdateData.requirements 
+          ? {
+              ...fullUpdateData.requirements,
+              // cup_size_conditionsが配列であることを保証
+              cup_size_conditions: Array.isArray(fullUpdateData.requirements.cup_size_conditions) 
+                ? fullUpdateData.requirements.cup_size_conditions 
+                : []
+            }
           : existingProfile.requirements || {},
         recruiter_name: fullUpdateData.recruiter_name,
         phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
