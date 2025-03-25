@@ -158,6 +158,18 @@ export function ProfileConfirmationModal({
                   label="顔出し設定" 
                   value={<Badge variant="secondary">{formData.face_visibility || "未設定"}</Badge>} 
                 />
+                {formData.hair_color && (
+                  <InfoItem 
+                    label="髪色" 
+                    value={<Badge variant="secondary">{formData.hair_color}</Badge>} 
+                  />
+                )}
+                {formData.look_type && (
+                  <InfoItem 
+                    label="外見タイプ" 
+                    value={<Badge variant="secondary">{formData.look_type}</Badge>} 
+                  />
+                )}
               </div>
             </section>
 
@@ -315,6 +327,28 @@ export function ProfileConfirmationModal({
             </section>
 
             <Separator />
+
+            {/* 特別経験・資格 */}
+            {formData.titles && formData.titles.length > 0 && (
+              <>
+                <section>
+                  <SectionHeader icon={Star} title="特別経験・資格" />
+                  <div className="space-y-4 bg-card p-4 rounded-lg">
+                    <InfoItem
+                      label="肩書き・特別経験"
+                      value={
+                        <div className="flex flex-wrap gap-2">
+                          {formData.titles.map((title, index) => (
+                            <Badge key={index} variant="outline">{title}</Badge>
+                          ))}
+                        </div>
+                      }
+                    />
+                  </div>
+                </section>
+                <Separator />
+              </>
+            )}
 
             {/* その他 */}
             <section>
