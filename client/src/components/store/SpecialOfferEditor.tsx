@@ -25,15 +25,15 @@ const AVAILABLE_ICONS = [
 
 // 利用可能な色のリスト
 const COLOR_PRESETS = [
-  { name: "ピンク", bg: "from-pink-50 to-pink-100", text: "text-pink-700", primary: "pink", border: "border-pink-200" },
-  { name: "パープル", bg: "from-purple-50 to-purple-100", text: "text-purple-700", primary: "purple", border: "border-purple-200" },
-  { name: "ブルー", bg: "from-blue-50 to-blue-100", text: "text-blue-700", primary: "blue", border: "border-blue-200" },
-  { name: "ティール", bg: "from-teal-50 to-teal-100", text: "text-teal-700", primary: "teal", border: "border-teal-200" },
-  { name: "グリーン", bg: "from-green-50 to-green-100", text: "text-green-700", primary: "green", border: "border-green-200" },
-  { name: "イエロー", bg: "from-amber-50 to-amber-100", text: "text-amber-700", primary: "amber", border: "border-amber-200" },
-  { name: "オレンジ", bg: "from-orange-50 to-orange-100", text: "text-orange-700", primary: "orange", border: "border-orange-200" },
-  { name: "レッド", bg: "from-red-50 to-red-100", text: "text-red-700", primary: "red", border: "border-red-200" },
-  { name: "グレー", bg: "from-gray-50 to-gray-100", text: "text-gray-700", primary: "gray", border: "border-gray-200" },
+  { name: "ピンク", bg: "from-pink-100 to-pink-200", text: "text-pink-700", primary: "pink", border: "border-pink-300" },
+  { name: "パープル", bg: "from-purple-100 to-purple-200", text: "text-purple-700", primary: "purple", border: "border-purple-300" },
+  { name: "ブルー", bg: "from-blue-100 to-blue-200", text: "text-blue-700", primary: "blue", border: "border-blue-300" },
+  { name: "ティール", bg: "from-teal-100 to-teal-200", text: "text-teal-700", primary: "teal", border: "border-teal-300" },
+  { name: "グリーン", bg: "from-green-100 to-green-200", text: "text-green-700", primary: "green", border: "border-green-300" },
+  { name: "イエロー", bg: "from-amber-100 to-amber-200", text: "text-amber-700", primary: "amber", border: "border-amber-300" },
+  { name: "オレンジ", bg: "from-orange-100 to-orange-200", text: "text-orange-700", primary: "orange", border: "border-orange-300" },
+  { name: "レッド", bg: "from-red-100 to-red-200", text: "text-red-700", primary: "red", border: "border-red-300" },
+  { name: "グレー", bg: "from-gray-100 to-gray-200", text: "text-gray-700", primary: "gray", border: "border-gray-300" },
 ];
 
 // テンプレート特典
@@ -42,35 +42,35 @@ const OFFER_TEMPLATES = [
     title: "入店祝い金", 
     description: "入店後1週間以内に全額支給", 
     icon: "Gift", 
-    backgroundColor: "from-pink-50 to-pink-100",
+    backgroundColor: "from-pink-100 to-pink-200",
     textColor: "text-pink-700" 
   },
   { 
     title: "面接交通費", 
     description: "面接時に全額支給", 
     icon: "Car", 
-    backgroundColor: "from-amber-50 to-amber-100",
+    backgroundColor: "from-amber-100 to-amber-200",
     textColor: "text-amber-700" 
   },
   { 
     title: "アリバイ対策", 
     description: "徹底したプライバシー保護", 
     icon: "Flag", 
-    backgroundColor: "from-blue-50 to-blue-100",
+    backgroundColor: "from-blue-100 to-blue-200",
     textColor: "text-blue-700" 
   },
   { 
     title: "罰金・ノルマなし", 
     description: "無理なく働ける環境", 
     icon: "Check", 
-    backgroundColor: "from-green-50 to-green-100",
+    backgroundColor: "from-green-100 to-green-200",
     textColor: "text-green-700" 
   },
   { 
     title: "自由出勤", 
     description: "あなたのペースで働けます", 
     icon: "Zap", 
-    backgroundColor: "from-purple-50 to-purple-100",
+    backgroundColor: "from-purple-100 to-purple-200",
     textColor: "text-purple-700" 
   },
 ];
@@ -106,7 +106,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
       title: "",
       description: "",
       icon: "Award",
-      backgroundColor: "from-purple-50 to-purple-100",
+      backgroundColor: "from-purple-100 to-purple-200",
       textColor: "text-purple-700",
       order: fields.length,
     });
@@ -388,7 +388,7 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
                         {COLOR_PRESETS.map((color) => (
                           <SelectItem key={color.name} value={color.bg}>
                             <div className="flex items-center">
-                              <span className={`w-4 h-4 rounded-full mr-2 inline-block bg-gradient-to-br ${color.bg.replace('from-', 'bg-').split(' ')[0]}`}></span>
+                              <span className={`w-6 h-6 rounded mr-2 inline-block bg-gradient-to-br ${color.bg}`}></span>
                               {color.name}
                             </div>
                           </SelectItem>
