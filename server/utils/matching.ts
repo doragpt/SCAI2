@@ -638,18 +638,36 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       }
       
       // 髪色スコア計算
-      // 現在の写真から髪色を取得
-      const hairColorPhoto = talentResult.photos?.find(photo => photo.tag === "現在の髪色");
-      let estimatedHairColor = "黒髪"; // デフォルト値
-      if (hairColorPhoto) {
-        // 髪色写真がある場合、写真の詳細から髪色を推定（実際の実装ではAPIなどでの判定や、入力値を使用）
-        if (talentResult.notes?.includes("金髪") || talentResult.notes?.includes("カラー")) {
-          estimatedHairColor = "金髪・インナーカラー・派手髪";
-        } else if (talentResult.notes?.includes("明るめ")) {
-          estimatedHairColor = "明るめの茶髪";
-        } else if (talentResult.notes?.includes("茶髪")) {
+      // プロフィールから髪色を直接取得
+      let hairColor = talentResult.hair_color || "黒髪"; // 設定されていない場合はデフォルト値
+      
+      // 髪色の値を計算用のラベルに変換
+      let estimatedHairColor;
+      switch (hairColor) {
+        case "黒髪":
+          estimatedHairColor = "黒髪";
+          break;
+        case "暗めの茶髪":
           estimatedHairColor = "暗めの茶髪";
-        }
+          break;
+        case "明るめの茶髪":
+          estimatedHairColor = "明るめの茶髪";
+          break;
+        case "金髪・インナーカラー・派手髪":
+          estimatedHairColor = "金髪・インナーカラー・派手髪";
+          break;
+        default:
+          // 写真や注釈から推測（フォールバック）
+          if (talentResult.notes?.includes("金髪") || talentResult.notes?.includes("カラー")) {
+            estimatedHairColor = "金髪・インナーカラー・派手髪";
+          } else if (talentResult.notes?.includes("明るめ")) {
+            estimatedHairColor = "明るめの茶髪";
+          } else if (talentResult.notes?.includes("茶髪")) {
+            estimatedHairColor = "暗めの茶髪";
+          } else {
+            estimatedHairColor = "黒髪"; // デフォルト値
+          }
+          break;
       }
       
       if (store.requirements?.preferred_hair_colors) {
@@ -662,31 +680,41 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       }
       
       // 外見スタイルスコア計算
-      // 基本情報から外見スタイルを推定
-      let estimatedLookType = "普通系";
-      // ageは既に計算済みなので再計算しない
-      const height = talentResult.height || 0;
-      const weight = talentResult.weight || 0;
+      // プロフィールから外見タイプを直接取得
+      let lookType = talentResult.look_type || null;
       
-      if (talentAge < 23) {
-        estimatedLookType = "ロリ系・素人系・素朴系・可愛い系";
-      } else if (talentAge >= 23 && talentAge < 28) {
-        if (talentResult.notes?.includes("モデル") || talentResult.notes?.includes("美人")) {
-          estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
-        } else if (height > 165 && weight < 50) {
-          estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
+      // 外見タイプが設定されていない場合は基本情報から推定
+      let estimatedLookType;
+      
+      if (lookType) {
+        // プロフィールで設定されたlook_typeを使用
+        estimatedLookType = lookType;
+      } else {
+        // 基本情報から推定する（フォールバック処理）
+        estimatedLookType = "普通系";
+        const height = talentResult.height || 0;
+        const weight = talentResult.weight || 0;
+        
+        if (talentAge < 23) {
+          estimatedLookType = "ロリ系・素人系・素朴系・可愛い系";
+        } else if (talentAge >= 23 && talentAge < 28) {
+          if (talentResult.notes?.includes("モデル") || talentResult.notes?.includes("美人")) {
+            estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
+          } else if (height > 165 && weight < 50) {
+            estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
+          }
+        } else if (talentAge >= 28 && talentAge < 35) {
+          estimatedLookType = "お姉さん系（20代後半〜30代前半）";
+        } else if (talentAge >= 35 && talentAge < 40) {
+          estimatedLookType = "大人系（30代〜）";
+        } else if (talentAge >= 40) {
+          estimatedLookType = "熟女系（40代〜）";
         }
-      } else if (talentAge >= 28 && talentAge < 35) {
-        estimatedLookType = "お姉さん系（20代後半〜30代前半）";
-      } else if (talentAge >= 35 && talentAge < 40) {
-        estimatedLookType = "大人系（30代〜）";
-      } else if (talentAge >= 40) {
-        estimatedLookType = "熟女系（40代〜）";
-      }
-      
-      // スペックから体型を判定
-      if (weight > height - 90) {
-        estimatedLookType = "ぽっちゃり系";
+        
+        // スペックから体型を判定
+        if (weight > height - 90) {
+          estimatedLookType = "ぽっちゃり系";
+        }
       }
       
       if (store.requirements?.preferred_look_types) {
