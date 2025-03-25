@@ -20,6 +20,8 @@ import {
   LogOut,
   Loader2,
   AlertCircle,
+  Trash2,
+  Clock,
   UserCircle,
   Phone,
   Mail,
@@ -28,7 +30,6 @@ import {
   User,
   Pencil,
   Eye,
-  Clock,
   CheckCircle,
   Banknote,
   Home,
@@ -225,6 +226,7 @@ export default function StoreDashboard() {
   const workingTimeHoursRef = useRef<HTMLInputElement>(null);
   const minGuaranteeRef = useRef<HTMLInputElement>(null);
   const maxGuaranteeRef = useRef<HTMLInputElement>(null);
+  const guaranteedHoursRef = useRef<HTMLInputElement>(null);
   const acceptsTempWorkersRef = useRef<HTMLButtonElement>(null);
   const requiresArrivalDayBeforeRef = useRef<HTMLButtonElement>(null);
   const otherConditionsRef = useRef<HTMLTextAreaElement>(null);
