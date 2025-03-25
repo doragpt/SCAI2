@@ -1512,7 +1512,7 @@ export default function StoreDashboard() {
                                     // ない場合は、デフォルト条件を表示のみして、ユーザーに編集してもらう
                                     toast({
                                       title: "カップサイズ条件を設定できます",
-                                      description: "条件を入力して入力欄右の保存ボタンを押してください",
+                                      description: "条件を入力して「条件を追加」ボタンを押してください",
                                     });
                                   }
                                   
