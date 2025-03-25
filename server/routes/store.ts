@@ -50,9 +50,38 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
       return res.status(404).json({ message: "店舗プロフィールが見つかりません" });
     }
 
+    // requirementsフィールドが存在するか確認し、空のオブジェクトでないことを確認
+    if (!profile.requirements || typeof profile.requirements !== 'object') {
+      profile.requirements = {
+        accepts_temporary_workers: false,
+        requires_arrival_day_before: false,
+        other_conditions: [],
+        cup_size_conditions: []
+      };
+    }
+
+    // cup_size_conditionsフィールドが存在するか確認
+    if (!profile.requirements.cup_size_conditions) {
+      profile.requirements.cup_size_conditions = [];
+    }
+    
+    // 必須フィールドが存在するか確認
+    if (profile.requirements.accepts_temporary_workers === undefined) {
+      profile.requirements.accepts_temporary_workers = false;
+    }
+    
+    if (profile.requirements.requires_arrival_day_before === undefined) {
+      profile.requirements.requires_arrival_day_before = false;
+    }
+    
+    if (!profile.requirements.other_conditions) {
+      profile.requirements.other_conditions = [];
+    }
+
     log('info', '店舗プロフィール取得成功', {
       userId: req.user.id,
-      profileId: profile.id
+      profileId: profile.id,
+      requirementsData: profile.requirements
     });
 
     return res.json(profile);
@@ -196,7 +225,14 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 勤務時間と応募条件
       working_hours: req.body.working_hours || existingProfile.working_hours || "",
-      requirements: req.body.requirements || existingProfile.requirements || "",
+      requirements: typeof req.body.requirements === 'object' 
+        ? req.body.requirements 
+        : existingProfile.requirements || {
+            accepts_temporary_workers: false,
+            requires_arrival_day_before: false,
+            other_conditions: [],
+            cup_size_conditions: []
+          },
       
       // 追加フィールド
       recruiter_name: req.body.recruiter_name,
@@ -303,7 +339,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         status: fullUpdateData.status,
         top_image: fullUpdateData.top_image,
         working_hours: fullUpdateData.working_hours,
-        requirements: fullUpdateData.requirements,
+        requirements: typeof fullUpdateData.requirements === 'object' 
+          ? fullUpdateData.requirements 
+          : existingProfile.requirements || {},
         recruiter_name: fullUpdateData.recruiter_name,
         phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
         email_addresses: validateArrayField(fullUpdateData.email_addresses),

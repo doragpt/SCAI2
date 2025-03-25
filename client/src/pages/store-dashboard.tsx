@@ -224,6 +224,7 @@ export default function StoreDashboard() {
     spec_min: 80
   });
   // カップサイズ条件の表示/非表示状態（初期値）- プロフィールデータに基づいて設定
+  // カップサイズ条件の表示状態（初期値false）
   const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
@@ -291,7 +292,7 @@ export default function StoreDashboard() {
         profile.requirements.cup_size_conditions.length > 0) {
       setShowCupSizeConditions(true);
     }
-  }, [profile]);
+  }, [profile?.requirements?.cup_size_conditions]);
   
   // 採用設定を保存するミューテーション
   const saveRequirementsMutation = useMutation({
