@@ -287,7 +287,165 @@ export default function JobDetail() {
         
         {/* バニラ風の拡張機能を持つ詳細コンポーネント */}
         <JobDetailExpanded 
-          job={job} 
+          job={{
+            ...job,
+            // テスト用の口コミデータ
+            testimonials: [
+              {
+                user_name: "ゆうか",
+                age: 25,
+                content: "この店舗で働いて3ヶ月になります。スタッフの方々が親切で、初心者の私でも安心して働けています。給与も約束通りで、人間関係も良好です。",
+                rating: 5,
+                verified: true,
+                date: "2025-02-15",
+                tags: ["初心者歓迎", "スタッフ親切"]
+              },
+              {
+                user_name: "まりな",
+                age: 29,
+                content: "以前は別の店舗で働いていましたが、こちらに移ってから収入が安定しました。シフトの融通も効くので、プライベートとの両立がしやすいです。",
+                rating: 4,
+                verified: true,
+                date: "2025-01-20",
+                tags: ["収入安定", "シフト自由"]
+              },
+              {
+                user_name: "あやの",
+                age: 22,
+                content: "面接から入店までのサポートがとても丁寧でした。不安なことがあってもすぐに相談に乗ってくれるので、安心して働けています。",
+                rating: 5,
+                verified: false,
+                date: "2024-12-10"
+              }
+            ],
+            // テスト用の設備情報
+            facility_features: [
+              {
+                id: "f1",
+                name: "個室完備",
+                category: "room",
+                highlight: true,
+                order: 1,
+                description: "プライバシーを確保した清潔な個室をご用意"
+              },
+              {
+                id: "f2",
+                name: "シャワールーム",
+                category: "bath",
+                highlight: false,
+                order: 2
+              },
+              {
+                id: "f3",
+                name: "セキュリティ監視",
+                category: "security",
+                highlight: true,
+                order: 3,
+                description: "24時間体制のセキュリティで安全を確保"
+              },
+              {
+                id: "f4",
+                name: "フリーWi-Fi",
+                category: "internet",
+                highlight: false,
+                order: 4
+              },
+              {
+                id: "f5",
+                name: "ドリンクバー",
+                category: "meal",
+                highlight: false,
+                order: 5
+              },
+              {
+                id: "f6",
+                name: "メイクルーム",
+                category: "room",
+                highlight: false,
+                order: 6
+              }
+            ],
+            // テスト用の身バレ対策
+            privacy_measures: [
+              {
+                id: "p1",
+                title: "顔出し不要の勤務",
+                description: "顔出し・顔バレの心配なく働けます。マスク着用可、SNS掲載なし、身バレ対策徹底。",
+                category: "face",
+                order: 1,
+                level: "high"
+              },
+              {
+                id: "p2",
+                title: "エリア外勤務",
+                description: "自宅近くではなく、離れたエリアで働けるため知人バレのリスクを最小限に。",
+                category: "location",
+                order: 2,
+                level: "medium"
+              },
+              {
+                id: "p3",
+                title: "個人情報保護",
+                description: "個人情報は厳重に管理され、外部に漏れることはありません。",
+                category: "data",
+                order: 3,
+                level: "high"
+              }
+            ],
+            // テスト用の給与例
+            salary_examples: [
+              {
+                id: "s1",
+                order: 1,
+                title: "体験入店保証",
+                hours: 8,
+                amount: 30000,
+                isGuaranteed: true,
+                description: "初日でも安心の高額保証"
+              },
+              {
+                id: "s2",
+                order: 2,
+                title: "平日勤務",
+                hours: 6,
+                amount: 25000,
+                isGuaranteed: false,
+                description: "平日でも高収入"
+              },
+              {
+                id: "s3",
+                order: 3,
+                title: "週末勤務",
+                hours: 8,
+                amount: 40000,
+                isGuaranteed: false,
+                description: "土日は特に稼げます"
+              }
+            ],
+            // テスト用の動画
+            job_videos: [
+              {
+                id: "v1",
+                category: "store",
+                order: 1,
+                title: "店内紹介",
+                url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+                thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                featured: true,
+                description: "清潔感のある高級感溢れる店内をご紹介"
+              },
+              {
+                id: "v2",
+                category: "interview",
+                order: 2,
+                title: "スタッフインタビュー",
+                url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+                thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                featured: false,
+                description: "実際に働くスタッフの声"
+              }
+            ]
+          }}
           onApply={() => {
             if (user) {
               window.location.href = `/jobs/${id}/apply`;
