@@ -430,16 +430,9 @@ export default function StoreDashboard() {
                     <div className="flex items-center gap-3">
                       {profile && (
                         <div className="flex items-center gap-2">
-                          <Switch
-                            checked={profile.status === "published"}
-                            disabled={isUpdatingStatus}
-                            onCheckedChange={(checked) => 
-                              updateStatusMutation.mutate(checked ? "published" : "draft")
-                            }
-                          />
-                          <span className="text-sm font-medium">
-                            {profile?.status === "published" ? "公開中" : "非公開"}
-                          </span>
+                          <Badge variant={profile?.status === "published" ? "default" : "secondary"}>
+                            {profileStatusLabels[profile?.status || "draft"]}
+                          </Badge>
                         </div>
                       )}
                       <Button onClick={() => setShowProfileForm(true)} variant="outline" size="sm">
