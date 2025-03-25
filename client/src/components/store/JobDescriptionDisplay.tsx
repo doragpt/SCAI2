@@ -92,14 +92,6 @@ export function JobDescriptionDisplay({
                     </div>
                   )}
                   
-                  {/* スペック条件 */}
-                  {typeof requirements === 'object' && requirements.spec_min !== undefined && (
-                    <div>
-                      <p className="font-medium mb-1">スペック条件：</p>
-                      <p>スペック値{requirements.spec_min}以上</p>
-                    </div>
-                  )}
-                  
                   {/* その他条件 */}
                   {typeof requirements === 'object' && requirements.other_conditions && requirements.other_conditions.length > 0 && (
                     <div>
@@ -109,6 +101,15 @@ export function JobDescriptionDisplay({
                           <li key={index}>{condition}</li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  
+                  {/* 詳細条件の案内 */}
+                  {typeof requirements === 'object' && requirements.spec_min !== undefined && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md mt-2">
+                      <p className="text-blue-700 dark:text-blue-300 text-sm">
+                        ※ 詳細な応募条件については、お電話またはメールにてお問い合わせください。
+                      </p>
                     </div>
                   )}
                 </div>
