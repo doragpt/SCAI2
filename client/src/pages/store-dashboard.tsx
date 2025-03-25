@@ -22,9 +22,11 @@ import {
   LogOut,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Trash2,
   Clock,
   UserCircle,
+  UserCheck,
   Phone,
   Mail,
   MessageCircle,
@@ -63,9 +65,12 @@ import {
   Ruler,
   ListPlus,
   Save,
+  Scissors,
   X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -324,8 +329,8 @@ export default function StoreDashboard() {
         Array.isArray(profile.requirements.cup_size_conditions) &&
         profile.requirements.cup_size_conditions.length > 0;
       
-      setShowCupSizeConditions(hasCupConditions);
-      setEnableCupSizeConditions(hasCupConditions);
+      setShowCupSizeConditions(hasCupConditions || false);
+      setEnableCupSizeConditions(hasCupConditions || false);
       
       console.log("カップサイズ条件の状態を更新:", {
         hasCupConditions,
@@ -1717,8 +1722,179 @@ export default function StoreDashboard() {
                         </div>
                       </div>
 
+                      {/* 髪色設定 */}
+                      <div className="border rounded-lg p-4 mt-6">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <Scissors className="h-5 w-5 mr-2 text-violet-500" />
+                          髪色条件
+                        </h3>
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Switch 
+                            id="enable-hair-color-settings"
+                            checked={showHairColorSettings}
+                            onCheckedChange={(checked) => {
+                              setShowHairColorSettings(checked);
+                              if (!checked) {
+                                setSelectedHairColors([]);
+                              }
+                            }}
+                          />
+                          <div>
+                            <label htmlFor="enable-hair-color-settings" className="text-sm font-medium cursor-pointer">
+                              髪色条件を設定する
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                              求職者の髪色に関する条件を設定できます
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {showHairColorSettings && (
+                          <div className="bg-muted/40 rounded-md p-4 border mt-2">
+                            <div className="text-sm mb-3">
+                              採用/マッチングの際に優先される髪色を選択してください
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {hairColorTypes.map((color) => (
+                                <div key={color} className="flex items-center">
+                                  <Checkbox 
+                                    id={`hair-color-${color}`}
+                                    checked={selectedHairColors.includes(color)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedHairColors([...selectedHairColors, color]);
+                                      } else {
+                                        setSelectedHairColors(
+                                          selectedHairColors.filter(c => c !== color)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`hair-color-${color}`} 
+                                    className="ml-2 text-sm cursor-pointer"
+                                  >
+                                    {color}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 外見タイプ設定 */}
+                      <div className="border rounded-lg p-4 mt-6">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <UserCheck className="h-5 w-5 mr-2 text-indigo-500" />
+                          外見タイプ条件
+                        </h3>
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Switch 
+                            id="enable-look-type-settings"
+                            checked={showLookTypeSettings}
+                            onCheckedChange={(checked) => {
+                              setShowLookTypeSettings(checked);
+                              if (!checked) {
+                                setSelectedLookTypes([]);
+                              }
+                            }}
+                          />
+                          <div>
+                            <label htmlFor="enable-look-type-settings" className="text-sm font-medium cursor-pointer">
+                              外見タイプ条件を設定する
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                              求職者の外見タイプに関する条件を設定できます
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {showLookTypeSettings && (
+                          <div className="bg-muted/40 rounded-md p-4 border mt-2">
+                            <div className="text-sm mb-3">
+                              採用/マッチングの際に優先される外見タイプを選択してください
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {lookTypes.map((type) => (
+                                <div key={type} className="flex items-center">
+                                  <Checkbox 
+                                    id={`look-type-${type}`}
+                                    checked={selectedLookTypes.includes(type)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedLookTypes([...selectedLookTypes, type]);
+                                      } else {
+                                        setSelectedLookTypes(
+                                          selectedLookTypes.filter(t => t !== type)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`look-type-${type}`} 
+                                    className="ml-2 text-sm cursor-pointer"
+                                  >
+                                    {type}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* タトゥー/傷許容レベル設定 */}
+                      <div className="border rounded-lg p-4 mt-6">
+                        <h3 className="text-lg font-medium mb-3 flex items-center">
+                          <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+                          タトゥー/傷許容レベル
+                        </h3>
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Switch 
+                            id="enable-tattoo-settings"
+                            checked={showTattooLevelSettings}
+                            onCheckedChange={(checked) => {
+                              setShowTattooLevelSettings(checked);
+                              if (!checked) {
+                                setSelectedTattooLevel(null);
+                              }
+                            }}
+                          />
+                          <div>
+                            <label htmlFor="enable-tattoo-settings" className="text-sm font-medium cursor-pointer">
+                              タトゥー/傷許容レベルを設定する
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                              タトゥーや傷の許容レベルを設定できます
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {showTattooLevelSettings && (
+                          <div className="bg-muted/40 rounded-md p-4 border mt-2">
+                            <div className="text-sm mb-3">
+                              タトゥーや傷の許容レベルを選択してください
+                            </div>
+                            <RadioGroup 
+                              value={selectedTattooLevel || ""}
+                              onValueChange={(value) => {
+                                setSelectedTattooLevel(value as TattooAcceptanceLevel);
+                              }}
+                            >
+                              {tattooAcceptanceLevels.map((level) => (
+                                <div key={level} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={level} id={`tattoo-level-${level}`} />
+                                  <Label htmlFor={`tattoo-level-${level}`}>{level}</Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </div>
+                        )}
+                      </div>
+
                       {/* 出稼ぎ関連設定 */}
-                      <div className="border rounded-lg p-4">
+                      <div className="border rounded-lg p-4 mt-6">
                         <h3 className="text-lg font-medium mb-3 flex items-center">
                           <Briefcase className="h-5 w-5 mr-2 text-violet-500" />
                           出稼ぎ関連設定
