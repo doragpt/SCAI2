@@ -66,7 +66,7 @@ export function SalaryDisplay({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             <BadgeJapaneseYen className="h-5 w-5 mr-2 text-emerald-600 dark:text-emerald-400" />
-            <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200">給与</h4>
+            <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200">参考給与例</h4>
           </div>
         </div>
         
@@ -75,7 +75,7 @@ export function SalaryDisplay({
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">日給</p>
               <p className="text-2xl font-bold text-green-700 dark:text-green-400">
-                {salaryText}
+                {minimumGuarantee && maximumGuarantee ? `${minimumGuarantee.toLocaleString()}円〜${maximumGuarantee.toLocaleString()}円` : salaryText}
               </p>
             </div>
             
@@ -97,13 +97,13 @@ export function SalaryDisplay({
             </div>
           </div>
           
-          {/* 時給制の場合に追加情報を表示 */}
+          {/* 時給表示を追加 */}
           {workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0 && (
             <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-1.5 text-green-600 dark:text-green-400" />
                 <span className="text-sm text-green-700 dark:text-green-300">
-                  平均時給: {averageHourlyPay.toLocaleString()}円 × {workingTimeHours}時間
+                  {workingTimeHours}時間{averageHourlyPay.toLocaleString()}円 時給換算{averageHourlyPay.toLocaleString()}円
                 </span>
               </div>
             </div>

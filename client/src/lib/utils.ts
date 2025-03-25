@@ -32,24 +32,24 @@ export function formatSalary(
 
   // 完全な給与情報がある場合（時給換算可能 + 給与情報あり）
   if (hasHourlyInfo && hasGuaranteeInfo) {
-    const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
+    const hourlyRate = averageHourlyPay;
     const guaranteeText = formatGuaranteeRange(min, max);
-    return `給与: ${guaranteeText} / ${workingTimeHours}時間勤務 / 時給換算${hourlyRate.toLocaleString()}円`;
+    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円 時給換算${hourlyRate.toLocaleString()}円`;
   }
   
   // 時給換算情報のみの場合
   if (hasHourlyInfo) {
-    const hourlyRate = Math.round(averageHourlyPay / workingTimeHours);
-    return `${workingTimeHours}時間で${averageHourlyPay.toLocaleString()}円 (時給換算: ${hourlyRate.toLocaleString()}円)`;
+    const hourlyRate = averageHourlyPay;
+    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円 時給換算${hourlyRate.toLocaleString()}円`;
   }
   
   // 給与情報のみの場合
   if (hasGuaranteeInfo) {
-    return `給与: ${formatGuaranteeRange(min, max)}`;
+    return `参考給与例 ${formatGuaranteeRange(min, max)}`;
   }
   
   // どちらの情報もない場合
-  return "給与応相談";
+  return "参考給与例 応相談";
 }
 
 /**

@@ -353,7 +353,7 @@ export default function JobDetail() {
               <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b">
                 <div className="flex items-center">
                   <Banknote className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                  <h3 className="text-lg font-bold text-green-800 dark:text-green-400">給与情報</h3>
+                  <h3 className="text-lg font-bold text-green-800 dark:text-green-400">参考給与例</h3>
                 </div>
               </CardHeader>
               <CardContent className="p-5">
