@@ -56,10 +56,10 @@ export function FacilityFeaturesDisplay({
             )}
           >
             <div className="mt-0.5 shrink-0">
-              {getFeatureIcon(feature.category)}
+              {feature.icon ? getIconByName(feature.icon) : getFeatureIcon(feature.category || 'other')}
             </div>
             <div>
-              <h4 className="font-medium text-base">{feature.name}</h4>
+              <h4 className="font-medium text-base">{feature.title || feature.name}</h4>
               {feature.description && (
                 <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
               )}
@@ -69,6 +69,34 @@ export function FacilityFeaturesDisplay({
       </div>
     </div>
   );
+}
+
+// アイコン名からアイコンを取得
+function getIconByName(iconName: string) {
+  switch (iconName) {
+    case 'bed':
+      return <Bed className="h-5 w-5 text-violet-500" />;
+    case 'shower-head':
+      return <ShowerHead className="h-5 w-5 text-blue-500" />;
+    case 'utensils':
+      return <Utensils className="h-5 w-5 text-orange-500" />;
+    case 'cctv':
+      return <Cctv className="h-5 w-5 text-red-500" />;
+    case 'umbrella-off':
+      return <UmbrellaOff className="h-5 w-5 text-green-500" />;
+    case 'tv':
+      return <Tv className="h-5 w-5 text-pink-500" />;
+    case 'flask-conical':
+      return <FlaskConical className="h-5 w-5 text-cyan-500" />;
+    case 'car':
+      return <Car className="h-5 w-5 text-yellow-500" />;
+    case 'wifi':
+      return <Wifi className="h-5 w-5 text-sky-500" />;
+    case 'building':
+      return <Building className="h-5 w-5 text-gray-500" />;
+    default:
+      return <Building className="h-5 w-5 text-gray-500" />;
+  }
 }
 
 // カテゴリに応じたアイコン

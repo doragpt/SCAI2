@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, timestamp, jsonb, index, boolean } from
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 
 // Constants
 export const prefectures = [
@@ -250,43 +251,56 @@ export const specialOfferSchema = z.object({
   order: z.number().default(0),
 });
 
-// 求人動画コンテンツの型定義
+// 求人動画コンテンツのスキーマ
 export const jobVideoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  url: z.string(), // 動画URL
-  thumbnail: z.string(), // サムネイル画像URL
-  duration: z.string(), // "PT0H1M30S"形式の動画時間
-  uploadDate: z.string(), // ISO-8601形式の日付
-  featured: z.boolean().default(false), // フィーチャー表示するかどうか
-});
-
-// 給与例・体験保証のケース
-export const salaryExampleSchema = z.object({
-  id: z.string(),
-  title: z.string(), // 例: "1日体験入店", "週3回勤務", "月20日勤務"
-  hours: z.number(), // 勤務時間
-  amount: z.number(), // 金額
-  description: z.string().optional(), // 追加説明
-  isGuaranteed: z.boolean().default(false), // 保証か目安か
-  conditions: z.string().optional(), // 条件説明
-});
-
-// 身バレ対策項目
-export const privacyMeasureSchema = z.object({
-  id: z.string(),
-  title: z.string(), // 例: "顔出し不要", "写メ日記不要"
-  description: z.string(),
-  icon: z.string(), // アイコン名
-});
-
-// 店舗設備項目
-export const facilityFeatureSchema = z.object({
-  id: z.string(),
-  title: z.string(), // 例: "個室待機", "Wi-Fi完備"
+  id: z.string().default(() => nanoid()),
+  title: z.string().min(1, "タイトルは必須です"),
   description: z.string().optional(),
-  icon: z.string(), // アイコン名
+  url: z.string().url("有効なURLを入力してください"),
+  thumbnail: z.string().url("有効なサムネイルURLを入力してください"),
+  duration: z.number().optional(), // 秒単位
+  featured: z.boolean().default(false), // メイン表示用動画かどうか
+  category: z.enum(["interview", "store", "work", "facility", "other"]).default("work"),
+  order: z.number().default(0),
+  uploadDate: z.string().optional(), // ISO-8601形式の日付
+});
+
+// 給与例・体験保証ケースのスキーマ
+export const salaryExampleSchema = z.object({
+  id: z.string().default(() => nanoid()),
+  title: z.string().min(1, "タイトルは必須です"),
+  description: z.string().optional(),
+  hours: z.number().min(1, "勤務時間を入力してください"),
+  amount: z.number().min(0, "金額を入力してください"),
+  isGuaranteed: z.boolean().default(false), // 保証あり/なし
+  conditions: z.string().optional(), // 条件
+  order: z.number().default(0),
+});
+
+// 身バレ対策のスキーマ
+export const privacyMeasureSchema = z.object({
+  id: z.string().default(() => nanoid()),
+  title: z.string().min(1, "タイトルは必須です"),
+  description: z.string(),
+  category: z.enum(["face", "location", "data", "emergency", "other"]).default("other"),
+  level: z.enum(["high", "medium", "low"]).default("medium"),
+  order: z.number().default(0),
+  icon: z.string().optional(), // アイコン名
+});
+
+// 店舗設備のスキーマ
+export const facilityFeatureSchema = z.object({
+  id: z.string().default(() => nanoid()),
+  name: z.string().min(1, "名前は必須です"),
+  description: z.string().optional(),
+  category: z.enum([
+    "room", "bath", "meal", "security", "privacy", 
+    "entertainment", "amenity", "transportation", "internet", "other"
+  ]).default("other"),
+  highlight: z.boolean().default(false), // 特に強調表示する設備かどうか
+  order: z.number().default(0),
+  title: z.string().optional(), // 互換性のため
+  icon: z.string().optional(), // 互換性のため
 });
 
 export type SpecialOffer = z.infer<typeof specialOfferSchema>;

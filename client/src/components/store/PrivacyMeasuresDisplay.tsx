@@ -33,12 +33,14 @@ export function PrivacyMeasuresDisplay({ measures, className, limit }: PrivacyMe
         {displayMeasures.map((measure) => (
           <div key={measure.id} className="flex gap-3">
             <div className="mt-1">
-              {getPrivacyIcon(measure.category)}
+              {measure.icon ? getPrivacyIconByName(measure.icon) : getPrivacyIconByCategory(measure.category || 'other')}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-semibold">{measure.title}</h4>
-                <Badge variant={getVariantByLevel(measure.level)}>{getLevelLabel(measure.level)}</Badge>
+                {measure.level && (
+                  <Badge variant={getVariantByLevel(measure.level)}>{getLevelLabel(measure.level)}</Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">{measure.description}</p>
             </div>
@@ -85,8 +87,26 @@ function getVariantByLevel(level: string): "default" | "secondary" | "destructiv
   }
 }
 
+// アイコン名からアイコンを取得
+function getPrivacyIconByName(iconName: string) {
+  switch (iconName) {
+    case 'eye-off':
+      return <EyeOff className="h-5 w-5 text-indigo-500" />;
+    case 'shield':
+      return <Shield className="h-5 w-5 text-green-500" />;
+    case 'shield-check':
+      return <ShieldCheck className="h-5 w-5 text-blue-500" />;
+    case 'shield-alert':
+      return <ShieldAlert className="h-5 w-5 text-red-500" />;
+    case 'eye':
+      return <Eye className="h-5 w-5 text-gray-500" />;
+    default:
+      return <ShieldCheck className="h-5 w-5 text-gray-500" />;
+  }
+}
+
 // カテゴリに応じたアイコン
-function getPrivacyIcon(category: string) {
+function getPrivacyIconByCategory(category: string) {
   switch (category) {
     case 'face':
       return <EyeOff className="h-5 w-5 text-indigo-500" />;
