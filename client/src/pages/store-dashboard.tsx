@@ -216,6 +216,9 @@ export default function StoreDashboard() {
   // 採用設定関連のステート
   const [isSavingRequirements, setIsSavingRequirements] = useState(false);
   const [newCupSizeCondition, setNewCupSizeCondition] = useState({ cup_size: "E", spec_min: 100 });
+  const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
+    { time: 60, price: 10000 },
+  ]);
   
   // 採用設定フォーム用のref
   const ageMinRef = useRef<HTMLInputElement>(null);
@@ -456,6 +459,43 @@ export default function StoreDashboard() {
     
     // 採用要件の更新と保存
     saveRequirementsMutation.mutate();
+  };
+  
+  // 価格設定を追加する関数
+  const handleAddPriceSetting = () => {
+    if (priceSettings.length >= 4) {
+      toast({
+        variant: "destructive",
+        title: "価格設定の上限に達しました",
+        description: "最大4つまでの価格設定を登録できます"
+      });
+      return;
+    }
+    
+    setPriceSettings([...priceSettings, { time: 60, price: 10000 }]);
+  };
+  
+  // 価格設定を削除する関数
+  const handleRemovePriceSetting = (index: number) => {
+    if (priceSettings.length <= 1) {
+      toast({
+        variant: "destructive",
+        title: "削除できません",
+        description: "少なくとも1つの価格設定が必要です"
+      });
+      return;
+    }
+    
+    const updatedSettings = [...priceSettings];
+    updatedSettings.splice(index, 1);
+    setPriceSettings(updatedSettings);
+  };
+  
+  // 価格設定の値を更新する関数
+  const handlePriceSettingChange = (index: number, field: 'time' | 'price', value: number) => {
+    const updatedSettings = [...priceSettings];
+    updatedSettings[index][field] = value;
+    setPriceSettings(updatedSettings);
   };
 
   // 公開ステータス変更処理
