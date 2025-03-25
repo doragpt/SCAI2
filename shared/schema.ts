@@ -603,6 +603,14 @@ export const talentProfileSchema = z.object({
   face_visibility: z.enum(faceVisibilityTypes, {
     required_error: "パネルの顔出し設定を選択してください",
   }),
+  // 新しいフィールド：タトゥー/傷のレベル
+  tattoo_level: z.enum(tattooAcceptanceLevels).optional(),
+  // 新しいフィールド：髪色
+  hair_color: z.enum(hairColorTypes).optional(),
+  // 新しいフィールド：外見スタイル
+  look_type: z.enum(lookTypes).optional(),
+  // 新しいフィールド：タイトル（芸能人/モデル経験など）
+  titles: z.array(z.string()).default([]),
   can_photo_diary: z.boolean().default(false),
   can_home_delivery: z.boolean().default(false),
   ng_options: z.object({

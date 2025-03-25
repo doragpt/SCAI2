@@ -384,6 +384,22 @@ function generateMatchReasons(scores: Record<string, number>, storeProfile: any)
   else if (scores.CUP_SIZE > 0.8) reasons.push("スタイル条件に合致しています");
   else if (scores.CUP_SIZE > 0.6) reasons.push("スタイル条件にほぼ合致しています");
   
+  // タトゥー/傷の条件によるマッチング
+  if (scores.TATTOO === 1.0) reasons.push("タトゥー/傷の条件に合致しています");
+  else if (scores.TATTOO > 0.7) reasons.push("タトゥー/傷の条件にほぼ合致しています");
+  
+  // 髪色によるマッチング
+  if (scores.HAIR_COLOR === 1.0) reasons.push("希望の髪色タイプです");
+  else if (scores.HAIR_COLOR > 0.8) reasons.push("髪色条件に合致しています");
+  
+  // 外見スタイルによるマッチング
+  if (scores.APPEARANCE === 1.0) reasons.push("希望の外見タイプに完全一致");
+  else if (scores.APPEARANCE > 0.8) reasons.push("希望の外見タイプに合致");
+  else if (scores.APPEARANCE > 0.6) reasons.push("外見タイプが近いです");
+  
+  // タイトル（特別経験）によるボーナス
+  if (scores.TITLES === 1.0) reasons.push("芸能/モデル経験者優遇店舗");
+  
   // 報酬によるマッチング
   if (scores.GUARANTEE === 1.0) reasons.push("あなたの希望報酬を上回る条件です");
   else if (scores.GUARANTEE > 0.9) reasons.push("希望報酬条件を満たしています");
@@ -607,19 +623,36 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       }
       
       // タトゥー許容レベルスコア計算
-      if (talentResult.tattoo_level && store.requirements?.tattoo_acceptance_level) {
+      if (talentResult.body_mark?.has_body_mark && store.requirements?.tattoo_acceptance) {
+        // 体のマークがある場合、タトゥーありとして判定
+        // 詳細に応じてタトゥーレベルを判定（目立つか目立たないか）
+        const talentTattooLevel = talentResult.body_mark.details?.includes("目立つ") ? "目立つ" : "目立たない";
         scores.TATTOO = calculateTattooScore(
-          talentResult.tattoo_level,
-          store.requirements.tattoo_acceptance_level
+          talentTattooLevel,
+          store.requirements.tattoo_acceptance
         );
       } else {
-        scores.TATTOO = 1.0; // 条件がなければ満点
+        scores.TATTOO = 1.0; // 条件がなければ満点または体のマークがない場合
       }
       
       // 髪色スコア計算
-      if (talentResult.hair_color && store.requirements?.preferred_hair_colors) {
+      // 現在の写真から髪色を取得
+      const hairColorPhoto = talentResult.photos?.find(photo => photo.tag === "現在の髪色");
+      let estimatedHairColor = "黒髪"; // デフォルト値
+      if (hairColorPhoto) {
+        // 髪色写真がある場合、写真の詳細から髪色を推定（実際の実装ではAPIなどでの判定や、入力値を使用）
+        if (talentResult.notes?.includes("金髪") || talentResult.notes?.includes("カラー")) {
+          estimatedHairColor = "金髪・インナーカラー・派手髪";
+        } else if (talentResult.notes?.includes("明るめ")) {
+          estimatedHairColor = "明るめの茶髪";
+        } else if (talentResult.notes?.includes("茶髪")) {
+          estimatedHairColor = "暗めの茶髪";
+        }
+      }
+      
+      if (store.requirements?.preferred_hair_colors) {
         scores.HAIR_COLOR = calculateHairColorScore(
-          talentResult.hair_color,
+          estimatedHairColor,
           store.requirements.preferred_hair_colors
         );
       } else {
@@ -627,9 +660,36 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       }
       
       // 外見スタイルスコア計算
-      if (talentResult.look_type && store.requirements?.preferred_look_types) {
+      // 基本情報から外見スタイルを推定
+      let estimatedLookType = "普通系";
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const height = talentResult.height || 0;
+      const weight = talentResult.weight || 0;
+      
+      if (age < 23) {
+        estimatedLookType = "ロリ系・素人系・素朴系・可愛い系";
+      } else if (age >= 23 && age < 28) {
+        if (talentResult.notes?.includes("モデル") || talentResult.notes?.includes("美人")) {
+          estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
+        } else if (height > 165 && weight < 50) {
+          estimatedLookType = "綺麗系・キレカワ系・モデル系・お姉さん系";
+        }
+      } else if (age >= 28 && age < 35) {
+        estimatedLookType = "お姉さん系（20代後半〜30代前半）";
+      } else if (age >= 35 && age < 40) {
+        estimatedLookType = "大人系（30代〜）";
+      } else if (age >= 40) {
+        estimatedLookType = "熟女系（40代〜）";
+      }
+      
+      // スペックから体型を判定
+      if (weight > height - 90) {
+        estimatedLookType = "ぽっちゃり系";
+      }
+      
+      if (store.requirements?.preferred_look_types) {
         scores.APPEARANCE = calculateLookTypeScore(
-          talentResult.look_type,
+          estimatedLookType,
           store.requirements.preferred_look_types
         );
       } else {
@@ -637,9 +697,18 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       }
       
       // タイトル優先ボーナスの計算
-      if (store.requirements?.prioritize_titles && talentResult.titles) {
+      // 特別経験の有無を判定（自己紹介文から推定）
+      const titles: string[] = [];
+      if (talentResult.self_introduction) {
+        if (talentResult.self_introduction.includes("女優")) titles.push("女優経験");
+        if (talentResult.self_introduction.includes("アイドル")) titles.push("アイドル経験");
+        if (talentResult.self_introduction.includes("モデル")) titles.push("モデル経験");
+        if (talentResult.self_introduction.includes("タレント")) titles.push("タレント経験");
+      }
+      
+      if (store.requirements?.prioritize_titles && titles.length > 0) {
         scores.TITLES = calculateTitleBonus(
-          talentResult.titles,
+          titles,
           store.requirements.prioritize_titles
         );
       } else {
