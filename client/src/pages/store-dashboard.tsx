@@ -1343,9 +1343,16 @@ export default function StoreDashboard() {
 
                       {/* 保存ボタン */}
                       <div className="flex justify-end">
-                        <Button>
-                          <Save className="h-4 w-4 mr-2" />
-                          採用条件を保存
+                        <Button 
+                          onClick={() => saveRequirementsMutation.mutate()}
+                          disabled={isSavingRequirements}
+                        >
+                          {isSavingRequirements ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
+                          {isSavingRequirements ? '保存中...' : '採用条件を保存'}
                         </Button>
                       </div>
                     </div>
