@@ -1239,6 +1239,7 @@ export default function StoreDashboard() {
                                 placeholder="例: 18" 
                                 min={18}
                                 max={99}
+                                ref={ageMinRef}
                                 defaultValue={profile?.requirements?.age_min || 18}
                               />
                               <span className="ml-2">歳</span>
@@ -1250,14 +1251,21 @@ export default function StoreDashboard() {
                               <input 
                                 type="number" 
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                placeholder="例: 35" 
+                                placeholder="空白=上限なし" 
                                 min={18}
                                 max={99}
+                                ref={ageMaxRef}
                                 defaultValue={profile?.requirements?.age_max || ""}
                               />
                               <span className="ml-2">歳</span>
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              空白の場合は上限なしとして扱われます
+                            </p>
                           </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-2">
+                          ※ AIマッチングで年齢による絞り込みを行う際に使用されます
                         </div>
                       </div>
 
@@ -1274,10 +1282,14 @@ export default function StoreDashboard() {
                               <input 
                                 type="number" 
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                placeholder="例: 90" 
+                                placeholder="空白=下限なし" 
+                                ref={specMinRef}
                                 defaultValue={profile?.requirements?.spec_min || ""}
                               />
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              空白の場合は下限なしとして扱われます
+                            </p>
                           </div>
                           <div>
                             <label className="text-sm font-medium mb-1 block">最高スペック</label>
@@ -1285,43 +1297,59 @@ export default function StoreDashboard() {
                               <input 
                                 type="number" 
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                placeholder="例: 120" 
+                                placeholder="空白=上限なし" 
+                                ref={specMaxRef}
                                 defaultValue={profile?.requirements?.spec_max || ""}
                               />
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              空白の場合は上限なしとして扱われます
+                            </p>
                           </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-2">
+                          ※ スペック値 = 身長(cm) - 体重(kg)
                         </div>
 
                         {/* カップサイズ特別条件 */}
                         <div className="mt-4">
                           <div className="flex items-center justify-between mb-2">
                             <label className="text-sm font-medium">カップサイズ別特別条件</label>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleAddCupSizeCondition()}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              条件を追加
-                            </Button>
                           </div>
-                          <div className="bg-muted/40 rounded-md p-3 border">
-                            <div className="text-sm text-muted-foreground">
-                              例: Eカップ以上なら最低スペック100からでも可能
+                          <div className="bg-muted/40 rounded-md p-4 border">
+                            <div className="text-sm mb-2">
+                              例: Eカップ以上なら最低スペック80からでも可能など
                             </div>
+                            
                             {/* カップサイズ条件リスト */}
-                            <div className="space-y-2 mt-2">
+                            <div className="space-y-2 mb-3">
                               {profile?.requirements?.cup_size_conditions?.map((condition, index) => (
                                 <div key={index} className="flex items-center p-2 bg-background rounded border">
                                   <div className="font-medium">{condition.cup_size}カップ以上</div>
                                   <div className="mx-2">→</div>
                                   <div>最低スペック: <span className="font-medium">{condition.spec_min}</span></div>
-                                  <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
-                                    <X className="h-4 w-4" />
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="ml-auto h-8 w-8" 
+                                    onClick={() => handleRemoveCupSizeCondition(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
                                 </div>
                               ))}
                             </div>
+                            
+                            {/* 新規条件追加ボタン */}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="w-full border-dashed"
+                              onClick={() => handleAddCupSizeCondition()}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              カップサイズ条件を追加
+                            </Button>
                           </div>
                         </div>
                       </div>
