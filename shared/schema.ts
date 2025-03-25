@@ -22,7 +22,11 @@ export const serviceTypes = [
   "箱ヘル",
   "風俗エステ",
   "オナクラ",
-  "M性感"
+  "M性感",
+  "ソープランド",
+  "ピンサロ",
+  "ファッションヘルス",
+  "イメクラ"
 ] as const;
 
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
@@ -313,6 +317,10 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   "風俗エステ": "風俗エステ",
   "オナクラ": "オナクラ",
   "M性感": "M性感",
+  "ソープランド": "ソープランド",
+  "ピンサロ": "ピンサロ",
+  "ファッションヘルス": "ファッションヘルス",
+  "イメクラ": "イメクラ",
 } as const;
 
 // Zod schemas for validation
