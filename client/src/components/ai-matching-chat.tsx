@@ -306,7 +306,7 @@ export const AIMatchingChat = () => {
         content: `【現在のプロフィール】
 • お名前: ${profileData.last_name || '未入力'} ${profileData.first_name || '未入力'}
 • フリガナ: ${profileData.last_name_kana || '未入力'} ${profileData.first_name_kana || '未入力'}
-• 生年月日: ${user?.birth_date ? format(new Date(user.birth_date), 'yyyy年MM月dd日', { locale: ja }) : '未入力'}
+• 生年月日: ${profileData && profileData.birth_date ? format(new Date(profileData.birth_date), 'yyyy年MM月dd日', { locale: ja }) : (user && user.birth_date ? format(new Date(user.birth_date), 'yyyy年MM月dd日', { locale: ja }) : '未入力')}
 • 在住地: ${profileData.location || '未入力'}
 • 最寄り駅: ${profileData.nearest_station || '未入力'}
 • 身長: ${profileData.height ? `${profileData.height}cm` : '未入力'}
@@ -1073,7 +1073,8 @@ ${result.description || '店舗の詳細情報を準備中です'}
             </div>
           </Card>
         </div>
-      )}      {/* マッチング方法選択部分を追加 */}      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("確認したい店舗を選んでから確認メッセージを送ります。") && (
+      )}      {/* マッチング方法選択部分 */}      
+      {!showForm && matchingMethod === null && messages.length > 0 && messages[messages.length - 1].type === "ai" && messages[messages.length - 1].content.includes("間違いが無ければマッチングをはじめるよ！") && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
           <div className="container max-w-screen-2xl mx-auto">
             <div className="flex flex-col gap-4">
@@ -1083,7 +1084,7 @@ ${result.description || '店舗の詳細情報を準備中です'}
               <div className="flex gap-4 justify-center">
                 <Button
                   onClick={() => handleMatchingMethodSelect("auto")}
-                  className="minw-[200px]"
+                  className="min-w-[200px]"
                 >
                   自動で確認する
                 </Button>
