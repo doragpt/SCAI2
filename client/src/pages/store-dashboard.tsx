@@ -255,7 +255,9 @@ export default function StoreDashboard() {
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: "draft" | "published") => {
       setIsUpdatingStatus(true);
-      // 現在のプロフィールデータを使って必要なフィールドだけ更新
+      console.log("ステータス更新中:", { 現在のステータス: profile?.status, 新しいステータス: newStatus });
+      
+      // Zodバリデーションに必要なフィールドを全て含める
       const updateData = {
         catch_phrase: profile?.catch_phrase || "",
         description: profile?.description || "",
@@ -264,10 +266,21 @@ export default function StoreDashboard() {
         maximum_guarantee: profile?.maximum_guarantee || 0,
         working_time_hours: profile?.working_time_hours || 0,
         average_hourly_pay: profile?.average_hourly_pay || 0,
+        top_image: profile?.top_image || "",
+        working_hours: profile?.working_hours || "",
+        requirements: profile?.requirements || "",
+        transportation_support: profile?.transportation_support || false,
+        housing_support: profile?.housing_support || false,
+        special_offers: profile?.special_offers || [],
         status: newStatus
       };
       
-      return await apiRequest("PATCH", "/api/store/profile", updateData);
+      try {
+        return await apiRequest("PATCH", "/api/store/profile", updateData);
+      } catch (error) {
+        console.error("ステータス更新エラー:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       // キャッシュを更新してUIを再描画
