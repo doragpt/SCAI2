@@ -123,7 +123,7 @@ export async function startMatching(conditions: MatchingConditions): Promise<Mat
     // AIマッチングレスポンスの形式に合わせて変換
     if (data && Array.isArray(data.matches)) {
       // マッチスコアでソートして返却
-      return data.matches.sort((a, b) => b.matchScore - a.matchScore);
+      return data.matches.sort((a: MatchedJob, b: MatchedJob) => b.matchScore - a.matchScore);
     } else {
       console.warn('Unexpected API response format:', data);
       return [];

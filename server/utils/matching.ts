@@ -350,33 +350,38 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
       
       // 既存のpreferredLocationsとマージ（重複は除去）
       const uniqueLocations = new Set([...preferredLocations]);
-      locationParam.forEach(loc => uniqueLocations.add(loc));
+      // 型の問題を回避するために型アサーションを使用
+      locationParam.forEach((loc: unknown) => uniqueLocations.add(loc as string));
       preferredLocations = Array.from(uniqueLocations);
     }
     
     // 店舗情報の取得 - フィルター条件を適用
-    let storeQuery = db
-      .select()
-      .from(store_profiles)
-      .where(eq(store_profiles.status, 'published'));
+    // 条件を配列として構築
+    const conditions = [eq(store_profiles.status, 'published')];
     
     // 特定の地域でフィルタリング
     if (searchOptions?.filterByLocation) {
-      storeQuery = storeQuery.where(eq(store_profiles.location, searchOptions.filterByLocation));
+      conditions.push(eq(store_profiles.location, searchOptions.filterByLocation));
     }
     
     // 特定の業種でフィルタリング
     if (searchOptions?.filterByService) {
-      storeQuery = storeQuery.where(eq(store_profiles.service_type, searchOptions.filterByService));
+      conditions.push(eq(store_profiles.service_type, searchOptions.filterByService));
     }
     
     // 特定の保証額以上でフィルタリング
     if (searchOptions?.filterByMinGuarantee) {
       const minGuarantee = parseInt(searchOptions.filterByMinGuarantee, 10);
       if (!isNaN(minGuarantee)) {
-        storeQuery = storeQuery.where(gte(store_profiles.minimum_guarantee, minGuarantee));
+        conditions.push(gte(store_profiles.minimum_guarantee, minGuarantee));
       }
     }
+    
+    // すべての条件を AND で結合
+    const storeQuery = db
+      .select()
+      .from(store_profiles)
+      .where(and(...conditions));
     
     const storeResults = await storeQuery;
     
