@@ -578,6 +578,48 @@ export default function HomePage() {
             </motion.div>
           </section>
 
+          {/* 業種から探す */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Building2 className="h-6 w-6 text-primary" />
+                業種から探す
+              </h2>
+            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-12"
+            >
+              {serviceTypes.map((type) => (
+                <motion.div key={type} variants={item}>
+                  <Button
+                    variant="outline"
+                    className="w-full h-full py-6 flex flex-col gap-2"
+                    asChild
+                  >
+                    <Link href={`/jobs?serviceType=${type}`}>
+                      <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-1">
+                        {type === "デリヘル" && <Hotel className="h-5 w-5 text-primary" />}
+                        {type === "ホテヘル" && <Hotel className="h-5 w-5 text-primary" />}
+                        {type === "箱ヘル" && <Building2 className="h-5 w-5 text-primary" />}
+                        {type === "風俗エステ" && <HandHeart className="h-5 w-5 text-primary" />}
+                        {type === "オナクラ" && <Heart className="h-5 w-5 text-primary" />}
+                        {type === "M性感" && <Sparkles className="h-5 w-5 text-primary" />}
+                        {type === "ソープランド" && <Hotel className="h-5 w-5 text-primary" />}
+                        {type === "ピンサロ" && <HandHeart className="h-5 w-5 text-primary" />}
+                        {type === "ファッションヘルス" && <Gem className="h-5 w-5 text-primary" />}
+                        {type === "イメクラ" && <Star className="h-5 w-5 text-primary" />}
+                      </div>
+                      {type}
+                    </Link>
+                  </Button>
+                </motion.div>
+              ))}
+            </motion.div>
+          </section>
+            
           {/* エリアから探す */}
           <section>
             <div className="flex items-center justify-between mb-8">
