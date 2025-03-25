@@ -35,7 +35,46 @@ export const photoTags = [
   "スタジオ写真（加工済み）"
 ] as const;
 
+// 体型定義
 export const bodyTypes = ["スリム", "普通", "グラマー", "ぽっちゃり"] as const;
+
+// 体型系統（スペック基準）
+export const bodyTypesBySpec = [
+  { name: "スレンダー", minSpec: 110 },
+  { name: "やや細め", minSpec: 105, maxSpec: 109 },
+  { name: "普通", minSpec: 100, maxSpec: 104 },
+  { name: "ややぽっちゃり", minSpec: 95, maxSpec: 99 },
+  { name: "ぽっちゃり", minSpec: 90, maxSpec: 94 },
+  { name: "太め", maxSpec: 89 }
+] as const;
+
+// タトゥー・傷の受け入れレベル
+export const tattooAcceptanceLevels = [
+  "なし",
+  "目立ちにくい",  // 古傷/ワンポイント程度
+  "目立つ",       // 生傷/2ヶ所以上
+  "応相談"
+] as const;
+
+// 髪色系統
+export const hairColorTypes = [
+  "黒髪",
+  "暗めの茶髪",
+  "明るめの茶髪", 
+  "金髪・インナーカラー・派手髪"
+] as const;
+
+// ルックス系統
+export const lookTypes = [
+  "ロリ系・素人系・素朴系・可愛い系",
+  "清楚系",
+  "綺麗系・キレカワ系・モデル系・お姉さん系",
+  "キャバ系・ギャル系",
+  "若妻系", // 20代後半〜30代前半
+  "人妻系", // 30代〜
+  "熟女系", // 40代〜
+  "ぽっちゃり系"
+] as const;
 export const faceVisibilityTypes = ["全出し", "口だけ隠し", "目だけ隠し", "全隠し"] as const;
 export const idTypes = [
   "運転免許証",
@@ -183,6 +222,10 @@ export type Prefecture = typeof prefectures[number];
 export type ServiceType = typeof serviceTypes[number];
 export type PhotoTag = typeof photoTags[number];
 export type BodyType = typeof bodyTypes[number];
+export type BodyTypeBySpec = typeof bodyTypesBySpec[number];
+export type TattooAcceptanceLevel = typeof tattooAcceptanceLevels[number];
+export type HairColorType = typeof hairColorTypes[number];
+export type LookType = typeof lookTypes[number];
 export type CupSize = typeof cupSizes[number];
 export type FaceVisibility = typeof faceVisibilityTypes[number];
 export type IdType = typeof idTypes[number];
@@ -250,10 +293,6 @@ export const store_profiles = pgTable("store_profiles", {
   average_hourly_pay: integer("average_hourly_pay").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
   requirements: jsonb("requirements").$type<JobRequirements>().default({
-    age_min: null,
-    age_max: null,
-    spec_min: null,
-    spec_max: null,
     cup_size_conditions: [],
     accepts_temporary_workers: true,
     requires_arrival_day_before: false,
@@ -415,6 +454,23 @@ export const jobRequirementsSchema = z.object({
   // 出稼ぎ関連条件
   accepts_temporary_workers: z.boolean().default(true), // 出稼ぎ受け入れ可否
   requires_arrival_day_before: z.boolean().default(false), // 前日入り必須かどうか
+  
+  // 体型系統設定
+  preferred_body_types: z.array(z.enum([
+    "スレンダー", "やや細め", "普通", "ややぽっちゃり", "ぽっちゃり", "太め"
+  ])).optional(),
+  
+  // タトゥー・傷の受け入れレベル
+  tattoo_acceptance: z.enum(tattooAcceptanceLevels).optional(),
+  
+  // 髪色系統
+  preferred_hair_colors: z.array(z.enum(hairColorTypes)).optional(),
+  
+  // ルックス系統
+  preferred_look_types: z.array(z.enum(lookTypes)).optional(),
+  
+  // 優遇項目（肩書持ち）
+  prioritize_titles: z.boolean().default(false), // AV女優、アイドル、モデルなどの肩書持ち優遇
   
   // その他条件
   other_conditions: z.array(z.string()).default([]),

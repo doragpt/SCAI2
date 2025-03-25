@@ -56,7 +56,8 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
         accepts_temporary_workers: false,
         requires_arrival_day_before: false,
         other_conditions: [],
-        cup_size_conditions: []
+        cup_size_conditions: [],
+        prioritize_titles: false
       };
     }
 
