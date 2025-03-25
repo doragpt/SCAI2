@@ -226,6 +226,8 @@ export default function StoreDashboard() {
   // カップサイズ条件の表示/非表示状態（初期値）- プロフィールデータに基づいて設定
   // カップサイズ条件の表示状態（初期値false）
   const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
+  // カップサイズ条件の有効/無効スイッチの状態
+  const [enableCupSizeConditions, setEnableCupSizeConditions] = useState<boolean>(false);
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
@@ -1475,8 +1477,11 @@ export default function StoreDashboard() {
                           <div className="flex items-center space-x-2 mb-3">
                             <Switch 
                               id="enable-cup-size-conditions"
-                              checked={showCupSizeConditions}
+                              checked={enableCupSizeConditions}
                               onCheckedChange={(checked) => {
+                                // スイッチの有効/無効状態を更新
+                                setEnableCupSizeConditions(checked);
+                                // 表示/非表示も連動して更新
                                 setShowCupSizeConditions(checked);
                                 
                                 // カップサイズ条件スイッチの状態が変更された時の処理
