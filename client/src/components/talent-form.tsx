@@ -2025,10 +2025,8 @@ export function TalentForm({ initialData }: TalentFormProps) {
                           <SelectContent>
                             {tattooAcceptanceLevels.map(level => (
                               <SelectItem key={level} value={level}>
-                                {level === "なし" && "タトゥーなし"}
                                 {level === "目立ちにくい" && "目立ちにくい（ワンポイント・小さいもの）"}
                                 {level === "目立つ" && "目立つ（大きいもの・複数）"}
-                                {level === "応相談" && "応相談"}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -2057,7 +2055,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                               <SelectValue placeholder="選択してください" />
                             </SelectTrigger>
                             <SelectContent>
-                              {["顔", "首", "胸", "背中", "腕", "手", "足", "その他"].map(location => (
+                              {["顔", "首", "胸", "背中", "腕", "手", "足", "複数", "その他"].map(location => (
                                 <SelectItem key={location} value={location}>
                                   {location}
                                 </SelectItem>
