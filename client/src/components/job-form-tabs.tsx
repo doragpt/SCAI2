@@ -697,17 +697,25 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   <FormField
                     control={form.control}
                     name="special_offers"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <SpecialOfferEditor />
-                        </FormControl>
-                        <FormDescription className="text-xs mt-2">
-                          特典やキャンペーンを自由に作成できます。タイトル、説明、色、アイコンなどをカスタマイズできます。
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      // 正しくフィールド値が設定されていることをコンソールで確認
+                      console.log("special_offers フィールド値：", field.value);
+                      
+                      return (
+                        <FormItem>
+                          <FormControl>
+                            <SpecialOfferEditor 
+                              value={field.value} 
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs mt-2">
+                            特典やキャンペーンを自由に作成できます。タイトル、説明、色、アイコンなどをカスタマイズできます。
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
                 

@@ -78,13 +78,20 @@ const OFFER_TEMPLATES = [
   },
 ];
 
-// 現在はコンポーネントがFormのコンテキスト内で使われるため、propsは不要
-export function SpecialOfferEditor() {
-  const { control, watch } = useFormContext();
-  const { fields, append, remove, move, update, replace } = useFieldArray({
-    control,
-    name: "special_offers",
-  });
+interface SpecialOfferEditorProps {
+  value: SpecialOffer[];
+  onChange: (value: SpecialOffer[]) => void;
+}
+
+export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorProps) {
+  // 渡されたpropsを使用するための状態管理
+  const [fields, setFields] = useState<SpecialOffer[]>(value);
+  
+  // 値の変更をトラッキングし親コンポーネントに通知
+  useEffect(() => {
+    // 初期値設定時やプロップ更新時のみ状態を更新
+    setFields(value || []);
+  }, [value]); // 重要: valueが変更された時のみ、再設定する
   
   const [isOpen, setIsOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<SpecialOffer | null>(null);
