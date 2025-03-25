@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, FieldArrayWithId } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { Trash, Plus, Check, Pencil, MoveVertical, Flag, Star, Award, Gift, Ticket, Zap, DollarSign, Banknote, Home, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ const OFFER_TEMPLATES = [
 // 現在はコンポーネントがFormのコンテキスト内で使われるため、propsは不要
 export function SpecialOfferEditor() {
   const { control, watch } = useFormContext();
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove, move, update, replace } = useFieldArray({
     control,
     name: "special_offers",
   });
@@ -107,7 +107,8 @@ export function SpecialOfferEditor() {
   
   // 編集
   const handleEditOffer = (offer: SpecialOffer, index: number) => {
-    setEditingOffer(offer);
+    // オブジェクトの参照ではなく、新しいオブジェクトを作成して編集
+    setEditingOffer({...offer});
     setEditIndex(index);
     setIsOpen(true);
   };
@@ -131,14 +132,14 @@ export function SpecialOfferEditor() {
   const handleSaveOffer = () => {
     if (!editingOffer) return;
     
-    if (editIndex !== null) {
-      // 既存のオファーを更新
-      // まず古いものを削除して新しいものを追加
-      remove(editIndex);
-      append(editingOffer);
+    console.log('保存中のオファー:', editingOffer, '編集インデックス:', editIndex);
+    
+    if (editIndex !== null && editIndex >= 0 && editIndex < fields.length) {
+      // React Hook Formのupdateメソッドを使用して特定のインデックスの項目を更新
+      update(editIndex, {...editingOffer});
     } else {
       // 新規オファーを追加
-      append(editingOffer);
+      append({...editingOffer});
     }
     
     // ダイアログを閉じてフォーム状態をリセット
