@@ -86,6 +86,14 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { 
+  hairColorTypes, 
+  lookTypes, 
+  tattooAcceptanceLevels,
+  TattooAcceptanceLevel,
+  HairColorType,
+  LookType
+} from "../../shared/schema";
 
 // プロフィールのステータスラベル
 const profileStatusLabels = {
