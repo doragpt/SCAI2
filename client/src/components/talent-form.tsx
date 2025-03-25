@@ -1512,85 +1512,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">タトゥー・傷について</h3>
-              <FormField
-                control={form.control}
-                name="tattoo_level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>タトゥー・傷のレベル</FormLabel>
-                    <FormControl>
-                      <Select 
-                        value={field.value || ""} 
-                        onValueChange={(value) => field.onChange(value || undefined)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="選択してください" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tattooAcceptanceLevels.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      タトゥーや目立つ傷の状態を選択してください。「なし」「目立ちにくい」「目立つ」「応相談」から最も近いものを選んでください。
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">特別経験・資格</h3>
-              <FormField
-                control={form.control}
-                name="titles"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>肩書き・特別経験</FormLabel>
-                    <div className="space-y-4">
-                      <FormDescription>
-                        芸能人経験、モデル経験、有名店在籍歴など、特別な経験や肩書きがあれば入力してください。
-                      </FormDescription>
-                      <div className="space-y-2">
-                        {field.value?.map((title, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <div className="flex-1 rounded-md border border-input px-3 py-2">
-                              {title}
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const updatedTitles = [...field.value || []].filter((_, i) => i !== index);
-                                field.onChange(updatedTitles);
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <OtherItemInput
-                        onAdd={(value) => {
-                          field.onChange([...(field.value || []), value]);
-                        }}
-                        placeholder="経験・肩書きを入力"
-                      />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
               name="can_photo_diary"
@@ -2290,6 +2211,51 @@ export function TalentForm({ initialData }: TalentFormProps) {
                 </div>
               </div>
 
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">特別経験・資格</h3>
+              <FormField
+                control={form.control}
+                name="titles"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>肩書き・特別経験</FormLabel>
+                    <div className="space-y-4">
+                      <FormDescription>
+                        芸能人経験、モデル経験、有名店在籍歴など、特別な経験や肩書きがあれば入力してください。
+                      </FormDescription>
+                      <div className="space-y-2">
+                        {field.value?.map((title, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div className="flex-1 rounded-md border border-input px-3 py-2">
+                              {title}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const updatedTitles = [...field.value || []].filter((_, i) => i !== index);
+                                field.onChange(updatedTitles);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <OtherItemInput
+                        onAdd={(value) => {
+                          field.onChange([...(field.value || []), value]);
+                        }}
+                        placeholder="経験・肩書きを入力"
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div>
