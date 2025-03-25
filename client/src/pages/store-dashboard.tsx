@@ -447,18 +447,54 @@ export default function StoreDashboard() {
       cup_size_conditions: updatedConditions
     };
     
-    // 注：ここではプロフィールの状態を直接更新せず、APIから再取得します
-    // profile.requirementsはすでにカップサイズ条件を含むように更新されているので
-    // 保存ミューテーションの中で処理されます
-    
     // 入力フォームをリセット
     setNewCupSizeCondition({
       cup_size: "E" as CupSize,
       spec_min: 80
     });
     
-    // 採用要件の更新と保存
-    saveRequirementsMutation.mutate();
+    // APIリクエストデータを構築
+    const updateData = {
+      catch_phrase: profile?.catch_phrase || "",
+      description: profile?.description || "",
+      recruiter_name: profile?.recruiter_name || "担当者",
+      benefits: profile?.benefits || [],
+      minimum_guarantee: profile?.minimum_guarantee || 0,
+      maximum_guarantee: profile?.maximum_guarantee || 0,
+      top_image: profile?.top_image || "",
+      working_hours: profile?.working_hours || "",
+      requirements: updatedRequirements, // 更新した要件を使用
+      transportation_support: profile?.transportation_support || false,
+      housing_support: profile?.housing_support || false,
+      special_offers: profile?.special_offers || [],
+      phone_numbers: profile?.phone_numbers || [],
+      email_addresses: profile?.email_addresses || [],
+      address: profile?.address || "",
+      access_info: profile?.access_info || "",
+      security_measures: profile?.security_measures || "",
+      application_requirements: profile?.application_requirements || "",
+      status: profile?.status || "draft"
+    };
+    
+    // APIリクエストを直接送信
+    apiRequest("PATCH", "/api/store/profile", updateData)
+      .then(() => {
+        // 成功したらキャッシュを更新
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+        
+        toast({
+          title: "カップサイズ条件を追加しました",
+          description: `${normalizedCupSize}カップ以上のスペック条件を設定しました`,
+        });
+      })
+      .catch((error) => {
+        console.error("カップサイズ条件追加エラー:", error);
+        toast({
+          variant: "destructive",
+          title: "設定の保存に失敗しました",
+          description: error.message || "もう一度お試しください",
+        });
+      });
   };
   
   // カップサイズ条件を削除する関数
@@ -467,6 +503,7 @@ export default function StoreDashboard() {
     
     // 条件を削除
     const updatedConditions = [...profile.requirements.cup_size_conditions];
+    const removedCondition = updatedConditions[index];
     updatedConditions.splice(index, 1);
     
     // プロフィールの採用要件を更新
@@ -475,11 +512,48 @@ export default function StoreDashboard() {
       cup_size_conditions: updatedConditions
     };
     
-    // 注：ここではプロフィールの状態を直接更新せず、APIから再取得します
-    // saveRequirementsMutation内でupdatedRequirementsが使用されます
+    // APIリクエストデータを構築
+    const updateData = {
+      catch_phrase: profile?.catch_phrase || "",
+      description: profile?.description || "",
+      recruiter_name: profile?.recruiter_name || "担当者",
+      benefits: profile?.benefits || [],
+      minimum_guarantee: profile?.minimum_guarantee || 0,
+      maximum_guarantee: profile?.maximum_guarantee || 0,
+      top_image: profile?.top_image || "",
+      working_hours: profile?.working_hours || "",
+      requirements: updatedRequirements, // 更新した要件を使用
+      transportation_support: profile?.transportation_support || false,
+      housing_support: profile?.housing_support || false,
+      special_offers: profile?.special_offers || [],
+      phone_numbers: profile?.phone_numbers || [],
+      email_addresses: profile?.email_addresses || [],
+      address: profile?.address || "",
+      access_info: profile?.access_info || "",
+      security_measures: profile?.security_measures || "",
+      application_requirements: profile?.application_requirements || "",
+      status: profile?.status || "draft"
+    };
     
-    // 採用要件の更新と保存
-    saveRequirementsMutation.mutate();
+    // APIリクエストを直接送信
+    apiRequest("PATCH", "/api/store/profile", updateData)
+      .then(() => {
+        // 成功したらキャッシュを更新
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+        
+        toast({
+          title: "カップサイズ条件を削除しました",
+          description: removedCondition ? `${removedCondition.cup_size}カップの条件を削除しました` : "条件を削除しました",
+        });
+      })
+      .catch((error) => {
+        console.error("カップサイズ条件削除エラー:", error);
+        toast({
+          variant: "destructive",
+          title: "設定の保存に失敗しました",
+          description: error.message || "もう一度お試しください",
+        });
+      });
   };
   
   // 価格設定を追加する関数
@@ -1379,18 +1453,56 @@ export default function StoreDashboard() {
                               onCheckedChange={(checked) => {
                                 setShowCupSizeConditions(checked);
                                 
-                                // カップサイズ条件スイッチの状態が変更された時に保存
-                                if (!checked) {
-                                  // スイッチがオフになった場合、cup_size_conditionsを空配列にする
-                                  if (profile && profile.requirements) {
-                                    const updatedRequirements = {
-                                      ...profile.requirements,
-                                      cup_size_conditions: [] // 条件をクリア
-                                    };
-                                    
-                                    // 注：保存ミューテーションが自動的に更新された条件を使用します
-                                    saveRequirementsMutation.mutate();
-                                  }
+                                // カップサイズ条件スイッチの状態が変更された時の処理
+                                if (!checked && profile?.requirements) {
+                                  // スイッチがオフになった場合、カップサイズ条件を直接クリアして保存する
+                                  const updatedRequirements = {
+                                    ...profile.requirements,
+                                    cup_size_conditions: [] // 条件をクリア
+                                  };
+                                  
+                                  // リクエストデータを作成
+                                  const updateData = {
+                                    catch_phrase: profile?.catch_phrase || "",
+                                    description: profile?.description || "",
+                                    recruiter_name: profile?.recruiter_name || "担当者",
+                                    benefits: profile?.benefits || [],
+                                    minimum_guarantee: profile?.minimum_guarantee || 0,
+                                    maximum_guarantee: profile?.maximum_guarantee || 0,
+                                    top_image: profile?.top_image || "",
+                                    working_hours: profile?.working_hours || "",
+                                    requirements: updatedRequirements, // 更新した要件を使用
+                                    transportation_support: profile?.transportation_support || false,
+                                    housing_support: profile?.housing_support || false,
+                                    special_offers: profile?.special_offers || [],
+                                    phone_numbers: profile?.phone_numbers || [],
+                                    email_addresses: profile?.email_addresses || [],
+                                    address: profile?.address || "",
+                                    access_info: profile?.access_info || "",
+                                    security_measures: profile?.security_measures || "",
+                                    application_requirements: profile?.application_requirements || "",
+                                    status: profile?.status || "draft"
+                                  };
+                                  
+                                  // APIリクエストを直接送信
+                                  apiRequest("PATCH", "/api/store/profile", updateData)
+                                    .then(() => {
+                                      // 成功したらキャッシュを更新
+                                      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+                                      
+                                      toast({
+                                        title: "カップサイズ条件をクリアしました",
+                                        description: "設定が保存されました",
+                                      });
+                                    })
+                                    .catch((error) => {
+                                      console.error("カップサイズ条件クリアエラー:", error);
+                                      toast({
+                                        variant: "destructive",
+                                        title: "設定の保存に失敗しました",
+                                        description: error.message || "もう一度お試しください",
+                                      });
+                                    });
                                 }
                               }}
                             />
