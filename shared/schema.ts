@@ -19,9 +19,9 @@ export const serviceTypes = [
   "デリヘル",
   "ホテヘル",
   "箱ヘル",
-  "エステ",
+  "風俗エステ",
   "オナクラ",
-  "メンズエステ"
+  "M性感"
 ] as const;
 
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
@@ -256,10 +256,10 @@ export type SpecialOffer = z.infer<typeof specialOfferSchema>;
 export const serviceTypeLabels: Record<ServiceType, string> = {
   "デリヘル": "デリヘル",
   "ホテヘル": "ホテヘル",
-  "箱ヘル": "箱ヘル",
-  "エステ": "エステ",
+  "箱ヘル": "店舗型ヘルス",
+  "風俗エステ": "風俗エステ",
   "オナクラ": "オナクラ",
-  "メンズエステ": "メンズエステ",
+  "M性感": "M性感",
 } as const;
 
 // Zod schemas for validation
