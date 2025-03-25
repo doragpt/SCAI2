@@ -66,7 +66,7 @@ export const MatchedJobCard: React.FC<MatchedJobCardProps> = ({ job, index, onVi
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-0.5">
-                <Badge variant={scorePercent >= 80 ? "success" : scorePercent >= 60 ? "default" : "secondary"} className="text-xs px-1.5 py-0">
+                <Badge variant={scorePercent >= 80 ? "default" : scorePercent >= 60 ? "default" : "secondary"} className={`text-xs px-1.5 py-0 ${scorePercent >= 80 ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}`}>
                   {index + 1}位
                 </Badge>
               </div>

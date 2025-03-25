@@ -17,7 +17,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HtmlContent } from "@/components/html-content";
+import { MatchedJobCard } from "@/components/matched-job-card";
+import { MatchedJobDetailDialog } from "@/components/matched-job-detail-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -73,19 +80,12 @@ import { formatConditionsMessage } from "@/utils/format-conditions-message";
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { TalentProfileData } from "@shared/schema";
 
 interface Message {
@@ -149,6 +149,9 @@ export const AIMatchingChat = () => {
   }, [messages, scrollToBottom]);
   const [matchingMethod, setMatchingMethod] = useState<MatchingMethod>(null);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
+  const [matchedJobs, setMatchedJobs] = useState<MatchedJob[]>([]);
+  const [showMatchedJobsGrid, setShowMatchedJobsGrid] = useState(false);
+  const [selectedMatchedJob, setSelectedMatchedJob] = useState<MatchedJob | null>(null);
 
 
   // プロフィールデータの変更を監視
@@ -460,6 +463,9 @@ ${index + 1}. ${result.businessName}
 
   // マッチング結果の表示（自動マッチング用）
   const handleMatchingResults = (results: MatchedJob[]) => {
+    // マッチング結果を状態に保存
+    setMatchedJobs(results);
+    
     if (results.length > 0) {
       setMessages(prev => [...prev, {
         type: "ai",
@@ -469,46 +475,31 @@ ${index + 1}. ${result.businessName}
         content: "マッチング中だよ...もう少し待っててね"
       }, {
         type: "ai",
-        content: `お待たせ！あなたに合いそうな店舗は${results.length}件程あったよ！
+        content: `お待たせ！あなたに合いそうな店舗は${results.length}件見つかったよ！
 
-【マッチング結果】
-${results.map((result, index) => `
-${index + 1}. ${result.businessName}
-  • 勤務地: ${result.location}
-  • 待遇: ${result.minimumGuarantee !== null ? `${result.minimumGuarantee}円～` : ''}${result.maximumGuarantee !== null ? `${result.maximumGuarantee}円` : '要相談'}
-  • サポート: ${[
-        result.transportationSupport ? '交通費あり' : null,
-        result.housingSupport ? '宿泊費あり' : null
-      ].filter(Boolean).join('、') || 'なし'}
-  • 勤務時間: ${result.workingHours || '要相談'}
-  • マッチ度: ${result.matchScore}%
-  • マッチポイント: ${result.matches?.join('、') || 'なし'}
-  • ${result.catchPhrase || ''}
-`).join('\n')}
-
-これらの店舗の詳細を確認してみるね！`
+相性の良い順に並べたよ！視覚的に確認しやすくするため、マッチングカードを表示するね。
+カードをクリックすると詳細を確認できるよ！`
       }]);
-
-      // 店舗情報の詳細表示
+      
+      // カードビューを表示
+      setShowMatchedJobsGrid(true);
+      
+      // 上位3件のマッチング理由を表示
       setTimeout(() => {
-        // 上位3件のみを詳しく分析して表示
         const topMatches = results.slice(0, 3);
         
         setMessages(prev => [...prev, {
           type: "ai",
-          content: `特に相性が良いと思われる店舗の詳細情報を分析しました：
+          content: `特に相性が良いと思われる店舗の詳細情報をピックアップしました：
 
 ${topMatches.map((result, index) => `
-【${index + 1}】${result.businessName} (マッチ度: ${result.matchScore}%)
-${result.matches?.map(match => `✓ ${match}`).join('\n') || 'マッチポイントの詳細情報がありません'}
+【${index + 1}】${result.businessName} (マッチ度: ${Math.round(result.matchScore * 100)}%)
+${result.matches?.map(match => `✓ ${match}`).join('\n') || 'マッチポイントの詳細情報がありません'}`).join('\n\n')}
 
-${result.description || '店舗の詳細情報を準備中です'}
-`).join('\n\n')}
-
-これらの店舗に興味があれば、直接応募することができます。
-もっと詳しい情報を知りたい場合は、ジョブ一覧画面から探してみてください。`
+カードをクリックすると詳細情報や応募方法を確認できます。
+どの店舗に興味がありますか？`
         }]);
-      }, 2000);
+      }, 1500);
     } else {
       setMessages(prev => [...prev, {
         type: "ai",
@@ -525,6 +516,25 @@ ${result.description || '店舗の詳細情報を準備中です'}
 より良いマッチング結果が得られる可能性があります。`
       }]);
     }
+  };
+  
+  // 詳細表示ハンドラー
+  const handleViewJobDetails = (job: MatchedJob) => {
+    setSelectedMatchedJob(job);
+  };
+  
+  // 応募ハンドラー
+  const handleApply = (job: MatchedJob) => {
+    // 応募処理
+    window.location.href = `/jobs/${job.id}/apply`;
+  };
+  
+  // キープハンドラー
+  const handleKeep = (job: MatchedJob) => {
+    toast({
+      title: "キープしました",
+      description: `${job.businessName}をキープリストに追加しました。`,
+    });
   };
 
   const calculateAge = (birthDate: string | undefined): number | null => {
@@ -593,9 +603,37 @@ ${result.description || '店舗の詳細情報を準備中です'}
               </div>
             </div>
           ))}
+          
+          {/* マッチング結果グリッド */}
+          {showMatchedJobsGrid && matchedJobs.length > 0 && (
+            <div className="w-full my-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {matchedJobs.map((job, index) => (
+                  <MatchedJobCard 
+                    key={job.id}
+                    job={job}
+                    index={index}
+                    onViewDetails={handleViewJobDetails}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
+      
+      {/* 求人詳細ダイアログ */}
+      {selectedMatchedJob && (
+        <MatchedJobDetailDialog
+          job={selectedMatchedJob}
+          isOpen={!!selectedMatchedJob}
+          onClose={() => setSelectedMatchedJob(null)}
+          onApply={handleApply}
+          onKeep={handleKeep}
+        />
+      )}
 
       {!selectedType && !showForm && (
         <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">

@@ -100,8 +100,8 @@ export const MatchedJobDetailDialog: React.FC<MatchedJobDetailDialogProps> = ({
             <DialogTitle className="text-2xl font-bold flex items-center">
               {job.businessName}
               <Badge 
-                className="ml-3" 
-                variant={scorePercent >= 80 ? "success" : scorePercent >= 60 ? "default" : "secondary"}
+                className={`ml-3 ${scorePercent >= 80 ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}`}
+                variant={scorePercent >= 80 ? "default" : scorePercent >= 60 ? "default" : "secondary"}
               >
                 マッチ度 {scorePercent}%
               </Badge>
