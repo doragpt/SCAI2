@@ -222,6 +222,7 @@ export default function StoreDashboard() {
   const specMinRef = useRef<HTMLInputElement>(null);
   const specMaxRef = useRef<HTMLInputElement>(null);
   const hourlyRateRef = useRef<HTMLInputElement>(null);
+  const workingTimeHoursRef = useRef<HTMLInputElement>(null);
   const minGuaranteeRef = useRef<HTMLInputElement>(null);
   const maxGuaranteeRef = useRef<HTMLInputElement>(null);
   const acceptsTempWorkersRef = useRef<HTMLButtonElement>(null);
