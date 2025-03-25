@@ -295,14 +295,13 @@ export default function StoreDashboard() {
       const ageMax = ageMaxRef.current?.value ? parseInt(ageMaxRef.current.value) : undefined;
       const specMin = specMinRef.current?.value ? parseInt(specMinRef.current.value) : undefined;
       const specMax = specMaxRef.current?.value ? parseInt(specMaxRef.current.value) : undefined;
-      const hourlyRate = hourlyRateRef.current?.value ? parseInt(hourlyRateRef.current.value) : undefined;
-      const workingTimeHours = workingTimeHoursRef.current?.value ? parseInt(workingTimeHoursRef.current.value) : undefined;
+      // 勤務時間と平均時給は削除されました
       const minGuarantee = minGuaranteeRef.current?.value ? parseInt(minGuaranteeRef.current.value) : undefined;
       const maxGuarantee = maxGuaranteeRef.current?.value ? parseInt(maxGuaranteeRef.current.value) : undefined;
       const acceptsTempWorkers = acceptsTempWorkersRef.current?.getAttribute('data-state') === 'checked';
       const requiresArrivalDayBefore = requiresArrivalDayBeforeRef.current?.getAttribute('data-state') === 'checked';
-      const otherConditionsText = otherConditionsRef.current?.value || '';
-      const otherConditions = otherConditionsText.split('\n').filter(line => line.trim() !== '');
+      // その他条件は削除されました
+      const otherConditions: string[] = [];
       
       // 現在のカップサイズ条件リスト
       // profileの状態が最新になるように、cup_size_conditionsを参照する
@@ -1512,39 +1511,7 @@ export default function StoreDashboard() {
                               </div>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium mb-1 block">勤務時間（時間）</label>
-                                <div className="flex items-center">
-                                  <input 
-                                    type="number" 
-                                    ref={workingTimeHoursRef}
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
-                                    placeholder="例: 8" 
-                                    defaultValue={profile?.working_time_hours || ""}
-                                  />
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  1日あたりの実働時間を入力してください
-                                </p>
-                              </div>
-
-                              <div>
-                                <label className="text-sm font-medium mb-1 block">平均時給（円）</label>
-                                <div className="flex items-center">
-                                  <input 
-                                    type="number" 
-                                    ref={hourlyRateRef}
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
-                                    placeholder="例: 3000" 
-                                    defaultValue={profile?.average_hourly_pay || ""}
-                                  />
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  平均的な時給を入力してください
-                                </p>
-                              </div>
-                            </div>
+                            {/* 勤務時間と平均時給の項目は削除されました */}
                           </div>
                           
                           <div className="flex items-start space-x-2">
@@ -1565,29 +1532,7 @@ export default function StoreDashboard() {
                         </div>
                       </div>
 
-                      {/* その他条件 */}
-                      <div className="border rounded-lg p-4">
-                        <h3 className="text-lg font-medium mb-3 flex items-center">
-                          <ListPlus className="h-5 w-5 mr-2 text-green-500" />
-                          その他条件
-                        </h3>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            応募者に知らせたい特別な条件やマッチングアルゴリズムに含めたい他の要素を入力してください。
-                            各条件は改行で区切ってください。例: 「英語可能な方歓迎」「車の運転ができる方」など
-                          </p>
-                          <textarea
-                            ref={otherConditionsRef}
-                            className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            placeholder="その他の採用条件があれば入力してください（各条件は改行で区切ってください）"
-                            defaultValue={
-                              Array.isArray(profile?.requirements?.other_conditions) 
-                                ? profile.requirements.other_conditions.join("\n") 
-                                : ""
-                            }
-                          />
-                        </div>
-                      </div>
+                      {/* その他条件セクションは削除されました */}
 
                       {/* 保存ボタン */}
                       <div className="flex justify-end">
