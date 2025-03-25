@@ -1156,16 +1156,20 @@ export default function StoreDashboard() {
                           <Switch
                             checked={profile?.status === "published"}
                             onCheckedChange={(checked) => {
-                              // 確認メッセージを表示
-                              if (confirm(checked 
+                              const newStatus = checked ? "published" : "draft";
+                              const confirmMessage = checked 
                                 ? "店舗情報を公開しますか？公開すると求職者に表示されます。" 
-                                : "店舗情報を非公開にしますか？非公開にすると求職者に表示されなくなります。")) {
-                                updateStatusMutation.mutate(checked ? "published" : "draft");
+                                : "店舗情報を非公開にしますか？非公開にすると求職者に表示されなくなります。";
+                              
+                              // 確認ダイアログを表示して処理
+                              if (window.confirm(confirmMessage)) {
+                                console.log(`スイッチ変更: ${profile?.status} → ${newStatus}`);
+                                updateStatusMutation.mutate(newStatus);
                               }
                             }}
                             disabled={isUpdatingStatus || !profile}
                           />
-                          {isUpdatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
+                          {isUpdatingStatus && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </div>
                       </div>
                     </div>
