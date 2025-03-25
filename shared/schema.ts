@@ -377,6 +377,12 @@ export const talentProfiles = pgTable("talent_profiles", {
   waist: integer("waist"),
   hip: integer("hip"),
   face_visibility: text("face_visibility", { enum: faceVisibilityTypes }).notNull(),
+  // 新規追加フィールド：髪色
+  hair_color: text("hair_color", { enum: hairColorTypes }),
+  // 新規追加フィールド：外見タイプ
+  look_type: text("look_type", { enum: lookTypes }),
+  // 新規追加フィールド：肩書き・特別経験
+  titles: jsonb("titles").$type<string[]>().default([]),
   can_photo_diary: boolean("can_photo_diary").default(false),
   can_home_delivery: boolean("can_home_delivery").default(false),
   ng_options: jsonb("ng_options").$type<{
