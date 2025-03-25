@@ -36,6 +36,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useState, useEffect } from "react";
 import { SEO } from "@/lib/seo";
 import { motion } from "framer-motion";
@@ -217,6 +223,72 @@ const JobCard = ({ job }: { job: JobResponse }) => {
   );
 };
 
+// キャンペーン情報
+const campaigns = [
+  {
+    title: "入店祝い金キャンペーン",
+    description: "今月中にご応募の方に最大20万円の入店祝い金をプレゼント！",
+    icon: "🎁",
+    color: "from-pink-500 to-rose-500",
+    textColor: "text-white",
+    badge: "3月限定",
+  },
+  {
+    title: "出稼ぎキャンペーン",
+    description: "他県からの出稼ぎの方に交通費と宿泊費を全額支給します！",
+    icon: "✈️",
+    color: "from-blue-500 to-cyan-500",
+    textColor: "text-white",
+    badge: "好評実施中",
+  },
+  {
+    title: "友達紹介ボーナス",
+    description: "お友達を紹介して一緒に働くと、紹介者に特別ボーナス！",
+    icon: "👯‍♀️",
+    color: "from-violet-500 to-purple-500",
+    textColor: "text-white",
+    badge: "永久実施",
+  }
+];
+
+// 特集セクション
+const features = [
+  {
+    title: "高収入特集",
+    description: "日給5万円以上の高収入求人をピックアップ",
+    image: "https://scoutai1.s3.ap-southeast-2.amazonaws.com/1742784033792-1742784033791-481ec640addd0a7f41975927ea001228_600.jpg",
+    link: "/jobs?minSalary=50000"
+  },
+  {
+    title: "未経験歓迎特集",
+    description: "業界未経験でも安心して働ける優良店特集",
+    image: "https://scoutai1.s3.ap-southeast-2.amazonaws.com/1742786349768-1742786349766-business_man_macho.png",
+    link: "/jobs?beginner=true"
+  },
+  {
+    title: "交通費支給特集",
+    description: "通勤にかかる費用をサポートする求人特集",
+    image: "https://scoutai1.s3.ap-southeast-2.amazonaws.com/1742786349768-1742786349766-business_man_macho.png",
+    link: "/jobs?transportationSupport=true"
+  }
+];
+
+// よくある質問
+const faqs = [
+  {
+    question: "未経験でも大丈夫ですか？",
+    answer: "はい、ほとんどの求人は未経験歓迎です。研修制度が充実しているので安心してご応募いただけます。"
+  },
+  {
+    question: "身バレの心配はありますか？",
+    answer: "各店舗は身バレ対策に配慮しています。写真加工や顔出しNG、勤務地選びなどでリスクを最小限に抑えられます。"
+  },
+  {
+    question: "稼げるか不安です",
+    answer: "初心者でも稼げるよう、多くの店舗では最低保証制度を設けています。経験を積むにつれて収入も上がっていきます。"
+  }
+];
+
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [selectedType, setSelectedType] = useState<ServiceType | "all">("all");
@@ -301,6 +373,38 @@ export default function HomePage() {
           </div>
         </motion.section>
 
+        {/* キャンペーンバナーエリア */}
+        <div className="container mx-auto px-4 relative z-10 -mt-8">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid md:grid-cols-3 gap-4"
+          >
+            {campaigns.map((campaign, index) => (
+              <motion.div
+                key={index}
+                variants={item}
+                whileHover={{ y: -5 }}
+                className="relative overflow-hidden"
+              >
+                <div className={`p-6 rounded-lg bg-gradient-to-r ${campaign.color} shadow-lg ${campaign.textColor}`}>
+                  <div className="absolute right-3 top-3">
+                    <Badge variant="outline" className="bg-white/20 text-white font-medium border-0">
+                      {campaign.badge}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center mb-3">
+                    <span className="text-2xl mr-3">{campaign.icon}</span>
+                    <h3 className="font-bold text-lg">{campaign.title}</h3>
+                  </div>
+                  <p className="text-sm opacity-90">{campaign.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
         <main className="container mx-auto px-4 py-8 space-y-16">
           {/* お仕事ガイド */}
           <section>
@@ -376,6 +480,55 @@ export default function HomePage() {
                       </BlockQuote>
                     </CardContent>
                   </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </section>
+
+          {/* 特集コンテンツ */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Star className="h-6 w-6 text-primary" />
+                特集コンテンツ
+              </h2>
+            </div>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid md:grid-cols-3 gap-6"
+            >
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  variants={item}
+                  whileHover={{ scale: 1.03 }}
+                  className="h-full"
+                >
+                  <Link href={feature.link} className="block h-full">
+                    <Card className="overflow-hidden h-full hover:shadow-xl transition-all cursor-pointer bg-gradient-to-b from-background to-background/60 border-2 border-background/80">
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={feature.image}
+                          alt={feature.title}
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/30" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h3 className="text-xl font-bold text-white">{feature.title}</h3>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <p className="text-muted-foreground text-sm">{feature.description}</p>
+                        <div className="flex justify-end mt-2">
+                          <Button variant="ghost" size="sm" className="text-primary">
+                            特集を見る <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </motion.div>
               ))}
             </motion.div>
@@ -515,6 +668,53 @@ export default function HomePage() {
                 ))}
               </motion.div>
             )}
+          </section>
+
+          {/* よくある質問 */}
+          <section className="bg-muted/30 p-8 rounded-lg">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <HelpCircle className="h-6 w-6 text-primary" />
+                よくある質問
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <Card key={index} className="overflow-hidden border-0 shadow-sm">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value={`faq-${index}`} className="border-0">
+                      <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="p-4 pt-0 text-muted-foreground">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* CTAセクション */}
+          <section className="bg-primary/10 p-12 rounded-2xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute left-0 bottom-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            <div className="max-w-3xl mx-auto text-center relative z-10">
+              <h2 className="text-3xl font-bold mb-6">お仕事を探すなら、SCAIで今すぐ始めよう</h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                あなたの条件に合った高収入求人が見つかります。<br />
+                無料会員登録をしてAIマッチングを体験してみましょう。
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="text-lg px-8" asChild>
+                  <Link href="/auth">無料会員登録</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-8" asChild>
+                  <Link href="/jobs">求人を見る</Link>
+                </Button>
+              </div>
+            </div>
           </section>
         </main>
       </div>
