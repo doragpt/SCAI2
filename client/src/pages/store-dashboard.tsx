@@ -56,7 +56,11 @@ import {
   DollarSign,
   Flag,
   Globe,
-  Smartphone
+  Smartphone,
+  Ruler,
+  ListPlus,
+  Save,
+  X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -70,7 +74,7 @@ import { ContactDisplay } from "@/components/store/ContactDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -208,6 +212,19 @@ export default function StoreDashboard() {
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [selectedTab, setSelectedTab] = useState("profile");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  
+  // 採用設定関連のステート
+  const [isSavingRequirements, setIsSavingRequirements] = useState(false);
+  const [newCupSizeCondition, setNewCupSizeCondition] = useState({ cup_size: "E", spec_min: 100 });
+  
+  // 採用設定フォーム用のref
+  const ageMinRef = useRef<HTMLInputElement>(null);
+  const ageMaxRef = useRef<HTMLInputElement>(null);
+  const specMinRef = useRef<HTMLInputElement>(null);
+  const specMaxRef = useRef<HTMLInputElement>(null);
+  const acceptsTempWorkersRef = useRef<HTMLButtonElement>(null);
+  const requiresArrivalDayBeforeRef = useRef<HTMLButtonElement>(null);
+  const otherConditionsRef = useRef<HTMLTextAreaElement>(null);
 
   // 店舗プロフィール情報の取得
   const { data: profile, isLoading: profileLoading } = useQuery<StoreProfile>({
@@ -251,6 +268,155 @@ export default function StoreDashboard() {
     retryDelay: 1000,
   });
   
+  // 採用設定を保存するミューテーション
+  const saveRequirementsMutation = useMutation({
+    mutationFn: async () => {
+      setIsSavingRequirements(true);
+      
+      // フォームの値を取得
+      const ageMin = ageMinRef.current?.value ? parseInt(ageMinRef.current.value) : undefined;
+      const ageMax = ageMaxRef.current?.value ? parseInt(ageMaxRef.current.value) : undefined;
+      const specMin = specMinRef.current?.value ? parseInt(specMinRef.current.value) : undefined;
+      const specMax = specMaxRef.current?.value ? parseInt(specMaxRef.current.value) : undefined;
+      const acceptsTempWorkers = acceptsTempWorkersRef.current?.getAttribute('data-state') === 'checked';
+      const requiresArrivalDayBefore = requiresArrivalDayBeforeRef.current?.getAttribute('data-state') === 'checked';
+      const otherConditionsText = otherConditionsRef.current?.value || '';
+      const otherConditions = otherConditionsText.split('\n').filter(line => line.trim() !== '');
+      
+      // 現在のカップサイズ条件リスト
+      const cupSizeConditions = profile?.requirements?.cup_size_conditions || [];
+      
+      // 採用要件オブジェクト
+      const requirements = {
+        age_min: ageMin,
+        age_max: ageMax,
+        spec_min: specMin,
+        spec_max: specMax,
+        accepts_temporary_workers: acceptsTempWorkers,
+        requires_arrival_day_before: requiresArrivalDayBefore,
+        other_conditions: otherConditions,
+        cup_size_conditions: cupSizeConditions
+      };
+      
+      console.log("送信する採用要件:", requirements);
+      
+      // すべての必須フィールドを含めるため、既存のプロフィールデータを複製
+      const updateData = {
+        // 必須フィールド (storeProfileSchemaで.min(1)が設定されている)
+        catch_phrase: profile?.catch_phrase || "",
+        description: profile?.description || "",
+        recruiter_name: profile?.recruiter_name || "担当者", // スキーマ上で必須項目
+        
+        // 必須ではないが送信が必要なフィールド
+        benefits: profile?.benefits || [],
+        minimum_guarantee: profile?.minimum_guarantee || 0,
+        maximum_guarantee: profile?.maximum_guarantee || 0,
+        working_time_hours: profile?.working_time_hours || 0,
+        average_hourly_pay: profile?.average_hourly_pay || 0,
+        top_image: profile?.top_image || "",
+        working_hours: profile?.working_hours || "",
+        requirements: requirements,
+        transportation_support: profile?.transportation_support || false,
+        housing_support: profile?.housing_support || false,
+        special_offers: profile?.special_offers || [],
+        
+        // 追加フィールド
+        phone_numbers: profile?.phone_numbers || [],
+        email_addresses: profile?.email_addresses || [],
+        address: profile?.address || "",
+        access_info: profile?.access_info || "",
+        security_measures: profile?.security_measures || "",
+        application_requirements: profile?.application_requirements || "",
+        
+        // ステータスは現在のものを維持
+        status: profile?.status || "draft"
+      };
+      
+      console.log("送信データ:", updateData);
+      
+      try {
+        return await apiRequest("PATCH", "/api/store/profile", updateData);
+      } catch (error) {
+        console.error("採用要件更新エラー:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // キャッシュを更新してUIを再描画
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STORE_PROFILE] });
+      
+      toast({
+        title: "採用設定を保存しました",
+        description: "設定に基づいたAIマッチングが行われるようになります",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "採用設定の保存に失敗しました",
+        description: error.message || "もう一度お試しください",
+      });
+    },
+    onSettled: () => {
+      setIsSavingRequirements(false);
+    }
+  });
+  
+  // カップサイズ条件を追加する関数
+  const handleAddCupSizeCondition = () => {
+    if (!profile?.requirements) return;
+    
+    // 現在の条件リストを取得
+    const currentConditions = profile.requirements.cup_size_conditions || [];
+    
+    // 重複チェック
+    const exists = currentConditions.some(
+      condition => condition.cup_size === newCupSizeCondition.cup_size
+    );
+    
+    if (exists) {
+      toast({
+        variant: "destructive",
+        title: "条件が重複しています",
+        description: `${newCupSizeCondition.cup_size}カップの条件はすでに設定されています`
+      });
+      return;
+    }
+    
+    // 条件を追加
+    const updatedConditions = [
+      ...currentConditions,
+      { ...newCupSizeCondition }
+    ];
+    
+    // プロフィールの採用要件を更新
+    const updatedRequirements = {
+      ...profile.requirements,
+      cup_size_conditions: updatedConditions
+    };
+    
+    // 採用要件の更新と保存
+    saveRequirementsMutation.mutate();
+  };
+  
+  // カップサイズ条件を削除する関数
+  const handleRemoveCupSizeCondition = (index: number) => {
+    if (!profile?.requirements?.cup_size_conditions) return;
+    
+    // 条件を削除
+    const updatedConditions = [...profile.requirements.cup_size_conditions];
+    updatedConditions.splice(index, 1);
+    
+    // プロフィールの採用要件を更新
+    const updatedRequirements = {
+      ...profile.requirements,
+      cup_size_conditions: updatedConditions
+    };
+    
+    // 採用要件の更新と保存
+    saveRequirementsMutation.mutate();
+  };
+
   // 公開ステータス変更処理
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: "draft" | "published") => {
