@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { type JobResponse, type ServiceType, type SpecialOffer } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Share, Heart, MapPin, Phone, Info } from "lucide-react";
+import { 
+  Loader2, Share, Heart, MapPin, Phone, Info, 
+  Building, Clock, Banknote, ShieldCheck, CalendarDays
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -163,54 +166,57 @@ export default function JobDetail() {
         <Breadcrumb items={breadcrumbItems} />
 
         {/* ヘッダー部分 - 店舗名、場所、ボタン */}
-        <Card className="mb-8 overflow-hidden">
-          <CardHeader className="pb-0 md:pb-0 relative">
+        <Card className="mb-8 overflow-hidden shadow-lg border-0">
+          <CardHeader className="pb-0 md:pb-0 relative bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
             {job.top_image && (
-              <div className="absolute inset-0 opacity-10 overflow-hidden h-full">
+              <div className="absolute inset-0 opacity-20 overflow-hidden h-full">
                 <img 
                   src={job.top_image} 
                   alt={job.businessName} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/80" />
               </div>
             )}
             
-            <div className="flex flex-col md:flex-row justify-between items-start relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-start relative z-10 py-4">
               <div>
-                <h1 className="text-3xl font-bold mb-2">{job.businessName}</h1>
-                <div className="text-muted-foreground flex items-center gap-2">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-1 text-red-500" />
-                    <span>{job.location}</span>
+                <div className="mb-1 text-sm font-medium text-blue-100">
+                  <p>SCAI（スカイ）を見た</p>
+                </div>
+                <h1 className="text-3xl font-bold mb-3">{job.businessName}</h1>
+                <div className="flex items-center flex-wrap gap-3 mb-4">
+                  <div className="flex items-center bg-white/20 px-3 py-1 rounded-full">
+                    <MapPin className="h-4 w-4 mr-1 text-blue-100" />
+                    <span className="text-white text-sm">{job.location}</span>
                   </div>
-                  <span>・</span>
-                  <div className="flex items-center">
-                    <Info className="h-4 w-4 mr-1 text-blue-500" />
-                    <span>{getServiceTypeLabel(job.serviceType as ServiceType)}</span>
+                  <div className="flex items-center bg-white/20 px-3 py-1 rounded-full">
+                    <Building className="h-4 w-4 mr-1 text-blue-100" />
+                    <span className="text-white text-sm">{getServiceTypeLabel(job.serviceType as ServiceType)}</span>
                   </div>
+                  {job.workingHours && (
+                    <div className="flex items-center bg-white/20 px-3 py-1 rounded-full">
+                      <Clock className="h-4 w-4 mr-1 text-blue-100" />
+                      <span className="text-white text-sm">{job.workingHours}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  <div className="inline-flex items-center px-3 py-1.5 bg-white text-blue-700 rounded-md text-sm font-medium">
+                    <Banknote className="mr-1.5 h-4 w-4 text-blue-500" />
                     {formatSalary(
                       job.minimumGuarantee,
                       job.maximumGuarantee,
                       job.workingTimeHours,
                       job.averageHourlyPay
                     )}
-                  </span>
-                  
-                  {job.workingHours && (
-                    <span className="inline-block px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-medium border border-orange-100">
-                      {job.workingHours}
-                    </span>
-                  )}
+                  </div>
                 </div>
               </div>
               
-              <div className="mt-4 md:mt-0 flex flex-col gap-2">
-                <Button size="lg" className="w-full" asChild>
+              <div className="mt-4 md:mt-0 flex flex-col gap-3">
+                <Button size="lg" className="w-full bg-white text-blue-700 hover:bg-blue-50" asChild>
                   {user ? (
                     <Link href={`/jobs/${id}/apply`}>
                       <Phone className="mr-2 h-4 w-4" />
@@ -222,11 +228,11 @@ export default function JobDetail() {
                 </Button>
                 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white">
                     <Heart className="mr-1 h-4 w-4" />
                     <span className="text-xs">キープ</span>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white">
                     <Share className="mr-1 h-4 w-4" />
                     <span className="text-xs">シェア</span>
                   </Button>
@@ -235,33 +241,44 @@ export default function JobDetail() {
             </div>
           </CardHeader>
           
-          <CardContent className="pb-6 pt-4 relative z-10">
+          <CardContent className="pb-6 pt-6 relative z-10">
             {job.catchPhrase && (
-              <p className="text-lg italic text-muted-foreground">{job.catchPhrase}</p>
+              <div className="border-l-4 border-blue-500 pl-4 py-2 mb-4">
+                <p className="text-lg italic text-gray-700 dark:text-gray-300">{job.catchPhrase}</p>
+              </div>
             )}
             
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
               {job.transportationSupport && (
-                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100">
-                  交通費支給
-                </span>
+                <div className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <ShieldCheck className="h-5 w-5 mr-2 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">交通費支給</span>
+                </div>
               )}
               {job.housingSupport && (
-                <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-100">
-                  寮完備
-                </span>
+                <div className="flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <Building className="h-5 w-5 mr-2 text-purple-500" />
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">寮完備</span>
+                </div>
               )}
-              {job.benefits && job.benefits.slice(0, 3).map((benefit, index) => (
-                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-100">
-                  {benefit}
-                </span>
+              {job.benefits && job.benefits.slice(0, 2).map((benefit, index) => (
+                <div key={index} className="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <CalendarDays className="h-5 w-5 mr-2 text-green-500" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">{benefit}</span>
+                </div>
               ))}
-              {job.benefits && job.benefits.length > 3 && (
-                <span className="px-2 py-1 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-100">
-                  +{job.benefits.length - 3}
-                </span>
-              )}
             </div>
+            
+            {job.benefits && job.benefits.length > 2 && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  その他の特典： 
+                  {job.benefits.slice(2).map((benefit, index) => (
+                    <span key={index} className="mx-1">{benefit}{index < job.benefits.slice(2).length - 1 ? '、' : ''}</span>
+                  ))}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
