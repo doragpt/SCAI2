@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb, index, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, index, boolean, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -1112,6 +1112,145 @@ export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
 // StoreProfileListResponseはすでに上部で定義されています。
 
 // JobResponse型の定義 - クライアント側の型定義
+// 体験入店・キャンペーン関連
+// 必要な身分証明書の種類
+export const requiredDocumentTypes = [
+  "運転免許証",
+  "パスポート",
+  "住基カード（写真付き）",
+  "住民票",
+  "住民票記載事項証明書",
+  "マイナンバーカード",
+  "その他"
+] as const;
+export type RequiredDocumentType = typeof requiredDocumentTypes[number];
+
+// キャンペーンタイプ
+export const campaignTypeOptions = [
+  "入店祝い金", 
+  "特別保証", 
+  "友達紹介", 
+  "体験入店特典", 
+  "期間限定特典",
+  "その他"
+] as const;
+export type CampaignType = typeof campaignTypeOptions[number];
+
+// キャンペーン対象者
+export const targetAudienceOptions = [
+  "未経験", 
+  "経験者", 
+  "出稼ぎ", 
+  "学生", 
+  "主婦", 
+  "全員対象"
+] as const;
+export type TargetAudience = typeof targetAudienceOptions[number];
+
+// 体験入店スキーマ
+export const trialEntrySchema = z.object({
+  id: z.string().uuid().optional(),
+  storeProfileId: z.number(),
+  dailyGuarantee: z.number(), // 日給保証額
+  hourlyRate: z.number().optional(), // 時給（オプション）
+  workingHours: z.number(), // 最低勤務時間
+  requirements: z.string().optional(), // 応募条件
+  benefitsDescription: z.string().optional(), // 特典の説明
+  startDate: z.date().optional(), // キャンペーン開始日
+  endDate: z.date().optional(), // キャンペーン終了日 
+  isActive: z.boolean().default(true),
+  examples: z.array(z.object({
+    hours: z.number(),
+    amount: z.number(),
+    description: z.string().optional()
+  })).optional(), // 給与例（6時間で〜円など）
+  requiredDocuments: z.array(z.enum(requiredDocumentTypes)).optional(),
+  qaItems: z.array(z.object({
+    question: z.string(),
+    answer: z.string()
+  })).optional(), // よくある質問
+});
+
+// キャンペーンスキーマ
+export const campaignSchema = z.object({
+  id: z.string().uuid().optional(),
+  storeProfileId: z.number(),
+  title: z.string(),
+  description: z.string(),
+  amount: z.number().optional(), // 金額（入店祝い金など）
+  type: z.enum(campaignTypeOptions),
+  conditions: z.string().optional(), // 適用条件
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+  isActive: z.boolean().default(true),
+  imageUrl: z.string().optional(),
+  tagline: z.string().optional(), // キャッチコピー
+  isLimited: z.boolean().default(false), // 期間限定かどうか
+  targetAudience: z.array(z.enum(targetAudienceOptions)).optional(), // ターゲット層
+});
+
+// データベーステーブル
+export const trialEntries = pgTable('trial_entries', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
+  daily_guarantee: integer('daily_guarantee').notNull(),
+  hourly_rate: integer('hourly_rate'),
+  working_hours: integer('working_hours').notNull(),
+  requirements: text('requirements'),
+  benefits_description: text('benefits_description'),
+  start_date: timestamp('start_date'),
+  end_date: timestamp('end_date'),
+  is_active: boolean('is_active').default(true).notNull(),
+  examples: jsonb('examples').$type<{hours: number, amount: number, description?: string}[]>(),
+  required_documents: jsonb('required_documents').$type<string[]>(),
+  qa_items: jsonb('qa_items').$type<{question: string, answer: string}[]>(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const campaigns = pgTable('campaigns', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  amount: integer('amount'),
+  type: text('type').notNull().$type<CampaignType>(),
+  conditions: text('conditions'),
+  start_date: timestamp('start_date'),
+  end_date: timestamp('end_date'),
+  is_active: boolean('is_active').default(true).notNull(),
+  image_url: text('image_url'),
+  tagline: text('tagline'),
+  is_limited: boolean('is_limited').default(false).notNull(),
+  target_audience: jsonb('target_audience').$type<string[]>(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull()
+});
+
+// 関連性の定義
+export const trialEntriesRelations = relations(trialEntries, ({ one }) => ({
+  storeProfile: one(store_profiles, {
+    fields: [trialEntries.store_profile_id],
+    references: [store_profiles.id]
+  })
+}));
+
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+  storeProfile: one(store_profiles, {
+    fields: [campaigns.store_profile_id],
+    references: [store_profiles.id]
+  })
+}));
+
+// タイプ定義
+export type TrialEntry = typeof trialEntries.$inferSelect;
+export type InsertTrialEntry = typeof trialEntries.$inferInsert;
+export type TrialEntryData = z.infer<typeof trialEntrySchema>;
+
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = typeof campaigns.$inferInsert;
+export type CampaignData = z.infer<typeof campaignSchema>;
+
 export interface JobResponse {
   id: number;
   businessName: string;
@@ -1158,4 +1297,8 @@ export interface JobResponse {
     verified: boolean;
     date: string;
   }[];
+  
+  // 体験入店・キャンペーン
+  trialEntry?: TrialEntryData;    // 体験入店情報
+  campaigns?: CampaignData[];     // キャンペーン情報
 }
