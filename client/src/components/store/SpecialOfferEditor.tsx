@@ -108,9 +108,11 @@ export function SpecialOfferEditor() {
   // 編集
   const handleEditOffer = (offer: SpecialOffer, index: number) => {
     // オブジェクトの参照ではなく、新しいオブジェクトを作成して編集
-    setEditingOffer({...offer});
+    // オブジェクトのディープコピーを作成して編集する
+    setEditingOffer(JSON.parse(JSON.stringify(offer)));
     setEditIndex(index);
     setIsOpen(true);
+    console.log('編集開始:', offer, 'インデックス:', index);
   };
   
   // テンプレートから追加
@@ -367,7 +369,7 @@ export function SpecialOfferEditor() {
                         {COLOR_PRESETS.map((color) => (
                           <SelectItem key={color.name} value={color.bg}>
                             <div className="flex items-center">
-                              <div className={`w-4 h-4 rounded-full bg-${color.primary}-500 mr-2`}></div>
+                              <span className={`w-4 h-4 rounded-full mr-2 inline-block ${color.bg.replace('from-', 'bg-').replace('to-', '')}`}></span>
                               {color.name}
                             </div>
                           </SelectItem>

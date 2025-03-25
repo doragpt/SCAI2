@@ -48,6 +48,12 @@ import {
   Award,
   ChevronRight,
   CreditCard,
+  Star,
+  Gift,
+  Ticket,
+  Zap,
+  DollarSign,
+  Flag,
   Globe,
   Smartphone
 } from "lucide-react";
@@ -614,17 +620,29 @@ export default function StoreDashboard() {
                                       <p className="text-xs text-emerald-700 dark:text-emerald-400">マンション寮完備・家具家電付き</p>
                                     </div>
                                   )}
-                                  {profile.minimum_guarantee && (
-                                    <div className="flex flex-col p-3 rounded-md bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border border-pink-200 dark:border-pink-800/30 shadow-sm">
-                                      <div className="flex items-center gap-2 mb-1.5">
-                                        <div className="p-1.5 bg-pink-200 dark:bg-pink-800/50 rounded-full">
-                                          <Banknote className="h-3.5 w-3.5 text-pink-600 dark:text-pink-300" />
+                                  {/* カスタム特別オファーの表示 */}
+                                  {profile.special_offers && profile.special_offers.length > 0 && 
+                                    profile.special_offers.slice(0, 3).map((offer: any, offerIndex: number) => (
+                                      <div key={offer.id || offerIndex} className={`flex flex-col p-3 rounded-md bg-gradient-to-br ${offer.backgroundColor || 'from-pink-50 to-pink-100'} border ${offer.border || 'border-pink-200'} shadow-sm`}>
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                          <div className="p-1.5 bg-white/50 rounded-full">
+                                            {/* 動的にアイコンを表示 */}
+                                            {React.createElement(
+                                              // @ts-ignore
+                                              {
+                                                "Award": Award, "Star": Star, "Gift": Gift, "Ticket": Ticket, 
+                                                "Zap": Zap, "DollarSign": DollarSign, "Banknote": Banknote, 
+                                                "Home": Home, "Car": Car, "Flag": Flag
+                                              }[offer.icon] || Award,
+                                              { className: `h-3.5 w-3.5 ${offer.textColor || 'text-pink-600'}` }
+                                            )}
+                                          </div>
+                                          <h5 className={`font-bold ${offer.textColor || 'text-pink-800'} text-xs uppercase`}>{offer.title}</h5>
                                         </div>
-                                        <h5 className="font-bold text-pink-800 dark:text-pink-300 text-xs uppercase">最低保証</h5>
+                                        <p className={`text-xs ${offer.textColor || 'text-pink-700'}`}>{offer.description}</p>
                                       </div>
-                                      <p className="text-xs text-pink-700 dark:text-pink-400">1日最低 {profile.minimum_guarantee.toLocaleString()}円 保証</p>
-                                    </div>
-                                  )}
+                                    ))
+                                  }
                                 </div>
                               </div>
                               
