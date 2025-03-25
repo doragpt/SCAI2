@@ -122,18 +122,18 @@ export function ProfileConfirmationModal({
                   value={
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        {(formData.available_ids || formData.availableIds)?.types?.map((type: string, index: number) => (
+                        {formData.available_ids?.types?.map((type: string, index: number) => (
                           <Badge key={index} variant="outline">{type}</Badge>
                         ))}
-                        {(formData.available_ids || formData.availableIds)?.others?.map((other: string, index: number) => (
+                        {formData.available_ids?.others?.map((other: string, index: number) => (
                           <Badge key={index} variant="outline">{other}</Badge>
                         ))}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        住民票提出: {(formData.can_provide_residence_record || formData.canProvideResidenceRecord) ? "可能" : "不可"}
+                        住民票提出: {formData.can_provide_residence_record ? "可能" : "不可"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        1ヶ月以内の性病検査表: {(formData.can_provide_std_test || formData.canProvideStdTest) ? "可能" : "不可"}
+                        1ヶ月以内の性病検査表: {formData.can_provide_std_test ? "可能" : "不可"}
                       </div>
                     </div>
                   }
@@ -181,11 +181,11 @@ export function ProfileConfirmationModal({
               <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="写メ日記"
-                  value={(formData.can_photo_diary || formData.canPhotoDiary) ? "可能" : "不可"}
+                  value={formData.can_photo_diary ? "可能" : "不可"}
                 />
                 <InfoItem
                   label="自宅派遣"
-                  value={(formData.can_home_delivery || formData.canHomeDelivery) ? "可能" : "不可"}
+                  value={formData.can_home_delivery ? "可能" : "不可"}
                 />
                 <InfoItem
                   label="現在の在籍店舗"
@@ -295,19 +295,19 @@ export function ProfileConfirmationModal({
               <div className="grid grid-cols-2 gap-4 bg-card p-4 rounded-lg">
                 <InfoItem
                   label="エステ経験"
-                  value={(formData.has_esthe_experience || formData.hasEstheExperience) ? "あり" : "なし"}
+                  value={formData.has_esthe_experience ? "あり" : "なし"}
                 />
-                {(formData.has_esthe_experience || formData.hasEstheExperience) && (
+                {formData.has_esthe_experience && (
                   <InfoItem
                     label="経験期間"
-                    value={formData.esthe_experience_period || formData.estheExperiencePeriod}
+                    value={formData.esthe_experience_period}
                   />
                 )}
                 <InfoItem
                   label="対応可能なエステ"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {(formData.esthe_options || formData.estheOptions)?.available?.map((option: string, index: number) => (
+                      {formData.esthe_options?.available?.map((option: string, index: number) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -317,7 +317,7 @@ export function ProfileConfirmationModal({
                   label="エステNG項目"
                   value={
                     <div className="flex flex-wrap gap-2">
-                      {(formData.esthe_options?.ng_options || formData.estheOptions?.ngOptions)?.map((option: string, index: number) => (
+                      {formData.esthe_options?.ng_options?.map((option: string, index: number) => (
                         <Badge key={index} variant="outline">{option}</Badge>
                       ))}
                     </div>
@@ -358,7 +358,7 @@ export function ProfileConfirmationModal({
                   label="自己紹介"
                   value={
                     <p className="text-sm whitespace-pre-wrap">
-                      {formData.self_introduction || formData.selfIntroduction || "未入力"}
+                      {formData.self_introduction || "未入力"}
                     </p>
                   }
                 />

@@ -308,7 +308,12 @@ export class DatabaseStorage implements IStorage {
         photo_diary_urls: profileResult.photo_diary_urls || [],
         photos: profileResult.photos || [],
         // ユーザーテーブルから取得した生年月日情報を追加
-        birth_date: profileResult.birth_date || null
+        birth_date: profileResult.birth_date || null,
+        // 新規追加フィールドの取得
+        hair_color: profileResult.hair_color || undefined,
+        look_type: profileResult.look_type || undefined,
+        tattoo_level: profileResult.tattoo_level || undefined,
+        titles: profileResult.titles || []
       };
 
       log('info', 'タレントプロフィール取得成功', {
@@ -320,7 +325,9 @@ export class DatabaseStorage implements IStorage {
           first_name_kana: profileData.first_name_kana,
           location: profileData.location,
           nearest_station: profileData.nearest_station,
-          face_visibility: profileData.face_visibility
+          face_visibility: profileData.face_visibility,
+          hair_color: profileData.hair_color,
+          look_type: profileData.look_type
         }
       });
 
@@ -349,6 +356,11 @@ export class DatabaseStorage implements IStorage {
           weight: data.weight,
           cup_size: data.cup_size,
           face_visibility: data.face_visibility,
+          // 新規追加フィールド
+          hair_color: data.hair_color,
+          look_type: data.look_type,
+          tattoo_level: data.tattoo_level,
+          titles: data.titles?.length || 0, // タイトル数のみログに記録
         }
       });
 
@@ -399,6 +411,11 @@ export class DatabaseStorage implements IStorage {
           weight: result.weight,
           cup_size: result.cup_size,
           face_visibility: result.face_visibility,
+          // 新規追加フィールド
+          hair_color: result.hair_color,
+          look_type: result.look_type,
+          tattoo_level: result.tattoo_level,
+          titles: result.titles ? result.titles.length : 0, // タイトル数のみログに記録
         }
       });
 
