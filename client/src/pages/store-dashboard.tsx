@@ -1377,16 +1377,37 @@ export default function StoreDashboard() {
                               </div>
                             </div>
                             
-                            <div>
-                              <label className="text-sm font-medium mb-1 block">平均時給（円）</label>
-                              <div className="flex items-center">
-                                <input 
-                                  type="number" 
-                                  ref={hourlyRateRef}
-                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
-                                  placeholder="例: 3000" 
-                                  defaultValue={profile?.average_hourly_pay || ""}
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">勤務時間（時間）</label>
+                                <div className="flex items-center">
+                                  <input 
+                                    type="number" 
+                                    ref={workingTimeHoursRef}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
+                                    placeholder="例: 8" 
+                                    defaultValue={profile?.working_time_hours || ""}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  1日あたりの実働時間を入力してください
+                                </p>
+                              </div>
+
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">平均時給（円）</label>
+                                <div className="flex items-center">
+                                  <input 
+                                    type="number" 
+                                    ref={hourlyRateRef}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
+                                    placeholder="例: 3000" 
+                                    defaultValue={profile?.average_hourly_pay || ""}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  平均的な時給を入力してください
+                                </p>
                               </div>
                             </div>
                           </div>
