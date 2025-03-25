@@ -501,7 +501,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     name="minimum_guarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel className="font-medium">最低給与（円）</FormLabel>
+                        <FormLabel className="font-medium">基本給与（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
@@ -524,7 +524,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     name="maximum_guarantee"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel className="font-medium">最高給与（円）</FormLabel>
+                        <FormLabel className="font-medium">上限給与（円）</FormLabel>
                         <FormControl>
                           <input
                             type="number"
@@ -593,7 +593,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     />
                   </div>
                   <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務で平均給与〇円」という形式で表示されます</p>
-                  <p className="text-sm text-gray-500">※ 最低給与・最高給与の入力がある場合は従来の表示形式も併用されます</p>
+                  <p className="text-sm text-gray-500">※ 基本給与・上限給与の入力がある場合は従来の表示形式も併用されます</p>
                 </div>
                 
                 {/* 勤務時間帯 */}
@@ -684,7 +684,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       </div>
                     )}
                     
-                    {/* カスタム特典機能に置き換えのため、最低保証の個別表示は削除 */}
+                    {/* カスタム特典機能に置き換えのため、給与情報の個別表示は削除 */}
                   </div>
                 </div>
 
