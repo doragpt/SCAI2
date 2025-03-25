@@ -553,7 +553,6 @@ const defaultValues: TalentProfileData = {
   hip: null,
   face_visibility: "全隠し",
   // 新規追加フィールド
-  tattoo_level: undefined,
   hair_color: undefined,
   look_type: undefined,
   titles: [],

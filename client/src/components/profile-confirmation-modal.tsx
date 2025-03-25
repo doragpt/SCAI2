@@ -283,6 +283,40 @@ export function ProfileConfirmationModal({
                     ) : "なし"
                   }
                 />
+                
+                <InfoItem
+                  label="タトゥー・傷の情報"
+                  value={
+                    formData.body_mark?.has_body_mark ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <span className="font-medium">種類: </span>
+                            <Badge variant="outline">{formData.body_mark.type || '-'}</Badge>
+                          </div>
+                          {formData.body_mark.location && (
+                            <div>
+                              <span className="font-medium">部位: </span>
+                              <Badge variant="outline">{formData.body_mark.location}</Badge>
+                            </div>
+                          )}
+                          {formData.body_mark.size && (
+                            <div>
+                              <span className="font-medium">大きさ: </span>
+                              <Badge variant="outline">{formData.body_mark.size}</Badge>
+                            </div>
+                          )}
+                          {formData.body_mark.details && (
+                            <div>
+                              <span className="font-medium">詳細: </span>
+                              <span>{formData.body_mark.details}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : "なし"
+                  }
+                />
 
               </div>
             </section>
