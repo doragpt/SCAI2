@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type StoreProfile, type BlogPost, cupSizes, type CupSize } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -74,7 +74,6 @@ import { ContactDisplay } from "@/components/store/ContactDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -281,6 +280,9 @@ export default function StoreDashboard() {
       const ageMax = ageMaxRef.current?.value ? parseInt(ageMaxRef.current.value) : undefined;
       const specMin = specMinRef.current?.value ? parseInt(specMinRef.current.value) : undefined;
       const specMax = specMaxRef.current?.value ? parseInt(specMaxRef.current.value) : undefined;
+      const hourlyRate = hourlyRateRef.current?.value ? parseInt(hourlyRateRef.current.value) : undefined;
+      const minGuarantee = minGuaranteeRef.current?.value ? parseInt(minGuaranteeRef.current.value) : undefined;
+      const maxGuarantee = maxGuaranteeRef.current?.value ? parseInt(maxGuaranteeRef.current.value) : undefined;
       const acceptsTempWorkers = acceptsTempWorkersRef.current?.getAttribute('data-state') === 'checked';
       const requiresArrivalDayBefore = requiresArrivalDayBeforeRef.current?.getAttribute('data-state') === 'checked';
       const otherConditionsText = otherConditionsRef.current?.value || '';
@@ -295,6 +297,9 @@ export default function StoreDashboard() {
         age_max: ageMax,
         spec_min: specMin,
         spec_max: specMax,
+        hourly_rate: hourlyRate,
+        min_guarantee: minGuarantee,
+        max_guarantee: maxGuarantee,
         accepts_temporary_workers: acceptsTempWorkers,
         requires_arrival_day_before: requiresArrivalDayBefore,
         other_conditions: otherConditions,
