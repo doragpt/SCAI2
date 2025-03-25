@@ -1414,9 +1414,14 @@ export default function StoreDashboard() {
                           その他条件
                         </h3>
                         <div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            応募者に知らせたい特別な条件やマッチングアルゴリズムに含めたい他の要素を入力してください。
+                            各条件は改行で区切ってください。例: 「英語可能な方歓迎」「車の運転ができる方」など
+                          </p>
                           <textarea
+                            ref={otherConditionsRef}
                             className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            placeholder="その他の採用条件があれば入力してください"
+                            placeholder="その他の採用条件があれば入力してください（各条件は改行で区切ってください）"
                             defaultValue={
                               Array.isArray(profile?.requirements?.other_conditions) 
                                 ? profile.requirements.other_conditions.join("\n") 
