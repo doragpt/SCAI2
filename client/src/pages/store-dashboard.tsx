@@ -829,26 +829,20 @@ export default function StoreDashboard() {
                                 </div>
                               </div>
                               
-                              {/* 平均給与の表示 */}
+                              {/* 平均給与の表示（削除されたフィールドのため、簡略化）*/}
                               <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
-                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">平均給与</div>
-                                {(profile.working_time_hours && profile.average_hourly_pay) && (
+                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">給与</div>
+                                {(profile.minimum_guarantee || profile.maximum_guarantee) ? (
                                   <div className="text-gray-700 dark:text-gray-300">
-                                    <div>{profile.working_time_hours}時間勤務で<span className="font-bold text-pink-700 dark:text-pink-300">{profile.average_hourly_pay.toLocaleString()}</span>円</div>
-                                    <div className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                                      時給換算：<span className="font-medium">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>
-                                    </div>
+                                    {profile.minimum_guarantee && profile.maximum_guarantee ? (
+                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee.toLocaleString()}〜{profile.maximum_guarantee.toLocaleString()}</span>円</div>
+                                    ) : profile.minimum_guarantee ? (
+                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee.toLocaleString()}</span>円〜</div>
+                                    ) : (
+                                      <div>〜<span className="font-bold text-pink-700 dark:text-pink-300">{profile.maximum_guarantee.toLocaleString()}</span>円</div>
+                                    )}
                                   </div>
-                                )}
-                                {(!profile.average_hourly_pay && profile.working_time_hours && profile.minimum_guarantee) && (
-                                  <div className="text-gray-700 dark:text-gray-300">
-                                    <div>{profile.working_time_hours}時間勤務で<span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee.toLocaleString()}</span>円</div>
-                                    <div className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                                      時給換算：<span className="font-medium">{Math.round(profile.minimum_guarantee / profile.working_time_hours).toLocaleString()}円</span>
-                                    </div>
-                                  </div>
-                                )}
-                                {(!profile.working_time_hours || (!profile.average_hourly_pay && !profile.minimum_guarantee)) && (
+                                ) : (
                                   <span className="text-sm text-muted-foreground italic">未設定</span>
                                 )}
                               </div>
