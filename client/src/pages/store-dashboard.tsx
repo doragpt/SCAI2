@@ -1850,6 +1850,15 @@ export default function StoreDashboard() {
                           <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
                           タトゥー/傷許容レベル
                         </h3>
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-md mb-3">
+                          <h4 className="text-sm font-semibold text-amber-800 mb-1 flex items-center">
+                            <Info className="h-4 w-4 mr-1" />
+                            採用ロジックについて
+                          </h4>
+                          <p className="text-xs text-amber-700">
+                            この設定はAIマッチングアルゴリズムに影響します。スイッチをオフにした場合は「受け入れ不可」となり、タトゥー/傷のある応募者はマッチングされません。スイッチをオンにして設定を選択すると、選んだ許容レベルに基づいて応募者のスコアが計算されます。
+                          </p>
+                        </div>
                         <div className="flex items-center space-x-2 mb-3">
                           <Switch 
                             id="enable-tattoo-settings"
@@ -1866,7 +1875,7 @@ export default function StoreDashboard() {
                               タトゥー/傷許容レベルを設定する
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              タトゥーや傷の許容レベルを設定できます
+                              オフ：タトゥー/傷のある応募者を完全に除外します
                             </p>
                           </div>
                         </div>
@@ -1883,9 +1892,36 @@ export default function StoreDashboard() {
                               }}
                             >
                               {tattooAcceptanceLevels.map((level) => (
-                                <div key={level} className="flex items-center space-x-2">
-                                  <RadioGroupItem value={level} id={`tattoo-level-${level}`} />
-                                  <Label htmlFor={`tattoo-level-${level}`}>{level}</Label>
+                                <div key={level} className="flex items-start space-x-2 mb-2 pb-2 border-b border-dashed last:border-0">
+                                  <RadioGroupItem value={level} id={`tattoo-level-${level}`} className="mt-1" />
+                                  <div>
+                                    <Label htmlFor={`tattoo-level-${level}`} className="font-medium">{level}</Label>
+                                    {level === "完全に許容不可" && 
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        タトゥーや傷がある人材は一切受け入れません
+                                      </p>
+                                    }
+                                    {level === "小さいもののみ許容" && 
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        ワンポイントや小さいタトゥー/傷なら許容します（5cm以下程度）
+                                      </p>
+                                    }
+                                    {level === "目立たない場所のみ許容" && 
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        服で隠れる位置にあるタトゥー/傷は許容します
+                                      </p>
+                                    }
+                                    {level === "すべて許容" && 
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        サイズや場所に関わらず全て許容します
+                                      </p>
+                                    }
+                                    {level === "応相談" && 
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        ルックスやスキルによって個別判断します（マッチング時に「要確認」と表示）
+                                      </p>
+                                    }
+                                  </div>
                                 </div>
                               ))}
                             </RadioGroup>
