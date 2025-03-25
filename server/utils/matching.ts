@@ -7,12 +7,16 @@ import { log } from '../utils/logger';
  * マッチングスコア計算のための重み付け
  */
 const WEIGHTS = {
-  AGE: 25,       // 年齢要件の重み
-  LOCATION: 20,  // 地域の重み
-  BODY_TYPE: 15, // 体型の重み
-  CUP_SIZE: 15,  // カップサイズの重み
-  GUARANTEE: 15, // 最低保証の重み
-  SERVICE: 10,   // サービスタイプの重み
+  AGE: 25,                 // 年齢要件の重み
+  LOCATION: 20,            // 地域の重み
+  BODY_TYPE: 10,           // 体型の重み
+  CUP_SIZE: 10,            // カップサイズの重み
+  GUARANTEE: 15,           // 最低保証の重み
+  SERVICE: 10,             // サービスタイプの重み
+  TATTOO: 3,               // タトゥー許容レベルの重み
+  HAIR_COLOR: 3,           // 髪色の重み
+  APPEARANCE: 4,           // 外見スタイルの重み
+  TITLES: 0,               // タイトル（特別経験）の重み - 基本スコアには含めず、必要な場合にのみ使用
 };
 
 /**
@@ -94,6 +98,159 @@ function calculateSpecScore(talentSpec: number, minSpec?: number | null, maxSpec
   }
   
   return 0.5;
+}
+
+/**
+ * 詳細な体型分類によるマッチングスコア計算
+ */
+function calculateBodyTypeScore(talentSpec: number, preferredBodyTypes?: string[] | null): number {
+  if (!preferredBodyTypes || preferredBodyTypes.length === 0) return 1.0; // 条件なしは満点
+  
+  // スペックから体型カテゴリを決定
+  let talentBodyType: string = "";
+  if (talentSpec >= 110) talentBodyType = "スリム";
+  else if (talentSpec >= 105) talentBodyType = "やや細め";
+  else if (talentSpec >= 100) talentBodyType = "普通";
+  else if (talentSpec >= 95) talentBodyType = "やや太め";
+  else if (talentSpec >= 90) talentBodyType = "グラマー";
+  else talentBodyType = "ぽっちゃり";
+  
+  // 完全一致
+  if (preferredBodyTypes.includes(talentBodyType)) return 1.0;
+  
+  // 近い体型へのマッチングスコア
+  const bodyTypeRanking = ["スリム", "やや細め", "普通", "やや太め", "グラマー", "ぽっちゃり"];
+  const talentIndex = bodyTypeRanking.indexOf(talentBodyType);
+  
+  if (talentIndex === -1) return 0.5; // カテゴリが見つからない場合は中間スコア
+  
+  // 最も近い好みの体型を見つける
+  let closestDistance = bodyTypeRanking.length;
+  for (const bodyType of preferredBodyTypes) {
+    const preferredIndex = bodyTypeRanking.indexOf(bodyType);
+    if (preferredIndex !== -1) {
+      const distance = Math.abs(talentIndex - preferredIndex);
+      closestDistance = Math.min(closestDistance, distance);
+    }
+  }
+  
+  // 距離に基づいてスコアを計算（最大距離は5）
+  return Math.max(0.3, 1 - (closestDistance * 0.15)); // 最低でも0.3点はつける
+}
+
+/**
+ * タトゥー/傷の許容レベルによるマッチングスコア計算
+ */
+function calculateTattooScore(talentTattooLevel: string, storeTattooAcceptance?: string | null): number {
+  if (!storeTattooAcceptance) return 1.0; // 条件なしは満点
+  
+  // タトゥーレベル順序
+  const tattooLevels = ["なし", "目立たない", "目立つ", "要相談"];
+  const talentIndex = tattooLevels.indexOf(talentTattooLevel);
+  const storeIndex = tattooLevels.indexOf(storeTattooAcceptance);
+  
+  if (talentIndex === -1 || storeIndex === -1) return 0.5; // 不明なレベルの場合は中間スコア
+  
+  // 店舗の許容レベル以下なら満点
+  if (talentIndex <= storeIndex) return 1.0;
+  
+  // 許容範囲を超えている場合、距離に応じてスコア減少
+  const distance = talentIndex - storeIndex;
+  return Math.max(0, 1 - (distance * 0.3)); // 許容範囲を1つ超えるごとに0.3下がる
+}
+
+/**
+ * 髪色によるマッチングスコア計算
+ */
+function calculateHairColorScore(talentHairColor: string, preferredHairColors?: string[] | null): number {
+  if (!preferredHairColors || preferredHairColors.length === 0) return 1.0; // 条件なしは満点
+  
+  // 完全一致
+  if (preferredHairColors.includes(talentHairColor)) return 1.0;
+  
+  // 髪色の近さによるスコア
+  const hairColorRanking = ["黒髪", "茶髪（暗め）", "茶髪（明るめ）", "金髪・カラー"];
+  const talentIndex = hairColorRanking.indexOf(talentHairColor);
+  
+  if (talentIndex === -1) return 0.5; // 不明な髪色の場合は中間スコア
+  
+  // 最も近い好みの髪色を見つける
+  let closestDistance = hairColorRanking.length;
+  for (const hairColor of preferredHairColors) {
+    const preferredIndex = hairColorRanking.indexOf(hairColor);
+    if (preferredIndex !== -1) {
+      const distance = Math.abs(talentIndex - preferredIndex);
+      closestDistance = Math.min(closestDistance, distance);
+    }
+  }
+  
+  // 距離に基づいてスコアを計算
+  return Math.max(0.3, 1 - (closestDistance * 0.2)); // 最低でも0.3点はつける
+}
+
+/**
+ * 外見スタイルによるマッチングスコア計算
+ */
+function calculateLookTypeScore(talentLookType: string, preferredLookTypes?: string[] | null): number {
+  if (!preferredLookTypes || preferredLookTypes.length === 0) return 1.0; // 条件なしは満点
+  
+  // 完全一致
+  if (preferredLookTypes.includes(talentLookType)) return 1.0;
+  
+  // 似た系統の外見スタイルグループを定義（近い系統でグループ化）
+  const lookTypeGroups = [
+    ["ロリ系・素人系・素朴系・可愛い系"], // かわいい系グループ
+    ["清楚系", "モデル系"], // きれい系グループ
+    ["ギャル系"], // ギャル系単体グループ
+    ["お姉さん系（20代後半〜30代前半）", "大人系（30代〜）"], // 大人系グループ
+    ["熟女系（40代〜）"], // 熟女系単体グループ
+    ["ぽっちゃり系"] // ぽっちゃり系単体グループ
+  ];
+  
+  // タレントのスタイルが属するグループを特定
+  const talentGroup = lookTypeGroups.findIndex(group => group.includes(talentLookType));
+  
+  if (talentGroup === -1) return 0.5; // 不明なスタイルの場合は中間スコア
+  
+  // 好みのスタイルが同じグループにあるかチェック
+  for (const lookType of preferredLookTypes) {
+    if (lookTypeGroups[talentGroup].includes(lookType)) {
+      return 0.9; // 同じグループ内で異なるスタイルの場合は高めのスコア
+    }
+  }
+  
+  // 異なるグループだが、近いグループを探す
+  for (const lookType of preferredLookTypes) {
+    // 各グループをチェック
+    for (let i = 0; i < lookTypeGroups.length; i++) {
+      if (lookTypeGroups[i].includes(lookType)) {
+        // グループ間の距離を計算（この例では隣接＝1、2つ離れる＝2など）
+        const distance = Math.abs(talentGroup - i);
+        // 近いグループほど高いスコア
+        return Math.max(0.4, 1 - (distance * 0.2)); // 最低でも0.4点
+      }
+    }
+  }
+  
+  return 0.3; // デフォルト（マッチしない場合）
+}
+
+/**
+ * タイトル（特別経験）によるボーナススコア計算
+ */
+function calculateTitleBonus(talentTitles: string[], prioritizeTitles: boolean): number {
+  if (!prioritizeTitles || !talentTitles || talentTitles.length === 0) return 0;
+  
+  const importantTitles = ["女優経験", "アイドル経験", "モデル経験", "タレント経験"];
+  
+  // 重要なタイトルを持っているかチェック
+  for (const title of talentTitles) {
+    if (importantTitles.some(imp => title.includes(imp))) {
+      return 1.0; // 完全ボーナス
+    }
+  }
+  
+  return 0; // ボーナスなし
 }
 
 /**
@@ -419,6 +576,12 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
         store.requirements?.cup_size_conditions
       );
       
+      // 詳細な体型分類によるスコア計算
+      if (store.requirements?.preferred_body_types && store.requirements.preferred_body_types.length > 0) {
+        // 体型詳細分類スコアを優先
+        scores.BODY_TYPE = calculateBodyTypeScore(spec, store.requirements.preferred_body_types);
+      }
+      
       // カップサイズスコア計算 - talentProfileからカップサイズを取得
       if (talentResult.cup_size && cupSizeValue[talentResult.cup_size]) {
         // カップサイズ特別条件があれば、そちらを優先的にチェック
@@ -441,6 +604,46 @@ export async function performAIMatching(userId: number, searchOptions?: any) {
         }
       } else {
         scores.CUP_SIZE = 0.5; // カップサイズ情報がなければ中間スコア
+      }
+      
+      // タトゥー許容レベルスコア計算
+      if (talentResult.tattoo_level && store.requirements?.tattoo_acceptance_level) {
+        scores.TATTOO = calculateTattooScore(
+          talentResult.tattoo_level,
+          store.requirements.tattoo_acceptance_level
+        );
+      } else {
+        scores.TATTOO = 1.0; // 条件がなければ満点
+      }
+      
+      // 髪色スコア計算
+      if (talentResult.hair_color && store.requirements?.preferred_hair_colors) {
+        scores.HAIR_COLOR = calculateHairColorScore(
+          talentResult.hair_color,
+          store.requirements.preferred_hair_colors
+        );
+      } else {
+        scores.HAIR_COLOR = 1.0; // 条件がなければ満点
+      }
+      
+      // 外見スタイルスコア計算
+      if (talentResult.look_type && store.requirements?.preferred_look_types) {
+        scores.APPEARANCE = calculateLookTypeScore(
+          talentResult.look_type,
+          store.requirements.preferred_look_types
+        );
+      } else {
+        scores.APPEARANCE = 1.0; // 条件がなければ満点
+      }
+      
+      // タイトル優先ボーナスの計算
+      if (store.requirements?.prioritize_titles && talentResult.titles) {
+        scores.TITLES = calculateTitleBonus(
+          talentResult.titles,
+          store.requirements.prioritize_titles
+        );
+      } else {
+        scores.TITLES = 0; // ボーナスなし
       }
       
       // 地域スコア計算
