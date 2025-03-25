@@ -326,7 +326,7 @@ export const AIMatchingChat = () => {
 • 喫煙: ${profileData.smoking?.enabled ? '喫煙あり' : '喫煙なし'}${
           profileData.smoking?.types?.length ? ` (${profileData.smoking.types.join('、')})` : ''
         }
-• ボディマーク: ${profileData.body_mark?.has_body_mark ? 'あり' : 'なし'}${
+• タトゥー・傷: ${profileData.body_mark?.has_body_mark ? 'あり' : 'なし'}${
           profileData.body_mark?.others?.length ? ` (${profileData.body_mark.others.join('、')})` : ''
         }
 • 自己紹介: ${profileData.self_introduction ? profileData.self_introduction.substring(0, 50) + (profileData.self_introduction.length > 50 ? '...' : '') : '未入力'}
@@ -1300,12 +1300,12 @@ ${result.description || '店舗の詳細情報を準備中です'}
 
                 <Separator className="my-6" />
 
-                {/* 傷・タトゥー・アトピー */}
+                {/* タトゥー・傷の情報 */}
                 {profileData?.body_mark && (profileData.body_mark.has_body_mark || profileData.body_mark.others?.length > 0) && (
                   <div className="space-y-4">
                     <h4 className="flex items-center gap-2 font-medium text-primary">
                       <PatchCheck className="h-4 w-4" />
-                      傷・タトゥー・アトピー
+                      タトゥー・傷の情報
                     </h4>
                     <div className="space-y-2">
                       {profileData.body_mark.others && profileData.body_mark.others.length > 0 && (

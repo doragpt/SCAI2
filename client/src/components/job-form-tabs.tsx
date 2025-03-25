@@ -660,7 +660,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     name="requirements.tattoo_acceptance"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">タトゥー・傷の許容レベル</FormLabel>
+                        <FormLabel className="text-sm font-medium">タトゥー・傷の目立ち具合</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -672,10 +672,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="なし">なし（タトゥー・目立つ傷不可）</SelectItem>
-                            <SelectItem value="目立ちにくい">目立ちにくいもののみ可</SelectItem>
-                            <SelectItem value="目立つ">目立つものも可</SelectItem>
-                            <SelectItem value="応相談">応相談</SelectItem>
+                            <SelectItem value="目立ちにくい">目立ちにくい（ワンポイント・小さいもの）</SelectItem>
+                            <SelectItem value="目立つ">目立つ（大きいもの・複数）</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
