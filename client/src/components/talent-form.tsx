@@ -986,7 +986,6 @@ export function TalentForm({ initialData }: TalentFormProps) {
   const estheNgOptionRef = useRef<HTMLInputElement>(null);
   const allergyInputRef = useRef<HTMLInputElement>(null);
   const smokingInputRef = useRef<HTMLInputElement>(null);
-  const bodyMarkInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -1998,6 +1997,36 @@ export function TalentForm({ initialData }: TalentFormProps) {
               />
               {form.watch("body_mark.has_body_mark") && (
                 <div className="mt-6 space-y-6">
+                  {/* タトゥー・傷の種類 */}
+                  <FormField
+                    control={form.control}
+                    name="body_mark.type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>種類</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={(value) => handleUpdateBodyMarkType(value as BodyMarkType)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="選択してください" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bodyMarkTypeOptions.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          タトゥー・傷の種類を選択してください
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   {/* タトゥーレベル選択フィールド */}
                   <FormField
                     control={form.control}
@@ -2105,29 +2134,7 @@ export function TalentForm({ initialData }: TalentFormProps) {
                     )}
                   />
                   
-                  <div className="space-y-2">
-                    <FormLabel>タグ</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {form.watch("body_mark.others").map((mark, index) => (
-                        <Badge key={index} variant="outline" className="flex items-center gap-1">
-                          {mark}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 hover:bg-transparent"
-                            onClick={() => handleRemoveBodyMark(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <OtherItemInput
-                      ref={bodyMarkInputRef}
-                      onAdd={handleAddBodyMark}
-                      placeholder="タグを追加（例：タトゥー、傷跡、アトピーなど）"
-                    />
-                  </div>
+                  {/* 新しいデータモデルでは、othersフィールドは削除されています */}
                   
                   <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm">
                     <p className="font-medium text-amber-800">写真アップロードのお願い</p>
