@@ -243,6 +243,19 @@ export default function StoreDashboard() {
   // 先にステート変数を初期化し、後でプロフィールデータが読み込まれたら更新する
   const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
   const [enableCupSizeConditions, setEnableCupSizeConditions] = useState<boolean>(false);
+  
+  // 髪色設定
+  const [selectedHairColors, setSelectedHairColors] = useState<HairColorType[]>([]);
+  const [showHairColorSettings, setShowHairColorSettings] = useState<boolean>(false);
+  
+  // 外見タイプ設定
+  const [selectedLookTypes, setSelectedLookTypes] = useState<LookType[]>([]);
+  const [showLookTypeSettings, setShowLookTypeSettings] = useState<boolean>(false);
+  
+  // タトゥー許容レベル設定
+  const [selectedTattooLevel, setSelectedTattooLevel] = useState<TattooAcceptanceLevel | null>(null);
+  const [showTattooLevelSettings, setShowTattooLevelSettings] = useState<boolean>(false);
+  
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
@@ -303,21 +316,52 @@ export default function StoreDashboard() {
     retryDelay: 1000,
   });
   
-  // プロフィールデータが読み込まれたときにカップサイズ条件の表示状態を更新
+  // プロフィールデータが読み込まれたときに条件の表示状態を更新
   useEffect(() => {
     if (profile?.requirements) {
-      // cup_size_conditionsが配列であり、要素が存在する場合はスイッチをオンにする
+      // カップサイズ条件 - cup_size_conditionsが配列であり、要素が存在する場合はスイッチをオンにする
       const hasCupConditions = profile.requirements.cup_size_conditions && 
         Array.isArray(profile.requirements.cup_size_conditions) &&
         profile.requirements.cup_size_conditions.length > 0;
       
-      setShowCupSizeConditions(hasCupConditions ? true : false);
-      setEnableCupSizeConditions(hasCupConditions ? true : false);
+      setShowCupSizeConditions(hasCupConditions);
+      setEnableCupSizeConditions(hasCupConditions);
       
       console.log("カップサイズ条件の状態を更新:", {
         hasCupConditions,
         conditions: profile.requirements.cup_size_conditions
       });
+      
+      // 髪色設定 - preferred_hair_colorsが存在する場合は設定
+      if (profile.requirements.preferred_hair_colors && 
+          Array.isArray(profile.requirements.preferred_hair_colors) &&
+          profile.requirements.preferred_hair_colors.length > 0) {
+        setSelectedHairColors(profile.requirements.preferred_hair_colors as HairColorType[]);
+        setShowHairColorSettings(true);
+      } else {
+        setSelectedHairColors([]);
+        setShowHairColorSettings(false);
+      }
+      
+      // 外見タイプ設定 - preferred_look_typesが存在する場合は設定
+      if (profile.requirements.preferred_look_types && 
+          Array.isArray(profile.requirements.preferred_look_types) &&
+          profile.requirements.preferred_look_types.length > 0) {
+        setSelectedLookTypes(profile.requirements.preferred_look_types as LookType[]);
+        setShowLookTypeSettings(true);
+      } else {
+        setSelectedLookTypes([]);
+        setShowLookTypeSettings(false);
+      }
+      
+      // タトゥー許容レベル設定 - tattoo_acceptanceが存在する場合は設定
+      if (profile.requirements.tattoo_acceptance) {
+        setSelectedTattooLevel(profile.requirements.tattoo_acceptance as TattooAcceptanceLevel);
+        setShowTattooLevelSettings(true);
+      } else {
+        setSelectedTattooLevel(null);
+        setShowTattooLevelSettings(false);
+      }
     }
   }, [profile?.requirements]);
   
@@ -354,7 +398,12 @@ export default function StoreDashboard() {
         accepts_temporary_workers: acceptsTempWorkers,
         requires_arrival_day_before: requiresArrivalDayBefore,
         other_conditions: otherConditions,
-        cup_size_conditions: cupSizeConditions
+        cup_size_conditions: cupSizeConditions,
+        
+        // 新しい採用条件
+        preferred_hair_colors: showHairColorSettings ? selectedHairColors : [],
+        preferred_look_types: showLookTypeSettings ? selectedLookTypes : [],
+        tattoo_acceptance: showTattooLevelSettings && selectedTattooLevel ? selectedTattooLevel : undefined
       };
       
       console.log("送信する採用要件:", requirements);
