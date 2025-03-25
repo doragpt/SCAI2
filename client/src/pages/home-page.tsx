@@ -17,6 +17,9 @@ import {
   Wallet,
   HelpCircle,
   MessageSquare,
+  Search,
+  Bus,
+  Home,
 } from "lucide-react";
 import {
   Select,
@@ -373,35 +376,52 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* キャンペーンバナーエリア */}
+        {/* クイック検索エリア */}
         <div className="container mx-auto px-4 relative z-10 -mt-8">
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="grid md:grid-cols-3 gap-4"
+            className="bg-white p-6 rounded-lg shadow-lg"
           >
-            {campaigns.map((campaign, index) => (
-              <motion.div
-                key={index}
-                variants={item}
-                whileHover={{ y: -5 }}
-                className="relative overflow-hidden"
-              >
-                <div className={`p-6 rounded-lg bg-gradient-to-r ${campaign.color} shadow-lg ${campaign.textColor}`}>
-                  <div className="absolute right-3 top-3">
-                    <Badge variant="outline" className="bg-white/20 text-white font-medium border-0">
-                      {campaign.badge}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center mb-3">
-                    <span className="text-2xl mr-3">{campaign.icon}</span>
-                    <h3 className="font-bold text-lg">{campaign.title}</h3>
-                  </div>
-                  <p className="text-sm opacity-90">{campaign.description}</p>
-                </div>
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <Search className="h-5 w-5 mr-2 text-primary" />
+              希望条件から求人を探す
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <motion.div variants={item}>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/jobs?experience=beginner">
+                    <Star className="h-4 w-4 mr-2 text-primary" />
+                    未経験歓迎
+                  </Link>
+                </Button>
               </motion.div>
-            ))}
+              <motion.div variants={item}>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/jobs?transportationSupport=true">
+                    <Bus className="h-4 w-4 mr-2 text-primary" />
+                    交通費支給
+                  </Link>
+                </Button>
+              </motion.div>
+              <motion.div variants={item}>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/jobs?housingSupport=true">
+                    <Home className="h-4 w-4 mr-2 text-primary" />
+                    寮完備
+                  </Link>
+                </Button>
+              </motion.div>
+              <motion.div variants={item}>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/jobs?minSalary=50000">
+                    <Banknote className="h-4 w-4 mr-2 text-primary" />
+                    日給5万円以上
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
 
