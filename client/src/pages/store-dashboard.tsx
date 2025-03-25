@@ -282,6 +282,7 @@ export default function StoreDashboard() {
       const specMin = specMinRef.current?.value ? parseInt(specMinRef.current.value) : undefined;
       const specMax = specMaxRef.current?.value ? parseInt(specMaxRef.current.value) : undefined;
       const hourlyRate = hourlyRateRef.current?.value ? parseInt(hourlyRateRef.current.value) : undefined;
+      const workingTimeHours = workingTimeHoursRef.current?.value ? parseInt(workingTimeHoursRef.current.value) : undefined;
       const minGuarantee = minGuaranteeRef.current?.value ? parseInt(minGuaranteeRef.current.value) : undefined;
       const maxGuarantee = maxGuaranteeRef.current?.value ? parseInt(maxGuaranteeRef.current.value) : undefined;
       const acceptsTempWorkers = acceptsTempWorkersRef.current?.getAttribute('data-state') === 'checked';
