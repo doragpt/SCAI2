@@ -963,7 +963,8 @@ export default function StoreDashboard() {
                             </h3>
                             
                             <div className="space-y-4">
-                              {profile.requirements && (
+                              {/* 応募条件の表示 - オブジェクトは直接表示せず、文字列化するか特定のプロパティを表示 */}
+                              {profile.requirements && typeof profile.requirements === 'string' && (
                                 <div className="px-4 py-3 bg-muted rounded-md">
                                   <h4 className="text-sm font-medium mb-1.5">基本応募条件</h4>
                                   <p className="text-sm whitespace-pre-line">{profile.requirements}</p>
