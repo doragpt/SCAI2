@@ -4,6 +4,8 @@ import { type StoreProfile, type BlogPost, cupSizes, type CupSize } from "@share
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -83,7 +85,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 // プロフィールのステータスラベル
@@ -222,10 +223,8 @@ export default function StoreDashboard() {
     cup_size: "E" as CupSize,
     spec_min: 80
   });
-  // カップサイズ条件の表示/非表示状態
-  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(
-    Boolean(profile?.requirements?.cup_size_conditions?.length)
-  );
+  // カップサイズ条件の表示/非表示状態（初期値）
+  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
