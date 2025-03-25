@@ -313,10 +313,8 @@ export default function StoreDashboard() {
         age_max: ageMax,
         spec_min: specMin,
         spec_max: specMax,
-        hourly_rate: hourlyRate,
         min_guarantee: minGuarantee,
         max_guarantee: maxGuarantee,
-        working_time_hours: workingTimeHours, // 勤務時間を追加
         accepts_temporary_workers: acceptsTempWorkers,
         requires_arrival_day_before: requiresArrivalDayBefore,
         other_conditions: otherConditions,
