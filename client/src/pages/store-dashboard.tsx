@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type StoreProfile, type BlogPost } from "@shared/schema";
+import { type StoreProfile, type BlogPost, cupSizes, type CupSize } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ import { ContactDisplay } from "@/components/store/ContactDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useRef, useEffect } from "react";
+import { useEffect } from "react";
 import { StoreApplicationView } from "@/components/store-application-view";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -1328,6 +1328,7 @@ export default function StoreDashboard() {
                           <div className="flex items-start space-x-2">
                             <Switch 
                               id="accepts-temp-workers"
+                              ref={acceptsTempWorkersRef}
                               defaultChecked={profile?.requirements?.accepts_temporary_workers !== false}
                             />
                             <div>
@@ -1340,9 +1341,53 @@ export default function StoreDashboard() {
                             </div>
                           </div>
                           
+                          {/* 出稼ぎ関連の保証額設定 */}
+                          <div className="pl-8 space-y-4 border-l-2 border-dashed border-muted-foreground/20">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">最低保証額（円/日）</label>
+                                <div className="flex items-center">
+                                  <input 
+                                    type="number" 
+                                    ref={minGuaranteeRef}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
+                                    placeholder="例: 20000" 
+                                    defaultValue={profile?.minimum_guarantee || ""}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">最高保証額（円/日）</label>
+                                <div className="flex items-center">
+                                  <input 
+                                    type="number" 
+                                    ref={maxGuaranteeRef}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
+                                    placeholder="例: 35000" 
+                                    defaultValue={profile?.maximum_guarantee || ""}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">平均時給（円）</label>
+                              <div className="flex items-center">
+                                <input 
+                                  type="number" 
+                                  ref={hourlyRateRef}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" 
+                                  placeholder="例: 3000" 
+                                  defaultValue={profile?.average_hourly_pay || ""}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          
                           <div className="flex items-start space-x-2">
                             <Switch 
                               id="arrival-day-before"
+                              ref={requiresArrivalDayBeforeRef}
                               defaultChecked={profile?.requirements?.requires_arrival_day_before === true}
                             />
                             <div>
