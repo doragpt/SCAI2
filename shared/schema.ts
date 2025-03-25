@@ -840,12 +840,15 @@ export const keepList = pgTable('keepList', {
   id: serial('id').primaryKey(),
   user_id: integer('user_id').notNull().references(() => users.id),
   store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
+  store_id: integer('store_id').references(() => store_profiles.id),
+  created_at: timestamp('created_at').defaultNow(),
   added_at: timestamp('added_at').defaultNow(),
   note: text('note')
 }, (table) => {
   return {
     user_id_idx: index('keep_list_user_id_idx').on(table.user_id),
     store_profile_id_idx: index('keep_list_store_profile_id_idx').on(table.store_profile_id),
+    store_id_idx: index('keep_list_store_id_idx').on(table.store_id),
   };
 });
 
@@ -853,11 +856,14 @@ export const viewHistory = pgTable('viewHistory', {
   id: serial('id').primaryKey(),
   user_id: integer('user_id').notNull().references(() => users.id),
   store_profile_id: integer('store_profile_id').notNull().references(() => store_profiles.id),
+  store_id: integer('store_id').references(() => store_profiles.id),
+  created_at: timestamp('created_at').defaultNow(),
   viewed_at: timestamp('viewed_at').defaultNow()
 }, (table) => {
   return {
     user_id_idx: index('view_history_user_id_idx').on(table.user_id),
     store_profile_id_idx: index('view_history_store_profile_id_idx').on(table.store_profile_id),
+    store_id_idx: index('view_history_store_id_idx').on(table.store_id),
     viewed_at_idx: index('view_history_viewed_at_idx').on(table.viewed_at),
   };
 });

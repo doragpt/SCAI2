@@ -27,20 +27,20 @@ export async function collectUserInteractions(userId: number) {
     const userViewHistory = await db
       .select({
         id: viewHistory.id,
-        store_id: viewHistory.store_id,
-        created_at: viewHistory.created_at
+        store_profile_id: viewHistory.store_profile_id,
+        viewed_at: viewHistory.viewed_at
       })
       .from(viewHistory)
       .where(eq(viewHistory.user_id, userId))
-      .orderBy(desc(viewHistory.created_at))
+      .orderBy(desc(viewHistory.viewed_at))
       .limit(50); // 最新50件に制限
 
     // ユーザーのキープリストを取得
     const userKeepList = await db
       .select({
         id: keepList.id,
-        store_id: keepList.store_id,
-        created_at: keepList.created_at
+        store_profile_id: keepList.store_profile_id,
+        added_at: keepList.added_at
       })
       .from(keepList)
       .where(eq(keepList.user_id, userId));
@@ -123,7 +123,7 @@ export async function calculateUserWeightAdjustments(userId: number) {
     
     // キープした店舗の分析
     if (interactionData.keepList.length > 0) {
-      const keptStoreIds = interactionData.keepList.map(item => item.store_id);
+      const keptStoreIds = interactionData.keepList.map(item => item.store_profile_id);
       const keptStores = await db
         .select()
         .from(store_profiles)
@@ -152,7 +152,7 @@ export async function calculateUserWeightAdjustments(userId: number) {
     
     // 閲覧履歴の分析（最も弱い重み）
     if (interactionData.viewHistory.length > 0) {
-      const viewedStoreIds = interactionData.viewHistory.map(item => item.store_id);
+      const viewedStoreIds = interactionData.viewHistory.map(item => item.store_profile_id);
       const viewedStores = await db
         .select()
         .from(store_profiles)

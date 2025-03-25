@@ -13,7 +13,7 @@ const router = express.Router();
  * 全体のマッチング統計を取得するエンドポイント
  * 管理者のみアクセス可能
  */
-router.get('/matching-statistics', authenticate, authorize('admin'), async (req: Request, res: Response) => {
+router.get('/matching-statistics', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
     const statistics = await getMatchingStatistics();
     
