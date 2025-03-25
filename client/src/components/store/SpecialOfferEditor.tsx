@@ -159,7 +159,16 @@ export function SpecialOfferEditor() {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">特別オファー</h3>
-        <Button size="sm" onClick={handleAddOffer} variant="outline">
+        <Button 
+          size="sm" 
+          type="button" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAddOffer();
+          }} 
+          variant="outline"
+        >
           <Plus className="h-4 w-4 mr-1" /> 新規追加
         </Button>
       </div>
@@ -171,9 +180,14 @@ export function SpecialOfferEditor() {
           {OFFER_TEMPLATES.map((template, index) => (
             <Button
               key={index}
+              type="button"
               variant="outline"
               className="justify-start h-auto py-2 px-3"
-              onClick={() => handleAddTemplate(template)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddTemplate(template);
+              }}
             >
               {AVAILABLE_ICONS.find(icon => icon.name === template.icon)?.component && (
                 <span className={`mr-2 ${template.textColor}`}>
@@ -212,26 +226,41 @@ export function SpecialOfferEditor() {
               {/* 操作ボタン */}
               <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">
                 <Button 
+                  type="button"
                   variant="ghost" 
                   size="icon" 
                   className="h-6 w-6" 
-                  onClick={() => handleEditOffer(offer, index)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleEditOffer(offer, index);
+                  }}
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
                 <Button 
+                  type="button"
                   variant="ghost" 
                   size="icon" 
                   className="h-6 w-6" 
-                  onClick={() => remove(index)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    remove(index);
+                  }}
                 >
                   <Trash className="h-3 w-3" />
                 </Button>
                 <Button 
+                  type="button"
                   variant="ghost" 
                   size="icon" 
                   className="h-6 w-6" 
-                  onClick={() => handleMoveOffer(index, 'up')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMoveOffer(index, 'up');
+                  }}
                   disabled={index === 0}
                 >
                   <MoveVertical className="h-3 w-3" />
@@ -373,7 +402,9 @@ export function SpecialOfferEditor() {
             <Button 
               variant="outline" 
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setIsOpen(false);
                 setEditingOffer(null);
                 setEditIndex(null);
@@ -383,7 +414,11 @@ export function SpecialOfferEditor() {
             </Button>
             <Button 
               type="button"
-              onClick={handleSaveOffer} 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSaveOffer();
+              }}
               disabled={!editingOffer?.title}
             >
               保存
