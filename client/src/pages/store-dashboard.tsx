@@ -222,6 +222,10 @@ export default function StoreDashboard() {
     cup_size: "E" as CupSize,
     spec_min: 80
   });
+  // カップサイズ条件の表示/非表示状態
+  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(
+    Boolean(profile?.requirements?.cup_size_conditions?.length)
+  );
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
@@ -1370,86 +1374,90 @@ export default function StoreDashboard() {
 
                         {/* カップサイズ特別条件 */}
                         <div className="mt-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium">カップサイズ別特別条件</label>
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Switch 
+                              id="enable-cup-size-conditions"
+                              checked={showCupSizeConditions}
+                              onCheckedChange={setShowCupSizeConditions}
+                            />
+                            <div>
+                              <label htmlFor="enable-cup-size-conditions" className="text-sm font-medium cursor-pointer">
+                                カップサイズ別特別条件を設定する
+                              </label>
+                              <p className="text-xs text-muted-foreground">
+                                特定のカップサイズに対して最低スペック条件を変更できます
+                              </p>
+                            </div>
                           </div>
-                          <div className="bg-muted/40 rounded-md p-4 border">
-                            <div className="text-sm mb-3">
-                              例: Eカップ以上なら最低スペック80からでも可能など
-                            </div>
-                            
-                            {/* カップサイズ条件リスト */}
-                            <div className="space-y-2 mb-3">
-                              {profile?.requirements?.cup_size_conditions?.map((condition, index) => (
-                                <div key={index} className="flex items-center p-2 bg-background rounded border">
-                                  <div className="font-medium">{condition.cup_size}カップ以上</div>
-                                  <div className="mx-2">→</div>
-                                  <div>最低スペック: <span className="font-medium">{condition.spec_min}</span></div>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="ml-auto h-8 w-8" 
-                                    onClick={() => handleRemoveCupSizeCondition(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* 新規条件入力フォーム */}
-                            <div className="grid grid-cols-2 gap-3 p-3 bg-background/80 rounded-md border mb-3">
-                              <div>
-                                <label className="text-xs font-medium mb-1 block">カップサイズ</label>
-                                <div className="flex items-center">
-                                  <select
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                    value={newCupSizeCondition.cup_size}
-                                    onChange={(e) => setNewCupSizeCondition({
-                                      ...newCupSizeCondition,
-                                      cup_size: e.target.value as CupSize
-                                    })}
-                                  >
-                                    {cupSizes.map((size) => (
-                                      <option key={size} value={size}>{size}カップ</option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  指定カップサイズ以上が対象
-                                </p>
+                          
+                          {showCupSizeConditions && (
+                            <div className="bg-muted/40 rounded-md p-4 border mt-2">
+                              <div className="text-sm mb-3">
+                                例: Eカップ以上なら最低スペック80からでも可能など
                               </div>
-                              <div>
-                                <label className="text-xs font-medium mb-1 block">最低スペック値</label>
-                                <div className="flex items-center">
-                                  <input
-                                    type="number"
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                    placeholder="例: 80（半角数字）"
-                                    value={newCupSizeCondition.spec_min}
-                                    onChange={(e) => setNewCupSizeCondition({
-                                      ...newCupSizeCondition,
-                                      spec_min: parseInt(e.target.value) || 0
-                                    })}
-                                  />
+                              
+                              {/* カップサイズ条件リスト */}
+                              <div className="space-y-2 mb-3">
+                                {profile?.requirements?.cup_size_conditions?.map((condition, index) => (
+                                  <div key={index} className="flex items-center p-2 bg-background rounded border">
+                                    <div className="font-medium">{condition.cup_size}カップ以上</div>
+                                    <div className="mx-2">→</div>
+                                    <div>最低スペック: <span className="font-medium">{condition.spec_min}</span></div>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="ml-auto h-8 w-8" 
+                                      onClick={() => handleRemoveCupSizeCondition(index)}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              {/* 新規条件入力フォーム */}
+                              <div className="grid grid-cols-2 gap-3 p-3 bg-background/80 rounded-md border">
+                                <div>
+                                  <label className="text-xs font-medium mb-1 block">カップサイズ</label>
+                                  <div className="flex items-center">
+                                    <select
+                                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                      value={newCupSizeCondition.cup_size}
+                                      onChange={(e) => setNewCupSizeCondition({
+                                        ...newCupSizeCondition,
+                                        cup_size: e.target.value as CupSize
+                                      })}
+                                    >
+                                      {cupSizes.map((size) => (
+                                        <option key={size} value={size}>{size}カップ</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    指定カップサイズ以上が対象
+                                  </p>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  ※半角数字で入力してください
-                                </p>
+                                <div>
+                                  <label className="text-xs font-medium mb-1 block">最低スペック値</label>
+                                  <div className="flex items-center">
+                                    <input
+                                      type="number"
+                                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                      placeholder="例: 80（半角数字）"
+                                      value={newCupSizeCondition.spec_min}
+                                      onChange={(e) => setNewCupSizeCondition({
+                                        ...newCupSizeCondition,
+                                        spec_min: parseInt(e.target.value) || 0
+                                      })}
+                                    />
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    ※半角数字で入力してください
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                            
-                            {/* 条件追加ボタン */}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="w-full"
-                              onClick={() => handleAddCupSizeCondition()}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              この条件を追加
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       </div>
 

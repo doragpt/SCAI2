@@ -1,0 +1,71 @@
+220-    spec_min: number;
+221-  }>({
+222-    cup_size: "E" as CupSize,
+223-    spec_min: 80
+224-  });
+225:  // カップサイズ条件の表示/非表示状態
+226-  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(
+227-    Boolean(profile?.requirements?.cup_size_conditions?.length)
+228-  );
+229-  const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
+230-    { time: 60, price: 10000 },
+--
+303-      const acceptsTempWorkers = acceptsTempWorkersRef.current?.getAttribute('data-state') === 'checked';
+304-      const requiresArrivalDayBefore = requiresArrivalDayBeforeRef.current?.getAttribute('data-state') === 'checked';
+305-      const otherConditionsText = otherConditionsRef.current?.value || '';
+306-      const otherConditions = otherConditionsText.split('\n').filter(line => line.trim() !== '');
+307-      
+308:      // 現在のカップサイズ条件リスト
+309-      // profileの状態が最新になるように、cup_size_conditionsを参照する
+310-      const cupSizeConditions = profile?.requirements?.cup_size_conditions || [];
+311-      
+312-      // 採用要件オブジェクト
+313-      const requirements = {
+--
+387-    onSettled: () => {
+388-      setIsSavingRequirements(false);
+389-    }
+390-  });
+391-  
+392:  // カップサイズ条件を追加する関数
+393-  const handleAddCupSizeCondition = () => {
+394-    if (!profile?.requirements) return;
+395-    
+396-    // 有効なカップサイズかチェック（大文字変換）
+397-    const normalizedCupSize = newCupSizeCondition.cup_size.toUpperCase();
+--
+443-      ...profile.requirements,
+444-      cup_size_conditions: updatedConditions
+445-    };
+446-    
+447-    // 注：ここではプロフィールの状態を直接更新せず、APIから再取得します
+448:    // profile.requirementsはすでにカップサイズ条件を含むように更新されているので
+449-    // 保存ミューテーションの中で処理されます
+450-    
+451-    // 入力フォームをリセット
+452-    setNewCupSizeCondition({
+453-      cup_size: "E" as CupSize,
+--
+456-    
+457-    // 採用要件の更新と保存
+458-    saveRequirementsMutation.mutate();
+459-  };
+460-  
+461:  // カップサイズ条件を削除する関数
+462-  const handleRemoveCupSizeCondition = (index: number) => {
+463-    if (!profile?.requirements?.cup_size_conditions) return;
+464-    
+465-    // 条件を削除
+466-    const updatedConditions = [...profile.requirements.cup_size_conditions];
+--
+1394-                            <div className="bg-muted/40 rounded-md p-4 border mt-2">
+1395-                              <div className="text-sm mb-3">
+1396-                                例: Eカップ以上なら最低スペック80からでも可能など
+1397-                              </div>
+1398-                              
+1399:                              {/* カップサイズ条件リスト */}
+1400-                              <div className="space-y-2 mb-3">
+1401-                                {profile?.requirements?.cup_size_conditions?.map((condition, index) => (
+1402-                                  <div key={index} className="flex items-center p-2 bg-background rounded border">
+1403-                                    <div className="font-medium">{condition.cup_size}カップ以上</div>
+1404-                                    <div className="mx-2">→</div>
