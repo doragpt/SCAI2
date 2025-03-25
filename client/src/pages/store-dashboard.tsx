@@ -98,7 +98,7 @@ import {
   TattooAcceptanceLevel,
   HairColorType,
   LookType
-} from "../../shared/schema";
+} from "@shared/schema";
 
 // プロフィールのステータスラベル
 const profileStatusLabels = {
