@@ -17,6 +17,7 @@ import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { JobEditor } from "@/components/job-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type JobFormProps = {
   initialData?: StoreProfile;
@@ -465,9 +466,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               </div>
             </div>
             
-            {/* 応募条件 */}
+            {/* 応募条件 - 詳細設定 */}
             <div className="p-5 border border-purple-200 bg-purple-50 rounded-lg">
               <h3 className="font-semibold text-purple-900 mb-3">応募条件</h3>
+              
+              {/* 基本的な応募条件テキスト */}
               <FormField
                 control={form.control}
                 name="requirements"
@@ -487,6 +490,324 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   </FormItem>
                 )}
               />
+              
+              {/* 詳細なマッチング条件 */}
+              <div className="mt-6 bg-white p-4 rounded-md border border-purple-100">
+                <h4 className="font-medium text-purple-900 mb-3">マッチング詳細設定</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  以下の設定は人材とのマッチング精度を高めるためのものです。
+                  設定した条件は求職者には表示されず、AIマッチングの内部処理にのみ使用されます。
+                </p>
+                
+                {/* 年齢範囲 */}
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium mb-2">年齢範囲</h5>
+                  <div className="flex gap-4">
+                    <FormField
+                      control={form.control}
+                      name="requirements.age_min"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">最小年齢</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              min="18"
+                              max="60"
+                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                              value={field.value === undefined ? "" : field.value?.toString()}
+                              placeholder="18"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="requirements.age_max"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">最大年齢</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              min="18"
+                              max="60"
+                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                              value={field.value === undefined ? "" : field.value?.toString()}
+                              placeholder="50"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                {/* スペック範囲（身長-体重） */}
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium mb-2">スペック範囲（身長-体重）</h5>
+                  <div className="flex gap-4">
+                    <FormField
+                      control={form.control}
+                      name="requirements.spec_min"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">最小スペック</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              min="80"
+                              max="150"
+                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                              value={field.value === undefined ? "" : field.value?.toString()}
+                              placeholder="100"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            スリム体型：110以上、普通：100-109、ぽっちゃり：90-99、太め：90未満
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="requirements.spec_max"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">最大スペック</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              min="80"
+                              max="150"
+                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                              value={field.value === undefined ? "" : field.value?.toString()}
+                              placeholder="130"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                {/* 体型分類 */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.preferred_body_types"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">希望する体型</FormLabel>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {["スレンダー", "やや細め", "普通", "ややぽっちゃり", "ぽっちゃり", "太め"].map((type) => (
+                            <FormItem key={type} className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(type)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...(field.value || []), type]);
+                                    } else {
+                                      field.onChange(field.value?.filter(t => t !== type) || []);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-xs font-normal cursor-pointer">{type}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* タトゥー許容レベル */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.tattoo_acceptance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">タトゥー・傷の許容レベル</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選択してください" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="なし">なし（タトゥー・目立つ傷不可）</SelectItem>
+                            <SelectItem value="目立ちにくい">目立ちにくいもののみ可</SelectItem>
+                            <SelectItem value="目立つ">目立つものも可</SelectItem>
+                            <SelectItem value="応相談">応相談</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* 髪色 */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.preferred_hair_colors"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">希望する髪色</FormLabel>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {["黒髪", "暗めの茶髪", "明るめの茶髪", "金髪・インナーカラー・派手髪"].map((color) => (
+                            <FormItem key={color} className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(color)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...(field.value || []), color]);
+                                    } else {
+                                      field.onChange(field.value?.filter(c => c !== color) || []);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-xs font-normal cursor-pointer">{color}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* 外見スタイル */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.preferred_look_types"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">希望する外見スタイル</FormLabel>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {[
+                            "ロリ系・素人系・素朴系・可愛い系",
+                            "清楚系",
+                            "綺麗系・キレカワ系・モデル系・お姉さん系",
+                            "キャバ系・ギャル系",
+                            "若妻系",
+                            "人妻系",
+                            "熟女系",
+                            "ぽっちゃり系"
+                          ].map((type) => (
+                            <FormItem key={type} className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(type)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...(field.value || []), type]);
+                                    } else {
+                                      field.onChange(field.value?.filter(t => t !== type) || []);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-xs font-normal cursor-pointer">{type}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* 特別優遇設定 */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.prioritize_titles"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>芸能人・モデル経験者を優先</FormLabel>
+                          <FormDescription>
+                            女優、アイドル、モデルなどの経験がある人材を優先的にマッチングします
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* 出稼ぎワーカー設定 */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.accepts_temporary_workers"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>出稼ぎを受け入れる</FormLabel>
+                          <FormDescription>
+                            遠方からの出稼ぎ勤務を受け入れる場合はチェックしてください
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* 前日入り設定 */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="requirements.requires_arrival_day_before"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>前日入りを必須とする</FormLabel>
+                          <FormDescription>
+                            出稼ぎの場合、勤務開始日の前日に入りを必須とする場合はチェックしてください
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </div>
           </TabsContent>
           
