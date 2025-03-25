@@ -1027,4 +1027,5 @@ export interface JobResponse {
   pc_website_url?: string;        // PCサイトURL
   mobile_website_url?: string;    // モバイルサイトURL
   application_requirements?: string; // 応募条件
+  specialOffers?: SpecialOffer[]; // 特別オファー
 }

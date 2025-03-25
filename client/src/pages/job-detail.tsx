@@ -1,9 +1,9 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { type JobResponse, type ServiceType } from "@shared/schema";
+import { type JobResponse, type ServiceType, type SpecialOffer } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Share, Heart, MapPin, Phone, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,11 +13,13 @@ import { toast } from "@/hooks/use-toast";
 import { getServiceTypeLabel, formatSalary, formatDate, getErrorMessage } from "@/lib/utils";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 
-// 新しく作成したコンポーネントをインポート
+// コンポーネントをインポート
 import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
 import { LocationDisplay } from "@/components/store/LocationDisplay";
 import { ContactDisplay } from "@/components/store/ContactDisplay";
+import { StoreDetailsDisplay } from "@/components/store/StoreDetailsDisplay";
+import { SpecialOffersDisplay } from "@/components/store/SpecialOffersDisplay";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -177,11 +179,19 @@ export default function JobDetail() {
             <div className="flex flex-col md:flex-row justify-between items-start relative z-10">
               <div>
                 <h1 className="text-3xl font-bold mb-2">{job.businessName}</h1>
-                <div className="text-muted-foreground">
-                  <span>{job.location}</span> - <span>{getServiceTypeLabel(job.serviceType as ServiceType)}</span>
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-1 text-red-500" />
+                    <span>{job.location}</span>
+                  </div>
+                  <span>・</span>
+                  <div className="flex items-center">
+                    <Info className="h-4 w-4 mr-1 text-blue-500" />
+                    <span>{getServiceTypeLabel(job.serviceType as ServiceType)}</span>
+                  </div>
                 </div>
                 
-                <div className="mt-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                     {formatSalary(
                       job.minimumGuarantee,
@@ -190,17 +200,37 @@ export default function JobDetail() {
                       job.averageHourlyPay
                     )}
                   </span>
+                  
+                  {job.workingHours && (
+                    <span className="inline-block px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-medium border border-orange-100">
+                      {job.workingHours}
+                    </span>
+                  )}
                 </div>
               </div>
               
-              <div className="mt-4 md:mt-0">
-                <Button size="lg" asChild>
+              <div className="mt-4 md:mt-0 flex flex-col gap-2">
+                <Button size="lg" className="w-full" asChild>
                   {user ? (
-                    <Link href={`/jobs/${id}/apply`}>面接予約をする</Link>
+                    <Link href={`/jobs/${id}/apply`}>
+                      <Phone className="mr-2 h-4 w-4" />
+                      面接予約をする
+                    </Link>
                   ) : (
                     <Link href="/auth">会員登録して面接予約</Link>
                   )}
                 </Button>
+                
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Heart className="mr-1 h-4 w-4" />
+                    <span className="text-xs">キープ</span>
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Share className="mr-1 h-4 w-4" />
+                    <span className="text-xs">シェア</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -226,17 +256,28 @@ export default function JobDetail() {
                   {benefit}
                 </span>
               ))}
+              {job.benefits && job.benefits.length > 3 && (
+                <span className="px-2 py-1 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-100">
+                  +{job.benefits.length - 3}
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* 特別オファー表示 - もし存在すれば */}
+        {job.specialOffers && Array.isArray(job.specialOffers) && job.specialOffers.length > 0 && (
+          <SpecialOffersDisplay 
+            specialOffers={job.specialOffers as SpecialOffer[]} 
+            className="mb-8"
+          />
+        )}
 
         <div className="grid md:grid-cols-3 gap-8">
           {/* 左側のメインコンテンツ - 仕事内容と応募条件 */}
           <div className="md:col-span-2 space-y-8">
             {/* 仕事内容コンポーネント */}
             <JobDescriptionDisplay
-              businessName={job.businessName}
-              location={job.location}
               serviceType={job.serviceType as ServiceType}
               catchPhrase={job.catchPhrase}
               description={job.description}
@@ -244,11 +285,12 @@ export default function JobDetail() {
               requirements={job.requirements}
             />
             
-            {/* アクセス・所在地情報 */}
-            <LocationDisplay
+            {/* 店舗詳細情報 */}
+            <StoreDetailsDisplay
               address={job.address}
               accessInfo={job.access_info}
               securityMeasures={job.security_measures}
+              applicationRequirements={job.application_requirements}
             />
             
             {/* 連絡先情報 */}
@@ -263,6 +305,23 @@ export default function JobDetail() {
 
           {/* 右側のサイドバー - 給与情報と月収計算 */}
           <div className="space-y-8">
+            {/* 応募ボタン（スティッキー） */}
+            <div className="sticky top-4 z-10 p-4 bg-white dark:bg-gray-950 border rounded-lg shadow-sm">
+              <Button className="w-full mb-3" size="lg" asChild>
+                {user ? (
+                  <Link href={`/jobs/${id}/apply`}>
+                    <Phone className="mr-2 h-4 w-4" />
+                    今すぐ応募する
+                  </Link>
+                ) : (
+                  <Link href="/auth">会員登録して応募</Link>
+                )}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                ※ 求人の詳細は採用担当にお気軽にお問い合わせください
+              </p>
+            </div>
+            
             {/* 給与情報コンポーネント */}
             <SalaryDisplay
               minimumGuarantee={job.minimumGuarantee}
@@ -276,7 +335,7 @@ export default function JobDetail() {
             
             {/* 月収シミュレーター */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <h3 className="text-lg font-medium">月収シミュレーション</h3>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -294,19 +353,19 @@ export default function JobDetail() {
                   <span className="text-sm">日</span>
                 </div>
                 
-                <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
-                  <div className="text-sm text-gray-600 mb-1">1ヶ月の想定収入</div>
-                  <div className="text-2xl font-bold text-green-700">
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900 rounded-lg">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">1ヶ月の想定収入</div>
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
                     {monthlyIncome > 0 
                       ? `${monthlyIncome.toLocaleString()}円`
                       : "収入情報がありません"}
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     ※実際の収入は経験や勤務状況により異なります
                   </div>
                 </div>
                 
-                <div className="text-sm text-gray-500 italic">
+                <div className="text-sm text-gray-500 dark:text-gray-400 italic">
                   <p>詳しい給与条件や待遇については、面接時にお気軽にお問い合わせください。</p>
                 </div>
               </CardContent>

@@ -1,4 +1,5 @@
-import { MapPinned, Lock, Building } from "lucide-react";
+import { Store, MapPin, Shield, Info } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface StoreDetailsDisplayProps {
   address?: string;
@@ -9,8 +10,8 @@ interface StoreDetailsDisplayProps {
 }
 
 /**
- * 店舗詳細情報表示コンポーネント
- * 住所、アクセス情報、セキュリティ対策、応募資格などの情報を表示
+ * 店舗の詳細情報表示コンポーネント
+ * 住所、アクセス情報、セキュリティ、応募条件などを表示
  */
 export function StoreDetailsDisplay({
   address,
@@ -19,81 +20,84 @@ export function StoreDetailsDisplay({
   applicationRequirements,
   className = "",
 }: StoreDetailsDisplayProps) {
-  const hasDetails = 
-    !!address || 
-    !!accessInfo || 
-    !!securityMeasures || 
-    !!applicationRequirements;
-    
-  if (!hasDetails) {
+  const hasInfo = !!address || !!accessInfo || !!securityMeasures || !!applicationRequirements;
+  
+  if (!hasInfo) {
     return null;
   }
   
   return (
-    <div className={`space-y-6 ${className}`}>
-      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-        <Building className="h-4 w-4 mr-2 text-gray-500" />
-        店舗詳細情報
-      </h4>
+    <Card className={className}>
+      <CardHeader className="pb-3">
+        <h3 className="text-xl font-semibold flex items-center">
+          <Store className="mr-2 h-5 w-5 text-primary" />
+          店舗詳細情報
+        </h3>
+      </CardHeader>
       
-      <div className="space-y-4">
-        {/* 住所情報 */}
-        {address && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MapPinned className="h-4 w-4 text-red-500" />
-              <h5 className="font-medium text-gray-900 dark:text-gray-100">住所</h5>
+      <CardContent className="space-y-6">
+        {/* アクセス・所在地情報 */}
+        {(address || accessInfo) && (
+          <div>
+            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+              <MapPin className="h-4 w-4 mr-2 text-rose-500" />
+              アクセス・所在地
+            </h4>
+            
+            <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+              {/* 所在地 */}
+              {address && (
+                <div className="bg-gray-50 dark:bg-gray-900 p-4">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">所在地</div>
+                  <div className="text-gray-900 dark:text-gray-100">{address}</div>
+                </div>
+              )}
+              
+              {/* アクセス方法 */}
+              {accessInfo && (
+                <div className={`p-4 ${address ? 'border-t border-gray-200 dark:border-gray-800' : ''}`}>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">アクセス方法</div>
+                  <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
+                    {accessInfo}
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 ml-6 whitespace-pre-line">
-              {address}
-            </p>
-          </div>
-        )}
-        
-        {/* アクセス情報 */}
-        {accessInfo && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
-                <path d="M10 5a1 1 0 0 1 2 0v4a1 1 0 0 1-1 1h-2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h2.001L11 20a1 1 0 0 1-2 0v-4a1 1 0 0 1 1-1h2a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.001L10 5Z" />
-              </svg>
-              <h5 className="font-medium text-gray-900 dark:text-gray-100">アクセス情報</h5>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 ml-6 whitespace-pre-line">
-              {accessInfo}
-            </p>
           </div>
         )}
         
         {/* セキュリティ対策 */}
         {securityMeasures && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="h-4 w-4 text-green-500" />
-              <h5 className="font-medium text-gray-900 dark:text-gray-100">セキュリティ対策</h5>
+          <div>
+            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+              安全対策
+            </h4>
+            
+            <div className="p-4 rounded-lg border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30">
+              <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
+                {securityMeasures}
+              </div>
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 ml-6 whitespace-pre-line">
-              {securityMeasures}
-            </p>
           </div>
         )}
         
-        {/* 応募資格 */}
+        {/* 応募条件 */}
         {applicationRequirements && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500">
-                <path d="M8 14c0-2.21 3.582-4 8-4s8 1.79 8 4M4 18c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
-                <path d="M16 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
-              </svg>
-              <h5 className="font-medium text-gray-900 dark:text-gray-100">応募資格</h5>
+          <div>
+            <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+              <Info className="h-4 w-4 mr-2 text-blue-500" />
+              応募条件
+            </h4>
+            
+            <div className="p-4 rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
+              <div className="text-gray-900 dark:text-gray-100 whitespace-pre-line text-sm">
+                {applicationRequirements}
+              </div>
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 ml-6 whitespace-pre-line">
-              {applicationRequirements}
-            </p>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

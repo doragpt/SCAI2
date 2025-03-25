@@ -1,64 +1,75 @@
-import { Gift, Check } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type SpecialOffer } from "@shared/schema";
-import * as LucideIcons from "lucide-react";
+import { Crown, Gift, Star, Sparkles, TagIcon, Award, Gem, Heart, CircleDollarSign, Rocket } from "lucide-react";
+
+// アイコンマッピング
+const iconMap: Record<string, React.ElementType> = {
+  Crown,
+  Gift,
+  Star,
+  Sparkles,
+  TagIcon,
+  Award,
+  Gem,
+  Heart,
+  CircleDollarSign,
+  Rocket,
+};
 
 interface SpecialOffersDisplayProps {
-  specialOffers?: SpecialOffer[];
+  specialOffers: SpecialOffer[];
   className?: string;
 }
 
 /**
  * 特別オファー表示コンポーネント
- * 店舗独自の特典を視覚的にリッチに表示する
+ * 店舗からの特別キャンペーンやオファーを表示する
  */
 export function SpecialOffersDisplay({
   specialOffers,
   className = "",
 }: SpecialOffersDisplayProps) {
-  // 特別オファーがない場合は何も表示しない
   if (!specialOffers || specialOffers.length === 0) {
     return null;
   }
-  
-  // 指定されたアイコン名からLucideアイコンコンポーネントを動的に取得
-  const getIconComponent = (iconName: string) => {
-    // @ts-ignore - Lucideアイコンを動的に取得
-    const IconComponent = LucideIcons[iconName] || Check;
-    return IconComponent;
-  };
+
+  // 表示順にソート
+  const sortedOffers = [...specialOffers].sort((a, b) => a.order - b.order);
   
   return (
     <div className={`space-y-6 ${className}`}>
-      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-        <Gift className="h-4 w-4 mr-2 text-pink-500" />
-        お店からの特別オファー
-      </h4>
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="h-5 w-5 text-yellow-500" />
+        <h3 className="text-xl font-semibold">特別オファー</h3>
+      </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {specialOffers.sort((a, b) => a.order - b.order).map((offer) => {
-          const IconComponent = getIconComponent(offer.icon);
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {sortedOffers.map((offer) => {
+          // アイコンを取得、ない場合はデフォルトでStar
+          const IconComponent = offer.icon && iconMap[offer.icon] ? iconMap[offer.icon] : Star;
           
           return (
             <Card 
-              key={offer.id} 
-              className="overflow-hidden border-transparent shadow-md hover:shadow-lg transition-shadow"
+              key={offer.id}
+              className="overflow-hidden border-2"
               style={{ 
-                backgroundColor: offer.backgroundColor || "#f9f9f9",
-                color: offer.textColor || "#333"
+                borderColor: offer.backgroundColor || '#f59e0b',
+                background: `linear-gradient(to right, ${offer.backgroundColor}15, transparent)`
               }}
             >
-              <CardContent className="p-0">
-                <div className="flex items-start p-4">
-                  <div className="mr-4 mt-1">
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                  
-                  <div>
-                    <h5 className="font-bold text-lg mb-1">{offer.title}</h5>
-                    <p className="text-sm whitespace-pre-line">{offer.description}</p>
-                  </div>
-                </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-lg">
+                  <IconComponent 
+                    className="mr-2 h-5 w-5"
+                    style={{ color: offer.backgroundColor || '#f59e0b' }}
+                  />
+                  <span style={{ color: offer.textColor || 'inherit' }}>{offer.title}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-sm whitespace-pre-line">
+                  {offer.description}
+                </CardDescription>
               </CardContent>
             </Card>
           );
