@@ -370,8 +370,8 @@ export async function getStorePerformanceAnalytics(storeId: number) {
           gte(viewHistory.viewed_at, threeMonthsAgo)
         )
       )
-      .groupBy(sql`DATE_TRUNC('month', ${viewHistory.created_at})`)
-      .orderBy(sql`DATE_TRUNC('month', ${viewHistory.created_at})`);
+      .groupBy(sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`)
+      .orderBy(sql`DATE_TRUNC('month', ${viewHistory.viewed_at})`);
     
     // 申し込みの月間推移（直近3ヶ月）
     const monthlyApplicationsResult = await db
