@@ -296,6 +296,7 @@ export const store_profiles = pgTable("store_profiles", {
     cup_size_conditions: [],
     accepts_temporary_workers: true,
     requires_arrival_day_before: false,
+    prioritize_titles: false,
     other_conditions: []
   }),
   working_hours: text("working_hours"),
