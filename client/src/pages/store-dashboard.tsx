@@ -285,6 +285,14 @@ export default function StoreDashboard() {
     retryDelay: 1000,
   });
   
+  // プロフィールデータが読み込まれたときにカップサイズ条件の表示状態を更新
+  useEffect(() => {
+    if (profile?.requirements?.cup_size_conditions && 
+        profile.requirements.cup_size_conditions.length > 0) {
+      setShowCupSizeConditions(true);
+    }
+  }, [profile]);
+  
   // 採用設定を保存するミューテーション
   const saveRequirementsMutation = useMutation({
     mutationFn: async () => {
@@ -1370,10 +1378,19 @@ export default function StoreDashboard() {
                               checked={showCupSizeConditions}
                               onCheckedChange={(checked) => {
                                 setShowCupSizeConditions(checked);
+                                
                                 // カップサイズ条件スイッチの状態が変更された時に保存
-                                if (!checked && profile?.requirements?.cup_size_conditions?.length) {
-                                  // カップサイズ条件をクリア（スイッチがオフの場合）
-                                  saveRequirementsMutation.mutate();
+                                if (!checked) {
+                                  // スイッチがオフになった場合、cup_size_conditionsを空配列にする
+                                  if (profile && profile.requirements) {
+                                    const updatedRequirements = {
+                                      ...profile.requirements,
+                                      cup_size_conditions: [] // 条件をクリア
+                                    };
+                                    
+                                    // 注：保存ミューテーションが自動的に更新された条件を使用します
+                                    saveRequirementsMutation.mutate();
+                                  }
                                 }
                               }}
                             />
