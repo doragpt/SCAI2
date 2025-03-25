@@ -222,6 +222,9 @@ export default function StoreDashboard() {
   const ageMaxRef = useRef<HTMLInputElement>(null);
   const specMinRef = useRef<HTMLInputElement>(null);
   const specMaxRef = useRef<HTMLInputElement>(null);
+  const hourlyRateRef = useRef<HTMLInputElement>(null);
+  const minGuaranteeRef = useRef<HTMLInputElement>(null);
+  const maxGuaranteeRef = useRef<HTMLInputElement>(null);
   const acceptsTempWorkersRef = useRef<HTMLButtonElement>(null);
   const requiresArrivalDayBeforeRef = useRef<HTMLButtonElement>(null);
   const otherConditionsRef = useRef<HTMLTextAreaElement>(null);
@@ -366,19 +369,47 @@ export default function StoreDashboard() {
   const handleAddCupSizeCondition = () => {
     if (!profile?.requirements) return;
     
+    // カップサイズと最低スペックの入力ダイアログを表示
+    const cupSize = window.prompt("カップサイズを入力してください (A～K):", "E");
+    if (!cupSize) return; // キャンセル時
+    
+    // 有効なカップサイズかチェック（大文字変換）
+    const normalizedCupSize = cupSize.toUpperCase();
+    if (!cupSizes.includes(normalizedCupSize as CupSize)) {
+      toast({
+        variant: "destructive",
+        title: "無効なカップサイズ",
+        description: "A～Kの間のカップサイズを入力してください"
+      });
+      return;
+    }
+    
+    const specMinInput = window.prompt(`${normalizedCupSize}カップ以上の場合の最低スペック値を入力してください:`, "100");
+    if (!specMinInput) return; // キャンセル時
+    
+    const specMin = parseInt(specMinInput);
+    if (isNaN(specMin) || specMin < 0) {
+      toast({
+        variant: "destructive",
+        title: "無効な値",
+        description: "最低スペックは0以上の数値を入力してください"
+      });
+      return;
+    }
+    
     // 現在の条件リストを取得
     const currentConditions = profile.requirements.cup_size_conditions || [];
     
     // 重複チェック
     const exists = currentConditions.some(
-      condition => condition.cup_size === newCupSizeCondition.cup_size
+      condition => condition.cup_size === normalizedCupSize
     );
     
     if (exists) {
       toast({
         variant: "destructive",
         title: "条件が重複しています",
-        description: `${newCupSizeCondition.cup_size}カップの条件はすでに設定されています`
+        description: `${normalizedCupSize}カップの条件はすでに設定されています`
       });
       return;
     }
@@ -386,7 +417,7 @@ export default function StoreDashboard() {
     // 条件を追加
     const updatedConditions = [
       ...currentConditions,
-      { ...newCupSizeCondition }
+      { cup_size: normalizedCupSize as CupSize, spec_min: specMin }
     ];
     
     // プロフィールの採用要件を更新
@@ -1257,7 +1288,11 @@ export default function StoreDashboard() {
                         <div className="mt-4">
                           <div className="flex items-center justify-between mb-2">
                             <label className="text-sm font-medium">カップサイズ別特別条件</label>
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleAddCupSizeCondition()}
+                            >
                               <Plus className="h-4 w-4 mr-1" />
                               条件を追加
                             </Button>
