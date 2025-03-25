@@ -34,13 +34,13 @@ export function formatSalary(
   if (hasHourlyInfo && hasGuaranteeInfo) {
     const hourlyRate = averageHourlyPay;
     const guaranteeText = formatGuaranteeRange(min, max);
-    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円 時給換算${hourlyRate.toLocaleString()}円`;
+    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円（時給換算：${hourlyRate.toLocaleString()}円）`;
   }
   
   // 時給換算情報のみの場合
   if (hasHourlyInfo) {
     const hourlyRate = averageHourlyPay;
-    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円 時給換算${hourlyRate.toLocaleString()}円`;
+    return `参考給与例 ${workingTimeHours}時間${averageHourlyPay.toLocaleString()}円（時給換算：${hourlyRate.toLocaleString()}円）`;
   }
   
   // 給与情報のみの場合
