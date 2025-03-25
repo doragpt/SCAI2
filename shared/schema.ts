@@ -25,8 +25,7 @@ export const serviceTypes = [
   "M性感",
   "ソープランド",
   "ピンサロ",
-  "ファッションヘルス",
-  "イメクラ"
+  "ファッションヘルス"
 ] as const;
 
 export const cupSizes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"] as const;
@@ -320,7 +319,6 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   "ソープランド": "ソープランド",
   "ピンサロ": "ピンサロ",
   "ファッションヘルス": "ヘルス",
-  "イメクラ": "イメクラ",
 } as const;
 
 // Service Type Descriptions
@@ -334,7 +332,6 @@ export const serviceTypeDescriptions: Record<ServiceType, string> = {
   "ソープランド": "湯船やマットを使ったサービスなど、特殊な設備を備えた高級風俗店です。",
   "ピンサロ": "個室でのオーラルサービスを中心とした風俗店です。",
   "ファッションヘルス": "コスプレや制服などを着用した女性がサービスを提供する風俗店です。",
-  "イメクラ": "様々なシチュエーションやロールプレイを楽しめる風俗店です。",
 } as const;
 
 // Service Type Icons
@@ -348,7 +345,6 @@ export const serviceTypeIcons: Record<ServiceType, string> = {
   "ソープランド": "Droplets",
   "ピンサロ": "HeartHandshake",
   "ファッションヘルス": "Shirt",
-  "イメクラ": "Theater",
 } as const;
 
 // Zod schemas for validation

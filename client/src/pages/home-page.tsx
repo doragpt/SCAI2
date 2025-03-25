@@ -619,9 +619,9 @@ export default function HomePage() {
                       <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
                         {type === "デリヘル" && <Hotel className="h-6 w-6 text-primary" />}
                         {type === "ホテヘル" && <Bed className="h-6 w-6 text-primary" />}
-                        {type === "ピンサロ" && <Hand className="h-6 w-6 text-primary" />}
+                        {type === "ピンサロ" && <HeartHandshake className="h-6 w-6 text-primary" />}
                         {type === "オナクラ" && <Hand className="h-6 w-6 text-primary" />}
-
+                        {type === "ファッションヘルス" && <Shirt className="h-6 w-6 text-primary" />}
                         {type === "箱ヘル" && <Building2 className="h-6 w-6 text-primary" />}
                         {type === "風俗エステ" && <HandHeart className="h-6 w-6 text-primary" />}
                         {type === "M性感" && <Sparkles className="h-6 w-6 text-primary" />}
