@@ -232,13 +232,9 @@ export default function StoreDashboard() {
            profile?.requirements?.cup_size_conditions.length > 0;
   };
 
-  // プロフィールデータに基づいてカップサイズ条件の状態を初期化
-  // プロフィールのカップサイズ条件の有無をチェックして初期状態を設定
-  const initialHasCupSizeConditions = useMemo(() => hasCupSizeConditions(profile), [profile]);
-  
-  // 表示状態と有効/無効状態を同期させる
-  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(initialHasCupSizeConditions);
-  const [enableCupSizeConditions, setEnableCupSizeConditions] = useState<boolean>(initialHasCupSizeConditions);
+  // 先にステート変数を初期化し、後でプロフィールデータが読み込まれたら更新する
+  const [showCupSizeConditions, setShowCupSizeConditions] = useState<boolean>(false);
+  const [enableCupSizeConditions, setEnableCupSizeConditions] = useState<boolean>(false);
   const [priceSettings, setPriceSettings] = useState<Array<{ time: number; price: number }>>([
     { time: 60, price: 10000 },
   ]);
@@ -303,15 +299,17 @@ export default function StoreDashboard() {
   useEffect(() => {
     if (profile?.requirements) {
       // cup_size_conditionsが配列であり、要素が存在する場合はスイッチをオンにする
-      if (profile.requirements.cup_size_conditions && 
-          Array.isArray(profile.requirements.cup_size_conditions) &&
-          profile.requirements.cup_size_conditions.length > 0) {
-        setShowCupSizeConditions(true);
-        setEnableCupSizeConditions(true);
-      } else {
-        // 条件が空の場合はスイッチの状態のみ維持（表示/非表示は別途制御）
-        setEnableCupSizeConditions(false);
-      }
+      const hasCupConditions = profile.requirements.cup_size_conditions && 
+        Array.isArray(profile.requirements.cup_size_conditions) &&
+        profile.requirements.cup_size_conditions.length > 0;
+      
+      setShowCupSizeConditions(hasCupConditions);
+      setEnableCupSizeConditions(hasCupConditions);
+      
+      console.log("カップサイズ条件の状態を更新:", {
+        hasCupConditions,
+        conditions: profile.requirements.cup_size_conditions
+      });
     }
   }, [profile?.requirements]);
   
