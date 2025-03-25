@@ -302,6 +302,7 @@ export default function StoreDashboard() {
         hourly_rate: hourlyRate,
         min_guarantee: minGuarantee,
         max_guarantee: maxGuarantee,
+        working_time_hours: workingTimeHours, // 勤務時間を追加
         accepts_temporary_workers: acceptsTempWorkers,
         requires_arrival_day_before: requiresArrivalDayBefore,
         other_conditions: otherConditions,
@@ -476,7 +477,7 @@ export default function StoreDashboard() {
         average_hourly_pay: profile?.average_hourly_pay || 0,
         top_image: profile?.top_image || "",
         working_hours: profile?.working_hours || "",
-        requirements: profile?.requirements || "",
+        requirements: profile?.requirements || {},
         transportation_support: profile?.transportation_support || false,
         housing_support: profile?.housing_support || false,
         special_offers: profile?.special_offers || [],
