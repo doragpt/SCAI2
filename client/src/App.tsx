@@ -26,6 +26,8 @@ import NewBlogPost from "@/pages/store/blog/new";
 import EditBlogPost from "@/pages/store/blog/edit/[id]";
 import BlogPostView from "@/pages/blog/[id]";
 import BlogManagement from "@/pages/store/blog/index";
+import StoreDesignManager from "@/pages/store/design-manager";
+import StorePreview from "@/pages/store/preview";
 
 function Router() {
   return (
@@ -62,6 +64,16 @@ function Router() {
       <ProtectedRoute 
         path="/store/blog/edit/:id" 
         component={EditBlogPost}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/design-manager" 
+        component={StoreDesignManager}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/preview" 
+        component={StorePreview}
         roleRequired="store"
       />
       <Route path="/blog/:id" component={BlogPostView} />
