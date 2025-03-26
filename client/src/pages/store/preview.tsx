@@ -333,14 +333,35 @@ export default function StorePreview() {
         );
         
       case 'photo_gallery':
-        return profile.gallery_photos && profile.gallery_photos.length > 0 && (
+        // フォトギャラリーの処理
+        return (
           <div key={sectionId} style={getSectionStyle('photo_gallery')} className="mb-8">
             <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
               <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
               写真ギャラリー
             </h3>
-            <PhotoGalleryDisplay photos={profile.gallery_photos} />
-            <p className="text-xs text-muted-foreground mt-2 text-right">※推奨画像サイズ: 200×150px</p>
+            
+            {profile?.gallery_photos && profile.gallery_photos.length > 0 ? (
+              <>
+                <PhotoGalleryDisplay photos={profile.gallery_photos.map(photo => ({
+                  id: photo.id,
+                  url: photo.url,
+                  title: photo.title,
+                  description: photo.description,
+                  category: photo.category || '店内',
+                  order: photo.order || 0,
+                  featured: photo.featured || false
+                }))} />
+                <p className="text-xs text-muted-foreground mt-2 text-right">※推奨画像サイズ: 200×150px</p>
+              </>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-md border border-gray-100 text-gray-500">
+                <Image className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                <p>写真ギャラリーに画像がありません</p>
+                <p className="text-xs mt-2">設定画面から写真を追加できます</p>
+                <p className="text-xs mt-2">※推奨画像サイズ: 200×150px</p>
+              </div>
+            )}
           </div>
         );
         
@@ -473,7 +494,16 @@ export default function StorePreview() {
                 backgroundColor: offer.backgroundColor || '#ff4d7d',
                 textColor: offer.textColor || '#333333',
                 icon: offer.icon || 'sparkles',
-                order: offer.order || 0
+                order: offer.order || 0,
+                type: offer.type || 'discount',
+                isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
+                isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
+                amount: offer.amount,
+                conditions: offer.conditions,
+                startDate: offer.startDate,
+                endDate: offer.endDate,
+                limitedCount: offer.limitedCount,
+                targetAudience: offer.targetAudience
               }))} />
             ) : (
               <div className="text-center py-6 bg-gray-50 rounded-md border border-gray-100 text-gray-500">
@@ -744,159 +774,6 @@ export default function StorePreview() {
             }}>
               {/* 設定の順序に従ってセクションを動的にレンダリング */}
               {renderOrderedSections()}
-              
-              {/* 以下の古いセクションレンダリングコードは削除します */}
-              {false && isSectionVisible('photo_gallery') && profile.gallery_photos && profile.gallery_photos.length > 0 && (
-                <div style={getSectionStyle('photo_gallery')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
-                    <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
-                    写真ギャラリー
-                  </h3>
-                  <PhotoGalleryDisplay photos={profile.gallery_photos} />
-                  <p className="text-xs text-muted-foreground mt-2 text-right">※推奨画像サイズ: 200×150px</p>
-                </div>
-              )}
-
-              {/* 待遇・環境 */}
-              {false && isSectionVisible('benefits') && profile.benefits && profile.benefits.length > 0 && (
-                <div style={getSectionStyle('benefits')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('benefits')} className="flex items-center">
-                    <BadgeCheck className="h-5 w-5 mr-2" style={{ color: getSectionSettings('benefits').titleColor || globalSettings.mainColor }} />
-                    待遇・環境
-                  </h3>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2" style={{ color: getSectionSettings('benefits').textColor || '#333333' }}>
-                    {profile.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-center">
-                        <BadgeCheck className="h-4 w-4 mr-2" style={{ color: globalSettings.mainColor }} />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* 給与情報 */}
-              {false && isSectionVisible('salary') && (
-                <div style={getSectionStyle('salary')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('salary')} className="flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2" style={{ color: getSectionSettings('salary').titleColor || globalSettings.mainColor }} />
-                    給与情報
-                  </h3>
-                  <div className="space-y-3" style={{ color: getSectionSettings('salary').textColor || '#333333' }}>
-                    <div>
-                      <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>日給</h4>
-                      <p className="text-lg font-bold">
-                        {profile.minimum_guarantee && profile.maximum_guarantee 
-                          ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
-                          : profile.minimum_guarantee 
-                            ? `${profile.minimum_guarantee.toLocaleString()}円〜`
-                            : profile.maximum_guarantee 
-                              ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
-                              : "要相談"}
-                      </p>
-                    </div>
-                    
-                    {(profile.working_time_hours && profile.average_hourly_pay) && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>平均時給</h4>
-                        <p className="font-bold">
-                          {profile.working_time_hours > 0 
-                            ? Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString() 
-                            : profile.average_hourly_pay.toLocaleString()}円
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* 勤務時間 */}
-              {false && isSectionVisible('schedule') && (
-                <div style={getSectionStyle('schedule')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('schedule')} className="flex items-center">
-                    <Clock className="h-5 w-5 mr-2" style={{ color: getSectionSettings('schedule').titleColor || globalSettings.mainColor }} />
-                    勤務時間
-                  </h3>
-                  <p style={{ color: getSectionSettings('schedule').textColor || '#333333' }}>
-                    {profile.working_hours || '勤務時間が設定されていません'}
-                  </p>
-                </div>
-              )}
-
-              {/* 応募条件 */}
-              {false && isSectionVisible('requirements') && (
-                <div style={getSectionStyle('requirements')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('requirements')} className="flex items-center">
-                    <User className="h-5 w-5 mr-2" style={{ color: getSectionSettings('requirements').titleColor || globalSettings.mainColor }} />
-                    応募条件
-                  </h3>
-                  
-                  {profile.requirements ? (
-                    <div className="space-y-3" style={{ color: getSectionSettings('requirements').textColor || '#333333' }}>
-                      {profile.requirements.age_min || profile.requirements.age_max ? (
-                        <div>
-                          <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>年齢</h4>
-                          <p>
-                            {profile.requirements.age_min || 18}歳以上
-                            {profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}
-                          </p>
-                        </div>
-                      ) : null}
-                      
-                      {profile.requirements.cup_size_conditions && 
-                      profile.requirements.cup_size_conditions.length > 0 && (
-                        <div>
-                          <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>カップサイズ条件</h4>
-                          <ul className="list-disc list-inside">
-                            {profile.requirements.cup_size_conditions.map((condition, index) => (
-                              <li key={index}>
-                                {condition.cup_size}カップ以上の方
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {profile.application_requirements && (
-                        <div>
-                          <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>その他の条件</h4>
-                          <p>{profile.application_requirements}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p style={{ color: getSectionSettings('requirements').textColor || '#333333' }}>応募条件が設定されていません</p>
-                  )}
-                </div>
-              )}
-
-              {/* 特別オファー */}
-              {isSectionVisible('special_offers') && profile?.special_offers && profile.special_offers.length > 0 && (
-                <div style={getSectionStyle('special_offers')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
-                    <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
-                    特別オファー
-                  </h3>
-                  <SpecialOffersDisplay specialOffers={profile.special_offers.map(offer => ({
-                    backgroundColor: offer.backgroundColor || '#ff4d7d',
-                    textColor: offer.textColor || '#333333',
-                    icon: offer.icon || 'sparkles',
-                    order: offer.order || 0,
-                    id: offer.id,
-                    title: offer.title,
-                    description: offer.description,
-                    type: offer.type || 'discount',
-                    isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
-                    isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
-                    amount: offer.amount,
-                    conditions: offer.conditions,
-                    startDate: offer.startDate,
-                    endDate: offer.endDate,
-                    limitedCount: offer.limitedCount,
-                    targetAudience: offer.targetAudience
-                  }))} />
-                </div>
-              )}
 
 
 
