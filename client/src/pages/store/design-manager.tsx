@@ -234,11 +234,11 @@ export default function StoreDesignManager() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // 設定を読み込むクエリ
-  const { data: savedSettings, isLoading } = useQuery({
+  const { data: savedSettings, isLoading, isError } = useQuery({
     queryKey: [QUERY_KEYS.STORE_DESIGN],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/design');
+        const response = await apiRequest('GET', QUERY_KEYS.STORE_DESIGN);
         return response as DesignSettings;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました', error);
@@ -252,7 +252,7 @@ export default function StoreDesignManager() {
   // 設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
-      return await apiRequest('POST', '/design', data);
+      return await apiRequest('POST', QUERY_KEYS.STORE_DESIGN, data);
     },
     onSuccess: () => {
       toast({
