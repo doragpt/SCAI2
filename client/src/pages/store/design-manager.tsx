@@ -68,25 +68,30 @@ export default function StoreDesignManager() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // デザイン設定を取得する
-  const { isLoading } = useQuery({
+  const { isLoading, refetch } = useQuery<DesignSettings>({
     queryKey: [QUERY_KEYS.STORE_DESIGN],
     queryFn: async () => {
-      const response = await apiRequest<DesignSettings>('GET', '/api/design');
-      return response;
-    },
-    onSuccess(data) {
-      if (data) {
-        setSettings(data);
+      try {
+        const response = await apiRequest<DesignSettings>('GET', '/api/design');
+        return response;
+      } catch (error) {
+        console.error('デザイン設定の取得に失敗しました', error);
+        return getDefaultDesignSettings();
       }
-    },
-    onError(error: any) {
-      toast({
-        title: "エラー",
-        description: "デザイン設定の取得に失敗しました。" + error.message,
-        variant: "destructive"
-      });
     }
   });
+  
+  // データが取得できたらステートを更新
+  useEffect(() => {
+    if (refetch) {
+      refetch().then(result => {
+        if (result.data) {
+          setSettings(result.data);
+          setIsDirty(false);
+        }
+      });
+    }
+  }, [refetch]);
 
   // デザイン設定を保存する
   const saveSettingsMutation = useMutation({
@@ -760,11 +765,11 @@ export default function StoreDesignManager() {
         </div>
         
         {/* プレビュー領域 */}
-        <div className="flex-1 flex items-center justify-center bg-muted/50 overflow-auto">
-          <div className="p-4 flex flex-col items-center">
+        <div className="flex-1 bg-muted/50 overflow-auto">
+          <div className="h-full p-4 flex flex-col items-center justify-center">
             <div className={`
               bg-white border rounded-md overflow-hidden shadow-md transition-all duration-300
-              ${deviceView === 'pc' ? 'w-full h-full' : 'w-[375px] h-[667px]'}
+              ${deviceView === 'pc' ? 'w-full max-w-[1000px] h-[800px]' : 'w-[375px] h-[667px]'}
             `}>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">

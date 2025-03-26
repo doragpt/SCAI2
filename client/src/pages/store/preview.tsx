@@ -25,7 +25,7 @@ export default function StorePreview() {
   const { data: profile, isLoading } = useQuery<StoreProfile>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/store/profile');
+      const response = await apiRequest('GET', '/store/profile');
       return response as StoreProfile;
     }
   });
