@@ -5,17 +5,15 @@ import { Control, useWatch } from 'react-hook-form';
 import { StoreProfileFormData } from '@shared/schema';
 
 interface PhotoGalleryFormTabProps {
-  control: Control<StoreProfileFormData>;
-  setValue: any;
+  photos: any[];
+  onChange: (photos: any[]) => void;
+  control?: Control<StoreProfileFormData>; // オプショナルにして後方互換性を維持
+  setValue?: any; // オプショナルにして後方互換性を維持
 }
 
-export function PhotoGalleryFormTab({ control, setValue }: PhotoGalleryFormTabProps) {
-  // フォームからフォトギャラリーの値を監視
-  const galleryPhotos = useWatch({
-    control,
-    name: 'gallery_photos',
-    defaultValue: [],
-  });
+export function PhotoGalleryFormTab({ photos, onChange, control, setValue }: PhotoGalleryFormTabProps) {
+  // 現在の写真データを直接使用
+  const galleryPhotos = photos || [];
 
   // フォトギャラリーの更新
   const handleGalleryPhotosChange = (newPhotos: any[]) => {
@@ -45,10 +43,16 @@ export function PhotoGalleryFormTab({ control, setValue }: PhotoGalleryFormTabPr
         };
       }).filter(Boolean); // nullや未定義の項目を除外
       
-      setValue('gallery_photos', processedPhotos, { 
-        shouldDirty: true,
-        shouldValidate: true
-      });
+      // 直接親コンポーネントのonChangeに処理済み写真を渡す
+      onChange(processedPhotos);
+      
+      // 後方互換性のために、setValueが提供されていれば使用する
+      if (setValue) {
+        setValue('gallery_photos', processedPhotos, { 
+          shouldDirty: true,
+          shouldValidate: true
+        });
+      }
     } catch (error) {
       console.error('PhotoGalleryFormTab: 写真処理エラー', error);
     }
