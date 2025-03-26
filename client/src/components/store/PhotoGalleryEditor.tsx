@@ -188,7 +188,15 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
         {galleryCategories.map(category => (
           <TabsContent key={category} value={category} className="w-full">
             <div className="mb-4">
-              <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="w-full">
+              <Button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }} 
+                disabled={isUploading} 
+                className="w-full"
+              >
                 {isUploading ? '画像をアップロード中...' : '写真を追加'} <Upload className="ml-2 h-4 w-4" />
               </Button>
               <input
@@ -211,9 +219,13 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
                     </CardTitle>
                     <div className="flex items-center space-x-1">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => toggleFeatured(photo.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleFeatured(photo.id);
+                        }}
                         title={photo.featured ? "注目を解除" : "注目写真に設定"}
                       >
                         {photo.featured ? 
@@ -222,9 +234,13 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
                         }
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => handlePhotoDelete(photo.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePhotoDelete(photo.id);
+                        }}
                         title="削除"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -239,18 +255,26 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
                     />
                     <div className="absolute top-2 right-2 flex flex-col space-y-1">
                       <Button
+                        type="button"
                         variant="secondary"
                         size="icon"
-                        onClick={() => movePhoto(photo.id, 'up')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          movePhoto(photo.id, 'up');
+                        }}
                         disabled={index === 0}
                         className="h-8 w-8 bg-white/70 hover:bg-white"
                       >
                         <ChevronUp className="h-4 w-4" />
                       </Button>
                       <Button
+                        type="button"
                         variant="secondary"
                         size="icon"
-                        onClick={() => movePhoto(photo.id, 'down')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          movePhoto(photo.id, 'down');
+                        }}
                         disabled={index === photosByCategory[category].length - 1}
                         className="h-8 w-8 bg-white/70 hover:bg-white"
                       >
