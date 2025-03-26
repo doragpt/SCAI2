@@ -102,39 +102,42 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
           reader.readAsDataURL(file);
         });
         
+        let result;
         try {
           console.log(`ファイル ${file.name} を S3 にアップロード中...`);
           // 画像をアップロード
-          const result = await uploadPhoto(base64Data, file.name);
-          
-          if (!result || !result.url) {
-            throw new Error(`ファイル ${file.name} のアップロードに失敗しました: URLが取得できません`);
-          }
-          
-          console.log(`ファイル ${file.name} のアップロード成功:`, result.url);
-          
-          // 新しい写真オブジェクトを作成して必ず一意のIDを持たせる
-          const newPhoto = {
-            id: `photo-${nanoid()}`, // IDに接頭辞を追加して確実に一意にする
-            url: result.url,
-            category: activeTab,
-            order: currentPhotos.length,
-            featured: false,
-            title: `写真 ${currentPhotos.length + 1}` // デフォルトのタイトルを設定
-          };
-          
-          // 写真配列に追加
-          currentPhotos = [...currentPhotos, newPhoto];
-          
-          // その都度親コンポーネントに更新を通知
-          console.log("写真配列を更新:", currentPhotos.length, "枚");
-          onChange(currentPhotos);
-          
+          result = await uploadPhoto(base64Data, file.name);
         } catch (error) {
           console.error('画像アップロードエラー:', error);
-          // ユーザーにエラーを通知 (開発時はコメントアウトして良い)
-          // alert(`画像「${file.name}」のアップロードに失敗しました: ${error.message || '原因不明のエラー'}`);
+          // ユーザーにエラーを通知
+          alert(`画像「${file.name}」のアップロードに失敗しました: ${error instanceof Error ? error.message : '原因不明のエラー'}`);
+          continue; // 次のファイルに進む
         }
+        
+        // 成功時の処理（try-catchブロックの外）
+        if (!result || !result.url) {
+          console.error(`ファイル ${file.name} のアップロード結果が無効です:`, result);
+          continue; // 次のファイルに進む
+        }
+          
+        console.log(`ファイル ${file.name} のアップロード成功:`, result.url);
+        
+        // 新しい写真オブジェクトを作成して必ず一意のIDを持たせる
+        const newPhoto = {
+          id: `photo-${nanoid()}`, // IDに接頭辞を追加して確実に一意にする
+          url: result.url,
+          category: activeTab,
+          order: currentPhotos.length,
+          featured: false,
+          title: `写真 ${currentPhotos.length + 1}` // デフォルトのタイトルを設定
+        };
+        
+        // 写真配列に追加
+        currentPhotos = [...currentPhotos, newPhoto];
+        
+        // その都度親コンポーネントに更新を通知
+        console.log("写真配列を更新:", currentPhotos.length, "枚");
+        onChange(currentPhotos);
       }
     } catch (error) {
       console.error('ファイル処理エラー:', error);

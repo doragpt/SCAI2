@@ -19,24 +19,39 @@ export function PhotoGalleryFormTab({ control, setValue }: PhotoGalleryFormTabPr
 
   // フォトギャラリーの更新
   const handleGalleryPhotosChange = (newPhotos: any[]) => {
+    // 新しい写真がnullまたは未定義の場合は処理しない
+    if (!newPhotos) {
+      console.error('PhotoGalleryFormTab: 写真が提供されていません');
+      return;
+    }
+    
     console.log('PhotoGalleryFormTab: 写真更新', {
       現在のデータ: galleryPhotos ? galleryPhotos.length : 0,
-      新しいデータ: newPhotos ? newPhotos.length : 0
+      新しいデータ: newPhotos.length
     });
     
-    // 完全な新しい配列を作成して、参照の問題を避ける
-    const processedPhotos = newPhotos.map(photo => {
-      // 必須のidフィールドを確実に持つようにする
-      return {
-        ...photo,
-        id: photo.id || `photo-${Math.random().toString(36).substr(2, 9)}`
-      };
-    });
-    
-    setValue('gallery_photos', processedPhotos, { 
-      shouldDirty: true,
-      shouldValidate: true
-    });
+    try {
+      // 完全な新しい配列を作成して、参照の問題を避ける
+      const processedPhotos = newPhotos.map(photo => {
+        if (!photo) {
+          console.error('無効な写真オブジェクト:', photo);
+          return null;
+        }
+        
+        // 必須のidフィールドを確実に持つようにする
+        return {
+          ...photo,
+          id: photo.id || `photo-${Math.random().toString(36).substr(2, 9)}`
+        };
+      }).filter(Boolean); // nullや未定義の項目を除外
+      
+      setValue('gallery_photos', processedPhotos, { 
+        shouldDirty: true,
+        shouldValidate: true
+      });
+    } catch (error) {
+      console.error('PhotoGalleryFormTab: 写真処理エラー', error);
+    }
   };
 
   return (
