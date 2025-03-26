@@ -138,7 +138,52 @@ export default function StoreDesignManager() {
     // クエリからデータが取得できた場合
     if (designSettingsQuery.isSuccess && designSettingsQuery.data) {
       console.log('デザイン設定データを適用:', designSettingsQuery.data);
-      setSettings(designSettingsQuery.data);
+      
+      // データの整合性チェック
+      const defaultSettings = getDefaultSettings();
+      const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
+        'salary', 'schedule', 'requirements', 'special_offers', 'trial_entry', 
+        'campaigns', 'access', 'contact', 'sns_links', 'blog'];
+      
+      // APIから取得したデータのセクションIDs
+      const apiSectionIds = designSettingsQuery.data.sections.map(s => s.id);
+      console.log('APIから取得したセクションIDs:', apiSectionIds);
+      
+      // 不足しているセクションを検出
+      const missingIds = requiredSections.filter(id => !apiSectionIds.includes(id));
+      console.log('不足しているセクション:', missingIds);
+      
+      if (missingIds.length > 0) {
+        // 不足しているセクションをデフォルト設定から補完
+        const completedSettings = { ...designSettingsQuery.data };
+        const maxOrder = Math.max(...completedSettings.sections.map(s => s.order), 0);
+        
+        let orderIncrement = 1;
+        missingIds.forEach(id => {
+          const defaultSection = defaultSettings.sections.find(s => s.id === id);
+          if (defaultSection) {
+            console.log(`セクション "${id}" をデフォルト設定から追加します`);
+            completedSettings.sections.push({
+              ...defaultSection,
+              order: maxOrder + orderIncrement++
+            });
+          }
+        });
+        
+        console.log('補完されたデザイン設定を適用:', completedSettings);
+        setSettings(completedSettings);
+        
+        // 整合性が取れていない設定は自動で保存するように促す
+        setIsDirty(true);
+        toast({
+          title: '設定を修正しました',
+          description: '一部のセクションが追加されました。設定を保存することをお勧めします。',
+          duration: 5000,
+        });
+      } else {
+        // そのまま適用
+        setSettings(designSettingsQuery.data);
+      }
     } 
     // エラーが発生した場合
     else if (designSettingsQuery.isError) {
