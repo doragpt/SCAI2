@@ -590,7 +590,19 @@ export default function StoreDesignManager() {
                       className="space-y-3"
                     >
                       {settings.sections
-                        .sort((a, b) => a.order - b.order)
+                        // ヘッダーは特別扱い、requirementsは最後に配置、その他は通常の順序で表示
+                        .sort((a, b) => {
+                          // ヘッダーは常に先頭
+                          if (a.id === 'header') return -1;
+                          if (b.id === 'header') return 1;
+                          
+                          // 応募条件は常に最後
+                          if (a.id === 'requirements') return 1;
+                          if (b.id === 'requirements') return -1;
+                          
+                          // その他は通常の順序で
+                          return a.order - b.order;
+                        })
                         .map((section, index) => (
                           <Draggable key={section.id} draggableId={section.id} index={index}>
                             {(provided) => (

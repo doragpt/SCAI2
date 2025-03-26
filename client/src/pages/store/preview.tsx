@@ -654,7 +654,24 @@ export default function StorePreview() {
   // セクションの順序に従って動的にレンダリングする関数
   const renderOrderedSections = () => {
     // ヘッダーはすでに別途レンダリングされているので除外
-    const contentSections = visibleSections;
+    const contentSections = [...visibleSections];
+    
+    // セクションを適切な順序でソート
+    contentSections.sort((a, b) => {
+      // ヘッダーは常に先頭（ただし別途レンダリングされるので、ここでは無視）
+      if (a.id === 'header') return -1;
+      if (b.id === 'header') return 1;
+      
+      // 応募条件は常に最後
+      if (a.id === 'requirements') return 1;
+      if (b.id === 'requirements') return -1;
+      
+      // その他は通常の順序で
+      return a.order - b.order;
+    });
+    
+    // デバッグ用のセクション順序ログ
+    debugLog(`レンダリング順序: ${contentSections.map(s => s.id).join(', ')}`);
     
     // セクションを順序に従ってレンダリング
     return contentSections.map(section => {
