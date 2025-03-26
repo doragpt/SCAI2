@@ -871,18 +871,29 @@ export default function StorePreview() {
               )}
 
               {/* 特別オファー */}
-              {false && isSectionVisible('special_offers') && profile.special_offers && profile.special_offers.length > 0 && (
+              {isSectionVisible('special_offers') && profile?.special_offers && profile.special_offers.length > 0 && (
                 <div style={getSectionStyle('special_offers')} className="mb-8">
                   <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
                     <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
                     特別オファー
                   </h3>
-                  <SpecialOffersDisplay specialOffers={profile.special_offers?.map(offer => ({
-                    backgroundColor: '#ff4d7d',
-                    textColor: '#333333',
-                    icon: 'sparkles',
-                    order: 0,
-                    ...offer
+                  <SpecialOffersDisplay specialOffers={profile.special_offers.map(offer => ({
+                    backgroundColor: offer.backgroundColor || '#ff4d7d',
+                    textColor: offer.textColor || '#333333',
+                    icon: offer.icon || 'sparkles',
+                    order: offer.order || 0,
+                    id: offer.id,
+                    title: offer.title,
+                    description: offer.description,
+                    type: offer.type || 'discount',
+                    isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
+                    isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
+                    amount: offer.amount,
+                    conditions: offer.conditions,
+                    startDate: offer.startDate,
+                    endDate: offer.endDate,
+                    limitedCount: offer.limitedCount,
+                    targetAudience: offer.targetAudience
                   }))} />
                 </div>
               )}
@@ -890,7 +901,7 @@ export default function StorePreview() {
 
 
               {/* アクセス・住所 */}
-              {false && isSectionVisible('access') && (
+              {isSectionVisible('access') && (
                 <div style={getSectionStyle('access')} className="mb-8">
                   <h3 style={getSectionTitleStyle('access')} className="flex items-center">
                     <MapPin className="h-5 w-5 mr-2" style={{ color: getSectionSettings('access').titleColor || globalSettings.mainColor }} />
@@ -900,17 +911,17 @@ export default function StorePreview() {
                   <div className="space-y-3" style={{ color: getSectionSettings('access').textColor || '#333333' }}>
                     <div>
                       <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>エリア</h4>
-                      <p>{profile.location}</p>
+                      <p>{profile?.location}</p>
                     </div>
                     
-                    {profile.address && (
+                    {profile?.address && (
                       <div>
                         <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>住所</h4>
                         <p>{profile.address}</p>
                       </div>
                     )}
                     
-                    {profile.access_info && (
+                    {profile?.access_info && (
                       <div>
                         <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>アクセス</h4>
                         <p>{profile.access_info}</p>
@@ -921,7 +932,7 @@ export default function StorePreview() {
               )}
 
               {/* 連絡先 */}
-              {false && isSectionVisible('contact') && (
+              {isSectionVisible('contact') && (
                 <div style={getSectionStyle('contact')} className="mb-8">
                   <h3 style={getSectionTitleStyle('contact')} className="flex items-center">
                     <Phone className="h-5 w-5 mr-2" style={{ color: getSectionSettings('contact').titleColor || globalSettings.mainColor }} />
@@ -929,14 +940,14 @@ export default function StorePreview() {
                   </h3>
                   
                   <div className="space-y-3" style={{ color: getSectionSettings('contact').textColor || '#333333' }}>
-                    {profile.recruiter_name && (
+                    {profile?.recruiter_name && (
                       <div>
                         <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>担当者</h4>
                         <p>{profile.recruiter_name}</p>
                       </div>
                     )}
                     
-                    {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                    {profile?.phone_numbers && profile.phone_numbers.length > 0 && (
                       <div>
                         <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>電話番号</h4>
                         <ul className="space-y-1">
@@ -950,7 +961,7 @@ export default function StorePreview() {
                       </div>
                     )}
                     
-                    {profile.email_addresses && profile.email_addresses.length > 0 && (
+                    {profile?.email_addresses && profile.email_addresses.length > 0 && (
                       <div>
                         <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>メールアドレス</h4>
                         <ul className="space-y-1">
@@ -968,9 +979,9 @@ export default function StorePreview() {
               )}
 
               {/* SNSリンク */}
-              {false && isSectionVisible('sns_links') && profile && (
-                (profile.sns_id || profile.sns_url || profile.sns_text || 
-                (profile.sns_urls && profile.sns_urls.length > 0)) && (
+              {isSectionVisible('sns_links') && profile && (
+                (profile?.sns_id || profile?.sns_url || profile?.sns_text || 
+                (profile?.sns_urls && profile.sns_urls.length > 0)) && (
                 <div style={getSectionStyle('sns_links')} className="mb-8">
                   <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
                     <MessageSquare className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
@@ -978,7 +989,7 @@ export default function StorePreview() {
                   </h3>
                   
                   <SNSLinksDisplay 
-                    links={Array.isArray(profile.sns_urls) 
+                    links={Array.isArray(profile?.sns_urls) 
                       ? profile.sns_urls.map((item: any) => {
                           // 文字列またはオブジェクトの両方に対応
                           if (typeof item === 'string') {
@@ -1008,16 +1019,16 @@ export default function StorePreview() {
                         })
                       : []
                     }
-                    snsId={profile.sns_id || undefined}
-                    snsUrl={profile.sns_url || undefined}
-                    snsText={profile.sns_text || undefined}
+                    snsId={profile?.sns_id || undefined}
+                    snsUrl={profile?.sns_url || undefined}
+                    snsText={profile?.sns_text || undefined}
                     textColor={getSectionSettings('sns_links').textColor}
                   />
                 </div>
               ))}
 
               {/* 店舗ブログ */}
-              {false && isSectionVisible('blog') && (
+              {isSectionVisible('blog') && (
                 <div style={getSectionStyle('blog')} className="mb-8">
                   <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
                     <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
