@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GalleryCategory, galleryCategories } from '@shared/schema';
 import {
   Card,
@@ -62,15 +62,30 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
     return acc;
   }, {} as Record<GalleryCategory, typeof photos>);
 
+  // アップロード処理中の写真を追跡するためのステート
+  const [uploadedPhotos, setUploadedPhotos] = useState<PhotoGalleryEditorProps['photos']>([]);
+  
+  // propsからの写真配列が変更されたら、uploadedPhotosをリセット
+  useEffect(() => {
+    // 初期化時や外部からの更新を処理
+    setUploadedPhotos([]);
+  }, []);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
+    // 一時的な配列を作成して、アップロードした写真を保存
+    let tempUploadedPhotos: PhotoGalleryEditorProps['photos'] = [];
+
     try {
+      console.log("ファイルアップロード開始:", files.length, "個のファイル");
       // ファイルを一つずつ順番に処理
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        
+        console.log(`ファイル ${i+1}/${files.length} 処理中: ${file.name}`);
         
         // Promise を使って FileReader の完了を待機
         const base64Data = await new Promise<string>((resolve, reject) => {
@@ -87,20 +102,29 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
         });
         
         try {
+          console.log(`ファイル ${file.name} を S3 にアップロード中...`);
           // 画像をアップロード
           const result = await uploadPhoto(base64Data, file.name);
+          console.log(`ファイル ${file.name} のアップロード成功:`, result.url);
           
-          // 現在の最新の写真配列を取得して更新（並行処理での競合を避けるため）
-          const updatedPhotos = [...photos, {
+          // 新しい写真オブジェクトを作成
+          const newPhoto = {
             id: nanoid(),
             url: result.url,
             category: activeTab,
-            order: photos.filter(p => p.category === activeTab).length,
+            order: (photos.length + tempUploadedPhotos.length),
             featured: false
-          }];
+          };
           
-          // 親コンポーネントに更新した写真配列を渡す
-          onChange(updatedPhotos);
+          // 一時配列に追加
+          tempUploadedPhotos = [...tempUploadedPhotos, newPhoto];
+          
+          // 現在の状態を反映した最新の写真配列を作成
+          const allUpdatedPhotos = [...photos, ...tempUploadedPhotos];
+          
+          // 直接親のonChangeを呼び出す
+          console.log("写真配列を更新:", allUpdatedPhotos.length, "枚");
+          onChange(allUpdatedPhotos);
         } catch (error) {
           console.error('画像アップロードエラー:', error);
           alert('画像のアップロードに失敗しました');
@@ -110,6 +134,7 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
       console.error('ファイル処理エラー:', error);
       alert('ファイル処理中にエラーが発生しました');
     } finally {
+      // 処理完了後、アップロードフラグをオフに
       setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
