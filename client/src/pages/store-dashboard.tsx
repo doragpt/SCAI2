@@ -911,34 +911,37 @@ export default function StoreDashboard() {
               {/* 店舗情報タブ */}
               <TabsContent value="profile">
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardHeader className="flex flex-col sm:flex-row justify-between pb-2">
                     <div>
                       <CardTitle>店舗プロフィール</CardTitle>
                       <CardDescription>
                         店舗の基本情報を管理できます
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center mt-2 sm:mt-0 gap-2">
                       {profile && (
-                        <div className="flex items-center gap-2">
-                          <Badge variant={profile?.status === "published" ? "default" : "secondary"}>
-                            {profileStatusLabels[profile?.status || "draft"]}
-                          </Badge>
-                        </div>
+                        <Badge variant={profile?.status === "published" ? "default" : "secondary"} className="mr-1">
+                          {profileStatusLabels[profile?.status || "draft"]}
+                        </Badge>
                       )}
-                      <Button
-                        onClick={() => window.location.href = '/store/preview'}
-                        variant="outline"
-                        size="sm"
-                        className="mr-2"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        プレビュー
-                      </Button>
-                      <Button onClick={() => setShowProfileForm(true)} variant="outline" size="sm">
-                        <FileEdit className="h-4 w-4 mr-2" />
-                        編集
-                      </Button>
+                      <div className="flex gap-2 mt-2 sm:mt-0">
+                        <Button
+                          onClick={() => window.location.href = '/store/preview'}
+                          variant="secondary"
+                          size="sm"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          プレビュー
+                        </Button>
+                        <Button 
+                          onClick={() => setShowProfileForm(true)} 
+                          variant="default" 
+                          size="sm"
+                        >
+                          <FileEdit className="h-4 w-4 mr-1" />
+                          編集
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
 
