@@ -68,40 +68,47 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
 
     setIsUploading(true);
     try {
-      const newPhotos = [...photos];
-      
+      // ファイルを一つずつ順番に処理
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const reader = new FileReader();
         
-        // ファイルをBase64に変換
-        reader.onload = async (event) => {
-          if (event.target && typeof event.target.result === 'string') {
-            try {
-              // 画像をアップロード
-              const result = await uploadPhoto(event.target.result, file.name);
-              
-              // 新しい写真を追加
-              newPhotos.push({
-                id: nanoid(),
-                url: result.url,
-                category: activeTab,
-                order: newPhotos.filter(p => p.category === activeTab).length,
-                featured: false
-              });
-              
-              onChange(newPhotos);
-            } catch (error) {
-              console.error('画像アップロードエラー:', error);
-              alert('画像のアップロードに失敗しました');
+        // Promise を使って FileReader の完了を待機
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target && typeof event.target.result === 'string') {
+              resolve(event.target.result);
+            } else {
+              reject(new Error('ファイルの読み込みに失敗しました'));
             }
-          }
-        };
+          };
+          reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+          reader.readAsDataURL(file);
+        });
         
-        reader.readAsDataURL(file);
+        try {
+          // 画像をアップロード
+          const result = await uploadPhoto(base64Data, file.name);
+          
+          // 現在の最新の写真配列を取得して更新（並行処理での競合を避けるため）
+          const updatedPhotos = [...photos, {
+            id: nanoid(),
+            url: result.url,
+            category: activeTab,
+            order: photos.filter(p => p.category === activeTab).length,
+            featured: false
+          }];
+          
+          // 親コンポーネントに更新した写真配列を渡す
+          onChange(updatedPhotos);
+        } catch (error) {
+          console.error('画像アップロードエラー:', error);
+          alert('画像のアップロードに失敗しました');
+        }
       }
     } catch (error) {
       console.error('ファイル処理エラー:', error);
+      alert('ファイル処理中にエラーが発生しました');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
