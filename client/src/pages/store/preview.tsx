@@ -432,6 +432,18 @@ export default function StorePreview() {
                 </div>
               )}
 
+              {/* フォトギャラリー - 写真ギャラリーセクション */}
+              {isSectionVisible('photo_gallery') && profile.gallery_photos && profile.gallery_photos.length > 0 && (
+                <div style={getSectionStyle('photo_gallery')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
+                    <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
+                    写真ギャラリー
+                  </h3>
+                  <PhotoGalleryDisplay photos={profile.gallery_photos} />
+                  <p className="text-xs text-muted-foreground mt-2 text-right">※推奨画像サイズ: 200×150px</p>
+                </div>
+              )}
+
               {/* 待遇・環境 */}
               {isSectionVisible('benefits') && profile.benefits && profile.benefits.length > 0 && (
                 <div style={getSectionStyle('benefits')} className="mb-8">
@@ -447,17 +459,6 @@ export default function StorePreview() {
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-
-              {/* フォトギャラリー - 写真ギャラリーセクション */}
-              {isSectionVisible('photo_gallery') && profile.gallery_photos && profile.gallery_photos.length > 0 && (
-                <div style={getSectionStyle('photo_gallery')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
-                    <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
-                    写真ギャラリー
-                  </h3>
-                  <PhotoGalleryDisplay photos={profile.gallery_photos} />
                 </div>
               )}
 

@@ -54,12 +54,12 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "benefits",
-          title: "待遇・環境",
+          id: "photo_gallery",
+          title: "写真ギャラリー",
           visible: true,
           order: 2,
           settings: {
-            backgroundColor: "#ffffff",
+            backgroundColor: "#fff9fa",
             textColor: "#333333",
             borderColor: "#e0e0e0",
             titleColor: "#ff6b81",
@@ -70,12 +70,12 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "photo_gallery",
-          title: "写真ギャラリー",
+          id: "benefits",
+          title: "待遇・環境",
           visible: true,
           order: 3,
           settings: {
-            backgroundColor: "#fff9fa",
+            backgroundColor: "#ffffff",
             textColor: "#333333",
             borderColor: "#e0e0e0",
             titleColor: "#ff6b81",
