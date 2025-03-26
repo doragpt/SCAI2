@@ -1251,6 +1251,46 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 export type CampaignData = z.infer<typeof campaignSchema>;
 
+// 店舗デザイン設定用のスキーマ
+export const sectionSettingsSchema = z.object({
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  borderColor: z.string().optional(),
+  titleColor: z.string().optional(),
+  fontSize: z.number().optional(),
+  padding: z.number().optional(),
+  borderRadius: z.number().optional(),
+  borderWidth: z.number().optional(),
+});
+
+export const designSectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  visible: z.boolean(),
+  order: z.number(),
+  settings: sectionSettingsSchema
+});
+
+export const globalDesignSettingsSchema = z.object({
+  mainColor: z.string(),
+  secondaryColor: z.string(),
+  accentColor: z.string(),
+  backgroundColor: z.string(),
+  fontFamily: z.string(),
+  borderRadius: z.number(),
+  maxWidth: z.number()
+});
+
+export const designSettingsSchema = z.object({
+  sections: z.array(designSectionSchema),
+  globalSettings: globalDesignSettingsSchema
+});
+
+export type SectionSettings = z.infer<typeof sectionSettingsSchema>;
+export type DesignSection = z.infer<typeof designSectionSchema>;
+export type GlobalDesignSettings = z.infer<typeof globalDesignSettingsSchema>;
+export type DesignSettings = z.infer<typeof designSettingsSchema>;
+
 export interface JobResponse {
   id: number;
   businessName: string;

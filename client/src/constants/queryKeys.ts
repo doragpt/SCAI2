@@ -12,6 +12,7 @@ export const QUERY_KEYS = {
   // 店舗関連
   STORE_STATS: "/store/stats",
   STORE_PROFILE: "/store/profile",
+  STORE_DESIGN: "/store/design",
 
   // タレント関連
   TALENT_PROFILE: "/talent/profile",
