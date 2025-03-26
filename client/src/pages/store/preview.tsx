@@ -17,6 +17,13 @@ import { cn } from '@/lib/utils';
  * デザイン設定を反映した店舗ページのプレビューコンポーネント
  * デザイン管理機能で設定されたスタイルやセクションの表示/非表示、順序を反映します
  */
+// デバッグ用関数（コンポーネント外で定義して一貫して使用）
+function debugLog(message: string, data?: any) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Preview Debug] ${message}`, data || '');
+  }
+}
+
 export default function StorePreview() {
   const [deviceView, setDeviceView] = useState<'pc' | 'smartphone'>('pc');
   const [currentDesignSettings, setCurrentDesignSettings] = useState<DesignSettings | null>(null);
@@ -65,7 +72,7 @@ export default function StorePreview() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const timestamp = new Date().toISOString();
-      console.log('メッセージ受信:', { 
+      debugLog('メッセージ受信', { 
         type: event.data?.type, 
         hasSettings: !!event.data?.settings,
         origin: event.origin,
@@ -74,7 +81,7 @@ export default function StorePreview() {
       
       // DESIGN_SETTINGSとUPDATE_DESIGNの両方に対応
       if (event.data?.type === 'UPDATE_DESIGN' || event.data?.type === 'DESIGN_SETTINGS') {
-        console.log('デザイン設定更新メッセージを受信:', {
+        debugLog('デザイン設定更新メッセージを受信', {
           type: event.data.type,
           timestamp: event.data.timestamp || timestamp,
           hasSettings: !!event.data.settings,
@@ -84,9 +91,38 @@ export default function StorePreview() {
         
         if (event.data.settings) {
           try {
-            console.log('デザイン設定詳細:', JSON.stringify(event.data.settings, null, 2));
+            // セクションIDリストをログ
+            debugLog('受信したセクションID', 
+              event.data.settings.sections.map(s => ({ 
+                id: s.id, 
+                visible: s.visible, 
+                order: s.order 
+              }))
+            );
+            
+            // セクションの整合性を確認（catchphraseとdescriptionの関係を特に注意）
+            const hasDescription = event.data.settings.sections.some(s => s.id === 'description');
+            const hasCatchphrase = event.data.settings.sections.some(s => s.id === 'catchphrase');
+            
+            if (hasDescription && !hasCatchphrase) {
+              debugLog('修正: descriptionセクションがあるがcatchphraseがない', {
+                fix: 'descriptionをcatchphraseに変換します'
+              });
+              
+              // descriptionをcatchphraseに変換
+              event.data.settings.sections = event.data.settings.sections.map(s => {
+                if (s.id === 'description') {
+                  return { ...s, id: 'catchphrase', title: 'キャッチコピー・仕事内容' };
+                }
+                return s;
+              });
+            }
+            
+            // 設定を適用
             setCurrentDesignSettings(event.data.settings);
             applyDesignSettings(event.data.settings);
+            
+            debugLog('デザイン設定を適用しました');
           } catch (error) {
             console.error('デザイン設定の適用に失敗しました:', error);
           }

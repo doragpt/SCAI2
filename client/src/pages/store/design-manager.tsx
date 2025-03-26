@@ -219,10 +219,39 @@ export default function StoreDesignManager() {
     }
   }, [settings]);
 
-  // 設定が変更されたらpropsを更新する
+  // デバッグ用関数
+  const debugLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Design Manager] ${message}`, data || '');
+    }
+  };
+
+  // 設定が変更されたらpropsを更新する（改善版）
   const handleSettingsChange = (newSettings: DesignSettings) => {
+    // 設定を更新
     setSettings(newSettings);
     setIsDirty(true);
+    
+    // プレビューウィンドウにリアルタイムで変更を通知
+    const previewWindow = iframeRef.current?.contentWindow;
+    if (previewWindow) {
+      try {
+        const timestamp = new Date().toISOString();
+        debugLog('プレビューに設定変更を送信', { 
+          timestamp,
+          sectionsCount: newSettings.sections.length, 
+          sectionIds: newSettings.sections.map(s => s.id),
+        });
+        
+        previewWindow.postMessage({
+          type: 'UPDATE_DESIGN',
+          settings: newSettings,
+          timestamp
+        }, '*');
+      } catch (error) {
+        console.error('プレビューへのメッセージ送信に失敗しました', error);
+      }
+    }
   };
 
   // セクションの表示/非表示を切り替える
