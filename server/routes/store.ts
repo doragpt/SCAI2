@@ -5,11 +5,7 @@ import {
   storeProfileSchema, 
   applications, 
   allBenefitTypes, 
-  BenefitType,
-  trialEntries,
-  trialEntrySchema,
-  campaigns,
-  campaignSchema
+  BenefitType
 } from '@shared/schema';
 import { eq, and, gte, sql, count, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
