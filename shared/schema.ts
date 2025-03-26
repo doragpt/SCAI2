@@ -68,6 +68,11 @@ export interface SpecialOfferInterface {
   isLimited: boolean;
   limitedCount?: number;
   targetAudience?: string[];
+  // デザイン関連のプロパティを追加
+  backgroundColor?: string;
+  textColor?: string;
+  icon?: string;
+  order?: number;
 }
 
 // Constants
@@ -314,9 +319,19 @@ export const specialOfferSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  icon: z.string(), // Lucideアイコン名
-  backgroundColor: z.string(), // テーマカラー
-  textColor: z.string(),
+  type: z.string(),
+  amount: z.number().optional(),
+  conditions: z.string().optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+  isActive: z.boolean().default(true),
+  isLimited: z.boolean().default(false),
+  limitedCount: z.number().optional(),
+  targetAudience: z.array(z.string()).optional(),
+  // デザイン関連のプロパティを追加
+  backgroundColor: z.string().default("#ff4d7d"), // テーマカラー
+  textColor: z.string().default("#ffffff"),
+  icon: z.string().default("sparkles"), // Lucideアイコン名
   order: z.number().default(0),
 });
 
