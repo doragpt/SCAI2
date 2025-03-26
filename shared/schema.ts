@@ -439,7 +439,6 @@ export const store_profiles = pgTable("store_profiles", {
   working_time_hours: integer("working_time_hours").default(0),
   average_hourly_pay: integer("average_hourly_pay").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
-  design_settings: jsonb("design_settings").$type<DesignSettings>(),
   requirements: jsonb("requirements").$type<JobRequirements>().default({
     cup_size_conditions: [],
     accepts_temporary_workers: true,
