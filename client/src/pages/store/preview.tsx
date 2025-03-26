@@ -4,6 +4,7 @@ import { type StoreProfile, type DesignSettings, type SectionSettings, type Desi
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { Link as RouterLink } from 'wouter';
 import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
 import { SpecialOffersDisplay } from '@/components/store/SpecialOffersDisplay';
 import { TrialEntryDisplay } from '@/components/store/TrialEntryDisplay';
@@ -13,7 +14,8 @@ import {
   Building2, Clock, MapPin, Phone, Mail, BadgeCheck, 
   Image, User, DollarSign, Info, ArrowLeft,
   Monitor, Smartphone, FileText, BookOpen, File,
-  Gift, MessageSquare, PartyPopper, Sparkles
+  Gift, MessageSquare, PartyPopper, Sparkles,
+  Share2, Link as LinkIcon, Video, Twitter as TwitterIcon, Instagram as InstagramIcon
 } from 'lucide-react';
 import { 
   type TrialEntryData, 
@@ -292,6 +294,386 @@ export default function StorePreview() {
       marginBottom: '15px'
     };
   };
+  
+  // SNS URLの型を定義
+  type SnsUrl = {
+    platform: string;
+    url: string;
+    name?: string;
+  };
+  
+  // セクションをIDに基づいてレンダリングする関数
+  const renderSection = (sectionId: string) => {
+    // 各セクションのレンダリングロジックを実装
+    switch (sectionId) {
+      case 'header':
+        // ヘッダーはメインコンテンツ外でレンダリングするのでスキップ
+        return null;
+        
+      case 'catchphrase':
+        return (profile.catch_phrase || profile.description) && (
+          <div key={sectionId} style={getSectionStyle('catchphrase')} className="mb-8">
+            {profile.catch_phrase && (
+              <h2 style={getSectionTitleStyle('catchphrase')} className="text-center p-4 mb-4">
+                『{profile.catch_phrase}』
+              </h2>
+            )}
+            
+            {profile.description && (
+              <>
+                <div className="flex items-center mb-3">
+                  <Building2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('catchphrase').titleColor || globalSettings.mainColor }} />
+                  <h3 style={{ color: getSectionSettings('catchphrase').titleColor || globalSettings.mainColor, fontWeight: 'bold' }}>
+                    仕事内容
+                  </h3>
+                </div>
+                <div className="prose max-w-none" style={{ color: getSectionSettings('catchphrase').textColor || '#333333' }}>
+                  <HtmlContent html={profile.description} />
+                </div>
+              </>
+            )}
+          </div>
+        );
+        
+      case 'photo_gallery':
+        return profile.gallery_photos && profile.gallery_photos.length > 0 && (
+          <div key={sectionId} style={getSectionStyle('photo_gallery')} className="mb-8">
+            <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
+              <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
+              写真ギャラリー
+            </h3>
+            <PhotoGalleryDisplay photos={profile.gallery_photos} />
+            <p className="text-xs text-muted-foreground mt-2 text-right">※推奨画像サイズ: 200×150px</p>
+          </div>
+        );
+        
+      case 'benefits':
+        return profile.benefits && profile.benefits.length > 0 && (
+          <div key={sectionId} style={getSectionStyle('benefits')} className="mb-8">
+            <h3 style={getSectionTitleStyle('benefits')} className="flex items-center">
+              <BadgeCheck className="h-5 w-5 mr-2" style={{ color: getSectionSettings('benefits').titleColor || globalSettings.mainColor }} />
+              待遇・環境
+            </h3>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2" style={{ color: getSectionSettings('benefits').textColor || '#333333' }}>
+              {profile.benefits.map((benefit, index) => (
+                <li key={index} className="flex items-center">
+                  <BadgeCheck className="h-4 w-4 mr-2" style={{ color: globalSettings.mainColor }} />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+        
+      case 'salary':
+        return (
+          <div key={sectionId} style={getSectionStyle('salary')} className="mb-8">
+            <h3 style={getSectionTitleStyle('salary')} className="flex items-center">
+              <DollarSign className="h-5 w-5 mr-2" style={{ color: getSectionSettings('salary').titleColor || globalSettings.mainColor }} />
+              給与情報
+            </h3>
+            <div className="space-y-3" style={{ color: getSectionSettings('salary').textColor || '#333333' }}>
+              <div>
+                <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>日給</h4>
+                <p className="text-lg font-bold">
+                  {profile.minimum_guarantee && profile.maximum_guarantee 
+                    ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
+                    : profile.minimum_guarantee 
+                      ? `${profile.minimum_guarantee.toLocaleString()}円〜`
+                      : profile.maximum_guarantee 
+                        ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
+                        : "要相談"}
+                </p>
+              </div>
+              
+              {(profile.working_time_hours && profile.average_hourly_pay) && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>平均時給</h4>
+                  <p className="font-bold">
+                    {profile.working_time_hours > 0 
+                      ? Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString() 
+                      : profile.average_hourly_pay.toLocaleString()}円
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+        
+      case 'schedule':
+        return (
+          <div key={sectionId} style={getSectionStyle('schedule')} className="mb-8">
+            <h3 style={getSectionTitleStyle('schedule')} className="flex items-center">
+              <Clock className="h-5 w-5 mr-2" style={{ color: getSectionSettings('schedule').titleColor || globalSettings.mainColor }} />
+              勤務時間
+            </h3>
+            <p style={{ color: getSectionSettings('schedule').textColor || '#333333' }}>
+              {profile.working_hours || '勤務時間が設定されていません'}
+            </p>
+          </div>
+        );
+        
+      case 'requirements':
+        return (
+          <div key={sectionId} style={getSectionStyle('requirements')} className="mb-8">
+            <h3 style={getSectionTitleStyle('requirements')} className="flex items-center">
+              <User className="h-5 w-5 mr-2" style={{ color: getSectionSettings('requirements').titleColor || globalSettings.mainColor }} />
+              応募条件
+            </h3>
+            
+            {profile.requirements ? (
+              <div className="space-y-3" style={{ color: getSectionSettings('requirements').textColor || '#333333' }}>
+                {profile.requirements.age_min || profile.requirements.age_max ? (
+                  <div>
+                    <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>年齢</h4>
+                    <p>
+                      {profile.requirements.age_min || 18}歳以上
+                      {profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}
+                    </p>
+                  </div>
+                ) : null}
+                
+                {profile.requirements.cup_size_conditions && 
+                profile.requirements.cup_size_conditions.length > 0 && (
+                  <div>
+                    <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>カップサイズ条件</h4>
+                    <ul className="list-disc list-inside">
+                      {profile.requirements.cup_size_conditions.map((condition, index) => (
+                        <li key={index}>
+                          {condition.cup_size}カップ以上の方
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {profile.application_requirements && (
+                  <div>
+                    <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>その他の条件</h4>
+                    <p>{profile.application_requirements}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p style={{ color: getSectionSettings('requirements').textColor || '#333333' }}>応募条件が設定されていません</p>
+            )}
+          </div>
+        );
+        
+      case 'special_offers':
+        return profile.special_offers && profile.special_offers.length > 0 && (
+          <div key={sectionId} style={getSectionStyle('special_offers')} className="mb-8">
+            <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
+              <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
+              特別オファー
+            </h3>
+            <SpecialOffersDisplay specialOffers={profile.special_offers?.map(offer => ({
+              backgroundColor: '#ff4d7d',
+              textColor: '#333333',
+              icon: 'sparkles',
+              order: 0,
+              ...offer
+            }))} />
+          </div>
+        );
+        
+      case 'trial_entry':
+        return profile.trial_entry && (
+          <div key={sectionId} style={getSectionStyle('trial_entry')} className="mb-8">
+            <h3 style={getSectionTitleStyle('trial_entry')} className="flex items-center">
+              <Gift className="h-5 w-5 mr-2" style={{ color: getSectionSettings('trial_entry').titleColor || globalSettings.mainColor }} />
+              体験入店保証
+            </h3>
+            <TrialEntryDisplay trialEntry={{
+              dailyGuarantee: profile.trial_entry.daily_guarantee,
+              hourlyRate: profile.trial_entry.hourly_rate,
+              workingHours: profile.trial_entry.working_hours,
+              requirements: profile.trial_entry.requirements,
+              benefitsDescription: profile.trial_entry.benefits_description,
+              startDate: profile.trial_entry.start_date,
+              endDate: profile.trial_entry.end_date,
+              isActive: profile.trial_entry.is_active,
+              examples: profile.trial_entry.examples,
+              requiredDocuments: profile.trial_entry.required_documents,
+              qaItems: profile.trial_entry.qa_items
+            }} />
+          </div>
+        );
+        
+      case 'campaigns':
+        return profile.campaigns && profile.campaigns.length > 0 && (
+          <div key={sectionId} style={getSectionStyle('campaigns')} className="mb-8">
+            <h3 style={getSectionTitleStyle('campaigns')} className="flex items-center">
+              <PartyPopper className="h-5 w-5 mr-2" style={{ color: getSectionSettings('campaigns').titleColor || globalSettings.mainColor }} />
+              キャンペーン
+            </h3>
+            <div className="grid grid-cols-1 gap-4">
+              {profile.campaigns.map((campaign, index) => (
+                <CampaignDisplay key={index} campaign={{
+                  id: campaign.id || `campaign-${index}`,
+                  title: campaign.title,
+                  description: campaign.description,
+                  amount: campaign.amount,
+                  type: campaign.type,
+                  conditions: campaign.conditions,
+                  startDate: campaign.startDate,
+                  endDate: campaign.endDate,
+                  isActive: campaign.isActive,
+                  isLimited: campaign.isLimited,
+                  targetAudience: campaign.targetAudience
+                }} />
+              ))}
+            </div>
+          </div>
+        );
+        
+      case 'access':
+        return (
+          <div key={sectionId} style={getSectionStyle('access')} className="mb-8">
+            <h3 style={getSectionTitleStyle('access')} className="flex items-center">
+              <MapPin className="h-5 w-5 mr-2" style={{ color: getSectionSettings('access').titleColor || globalSettings.mainColor }} />
+              アクセス・住所
+            </h3>
+            
+            <div className="space-y-3" style={{ color: getSectionSettings('access').textColor || '#333333' }}>
+              <div>
+                <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>エリア</h4>
+                <p>{profile.location}</p>
+              </div>
+              
+              {profile.address && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>住所</h4>
+                  <p>{profile.address}</p>
+                </div>
+              )}
+              
+              {profile.access_info && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>アクセス</h4>
+                  <p>{profile.access_info}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+        
+      case 'contact':
+        return (
+          <div key={sectionId} style={getSectionStyle('contact')} className="mb-8">
+            <h3 style={getSectionTitleStyle('contact')} className="flex items-center">
+              <Phone className="h-5 w-5 mr-2" style={{ color: getSectionSettings('contact').titleColor || globalSettings.mainColor }} />
+              連絡先
+            </h3>
+            
+            <div className="space-y-3" style={{ color: getSectionSettings('contact').textColor || '#333333' }}>
+              {profile.recruiter_name && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>担当者</h4>
+                  <p>{profile.recruiter_name}</p>
+                </div>
+              )}
+              
+              {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>電話番号</h4>
+                  <ul>
+                    {profile.phone_numbers.map((phone, index) => (
+                      <li key={index}>{phone}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {profile.email_addresses && profile.email_addresses.length > 0 && (
+                <div>
+                  <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>メールアドレス</h4>
+                  <ul>
+                    {profile.email_addresses.map((email, index) => (
+                      <li key={index}>{email}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+        
+      case 'sns_links':
+        return profile.sns_urls && profile.sns_urls.length > 0 && (
+          <div key={sectionId} style={getSectionStyle('sns_links')} className="mb-8">
+            <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
+              <Share2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
+              SNS
+            </h3>
+            <div className="flex flex-wrap gap-3 mt-4" style={{ color: getSectionSettings('sns_links').textColor || '#333333' }}>
+              {profile.sns_urls.map((sns, index) => (
+                <a 
+                  key={index}
+                  href={sns.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 rounded-full"
+                  style={{ 
+                    backgroundColor: globalSettings.secondaryColor,
+                    color: globalSettings.mainColor
+                  }}
+                >
+                  {sns.platform === 'twitter' && <TwitterIcon className="h-5 w-5 mr-2" />}
+                  {sns.platform === 'instagram' && <InstagramIcon className="h-5 w-5 mr-2" />}
+                  {sns.platform === 'line' && <MessageSquare className="h-5 w-5 mr-2" />}
+                  {sns.platform === 'tiktok' && <Video className="h-5 w-5 mr-2" />}
+                  {sns.platform === 'other' && <Link className="h-5 w-5 mr-2" />}
+                  {sns.name || sns.platform}
+                </a>
+              ))}
+            </div>
+          </div>
+        );
+        
+      case 'blog':
+        return (
+          <div key={sectionId} style={getSectionStyle('blog')} className="mb-8">
+            <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
+              <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
+              店舗ブログ
+            </h3>
+            <Link 
+              to={`/blog?store_id=${profile.id}`}
+              className="inline-flex items-center px-4 py-2 rounded-md mt-3"
+              style={{ 
+                backgroundColor: globalSettings.mainColor,
+                color: '#ffffff'
+              }}
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              ブログを読む
+            </Link>
+          </div>
+        );
+        
+      default:
+        debugLog(`未対応のセクションID: ${sectionId}`);
+        return null;
+    }
+  };
+  
+  // セクションの順序に従って動的にレンダリングする関数
+  const renderOrderedSections = () => {
+    // ヘッダーはすでに別途レンダリングされているので除外
+    const contentSections = visibleSections.filter(section => section.id !== 'header');
+    
+    // セクションを順序に従ってレンダリング
+    return contentSections.map(section => {
+      // セクションが表示可能かチェック
+      if (!isSectionVisible(section.id)) {
+        return null;
+      }
+      
+      // セクションをレンダリング
+      return renderSection(section.id);
+    });
+  };
 
   return (
     <div className="bg-white min-h-screen" 
@@ -394,8 +776,11 @@ export default function StorePreview() {
               maxWidth: `${globalSettings.maxWidth}px`,
               margin: '0 auto'
             }}>
-              {/* キャッチコピー・仕事内容 */}
-              {isSectionVisible('catchphrase') && (profile.catch_phrase || profile.description) && (
+              {/* 設定の順序に従ってセクションを動的にレンダリング */}
+              {renderOrderedSections()}
+              
+              {/* 以下は古いレンダリング方法（renderOrderedSectionsが使用されるので非表示） */}
+              {false && isSectionVisible('catchphrase') && (profile.catch_phrase || profile.description) && (
                 <div style={getSectionStyle('catchphrase')} className="mb-8">
                   {profile.catch_phrase && (
                     <h2 style={getSectionTitleStyle('catchphrase')} className="text-center p-4 mb-4">
