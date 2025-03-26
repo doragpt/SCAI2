@@ -862,7 +862,7 @@ export default function StorePreview() {
               )}
 
               {/* 応募条件 */}
-              {isSectionVisible('requirements') && (
+              {false && isSectionVisible('requirements') && (
                 <div style={getSectionStyle('requirements')} className="mb-8">
                   <h3 style={getSectionTitleStyle('requirements')} className="flex items-center">
                     <User className="h-5 w-5 mr-2" style={{ color: getSectionSettings('requirements').titleColor || globalSettings.mainColor }} />
@@ -909,7 +909,7 @@ export default function StorePreview() {
               )}
 
               {/* 特別オファー */}
-              {isSectionVisible('special_offers') && profile.special_offers && profile.special_offers.length > 0 && (
+              {false && isSectionVisible('special_offers') && profile.special_offers && profile.special_offers.length > 0 && (
                 <div style={getSectionStyle('special_offers')} className="mb-8">
                   <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
                     <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
@@ -926,7 +926,7 @@ export default function StorePreview() {
               )}
 
               {/* 体験入店保証 */}
-              {isSectionVisible('trial_entry') && profile.trial_entry && (
+              {false && isSectionVisible('trial_entry') && profile.trial_entry && (
                 <div style={getSectionStyle('trial_entry')} className="mb-8">
                   <h3 style={getSectionTitleStyle('trial_entry')} className="flex items-center">
                     <Gift className="h-5 w-5 mr-2" style={{ color: getSectionSettings('trial_entry').titleColor || globalSettings.mainColor }} />
@@ -949,7 +949,7 @@ export default function StorePreview() {
               )}
 
               {/* キャンペーン */}
-              {isSectionVisible('campaigns') && profile.campaigns && profile.campaigns.length > 0 && (
+              {false && isSectionVisible('campaigns') && profile.campaigns && profile.campaigns.length > 0 && (
                 <div style={getSectionStyle('campaigns')} className="mb-8">
                   <h3 style={getSectionTitleStyle('campaigns')} className="flex items-center">
                     <PartyPopper className="h-5 w-5 mr-2" style={{ color: getSectionSettings('campaigns').titleColor || globalSettings.mainColor }} />
@@ -976,7 +976,7 @@ export default function StorePreview() {
               )}
 
               {/* アクセス・住所 */}
-              {isSectionVisible('access') && (
+              {false && isSectionVisible('access') && (
                 <div style={getSectionStyle('access')} className="mb-8">
                   <h3 style={getSectionTitleStyle('access')} className="flex items-center">
                     <MapPin className="h-5 w-5 mr-2" style={{ color: getSectionSettings('access').titleColor || globalSettings.mainColor }} />
@@ -1007,7 +1007,7 @@ export default function StorePreview() {
               )}
 
               {/* 連絡先 */}
-              {isSectionVisible('contact') && (
+              {false && isSectionVisible('contact') && (
                 <div style={getSectionStyle('contact')} className="mb-8">
                   <h3 style={getSectionTitleStyle('contact')} className="flex items-center">
                     <Phone className="h-5 w-5 mr-2" style={{ color: getSectionSettings('contact').titleColor || globalSettings.mainColor }} />
@@ -1054,7 +1054,7 @@ export default function StorePreview() {
               )}
 
               {/* SNSリンク */}
-              {isSectionVisible('sns_links') && profile && (
+              {false && isSectionVisible('sns_links') && profile && (
                 (profile.sns_id || profile.sns_url || profile.sns_text || 
                 (profile.sns_urls && profile.sns_urls.length > 0)) && (
                 <div style={getSectionStyle('sns_links')} className="mb-8">
@@ -1103,7 +1103,7 @@ export default function StorePreview() {
               ))}
 
               {/* 店舗ブログ */}
-              {isSectionVisible('blog') && (
+              {false && isSectionVisible('blog') && (
                 <div style={getSectionStyle('blog')} className="mb-8">
                   <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
                     <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
@@ -1139,7 +1139,7 @@ export default function StorePreview() {
                     </div>
                     
                     <div className="text-center mt-4">
-                      <a href={`/blog?store_id=${profile.id}`} target="_blank" rel="noopener noreferrer" 
+                      <a href={`/blog?store_id=${profile?.id || ''}`} target="_blank" rel="noopener noreferrer" 
                          className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md cursor-pointer" 
                          style={{ 
                           backgroundColor: globalSettings.mainColor, 
