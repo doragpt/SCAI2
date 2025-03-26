@@ -42,6 +42,7 @@ import {
   Pencil,
   Eye,
   CheckCircle,
+  Image as ImageIcon,
   Banknote,
   Home,
   Car,
@@ -1170,6 +1171,31 @@ export default function StoreDashboard() {
                                   )}
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 店舗フォトギャラリー */}
+                        <div className="py-5 px-1">
+                          <div className="flex items-center justify-between border-b border-blue-200 dark:border-blue-900/30 pb-2 mb-4">
+                            <h3 className="text-base font-medium flex items-center">
+                              <ImageIcon className="h-5 w-5 mr-2 text-blue-600" />
+                              <span className="bg-gradient-to-r from-blue-700 to-sky-600 dark:from-blue-400 dark:to-sky-300 inline-block text-transparent bg-clip-text">店舗フォトギャラリー</span>
+                            </h3>
+                          </div>
+                          
+                          <div className="mt-4">
+                            {profile.gallery_photos && profile.gallery_photos.length > 0 ? (
+                              <PhotoGalleryDisplay photos={profile.gallery_photos} className="mb-4" />
+                            ) : (
+                              <div className="p-6 border border-dashed rounded-md text-center text-muted-foreground">
+                                <ImageIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                                <p>店舗フォトギャラリーが未設定です</p>
+                                <p className="text-sm mt-1">編集ボタンからギャラリー写真を追加できます</p>
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-2">
+                              ※ プレビューで閲覧者向けの表示を確認してください。写真サイズは自動的に200×150pxに調整されます。
                             </div>
                           </div>
                         </div>
