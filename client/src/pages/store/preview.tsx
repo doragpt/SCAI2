@@ -64,14 +64,32 @@ export default function StorePreview() {
   // postMessageリスナーの設定（リアルタイムプレビュー用）
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      console.log('メッセージ受信:', event.data);
+      const timestamp = new Date().toISOString();
+      console.log('メッセージ受信:', { 
+        type: event.data?.type, 
+        hasSettings: !!event.data?.settings,
+        origin: event.origin,
+        time: timestamp
+      });
       
       // DESIGN_SETTINGSとUPDATE_DESIGNの両方に対応
-      if (event.data.type === 'UPDATE_DESIGN' || event.data.type === 'DESIGN_SETTINGS') {
-        console.log('デザイン設定更新メッセージを受信:', event.data);
+      if (event.data?.type === 'UPDATE_DESIGN' || event.data?.type === 'DESIGN_SETTINGS') {
+        console.log('デザイン設定更新メッセージを受信:', {
+          type: event.data.type,
+          timestamp: event.data.timestamp || timestamp,
+          hasSettings: !!event.data.settings,
+          sectionsCount: event.data.settings?.sections?.length,
+          globalSettings: !!event.data.settings?.globalSettings
+        });
+        
         if (event.data.settings) {
-          setCurrentDesignSettings(event.data.settings);
-          applyDesignSettings(event.data.settings);
+          try {
+            console.log('デザイン設定詳細:', JSON.stringify(event.data.settings, null, 2));
+            setCurrentDesignSettings(event.data.settings);
+            applyDesignSettings(event.data.settings);
+          } catch (error) {
+            console.error('デザイン設定の適用に失敗しました:', error);
+          }
         } else {
           console.warn('デザイン設定が見つかりません:', event.data);
         }
@@ -80,6 +98,14 @@ export default function StorePreview() {
     
     window.addEventListener('message', handleMessage);
     console.log('メッセージリスナーを登録しました', { time: new Date().toISOString() });
+    
+    // 親ウィンドウに準備完了を通知
+    try {
+      window.parent.postMessage({ type: 'PREVIEW_READY', timestamp: new Date().toISOString() }, '*');
+      console.log('親ウィンドウに準備完了を通知しました');
+    } catch (error) {
+      console.warn('親ウィンドウへの通知に失敗しました:', error);
+    }
     
     return () => {
       window.removeEventListener('message', handleMessage);

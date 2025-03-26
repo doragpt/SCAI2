@@ -192,11 +192,30 @@ export default function StoreDesignManager() {
     const previewWindow = iframeRef.current?.contentWindow;
     if (previewWindow) {
       try {
-        console.log('プレビューウィンドウにデザイン設定を送信します', { time: new Date().toISOString() });
-        previewWindow.postMessage({ type: 'UPDATE_DESIGN', settings }, '*');
+        const timestamp = new Date().toISOString();
+        console.log('プレビューウィンドウにデザイン設定を送信します', { 
+          time: timestamp,
+          hasSettings: !!settings,
+          sectionCount: settings?.sections?.length,
+        });
+        
+        // メッセージ構造を詳細なログ出力で確認できるよう調整
+        const message = { 
+          type: 'UPDATE_DESIGN', 
+          settings, 
+          timestamp 
+        };
+        console.log('送信メッセージ詳細:', JSON.stringify(message, null, 2));
+        
+        previewWindow.postMessage(message, '*');
       } catch (error) {
         console.error('プレビューへのメッセージ送信に失敗しました', error);
       }
+    } else {
+      console.warn('プレビューウィンドウが利用できません', { 
+        hasIframeRef: !!iframeRef.current,
+        time: new Date().toISOString()
+      });
     }
   }, [settings]);
 
@@ -320,6 +339,48 @@ export default function StoreDesignManager() {
       iframeRef.current.src = iframeRef.current.src;
     }
   };
+  
+  // プレビューからのメッセージを受け取る
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      console.log('親ウィンドウでメッセージを受信:', {
+        type: event.data?.type,
+        time: new Date().toISOString()
+      });
+      
+      // PREVIEW_READYメッセージを受け取ったらデザイン設定を送信
+      if (event.data?.type === 'PREVIEW_READY') {
+        console.log('プレビュー画面の準備完了を確認しました');
+        
+        // プレビューウィンドウにデザイン設定を送信
+        const previewWindow = iframeRef.current?.contentWindow;
+        if (previewWindow) {
+          try {
+            const timestamp = new Date().toISOString();
+            console.log('プレビュー準備完了後に設定を再送信します', { 
+              time: timestamp,
+              hasSettings: !!settings
+            });
+            
+            previewWindow.postMessage({ 
+              type: 'UPDATE_DESIGN', 
+              settings, 
+              timestamp,
+              forceUpdate: true
+            }, '*');
+          } catch (error) {
+            console.error('プレビューへのメッセージ送信に失敗しました', error);
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [settings]);
 
   // セクション詳細設定のコンポーネント
   const SectionDetailSettings = ({ section }: { section: DesignSection }) => (
@@ -858,6 +919,25 @@ export default function StoreDesignManager() {
                   src="/store/preview" 
                   className="w-full h-full border-0" 
                   ref={iframeRef}
+                  title="店舗プロフィールプレビュー"
+                  onLoad={() => {
+                    console.log('iframeがロードされました', { time: new Date().toISOString() });
+                    const previewWindow = iframeRef.current?.contentWindow;
+                    if (previewWindow) {
+                      setTimeout(() => {
+                        try {
+                          console.log('iframe読み込み完了後に設定を送信します');
+                          previewWindow.postMessage({ 
+                            type: 'UPDATE_DESIGN', 
+                            settings,
+                            timestamp: new Date().toISOString()
+                          }, '*');
+                        } catch (error) {
+                          console.error('プレビューへのメッセージ送信に失敗しました', error);
+                        }
+                      }, 500); // 少し遅延させて確実に送信
+                    }
+                  }}
                 />
               )}
             </div>
