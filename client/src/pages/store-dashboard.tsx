@@ -15,6 +15,7 @@ import { TrialEntryDisplay } from "@/components/store/TrialEntryDisplay";
 import { TrialEntryFormTab } from "@/components/store/TrialEntryFormTab";
 import { CampaignDisplay } from "@/components/store/CampaignDisplay";
 import { CampaignFormTab } from "@/components/store/CampaignFormTab";
+import { PhotoGalleryDisplay } from "@/components/store/PhotoGalleryDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import {
@@ -946,6 +947,21 @@ export default function StoreDashboard() {
                   </CardHeader>
 
                   <CardContent>
+                    {/* 注意書き */}
+                    <div className="mb-6 bg-blue-50 border border-blue-200 p-3 rounded-md">
+                      <p className="text-sm text-blue-800">
+                        <AlertCircle className="inline-block h-4 w-4 mr-1" />
+                        <span className="font-semibold">注意：</span>以下は入力した情報の一覧です。実際に応募者から見える店舗デザインは
+                        <span 
+                          className="underline cursor-pointer font-medium ml-1" 
+                          onClick={() => window.open(`/store/preview?id=${profile?.id}`, '_blank')}
+                        >
+                          プレビュー
+                        </span>
+                        でご確認ください。
+                      </p>
+                    </div>
+                    
                     {!profile ? (
                       <div className="text-center py-10">
                         <div className="bg-muted p-6 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
