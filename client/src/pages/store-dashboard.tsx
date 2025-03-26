@@ -962,9 +962,9 @@ export default function StoreDashboard() {
                       </div>
                     ) : (
                       <div className="divide-y">
-                        {/* 店舗基本情報 */}
-                        <div className="py-6 px-1">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* 店舗基本情報 - シンプル化したデザイン */}
+                        <div className="py-4 px-1">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {/* 左側: 店舗画像 */}
                             <div>
                               {profile.top_image ? (
@@ -982,56 +982,52 @@ export default function StoreDashboard() {
                               )}
                             </div>
                             
-                            {/* 中央と右側: プロフィール情報 */}
-                            <div className="md:col-span-2 space-y-6">
+                            {/* 中央と右側: プロフィール情報 - シンプル化 */}
+                            <div className="md:col-span-2 space-y-4">
                               {/* 店舗名とステータス */}
                               <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                  <h2 className="text-2xl font-bold">{profile.business_name}</h2>
-                                  <Badge variant="outline" className="mt-0.5">
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <h2 className="text-xl font-bold">{profile.business_name}</h2>
+                                  <Badge variant="outline">
                                     {profile.service_type}
                                   </Badge>
                                 </div>
                                 
-                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                                   <div className="flex items-center">
-                                    <MapPin className="h-4 w-4 mr-1.5" />
+                                    <MapPin className="h-4 w-4 mr-1" />
                                     <span>{profile.location}</span>
                                   </div>
                                 </div>
                               </div>
                               
-                              {/* キャッチコピー - ガールズヘブン風に強調表示 */}
+                              {/* キャッチコピー - シンプル化 */}
                               {profile.catch_phrase && (
-                                <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 to-fuchsia-500 p-0.5 rounded-md">
-                                  <div className="bg-white dark:bg-gray-900 rounded-sm p-5 relative z-10">
-                                    <div className="absolute top-0 left-0 w-12 h-12 bg-fuchsia-500/20 -translate-x-1/2 -translate-y-1/2 rounded-full"></div>
-                                    <div className="absolute bottom-0 right-0 w-20 h-20 bg-violet-500/20 translate-x-1/3 translate-y-1/3 rounded-full"></div>
-                                    <h3 className="text-base font-bold text-center mb-2 text-gray-700 dark:text-gray-200">店舗からのメッセージ</h3>
-                                    <p className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-violet-600 dark:from-fuchsia-400 dark:to-violet-400 text-center leading-relaxed">
-                                      『{profile.catch_phrase}』
-                                    </p>
-                                  </div>
+                                <div className="border rounded-md p-3">
+                                  <h3 className="text-sm font-medium mb-1 text-gray-600">店舗からのメッセージ</h3>
+                                  <p className="text-base font-bold">
+                                    『{profile.catch_phrase}』
+                                  </p>
                                 </div>
                               )}
                             </div>
                           </div>
                         </div>
                         
-                        {/* 重要事項: 日給・勤務時間・待遇 - 1カラムレイアウト */}
-                        <div className="space-y-5 py-6 px-1">
-                          {/* 日給 - ガールズヘブン風に改良 */}
-                          <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/10 p-4 rounded-md border border-pink-100 dark:border-pink-900/30">
-                            <h3 className="flex items-center text-base font-medium text-pink-700 dark:text-pink-300 mb-3 pb-2 border-b border-pink-100 dark:border-pink-800/30">
-                              <Banknote className="h-5 w-5 mr-2 text-pink-600" />
+                        {/* 重要事項: 日給・勤務時間・待遇 - シンプル化したレイアウト */}
+                        <div className="space-y-4 py-4 px-1">
+                          {/* 日給 - シンプル化 */}
+                          <div className="border rounded-md p-3">
+                            <h3 className="flex items-center text-base font-medium mb-2">
+                              <Banknote className="h-5 w-5 mr-2 text-gray-500" />
                               参考給与例
                             </h3>
                             
-                            <div className="flex flex-col md:flex-row md:items-center gap-4">
-                              {/* 最低・最高給与の表示 - 強調表示 */}
-                              <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
-                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">日給</div>
-                                <div className="text-2xl font-bold text-pink-800 dark:text-pink-300">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {/* 最低・最高給与の表示 - シンプル化 */}
+                              <div className="bg-gray-50 p-2 rounded-md">
+                                <div className="text-xs text-gray-500 mb-1">日給</div>
+                                <div className="text-lg font-semibold">
                                   {profile.minimum_guarantee && profile.maximum_guarantee 
                                     ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
                                     : profile.minimum_guarantee 
@@ -1042,24 +1038,24 @@ export default function StoreDashboard() {
                                 </div>
                               </div>
                               
-                              {/* 平均給与の表示（削除されたフィールドのため、簡略化）*/}
-                              <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-pink-200 dark:border-pink-900/20 flex-1">
-                                <div className="text-xs text-pink-600 dark:text-pink-400 mb-1 font-medium">平均給与</div>
+                              {/* 平均給与の表示 - シンプル化 */}
+                              <div className="bg-gray-50 p-2 rounded-md">
+                                <div className="text-xs text-gray-500 mb-1">平均給与</div>
                                 {(profile.working_time_hours && profile.average_hourly_pay) ? (
-                                  <div className="text-gray-700 dark:text-gray-300">
-                                    <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.working_time_hours}時間勤務　{profile.average_hourly_pay.toLocaleString()}円</span></div>
-                                    <div className="text-xs mt-1">（時給換算：<span className="font-bold">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>）</div>
+                                  <div>
+                                    <div><span className="font-semibold">{profile.working_time_hours}時間勤務　{profile.average_hourly_pay.toLocaleString()}円</span></div>
+                                    <div className="text-xs mt-1">（時給換算：<span className="font-semibold">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>）</div>
                                   </div>
                                 ) : (profile.minimum_guarantee || profile.maximum_guarantee) ? (
-                                  <div className="text-gray-700 dark:text-gray-300">
+                                  <div>
                                     {profile.minimum_guarantee && profile.maximum_guarantee ? (
-                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee?.toLocaleString() || '0'}〜{profile.maximum_guarantee?.toLocaleString() || '0'}</span>円</div>
+                                      <div><span className="font-semibold">{profile.minimum_guarantee?.toLocaleString() || '0'}〜{profile.maximum_guarantee?.toLocaleString() || '0'}</span>円</div>
                                     ) : profile.minimum_guarantee ? (
-                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">{profile.minimum_guarantee?.toLocaleString() || '0'}</span>円〜</div>
+                                      <div><span className="font-semibold">{profile.minimum_guarantee?.toLocaleString() || '0'}</span>円〜</div>
                                     ) : profile.maximum_guarantee ? (
-                                      <div>〜<span className="font-bold text-pink-700 dark:text-pink-300">{profile.maximum_guarantee?.toLocaleString() || '要相談'}</span>円</div>
+                                      <div>〜<span className="font-semibold">{profile.maximum_guarantee?.toLocaleString() || '要相談'}</span>円</div>
                                     ) : (
-                                      <div><span className="font-bold text-pink-700 dark:text-pink-300">要相談</span></div>
+                                      <div><span className="font-semibold">要相談</span></div>
                                     )}
                                   </div>
                                 ) : (
@@ -1069,27 +1065,24 @@ export default function StoreDashboard() {
                             </div>
                           </div>
                           
-                          {/* 勤務時間 */}
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
-                            <h3 className="flex items-center text-base font-medium text-blue-700 dark:text-blue-300 mb-3 pb-2 border-b border-blue-100 dark:border-blue-800/30">
-                              <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                          {/* 勤務時間 - シンプル化 */}
+                          <div className="border rounded-md p-3">
+                            <h3 className="flex items-center text-base font-medium mb-2">
+                              <Clock className="h-5 w-5 mr-2 text-gray-500" />
                               勤務時間
                             </h3>
-                            <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-blue-100 dark:border-blue-900/30">
-                              <div className="text-lg font-medium">
+                            <div className="bg-gray-50 p-3 rounded">
+                              <div className="text-base">
                                 {profile.working_hours || <span className="text-muted-foreground italic">未設定</span>}
                               </div>
                             </div>
                           </div>
                           
-                          {/* 待遇 - ガールズヘブン風に大幅改良、特典バッジを強調 */}
-                          <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/10 p-4 rounded-md border border-purple-100 dark:border-purple-900/30 relative overflow-hidden">
-                            <div className="absolute -top-5 -right-5 w-24 h-24 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
-                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-100/50 dark:bg-purple-700/10 rounded-full"></div>
-                            
-                            <h3 className="flex items-center text-base font-medium text-purple-700 dark:text-purple-300 mb-3 pb-2 border-b border-purple-100 dark:border-purple-800/30 relative z-10">
-                              <Award className="h-5 w-5 mr-2 text-purple-600" />
-                              <span className="bg-gradient-to-r from-purple-700 to-violet-600 dark:from-purple-400 dark:to-violet-300 inline-block text-transparent bg-clip-text">待遇・福利厚生</span>
+                          {/* 待遇 - シンプル化 */}
+                          <div className="border rounded-md p-3">
+                            <h3 className="flex items-center text-base font-medium mb-2">
+                              <Award className="h-5 w-5 mr-2 text-gray-500" />
+                              待遇・福利厚生
                             </h3>
                             
                             <div className="relative z-10">
@@ -1209,67 +1202,38 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
-                        {/* アクセス・所在地 - 地図表示を追加 */}
+                        {/* アクセス・所在地 - シンプル化 */}
                         {(profile.address || profile.access_info) && (
-                          <div className="py-6 px-1">
-                            <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/10 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
-                              <h3 className="flex items-center text-base font-medium text-blue-700 dark:text-blue-300 mb-3 pb-2 border-b border-blue-100 dark:border-blue-800/30">
-                                <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+                          <div className="py-4 px-1">
+                            <div className="border rounded-md p-3">
+                              <h3 className="flex items-center text-base font-medium mb-3">
+                                <MapPin className="h-5 w-5 mr-2 text-gray-500" />
                                 アクセス・所在地
                               </h3>
                               
-                              <div className="space-y-5">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-md border border-blue-100 dark:border-blue-900/30">
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="bg-gray-50 p-3 rounded">
                                     {profile.address && (
-                                      <div className="flex flex-col gap-2">
-                                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">所在地</div>
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-700 mb-1">所在地</div>
                                         <div className="flex items-center gap-2">
-                                          <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                          <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
                                           <div>{profile.address}</div>
                                         </div>
                                       </div>
                                     )}
                                     
                                     {profile.access_info && (
-                                      <div className="flex flex-col gap-2 mt-4">
-                                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">アクセス方法</div>
+                                      <div className="mt-3">
+                                        <div className="text-sm font-medium text-gray-700 mb-1">アクセス方法</div>
                                         <div className="flex gap-2">
-                                          <Train className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                                          <div className="text-sm whitespace-pre-line">{profile.access_info}</div>
+                                          <Train className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                                          <div className="text-sm">{profile.access_info}</div>
                                         </div>
                                       </div>
                                     )}
                                   </div>
-                                  
-                                  {/* 地図表示エリア */}
-                                  <div className="rounded-md overflow-hidden border border-blue-100 dark:border-blue-900/30 bg-white">
-                                    {profile.address && (
-                                      <div className="relative w-full h-0 pb-[75%]">
-                                        <iframe 
-                                          className="absolute inset-0 w-full h-full"
-                                          src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                          frameBorder="0"
-                                          scrolling="no"
-                                          title="店舗地図"
-                                          loading="lazy"
-                                        ></iframe>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* モバイルでの優先表示、アクセス優先ボタン */}
-                                <div className="flex justify-center">
-                                  <a
-                                    href={`https://maps.google.com/maps?q=${encodeURIComponent(profile.address || profile.location)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full border border-blue-200 transition-colors"
-                                  >
-                                    <Navigation className="h-4 w-4" />
-                                    地図アプリで確認する
-                                  </a>
                                 </div>
                               </div>
                             </div>
