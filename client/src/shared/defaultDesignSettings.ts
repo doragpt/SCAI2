@@ -8,8 +8,8 @@ export const getDefaultDesignSettings = (): DesignSettings => {
   return {
     sections: [
       {
-        id: "header",
-        title: "ヘッダー",
+        id: "catchphrase",
+        title: "キャッチコピー・仕事内容",
         visible: true,
         order: 1,
         settings: {
@@ -24,8 +24,8 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "catchphrase",
-        title: "キャッチコピー・仕事内容",
+        id: "benefits",
+        title: "待遇・環境",
         visible: true,
         order: 2,
         settings: {
@@ -40,26 +40,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "photo_gallery",
-        title: "写真ギャラリー",
+        id: "requirements",
+        title: "応募条件",
         visible: true,
         order: 3,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "benefits",
-        title: "待遇・環境",
-        visible: true,
-        order: 4,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -75,7 +59,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "salary",
         title: "給与情報",
         visible: true,
-        order: 5,
+        order: 4,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -91,71 +75,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "schedule",
         title: "勤務時間",
         visible: true,
-        order: 6,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "requirements",
-        title: "応募条件",
-        visible: true,
-        order: 7,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "special_offers",
-        title: "特別オファー",
-        visible: true,
-        order: 8,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "trial_entry",
-        title: "体験入店",
-        visible: true,
-        order: 9,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "campaigns",
-        title: "キャンペーン",
-        visible: true,
-        order: 10,
+        order: 5,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -171,7 +91,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "access",
         title: "アクセス情報",
         visible: true,
-        order: 11,
+        order: 6,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -186,6 +106,86 @@ export const getDefaultDesignSettings = (): DesignSettings => {
       {
         id: "contact",
         title: "問い合わせ",
+        visible: true,
+        order: 7,
+        settings: {
+          backgroundColor: "#fff9fa",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: "trial_entry",
+        title: "体験入店",
+        visible: true,
+        order: 8,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: "campaigns",
+        title: "キャンペーン",
+        visible: true,
+        order: 9,
+        settings: {
+          backgroundColor: "#fff9fa",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: "photo_gallery",
+        title: "写真ギャラリー",
+        visible: true,
+        order: 10,
+        settings: {
+          backgroundColor: "#fff9fa",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: "header",
+        title: "ヘッダー",
+        visible: true,
+        order: 11,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: "special_offers",
+        title: "特別オファー",
         visible: true,
         order: 12,
         settings: {
