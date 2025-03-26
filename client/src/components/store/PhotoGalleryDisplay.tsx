@@ -91,6 +91,7 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
                           src={photo.url} 
                           alt={photo.title || `${category}画像`} 
                           className="w-[200px] h-[150px] object-cover transition-transform duration-300 group-hover:scale-105"
+                          style={{width: "200px", height: "150px", objectFit: "cover"}}
                           loading="lazy"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;

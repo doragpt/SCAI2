@@ -341,13 +341,13 @@ export default function StorePreview() {
               写真ギャラリー
             </h3>
             
-            {profile?.gallery_photos && profile.gallery_photos.length > 0 ? (
+            {profile && profile.gallery_photos && profile.gallery_photos.length > 0 ? (
               <>
                 <PhotoGalleryDisplay photos={profile.gallery_photos.map(photo => ({
-                  id: photo.id,
+                  id: photo.id || `photo-${Math.random().toString(36).substring(2, 9)}`,
                   url: photo.url,
-                  title: photo.title,
-                  description: photo.description,
+                  title: photo.title || '',
+                  description: photo.description || '',
                   category: photo.category || '店内',
                   order: photo.order || 0,
                   featured: photo.featured || false
@@ -366,7 +366,7 @@ export default function StorePreview() {
         );
         
       case 'benefits':
-        return profile.benefits && profile.benefits.length > 0 && (
+        return profile && profile.benefits && profile.benefits.length > 0 && (
           <div key={sectionId} style={getSectionStyle('benefits')} className="mb-8">
             <h3 style={getSectionTitleStyle('benefits')} className="flex items-center">
               <BadgeCheck className="h-5 w-5 mr-2" style={{ color: getSectionSettings('benefits').titleColor || globalSettings.mainColor }} />
@@ -486,7 +486,7 @@ export default function StorePreview() {
               <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
               特別オファー
             </h3>
-            {profile.special_offers && profile.special_offers.length > 0 ? (
+            {profile && profile.special_offers && profile.special_offers.length > 0 ? (
               <SpecialOffersDisplay specialOffers={profile.special_offers.map(offer => ({
                 id: offer.id,
                 title: offer.title,
