@@ -43,6 +43,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       description: initialData?.description || "",
       special_offers: initialData?.special_offers || [],
       top_image: initialData?.top_image || "",
+      gallery_photos: initialData?.gallery_photos || [],
       
       // 給与情報
       benefits: initialData?.benefits || [],
@@ -216,6 +217,9 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           application_requirements: data.application_requirements || "",
           access_info: data.access_info || "",
           security_measures: data.security_measures || "",
+          
+          // 店舗写真ギャラリー
+          gallery_photos: data.gallery_photos || [],
         };
         
         console.log("送信データ:", formattedData);
@@ -353,7 +357,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid grid-cols-5 mb-6">
+          <TabsList className="grid grid-cols-6 mb-6">
             <TabsTrigger value="basic" className="flex items-center gap-2">
               <Info className="h-4 w-4" /> 基本情報
             </TabsTrigger>
@@ -368,6 +372,9 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" /> 安全対策
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" /> 写真ギャラリー
             </TabsTrigger>
           </TabsList>
           
@@ -1698,6 +1705,34 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   )}
                 />
               </div>
+            </div>
+          </TabsContent>
+          
+          {/* 写真ギャラリータブ */}
+          <TabsContent value="gallery" className="space-y-6">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <h3 className="text-lg font-medium mb-4">店舗写真ギャラリー</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                お店の内装・設備・待機所などの写真を登録して、求職者に魅力をアピールしましょう。
+                写真は各カテゴリごとに分類されます。
+              </p>
+              <FormField
+                control={form.control}
+                name="gallery_photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <PhotoGalleryFormTab
+                        photos={field.value || []}
+                        onChange={(newPhotos) => {
+                          field.onChange(newPhotos);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </TabsContent>
         </Tabs>
