@@ -10,6 +10,7 @@ import { LocationDisplay } from '@/components/store/LocationDisplay';
 import { ContactDisplay } from '@/components/store/ContactDisplay';
 import { SalaryDisplay } from '@/components/store/SalaryDisplay';
 import { JobDescriptionDisplay } from '@/components/store/JobDescriptionDisplay';
+import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
 import { BookOpenCheck, Clock, Calendar, MapPin, Phone, Mail, Star, Gift, BadgeCheck, Shield, Image } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
