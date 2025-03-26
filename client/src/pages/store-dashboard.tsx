@@ -1240,156 +1240,154 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
-                        {/* セキュリティ対策 */}
+                        {/* セキュリティ対策 - シンプル化 */}
                         {profile.security_measures && (
-                          <div className="py-6 px-1">
-                            <h3 className="text-base font-medium mb-4 flex items-center">
-                              <Shield className="h-4 w-4 mr-1.5 text-green-500" />
-                              セキュリティ対策
-                            </h3>
-                            
-                            <div className="px-4 py-3 bg-muted rounded-md">
-                              <p className="text-sm whitespace-pre-line">{profile.security_measures}</p>
+                          <div className="py-4 px-1">
+                            <div className="border rounded-md p-3">
+                              <h3 className="flex items-center text-base font-medium mb-2">
+                                <Shield className="h-5 w-5 mr-2 text-gray-500" />
+                                セキュリティ対策
+                              </h3>
+                              
+                              <div className="bg-gray-50 p-3 rounded">
+                                <p className="text-sm">{profile.security_measures}</p>
+                              </div>
                             </div>
                           </div>
                         )}
                         
-                        {/* 連絡先情報 */}
+                        {/* 連絡先情報 - シンプル化 */}
                         {(profile.recruiter_name || (profile.phone_numbers && profile.phone_numbers.length > 0) || 
                           (profile.email_addresses && profile.email_addresses.length > 0) || 
                           profile.pc_website_url || profile.mobile_website_url) && (
-                          <div className="py-6 px-1">
-                            <h3 className="text-base font-medium mb-4 flex items-center">
-                              <Phone className="h-4 w-4 mr-1.5 text-rose-500" />
-                              連絡先情報
-                            </h3>
-                            
-                            <div className="space-y-3">
-                              {/* 採用担当者 */}
-                              {profile.recruiter_name && (
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">採用担当者</div>
-                                  <div>{profile.recruiter_name}</div>
-                                </div>
-                              )}
+                          <div className="py-4 px-1">
+                            <div className="border rounded-md p-3">
+                              <h3 className="flex items-center text-base font-medium mb-2">
+                                <Phone className="h-5 w-5 mr-2 text-gray-500" />
+                                連絡先情報
+                              </h3>
                               
-                              {/* 電話番号 */}
-                              {profile.phone_numbers && profile.phone_numbers.length > 0 && (
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">電話番号</div>
-                                  <div className="space-y-1">
-                                    {profile.phone_numbers.map((phone, index) => (
-                                      <div key={index} className="flex items-center gap-2">
-                                        <Phone className="h-3.5 w-3.5 text-green-500" />
-                                        <a href={`tel:${phone.replace(/[-\s]/g, '')}`} className="hover:underline">
-                                          {phone}
-                                        </a>
-                                      </div>
-                                    ))}
+                              <div className="space-y-3 bg-gray-50 p-3 rounded">
+                                {/* 採用担当者 */}
+                                {profile.recruiter_name && (
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                                    <div className="text-sm font-medium min-w-20">採用担当者:</div>
+                                    <div>{profile.recruiter_name}</div>
                                   </div>
-                                </div>
-                              )}
-                              
-                              {/* メールアドレス */}
-                              {profile.email_addresses && profile.email_addresses.length > 0 && (
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">メールアドレス</div>
-                                  <div className="space-y-1">
-                                    {profile.email_addresses.map((email, index) => (
-                                      <div key={index} className="flex items-center gap-2">
-                                        <Mail className="h-3.5 w-3.5 text-blue-500" />
-                                        <a href={`mailto:${email}`} className="hover:underline">
-                                          {email}
-                                        </a>
-                                      </div>
-                                    ))}
+                                )}
+                                
+                                {/* 電話番号 */}
+                                {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                                    <div className="text-sm font-medium min-w-20">電話番号:</div>
+                                    <div>
+                                      {profile.phone_numbers.map((phone, index) => (
+                                        <div key={index} className="flex items-center gap-1">
+                                          <Phone className="h-3.5 w-3.5 text-gray-500" />
+                                          <a href={`tel:${phone.replace(/[-\s]/g, '')}`} className="hover:underline">
+                                            {phone}
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                              
-                              {/* Webサイト */}
-                              {(profile.pc_website_url || profile.mobile_website_url) && (
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">Webサイト</div>
-                                  <div className="space-y-1">
-                                    {profile.pc_website_url && (
-                                      <div className="flex items-center gap-2">
-                                        <Globe className="h-3.5 w-3.5 text-indigo-500" />
-                                        <a href={profile.pc_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                          公式サイト
-                                        </a>
-                                      </div>
-                                    )}
-                                    {profile.mobile_website_url && (
-                                      <div className="flex items-center gap-2">
-                                        <Smartphone className="h-3.5 w-3.5 text-purple-500" />
-                                        <a href={profile.mobile_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                          モバイルサイト
-                                        </a>
-                                      </div>
-                                    )}
+                                )}
+                                
+                                {/* メールアドレス */}
+                                {profile.email_addresses && profile.email_addresses.length > 0 && (
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                                    <div className="text-sm font-medium min-w-20">メール:</div>
+                                    <div>
+                                      {profile.email_addresses.map((email, index) => (
+                                        <div key={index} className="flex items-center gap-1">
+                                          <Mail className="h-3.5 w-3.5 text-gray-500" />
+                                          <a href={`mailto:${email}`} className="hover:underline">
+                                            {email}
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                              
-                              {/* SNS連絡先（LINE） */}
-                              {profile.sns_id && (
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
-                                  <div className="text-sm font-medium min-w-24">SNS連絡先</div>
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <div className="bg-[#06C755] p-1 rounded-md inline-flex items-center justify-center">
-                                        <MessageCircle className="h-3.5 w-3.5 text-white" />
-                                      </div>
-                                      {profile.sns_url ? (
-                                        <a 
-                                          href={profile.sns_url} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer" 
-                                          className="hover:underline flex items-center space-x-1"
-                                        >
-                                          <span className="font-medium">{profile.sns_id}</span>
-                                          {profile.sns_text && <span className="text-sm text-muted-foreground">（{profile.sns_text}）</span>}
-                                        </a>
-                                      ) : (
-                                        <div className="flex items-center space-x-1">
-                                          <span className="font-medium">{profile.sns_id}</span>
-                                          {profile.sns_text && <span className="text-sm text-muted-foreground">（{profile.sns_text}）</span>}
+                                )}
+                                
+                                {/* Webサイト */}
+                                {(profile.pc_website_url || profile.mobile_website_url) && (
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                                    <div className="text-sm font-medium min-w-20">Webサイト:</div>
+                                    <div>
+                                      {profile.pc_website_url && (
+                                        <div className="flex items-center gap-1">
+                                          <Globe className="h-3.5 w-3.5 text-gray-500" />
+                                          <a href={profile.pc_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                            公式サイト
+                                          </a>
+                                        </div>
+                                      )}
+                                      {profile.mobile_website_url && (
+                                        <div className="flex items-center gap-1">
+                                          <Smartphone className="h-3.5 w-3.5 text-gray-500" />
+                                          <a href={profile.mobile_website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                            モバイルサイト
+                                          </a>
                                         </div>
                                       )}
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                                
+                                {/* SNS連絡先（LINE） */}
+                                {profile.sns_id && (
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
+                                    <div className="text-sm font-medium min-w-20">SNS連絡先:</div>
+                                    <div>
+                                      <div className="flex items-center gap-1">
+                                        <MessageCircle className="h-3.5 w-3.5 text-gray-500" />
+                                        {profile.sns_url ? (
+                                          <a 
+                                            href={profile.sns_url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="hover:underline flex items-center"
+                                          >
+                                            <span>{profile.sns_id}</span>
+                                            {profile.sns_text && <span className="text-sm text-muted-foreground ml-1">（{profile.sns_text}）</span>}
+                                          </a>
+                                        ) : (
+                                          <div className="flex items-center">
+                                            <span>{profile.sns_id}</span>
+                                            {profile.sns_text && <span className="text-sm text-muted-foreground ml-1">（{profile.sns_text}）</span>}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
                         
-                        {/* 応募ボタンの強調表示 */}
-                        <div className="py-6 px-1">
-                          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 rounded-lg shadow-lg text-white relative overflow-hidden">
-                            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
-                            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/10 rounded-full"></div>
+                        {/* 応募ボタン - シンプル化 */}
+                        <div className="py-4 px-1">
+                          <div className="border rounded-md p-3">
+                            <h3 className="flex items-center text-base font-medium mb-2">
+                              <Mail className="h-5 w-5 mr-2 text-gray-500" />
+                              応募方法
+                            </h3>
                             
-                            <div className="text-center relative z-10 space-y-3">
-                              <h3 className="text-xl font-bold">今すぐ応募しませんか？</h3>
-                              <p className="text-white/80 text-sm max-w-md mx-auto">
-                                採用担当が丁寧にご対応いたします。お気軽にご連絡ください。
-                              </p>
-                              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                            <div className="bg-gray-50 p-4 rounded text-center">
+                              <p className="text-sm mb-3">採用担当が丁寧にご対応いたします。お気軽にご連絡ください。</p>
+                              <div className="flex flex-col sm:flex-row justify-center gap-2">
                                 {profile.phone_numbers && profile.phone_numbers.length > 0 && (
                                   <a 
                                     href={`tel:${profile.phone_numbers[0].replace(/[-\s]/g, '')}`}
-                                    className="inline-flex items-center justify-center gap-2 bg-white text-emerald-600 hover:bg-emerald-50 py-3 px-6 rounded-full font-bold shadow-sm transition-colors"
+                                    className="inline-flex items-center justify-center gap-2 bg-primary text-white py-2 px-4 rounded font-medium"
                                   >
                                     <Phone className="h-4 w-4" />
                                     電話で応募
                                   </a>
                                 )}
-                                <Button 
-                                  size="lg" 
-                                  className="bg-white hover:bg-emerald-50 text-emerald-600 border-none hover:text-emerald-700"
-                                >
+                                <Button>
                                   <Mail className="h-4 w-4 mr-2" />
                                   メールで応募
                                 </Button>
@@ -1398,9 +1396,9 @@ export default function StoreDashboard() {
                           </div>
                         </div>
 
-                        {/* 編集ボタン */}
-                        <div className="py-6 px-1 flex justify-center">
-                          <Button onClick={() => setShowProfileForm(true)} size="lg">
+                        {/* 編集ボタン - シンプル化 */}
+                        <div className="py-4 px-1 flex justify-center">
+                          <Button onClick={() => setShowProfileForm(true)} variant="outline">
                             <FileEdit className="h-4 w-4 mr-2" />
                             プロフィールを編集する
                           </Button>
