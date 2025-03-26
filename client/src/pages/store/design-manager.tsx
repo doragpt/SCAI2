@@ -350,6 +350,22 @@ const defaultSections = [
       borderRadius: 10,
       borderWidth: 1
     }
+  },
+  {
+    id: 'blog',
+    title: '店舗ブログ',
+    visible: true,
+    order: 19,
+    settings: {
+      backgroundColor: '#fff8f0',
+      textColor: '#333333',
+      borderColor: '#ffebcc',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
   }
 ];
 
