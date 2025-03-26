@@ -846,7 +846,7 @@ export default function StoreDesignManager() {
           <div className="h-full p-4 flex flex-col items-center justify-center">
             <div className={`
               bg-white border rounded-md overflow-hidden shadow-md transition-all duration-300
-              ${deviceView === 'pc' ? 'w-full max-w-[1000px] h-[800px]' : 'w-[375px] h-[667px]'}
+              ${deviceView === 'pc' ? 'w-full max-w-[1000px] h-auto min-h-[600px]' : 'w-[375px] h-[667px]'}
             `}>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">
