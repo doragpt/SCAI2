@@ -280,6 +280,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // カスタム特典
       special_offers: req.body.special_offers || existingProfile.special_offers || [],
       
+      // ギャラリー写真（重要：ここが抜けていたため写真が保存されなかった）
+      gallery_photos: req.body.gallery_photos || existingProfile.gallery_photos || [],
+      
       updated_at: new Date()
     };
 
@@ -334,7 +337,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       housing_support: updateData.housing_support,
       
       // カスタム特典
-      special_offers: updateData.special_offers
+      special_offers: updateData.special_offers,
+      
+      // ギャラリー写真
+      gallery_photos: updateData.gallery_photos
     });
 
     // 更新用のオブジェクトを作成
