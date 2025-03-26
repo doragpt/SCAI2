@@ -31,25 +31,50 @@ export default function StorePreview() {
   });
 
   // ページにデザイン設定を適用
+  // デザイン設定を適用する関数
+  const applyDesignSettings = (settings: DesignSettings) => {
+    if (settings && mainContentRef.current) {
+      // グローバル設定を適用
+      const global = settings.globalSettings;
+      const root = document.documentElement;
+      root.style.setProperty('--primary', global.mainColor);
+      root.style.setProperty('--secondary', global.secondaryColor);
+      root.style.setProperty('--accent', global.accentColor);
+      root.style.setProperty('--background', global.backgroundColor);
+      root.style.setProperty('--border-radius', `${global.borderRadius}px`);
+      
+      // フォントファミリーを設定
+      document.body.style.fontFamily = global.fontFamily;
+      
+      console.log('デザイン設定を適用しました', {
+        time: new Date().toISOString(),
+        mainColor: global.mainColor
+      });
+    }
+  };
+
+  // プロフィールのデザイン設定を適用
   useEffect(() => {
-    const applyDesignSettings = () => {
-      if (profile?.design_settings && mainContentRef.current) {
-        // グローバル設定を適用
-        const global = profile.design_settings.globalSettings;
-        const root = document.documentElement;
-        root.style.setProperty('--primary', global.mainColor);
-        root.style.setProperty('--secondary', global.secondaryColor);
-        root.style.setProperty('--accent', global.accentColor);
-        root.style.setProperty('--background', global.backgroundColor);
-        root.style.setProperty('--border-radius', `${global.borderRadius}px`);
-        
-        // フォントファミリーを設定
-        document.body.style.fontFamily = global.fontFamily;
+    if (profile?.design_settings) {
+      applyDesignSettings(profile.design_settings);
+    }
+  }, [profile?.design_settings]);
+  
+  // postMessageリスナーの設定（リアルタイムプレビュー用）
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'UPDATE_DESIGN') {
+        console.log('デザイン設定更新メッセージを受信:', event.data);
+        applyDesignSettings(event.data.settings);
       }
     };
-
-    applyDesignSettings();
-  }, [profile?.design_settings]);
+    
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
 
   // ローディング表示
   if (isLoading) {
