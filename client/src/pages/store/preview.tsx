@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HtmlContent } from '@/components/html-content';
-import { type StoreProfile, type DesignSettings, type SectionSettings } from '@shared/schema';
+import { type StoreProfile, type DesignSettings, type SectionSettings, type DesignSection } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
@@ -91,9 +91,9 @@ export default function StorePreview() {
         
         if (event.data.settings) {
           try {
-            // セクションIDリストをログ
+            // セクションIDリストをログ（型付き）
             debugLog('受信したセクションID', 
-              event.data.settings.sections.map(s => ({ 
+              event.data.settings.sections.map((s: { id: string; visible: boolean; order: number }) => ({ 
                 id: s.id, 
                 visible: s.visible, 
                 order: s.order 
@@ -101,8 +101,8 @@ export default function StorePreview() {
             );
             
             // セクションの整合性を確認（catchphraseとdescriptionの関係を特に注意）
-            const hasDescription = event.data.settings.sections.some(s => s.id === 'description');
-            const hasCatchphrase = event.data.settings.sections.some(s => s.id === 'catchphrase');
+            const hasDescription = event.data.settings.sections.some((s: { id: string }) => s.id === 'description');
+            const hasCatchphrase = event.data.settings.sections.some((s: { id: string }) => s.id === 'catchphrase');
             
             if (hasDescription && !hasCatchphrase) {
               debugLog('修正: descriptionセクションがあるがcatchphraseがない', {
@@ -110,7 +110,7 @@ export default function StorePreview() {
               });
               
               // descriptionをcatchphraseに変換
-              event.data.settings.sections = event.data.settings.sections.map(s => {
+              event.data.settings.sections = event.data.settings.sections.map((s: { id: string; title?: string }) => {
                 if (s.id === 'description') {
                   return { ...s, id: 'catchphrase', title: 'キャッチコピー・仕事内容' };
                 }

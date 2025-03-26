@@ -12,41 +12,9 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Save, RefreshCw, Settings, Palette, Layout, Eye, EyeOff, ArrowUp, ArrowDown, Monitor, Smartphone, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getServiceTypeLabel } from '@/lib/utils';
+import { type DesignSettings, type SectionSettings, type GlobalDesignSettings, type DesignSection } from '@shared/schema';
 
-// デザイン設定の型定義
-interface SectionSettings {
-  backgroundColor?: string;
-  textColor?: string;
-  borderColor?: string;
-  titleColor?: string;
-  fontSize?: number;
-  padding?: number;
-  borderRadius?: number;
-  borderWidth?: number;
-}
-
-interface DesignSection {
-  id: string;
-  title: string;
-  visible: boolean;
-  order: number;
-  settings: SectionSettings;
-}
-
-interface GlobalDesignSettings {
-  mainColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  fontFamily: string;
-  borderRadius: number;
-  maxWidth: number;
-}
-
-interface DesignSettings {
-  sections: DesignSection[];
-  globalSettings: GlobalDesignSettings;
-}
+// 型定義はすでに@shared/schemaから読み込み済み
 
 export default function StoreDesignManager() {
   const { toast } = useToast();
@@ -240,7 +208,7 @@ export default function StoreDesignManager() {
         debugLog('プレビューに設定変更を送信', { 
           timestamp,
           sectionsCount: newSettings.sections.length, 
-          sectionIds: newSettings.sections.map(s => s.id),
+          sectionIds: newSettings.sections.map((s: DesignSection) => s.id),
         });
         
         previewWindow.postMessage({
