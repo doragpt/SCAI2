@@ -215,12 +215,7 @@ export default function StorePreview() {
     .filter(section => section.visible)
     .sort((a, b) => a.order - b.order);
 
-  // デバッグ用関数
-  const debugLog = (message: string, data?: any) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[Preview Debug] ${message}`, data || '');
-    }
-  };
+  // debugLog関数はコンポーネント外で定義済み
 
   // セクション設定を取得する関数（改善版）
   const getSectionSettings = (sectionId: string): SectionSettings => {
