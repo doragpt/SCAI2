@@ -6,12 +6,12 @@ import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
 import { 
-  Building2, Clock, MapPin, Phone, Mail, BadgeCheck, Shield, 
-  Image, Info, User, DollarSign 
+  Building2, Clock, MapPin, Phone, Mail, BadgeCheck, 
+  Image, User, DollarSign, Info, ArrowLeft
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
-// シンプル化したプレビュー表示用コンポーネント
+// よりシンプル化したプレビュー表示用コンポーネント
 export default function StorePreview() {
   // 店舗データを取得
   const { data: profile, isLoading } = useQuery<StoreProfile>({
@@ -24,7 +24,7 @@ export default function StorePreview() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full p-10">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         <span className="ml-2">読み込み中...</span>
       </div>
@@ -41,215 +41,236 @@ export default function StorePreview() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      {/* ヘッダー */}
-      <header className="bg-primary text-white py-6 shadow-md">
-        <div className="container mx-auto px-4">
+    <div className="bg-white min-h-screen">
+      {/* ナビゲーションバー */}
+      <div className="bg-gray-100 p-4 border-b">
+        <div className="max-w-4xl mx-auto flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => window.location.href = '/store/dashboard'} 
+            className="mr-auto"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            ダッシュボードに戻る
+          </Button>
+          <span className="font-bold">プレビュー画面</span>
+        </div>
+      </div>
+
+      {/* シンプルなプレビューヘッダー */}
+      <header className="bg-gray-50 py-6 border-b">
+        <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold">{profile.business_name || 'テスト店舗'}</h1>
-          <p className="text-sm opacity-80">
-            {profile.location} | {profile.service_type}
-          </p>
+          <div className="flex items-center mt-2 text-gray-600">
+            <MapPin className="h-4 w-4 mr-1" />
+            <span className="mr-3">{profile.location}</span>
+            <span className="px-2 py-0.5 bg-gray-200 rounded text-sm">{profile.service_type}</span>
+          </div>
         </div>
       </header>
 
-      {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="grid gap-6">
-          
-          {/* 基本情報セクション */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <Info className="mr-2 h-5 w-5" />
+      {/* シンプルなメインコンテンツ */}
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* 注意書き */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
+          <p className="text-sm text-blue-700">
+            <Info className="h-4 w-4 inline mr-2" />
+            これはプレビュー画面です。実際の公開ページのデザインとは異なります。
+          </p>
+        </div>
+
+        {/* キャッチコピー */}
+        {profile.catch_phrase && (
+          <div className="mb-8 text-center p-4 border-b">
+            <h2 className="text-xl font-bold text-gray-800">『{profile.catch_phrase}』</h2>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* 左側カラム */}
+          <div className="space-y-6">
+            {/* 店舗情報 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <Building2 className="h-5 w-5 mr-2 text-gray-700" />
                 店舗情報
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold">{profile.catch_phrase}</h2>
+              </h3>
+              
+              {profile.description && (
+                <div className="prose max-w-none">
+                  <HtmlContent html={profile.description} />
+                </div>
+              )}
+            </section>
+
+            {/* 給与情報 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-gray-700" />
+                給与情報
+              </h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-medium text-gray-600">日給</h4>
+                  <p className="text-lg">
+                    {profile.minimum_guarantee && profile.maximum_guarantee 
+                      ? `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円`
+                      : profile.minimum_guarantee 
+                        ? `${profile.minimum_guarantee.toLocaleString()}円〜`
+                        : profile.maximum_guarantee 
+                          ? `〜${profile.maximum_guarantee.toLocaleString()}円` 
+                          : "要相談"}
+                  </p>
                 </div>
                 
-                {profile.description && (
-                  <div className="mt-4">
-                    <HtmlContent html={profile.description} />
+                {(profile.working_time_hours && profile.average_hourly_pay) && (
+                  <div>
+                    <h4 className="font-medium text-gray-600">平均時給</h4>
+                    <p>{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</p>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* 給与情報 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <DollarSign className="mr-2 h-5 w-5" />
-                給与情報
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <h3 className="font-semibold mb-2">日給保証</h3>
-                  <p>
-                    {profile.minimum_guarantee ? 
-                      `${profile.minimum_guarantee.toLocaleString()}円〜` : '未設定'}
-                    {profile.maximum_guarantee ? 
-                      `${profile.maximum_guarantee.toLocaleString()}円` : ''}
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-2">時給目安</h3>
-                  <p>
-                    {profile.average_hourly_pay ? 
-                      `平均 ${profile.average_hourly_pay.toLocaleString()}円` : '未設定'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* 勤務時間 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-gray-700" />
+                勤務時間
+              </h3>
+              <p>{profile.working_hours || '勤務時間が設定されていません'}</p>
+            </section>
 
-          {/* 応募条件 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <User className="mr-2 h-5 w-5" />
+            {/* フォトギャラリー */}
+            {profile.gallery_photos && profile.gallery_photos.length > 0 && (
+              <section className="border rounded-md p-4">
+                <h3 className="text-lg font-bold mb-4 flex items-center">
+                  <Image className="h-5 w-5 mr-2 text-gray-700" />
+                  フォトギャラリー
+                </h3>
+                <PhotoGalleryDisplay photos={profile.gallery_photos} />
+              </section>
+            )}
+          </div>
+
+          {/* 右側カラム */}
+          <div className="space-y-6">
+            {/* 応募条件 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <User className="h-5 w-5 mr-2 text-gray-700" />
                 応募条件
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
+              </h3>
+              
               {profile.requirements ? (
-                <div className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <h3 className="font-semibold mb-2">年齢</h3>
-                      <p>{profile.requirements.age_min || 18}歳以上
-                        {profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}
-                      </p>
-                    </div>
-                    
-                    {profile.requirements.cup_size_conditions && 
-                     profile.requirements.cup_size_conditions.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold mb-2">カップサイズ条件</h3>
-                        <ul className="list-disc list-inside">
-                          {profile.requirements.cup_size_conditions.map((condition, index) => (
-                            <li key={index}>
-                              {condition.cup_size}カップ以上の方
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-medium text-gray-600">年齢</h4>
+                    <p>{profile.requirements.age_min || 18}歳以上
+                      {profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}
+                    </p>
                   </div>
+                  
+                  {profile.requirements.cup_size_conditions && 
+                   profile.requirements.cup_size_conditions.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-600">カップサイズ条件</h4>
+                      <ul className="list-disc list-inside">
+                        {profile.requirements.cup_size_conditions.map((condition, index) => (
+                          <li key={index}>
+                            {condition.cup_size}カップ以上の方
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   
                   {profile.application_requirements && (
                     <div>
-                      <h3 className="font-semibold mb-2">その他の条件</h3>
+                      <h4 className="font-medium text-gray-600">その他の条件</h4>
                       <p>{profile.application_requirements}</p>
                     </div>
                   )}
                 </div>
               ) : (
-                <p>応募条件が設定されていません</p>
+                <p className="text-gray-500">応募条件が設定されていません</p>
               )}
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* 勤務時間 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <Clock className="mr-2 h-5 w-5" />
-                勤務時間
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <p>{profile.working_hours || '勤務時間が設定されていません'}</p>
-            </CardContent>
-          </Card>
-
-          {/* 待遇・環境 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <BadgeCheck className="mr-2 h-5 w-5" />
+            {/* 待遇・環境 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <BadgeCheck className="h-5 w-5 mr-2 text-gray-700" />
                 待遇・環境
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
+              </h3>
+              
               {profile.benefits && profile.benefits.length > 0 ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <ul className="grid grid-cols-1 gap-2">
                   {profile.benefits.map((benefit, index) => (
                     <li key={index} className="flex items-center">
-                      <BadgeCheck className="h-5 w-5 mr-2 text-primary" />
+                      <BadgeCheck className="h-4 w-4 mr-2 text-green-600" />
                       <span>{benefit}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p>待遇情報がまだ登録されていません</p>
+                <p className="text-gray-500">待遇情報がまだ登録されていません</p>
               )}
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* アクセス・住所 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <MapPin className="mr-2 h-5 w-5" />
+            {/* アクセス・住所 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <MapPin className="h-5 w-5 mr-2 text-gray-700" />
                 アクセス・住所
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
+              </h3>
+              
+              <div className="space-y-3">
                 <div>
-                  <h3 className="font-semibold mb-2">エリア</h3>
+                  <h4 className="font-medium text-gray-600">エリア</h4>
                   <p>{profile.location}</p>
                 </div>
                 
                 {profile.address && (
                   <div>
-                    <h3 className="font-semibold mb-2">住所</h3>
+                    <h4 className="font-medium text-gray-600">住所</h4>
                     <p>{profile.address}</p>
                   </div>
                 )}
                 
                 {profile.access_info && (
                   <div>
-                    <h3 className="font-semibold mb-2">アクセス</h3>
+                    <h4 className="font-medium text-gray-600">アクセス</h4>
                     <p>{profile.access_info}</p>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* 連絡先 */}
-          <Card className="overflow-hidden shadow-md">
-            <CardHeader className="bg-primary/10">
-              <CardTitle className="flex items-center text-xl">
-                <Phone className="mr-2 h-5 w-5" />
+            {/* 連絡先 */}
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center">
+                <Phone className="h-5 w-5 mr-2 text-gray-700" />
                 連絡先
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
+              </h3>
+              
+              <div className="space-y-3">
                 {profile.recruiter_name && (
                   <div>
-                    <h3 className="font-semibold mb-2">担当者</h3>
+                    <h4 className="font-medium text-gray-600">担当者</h4>
                     <p>{profile.recruiter_name}</p>
                   </div>
                 )}
                 
                 {profile.phone_numbers && profile.phone_numbers.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">電話番号</h3>
+                    <h4 className="font-medium text-gray-600">電話番号</h4>
                     <ul className="space-y-1">
                       {profile.phone_numbers.map((phone, index) => (
                         <li key={index} className="flex items-center">
-                          <Phone className="h-4 w-4 mr-2 text-primary" />
+                          <Phone className="h-4 w-4 mr-2 text-blue-600" />
                           <span>{phone}</span>
                         </li>
                       ))}
@@ -259,11 +280,11 @@ export default function StorePreview() {
                 
                 {profile.email_addresses && profile.email_addresses.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">メールアドレス</h3>
+                    <h4 className="font-medium text-gray-600">メールアドレス</h4>
                     <ul className="space-y-1">
                       {profile.email_addresses.map((email, index) => (
                         <li key={index} className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-primary" />
+                          <Mail className="h-4 w-4 mr-2 text-blue-600" />
                           <span>{email}</span>
                         </li>
                       ))}
@@ -271,30 +292,15 @@ export default function StorePreview() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* フォトギャラリー */}
-          {profile.gallery_photos && profile.gallery_photos.length > 0 && (
-            <Card className="overflow-hidden shadow-md">
-              <CardHeader className="bg-primary/10">
-                <CardTitle className="flex items-center text-xl">
-                  <Image className="mr-2 h-5 w-5" />
-                  フォトギャラリー
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <PhotoGalleryDisplay photos={profile.gallery_photos} />
-              </CardContent>
-            </Card>
-          )}
+            </section>
+          </div>
         </div>
       </main>
 
-      {/* フッター */}
-      <footer className="bg-gray-800 text-white py-6 mt-12">
-        <div className="container mx-auto px-4">
-          <p className="text-center">&copy; 2025 {profile.business_name || 'テスト店舗'}. All rights reserved.</p>
+      {/* シンプルなフッター */}
+      <footer className="border-t bg-gray-50 mt-8 py-4">
+        <div className="max-w-4xl mx-auto px-4 text-center text-gray-600 text-sm">
+          <p>このプレビューは管理用です。実際の公開ページとは異なります。</p>
         </div>
       </footer>
     </div>
