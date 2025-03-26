@@ -25,7 +25,64 @@ export default function StoreDesignManager() {
 
   // デフォルトのデザイン設定を取得する関数 - 共通ファイルから取得
   const getDefaultSettings = (): DesignSettings => {
-    return getDefaultDesignSettings();
+    // すべてのセクションを含む完全な設定を確保
+    const defaultSettings = getDefaultDesignSettings();
+    
+    // セクションの存在確認（デバッグログ）
+    const sectionIds = defaultSettings.sections.map(s => s.id);
+    console.log('デフォルト設定のセクションリスト:', sectionIds);
+    
+    // 必須セクションの存在チェック
+    const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
+      'salary', 'schedule', 'requirements', 'special_offers', 'trial_entry', 
+      'campaigns', 'access', 'contact', 'sns_links', 'blog'];
+    
+    for (const id of requiredSections) {
+      if (!sectionIds.includes(id)) {
+        console.warn(`必須セクション "${id}" がデフォルト設定に存在しません。追加します。`);
+        // 不足しているセクションを追加（順序は既存の最大値+1）
+        const maxOrder = Math.max(...defaultSettings.sections.map(s => s.order));
+        defaultSettings.sections.push({
+          id,
+          title: getSectionTitle(id),
+          visible: true,
+          order: maxOrder + 1,
+          settings: {
+            backgroundColor: '#ffffff',
+            textColor: '#333333',
+            borderColor: '#e0e0e0',
+            titleColor: defaultSettings.globalSettings.mainColor,
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        });
+      }
+    }
+    
+    return defaultSettings;
+  };
+  
+  // セクションIDから表示名を取得する補助関数
+  const getSectionTitle = (id: string): string => {
+    switch(id) {
+      case 'header': return 'ヘッダー';
+      case 'catchphrase': return 'キャッチコピー・仕事内容';
+      case 'photo_gallery': return '写真ギャラリー';
+      case 'benefits': return '待遇・環境';
+      case 'salary': return '給与情報';
+      case 'schedule': return '勤務時間';
+      case 'requirements': return '応募条件';
+      case 'special_offers': return '特別オファー';
+      case 'trial_entry': return '体験入店';
+      case 'campaigns': return 'キャンペーン';
+      case 'access': return 'アクセス情報';
+      case 'contact': return '問い合わせ';
+      case 'sns_links': return 'SNSリンク';
+      case 'blog': return '店舗ブログ';
+      default: return `セクション: ${id}`;
+    }
   };
 
   // 設定を取得するクエリ

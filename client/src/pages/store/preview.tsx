@@ -210,9 +210,20 @@ export default function StorePreview() {
       return getSectionSettings('catchphrase');
     }
     
+    // セクションを検索
     const section = designSettings.sections.find(s => s.id === sectionId);
     if (!section) {
       debugLog(`セクション設定が見つかりません: ${sectionId}、デフォルト設定を使用します`);
+      
+      // デフォルト設定からセクションを探す
+      const defaultSection = getDefaultDesignSettings().sections.find(s => s.id === sectionId);
+      
+      if (defaultSection && defaultSection.settings) {
+        debugLog(`デフォルト設定から ${sectionId} セクションの設定を使用します`);
+        return defaultSection.settings;
+      }
+      
+      // デフォルトの基本設定を返す
       return {
         backgroundColor: '#ffffff',
         textColor: '#333333',
@@ -238,9 +249,18 @@ export default function StorePreview() {
       return isSectionVisible('catchphrase');
     }
     
+    // セクションを検索
     const section = designSettings.sections.find(s => s.id === sectionId);
     if (!section) {
       console.log(`[Preview] セクションが見つかりません: ${sectionId}`);
+      
+      // 特別に処理する必要があるセクション（プレビューでは表示する）
+      const criticalSections = ['header', 'special_offers', 'sns_links', 'blog'];
+      if (criticalSections.includes(sectionId)) {
+        console.log(`[Preview] ${sectionId} は重要なセクションなので表示します`);
+        return true;
+      }
+      
       return false; // 見つからない場合は非表示
     }
     
