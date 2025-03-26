@@ -19,7 +19,24 @@ export function PhotoGalleryFormTab({ control, setValue }: PhotoGalleryFormTabPr
 
   // フォトギャラリーの更新
   const handleGalleryPhotosChange = (newPhotos: any[]) => {
-    setValue('gallery_photos', newPhotos, { shouldDirty: true });
+    console.log('PhotoGalleryFormTab: 写真更新', {
+      現在のデータ: galleryPhotos ? galleryPhotos.length : 0,
+      新しいデータ: newPhotos ? newPhotos.length : 0
+    });
+    
+    // 完全な新しい配列を作成して、参照の問題を避ける
+    const processedPhotos = newPhotos.map(photo => {
+      // 必須のidフィールドを確実に持つようにする
+      return {
+        ...photo,
+        id: photo.id || `photo-${Math.random().toString(36).substr(2, 9)}`
+      };
+    });
+    
+    setValue('gallery_photos', processedPhotos, { 
+      shouldDirty: true,
+      shouldValidate: true
+    });
   };
 
   return (

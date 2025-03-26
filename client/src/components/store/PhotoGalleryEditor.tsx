@@ -76,11 +76,12 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
-    // 一時的な配列を作成して、アップロードした写真を保存
-    let tempUploadedPhotos: PhotoGalleryEditorProps['photos'] = [];
-
+    
     try {
       console.log("ファイルアップロード開始:", files.length, "個のファイル");
+      // 現在の写真配列のコピーを作成
+      let currentPhotos = [...photos];
+      
       // ファイルを一つずつ順番に処理
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -107,27 +108,24 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
           const result = await uploadPhoto(base64Data, file.name);
           console.log(`ファイル ${file.name} のアップロード成功:`, result.url);
           
-          // 新しい写真オブジェクトを作成
+          // 新しい写真オブジェクトを作成して必ず一意のIDを持たせる
           const newPhoto = {
-            id: nanoid(),
+            id: `photo-${nanoid()}`, // IDに接頭辞を追加して確実に一意にする
             url: result.url,
             category: activeTab,
-            order: (photos.length + tempUploadedPhotos.length),
-            featured: false
+            order: currentPhotos.length,
+            featured: false,
+            title: `写真 ${currentPhotos.length + 1}` // デフォルトのタイトルを設定
           };
           
-          // 一時配列に追加
-          tempUploadedPhotos = [...tempUploadedPhotos, newPhoto];
+          // 写真配列に追加
+          currentPhotos = [...currentPhotos, newPhoto];
           
-          // 現在の状態を反映した最新の写真配列を作成
-          const allUpdatedPhotos = [...photos, ...tempUploadedPhotos];
-          
-          // 直接親のonChangeを呼び出す
-          console.log("写真配列を更新:", allUpdatedPhotos.length, "枚");
-          onChange(allUpdatedPhotos);
+          // その都度親コンポーネントに更新を通知
+          console.log("写真配列を更新:", currentPhotos.length, "枚");
+          onChange(currentPhotos);
         } catch (error) {
           console.error('画像アップロードエラー:', error);
-          alert('画像のアップロードに失敗しました');
         }
       }
     } catch (error) {
