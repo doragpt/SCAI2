@@ -600,33 +600,20 @@ export default function StorePreview() {
         );
         
       case 'sns_links':
-        return profile.sns_urls && profile.sns_urls.length > 0 && (
+        return profile.sns_urls && Array.isArray(profile.sns_urls) && profile.sns_urls.length > 0 && (
           <div key={sectionId} style={getSectionStyle('sns_links')} className="mb-8">
             <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
               <Share2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
               SNS
             </h3>
             <div className="flex flex-wrap gap-3 mt-4" style={{ color: getSectionSettings('sns_links').textColor || '#333333' }}>
-              {profile.sns_urls.map((sns, index) => (
-                <a 
-                  key={index}
-                  href={sns.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-4 py-2 rounded-full"
-                  style={{ 
-                    backgroundColor: globalSettings.secondaryColor,
-                    color: globalSettings.mainColor
-                  }}
-                >
-                  {sns.platform === 'twitter' && <TwitterIcon className="h-5 w-5 mr-2" />}
-                  {sns.platform === 'instagram' && <InstagramIcon className="h-5 w-5 mr-2" />}
-                  {sns.platform === 'line' && <MessageSquare className="h-5 w-5 mr-2" />}
-                  {sns.platform === 'tiktok' && <Video className="h-5 w-5 mr-2" />}
-                  {sns.platform === 'other' && <Link className="h-5 w-5 mr-2" />}
-                  {sns.name || sns.platform}
-                </a>
-              ))}
+              <SNSLinksDisplay 
+                links={profile.sns_urls.map((sns: any) => ({
+                  platform: sns.platform || 'その他',
+                  url: sns.url || '#',
+                  text: sns.name || sns.platform || 'SNS'
+                }))} 
+              />
             </div>
           </div>
         );
@@ -638,7 +625,7 @@ export default function StorePreview() {
               <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
               店舗ブログ
             </h3>
-            <Link 
+            <RouterLink 
               to={`/blog?store_id=${profile.id}`}
               className="inline-flex items-center px-4 py-2 rounded-md mt-3"
               style={{ 
@@ -648,7 +635,7 @@ export default function StorePreview() {
             >
               <BookOpen className="h-4 w-4 mr-2" />
               ブログを読む
-            </Link>
+            </RouterLink>
           </div>
         );
         
@@ -1085,19 +1072,12 @@ export default function StorePreview() {
                   </h3>
                   
                   <SNSLinksDisplay 
-                    links={(profile.sns_urls || []).map(url => {
-                      // URLからプラットフォームを推測
-                      let platform = 'その他';
-                      if (url.includes('twitter.com') || url.includes('x.com')) platform = 'Twitter';
-                      else if (url.includes('instagram.com')) platform = 'Instagram';
-                      else if (url.includes('facebook.com')) platform = 'Facebook';
-                      else if (url.includes('youtube.com')) platform = 'Youtube';
-                      else if (url.includes('line.me')) platform = 'Line';
-                      
+                    links={(profile.sns_urls || []).map((item: SnsUrl) => {
+                      // SnsUrl型のオブジェクトを使用
                       return {
-                        platform,
-                        url,
-                        text: platform
+                        platform: item.platform,
+                        url: item.url,
+                        text: item.name || item.platform
                       };
                     })}
                     snsId={profile.sns_id || undefined}
