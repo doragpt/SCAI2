@@ -749,18 +749,18 @@ export default function StorePreview() {
                 <div className="max-w-4xl mx-auto px-4 py-6">
                   <h1 className="text-2xl font-bold" 
                     style={{ color: (getSectionSettings('header') as SectionSettings).titleColor || '#333333' }}>
-                    {profile.business_name || 'テスト店舗'}
+                    {profile && profile.business_name || 'テスト店舗'}
                   </h1>
                   <div className="flex items-center mt-2" 
                     style={{ color: (getSectionSettings('header') as SectionSettings).textColor || '#666666' }}>
                     <MapPin className="h-4 w-4 mr-1" />
-                    <span className="mr-3">{profile.location}</span>
+                    <span className="mr-3">{profile && profile.location || ''}</span>
                     <span className="px-2 py-0.5 rounded text-sm" 
                       style={{ 
                         backgroundColor: globalSettings.secondaryColor,
                         color: globalSettings.mainColor 
                       }}>
-                      {profile.service_type}
+                      {profile && profile.service_type || ''}
                     </span>
                   </div>
                 </div>
@@ -777,183 +777,11 @@ export default function StorePreview() {
 
 
 
-              {/* アクセス・住所 - コメントアウト、renderOrderedSectionsで管理 */}
-              {false && isSectionVisible('access') && (
-                <div style={getSectionStyle('access')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('access')} className="flex items-center">
-                    <MapPin className="h-5 w-5 mr-2" style={{ color: getSectionSettings('access').titleColor || globalSettings.mainColor }} />
-                    アクセス・住所
-                  </h3>
-                  
-                  <div className="space-y-3" style={{ color: getSectionSettings('access').textColor || '#333333' }}>
-                    <div>
-                      <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>エリア</h4>
-                      <p>{profile?.location}</p>
-                    </div>
-                    
-                    {profile?.address && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>住所</h4>
-                        <p>{profile.address}</p>
-                      </div>
-                    )}
-                    
-                    {profile?.access_info && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>アクセス</h4>
-                        <p>{profile.access_info}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* 
+                各セクションは renderOrderedSectionsで動的に生成されるため
+                個別のセクションレンダリングコードは削除しました
+              */}
 
-              {/* 連絡先 - コメントアウト、renderOrderedSectionsで管理 */}
-              {false && isSectionVisible('contact') && (
-                <div style={getSectionStyle('contact')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('contact')} className="flex items-center">
-                    <Phone className="h-5 w-5 mr-2" style={{ color: getSectionSettings('contact').titleColor || globalSettings.mainColor }} />
-                    連絡先
-                  </h3>
-                  
-                  <div className="space-y-3" style={{ color: getSectionSettings('contact').textColor || '#333333' }}>
-                    {profile?.recruiter_name && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>担当者</h4>
-                        <p>{profile.recruiter_name}</p>
-                      </div>
-                    )}
-                    
-                    {profile?.phone_numbers && profile.phone_numbers.length > 0 && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>電話番号</h4>
-                        <ul className="space-y-1">
-                          {profile.phone_numbers.map((phone, index) => (
-                            <li key={index} className="flex items-center">
-                              <Phone className="h-4 w-4 mr-2" style={{ color: globalSettings.mainColor }} />
-                              <span>{phone}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {profile?.email_addresses && profile.email_addresses.length > 0 && (
-                      <div>
-                        <h4 className="font-medium" style={{ color: globalSettings.mainColor }}>メールアドレス</h4>
-                        <ul className="space-y-1">
-                          {profile.email_addresses.map((email, index) => (
-                            <li key={index} className="flex items-center">
-                              <Mail className="h-4 w-4 mr-2" style={{ color: globalSettings.mainColor }} />
-                              <span>{email}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* SNSリンク - コメントアウト、renderOrderedSectionsで管理 */}
-              {false && isSectionVisible('sns_links') && profile && (
-                (profile?.sns_id || profile?.sns_url || profile?.sns_text || 
-                (profile?.sns_urls && profile.sns_urls.length > 0)) && (
-                <div style={getSectionStyle('sns_links')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
-                    公式SNS
-                  </h3>
-                  
-                  <SNSLinksDisplay 
-                    links={Array.isArray(profile?.sns_urls) 
-                      ? profile.sns_urls.map((item: any) => {
-                          // 文字列またはオブジェクトの両方に対応
-                          if (typeof item === 'string') {
-                            // 文字列の場合はデフォルト値でオブジェクトを作成
-                            try {
-                              const url = new URL(item);
-                              return {
-                                platform: 'その他',
-                                url: item,
-                                text: url.hostname
-                              };
-                            } catch (e) {
-                              return {
-                                platform: 'その他',
-                                url: item,
-                                text: 'リンク'
-                              };
-                            }
-                          } else {
-                            // オブジェクトの場合はそのプロパティを使用
-                            return {
-                              platform: item.platform || 'その他',
-                              url: item.url || '#',
-                              text: item.name || item.platform || 'SNS'
-                            };
-                          }
-                        })
-                      : []
-                    }
-                    snsId={profile?.sns_id || undefined}
-                    snsUrl={profile?.sns_url || undefined}
-                    snsText={profile?.sns_text || undefined}
-                    textColor={getSectionSettings('sns_links').textColor}
-                  />
-                </div>
-              ))}
-
-              {/* 店舗ブログ - コメントアウト、renderOrderedSectionsで管理 */}
-              {false && isSectionVisible('blog') && (
-                <div style={getSectionStyle('blog')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
-                    <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
-                    店舗ブログ
-                  </h3>
-                  
-                  <div className="space-y-4" style={{ color: getSectionSettings('blog').textColor || '#333333' }}>
-                    {/* ブログ記事リスト（最新3件のみ表示） */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="border rounded-md overflow-hidden hover:shadow-md transition-shadow">
-                          <div className="aspect-video bg-gray-200 relative">
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                              <Image className="h-10 w-10" />
-                            </div>
-                          </div>
-                          <div className="p-3">
-                            <div className="text-xs text-gray-500 mb-1">{new Date().toLocaleDateString('ja-JP')}</div>
-                            <h4 className="font-medium mb-2 line-clamp-1" style={{ color: globalSettings.mainColor }}>
-                              ブログ記事タイトルがここに表示されます
-                            </h4>
-                            <p className="text-sm line-clamp-2">
-                              ブログ記事の内容がここに表示されます。実際の記事が投稿されると、ここにその記事の抜粋が表示されます。
-                            </p>
-                            <div className="mt-2 text-right">
-                              <span className="text-sm" style={{ color: globalSettings.mainColor }}>
-                                続きを読む →
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="text-center mt-4">
-                      <a href={`/blog?store_id=${profile?.id || ''}`} target="_blank" rel="noopener noreferrer" 
-                         className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md cursor-pointer" 
-                         style={{ 
-                          backgroundColor: globalSettings.mainColor, 
-                          color: '#ffffff'
-                         }}>
-                        <File className="h-4 w-4 mr-2" />
-                        ブログ一覧を見る
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
             </main>
 
             {/* フッター */}
