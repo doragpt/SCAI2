@@ -86,42 +86,17 @@ const PublicBlogListPage = () => {
     const { currentPage, totalPages } = pagination;
     if (totalPages <= 1) return null;
 
-    const pageItems = [];
-    const maxPagesToShow = 5;
-    const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageItems.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            isActive={i === currentPage}
-            onClick={() => setPage(i)}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
+    const handlePageChange = (page: number) => {
+      setPage(page);
+    };
 
     return (
-      <Pagination className="mt-6">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-            />
-          </PaginationItem>
-          {pageItems}
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        className="mt-6"
+      />
     );
   };
 

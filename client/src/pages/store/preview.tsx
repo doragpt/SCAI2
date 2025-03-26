@@ -563,7 +563,16 @@ export default function StorePreview() {
                     <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
                     特別オファー
                   </h3>
-                  <SpecialOffersDisplay specialOffers={profile.special_offers} />
+                  <SpecialOffersDisplay specialOffers={profile.special_offers?.map(offer => ({
+                    id: offer.id || '',
+                    title: offer.title || '',
+                    description: offer.description || '',
+                    backgroundColor: '#ff4d7d',
+                    textColor: '#333333',
+                    icon: 'sparkles',
+                    order: 0,
+                    ...offer
+                  }))} />
                 </div>
               )}
 
@@ -574,7 +583,19 @@ export default function StorePreview() {
                     <Gift className="h-5 w-5 mr-2" style={{ color: getSectionSettings('trial_entry').titleColor || globalSettings.mainColor }} />
                     体験入店保証
                   </h3>
-                  <TrialEntryDisplay trialEntry={profile.trial_entry} />
+                  <TrialEntryDisplay trialEntry={{
+                    dailyGuarantee: profile.trial_entry.daily_guarantee,
+                    hourlyRate: profile.trial_entry.hourly_rate,
+                    workingHours: profile.trial_entry.working_hours,
+                    requirements: profile.trial_entry.requirements,
+                    benefitsDescription: profile.trial_entry.benefits_description,
+                    startDate: profile.trial_entry.start_date,
+                    endDate: profile.trial_entry.end_date,
+                    isActive: profile.trial_entry.is_active,
+                    examples: profile.trial_entry.examples,
+                    requiredDocuments: profile.trial_entry.required_documents,
+                    qaItems: profile.trial_entry.qa_items
+                  }} />
                 </div>
               )}
 
@@ -587,7 +608,19 @@ export default function StorePreview() {
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
                     {profile.campaigns.map((campaign, index) => (
-                      <CampaignDisplay key={index} campaign={campaign} />
+                      <CampaignDisplay key={index} campaign={{
+                        id: campaign.id || `campaign-${index}`,
+                        title: campaign.title,
+                        description: campaign.description,
+                        amount: campaign.amount,
+                        type: campaign.type,
+                        conditions: campaign.conditions,
+                        startDate: campaign.startDate,
+                        endDate: campaign.endDate,
+                        isActive: campaign.isActive,
+                        isLimited: campaign.isLimited,
+                        targetAudience: campaign.targetAudience
+                      }} />
                     ))}
                   </div>
                 </div>
@@ -697,9 +730,9 @@ export default function StorePreview() {
                         text: platform
                       };
                     })}
-                    snsId={profile.sns_id}
-                    snsUrl={profile.sns_url}
-                    snsText={profile.sns_text}
+                    snsId={profile.sns_id || undefined}
+                    snsUrl={profile.sns_url || undefined}
+                    snsText={profile.sns_text || undefined}
                     textColor={getSectionSettings('sns_links').textColor}
                   />
                 </div>
