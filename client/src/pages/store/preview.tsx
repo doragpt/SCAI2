@@ -7,8 +7,6 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { Link as RouterLink } from 'wouter';
 import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
 import { SpecialOffersDisplay } from '@/components/store/SpecialOffersDisplay';
-import { TrialEntryDisplay } from '@/components/store/TrialEntryDisplay';
-import { CampaignDisplay } from '@/components/store/CampaignDisplay';
 import { SNSLinksDisplay } from '@/components/store/SNSLinksDisplay';
 import { 
   Building2, Clock, MapPin, Phone, Mail, BadgeCheck, 
@@ -18,8 +16,6 @@ import {
   Share2, Link as LinkIcon, Video, Twitter as TwitterIcon, Instagram as InstagramIcon
 } from 'lucide-react';
 import { 
-  type TrialEntryData, 
-  type CampaignData, 
   type SpecialOffer, 
   type GalleryPhoto 
 } from '@shared/schema';

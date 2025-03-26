@@ -135,13 +135,11 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-
-
       {
         id: "header",
         title: "ヘッダー",
         visible: true,
-        order: 1,
+        order: 0,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
