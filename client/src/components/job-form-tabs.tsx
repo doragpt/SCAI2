@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home, Sparkles } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home, Sparkles, ImageIcon } from "lucide-react";
 import { SpecialOfferEditor } from "./store/SpecialOfferEditor";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -18,6 +18,7 @@ import { JobEditor } from "@/components/job-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhotoGalleryFormTab } from "./store/PhotoGalleryFormTab";
 
 type JobFormProps = {
   initialData?: StoreProfile;
