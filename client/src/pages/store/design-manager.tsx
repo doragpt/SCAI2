@@ -139,9 +139,10 @@ export default function StoreDesignManager() {
       
       // データの整合性チェック
       const defaultSettings = getDefaultSettings();
+      // 注：requirementsはデザイン設定に含めるが、特別処理するため末尾に配置
       const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
-        'salary', 'schedule', 'requirements', 'special_offers', 
-        'access', 'contact', 'sns_links', 'blog'];
+        'salary', 'schedule', 'access', 'contact', 'sns_links', 
+        'special_offers', 'blog', 'requirements'];
       
       // APIから取得したデータのセクションIDs
       const apiSectionIds = designSettingsQuery.data.sections.map(s => s.id);

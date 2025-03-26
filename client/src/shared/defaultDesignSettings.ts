@@ -7,6 +7,24 @@ import { DesignSettings } from '@shared/schema';
 export const getDefaultDesignSettings = (): DesignSettings => {
   return {
     sections: [
+      // ヘッダーは常に先頭（特別扱い）
+      {
+        id: "header",
+        title: "ヘッダー",
+        visible: true,
+        order: 0, // 特別な順序として0を使用
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      // 以下は実際の表示順序（1から始まる）
       {
         id: "catchphrase",
         title: "キャッチコピー・仕事内容",
@@ -56,26 +74,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "requirements",
-        title: "応募条件",
-        visible: true,
-        order: 4,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
         id: "salary",
         title: "給与情報",
         visible: true,
-        order: 5,
+        order: 4,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -91,7 +93,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "schedule",
         title: "勤務時間",
         visible: true,
-        order: 6,
+        order: 5,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -107,7 +109,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "access",
         title: "アクセス情報",
         visible: true,
-        order: 7,
+        order: 6,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -123,7 +125,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "contact",
         title: "問い合わせ",
         visible: true,
-        order: 8,
+        order: 7,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -136,10 +138,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "header",
-        title: "ヘッダー",
+        id: "sns_links",
+        title: "SNSリンク",
         visible: true,
-        order: 0,
+        order: 8,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -168,8 +170,8 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "sns_links",
-        title: "SNSリンク",
+        id: "blog",
+        title: "店舗ブログ",
         visible: true,
         order: 10,
         settings: {
@@ -183,11 +185,12 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // requirements（応募条件）をデザイン設定とは別に最後に配置
       {
-        id: "blog",
-        title: "店舗ブログ",
+        id: "requirements",
+        title: "応募条件",
         visible: true,
-        order: 11,
+        order: 11, // 最後の位置に配置
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
