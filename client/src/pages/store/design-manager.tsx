@@ -227,7 +227,7 @@ export default function StoreDesignManager() {
   };
 
   // 設定を取得するクエリ
-  const designSettingsQuery = useQuery({
+  const designSettingsQuery = useQuery<DesignSettings, Error>({
     queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
     queryFn: async () => {
       try {
