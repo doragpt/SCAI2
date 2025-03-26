@@ -896,6 +896,16 @@ export default function StoreDashboard() {
                   <Briefcase className="h-4 w-4 mr-2" />
                   採用設定
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="design" 
+                  className="py-2 rounded-lg"
+                  onClick={() => {
+                    window.location.href = '/store/design-manager';
+                  }}
+                >
+                  <PenBox className="h-4 w-4 mr-2" />
+                  デザイン管理
+                </TabsTrigger>
               </TabsList>
 
               {/* 店舗情報タブ */}
