@@ -1,0 +1,1307 @@
+
+    
+    
+        
+    
+        
+
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
+
+<head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+    <meta http-equiv="content-script-type" content="text/javascript" />
+    <meta http-equiv="content-style-type" content="text/css" />
+    <meta http-equiv="imagetoolbar" content="no" />
+    <meta name="keywords" content= "<!-- keywords -->" />
+    <meta name="description" content= "<!-- description -->" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <script type="text/javascript">var enableDmn = false; var spModePc = false;</script><script type="text/javascript">var _GirlsScript=function(){};_GirlsScript.url=function(change_url){enableDmn=enableDmn||false;if(!enableDmn){return change_url;}var url=location.search;var mode="";spModePc=spModePc||false;if(spModePc&&change_url.match(/^\/noscreen\/ajax\//)){if(change_url.match(/(&|\?)spmode=pc/)){return change_url;}mode="spmode=pc";}else{if(change_url.match(/(&|\?)(pcmode=sp|spmode=pc)/)){return change_url;}if(url.match(/(&|\?)pcmode=sp/)){mode="pcmode=sp";}else if(url.match(/(&|\?)spmode=pc/)){mode="spmode=pc";}}var result=change_url;var suffix="";if(mode!=""){if(result.indexOf("#")!=-1){var tmpUrl=result.split("#");if(tmpUrl.length>1){result=tmpUrl[0];suffix="#"+tmpUrl[1];}}if(result.indexOf("?")!=-1){result=result+"&"+mode;}else{result=result+"?"+mode;}result+=suffix;}return result;}</script>
+    <title>DX管理　PCデザイン変更｜ガールズヘブン マネージャー管理</title>
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/jquery.toastmessage.css">
+    <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/font-awesome.min.css">
+    
+    
+            <link type="text/css" rel="stylesheet" href="https://manager.girlsheaven-job.net/css/dx_design_pc.css?cache01=20240917094920">
+        
+
+    <script language="javascript" type='text/javascript' src="https://manager.girlsheaven-job.net/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery-ui-1.9.2.custom.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.upload-1.0.2.js"></script>
+    <script language="JavaScript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/jquery.toastmessage.js"></script>
+    
+        
+    
+    
+    
+            <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/dx_design_pc.js?cache01=20240917094920"></script>
+        <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/upload_image2.js?cache01=20170706094453">
+        
+
+    <script language="javascript" type="text/javascript" src="https://manager.girlsheaven-job.net/js/common.js?cache01=20240227091753"></script>
+
+    <script language="javascript" type='text/javascript' src="https://manager.girlsheaven-job.net/js/jscolor/jscolor_custom_design.js?cache01=20160914145816"></script>
+    <script language="javascript" type='text/javascript' src="https://manager.girlsheaven-job.net/js/colorSelect.js?cache01=20160914145816"></script>
+
+
+
+
+
+    <Script Language="JavaScript">
+    <!--
+                    var exePath = 'dx_pc_design_edit';
+            var postParam = {shop_id: '149698'};
+            var defaultUrl = 'https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=8&spmode=pc';
+            var previewUrl = 'https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=8&spmode=pc';
+            //-->
+    </Script>
+
+    <!-- Google TreasureData Tracking -->
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    !function(t,e){if(void 0===e[t]){e[t]=function(){e[t].clients.push(this),this._init=[Array.prototype.slice.call(arguments)]},
+    e[t].clients=[];for(var r=function(t){return function(){return this["_"+t]=this["_"+t]||[],
+    this["_"+t].push(Array.prototype.slice.call(arguments)), this}}, s=["blockEvents",
+    "unblockEvents", "setSignedMode", "setAnonymousMode", "resetUUID", "addRecord",
+    "fetchGlobalID", "set", "trackEvent", "trackPageview", "trackClicks", "ready"],
+    n=0;n<s.length;n++){var c=s[n];e[t].prototype[c]=r(c)}var o=document.createElement("script");o.type="text/javascript",
+    o.async=!0, o.src=("https:"===document.location.protocol?"https:":"http:")+"//cdn.treasuredata.com/sdk/2.1/td.min.js";
+    var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o, a)}}("Treasure", this);
+    }
+    </script>
+    <!-- Load fingerprint2 library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.8.6/fingerprint2.min.js"></script>
+    <script type="text/javascript">
+    if (!~navigator.userAgent.indexOf('Google Page Speed Insights') && !~navigator.userAgent.indexOf('Googlebot') && !~navigator.userAgent.indexOf('Chrome-Lighthouse')) {
+    var td = new Treasure({
+      host: 'in.treasuredata.com',
+      database: 'surprisecrew_production',
+      writeKey: '10483/24240077c38c8ca9b2128445a441bd4b560a6d52'
+    });
+    td.setSignedMode();
+    // Enable cross-domain tracking
+    td.set('$global', 'td_global_id', 'td_global_id');
+    
+    function getCookieForTD(key) {
+      var cookieString = document.cookie;
+      var cookieKeyArray = cookieString.split(';');
+      for (var i=0; i<cookieKeyArray.length; i++) {
+        var targetCookie = cookieKeyArray[i];
+        targetCookie = targetCookie.replace(/(^\s+)|(\s+$)/g, '');
+        var valueIndex = targetCookie.indexOf('=');
+        if (targetCookie.substring(0, valueIndex) == key) {
+            return unescape(targetCookie.slice(valueIndex + 1));
+        }
+      }
+      return '';
+    }
+      function uuid() {
+        var uuid = '', i, random;
+        for (i = 0; i < 15; i++) {
+          random = Math.random() * 10 | 0;
+            uuid += random;
+        }
+        return uuid;
+      }
+      if (getCookieForTD('unique_id') == '') {
+        var date, expires;
+        date = new Date();
+        date.setTime(date.getTime() + 2*356*24*60*60*1000); // 二年有効
+        expires = date.toGMTString();
+        document.cookie = 'unique_id=' + uuid() + ' ; path=/; expires=' + expires;
+      }
+    
+    new Fingerprint2().get(function(result, components) {
+        var fingerprint = result;
+        td.set('g_td_pageviews', {
+            fingerprint: fingerprint,
+            uniqueId: getCookieForTD('unique_id'),
+            
+            group_admin_id: getCookieForTD('group_admin_id'),
+            shop_org_id: getCookieForTD('shop_org_id'),
+            page: 'pcmanager'
+        });
+        td.trackPageview('g_td_pageviews');
+    });
+    }
+    </script>
+    <!-- End Google TreasureData Tracking -->
+    </head>
+
+
+<body class="wp-core-ui wp-customizer js locale-ja" id="pc-dx-design">
+
+    <div class="wp-full-overlay expanded">
+        <form id="customize-controls" class="wrap wp-full-overlay-sidebar" name="srvEntryListForm" method="POST" target="preview-frame" action="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=8&spmode=pc">
+            <div id="screen-reader-messages" class="screen-reader-text" aria-atomic="true" aria-role="status" aria-relevant="all" aria-live="polite"></div>
+            <div id="customize-header-actions" class="wp-full-overlay-header">
+                <span class="control-panel-back" tabindex="0"></span>
+                <a href="javascript:void(0);" class="save_btn">保存</a>
+                <a class="term_btn term_sp" href="/dx_sp_design_edit/">
+                    <i class="fa fa-mobile" aria-hidden="true"></i>スマホ切替
+                </a>
+                <span class="spinner"></span>
+            </div>
+            <div id="widgets-right">
+                <div class="wp-full-overlay-sidebar-content" tabindex="-1">
+                    <div class="customize-block">
+                        <div id="customize-info" class="normal-section">
+                            <div class="normal-section-title" tabindex="0" aria-label="カスタマイザーオプション">
+                                <span class="preview-notice">
+                                    <strong class="theme-name site-title">PCDX店</strong>をカスタマイズ中です
+                                </span>
+                            </div>
+                        </div>
+                        <div id="customize-theme-controls">
+                            <ul class="setting_list">
+                                <li id="accordion-section-widgets_sort_panel" class="accordion-top accordion-section control-section control-panel control-panel-default" style="">
+                                    
+                                    
+                                    <h3 id="accordion-section-widgets_sort-title" class="accordion-section-title open-control-panel" tabindex="0">コンテンツ</h3>
+                                    
+                                    <ul id="accordion-section-widgets_sort-content" class="accordion-sub-container control-panel-content widgets_sort_panel">
+                                        <div class="accordion-section-title" tabindex="0" aria-label="カスタマイザーオプション">
+                                            <span class="preview-notice">
+                                                
+                                                
+                                                <strong class="panel-title">コンテンツ</strong>をカスタマイズ中です
+                                                
+                                            </span>
+                                        </div>
+                                        <li id="accordion-section-sidebar-widgets-sort" class="accordion-section control-section control-section-sidebar control-subsection open no-close" style="">
+                                            <h3 class="accordion-section-title" tabindex="0">メインカラム(1カラム版)</h3>
+                                            <ul class="sort-list accordion-section-content no-close" style="display: block;">
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="1" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>キャッチコピー・仕事内容</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-1" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-1" name="bg_color_rgb-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-1" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-1_def" name="bg_color_rgb-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-1" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-1" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-1" name="title_font_color_rgb-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-1" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-1_def" name="title_font_color_rgb-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-1" name="main_font_color_rgb-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-1" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-1_def" name="main_font_color_rgb-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="6" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>募集要項</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="EEEEEE" data-target="bg_color_rgb-6" style="background-color: #EEEEEE;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-6" name="bg_color_rgb-6" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="EEEEEE" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-6" data-default-color="EEEEEE" />
+        <input type="hidden" id="bg_color_rgb-6_def" name="bg_color_rgb-6_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-6" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-6" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-6" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-6" name="title_font_color_rgb-6" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-6" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-6_def" name="title_font_color_rgb-6_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-6" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-6" name="main_font_color_rgb-6" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-6" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-6_def" name="main_font_color_rgb-6_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">リンク色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="833A19" data-target="main_link_color_rgb-6" style="background-color: #833A19;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_link_color_rgb-6" name="main_link_color_rgb-6" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="833A19" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_link_color_rgb-6" data-default-color="833A19" />
+        <input type="hidden" id="main_link_color_rgb-6_def" name="main_link_color_rgb-6_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">罫線色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="999999" data-target="line_color_rgb-6" style="background-color: #999999;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="line_color_rgb-6" name="line_color_rgb-6" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="999999" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="line_color_rgb-6" data-default-color="999999" />
+        <input type="hidden" id="line_color_rgb-6_def" name="line_color_rgb-6_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="9-1" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>DXフリースペース1</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-9-1" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-9-1" name="bg_color_rgb-9-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-9-1" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-9-1_def" name="bg_color_rgb-9-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-9-1" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-9-1" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-9-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-9-1" name="title_font_color_rgb-9-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-9-1" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-9-1_def" name="title_font_color_rgb-9-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-9-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-9-1" name="main_font_color_rgb-9-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-9-1" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-9-1_def" name="main_font_color_rgb-9-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="4" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>先輩ボイス</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="EEEEEE" data-target="bg_color_rgb-4" style="background-color: #EEEEEE;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-4" name="bg_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="EEEEEE" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-4" data-default-color="EEEEEE" />
+        <input type="hidden" id="bg_color_rgb-4_def" name="bg_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-4" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-4" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-4" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-4" name="title_font_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-4" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-4_def" name="title_font_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-4" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-4" name="main_font_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-4" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-4_def" name="main_font_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">名前文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="name_font_color_rgb-4" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="name_font_color_rgb-4" name="name_font_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="name_font_color_rgb-4" data-default-color="333333" />
+        <input type="hidden" id="name_font_color_rgb-4_def" name="name_font_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">吹き出し背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="F6F6F6" data-target="balloon_bg_color_rgb-4" style="background-color: #F6F6F6;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="balloon_bg_color_rgb-4" name="balloon_bg_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="F6F6F6" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="balloon_bg_color_rgb-4" data-default-color="F6F6F6" />
+        <input type="hidden" id="balloon_bg_color_rgb-4_def" name="balloon_bg_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">罫線色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7DAE" data-target="line_color_rgb-4" style="background-color: #FF7DAE;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="line_color_rgb-4" name="line_color_rgb-4" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7DAE" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="line_color_rgb-4" data-default-color="FF7DAE" />
+        <input type="hidden" id="line_color_rgb-4_def" name="line_color_rgb-4_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="7" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>当店のポイント</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-7" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-7" name="bg_color_rgb-7" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-7" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-7_def" name="bg_color_rgb-7_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-7" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-7" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-7" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-7" name="title_font_color_rgb-7" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-7" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-7_def" name="title_font_color_rgb-7_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-7" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-7" name="main_font_color_rgb-7" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-7" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-7_def" name="main_font_color_rgb-7_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="3" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>店長ブログ</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-3" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-3" name="bg_color_rgb-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-3" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-3_def" name="bg_color_rgb-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-3" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-3" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-3" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-3" name="title_font_color_rgb-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-3" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-3_def" name="title_font_color_rgb-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-3" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-3" name="main_font_color_rgb-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-3" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-3_def" name="main_font_color_rgb-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">リンク色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_link_color_rgb-3" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_link_color_rgb-3" name="main_link_color_rgb-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_link_color_rgb-3" data-default-color="333333" />
+        <input type="hidden" id="main_link_color_rgb-3_def" name="main_link_color_rgb-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="9-2" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>DXフリースペース2</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-9-2" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-9-2" name="bg_color_rgb-9-2" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-9-2" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-9-2_def" name="bg_color_rgb-9-2_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-9-2" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-9-2" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-9-2" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-9-2" name="title_font_color_rgb-9-2" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-9-2" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-9-2_def" name="title_font_color_rgb-9-2_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-9-2" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-9-2" name="main_font_color_rgb-9-2" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-9-2" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-9-2_def" name="main_font_color_rgb-9-2_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="9-3" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>DXフリースペース3</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-9-3" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-9-3" name="bg_color_rgb-9-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-9-3" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-9-3_def" name="bg_color_rgb-9-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-9-3" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-9-3" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-9-3" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-9-3" name="title_font_color_rgb-9-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-9-3" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-9-3_def" name="title_font_color_rgb-9-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-9-3" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-9-3" name="main_font_color_rgb-9-3" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-9-3" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-9-3_def" name="main_font_color_rgb-9-3_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="10-1" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>よくある質問に回答！</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="EEEEEE" data-target="bg_color_rgb-10-1" style="background-color: #EEEEEE;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-10-1" name="bg_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="EEEEEE" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-10-1" data-default-color="EEEEEE" />
+        <input type="hidden" id="bg_color_rgb-10-1_def" name="bg_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-10-1" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-10-1" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-10-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-10-1" name="title_font_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-10-1" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-10-1_def" name="title_font_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-10-1" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-10-1" name="main_font_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-10-1" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-10-1_def" name="main_font_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">罫線色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="999999" data-target="line_color_rgb-10-1" style="background-color: #999999;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="line_color_rgb-10-1" name="line_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="999999" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="line_color_rgb-10-1" data-default-color="999999" />
+        <input type="hidden" id="line_color_rgb-10-1_def" name="line_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">帯色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7CAD" data-target="headline_color_rgb-10-1" style="background-color: #FF7CAD;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="headline_color_rgb-10-1" name="headline_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7CAD" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="headline_color_rgb-10-1" data-default-color="FF7CAD" />
+        <input type="hidden" id="headline_color_rgb-10-1_def" name="headline_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">帯文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="headline_font_color_rgb-10-1" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="headline_font_color_rgb-10-1" name="headline_font_color_rgb-10-1" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="headline_font_color_rgb-10-1" data-default-color="FFFFFF" />
+        <input type="hidden" id="headline_font_color_rgb-10-1_def" name="headline_font_color_rgb-10-1_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="8" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>グループ店</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="EEEEEE" data-target="bg_color_rgb-8" style="background-color: #EEEEEE;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-8" name="bg_color_rgb-8" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="EEEEEE" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-8" data-default-color="EEEEEE" />
+        <input type="hidden" id="bg_color_rgb-8_def" name="bg_color_rgb-8_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-8" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-8" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-8" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-8" name="title_font_color_rgb-8" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-8" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-8_def" name="title_font_color_rgb-8_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-8" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-8" name="main_font_color_rgb-8" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-8" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-8_def" name="main_font_color_rgb-8_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">リンク色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_link_color_rgb-8" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_link_color_rgb-8" name="main_link_color_rgb-8" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_link_color_rgb-8" data-default-color="333333" />
+        <input type="hidden" id="main_link_color_rgb-8_def" name="main_link_color_rgb-8_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">矢印色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="arrow_color_rgb-8" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="arrow_color_rgb-8" name="arrow_color_rgb-8" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="arrow_color_rgb-8" data-default-color="333333" />
+        <input type="hidden" id="arrow_color_rgb-8_def" name="arrow_color_rgb-8_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                            
+                                                                                                    <li class="sort-item" data-id="5" data-flg="1">
+                                                        <h3 class="sort-item-title" tabindex="0"><div>お店紹介</div></h3>
+                                                        <div class="sort-item-content" style="display: none;">
+                                                            <div class="sort-item-view">
+                                                                                                                            
+                                                                
+                                                                                                                                    <span class="show">表示</span><span class="hide">非表示</span>
+                                                                                                                                
+                                                                                                                        </div>
+                                                                                                                            <ul class="sort-item-setting">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="bg_color_rgb-5" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb-5" name="bg_color_rgb-5" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb-5" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb-5_def" name="bg_color_rgb-5_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                                            <span class="customize-control-title">背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                                            <input class="input-opacity" name="bg_opacity-5" type="text" maxlength='5' value="0.8" placeholder="ここに入力してください" data-name="背景色透明度" /><br/>
+                                                                            <span name="bg_opacity-5" class="cautionTextLine"></span>
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">タイトル文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="title_font_color_rgb-5" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="title_font_color_rgb-5" name="title_font_color_rgb-5" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="title_font_color_rgb-5" data-default-color="333333" />
+        <input type="hidden" id="title_font_color_rgb-5_def" name="title_font_color_rgb-5_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                            <span class="customize-control-title">文字色</span>
+                                                                            
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb-5" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb-5" name="main_font_color_rgb-5" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb-5" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb-5_def" name="main_font_color_rgb-5_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                        </li>
+                                                                                                                                                                                                    </ul>
+                                                                                                                    </div>
+                                                    </li>
+                                                                                                
+                                                                                        </ul>
+                                        </li>
+                                    </ul>
+                                    
+                                    <input type="hidden" id="contentsList" name="contentsList" value="">
+                                    
+                                    <input type="hidden" id="use_sort_list" name="use_sort_list" value="">
+                                    <input type="hidden" id="not_sort_list" name="not_sort_list" value="">
+                                    <input type="hidden" id="noDataList" name="noDataList" value="11" />
+                                </li>
+                                <li id="accordion-section-theme_option_config" class="accordion-top accordion-section control-section control-section-default" style="">
+                                    <h3 class="accordion-section-title" tabindex="0">PCヘッダーロゴ</h3>
+                                    <ul class="accordion-section-content" style="display: none;">
+                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                            <span class="customize-control-title">PCヘッダーロゴ</span>
+                                            <div>
+                                                ファイルサイズ：100KB以下<br>
+                                                拡張子：jpg, gif, png アニメーションGif不可<br>
+                                                推奨サイズ：145px×40px
+                                            </div>
+                                            
+                                        <div class="upload_box">
+        <span class="error_msg"></span>
+        <div class="btn_box">
+            <div class="button1 btn-default img_upload">
+                <span>画像を選択</span>
+                <input type="file" class="upload" name="upload_file">
+            </div>
+
+            
+            <div id="pc_dx_header_logo_img_delete" class="button1 btn-default img_delete" style="display:none;">
+
+                <span>画像を削除</span>
+            </div>
+            <img src="https://manager.girlsheaven-job.net/img/manager/load.gif" class="load_img" />
+        </div>
+        <div class="img_box">
+
+            
+                
+            <div id="pc_dx_header_logo_box" class="preview_box" style="display:none;">
+                <img id="pc_dx_header_logo_img" src="" class="preview_img" />
+
+            </div>
+        </div>
+        <input type="hidden" id="pc_dx_header_logo" name="pc_dx_header_logo" class="img_value" value="">
+        <input type="hidden" id="pc_dx_header_logo_del" name="pc_dx_header_logo_del" class="del_flg" value="">
+    </div>
+
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li id="accordion-section-theme_option_config" class="accordion-top accordion-section control-section control-section-default" style="">
+                                    <h3 class="accordion-section-title" tabindex="0">PCアピール画像</h3>
+                                    <ul class="accordion-section-content" style="display: none;">
+                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                            <span class="customize-control-title">PCアピール画像</span>
+                                            <div>
+                                                ファイルサイズ：1MB以下<br>
+                                                拡張子：jpg, gif, png アニメーションGif不可<br>
+                                                推奨サイズ：1920px×640px
+                                            </div>
+                                            
+                                <div class="upload_box">
+        <span class="error_msg"></span>
+        <div class="btn_box">
+            <div class="button1 btn-default img_upload">
+                <span>画像を選択</span>
+                <input type="file" class="upload" name="upload_file">
+            </div>
+
+            
+            <div id="pc_dx_appeal_img_delete" class="button1 btn-default img_delete" style="">
+
+                <span>画像を削除</span>
+            </div>
+            <img src="https://manager.girlsheaven-job.net/img/manager/load.gif" class="load_img" />
+        </div>
+        <div class="img_box">
+
+            
+                
+            <div id="pc_dx_appeal_box" class="preview_box" style="">
+                <img id="pc_dx_appeal_img" src="/img/img_sys/job/136031/pc_dx_appeal.jpg?250326093155" class="preview_img" />
+
+            </div>
+        </div>
+        <input type="hidden" id="pc_dx_appeal" name="pc_dx_appeal" class="img_value" value="">
+        <input type="hidden" id="pc_dx_appeal_del" name="pc_dx_appeal_del" class="del_flg" value="">
+    </div>
+
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li id="accordion-section-theme_option_config" class="accordion-top accordion-section control-section control-section-default" style="">
+                                    <h3 class="accordion-section-title" tabindex="0">メニュー</h3>
+                                    <ul class="accordion-section-content" style="display: none;">
+                                                                                                                                                                                                                                                                                                                                                                                <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <span class="customize-control-title">メニューリンク色</span>
+                                                
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7CAD" data-target="menu_link_color_rgb" style="background-color: #FF7CAD;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="menu_link_color_rgb" name="menu_link_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7CAD" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="menu_link_color_rgb" data-default-color="FF7CAD" />
+        <input type="hidden" id="menu_link_color_rgb_def" name="menu_link_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                            </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <span class="customize-control-title">メニューリンク色（マウスオーバー時）</span>
+                                                
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="menu_link_hover_color_rgb" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="menu_link_hover_color_rgb" name="menu_link_hover_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="menu_link_hover_color_rgb" data-default-color="FFFFFF" />
+        <input type="hidden" id="menu_link_hover_color_rgb_def" name="menu_link_hover_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                            </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <span class="customize-control-title">メニュー背景色</span>
+                                                
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="9EEDFF" data-target="menu_bg_color_rgb" style="background-color: #9EEDFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="menu_bg_color_rgb" name="menu_bg_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="9EEDFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="menu_bg_color_rgb" data-default-color="FFE9F5" />
+        <input type="hidden" id="menu_bg_color_rgb_def" name="menu_bg_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                            </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <span class="customize-control-title">メニュー背景色（マウスオーバー時）</span>
+                                                
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7CAD" data-target="menu_bg_hover_color_rgb" style="background-color: #FF7CAD;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="menu_bg_hover_color_rgb" name="menu_bg_hover_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7CAD" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="menu_bg_hover_color_rgb" data-default-color="FF7CAD" />
+        <input type="hidden" id="menu_bg_hover_color_rgb_def" name="menu_bg_hover_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                            </li>
+                                                                                                                </ul>
+                                </li>
+                                <li id="accordion-section-theme_option_config" class="accordion-top accordion-section control-section control-section-default" style="">
+                                    <h3 class="accordion-section-title" tabindex="0">背景色・背景画像</h3>
+                                    <ul class="accordion-section-content" style="display: none;">
+                                                                                                                                                                                                                                                                                            
+                                                                                    <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <span class="customize-control-title">背景色</span>
+                                                
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="BFFEFF" data-target="bg_color_rgb" style="background-color: #BFFEFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="bg_color_rgb" name="bg_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="BFFEFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="bg_color_rgb" data-default-color="FFFFFF" />
+        <input type="hidden" id="bg_color_rgb_def" name="bg_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                            </li>
+                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                    <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                <span class="customize-control-title">背景画像</span>
+                                                <div>
+                                                    ファイルサイズ：1MB以下<br>
+                                                    拡張子：jpg, gif, png アニメーションGif不可<br>
+                                                    推奨サイズ：1920px×1080px
+                                                </div>
+                                                
+                                                                <div class="upload_box">
+        <span class="error_msg"></span>
+        <div class="btn_box">
+            <div class="button1 btn-default img_upload">
+                <span>画像を選択</span>
+                <input type="file" class="upload" name="upload_file">
+            </div>
+            <div class="button1 btn-default img_delete" style="">
+                <span>画像を削除</span>
+            </div>
+            <img src="https://manager.girlsheaven-job.net/img/manager/load.gif" class="load_img" />
+        </div>
+        <div class="img_box">
+            <div class="preview_box" style="">
+                <img src="/img/img_sys/deco_bgimage/2500000735/2500000735_pc_dx_bg_img.gif?250326093155" class="preview_img" />
+            </div>
+        </div>
+        <input type="hidden" id="bg_img_file_name" name="bg_img_file_name" class="img_value" value="">
+        <input type="hidden" id="bg_img_file_name_del" name="bg_img_file_name_del" class="del_flg" value="">
+        <input type="hidden" id="bg_img_file_name_flg" name="bg_img_file_name_flg" class="def_flg" value="">
+        <input type="hidden" id="bg_img_file_name_sav" name="bg_img_file_name_sav" class="sav_flg" value="1">
+        <input type="hidden" id="bg_img_file_name_lnk" name="bg_img_file_name_lnk" class="img_lnk" value="paging_img_file_name">
+    </div>
+
+                                            </li>
+                                                                                                                                                                                                                                                                                                                                    
+                                                                                    <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                <input name="bg_img_fixed_flg" type="radio" id="radio_bg_image" class="img_fixed_flg" value="0" checked data-name="繰り返し">
+                                                <label for="radio_bg_image">繰り返し</label>
+                                                <input name="bg_img_fixed_flg" type="radio" id="radio_bg_image" class="img_fixed_flg" value="1"  data-name="固定">
+                                                <label for="radio_bg_image">固定</label>
+                                            </li>
+                                                                                                                </ul>
+                                </li>
+                                <li id="accordion-panel-bgImage_panel" class="accordion-top accordion-section control-section control-panel control-panel-default" style="">
+                                    <h3 id="accordion-panel-bgImage-title" class="accordion-section-title open-control-panel" tabindex="0">2ページ目以降</h3>
+                                    <ul id="accordion-panel-bgImage-content" class="accordion-sub-container control-panel-content bgImage_panel">
+                                        <div class="accordion-section-title" tabindex="0" aria-label="カスタマイザーオプション">
+                                            <span class="preview-notice">
+                                                <strong class="panel-title">2ページ目以降</strong>をカスタマイズ中です
+                                            </span>
+                                        </div>
+                                        <li id="accordion-section-sidebar-widgets-bgImage" class="accordion-section control-section control-section-sidebar control-subsection" style="">
+                                            <h3 class="accordion-section-title" tabindex="0">2ページ目以降の背景画像</h3>
+                                            <ul class="accordion-section-content" style="display: none;">
+                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img" style="display: list-item;">
+                                                            <span class="customize-control-title">背景画像</span>
+                                                            <div>
+                                                                ファイルサイズ：1MB以下<br>
+                                                                拡張子：jpg, gif, png アニメーションGif不可<br>
+                                                                推奨サイズ：1920px×1080px
+                                                            </div>
+                                                            
+                                                                <div class="upload_box">
+        <span class="error_msg"></span>
+        <div class="btn_box">
+            <div class="button1 btn-default img_upload">
+                <span>画像を選択</span>
+                <input type="file" class="upload" name="upload_file">
+            </div>
+            <div class="button1 btn-default img_delete" style="display:none;">
+                <span>画像を削除</span>
+            </div>
+            <img src="https://manager.girlsheaven-job.net/img/manager/load.gif" class="load_img" />
+        </div>
+        <div class="img_box">
+            <div class="preview_box" style="">
+                <img src="/img/img_sys/deco_bgimage/2500000735/2500000735_pc_dx_bg_img.gif?250326093155" class="preview_img" />
+            </div>
+        </div>
+        <input type="hidden" id="paging_img_file_name" name="paging_img_file_name" class="img_value" value="">
+        <input type="hidden" id="paging_img_file_name_del" name="paging_img_file_name_del" class="del_flg" value="">
+        <input type="hidden" id="paging_img_file_name_flg" name="paging_img_file_name_flg" class="def_flg" value="">
+        <input type="hidden" id="paging_img_file_name_sav" name="paging_img_file_name_sav" class="sav_flg" value="">
+        <input type="hidden" id="paging_img_file_name_lnk" name="paging_img_file_name_lnk" class="img_lnk" value="">
+    </div>
+
+                                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                            <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                            <input name="paging_img_fixed_flg" type="radio" id="radio_paging_bg_image" class="img_fixed_flg" value="0"  data-name="繰り返し">
+                                                            <label for="radio_paging_bg_image">繰り返し</label>
+                                                            <input name="paging_img_fixed_flg" type="radio" id="radio_paging_bg_image" class="img_fixed_flg" value="1" checked data-name="固定">
+                                                            <label for="radio_paging_bg_image">固定</label>
+                                                        </li>
+                                                                                                                                                </ul>
+                                        </li>
+                                        <li id="accordion-section-theme_option_config" class="accordion-section control-section control-section-sidebar control-subsection" style="">
+                                            <h3 class="accordion-section-title" tabindex="0">文字色、コンテンツ色</h3>
+                                            <ul class="accordion-section-content" style="display: none;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">コンテンツ背景色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="contents_color_rgb" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="contents_color_rgb" name="contents_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="contents_color_rgb" data-default-color="FFFFFF" />
+        <input type="hidden" id="contents_color_rgb_def" name="contents_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">コンテンツ背景色透明度（薄0.000～濃1.000 小数第三位まで）</span>
+                                                        <input class="input-opacity" name="contents_bg_opacity" type="text" maxlength='5' value="1.0" placeholder="ここに入力してください" data-name="コンテンツ背景色透明度" /><br/>
+                                                        <span name="contents_bg_opacity" class="cautionTextLine"></span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">文字色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="333333" data-target="main_font_color_rgb" style="background-color: #333333;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_font_color_rgb" name="main_font_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="333333" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_font_color_rgb" data-default-color="333333" />
+        <input type="hidden" id="main_font_color_rgb_def" name="main_font_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">リンク色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="005EEB" data-target="main_link_color_rgb" style="background-color: #005EEB;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_link_color_rgb" name="main_link_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="005EEB" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_link_color_rgb" data-default-color="005EEB" />
+        <input type="hidden" id="main_link_color_rgb_def" name="main_link_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">リンク色（マウスオーバー時）</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="005EEB" data-target="main_link_hover_color_rgb" style="background-color: #005EEB;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="main_link_hover_color_rgb" name="main_link_hover_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="005EEB" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="main_link_hover_color_rgb" data-default-color="005EEB" />
+        <input type="hidden" id="main_link_hover_color_rgb_def" name="main_link_hover_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">帯色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7CAD" data-target="headline_color_rgb" style="background-color: #FF7CAD;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="headline_color_rgb" name="headline_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7CAD" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="headline_color_rgb" data-default-color="FF7CAD" />
+        <input type="hidden" id="headline_color_rgb_def" name="headline_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">帯文字色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FFFFFF" data-target="headline_font_color_rgb" style="background-color: #FFFFFF;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="headline_font_color_rgb" name="headline_font_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FFFFFF" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="headline_font_color_rgb" data-default-color="FFFFFF" />
+        <input type="hidden" id="headline_font_color_rgb_def" name="headline_font_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li id="customize-control-firstview_logo_img" class="customize-control customize-control-img wp-picker-container" style="display: list-item;">
+                                                                                                            <span class="customize-control-title">罫線色</span>
+                                                        
+
+    <a tabindex="0" class="wp-color-result" title="色を選択" data-current="現在の色" data-current-color="FF7CAD" data-target="line_color_rgb" style="background-color: #FF7CAD;"></a>
+    <span class="wp-picker-input-wrap">
+        <input type="text" id="line_color_rgb" name="line_color_rgb" class="wp-color-picker jscolor { hash:true,closable:true,zIndex:500001,onFineChange:'colorSelect.resetCurrent(this)',onDetachPicker:'colorSelect.closeColor(this)' }" value="FF7CAD" />
+        <input type="button" class="button button-small wp-picker-default" value="デフォルト" data-target="line_color_rgb" data-default-color="FF7CAD" />
+        <input type="hidden" id="line_color_rgb_def" name="line_color_rgb_def" class="def_flg" data-notclear="true" value="">
+    </span>
+
+                                                                                                                                                </ul>
+                                        </li>
+                                    </ul>
+                                    <input type="hidden" name="preview_url" value="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/blog/?view_mode=8" disabled>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+            		<div class="manual">
+                		<a target="_blank" href="https://manager.girlsheaven-job.net/img/manager/pdf/manualPC.pdf">操作マニュアルはこちら</a>
+                		<div class="manual-text">
+                    		<p>操作方法・不具合に関するお問い合わせ</p>
+                    		<p style="font-size:12px;">TEL：0120-081-320</p>
+                    		<p style="font-size:12px;">MAIL：info@girlsheaven-job.net</p>
+                    		<p>（11:00～19:00 土日、祝祭日はメールのみ）</p>
+                		</div>
+            		</div>
+                </div>                
+            </div>            
+            <div id="customize-footer-actions" class="wp-full-overlay-footer">
+                <a href="javascript:void(0);" class="collapse-sidebar button-secondary" title="サイドバーを折りたたむ">
+                    <span class="collapse-sidebar-arrow"></span>
+                    <span class="collapse-sidebar-label">折りたたむ</span>
+                </a>
+            </div>
+            
+            <input type="hidden" name="sc_top"  id="sc_top"  value="-1">
+            <input type="hidden" name="sc_left" id="sc_left" value="-1">
+        </form>
+        
+        <div id="customize-preview" class="wp-full-overlay-main">
+            <iframe id="preview-frame" name="preview-frame" src="https://www.girlsheaven-job.net/chiba/ma-158/sa-306/seaparadise/?view_mode=8&spmode=pc"></iframe>
+        </div>
+    </div>
+</body>
+</html>

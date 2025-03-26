@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type StoreProfile, type BlogPost, cupSizes, type CupSize } from "@shared/schema";
+import { type StoreProfile, type BlogPost, cupSizes, type CupSize, trialEntrySchema, campaignSchema } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,12 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { HtmlContent } from "@/components/html-content";
 import { type LucideIcon } from "lucide-react";
+import { TrialEntryDisplay } from "@/components/store/TrialEntryDisplay";
+import { TrialEntryFormTab } from "@/components/store/TrialEntryFormTab";
+import { CampaignDisplay } from "@/components/store/CampaignDisplay";
+import { CampaignFormTab } from "@/components/store/CampaignFormTab";
+import { apiRequest } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import {
   Building2,
   PenBox,
@@ -73,13 +79,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 import { JobFormDialog } from "@/components/job-form-dialog";
 import { JobDescriptionDisplay } from "@/components/store/JobDescriptionDisplay";
 import { SalaryDisplay } from "@/components/store/SalaryDisplay";
 import { LocationDisplay } from "@/components/store/LocationDisplay";
 import { ContactDisplay } from "@/components/store/ContactDisplay";
-import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StoreApplicationView } from "@/components/store-application-view";
