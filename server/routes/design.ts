@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { db } from '../db';
-import { store_profiles, eq } from '@shared/schema';
+import { store_profiles } from '@shared/schema';
 import { designSettingsSchema, type DesignSettings } from '@shared/schema';
 import { storage } from '../storage';
+import { eq } from 'drizzle-orm';
 
 const router = express.Router();
 

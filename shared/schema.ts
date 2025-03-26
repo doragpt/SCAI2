@@ -4,6 +4,46 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 
+// デザイン設定関連のスキーマ定義
+export const sectionSettingsSchema = z.object({
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  borderColor: z.string().optional(),
+  titleColor: z.string().optional(),
+  fontSize: z.number().optional(),
+  padding: z.number().optional(),
+  borderRadius: z.number().optional(),
+  borderWidth: z.number().optional(),
+});
+
+export const designSectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  visible: z.boolean().default(true),
+  order: z.number(),
+  settings: sectionSettingsSchema.optional(),
+});
+
+export const globalDesignSettingsSchema = z.object({
+  mainColor: z.string(),
+  secondaryColor: z.string(),
+  accentColor: z.string(),
+  backgroundColor: z.string(),
+  fontFamily: z.string(),
+  borderRadius: z.number(),
+  maxWidth: z.number(),
+});
+
+export const designSettingsSchema = z.object({
+  sections: z.array(designSectionSchema),
+  globalSettings: globalDesignSettingsSchema,
+});
+
+export type SectionSettings = z.infer<typeof sectionSettingsSchema>;
+export type DesignSection = z.infer<typeof designSectionSchema>;
+export type GlobalDesignSettings = z.infer<typeof globalDesignSettingsSchema>;
+export type DesignSettings = z.infer<typeof designSettingsSchema>;
+
 // Constants
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",
@@ -423,6 +463,9 @@ export const store_profiles = pgTable("store_profiles", {
     verified: boolean;
     date: string;
   }[]>().default([]), // 口コミ・体験談
+  
+  // デザイン設定
+  design_settings: jsonb("design_settings").$type<DesignSettings>(),
   
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
@@ -1250,46 +1293,6 @@ export type TrialEntryData = z.infer<typeof trialEntrySchema>;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = typeof campaigns.$inferInsert;
 export type CampaignData = z.infer<typeof campaignSchema>;
-
-// 店舗デザイン設定用のスキーマ
-export const sectionSettingsSchema = z.object({
-  backgroundColor: z.string().optional(),
-  textColor: z.string().optional(),
-  borderColor: z.string().optional(),
-  titleColor: z.string().optional(),
-  fontSize: z.number().optional(),
-  padding: z.number().optional(),
-  borderRadius: z.number().optional(),
-  borderWidth: z.number().optional(),
-});
-
-export const designSectionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  visible: z.boolean(),
-  order: z.number(),
-  settings: sectionSettingsSchema
-});
-
-export const globalDesignSettingsSchema = z.object({
-  mainColor: z.string(),
-  secondaryColor: z.string(),
-  accentColor: z.string(),
-  backgroundColor: z.string(),
-  fontFamily: z.string(),
-  borderRadius: z.number(),
-  maxWidth: z.number()
-});
-
-export const designSettingsSchema = z.object({
-  sections: z.array(designSectionSchema),
-  globalSettings: globalDesignSettingsSchema
-});
-
-export type SectionSettings = z.infer<typeof sectionSettingsSchema>;
-export type DesignSection = z.infer<typeof designSectionSchema>;
-export type GlobalDesignSettings = z.infer<typeof globalDesignSettingsSchema>;
-export type DesignSettings = z.infer<typeof designSettingsSchema>;
 
 export interface JobResponse {
   id: number;
