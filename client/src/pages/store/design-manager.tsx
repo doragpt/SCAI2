@@ -70,8 +70,8 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "requirements",
-          title: "応募条件",
+          id: "benefits",
+          title: "待遇・環境",
           visible: true,
           order: 3,
           settings: {
@@ -86,12 +86,28 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "salary",
-          title: "給与情報",
+          id: "requirements",
+          title: "応募条件",
           visible: true,
           order: 4,
           settings: {
             backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "salary",
+          title: "給与情報",
+          visible: true,
+          order: 5,
+          settings: {
+            backgroundColor: "#ffffff",
             textColor: "#333333",
             borderColor: "#ffd6dd",
             titleColor: "#ff6b81",
@@ -104,22 +120,6 @@ export default function StoreDesignManager() {
         {
           id: "schedule",
           title: "勤務時間",
-          visible: true,
-          order: 5,
-          settings: {
-            backgroundColor: "#ffffff",
-            textColor: "#333333",
-            borderColor: "#e0e0e0",
-            titleColor: "#ff6b81",
-            fontSize: 16,
-            padding: 20,
-            borderRadius: 8,
-            borderWidth: 1
-          }
-        },
-        {
-          id: "access",
-          title: "アクセス",
           visible: true,
           order: 6,
           settings: {
@@ -134,28 +134,12 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "contact",
-          title: "連絡先",
+          id: "trial_entry",
+          title: "体験入店",
           visible: true,
           order: 7,
           settings: {
             backgroundColor: "#ffffff",
-            textColor: "#333333",
-            borderColor: "#e0e0e0",
-            titleColor: "#ff6b81",
-            fontSize: 16,
-            padding: 20,
-            borderRadius: 8,
-            borderWidth: 1
-          }
-        },
-        {
-          id: "trial_entry",
-          title: "体験入店",
-          visible: true,
-          order: 8,
-          settings: {
-            backgroundColor: "#fff9fa",
             textColor: "#333333",
             borderColor: "#ffd6dd",
             titleColor: "#ff6b81",
@@ -168,6 +152,22 @@ export default function StoreDesignManager() {
         {
           id: "campaigns",
           title: "キャンペーン",
+          visible: true,
+          order: 8,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "access",
+          title: "アクセス",
           visible: true,
           order: 9,
           settings: {
@@ -182,12 +182,28 @@ export default function StoreDesignManager() {
           }
         },
         {
-          id: "benefits",
-          title: "待遇・環境",
+          id: "contact",
+          title: "連絡先",
           visible: true,
           order: 10,
           settings: {
             backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "blog",
+          title: "店舗ブログ",
+          visible: true,
+          order: 11,
+          settings: {
+            backgroundColor: "#ffffff",
             textColor: "#333333",
             borderColor: "#e0e0e0",
             titleColor: "#ff6b81",
