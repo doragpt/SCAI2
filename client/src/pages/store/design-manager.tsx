@@ -34,8 +34,8 @@ export default function StoreDesignManager() {
     
     // 必須セクションの存在チェック
     const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
-      'salary', 'schedule', 'requirements', 'special_offers', 'trial_entry', 
-      'campaigns', 'access', 'contact', 'sns_links', 'blog'];
+      'salary', 'schedule', 'requirements', 'special_offers', 
+      'access', 'contact', 'sns_links', 'blog'];
     
     for (const id of requiredSections) {
       if (!sectionIds.includes(id)) {
@@ -75,8 +75,6 @@ export default function StoreDesignManager() {
       case 'schedule': return '勤務時間';
       case 'requirements': return '応募条件';
       case 'special_offers': return '特別オファー';
-      case 'trial_entry': return '体験入店';
-      case 'campaigns': return 'キャンペーン';
       case 'access': return 'アクセス情報';
       case 'contact': return '問い合わせ';
       case 'sns_links': return 'SNSリンク';
@@ -142,8 +140,8 @@ export default function StoreDesignManager() {
       // データの整合性チェック
       const defaultSettings = getDefaultSettings();
       const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
-        'salary', 'schedule', 'requirements', 'special_offers', 'trial_entry', 
-        'campaigns', 'access', 'contact', 'sns_links', 'blog'];
+        'salary', 'schedule', 'requirements', 'special_offers', 
+        'access', 'contact', 'sns_links', 'blog'];
       
       // APIから取得したデータのセクションIDs
       const apiSectionIds = designSettingsQuery.data.sections.map(s => s.id);
