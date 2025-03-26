@@ -462,19 +462,30 @@ export default function StorePreview() {
         );
         
       case 'special_offers':
-        return profile.special_offers && profile.special_offers.length > 0 && (
+        // プロファイルデータの有無にかかわらず表示する
+        return (
           <div key={sectionId} style={getSectionStyle('special_offers')} className="mb-8">
             <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
               <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
               特別オファー
             </h3>
-            <SpecialOffersDisplay specialOffers={profile.special_offers?.map(offer => ({
-              backgroundColor: '#ff4d7d',
-              textColor: '#333333',
-              icon: 'sparkles',
-              order: 0,
-              ...offer
-            }))} />
+            {profile.special_offers && profile.special_offers.length > 0 ? (
+              <SpecialOffersDisplay specialOffers={profile.special_offers.map(offer => ({
+                id: offer.id,
+                title: offer.title,
+                description: offer.description,
+                backgroundColor: offer.backgroundColor || '#ff4d7d',
+                textColor: offer.textColor || '#333333',
+                icon: offer.icon || 'sparkles',
+                order: offer.order || 0
+              }))} />
+            ) : (
+              <div className="text-center py-6 bg-gray-50 rounded-md border border-gray-100 text-gray-500">
+                <Sparkles className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                <p>特別オファーが設定されていません</p>
+                <p className="text-xs mt-2">設定画面から特別オファーを追加できます</p>
+              </div>
+            )}
           </div>
         );
         
@@ -665,7 +676,7 @@ export default function StorePreview() {
   // セクションの順序に従って動的にレンダリングする関数
   const renderOrderedSections = () => {
     // ヘッダーはすでに別途レンダリングされているので除外
-    const contentSections = visibleSections.filter(section => section.id !== 'header');
+    const contentSections = visibleSections;
     
     // セクションを順序に従ってレンダリング
     return contentSections.map(section => {
@@ -673,6 +684,9 @@ export default function StorePreview() {
       if (!isSectionVisible(section.id)) {
         return null;
       }
+      
+      // デバッグログ（どのセクションが処理されているか）
+      debugLog(`セクション ${section.id} をレンダリングします`);
       
       // セクションをレンダリング
       return renderSection(section.id);
