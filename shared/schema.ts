@@ -465,7 +465,85 @@ export const store_profiles = pgTable("store_profiles", {
   }[]>().default([]), // 口コミ・体験談
   
   // デザイン設定
-  design_settings: jsonb("design_settings").$type<DesignSettings>(),
+  design_settings: jsonb("design_settings").$type<DesignSettings>().default({
+    sections: [
+      {
+        id: "header",
+        title: "ヘッダー",
+        visible: true,
+        order: 1,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
+        id: "catchphrase",
+        title: "キャッチフレーズ",
+        visible: true,
+        order: 2,
+        settings: {
+          backgroundColor: "#fff5f8",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
+        id: "description",
+        title: "仕事内容",
+        visible: true,
+        order: 3,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
+        id: "benefits",
+        title: "待遇",
+        visible: true,
+        order: 4,
+        settings: {
+          backgroundColor: "#fff5f8",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
+        id: "requirements",
+        title: "応募条件",
+        visible: true,
+        order: 5,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
+        id: "contact",
+        title: "連絡先",
+        visible: true,
+        order: 6,
+        settings: {
+          backgroundColor: "#fff5f8",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      }
+    ],
+    globalSettings: {
+      mainColor: "#ff69b4",
+      secondaryColor: "#fff5f8",
+      accentColor: "#ff1493",
+      backgroundColor: "#ffffff",
+      fontFamily: "Arial, sans-serif",
+      borderRadius: 8,
+      maxWidth: 1200
+    }
+  }),
   
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
