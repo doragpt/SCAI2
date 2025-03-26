@@ -238,7 +238,7 @@ export default function StoreDesignManager() {
     queryKey: [QUERY_KEYS.STORE_DESIGN],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/api/store/design');
+        const response = await apiRequest('GET', '/design');
         return response as DesignSettings;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました', error);
@@ -252,7 +252,7 @@ export default function StoreDesignManager() {
   // 設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
-      return await apiRequest('POST', '/api/store/design', data);
+      return await apiRequest('POST', '/design', data);
     },
     onSuccess: () => {
       toast({
@@ -363,6 +363,12 @@ export default function StoreDesignManager() {
         type: 'UPDATE_DESIGN',
         settings: newSettings
       }, '*');
+
+      // リアルタイムプレビューのログ
+      console.log('リアルタイムプレビュー更新:', { 
+        time: new Date().toISOString(),
+        sections: newSettings.sections.length
+      });
     }
   };
 

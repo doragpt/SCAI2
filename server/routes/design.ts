@@ -170,6 +170,22 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
               borderRadius: 8,
               borderWidth: 1
             }
+          },
+          {
+            id: 'photo_gallery',
+            title: '写真ギャラリー',
+            visible: true,
+            order: 10,
+            settings: {
+              backgroundColor: '#fff9fa',
+              textColor: '#333333',
+              borderColor: '#e0e0e0',
+              titleColor: '#ff6b81',
+              fontSize: 16,
+              padding: 20,
+              borderRadius: 8,
+              borderWidth: 1
+            }
           }
         ],
         globalSettings: {
