@@ -411,8 +411,14 @@ export default function StoreDesignManager() {
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
+      console.log('プレビューを更新します:', {
+        sectionsCount: settings.sections.length,
+        globalSettings: settings.globalSettings
+      });
+      
       iframeRef.current.contentWindow.postMessage({
         type: 'UPDATE_DESIGN',
+        timestamp: new Date().toISOString(),
         settings: settings
       }, '*');
     }
