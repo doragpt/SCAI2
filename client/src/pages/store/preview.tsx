@@ -253,10 +253,17 @@ export default function StorePreview() {
       console.log(`[Preview] セクションが見つかりません: ${sectionId}`);
       
       // 特別に処理する必要があるセクション（プレビューでは表示する）
-      const criticalSections = ['header', 'special_offers', 'sns_links', 'blog'];
+      const criticalSections = ['header', 'special_offers', 'sns_links', 'blog', 'requirements'];
       if (criticalSections.includes(sectionId)) {
         console.log(`[Preview] ${sectionId} は重要なセクションなので表示します`);
         return true;
+      }
+      
+      // 削除されたセクションは表示しない
+      const removedSections = ['trial_entry', 'campaigns'];
+      if (removedSections.includes(sectionId)) {
+        console.log(`[Preview] ${sectionId} は削除されたセクションなので表示しません`);
+        return false;
       }
       
       return false; // 見つからない場合は非表示
