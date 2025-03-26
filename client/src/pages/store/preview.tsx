@@ -179,16 +179,57 @@ export default function StorePreview() {
     .filter(section => section.visible)
     .sort((a, b) => a.order - b.order);
 
-  // セクション設定を取得する関数
+  // デバッグ用関数
+  const debugLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Preview Debug] ${message}`, data || '');
+    }
+  };
+
+  // セクション設定を取得する関数（改善版）
   const getSectionSettings = (sectionId: string): SectionSettings => {
+    // 互換性のために特殊なケースを処理
+    if (sectionId === 'description') {
+      // descriptionセクションはcatchphraseセクションに統合されているため
+      debugLog(`descriptionセクションにはcatchphraseセクションの設定を使用します`);
+      return getSectionSettings('catchphrase');
+    }
+    
     const section = designSettings.sections.find(s => s.id === sectionId);
-    return section?.settings || {};
+    if (!section) {
+      debugLog(`セクション設定が見つかりません: ${sectionId}、デフォルト設定を使用します`);
+      return {
+        backgroundColor: '#ffffff',
+        textColor: '#333333',
+        borderColor: '#e0e0e0',
+        titleColor: globalSettings.mainColor,
+        fontSize: 16,
+        padding: 20,
+        borderRadius: 8,
+        borderWidth: 1
+      };
+    }
+    
+    return section.settings || {};
   };
   
-  // セクションを表示するかどうかを判定する関数
+  // セクションを表示するかどうかを判定する関数（改善版）
   const isSectionVisible = (sectionId: string) => {
+    // 互換性のために特殊なケースを処理
+    if (sectionId === 'description') {
+      // descriptionセクションはcatchphraseセクションに統合されているため
+      // catchphraseセクションの可視性を継承する
+      console.log(`[Preview] descriptionセクションはcatchphraseセクションの可視性を継承します`);
+      return isSectionVisible('catchphrase');
+    }
+    
     const section = designSettings.sections.find(s => s.id === sectionId);
-    return section?.visible || false;
+    if (!section) {
+      console.log(`[Preview] セクションが見つかりません: ${sectionId}`);
+      return false; // 見つからない場合は非表示
+    }
+    
+    return section.visible;
   };
 
   // セクションスタイルを生成する関数
