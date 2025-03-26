@@ -293,7 +293,34 @@ export default function StoreDesignManager() {
   // 保存された設定をロード
   useEffect(() => {
     if (savedSettings) {
-      setSettings(savedSettings);
+      // 写真ギャラリーセクションが存在しない場合は追加する
+      let updatedSettings = { ...savedSettings };
+      const hasPhotoGallery = savedSettings.sections.some(section => section.id === 'photo_gallery');
+      
+      if (!hasPhotoGallery) {
+        console.log('写真ギャラリーセクションが見つからないため追加します');
+        updatedSettings.sections = [
+          ...updatedSettings.sections,
+          {
+            id: 'photo_gallery',
+            title: '写真ギャラリー',
+            visible: true,
+            order: updatedSettings.sections.length + 1,
+            settings: {
+              backgroundColor: '#fff9fa',
+              textColor: '#333333',
+              borderColor: '#e0e0e0',
+              titleColor: '#ff6b81',
+              fontSize: 16,
+              padding: 20,
+              borderRadius: 8,
+              borderWidth: 1
+            }
+          }
+        ];
+      }
+      
+      setSettings(updatedSettings);
     }
   }, [savedSettings]);
 
