@@ -502,6 +502,56 @@ export default function StorePreview() {
                   </div>
                 </div>
               )}
+
+              {/* 店舗ブログ */}
+              {isSectionVisible('blog') && (
+                <div style={getSectionStyle('blog')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
+                    店舗ブログ
+                  </h3>
+                  
+                  <div className="space-y-4" style={{ color: getSectionSettings('blog').textColor || '#333333' }}>
+                    {/* ブログ記事リスト（最新3件のみ表示） */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[1, 2, 3].map((_, index) => (
+                        <div key={index} className="border rounded-md overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="aspect-video bg-gray-200 relative">
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                              <Image className="h-10 w-10" />
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            <div className="text-xs text-gray-500 mb-1">{new Date().toLocaleDateString('ja-JP')}</div>
+                            <h4 className="font-medium mb-2 line-clamp-1" style={{ color: globalSettings.mainColor }}>
+                              ブログ記事タイトルがここに表示されます
+                            </h4>
+                            <p className="text-sm line-clamp-2">
+                              ブログ記事の内容がここに表示されます。実際の記事が投稿されると、ここにその記事の抜粋が表示されます。
+                            </p>
+                            <div className="mt-2 text-right">
+                              <span className="text-sm" style={{ color: globalSettings.mainColor }}>
+                                続きを読む →
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="text-center mt-4">
+                      <span className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md" 
+                        style={{ 
+                          backgroundColor: globalSettings.mainColor, 
+                          color: '#ffffff'
+                        }}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        ブログ一覧を見る
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </main>
 
             {/* フッター */}
