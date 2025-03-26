@@ -69,19 +69,17 @@ export default function StoreDesignManager() {
 
   // デザイン設定を取得する
   const { isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
+    queryKey: [QUERY_KEYS.STORE_DESIGN],
     queryFn: async () => {
-      const response = await apiRequest<DesignSettings>('/api/design', {
-        method: 'GET'
-      });
+      const response = await apiRequest<DesignSettings>('GET', '/api/design');
       return response;
     },
-    onSuccess: (data) => {
+    onSuccess(data) {
       if (data) {
         setSettings(data);
       }
     },
-    onError: (error: Error) => {
+    onError(error: any) {
       toast({
         title: "エラー",
         description: "デザイン設定の取得に失敗しました。" + error.message,
@@ -93,10 +91,7 @@ export default function StoreDesignManager() {
   // デザイン設定を保存する
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
-      const response = await apiRequest('/api/design', {
-        method: 'POST',
-        data
-      });
+      const response = await apiRequest('POST', '/api/design', data);
       return response;
     },
     onSuccess: () => {
