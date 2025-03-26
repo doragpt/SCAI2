@@ -63,13 +63,22 @@ export default function StorePreview() {
   // postMessageリスナーの設定（リアルタイムプレビュー用）
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'UPDATE_DESIGN') {
+      console.log('メッセージ受信:', event.data);
+      
+      // DESIGN_SETTINGSとUPDATE_DESIGNの両方に対応
+      if (event.data.type === 'UPDATE_DESIGN' || event.data.type === 'DESIGN_SETTINGS') {
         console.log('デザイン設定更新メッセージを受信:', event.data);
-        applyDesignSettings(event.data.settings);
+        if (event.data.settings) {
+          setDesignSettings(event.data.settings);
+          applyDesignSettings(event.data.settings);
+        } else {
+          console.warn('デザイン設定が見つかりません:', event.data);
+        }
       }
     };
     
     window.addEventListener('message', handleMessage);
+    console.log('メッセージリスナーを登録しました', { time: new Date().toISOString() });
     
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -224,10 +233,10 @@ export default function StorePreview() {
       {/* プレビュー画面表示エリア */}
       <div className={cn(
         "mx-auto transition-all duration-300 overflow-hidden",
-        deviceView === 'pc' ? "max-w-4xl" : "max-w-sm"
+        deviceView === 'pc' ? "max-w-5xl w-full" : "max-w-sm"
       )}>
         <div className={cn(
-          "bg-gray-100 mx-auto border-x",
+          "bg-gray-100 mx-auto border-x min-h-[800px]",
           deviceView === 'smartphone' && "border-t border-b rounded-b-xl"
         )}>
           {/* スマホ表示の時はデバイスフレームを表示 */}

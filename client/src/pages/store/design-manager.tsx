@@ -67,6 +67,78 @@ export default function StoreDesignManager() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // デフォルトのデザイン設定を取得する関数
+  const getDefaultSettings = (): DesignSettings => {
+    return {
+      sections: [
+        {
+          id: "header",
+          title: "ヘッダー",
+          visible: true,
+          order: 1,
+          settings: {
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "catchphrase",
+          title: "キャッチフレーズ",
+          visible: true,
+          order: 2,
+          settings: {
+            backgroundColor: "#fff5f8",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "description",
+          title: "仕事内容",
+          visible: true,
+          order: 3,
+          settings: {
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "photo_gallery",
+          title: "写真ギャラリー",
+          visible: true,
+          order: 4,
+          settings: {
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "benefits",
+          title: "待遇・環境",
+          visible: true,
+          order: 5,
+          settings: {
+            backgroundColor: "#fff5f8",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        }
+      ],
+      globalSettings: {
+        mainColor: "#ff69b4",
+        secondaryColor: "#fff5f8",
+        accentColor: "#ff1493",
+        backgroundColor: "#ffffff",
+        fontFamily: "sans-serif",
+        borderRadius: 8,
+        maxWidth: 1200
+      }
+    };
+  };
+
   // デザイン設定を取得する
   const { isLoading, refetch } = useQuery<DesignSettings>({
     queryKey: [QUERY_KEYS.STORE_DESIGN],
@@ -76,7 +148,7 @@ export default function StoreDesignManager() {
         return response;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました', error);
-        return getDefaultDesignSettings();
+        return getDefaultSettings();
       }
     }
   });
@@ -119,7 +191,12 @@ export default function StoreDesignManager() {
   useEffect(() => {
     const previewWindow = iframeRef.current?.contentWindow;
     if (previewWindow) {
-      previewWindow.postMessage({ type: 'DESIGN_SETTINGS', settings }, '*');
+      try {
+        console.log('プレビューウィンドウにデザイン設定を送信します', { time: new Date().toISOString() });
+        previewWindow.postMessage({ type: 'UPDATE_DESIGN', settings }, '*');
+      } catch (error) {
+        console.error('プレビューへのメッセージ送信に失敗しました', error);
+      }
     }
   }, [settings]);
 
