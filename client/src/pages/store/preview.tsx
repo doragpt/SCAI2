@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
  */
 export default function StorePreview() {
   const [deviceView, setDeviceView] = useState<'pc' | 'smartphone'>('pc');
+  const [currentDesignSettings, setCurrentDesignSettings] = useState<DesignSettings | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   // 店舗データを取得
@@ -69,7 +70,7 @@ export default function StorePreview() {
       if (event.data.type === 'UPDATE_DESIGN' || event.data.type === 'DESIGN_SETTINGS') {
         console.log('デザイン設定更新メッセージを受信:', event.data);
         if (event.data.settings) {
-          setDesignSettings(event.data.settings);
+          setCurrentDesignSettings(event.data.settings);
           applyDesignSettings(event.data.settings);
         } else {
           console.warn('デザイン設定が見つかりません:', event.data);
@@ -105,8 +106,8 @@ export default function StorePreview() {
     );
   }
 
-  // デザイン設定を取得、なければデフォルト設定を使用
-  const designSettings = profile.design_settings || {
+  // デザイン設定を取得、リアルタイム更新分がある場合はそちらを優先、なければプロファイルから、それもなければデフォルト設定を使用
+  const defaultSettings = {
     sections: [
       {
         id: "header",
@@ -142,6 +143,8 @@ export default function StorePreview() {
       maxWidth: 1200
     }
   };
+  
+  const designSettings = currentDesignSettings || profile.design_settings || defaultSettings;
 
   const globalSettings = designSettings.globalSettings;
   
