@@ -1,51 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { HtmlContent } from '@/components/html-content';
 import { type StoreProfile } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { TrialEntryDisplay } from '@/components/store/TrialEntryDisplay';
-import { CampaignDisplay } from '@/components/store/CampaignDisplay';
-import { LocationDisplay } from '@/components/store/LocationDisplay';
-import { ContactDisplay } from '@/components/store/ContactDisplay';
-import { SalaryDisplay } from '@/components/store/SalaryDisplay';
-import { JobDescriptionDisplay } from '@/components/store/JobDescriptionDisplay';
 import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
-import { BookOpenCheck, Clock, Calendar, MapPin, Phone, Mail, Star, Gift, BadgeCheck, Shield, Image } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { 
+  Building2, Clock, MapPin, Phone, Mail, BadgeCheck, Shield, 
+  Image, Info, User, DollarSign 
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// デザイン設定の型定義
-interface DesignSettings {
-  sections: {
-    id: string;
-    title: string;
-    visible: boolean;
-    order: number;
-    settings: {
-      backgroundColor?: string;
-      textColor?: string;
-      borderColor?: string;
-      titleColor?: string;
-      fontSize?: number;
-      padding?: number;
-      borderRadius?: number;
-      borderWidth?: number;
-    };
-  }[];
-  globalSettings: {
-    mainColor: string;
-    secondaryColor: string;
-    accentColor: string;
-    backgroundColor: string;
-    fontFamily: string;
-    borderRadius: number;
-    maxWidth: number;
-  };
-}
-
+// シンプル化したプレビュー表示用コンポーネント
 export default function StorePreview() {
-  const [designSettings, setDesignSettings] = useState<DesignSettings | null>(null);
-  
   // 店舗データを取得
   const { data: profile, isLoading } = useQuery<StoreProfile>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
@@ -54,59 +21,6 @@ export default function StorePreview() {
       return response as StoreProfile;
     }
   });
-
-  // MessageEvent リスナーを追加
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // 親ウィンドウからのメッセージを処理
-      if (event.data && event.data.type === 'UPDATE_DESIGN') {
-        setDesignSettings(event.data.settings);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // デザイン設定から CSS 変数を生成
-  const generateCssVariables = () => {
-    if (!designSettings) return {};
-
-    return {
-      '--main-color': designSettings.globalSettings.mainColor,
-      '--secondary-color': designSettings.globalSettings.secondaryColor,
-      '--accent-color': designSettings.globalSettings.accentColor,
-      '--background-color': designSettings.globalSettings.backgroundColor,
-      '--font-family': designSettings.globalSettings.fontFamily,
-      '--border-radius': `${designSettings.globalSettings.borderRadius}px`,
-      '--max-width': `${designSettings.globalSettings.maxWidth}px`,
-    };
-  };
-
-  // セクションの設定を取得
-  const getSectionSettings = (sectionId: string) => {
-    if (!designSettings) return null;
-    
-    const section = designSettings.sections.find(s => s.id === sectionId);
-    if (!section || !section.visible) return null;
-    
-    return {
-      ...section,
-      style: {
-        backgroundColor: section.settings.backgroundColor,
-        color: section.settings.textColor,
-        borderColor: section.settings.borderColor,
-        fontSize: `${section.settings.fontSize}px`,
-        padding: `${section.settings.padding}px`,
-        borderRadius: `${section.settings.borderRadius}px`,
-        borderWidth: `${section.settings.borderWidth}px`,
-        borderStyle: section.settings.borderWidth && section.settings.borderWidth > 0 ? 'solid' : 'none',
-      },
-      titleStyle: {
-        color: section.settings.titleColor,
-      }
-    };
-  };
 
   if (isLoading) {
     return (
@@ -126,25 +40,10 @@ export default function StorePreview() {
     );
   }
 
-  // 各セクションを取得
-  const catchphraseSection = getSectionSettings('catchphrase');
-  const benefitsSection = getSectionSettings('benefits');
-  const requirementsSection = getSectionSettings('requirements');
-  const salarySection = getSectionSettings('salary');
-  const scheduleSection = getSectionSettings('schedule');
-  const accessSection = getSectionSettings('access');
-  const contactSection = getSectionSettings('contact');
-  const trialEntrySection = getSectionSettings('trial_entry');
-  const campaignsSection = getSectionSettings('campaigns');
-  const gallerySection = getSectionSettings('gallery');
-
   return (
-    <div 
-      className="bg-background min-h-screen"
-      style={generateCssVariables()}
-    >
+    <div className="bg-background min-h-screen">
       {/* ヘッダー */}
-      <header className="bg-primary text-white py-6">
+      <header className="bg-primary text-white py-6 shadow-md">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold">{profile.business_name || 'テスト店舗'}</h1>
           <p className="text-sm opacity-80">
@@ -154,273 +53,246 @@ export default function StorePreview() {
       </header>
 
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-8">
-        {/* キャッチコピー・仕事内容 */}
-        {(!designSettings || catchphraseSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={catchphraseSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={catchphraseSection?.titleStyle}
-            >
-              <BookOpenCheck className="inline-block mr-2 h-5 w-5" />
-              キャッチコピー・仕事内容
-            </h2>
-            <div className="p-4">
-              <div className="text-center mb-4">
-                <p className="text-xl font-bold">{profile.catch_phrase}</p>
-              </div>
-              <JobDescriptionDisplay description={profile.description || ''} />
-            </div>
-          </section>
-        )}
-
-        {/* 待遇・環境 */}
-        {(!designSettings || benefitsSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={benefitsSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={benefitsSection?.titleStyle}
-            >
-              <Star className="inline-block mr-2 h-5 w-5" />
-              待遇・環境
-            </h2>
-            <div className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {profile.benefits && profile.benefits.length > 0 ? (
-                  <ul className="space-y-2">
-                    {profile.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-center">
-                        <BadgeCheck className="h-5 w-5 mr-2 text-primary" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>待遇情報がまだ登録されていません。</p>
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="grid gap-6">
+          
+          {/* 基本情報セクション */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <Info className="mr-2 h-5 w-5" />
+                店舗情報
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold">{profile.catch_phrase}</h2>
+                </div>
+                
+                {profile.description && (
+                  <div className="mt-4">
+                    <HtmlContent html={profile.description} />
+                  </div>
                 )}
               </div>
-            </div>
-          </section>
-        )}
+            </CardContent>
+          </Card>
 
-        {/* 応募条件 */}
-        {(!designSettings || requirementsSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={requirementsSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={requirementsSection?.titleStyle}
-            >
-              <Shield className="inline-block mr-2 h-5 w-5" />
-              応募条件
-            </h2>
-            <div className="p-4">
-              <div className="space-y-4">
-                {profile.requirements ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="font-semibold mb-2">年齢</h3>
-                        <p>{profile.requirements.age_min || 18}歳以上{profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}</p>
-                      </div>
-                      
-                      {profile.requirements.cup_size_conditions && profile.requirements.cup_size_conditions.length > 0 && (
-                        <div>
-                          <h3 className="font-semibold mb-2">カップサイズ条件</h3>
-                          <ul className="list-disc list-inside">
-                            {profile.requirements.cup_size_conditions.map((condition, index) => (
-                              <li key={index}>
-                                {condition.cup_size}カップ以上の方
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+          {/* 給与情報 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <DollarSign className="mr-2 h-5 w-5" />
+                給与情報
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold mb-2">日給保証</h3>
+                  <p>
+                    {profile.minimum_guarantee ? 
+                      `${profile.minimum_guarantee.toLocaleString()}円〜` : '未設定'}
+                    {profile.maximum_guarantee ? 
+                      `${profile.maximum_guarantee.toLocaleString()}円` : ''}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">時給目安</h3>
+                  <p>
+                    {profile.average_hourly_pay ? 
+                      `平均 ${profile.average_hourly_pay.toLocaleString()}円` : '未設定'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 応募条件 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <User className="mr-2 h-5 w-5" />
+                応募条件
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {profile.requirements ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <h3 className="font-semibold mb-2">年齢</h3>
+                      <p>{profile.requirements.age_min || 18}歳以上
+                        {profile.requirements.age_max ? `${profile.requirements.age_max}歳以下` : ''}
+                      </p>
                     </div>
                     
-                    {profile.application_requirements && (
+                    {profile.requirements.cup_size_conditions && 
+                     profile.requirements.cup_size_conditions.length > 0 && (
                       <div>
-                        <h3 className="font-semibold mb-2">その他の条件</h3>
-                        <p>{profile.application_requirements}</p>
+                        <h3 className="font-semibold mb-2">カップサイズ条件</h3>
+                        <ul className="list-disc list-inside">
+                          {profile.requirements.cup_size_conditions.map((condition, index) => (
+                            <li key={index}>
+                              {condition.cup_size}カップ以上の方
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                  </>
-                ) : (
-                  <p>応募条件が設定されていません。</p>
+                  </div>
+                  
+                  {profile.application_requirements && (
+                    <div>
+                      <h3 className="font-semibold mb-2">その他の条件</h3>
+                      <p>{profile.application_requirements}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p>応募条件が設定されていません</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 勤務時間 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <Clock className="mr-2 h-5 w-5" />
+                勤務時間
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p>{profile.working_hours || '勤務時間が設定されていません'}</p>
+            </CardContent>
+          </Card>
+
+          {/* 待遇・環境 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <BadgeCheck className="mr-2 h-5 w-5" />
+                待遇・環境
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {profile.benefits && profile.benefits.length > 0 ? (
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {profile.benefits.map((benefit, index) => (
+                    <li key={index} className="flex items-center">
+                      <BadgeCheck className="h-5 w-5 mr-2 text-primary" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>待遇情報がまだ登録されていません</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* アクセス・住所 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <MapPin className="mr-2 h-5 w-5" />
+                アクセス・住所
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">エリア</h3>
+                  <p>{profile.location}</p>
+                </div>
+                
+                {profile.address && (
+                  <div>
+                    <h3 className="font-semibold mb-2">住所</h3>
+                    <p>{profile.address}</p>
+                  </div>
+                )}
+                
+                {profile.access_info && (
+                  <div>
+                    <h3 className="font-semibold mb-2">アクセス</h3>
+                    <p>{profile.access_info}</p>
+                  </div>
                 )}
               </div>
-            </div>
-          </section>
-        )}
+            </CardContent>
+          </Card>
 
-        {/* 給与情報 */}
-        {(!designSettings || salarySection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={salarySection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={salarySection?.titleStyle}
-            >
-              <BadgeCheck className="inline-block mr-2 h-5 w-5" />
-              給与情報
-            </h2>
-            <div className="p-4">
-              <SalaryDisplay 
-                minGuarantee={profile.minimum_guarantee} 
-                maxGuarantee={profile.maximum_guarantee}
-                workingTimeHours={profile.working_time_hours}
-                averageHourlyPay={profile.average_hourly_pay}
-                salaryExamples={profile.salary_examples || []}
-              />
-            </div>
-          </section>
-        )}
+          {/* 連絡先 */}
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="bg-primary/10">
+              <CardTitle className="flex items-center text-xl">
+                <Phone className="mr-2 h-5 w-5" />
+                連絡先
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {profile.recruiter_name && (
+                  <div>
+                    <h3 className="font-semibold mb-2">担当者</h3>
+                    <p>{profile.recruiter_name}</p>
+                  </div>
+                )}
+                
+                {profile.phone_numbers && profile.phone_numbers.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">電話番号</h3>
+                    <ul className="space-y-1">
+                      {profile.phone_numbers.map((phone, index) => (
+                        <li key={index} className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-primary" />
+                          <span>{phone}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {profile.email_addresses && profile.email_addresses.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">メールアドレス</h3>
+                    <ul className="space-y-1">
+                      {profile.email_addresses.map((email, index) => (
+                        <li key={index} className="flex items-center">
+                          <Mail className="h-4 w-4 mr-2 text-primary" />
+                          <span>{email}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* 勤務時間 */}
-        {(!designSettings || scheduleSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={scheduleSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={scheduleSection?.titleStyle}
-            >
-              <Clock className="inline-block mr-2 h-5 w-5" />
-              勤務時間
-            </h2>
-            <div className="p-4">
-              <p>{profile.working_hours || '勤務時間が設定されていません。'}</p>
-            </div>
-          </section>
-        )}
-
-        {/* アクセス・住所 */}
-        {(!designSettings || accessSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={accessSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={accessSection?.titleStyle}
-            >
-              <MapPin className="inline-block mr-2 h-5 w-5" />
-              アクセス・住所
-            </h2>
-            <div className="p-4">
-              <LocationDisplay location={profile.location} address={profile.address} accessInfo={profile.access_info} />
-            </div>
-          </section>
-        )}
-
-        {/* 応募方法・連絡先 */}
-        {(!designSettings || contactSection) && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={contactSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={contactSection?.titleStyle}
-            >
-              <Phone className="inline-block mr-2 h-5 w-5" />
-              応募方法・連絡先
-            </h2>
-            <div className="p-4">
-              <ContactDisplay 
-                recruiterName={profile.recruiter_name} 
-                phoneNumbers={profile.phone_numbers} 
-                emailAddresses={profile.email_addresses}
-                pcWebsiteUrl={profile.pc_website_url}
-                mobileWebsiteUrl={profile.mobile_website_url}
-              />
-            </div>
-          </section>
-        )}
-
-        {/* 体験入店情報 */}
-        {(!designSettings || trialEntrySection) && profile.trial_entry && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={trialEntrySection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={trialEntrySection?.titleStyle}
-            >
-              <Calendar className="inline-block mr-2 h-5 w-5" />
-              体験入店情報
-            </h2>
-            <div className="p-4">
-              {profile.trial_entry ? (
-                <TrialEntryDisplay data={profile.trial_entry} />
-              ) : (
-                <p>体験入店情報が設定されていません。</p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* フォトギャラリー */}
-        {(!designSettings || gallerySection) && profile.gallery_photos && profile.gallery_photos.length > 0 && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={gallerySection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={gallerySection?.titleStyle}
-            >
-              <Image className="inline-block mr-2 h-5 w-5" />
-              フォトギャラリー
-            </h2>
-            <div className="p-4">
-              {profile.gallery_photos && profile.gallery_photos.length > 0 ? (
+          {/* フォトギャラリー */}
+          {profile.gallery_photos && profile.gallery_photos.length > 0 && (
+            <Card className="overflow-hidden shadow-md">
+              <CardHeader className="bg-primary/10">
+                <CardTitle className="flex items-center text-xl">
+                  <Image className="mr-2 h-5 w-5" />
+                  フォトギャラリー
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
                 <PhotoGalleryDisplay photos={profile.gallery_photos} />
-              ) : (
-                <p>フォトギャラリーが設定されていません。</p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* キャンペーン情報 */}
-        {(!designSettings || campaignsSection) && profile.campaigns && profile.campaigns.length > 0 && (
-          <section 
-            className="mb-8 border rounded-lg overflow-hidden"
-            style={campaignsSection?.style}
-          >
-            <h2 
-              className="text-xl font-bold p-4 border-b bg-primary/10"
-              style={campaignsSection?.titleStyle}
-            >
-              <Gift className="inline-block mr-2 h-5 w-5" />
-              キャンペーン情報
-            </h2>
-            <div className="p-4">
-              {profile.campaigns && profile.campaigns.length > 0 ? (
-                <CampaignDisplay campaigns={profile.campaigns} />
-              ) : (
-                <p>現在実施中のキャンペーンはありません。</p>
-              )}
-            </div>
-          </section>
-        )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </main>
 
       {/* フッター */}
-      <footer className="bg-gray-800 text-white py-8">
+      <footer className="bg-gray-800 text-white py-6 mt-12">
         <div className="container mx-auto px-4">
           <p className="text-center">&copy; 2025 {profile.business_name || 'テスト店舗'}. All rights reserved.</p>
         </div>
