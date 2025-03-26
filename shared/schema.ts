@@ -395,6 +395,21 @@ export const photoSchema = z.object({
   order: z.number().optional(),
 });
 
+// フォトギャラリーのカテゴリ
+export const galleryCategories = ["店内", "個室", "待機所", "お風呂", "備品", "その他"] as const;
+export type GalleryCategory = typeof galleryCategories[number];
+
+// フォトギャラリー画像のスキーマ
+export const galleryPhotoSchema = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  category: z.enum(galleryCategories),
+  order: z.number().optional(),
+  featured: z.boolean().optional(),
+});
+
 // タトゥー・傷のタイプ
 export const bodyMarkTypeOptions = ["タトゥー", "傷", "両方"] as const;
 export type BodyMarkType = typeof bodyMarkTypeOptions[number];
@@ -464,6 +479,9 @@ export const store_profiles = pgTable("store_profiles", {
     date: string;
   }[]>().default([]), // 口コミ・体験談
   
+  // フォトギャラリー
+  gallery_photos: jsonb("gallery_photos").$type<z.infer<typeof galleryPhotoSchema>[]>().default([]),
+  
   // デザイン設定
   design_settings: jsonb("design_settings").$type<DesignSettings>().default({
     sections: [
@@ -501,10 +519,21 @@ export const store_profiles = pgTable("store_profiles", {
         }
       },
       {
+        id: "gallery",
+        title: "フォトギャラリー",
+        visible: true,
+        order: 4,
+        settings: {
+          backgroundColor: "#fff5f8",
+          textColor: "#333333",
+          titleColor: "#ff69b4"
+        }
+      },
+      {
         id: "benefits",
         title: "待遇",
         visible: true,
-        order: 4,
+        order: 5,
         settings: {
           backgroundColor: "#fff5f8",
           textColor: "#333333",
@@ -515,7 +544,7 @@ export const store_profiles = pgTable("store_profiles", {
         id: "requirements",
         title: "応募条件",
         visible: true,
-        order: 5,
+        order: 6,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -526,7 +555,7 @@ export const store_profiles = pgTable("store_profiles", {
         id: "contact",
         title: "連絡先",
         visible: true,
-        order: 6,
+        order: 7,
         settings: {
           backgroundColor: "#fff5f8",
           textColor: "#333333",
@@ -785,6 +814,9 @@ export const storeProfileSchema = z.object({
       date: z.string(),
     })
   ).optional(), // 口コミ・体験談
+  
+  // フォトギャラリー
+  gallery_photos: z.array(galleryPhotoSchema).optional(),
 });
 
 export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
