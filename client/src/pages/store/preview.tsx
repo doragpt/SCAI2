@@ -777,8 +777,8 @@ export default function StorePreview() {
 
 
 
-              {/* アクセス・住所 */}
-              {isSectionVisible('access') && (
+              {/* アクセス・住所 - コメントアウト、renderOrderedSectionsで管理 */}
+              {false && isSectionVisible('access') && (
                 <div style={getSectionStyle('access')} className="mb-8">
                   <h3 style={getSectionTitleStyle('access')} className="flex items-center">
                     <MapPin className="h-5 w-5 mr-2" style={{ color: getSectionSettings('access').titleColor || globalSettings.mainColor }} />
@@ -808,8 +808,8 @@ export default function StorePreview() {
                 </div>
               )}
 
-              {/* 連絡先 */}
-              {isSectionVisible('contact') && (
+              {/* 連絡先 - コメントアウト、renderOrderedSectionsで管理 */}
+              {false && isSectionVisible('contact') && (
                 <div style={getSectionStyle('contact')} className="mb-8">
                   <h3 style={getSectionTitleStyle('contact')} className="flex items-center">
                     <Phone className="h-5 w-5 mr-2" style={{ color: getSectionSettings('contact').titleColor || globalSettings.mainColor }} />
@@ -855,8 +855,8 @@ export default function StorePreview() {
                 </div>
               )}
 
-              {/* SNSリンク */}
-              {isSectionVisible('sns_links') && profile && (
+              {/* SNSリンク - コメントアウト、renderOrderedSectionsで管理 */}
+              {false && isSectionVisible('sns_links') && profile && (
                 (profile?.sns_id || profile?.sns_url || profile?.sns_text || 
                 (profile?.sns_urls && profile.sns_urls.length > 0)) && (
                 <div style={getSectionStyle('sns_links')} className="mb-8">
@@ -904,8 +904,8 @@ export default function StorePreview() {
                 </div>
               ))}
 
-              {/* 店舗ブログ */}
-              {isSectionVisible('blog') && (
+              {/* 店舗ブログ - コメントアウト、renderOrderedSectionsで管理 */}
+              {false && isSectionVisible('blog') && (
                 <div style={getSectionStyle('blog')} className="mb-8">
                   <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
                     <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
