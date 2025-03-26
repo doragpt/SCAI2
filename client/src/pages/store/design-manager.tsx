@@ -238,7 +238,9 @@ export default function StoreDesignManager() {
     queryKey: [QUERY_KEYS.STORE_DESIGN],
     queryFn: async () => {
       try {
+        console.log('デザイン設定を取得中...', QUERY_KEYS.STORE_DESIGN);
         const response = await apiRequest('GET', QUERY_KEYS.STORE_DESIGN);
+        console.log('デザイン設定取得成功:', response);
         return response as DesignSettings;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました', error);
