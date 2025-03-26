@@ -14,8 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getServiceTypeLabel } from '@/lib/utils';
 import { type DesignSettings, type SectionSettings, type GlobalDesignSettings, type DesignSection } from '@shared/schema';
 
-// 型定義はすでに@shared/schemaから読み込み済み
-
 export default function StoreDesignManager() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<DesignSettings>({
@@ -40,110 +38,171 @@ export default function StoreDesignManager() {
     return {
       sections: [
         {
-          id: "header",
-          title: "ヘッダー",
+          id: "catchphrase",
+          title: "キャッチコピー・仕事内容",
           visible: true,
           order: 1,
           settings: {
             backgroundColor: "#ffffff",
             textColor: "#333333",
-            titleColor: "#ff69b4"
-          }
-        },
-        {
-          id: "catchphrase",
-          title: "キャッチフレーズ",
-          visible: true,
-          order: 2,
-          settings: {
-            backgroundColor: "#fff5f8",
-            textColor: "#333333",
-            titleColor: "#ff69b4"
-          }
-        },
-        {
-          id: "description",
-          title: "仕事内容",
-          visible: true,
-          order: 3,
-          settings: {
-            backgroundColor: "#ffffff",
-            textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
           id: "photo_gallery",
           title: "写真ギャラリー",
           visible: true,
-          order: 4,
+          order: 2,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "requirements",
+          title: "応募条件",
+          visible: true,
+          order: 3,
           settings: {
             backgroundColor: "#ffffff",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
-          id: "benefits",
-          title: "待遇・環境",
+          id: "salary",
+          title: "給与情報",
+          visible: true,
+          order: 4,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            borderColor: "#ffd6dd",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "schedule",
+          title: "勤務時間",
           visible: true,
           order: 5,
           settings: {
-            backgroundColor: "#fff5f8",
+            backgroundColor: "#ffffff",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
-          id: "special_offers",
-          title: "特別オファー",
+          id: "access",
+          title: "アクセス",
           visible: true,
           order: 6,
           settings: {
             backgroundColor: "#fff9fa",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        },
+        {
+          id: "contact",
+          title: "連絡先",
+          visible: true,
+          order: 7,
+          settings: {
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
           id: "trial_entry",
-          title: "体験入店保証",
+          title: "体験入店",
           visible: true,
-          order: 7,
+          order: 8,
           settings: {
             backgroundColor: "#fff9fa",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#ffd6dd",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
           id: "campaigns",
           title: "キャンペーン",
           visible: true,
-          order: 8,
+          order: 9,
           settings: {
-            backgroundColor: "#fff9fa",
+            backgroundColor: "#ffffff",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         },
         {
-          id: "sns_links",
-          title: "公式SNS",
+          id: "benefits",
+          title: "待遇・環境",
           visible: true,
-          order: 12,
+          order: 10,
           settings: {
             backgroundColor: "#fff9fa",
             textColor: "#333333",
-            titleColor: "#ff69b4"
+            borderColor: "#e0e0e0",
+            titleColor: "#ff6b81",
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
           }
         }
       ],
       globalSettings: {
-        mainColor: "#ff69b4",
-        secondaryColor: "#fff5f8",
-        accentColor: "#ff1493",
-        backgroundColor: "#ffffff",
+        mainColor: "#ff4d7d",
+        secondaryColor: "#ffc7d8",
+        accentColor: "#ff9eb8",
+        backgroundColor: "#fff5f9",
         fontFamily: "sans-serif",
         borderRadius: 8,
         maxWidth: 1200
@@ -151,251 +210,167 @@ export default function StoreDesignManager() {
     };
   };
 
-  // デザイン設定を取得する
-  const { isLoading, refetch } = useQuery<DesignSettings>({
-    queryKey: [QUERY_KEYS.STORE_DESIGN],
+  // 設定を取得するクエリ
+  const designSettingsQuery = useQuery({
+    queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
     queryFn: async () => {
-      try {
-        const response = await apiRequest<DesignSettings>('GET', '/api/design');
-        return response;
-      } catch (error) {
-        console.error('デザイン設定の取得に失敗しました', error);
-        return getDefaultSettings();
-      }
-    }
-  });
-  
-  // データが取得できたらステートを更新
-  useEffect(() => {
-    if (refetch) {
-      refetch().then(result => {
-        if (result.data) {
-          setSettings(result.data);
-          setIsDirty(false);
-        }
+      const response = await apiRequest<DesignSettings>({
+        url: '/api/design',
+        method: 'GET'
       });
-    }
-  }, [refetch]);
+      return response;
+    },
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュ
+    retry: 1,
+    retryDelay: 1000
+  });
 
-  // デザイン設定を保存する
+  // 設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
-      const response = await apiRequest('POST', '/api/design', data);
+      const response = await apiRequest({
+        url: '/api/design',
+        method: 'POST',
+        data
+      });
       return response;
     },
     onSuccess: () => {
       toast({
-        title: "保存完了",
-        description: "デザイン設定を保存しました。",
+        title: '設定が保存されました',
+        description: 'デザイン設定が正常に保存されました。',
       });
       setIsDirty(false);
     },
     onError: (error: Error) => {
       toast({
-        title: "エラー",
-        description: "デザイン設定の保存に失敗しました。" + error.message,
-        variant: "destructive"
+        title: '保存に失敗しました',
+        description: `エラー: ${error.message}`,
+        variant: 'destructive',
       });
     }
   });
 
-  // プレビューにデザイン設定を送信する
+  // 初期データのロード
   useEffect(() => {
-    const previewWindow = iframeRef.current?.contentWindow;
-    if (previewWindow) {
-      try {
-        const timestamp = new Date().toISOString();
-        console.log('プレビューウィンドウにデザイン設定を送信します', { 
-          time: timestamp,
-          hasSettings: !!settings,
-          sectionCount: settings?.sections?.length,
-        });
-        
-        // メッセージ構造を詳細なログ出力で確認できるよう調整
-        const message = { 
-          type: 'UPDATE_DESIGN', 
-          settings, 
-          timestamp 
-        };
-        console.log('送信メッセージ詳細:', JSON.stringify(message, null, 2));
-        
-        previewWindow.postMessage(message, '*');
-      } catch (error) {
-        console.error('プレビューへのメッセージ送信に失敗しました', error);
-      }
-    } else {
-      console.warn('プレビューウィンドウが利用できません', { 
-        hasIframeRef: !!iframeRef.current,
-        time: new Date().toISOString()
+    if (designSettingsQuery.data) {
+      setSettings(designSettingsQuery.data);
+    } else if (designSettingsQuery.error) {
+      toast({
+        title: 'データの読み込みに失敗しました',
+        description: '初期設定を適用します。',
+        variant: 'destructive',
       });
+      const defaultSettings = getDefaultSettings();
+      setSettings(defaultSettings);
+    } else if (designSettingsQuery.isLoading) {
+      // ロード中の表示もここに追加できます
+    } else if (designSettingsQuery.isSuccess && !designSettingsQuery.data) {
+      const defaultSettings = getDefaultSettings();
+      setSettings(defaultSettings);
     }
-  }, [settings]);
-
-  // デバッグ用関数
-  const debugLog = (message: string, data?: any) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[Design Manager] ${message}`, data || '');
-    }
-  };
-
-  // 設定が変更されたらpropsを更新する（改善版）
-  const handleSettingsChange = (newSettings: DesignSettings) => {
-    // 設定を更新
-    setSettings(newSettings);
-    setIsDirty(true);
-    
-    // プレビューウィンドウにリアルタイムで変更を通知
-    const previewWindow = iframeRef.current?.contentWindow;
-    if (previewWindow) {
-      try {
-        const timestamp = new Date().toISOString();
-        debugLog('プレビューに設定変更を送信', { 
-          timestamp,
-          sectionsCount: newSettings.sections.length, 
-          sectionIds: newSettings.sections.map((s: DesignSection) => s.id),
-        });
-        
-        previewWindow.postMessage({
-          type: 'UPDATE_DESIGN',
-          settings: newSettings,
-          timestamp
-        }, '*');
-      } catch (error) {
-        console.error('プレビューへのメッセージ送信に失敗しました', error);
-      }
-    }
-  };
+  }, [designSettingsQuery.data, designSettingsQuery.error, designSettingsQuery.isLoading, designSettingsQuery.isSuccess, toast]);
 
   // セクションの表示/非表示を切り替える
-  const toggleSectionVisibility = (sectionId: string) => {
-    const updatedSections = settings.sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          visible: !section.visible
-        };
-      }
-      return section;
+  const toggleSectionVisibility = (id: string) => {
+    setSettings(prev => {
+      const newSections = prev.sections.map(section => {
+        if (section.id === id) {
+          return { ...section, visible: !section.visible };
+        }
+        return section;
+      });
+      return { ...prev, sections: newSections };
     });
-
-    handleSettingsChange({
-      ...settings,
-      sections: updatedSections
-    });
+    setIsDirty(true);
   };
 
-  // セクションの順序を変更する
-  const changeOrder = (sectionId: string, direction: 'up' | 'down') => {
-    const sortedSections = [...settings.sections].sort((a, b) => a.order - b.order);
-    const sectionIndex = sortedSections.findIndex(section => section.id === sectionId);
-    
-    if (sectionIndex === -1) return;
-    
-    if (direction === 'up' && sectionIndex > 0) {
-      // 上に移動
-      const temp = sortedSections[sectionIndex].order;
-      sortedSections[sectionIndex].order = sortedSections[sectionIndex - 1].order;
-      sortedSections[sectionIndex - 1].order = temp;
-    } else if (direction === 'down' && sectionIndex < sortedSections.length - 1) {
-      // 下に移動
-      const temp = sortedSections[sectionIndex].order;
-      sortedSections[sectionIndex].order = sortedSections[sectionIndex + 1].order;
-      sortedSections[sectionIndex + 1].order = temp;
-    }
-    
-    handleSettingsChange({
-      ...settings,
-      sections: sortedSections
+  // セクション設定の更新
+  const updateSectionSettings = (id: string, newSettings: Partial<SectionSettings>) => {
+    setSettings(prev => {
+      const newSections = prev.sections.map(section => {
+        if (section.id === id) {
+          return { 
+            ...section, 
+            settings: { 
+              ...section.settings, 
+              ...newSettings 
+            } 
+          };
+        }
+        return section;
+      });
+      return { ...prev, sections: newSections };
     });
-  };
-  
-  // 特定のセクション順序を入れ替える（初期ロード後の一度だけ実行する特別な処理）
-  useEffect(() => {
-    if (settings.sections.length > 0) {
-      const photoGallerySection = settings.sections.find(s => s.id === 'photo_gallery');
-      const benefitsSection = settings.sections.find(s => s.id === 'benefits');
-      
-      // 両方のセクションが存在し、写真ギャラリーが待遇・環境の後にある場合
-      if (photoGallerySection && benefitsSection && photoGallerySection.order > benefitsSection.order) {
-        // 順序を入れ替える
-        const updatedSections = settings.sections.map(section => {
-          if (section.id === 'photo_gallery') {
-            return { ...section, order: benefitsSection.order };
-          } else if (section.id === 'benefits') {
-            return { ...section, order: photoGallerySection.order };
-          }
-          return section;
-        });
-        
-        // 設定を更新
-        handleSettingsChange({
-          ...settings,
-          sections: updatedSections
-        });
-        
-        console.log('写真ギャラリーと待遇・環境の順序を入れ替えました');
-      }
-    }
-  }, [settings.sections.length]);
-  
-  // ドラッグアンドドロップによるセクション順序変更
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return; // ドロップ先がない場合は何もしない
-    
-    const { source, destination } = result;
-    if (source.index === destination.index) return; // 位置が変わっていない場合は何もしない
-    
-    // 並び順でソートされたセクションリストを取得
-    const sortedSections = [...settings.sections].sort((a, b) => a.order - b.order);
-    
-    // 移動するアイテムを一時保存
-    const [movedItem] = sortedSections.splice(source.index, 1);
-    
-    // 新しい位置に挿入
-    sortedSections.splice(destination.index, 0, movedItem);
-    
-    // order値を更新（1から順に振り直す）
-    const updatedSections = sortedSections.map((section, index) => ({
-      ...section,
-      order: index + 1
-    }));
-    
-    handleSettingsChange({
-      ...settings,
-      sections: updatedSections
-    });
+    setIsDirty(true);
   };
 
-  // セクション設定を更新する
-  const updateSectionSettings = (sectionId: string, newSettings: Partial<SectionSettings>) => {
-    const updatedSections = settings.sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          settings: {
-            ...section.settings,
-            ...newSettings
-          }
-        };
-      }
-      return section;
-    });
-
-    handleSettingsChange({
-      ...settings,
-      sections: updatedSections
-    });
-  };
-
-  // グローバル設定を更新する
+  // グローバル設定の更新
   const updateGlobalSettings = (newSettings: Partial<GlobalDesignSettings>) => {
-    handleSettingsChange({
-      ...settings,
+    setSettings(prev => ({
+      ...prev,
       globalSettings: {
-        ...settings.globalSettings,
+        ...prev.globalSettings,
         ...newSettings
       }
+    }));
+    setIsDirty(true);
+  };
+
+  // セクションの並び順を変更する
+  const changeOrder = (id: string, direction: 'up' | 'down') => {
+    setSettings(prev => {
+      const sections = [...prev.sections];
+      const currentIndex = sections.findIndex(s => s.id === id);
+      if (currentIndex === -1) return prev;
+
+      const currentSection = sections[currentIndex];
+      const newOrder = direction === 'up' 
+        ? Math.max(1, currentSection.order - 1)
+        : Math.min(sections.length, currentSection.order + 1);
+
+      // すでに存在する順序を入れ替える
+      const swapSection = sections.find(s => s.order === newOrder);
+      if (swapSection) {
+        swapSection.order = currentSection.order;
+      }
+
+      currentSection.order = newOrder;
+
+      return { ...prev, sections: sections };
     });
+    setIsDirty(true);
+  };
+
+  // ドラッグ&ドロップ後の処理
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+
+    // ドロップ先が無効な場合は何もしない
+    if (!destination) return;
+
+    // 元の位置と同じ場合は何もしない
+    if (destination.index === source.index) return;
+
+    setSettings(prev => {
+      const sections = [...prev.sections];
+      const sourceIndex = sections.findIndex(s => s.order === source.index + 1);
+      const destinationIndex = sections.findIndex(s => s.order === destination.index + 1);
+
+      if (sourceIndex === -1 || destinationIndex === -1) return prev;
+
+      const [removed] = sections.splice(sourceIndex, 1);
+      sections.splice(destinationIndex, 0, removed);
+
+      // 順序を再計算
+      const reorderedSections = sections.map((section, index) => ({
+        ...section,
+        order: index + 1
+      }));
+
+      return { ...prev, sections: reorderedSections };
+    });
+    setIsDirty(true);
   };
 
   // 設定を保存する
@@ -403,191 +378,180 @@ export default function StoreDesignManager() {
     saveSettingsMutation.mutate(settings);
   };
 
-  // プレビューをリフレッシュする
+  // プレビューを更新する
   const refreshPreview = () => {
-    if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'UPDATE_DESIGN',
+        settings: settings
+      }, '*');
     }
   };
-  
-  // プレビューからのメッセージを受け取る
+
+  // 子ウィンドウからのメッセージを受け取る
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      console.log('親ウィンドウでメッセージを受信:', {
-        type: event.data?.type,
-        time: new Date().toISOString()
-      });
-      
-      // PREVIEW_READYメッセージを受け取ったらデザイン設定を送信
-      if (event.data?.type === 'PREVIEW_READY') {
-        console.log('プレビュー画面の準備完了を確認しました');
-        
-        // プレビューウィンドウにデザイン設定を送信
-        const previewWindow = iframeRef.current?.contentWindow;
-        if (previewWindow) {
-          try {
-            const timestamp = new Date().toISOString();
-            console.log('プレビュー準備完了後に設定を再送信します', { 
-              time: timestamp,
-              hasSettings: !!settings
-            });
-            
-            previewWindow.postMessage({ 
-              type: 'UPDATE_DESIGN', 
-              settings, 
-              timestamp,
-              forceUpdate: true
-            }, '*');
-          } catch (error) {
-            console.error('プレビューへのメッセージ送信に失敗しました', error);
-          }
-        }
+      // プレビューページからのログを親ウィンドウのコンソールに出力
+      if (event.data.type === 'forward-log') {
+        console.log('プレビューウィンドウからのログ:', event.data);
       }
     };
-    
+
     window.addEventListener('message', handleMessage);
-    
     return () => {
       window.removeEventListener('message', handleMessage);
     };
   }, [settings]);
 
   // セクション詳細設定のコンポーネント
-  const SectionDetailSettings = ({ section }: { section: DesignSection }) => (
-    <div className="p-3 border-t bg-muted/30">
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-bg-color`}>背景色</Label>
-          <div className="flex">
-            <Input 
-              id={`${section.id}-bg-color`}
-              type="color" 
-              value={section.settings.backgroundColor || '#ffffff'} 
-              onChange={(e) => updateSectionSettings(section.id, { backgroundColor: e.target.value })}
-              className="w-10 h-10 p-1 mr-2"
-            />
-            <Input 
-              value={section.settings.backgroundColor || '#ffffff'} 
-              onChange={(e) => updateSectionSettings(section.id, { backgroundColor: e.target.value })}
-              className="flex-1"
-            />
+  const SectionDetailSettings = ({ section }: { section: DesignSection }) => {
+    const sectionSettings = section.settings || {
+      backgroundColor: '#ffffff',
+      textColor: '#333333',
+      titleColor: '#ff6b81',
+      borderColor: '#e0e0e0',
+      fontSize: 16,
+      padding: 20,
+      borderRadius: 8,
+      borderWidth: 1
+    };
+    
+    return (
+      <div className="p-3 border-t bg-muted/30">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-bg-color`}>背景色</Label>
+            <div className="flex">
+              <Input 
+                id={`${section.id}-bg-color`}
+                type="color" 
+                value={sectionSettings.backgroundColor || '#ffffff'} 
+                onChange={(e) => updateSectionSettings(section.id, { backgroundColor: e.target.value })}
+                className="w-10 h-10 p-1 mr-2"
+              />
+              <Input 
+                value={sectionSettings.backgroundColor || '#ffffff'} 
+                onChange={(e) => updateSectionSettings(section.id, { backgroundColor: e.target.value })}
+                className="flex-1"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-text-color`}>文字色</Label>
+            <div className="flex">
+              <Input 
+                id={`${section.id}-text-color`}
+                type="color" 
+                value={sectionSettings.textColor || '#333333'} 
+                onChange={(e) => updateSectionSettings(section.id, { textColor: e.target.value })}
+                className="w-10 h-10 p-1 mr-2"
+              />
+              <Input 
+                value={sectionSettings.textColor || '#333333'} 
+                onChange={(e) => updateSectionSettings(section.id, { textColor: e.target.value })}
+                className="flex-1"
+              />
+            </div>
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-text-color`}>文字色</Label>
-          <div className="flex">
-            <Input 
-              id={`${section.id}-text-color`}
-              type="color" 
-              value={section.settings.textColor || '#333333'} 
-              onChange={(e) => updateSectionSettings(section.id, { textColor: e.target.value })}
-              className="w-10 h-10 p-1 mr-2"
-            />
-            <Input 
-              value={section.settings.textColor || '#333333'} 
-              onChange={(e) => updateSectionSettings(section.id, { textColor: e.target.value })}
-              className="flex-1"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-title-color`}>見出し色</Label>
-          <div className="flex">
-            <Input 
-              id={`${section.id}-title-color`}
-              type="color" 
-              value={section.settings.titleColor || '#ff6b81'} 
-              onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
-              className="w-10 h-10 p-1 mr-2"
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-title-color`}>見出し色</Label>
+            <div className="flex">
+              <Input 
+                id={`${section.id}-title-color`}
+                type="color" 
+                value={sectionSettings.titleColor || '#ff6b81'} 
+                onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
+                className="w-10 h-10 p-1 mr-2"
+              />
+              <Input 
+                value={sectionSettings.titleColor || '#ff6b81'} 
+                onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
+                className="flex-1"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-border-color`}>枠線色</Label>
+            <div className="flex">
+              <Input 
+                id={`${section.id}-border-color`}
+                type="color" 
+                value={sectionSettings.borderColor || '#e0e0e0'} 
+                onChange={(e) => updateSectionSettings(section.id, { borderColor: e.target.value })}
+                className="w-10 h-10 p-1 mr-2"
+              />
+              <Input 
+                value={sectionSettings.borderColor || '#e0e0e0'} 
+                onChange={(e) => updateSectionSettings(section.id, { borderColor: e.target.value })}
+                className="flex-1"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-font-size`}>
+              文字サイズ: {sectionSettings.fontSize || 16}px
+            </Label>
+            <Slider
+              id={`${section.id}-font-size`}
+              defaultValue={[sectionSettings.fontSize || 16]}
+              min={12}
+              max={24}
+              step={1}
+              onValueChange={(value) => updateSectionSettings(section.id, { fontSize: value[0] })}
             />
-            <Input 
-              value={section.settings.titleColor || '#ff6b81'} 
-              onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
-              className="flex-1"
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-padding`}>
+              内側余白: {sectionSettings.padding || 20}px
+            </Label>
+            <Slider
+              id={`${section.id}-padding`}
+              defaultValue={[sectionSettings.padding || 20]}
+              min={0}
+              max={40}
+              step={1}
+              onValueChange={(value) => updateSectionSettings(section.id, { padding: value[0] })}
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-border-color`}>枠線色</Label>
-          <div className="flex">
-            <Input 
-              id={`${section.id}-border-color`}
-              type="color" 
-              value={section.settings.borderColor || '#e0e0e0'} 
-              onChange={(e) => updateSectionSettings(section.id, { borderColor: e.target.value })}
-              className="w-10 h-10 p-1 mr-2"
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-border-radius`}>
+              角丸: {sectionSettings.borderRadius || 8}px
+            </Label>
+            <Slider
+              id={`${section.id}-border-radius`}
+              defaultValue={[sectionSettings.borderRadius || 8]}
+              min={0}
+              max={20}
+              step={1}
+              onValueChange={(value) => updateSectionSettings(section.id, { borderRadius: value[0] })}
             />
-            <Input 
-              value={section.settings.borderColor || '#e0e0e0'} 
-              onChange={(e) => updateSectionSettings(section.id, { borderColor: e.target.value })}
-              className="flex-1"
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`${section.id}-border-width`}>
+              枠線太さ: {sectionSettings.borderWidth || 1}px
+            </Label>
+            <Slider
+              id={`${section.id}-border-width`}
+              defaultValue={[sectionSettings.borderWidth || 1]}
+              min={0}
+              max={10}
+              step={1}
+              onValueChange={(value) => updateSectionSettings(section.id, { borderWidth: value[0] })}
             />
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-font-size`}>
-            文字サイズ: {section.settings.fontSize || 16}px
-          </Label>
-          <Slider
-            id={`${section.id}-font-size`}
-            defaultValue={[section.settings.fontSize || 16]}
-            min={12}
-            max={24}
-            step={1}
-            onValueChange={(value) => updateSectionSettings(section.id, { fontSize: value[0] })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-padding`}>
-            内側余白: {section.settings.padding || 20}px
-          </Label>
-          <Slider
-            id={`${section.id}-padding`}
-            defaultValue={[section.settings.padding || 20]}
-            min={0}
-            max={40}
-            step={1}
-            onValueChange={(value) => updateSectionSettings(section.id, { padding: value[0] })}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-border-radius`}>
-            角丸: {section.settings.borderRadius || 8}px
-          </Label>
-          <Slider
-            id={`${section.id}-border-radius`}
-            defaultValue={[section.settings.borderRadius || 8]}
-            min={0}
-            max={20}
-            step={1}
-            onValueChange={(value) => updateSectionSettings(section.id, { borderRadius: value[0] })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-border-width`}>
-            枠線太さ: {section.settings.borderWidth || 1}px
-          </Label>
-          <Slider
-            id={`${section.id}-border-width`}
-            defaultValue={[section.settings.borderWidth || 1]}
-            min={0}
-            max={10}
-            step={1}
-            onValueChange={(value) => updateSectionSettings(section.id, { borderWidth: value[0] })}
-          />
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -882,14 +846,14 @@ export default function StoreDesignManager() {
 
                 <div className="space-y-2">
                   <Label htmlFor="max-width">
-                    コンテンツ最大幅: {settings.globalSettings.maxWidth}px
+                    最大幅: {settings.globalSettings.maxWidth}px
                   </Label>
                   <Slider
                     id="max-width"
                     defaultValue={[settings.globalSettings.maxWidth]}
-                    min={600}
+                    min={800}
                     max={1600}
-                    step={10}
+                    step={50}
                     onValueChange={(value) => updateGlobalSettings({ maxWidth: value[0] })}
                   />
                 </div>
@@ -899,115 +863,128 @@ export default function StoreDesignManager() {
             {/* 設定タブ */}
             <TabsContent value="settings" className="space-y-4">
               <div className="text-sm text-muted-foreground mb-2">
-                その他の設定を行えます。表示に関する詳細な設定やシステム設定などを行います。
+                その他の設定を変更できます。
               </div>
               
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-medium mb-2">デバイス設定</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    レスポンシブデザインの設定を行います。各デバイスでの表示を最適化できます。
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <Label>プレビューモード</Label>
-                    <div className="flex items-center space-x-2 bg-muted p-1 rounded-md w-fit">
-                      <Button 
-                        variant={deviceView === 'pc' ? "default" : "ghost"} 
-                        size="sm" 
-                        onClick={() => setDeviceView('pc')}
-                      >
-                        <Monitor className="h-4 w-4 mr-1" />
-                        PC
-                      </Button>
-                      <Button 
-                        variant={deviceView === 'smartphone' ? "default" : "ghost"} 
-                        size="sm" 
-                        onClick={() => setDeviceView('smartphone')}
-                      >
-                        <Smartphone className="h-4 w-4 mr-1" />
-                        スマホ
-                      </Button>
+              <div className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-medium">プレビュー設定</h3>
+                        <p className="text-sm text-muted-foreground">
+                          プレビューの表示方法を設定します。
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="device-view">デバイス表示</Label>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant={deviceView === 'pc' ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setDeviceView('pc')}
+                            className="flex-1"
+                          >
+                            <Monitor className="h-4 w-4 mr-2" />
+                            PC
+                          </Button>
+                          <Button
+                            variant={deviceView === 'smartphone' ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setDeviceView('smartphone')}
+                            className="flex-1"
+                          >
+                            <Smartphone className="h-4 w-4 mr-2" />
+                            スマートフォン
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-medium mb-2">保存と公開</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    デザイン設定の保存と公開を行います。変更内容を保存して公開画面に反映します。
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <Button 
-                      variant="default" 
-                      onClick={handleSave}
-                      disabled={!isDirty || saveSettingsMutation.isPending}
-                    >
-                      {saveSettingsMutation.isPending ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                          保存中...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-1" />
-                          設定を保存する
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={refreshPreview}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      プレビューを更新する
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-medium">保存・リセット</h3>
+                        <p className="text-sm text-muted-foreground">
+                          設定の保存やリセットを行います。
+                        </p>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="default"
+                          onClick={handleSave}
+                          disabled={!isDirty || saveSettingsMutation.isPending}
+                          className="flex-1"
+                        >
+                          {saveSettingsMutation.isPending ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              保存中...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              設定を保存
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (designSettingsQuery.data) {
+                              setSettings(designSettingsQuery.data);
+                            } else {
+                              setSettings(getDefaultSettings());
+                            }
+                            setIsDirty(false);
+                          }}
+                          disabled={!isDirty || saveSettingsMutation.isPending}
+                          className="flex-1"
+                        >
+                          変更を破棄
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
-        
-        {/* プレビュー領域 */}
-        <div className="flex-1 bg-muted/50 overflow-auto">
-          <div className="h-full p-4 flex flex-col items-center justify-center">
-            <div className={`
-              bg-white border rounded-md overflow-hidden shadow-md transition-all duration-300
-              ${deviceView === 'pc' ? 'w-full max-w-[1000px] h-auto min-h-[600px]' : 'w-[375px] h-[667px]'}
-            `}>
-              {isLoading ? (
-                <div className="h-full flex items-center justify-center">
-                  <RefreshCw className="h-6 w-6 text-muted-foreground animate-spin" />
-                  <span className="ml-2">読み込み中...</span>
+
+        {/* プレビュー */}
+        <div className="flex-1 overflow-auto p-4 bg-muted/20">
+          <div className="flex flex-col h-full items-center">
+            <div className="mb-2 text-center">
+              <h2 className="text-lg font-bold">プレビュー</h2>
+              <p className="text-sm text-muted-foreground">
+                実際の表示と異なる場合があります。設定変更後は「更新」ボタンをクリックしてください。
+              </p>
+            </div>
+            
+            <div 
+              className={`mt-4 flex-1 relative overflow-hidden border border-border rounded-lg shadow ${
+                deviceView === 'smartphone' 
+                  ? 'w-[375px] max-w-full' 
+                  : 'w-full max-w-[1200px]'
+              }`}
+            >
+              {designSettingsQuery.isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                  読み込み中...
                 </div>
               ) : (
-                <iframe 
-                  src="/store/preview" 
-                  className="w-full h-full border-0" 
+                <iframe
                   ref={iframeRef}
-                  title="店舗プロフィールプレビュー"
-                  onLoad={() => {
-                    console.log('iframeがロードされました', { time: new Date().toISOString() });
-                    const previewWindow = iframeRef.current?.contentWindow;
-                    if (previewWindow) {
-                      setTimeout(() => {
-                        try {
-                          console.log('iframe読み込み完了後に設定を送信します');
-                          previewWindow.postMessage({ 
-                            type: 'UPDATE_DESIGN', 
-                            settings,
-                            timestamp: new Date().toISOString()
-                          }, '*');
-                        } catch (error) {
-                          console.error('プレビューへのメッセージ送信に失敗しました', error);
-                        }
-                      }, 500); // 少し遅延させて確実に送信
-                    }
-                  }}
+                  src="/store/preview"
+                  className="w-full h-full bg-white"
+                  title="店舗プレビュー"
                 />
               )}
             </div>

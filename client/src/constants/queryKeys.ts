@@ -13,6 +13,7 @@ export const QUERY_KEYS = {
   STORE_STATS: "/store/stats",
   STORE_PROFILE: "/store/profile",
   STORE_DESIGN: "/api/design", // 修正: /store/design から /api/design へパスを変更
+  DESIGN_SETTINGS: "/api/design", // デザイン設定用
 
   // タレント関連
   TALENT_PROFILE: "/talent/profile",

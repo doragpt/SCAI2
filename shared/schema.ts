@@ -480,7 +480,7 @@ export const store_profiles = pgTable("store_profiles", {
   }[]>().default([]), // 口コミ・体験談
 
   // 体験入店・キャンペーン関連の項目
-  trial_entry: jsonb("trial_entry").$type<z.infer<typeof trialEntrySchema>>().default(null), // 体験入店情報
+  trial_entry: jsonb("trial_entry").$type<z.infer<typeof trialEntrySchema> | null>().default(null), // 体験入店情報
   campaigns: jsonb("campaigns").$type<z.infer<typeof campaignSchema>[]>().default([]), // キャンペーン情報
   sns_urls: jsonb("sns_urls").$type<string[]>().default([]), // SNS URL配列
   
