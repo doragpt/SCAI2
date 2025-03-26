@@ -744,6 +744,82 @@ export const jobRequirementsSchema = z.object({
 
 export type JobRequirements = z.infer<typeof jobRequirementsSchema>;
 
+// 必要な身分証明書の種類
+export const requiredDocumentTypes = [
+  "運転免許証",
+  "パスポート",
+  "住基カード（写真付き）",
+  "住民票",
+  "住民票記載事項証明書",
+  "マイナンバーカード",
+  "その他"
+] as const;
+export type RequiredDocumentType = typeof requiredDocumentTypes[number];
+
+// キャンペーンタイプ
+export const campaignTypeOptions = [
+  "入店祝い金", 
+  "特別保証", 
+  "友達紹介", 
+  "体験入店特典", 
+  "期間限定特典",
+  "その他"
+] as const;
+export type CampaignType = typeof campaignTypeOptions[number];
+
+// キャンペーン対象者
+export const targetAudienceOptions = [
+  "未経験", 
+  "経験者", 
+  "出稼ぎ", 
+  "学生", 
+  "主婦", 
+  "全員対象"
+] as const;
+export type TargetAudience = typeof targetAudienceOptions[number];
+
+// 体験入店スキーマ
+export const trialEntrySchema = z.object({
+  id: z.string().uuid().optional(),
+  store_profile_id: z.number(),
+  daily_guarantee: z.number(), // 日給保証額
+  hourly_rate: z.number().optional(), // 時給（オプション）
+  working_hours: z.number(), // 最低勤務時間
+  requirements: z.string().optional(), // 応募条件
+  benefits_description: z.string().optional(), // 特典の説明
+  start_date: z.date().optional(), // キャンペーン開始日
+  end_date: z.date().optional(), // キャンペーン終了日 
+  is_active: z.boolean().default(true),
+  examples: z.array(z.object({
+    hours: z.number(),
+    amount: z.number(),
+    description: z.string().optional()
+  })).optional(), // 給与例（6時間で〜円など）
+  required_documents: z.array(z.enum(requiredDocumentTypes)).optional(),
+  qa_items: z.array(z.object({
+    question: z.string(),
+    answer: z.string()
+  })).optional() // よくある質問
+});
+
+// キャンペーンスキーマ
+export const campaignSchema = z.object({
+  id: z.string().uuid().optional(),
+  storeProfileId: z.number(),
+  title: z.string(),
+  description: z.string(),
+  amount: z.number().optional(), // 金額（入店祝い金など）
+  type: z.enum(campaignTypeOptions),
+  conditions: z.string().optional(), // 適用条件
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+  isActive: z.boolean().default(true),
+  imageUrl: z.string().optional(),
+  tagline: z.string().optional(), // キャッチコピー
+  isLimited: z.boolean().default(false), // 期間限定かどうか
+  targetAudience: z.array(z.enum(targetAudienceOptions)).optional(), // ターゲット層
+});
+
 export const storeProfileSchema = z.object({
   // 基本情報
   catch_phrase: z.string()
@@ -817,6 +893,15 @@ export const storeProfileSchema = z.object({
   
   // フォトギャラリー
   gallery_photos: z.array(galleryPhotoSchema).optional(),
+
+  // SNSリンク
+  sns_urls: z.array(z.string().url("有効なURLを入力してください")).optional(),
+  
+  // 体験入店保証
+  trial_entry: trialEntrySchema.optional(),
+  
+  // キャンペーン情報
+  campaigns: z.array(campaignSchema).optional(),
 });
 
 export type StoreProfileFormData = z.infer<typeof storeProfileSchema>;
@@ -1265,18 +1350,7 @@ export const talentProfileRelations = relations(talentProfiles, ({ one }) => ({
 // StoreProfileListResponseはすでに上部で定義されています。
 
 // JobResponse型の定義 - クライアント側の型定義
-// 体験入店・キャンペーン関連
-// 必要な身分証明書の種類
-export const requiredDocumentTypes = [
-  "運転免許証",
-  "パスポート",
-  "住基カード（写真付き）",
-  "住民票",
-  "住民票記載事項証明書",
-  "マイナンバーカード",
-  "その他"
-] as const;
-export type RequiredDocumentType = typeof requiredDocumentTypes[number];
+// データベーステーブル関連
 
 // キャンペーンタイプ
 export const campaignTypeOptions = [
@@ -1300,8 +1374,8 @@ export const targetAudienceOptions = [
 ] as const;
 export type TargetAudience = typeof targetAudienceOptions[number];
 
-// 体験入店スキーマ
-export const trialEntrySchema = z.object({
+// 削除 - この位置に記述していたtrialEntrySchemaとcampaignSchemaの定義は、storeProfileSchemaの前に移動します
+// 実際の定義はここからは削除され、新しい位置に再配置されます
   id: z.string().uuid().optional(),
   storeProfileId: z.number(),
   dailyGuarantee: z.number(), // 日給保証額

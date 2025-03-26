@@ -15,6 +15,12 @@ import {
   Monitor, Smartphone, FileText, BookOpen, File,
   Gift, MessageSquare, PartyPopper, Sparkles
 } from 'lucide-react';
+import { 
+  type TrialEntryData, 
+  type CampaignData, 
+  type SpecialOffer, 
+  type GalleryPhoto 
+} from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
