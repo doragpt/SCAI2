@@ -28,6 +28,8 @@ import {
   Layout,
   Image,
   Type,
+  GripVertical,
+  Move,
   Palette,
   Plus
 } from 'lucide-react';

@@ -8,7 +8,7 @@ import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
 import { 
   Building2, Clock, MapPin, Phone, Mail, BadgeCheck, 
   Image, User, DollarSign, Info, ArrowLeft,
-  Monitor, Smartphone
+  Monitor, Smartphone, FileText, BookOpen, File
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -507,7 +507,7 @@ export default function StorePreview() {
               {isSectionVisible('blog') && (
                 <div style={getSectionStyle('blog')} className="mb-8">
                   <h3 style={getSectionTitleStyle('blog')} className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
+                    <BookOpen className="h-5 w-5 mr-2" style={{ color: getSectionSettings('blog').titleColor || globalSettings.mainColor }} />
                     店舗ブログ
                   </h3>
                   
