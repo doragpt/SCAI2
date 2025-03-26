@@ -217,11 +217,18 @@ export async function uploadPhoto(base64Data: string, fileName: string): Promise
       timestamp: new Date().toISOString()
     });
 
-    const result = await apiRequest<{url: string, fileName: string}>(
+    const result = await apiRequest<{url: string, fileName: string, message: string}>(
       "POST",
       "/api/upload/photo",
       { base64Data, fileName }
     );
+    
+    // 明示的にレスポンスを検証
+    if (!result || !result.url) {
+      const errorMsg = '写真アップロード失敗: URLが取得できません';
+      log('error', errorMsg, { fileName });
+      throw new Error(`${errorMsg} (ファイル: ${fileName})`);
+    }
     
     log('info', '写真アップロード成功', {
       fileName,
@@ -229,7 +236,10 @@ export async function uploadPhoto(base64Data: string, fileName: string): Promise
       timestamp: new Date().toISOString()
     });
 
-    return result;
+    return { 
+      url: result.url, 
+      fileName: result.fileName || fileName 
+    };
   } catch (error) {
     log('error', '写真アップロードエラー', {
       fileName,

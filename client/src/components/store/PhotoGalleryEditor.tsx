@@ -106,6 +106,11 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
           console.log(`ファイル ${file.name} を S3 にアップロード中...`);
           // 画像をアップロード
           const result = await uploadPhoto(base64Data, file.name);
+          
+          if (!result || !result.url) {
+            throw new Error(`ファイル ${file.name} のアップロードに失敗しました: URLが取得できません`);
+          }
+          
           console.log(`ファイル ${file.name} のアップロード成功:`, result.url);
           
           // 新しい写真オブジェクトを作成して必ず一意のIDを持たせる
@@ -124,8 +129,11 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
           // その都度親コンポーネントに更新を通知
           console.log("写真配列を更新:", currentPhotos.length, "枚");
           onChange(currentPhotos);
+          
         } catch (error) {
           console.error('画像アップロードエラー:', error);
+          // ユーザーにエラーを通知 (開発時はコメントアウトして良い)
+          // alert(`画像「${file.name}」のアップロードに失敗しました: ${error.message || '原因不明のエラー'}`);
         }
       }
     } catch (error) {
