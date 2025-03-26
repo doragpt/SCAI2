@@ -363,7 +363,8 @@ export default function StorePreview() {
           </div>
 
           <div ref={mainContentRef} className="bg-white overflow-auto">
-            {/* ヘッダー */}
+            {/* 動的に順序付けされたセクションの表示 */}
+            {/* ヘッダーセクションは特別に先頭に表示 */}
             {isSectionVisible('header') && (
               <header style={getSectionStyle('header')} 
                 className="border-b">
