@@ -23,7 +23,7 @@ import { Image, ChevronRight, ChevronLeft, ImageIcon } from 'lucide-react';
 
 interface PhotoGalleryDisplayProps {
   photos: Array<{
-    id: string;
+    id?: string;
     url: string;
     title?: string;
     description?: string;
@@ -59,7 +59,7 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
   );
 
   // デフォルトで最初のタブを選択
-  const defaultTab = availableCategories.length > 0 ? availableCategories[0] : null;
+  const defaultTab = availableCategories.length > 0 ? availableCategories[0] : "";
 
   return (
     <div className={`w-full ${className}`}>
@@ -79,8 +79,8 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
           <TabsContent key={category} value={category} className="w-full">
             <Carousel>
               <CarouselContent>
-                {photosByCategory[category].map((photo) => (
-                  <CarouselItem key={photo.id} className="basis-full md:basis-1/2 lg:basis-1/3">
+                {photosByCategory[category].map((photo, index) => (
+                  <CarouselItem key={photo.id || `photo-${index}`} className="basis-full md:basis-1/2 lg:basis-1/3">
                     <Card className="overflow-hidden">
                       <div className="w-[200px] h-[150px] mx-auto overflow-hidden">
                         <img 

@@ -926,6 +926,15 @@ export default function StoreDashboard() {
                           </Badge>
                         </div>
                       )}
+                      <Button
+                        onClick={() => window.location.href = '/store/preview'}
+                        variant="outline"
+                        size="sm"
+                        className="mr-2"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        プレビュー
+                      </Button>
                       <Button onClick={() => setShowProfileForm(true)} variant="outline" size="sm">
                         <FileEdit className="h-4 w-4 mr-2" />
                         編集
