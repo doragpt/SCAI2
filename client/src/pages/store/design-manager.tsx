@@ -347,10 +347,9 @@ export default function StoreDesignManager() {
   
   // 設定が変更されたら自動的にプレビューを更新
   useEffect(() => {
-    if (isDirty) {
-      refreshPreview();
-    }
-  }, [settings, isDirty]);
+    // 設定が変更されるたびに、常にプレビューを更新
+    refreshPreview();
+  }, [settings]);
 
   // セクション詳細設定のコンポーネント
   const SectionDetailSettings = ({ section }: { section: DesignSection }) => {
@@ -912,7 +911,7 @@ export default function StoreDesignManager() {
             <div className="mb-2 text-center">
               <h2 className="text-lg font-bold">プレビュー</h2>
               <p className="text-sm text-muted-foreground">
-                実際の表示と異なる場合があります。設定変更後は「更新」ボタンをクリックしてください。
+                設定変更はリアルタイムで反映されます。実際の表示とは若干異なる場合があります。
               </p>
             </div>
             
@@ -938,7 +937,7 @@ export default function StoreDesignManager() {
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {deviceView === 'pc' ? 'PCビュー' : 'スマートフォンビュー'} - 実際の表示と異なる場合があります
+              {deviceView === 'pc' ? 'PCビュー' : 'スマートフォンビュー'} - リアルタイムプレビュー
             </p>
           </div>
         </div>
