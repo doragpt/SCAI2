@@ -235,7 +235,7 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
                     <img
                       src={photo.url}
                       alt={photo.title || `${category}写真`}
-                      className="w-full aspect-[4/3] object-cover"
+                      className="w-[200px] h-[150px] object-cover"
                     />
                     <div className="absolute top-2 right-2 flex flex-col space-y-1">
                       <Button

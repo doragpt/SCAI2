@@ -82,13 +82,13 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
                 {photosByCategory[category].map((photo) => (
                   <CarouselItem key={photo.id} className="basis-full md:basis-1/2 lg:basis-1/3">
                     <Card className="overflow-hidden">
-                      <AspectRatio ratio={4/3}>
+                      <div className="w-[200px] h-[150px] mx-auto overflow-hidden">
                         <img 
                           src={photo.url} 
                           alt={photo.title || `${category}画像`} 
-                          className="w-full h-full object-cover"
+                          className="w-[200px] h-[150px] object-cover"
                         />
-                      </AspectRatio>
+                      </div>
                       {(photo.title || photo.description) && (
                         <CardContent className="p-2 text-center">
                           {photo.title && <p className="font-medium">{photo.title}</p>}
