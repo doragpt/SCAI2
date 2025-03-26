@@ -43,3 +43,13 @@ export const QUERY_KEYS = {
   // その他
   SIGNED_URL: "/storage/get-signed-url"
 } as const;
+
+// ブログ関連のクエリキー
+export const blogKeys = {
+  all: [QUERY_KEYS.BLOG_POSTS],
+  list: [QUERY_KEYS.BLOG_POSTS],
+  publicList: [QUERY_KEYS.PUBLIC_BLOG_POSTS],
+  storeList: [QUERY_KEYS.BLOG_POSTS_STORE],
+  detail: (id: string | number) => [QUERY_KEYS.BLOG_POST_DETAIL(id.toString())],
+  status: (id: string | number) => [QUERY_KEYS.BLOG_POST_STATUS(id.toString())]
+};

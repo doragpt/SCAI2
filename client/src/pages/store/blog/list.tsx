@@ -1,171 +1,251 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { apiRequest } from '@/lib/queryClient';
-import { QUERY_KEYS } from '@/constants/queryKeys';
-import { BlogPost } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pagination } from '@/components/ui/pagination';
-import { HtmlContent } from '@/components/html-content';
-import { Loader2, Plus, ArrowLeft, Edit, Trash } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
-import { Breadcrumb } from '@/components/breadcrumb';
-import { toast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Link } from 'wouter';
+import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import { Loader2, CalendarIcon, FileTextIcon, PlusCircleIcon, EditIcon, Newspaper } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { blogKeys } from '@/constants/queryKeys';
 
-export default function BlogList() {
-  const { user } = useAuth();
-  const [page, setPage] = useState(1);
+// ブログ記事の型定義
+interface BlogPost {
+  id: number;
+  store_id: number;
+  title: string;
+  content: string;
+  thumbnail: string | null;
+  status: 'draft' | 'published' | 'scheduled';
+  published_at: string | null;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+}
+
+interface BlogListResponse {
+  posts: BlogPost[];
+  pagination: PaginationData;
+}
+
+const BlogListPage = () => {
+  const { toast } = useToast();
+  const [page, setPage] = React.useState(1);
   const pageSize = 10;
 
-  // ブログ投稿の取得クエリ
-  const { data, isLoading, error } = useQuery({
-    queryKey: [QUERY_KEYS.BLOG_POSTS, page, pageSize],
+  // ブログ記事の取得
+  const { data, isLoading, isError } = useQuery<BlogListResponse>({
+    queryKey: [...blogKeys.list, page, pageSize],
     queryFn: async () => {
-      const response = await apiRequest<{
-        posts: BlogPost[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          totalItems: number;
-        }
-      }>('GET', `/api/blog?page=${page}&pageSize=${pageSize}`);
-      return response;
+      const response = await fetch(`/api/blog?page=${page}&pageSize=${pageSize}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('ブログ記事の取得に失敗しました');
+      }
+      return response.json();
     }
   });
 
-  // コンテンツの抜粋を作成（HTMLタグを除去して最初の100文字を表示）
-  const getExcerpt = (content: string) => {
-    // HTMLタグを除去
-    const plainText = content.replace(/<[^>]*>/g, '');
-    return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+  // エラー時の処理
+  React.useEffect(() => {
+    if (isError) {
+      toast({
+        title: 'エラー',
+        description: 'ブログ記事の取得に失敗しました。再度お試しください。',
+        variant: 'destructive',
+      });
+    }
+  }, [isError, toast]);
+
+  // ステータスに応じたバッジの表示
+  const getStatusBadge = (status: string, scheduledAt: string | null) => {
+    switch (status) {
+      case 'published':
+        return <Badge variant="default" className="bg-green-500">公開中</Badge>;
+      case 'scheduled':
+        return <Badge variant="outline" className="border-blue-500 text-blue-500">
+          {scheduledAt ? `${format(new Date(scheduledAt), 'yyyy/MM/dd HH:mm')}に公開予定` : '公開予定'}
+        </Badge>;
+      case 'draft':
+        return <Badge variant="outline" className="border-gray-500 text-gray-500">下書き</Badge>;
+      default:
+        return null;
+    }
   };
 
-  // エラー発生時
-  if (error) {
+  // ページネーションの表示処理
+  const renderPagination = (pagination: PaginationData) => {
+    const { currentPage, totalPages } = pagination;
+    if (totalPages <= 1) return null;
+
+    const pageItems = [];
+    const maxPagesToShow = 5;
+    const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageItems.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            isActive={i === currentPage}
+            onClick={() => setPage(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">ブログ一覧</h1>
-        <div className="p-4 border rounded bg-red-50 text-red-500">
-          エラーが発生しました: {(error as Error).message}
-        </div>
-      </div>
+      <Pagination className="mt-6">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+              className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+            />
+          </PaginationItem>
+          {pageItems}
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     );
-  }
+  };
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <Breadcrumb items={[
-        { label: 'ダッシュボード', href: '/store/dashboard' },
-        { label: 'ブログ管理', href: '/store/blog' },
-        { label: 'ブログ一覧', href: '/store/blog/list' }
-      ]} />
-
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">店舗ブログ一覧</h1>
-        <Link href="/store/blog/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            新規記事作成
-          </Button>
-        </Link>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">ブログ一覧</h1>
+          <p className="text-muted-foreground mt-2">
+            店舗のブログ記事を管理します
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <Link href="/store/blog">
+            <Button variant="outline">
+              <Newspaper className="mr-2 h-4 w-4" />
+              ブログ管理
+            </Button>
+          </Link>
+          <Link href="/store/blog/new">
+            <Button>
+              <PlusCircleIcon className="mr-2 h-4 w-4" />
+              新規作成
+            </Button>
+          </Link>
+        </div>
       </div>
-
+      
+      <Separator />
+      
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">読み込み中...</span>
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       ) : (
-        <>
-          {data?.posts && data.posts.length > 0 ? (
-            <div className="grid gap-6 mt-6">
-              {data.posts.map((post) => (
-                <Card key={post.id} className="overflow-hidden border-t-4" style={{ borderTopColor: '#ff4d7d' }}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{post.title}</CardTitle>
-                        <CardDescription>
-                          公開日: {formatDate(post.published_at || post.created_at)}
-                          {post.status === 'scheduled' && post.scheduled_at && 
-                            ` (${formatDate(post.scheduled_at)}に公開予定)`}
-                          {post.status === 'draft' && ' (下書き)'}
-                        </CardDescription>
-                      </div>
-                      <div className="flex gap-2">
-                        <Link href={`/store/blog/edit/${post.id}`}>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4 mr-1" />
-                            編集
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-start gap-4">
-                      {post.thumbnail && (
-                        <img 
-                          src={post.thumbnail} 
-                          alt={post.title} 
-                          className="w-32 h-32 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-600 line-clamp-3">
-                          {getExcerpt(post.content)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="border-t pt-4 flex justify-between">
-                    <Link href={`/blog/${post.id}`}>
-                      <Button variant="link" className="text-primary p-0 h-auto">
-                        記事を表示
-                      </Button>
-                    </Link>
-                    <div className="text-sm text-gray-500">
-                      ID: {post.id}
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center p-12 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">まだブログ記事がありません</h3>
-              <p className="text-gray-500 mb-4">新しい記事を作成して店舗の魅力をアピールしましょう！</p>
+        <div className="space-y-6">
+          {data?.posts?.length === 0 ? (
+            <div className="text-center py-10">
+              <FileTextIcon className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-xl font-medium">記事がありません</h2>
+              <p className="text-muted-foreground mt-2">
+                最初のブログ記事を作成しましょう
+              </p>
               <Link href="/store/blog/new">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  最初の記事を作成する
+                <Button className="mt-4">
+                  <PlusCircleIcon className="mr-2 h-4 w-4" />
+                  記事を作成
                 </Button>
               </Link>
             </div>
+          ) : (
+            <>
+              <div className="grid gap-4">
+                {data?.posts.map((post) => (
+                  <Card key={post.id} className="overflow-hidden">
+                    <div className="flex flex-col md:flex-row">
+                      {post.thumbnail && (
+                        <div className="w-full md:w-40 h-40 flex-shrink-0 overflow-hidden">
+                          <img 
+                            src={post.thumbnail} 
+                            alt={post.title} 
+                            className="h-full w-full object-cover" 
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 p-0">
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                              <CardDescription className="mt-2 flex items-center text-xs">
+                                <CalendarIcon className="h-3 w-3 mr-1" />
+                                {post.published_at 
+                                  ? `公開: ${format(new Date(post.published_at), 'yyyy年MM月dd日 HH:mm', { locale: ja })}`
+                                  : `作成: ${format(new Date(post.created_at), 'yyyy年MM月dd日 HH:mm', { locale: ja })}`
+                                }
+                              </CardDescription>
+                            </div>
+                            <div>
+                              {getStatusBadge(post.status, post.scheduled_at)}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="line-clamp-2 text-sm text-muted-foreground">
+                            {post.content.replace(/<[^>]*>/g, '')}
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <div className="text-xs text-muted-foreground">
+                            更新: {format(new Date(post.updated_at), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
+                          </div>
+                          <div className="flex space-x-2">
+                            <Link href={`/blog/${post.id}`}>
+                              <Button variant="ghost" size="sm">
+                                閲覧
+                              </Button>
+                            </Link>
+                            <Link href={`/store/blog/edit/${post.id}`}>
+                              <Button variant="outline" size="sm">
+                                <EditIcon className="h-4 w-4 mr-1" />
+                                編集
+                              </Button>
+                            </Link>
+                          </div>
+                        </CardFooter>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {data?.pagination && renderPagination(data.pagination)}
+            </>
           )}
-
-          {data?.pagination && data.pagination.totalPages > 1 && (
-            <div className="mt-6 flex justify-center">
-              <Pagination
-                currentPage={data.pagination.currentPage}
-                totalPages={data.pagination.totalPages}
-                onPageChange={setPage}
-              />
-            </div>
-          )}
-        </>
+        </div>
       )}
-
-      <div className="mt-8">
-        <Link href="/store/blog">
-          <Button variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            ブログ管理に戻る
-          </Button>
-        </Link>
-      </div>
     </div>
   );
-}
+};
+
+export default BlogListPage;

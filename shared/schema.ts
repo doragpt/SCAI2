@@ -44,6 +44,32 @@ export type DesignSection = z.infer<typeof designSectionSchema>;
 export type GlobalDesignSettings = z.infer<typeof globalDesignSettingsSchema>;
 export type DesignSettings = z.infer<typeof designSettingsSchema>;
 
+// ギャラリー写真の型定義
+export interface GalleryPhoto {
+  id: string;
+  url: string;
+  alt?: string;
+  title?: string;
+  description?: string;
+  order: number;
+}
+
+// 特別オファーの型定義
+export interface SpecialOffer {
+  id: string;
+  title: string;
+  description: string;
+  amount?: number;
+  type: string;
+  conditions?: string;
+  startDate?: Date;
+  endDate?: Date;
+  isActive: boolean;
+  isLimited: boolean;
+  limitedCount?: number;
+  targetAudience?: string[];
+}
+
 // Constants
 export const prefectures = [
   "北海道", "青森県", "秋田県", "岩手県", "山形県", "福島県", "宮城県",

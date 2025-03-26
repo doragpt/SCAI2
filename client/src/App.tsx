@@ -28,6 +28,8 @@ import BlogPostView from "@/pages/blog/[id]";
 import BlogManagement from "@/pages/store/blog/index";
 import StoreDesignManager from "@/pages/store/design-manager";
 import StorePreview from "@/pages/store/preview";
+import BlogList from "@/pages/store/blog/list";
+import PublicBlogList from "@/pages/blog/index";
 
 function Router() {
   return (
@@ -52,8 +54,8 @@ function Router() {
         roleRequired="store"
       />
       <ProtectedRoute 
-        path="/store/blog"
-        component={BlogManagement}
+        path="/store/blog/list"
+        component={BlogList}
         roleRequired="store"
       />
       <ProtectedRoute 
@@ -67,6 +69,11 @@ function Router() {
         roleRequired="store"
       />
       <ProtectedRoute 
+        path="/store/blog"
+        component={BlogManagement}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
         path="/store/design-manager" 
         component={StoreDesignManager}
         roleRequired="store"
@@ -76,6 +83,7 @@ function Router() {
         component={StorePreview}
         roleRequired="store"
       />
+      <Route path="/blog" component={PublicBlogList} />
       <Route path="/blog/:id" component={BlogPostView} />
       <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
       <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
