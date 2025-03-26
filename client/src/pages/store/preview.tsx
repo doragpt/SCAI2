@@ -608,11 +608,27 @@ export default function StorePreview() {
             </h3>
             <div className="flex flex-wrap gap-3 mt-4" style={{ color: getSectionSettings('sns_links').textColor || '#333333' }}>
               <SNSLinksDisplay 
-                links={profile.sns_urls.map((sns: any) => ({
-                  platform: sns.platform || 'その他',
-                  url: sns.url || '#',
-                  text: sns.name || sns.platform || 'SNS'
-                }))} 
+                links={Array.isArray(profile.sns_urls) 
+                  ? profile.sns_urls.map((sns: any) => {
+                      // Handle both string URLs and object URLs
+                      if (typeof sns === 'string') {
+                        // If it's a string, create an object with default values
+                        return {
+                          platform: 'その他',
+                          url: sns,
+                          text: new URL(sns).hostname
+                        };
+                      } else {
+                        // If it's already an object, use its properties
+                        return {
+                          platform: sns.platform || 'その他',
+                          url: sns.url || '#',
+                          text: sns.name || sns.platform || 'SNS'
+                        };
+                      }
+                    })
+                  : []
+                } 
               />
             </div>
           </div>
