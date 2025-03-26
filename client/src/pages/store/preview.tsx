@@ -317,25 +317,28 @@ export default function StorePreview() {
               maxWidth: `${globalSettings.maxWidth}px`,
               margin: '0 auto'
             }}>
-              {/* キャッチコピー */}
-              {isSectionVisible('catchphrase') && profile.catch_phrase && (
-                <div style={getSectionStyle('catchphrase')} className="mb-8 text-center p-4">
-                  <h2 style={getSectionTitleStyle('catchphrase')}>
-                    『{profile.catch_phrase}』
-                  </h2>
-                </div>
-              )}
-
-              {/* 仕事内容 */}
-              {isSectionVisible('description') && profile.description && (
-                <div style={getSectionStyle('description')} className="mb-8">
-                  <h3 style={getSectionTitleStyle('description')} className="flex items-center">
-                    <Building2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('description').titleColor || globalSettings.mainColor }} />
-                    仕事内容
-                  </h3>
-                  <div className="prose max-w-none" style={{ color: getSectionSettings('description').textColor || '#333333' }}>
-                    <HtmlContent html={profile.description} />
-                  </div>
+              {/* キャッチコピー・仕事内容 */}
+              {isSectionVisible('catchphrase') && (profile.catch_phrase || profile.description) && (
+                <div style={getSectionStyle('catchphrase')} className="mb-8">
+                  {profile.catch_phrase && (
+                    <h2 style={getSectionTitleStyle('catchphrase')} className="text-center p-4 mb-4">
+                      『{profile.catch_phrase}』
+                    </h2>
+                  )}
+                  
+                  {profile.description && (
+                    <>
+                      <div className="flex items-center mb-3">
+                        <Building2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('catchphrase').titleColor || globalSettings.mainColor }} />
+                        <h3 style={{ color: getSectionSettings('catchphrase').titleColor || globalSettings.mainColor, fontWeight: 'bold' }}>
+                          仕事内容
+                        </h3>
+                      </div>
+                      <div className="prose max-w-none" style={{ color: getSectionSettings('catchphrase').textColor || '#333333' }}>
+                        <HtmlContent html={profile.description} />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
