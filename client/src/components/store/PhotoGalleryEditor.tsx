@@ -240,6 +240,9 @@ export function PhotoGalleryEditor({ photos = [], onChange, className = "" }: Ph
               >
                 {isUploading ? '画像をアップロード中...' : '写真を追加'} <Upload className="ml-2 h-4 w-4" />
               </Button>
+              <div className="text-xs text-muted-foreground text-right mt-1">
+                推奨画像サイズ: 200 × 150 px
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"

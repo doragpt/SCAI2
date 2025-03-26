@@ -42,6 +42,7 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
         <CardContent className="p-6 text-center">
           <ImageIcon className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
           <p className="text-muted-foreground">現在フォトギャラリーに画像はありません</p>
+          <p className="text-xs text-muted-foreground mt-2">推奨画像サイズ: 200 × 150 px</p>
         </CardContent>
       </Card>
     );
@@ -63,6 +64,9 @@ export function PhotoGalleryDisplay({ photos, className = "" }: PhotoGalleryDisp
 
   return (
     <div className={`w-full ${className}`}>
+      <div className="flex justify-end mb-1">
+        <p className="text-xs text-muted-foreground">推奨画像サイズ: 200 × 150 px</p>
+      </div>
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="w-full mb-4 flex overflow-x-auto">
           {availableCategories.map(category => (
