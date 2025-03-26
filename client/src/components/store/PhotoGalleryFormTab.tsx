@@ -29,6 +29,7 @@ export function PhotoGalleryFormTab({ control, setValue }: PhotoGalleryFormTabPr
           <CardTitle>フォトギャラリー</CardTitle>
           <CardDescription>
             店内、個室、待機所などの写真を追加して、お店の雰囲気をアピールしましょう。
+            推奨サイズは 200 × 150 px です。写真は全て表示時このサイズに固定されます。
           </CardDescription>
         </CardHeader>
         <CardContent>
