@@ -214,11 +214,15 @@ export default function StoreDesignManager() {
   const designSettingsQuery = useQuery({
     queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
     queryFn: async () => {
-      const response = await apiRequest<DesignSettings>({
-        url: '/api/design',
-        method: 'GET'
-      });
-      return response;
+      try {
+        console.log('デザイン設定を取得しています...');
+        const response = await apiRequest<DesignSettings>("GET", "/api/design");
+        console.log('デザイン設定の取得に成功しました:', response);
+        return response;
+      } catch (error) {
+        console.error('デザイン設定の取得に失敗しました:', error);
+        throw error;
+      }
     },
     staleTime: 5 * 60 * 1000, // 5分間キャッシュ
     retry: 1,
@@ -228,12 +232,15 @@ export default function StoreDesignManager() {
   // 設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
-      const response = await apiRequest({
-        url: '/api/design',
-        method: 'POST',
-        data
-      });
-      return response;
+      try {
+        console.log('デザイン設定を保存しています...', data);
+        const response = await apiRequest("POST", "/api/design", data);
+        console.log('デザイン設定の保存に成功しました:', response);
+        return response;
+      } catch (error) {
+        console.error('デザイン設定の保存に失敗しました:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({

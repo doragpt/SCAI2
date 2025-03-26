@@ -44,8 +44,15 @@ export default function StorePreview() {
   const { data: profile, isLoading } = useQuery<StoreProfile>({
     queryKey: [QUERY_KEYS.STORE_PROFILE],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/store/profile');
-      return response as StoreProfile;
+      try {
+        console.log('店舗プロフィールを取得しています...');
+        const response = await apiRequest("GET", "/store/profile");
+        console.log('店舗プロフィール取得成功:', response);
+        return response as StoreProfile;
+      } catch (error) {
+        console.error('店舗プロフィール取得エラー:', error);
+        throw error;
+      }
     }
   });
 
