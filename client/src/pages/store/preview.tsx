@@ -10,7 +10,7 @@ import { LocationDisplay } from '@/components/store/LocationDisplay';
 import { ContactDisplay } from '@/components/store/ContactDisplay';
 import { SalaryDisplay } from '@/components/store/SalaryDisplay';
 import { JobDescriptionDisplay } from '@/components/store/JobDescriptionDisplay';
-import { BookOpenCheck, Clock, Calendar, MapPin, Phone, Mail, Star, Gift, BadgeCheck, Shield } from 'lucide-react';
+import { BookOpenCheck, Clock, Calendar, MapPin, Phone, Mail, Star, Gift, BadgeCheck, Shield, Image } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 // デザイン設定の型定義
@@ -135,6 +135,7 @@ export default function StorePreview() {
   const contactSection = getSectionSettings('contact');
   const trialEntrySection = getSectionSettings('trial_entry');
   const campaignsSection = getSectionSettings('campaigns');
+  const gallerySection = getSectionSettings('gallery');
 
   return (
     <div 
@@ -365,6 +366,29 @@ export default function StorePreview() {
                 <TrialEntryDisplay data={profile.trial_entry} />
               ) : (
                 <p>体験入店情報が設定されていません。</p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* フォトギャラリー */}
+        {(!designSettings || gallerySection) && profile.gallery_photos && profile.gallery_photos.length > 0 && (
+          <section 
+            className="mb-8 border rounded-lg overflow-hidden"
+            style={gallerySection?.style}
+          >
+            <h2 
+              className="text-xl font-bold p-4 border-b bg-primary/10"
+              style={gallerySection?.titleStyle}
+            >
+              <Image className="inline-block mr-2 h-5 w-5" />
+              フォトギャラリー
+            </h2>
+            <div className="p-4">
+              {profile.gallery_photos && profile.gallery_photos.length > 0 ? (
+                <PhotoGalleryDisplay photos={profile.gallery_photos} />
+              ) : (
+                <p>フォトギャラリーが設定されていません。</p>
               )}
             </div>
           </section>

@@ -386,6 +386,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
         special_offers: fullUpdateData.special_offers || [],
+        gallery_photos: fullUpdateData.gallery_photos || [],
         updated_at: fullUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))
