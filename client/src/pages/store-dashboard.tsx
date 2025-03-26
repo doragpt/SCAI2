@@ -867,7 +867,7 @@ export default function StoreDashboard() {
           {/* メインコンテンツ */}
           <div className="col-span-12 lg:col-span-8">
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-              <TabsList className="grid grid-cols-4 h-auto p-1 bg-muted/80 backdrop-blur-sm rounded-xl">
+              <TabsList className="grid grid-cols-6 h-auto p-1 bg-muted/80 backdrop-blur-sm rounded-xl">
                 <TabsTrigger value="profile" className="py-2 rounded-lg">
                   <Building2 className="h-4 w-4 mr-2" />
                   店舗情報
@@ -879,6 +879,14 @@ export default function StoreDashboard() {
                 <TabsTrigger value="blog" className="py-2 rounded-lg">
                   <Pencil className="h-4 w-4 mr-2" />
                   ブログ管理
+                </TabsTrigger>
+                <TabsTrigger value="trialEntry" className="py-2 rounded-lg">
+                  <Award className="h-4 w-4 mr-2" />
+                  体験入店
+                </TabsTrigger>
+                <TabsTrigger value="campaigns" className="py-2 rounded-lg">
+                  <Gift className="h-4 w-4 mr-2" />
+                  キャンペーン
                 </TabsTrigger>
                 <TabsTrigger value="recruitmentLogic" className="py-2 rounded-lg">
                   <Briefcase className="h-4 w-4 mr-2" />
