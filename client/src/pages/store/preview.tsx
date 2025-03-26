@@ -782,9 +782,9 @@ export default function StorePreview() {
             }}>
               {/* 設定の順序に従ってセクションを動的にレンダリング */}
               {renderOrderedSections()}
-
-              {/* フォトギャラリー - 写真ギャラリーセクション */}
-              {isSectionVisible('photo_gallery') && profile.gallery_photos && profile.gallery_photos.length > 0 && (
+              
+              {/* 以下の古いセクションレンダリングコードは削除します */}
+              {false && isSectionVisible('photo_gallery') && profile.gallery_photos && profile.gallery_photos.length > 0 && (
                 <div style={getSectionStyle('photo_gallery')} className="mb-8">
                   <h3 style={getSectionTitleStyle('photo_gallery')} className="flex items-center">
                     <Image className="h-5 w-5 mr-2" style={{ color: getSectionSettings('photo_gallery').titleColor || globalSettings.mainColor }} />
@@ -796,7 +796,7 @@ export default function StorePreview() {
               )}
 
               {/* 待遇・環境 */}
-              {isSectionVisible('benefits') && profile.benefits && profile.benefits.length > 0 && (
+              {false && isSectionVisible('benefits') && profile.benefits && profile.benefits.length > 0 && (
                 <div style={getSectionStyle('benefits')} className="mb-8">
                   <h3 style={getSectionTitleStyle('benefits')} className="flex items-center">
                     <BadgeCheck className="h-5 w-5 mr-2" style={{ color: getSectionSettings('benefits').titleColor || globalSettings.mainColor }} />
@@ -814,7 +814,7 @@ export default function StorePreview() {
               )}
 
               {/* 給与情報 */}
-              {isSectionVisible('salary') && (
+              {false && isSectionVisible('salary') && (
                 <div style={getSectionStyle('salary')} className="mb-8">
                   <h3 style={getSectionTitleStyle('salary')} className="flex items-center">
                     <DollarSign className="h-5 w-5 mr-2" style={{ color: getSectionSettings('salary').titleColor || globalSettings.mainColor }} />
@@ -849,7 +849,7 @@ export default function StorePreview() {
               )}
 
               {/* 勤務時間 */}
-              {isSectionVisible('schedule') && (
+              {false && isSectionVisible('schedule') && (
                 <div style={getSectionStyle('schedule')} className="mb-8">
                   <h3 style={getSectionTitleStyle('schedule')} className="flex items-center">
                     <Clock className="h-5 w-5 mr-2" style={{ color: getSectionSettings('schedule').titleColor || globalSettings.mainColor }} />
