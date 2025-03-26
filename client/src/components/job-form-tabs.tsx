@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home, Sparkles, ImageIcon } from "lucide-react";
+import { Loader2, Upload, Image, Plus, X, Phone, Mail, Link, Building, User, Banknote, Clock, Info, Check, Shield, MapPin, MessageSquare, Award, CheckCircle, Car, Home, Sparkles, ImageIcon, Briefcase } from "lucide-react";
 import { SpecialOfferEditor } from "./store/SpecialOfferEditor";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -520,61 +520,30 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                 )}
               />
               
-              {/* 詳細なマッチング条件 */}
+              {/* 採用ロジック設定への誘導 */}
               <div className="mt-6 bg-white p-4 rounded-md border border-purple-100">
-                <h4 className="font-medium text-purple-900 mb-3">マッチング詳細設定</h4>
-                <p className="text-sm text-gray-600 mb-4">
-                  以下の設定は人材とのマッチング精度を高めるためのものです。
-                  設定した条件は求職者には表示されず、AIマッチングの内部処理にのみ使用されます。
-                </p>
-                
-                {/* 年齢範囲 */}
-                <div className="mb-4">
-                  <h5 className="text-sm font-medium mb-2">年齢範囲</h5>
-                  <div className="flex gap-4">
-                    <FormField
-                      control={form.control}
-                      name="requirements.age_min"
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel className="text-xs">最小年齢</FormLabel>
-                          <FormControl>
-                            <input
-                              type="number"
-                              min="18"
-                              max="60"
-                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              value={field.value === undefined ? "" : field.value?.toString()}
-                              placeholder="18"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="requirements.age_max"
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel className="text-xs">最大年齢</FormLabel>
-                          <FormControl>
-                            <input
-                              type="number"
-                              min="18"
-                              max="60"
-                              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              value={field.value === undefined ? "" : field.value?.toString()}
-                              placeholder="50"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-purple-900 mb-2">AIマッチング設定</h4>
+                    <p className="text-sm text-gray-600">
+                      AIマッチングの詳細設定は「ダッシュボード」の「採用設定」タブから行えます。
+                      年齢、体型、外見タイプなどの条件を設定して、お店に合った求職者とのマッチング精度を向上させましょう。
+                    </p>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="shrink-0 text-sm text-purple-700 border-purple-200 hover:bg-purple-50"
+                    onClick={() => window.open("/store/dashboard?tab=recruitmentLogic", "_blank")}
+                  >
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    採用設定へ
+                  </Button>
+                </div>
+                
+                {/* 求人に関する必須情報 */}
+                <div className="mb-6 pt-4 border-t border-gray-200">
+                  <h5 className="text-sm font-medium mb-3">応募条件</h5>
                 </div>
                 
                 {/* スペック範囲（身長-体重） */}
