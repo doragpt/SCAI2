@@ -31,63 +31,66 @@ import StorePreview from "@/pages/store/preview";
 import BlogList from "@/pages/store/blog/list";
 import PublicBlogList from "@/pages/blog/index";
 
+// Define the component types to fix TypeScript errors
+type RouteComponent = () => JSX.Element;
+
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/jobs" component={Jobs} />
-      <Route path="/jobs/:id" component={JobDetail} />
+      <Route path="/" component={HomePage as RouteComponent} />
+      <Route path="/auth" component={AuthPage as RouteComponent} />
+      <Route path="/jobs" component={Jobs as RouteComponent} />
+      <Route path="/jobs/:id" component={JobDetail as RouteComponent} />
       <Route path="/talent">
         {() => <Redirect to="/talent/mypage" />}
       </Route>
-      <ProtectedRoute path="/talent/register" component={TalentRegistration} />
-      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage} />
-      <ProtectedRoute path="/talent/mypage" component={MyPage} />
-      <ProtectedRoute path="/talent/profile/view" component={ProfileViewPage} />
-      <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage} />
-      <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage} />
-      <Route path="/manager/login" component={ManagerLogin} />
+      <ProtectedRoute path="/talent/register" component={TalentRegistration as RouteComponent} />
+      <ProtectedRoute path="/talent/ai-matching" component={AIMatchingPage as RouteComponent} />
+      <ProtectedRoute path="/talent/mypage" component={MyPage as RouteComponent} />
+      <ProtectedRoute path="/talent/profile/view" component={ProfileViewPage as RouteComponent} />
+      <ProtectedRoute path="/talent/mypage/keep-list" component={KeepListPage as RouteComponent} />
+      <ProtectedRoute path="/talent/mypage/view-history" component={ViewHistoryPage as RouteComponent} />
+      <Route path="/manager/login" component={ManagerLogin as RouteComponent} />
       <ProtectedRoute 
         path="/store/dashboard" 
-        component={StoreDashboard}
+        component={StoreDashboard as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/blog/list"
-        component={BlogList}
+        component={BlogList as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/blog/new" 
-        component={NewBlogPost}
+        component={NewBlogPost as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/blog/edit/:id" 
-        component={EditBlogPost}
+        component={EditBlogPost as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/blog"
-        component={BlogManagement}
+        component={BlogManagement as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/design-manager" 
-        component={StoreDesignManager}
+        component={StoreDesignManager as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/preview" 
-        component={StorePreview}
+        component={StorePreview as RouteComponent}
         roleRequired="store"
       />
-      <Route path="/blog" component={PublicBlogList} />
-      <Route path="/blog/:id" component={BlogPostView} />
-      <ProtectedRoute path="/basic-info/view" component={BasicInfoView} />
-      <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit} />
-      <Route component={NotFound} />
+      <Route path="/blog" component={PublicBlogList as RouteComponent} />
+      <Route path="/blog/:id" component={BlogPostView as RouteComponent} />
+      <ProtectedRoute path="/basic-info/view" component={BasicInfoView as RouteComponent} />
+      <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit as RouteComponent} />
+      <Route component={NotFound as RouteComponent} />
     </Switch>
   );
 }

@@ -565,9 +565,6 @@ export default function StorePreview() {
                     特別オファー
                   </h3>
                   <SpecialOffersDisplay specialOffers={profile.special_offers?.map(offer => ({
-                    id: offer.id || '',
-                    title: offer.title || '',
-                    description: offer.description || '',
                     backgroundColor: '#ff4d7d',
                     textColor: '#333333',
                     icon: 'sparkles',

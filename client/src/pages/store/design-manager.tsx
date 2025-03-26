@@ -293,7 +293,7 @@ export default function StoreDesignManager() {
       setSettings(defaultSettings);
     } 
     // クエリが成功したが、データがない場合
-    else if (designSettingsQuery.isSuccess && !designSettingsQuery.data) {
+    else if (designSettingsQuery.isSuccess) {
       console.log('デザイン設定が存在しないため、デフォルト設定を適用します');
       const defaultSettings = getDefaultSettings();
       setSettings(defaultSettings);
@@ -425,13 +425,24 @@ export default function StoreDesignManager() {
       if (event.data.type === 'forward-log') {
         console.log('プレビューウィンドウからのログ:', event.data);
       }
+      // iframeがロードされた通知を受け取ったら設定を送信
+      else if (event.data.type === 'PREVIEW_READY') {
+        refreshPreview();
+      }
     };
 
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [settings]);
+  }, []);
+  
+  // 設定が変更されたら自動的にプレビューを更新
+  useEffect(() => {
+    if (isDirty) {
+      refreshPreview();
+    }
+  }, [settings, isDirty]);
 
   // セクション詳細設定のコンポーネント
   const SectionDetailSettings = ({ section }: { section: DesignSection }) => {
