@@ -68,10 +68,11 @@ app.use('/api/store', storeRouter); // クライアント側からのAPIリク�
 app.use('/api/blog', blogRouter);
 app.use('/api/upload', uploadRouter);
 
+// デザイン関連のAPIルートを登録
+import designRouter from './routes/design';
+app.use('/api/design', designRouter);
+
 // 求人関連のAPIルートを登録
-import { db } from './db';
-import { store_profiles } from '../shared/schema';
-import { eq, and, like, sql } from 'drizzle-orm';
 
 app.get('/api/jobs', async (req, res) => {
   log('info', 'API 求人一覧リクエスト', { query: req.query });
