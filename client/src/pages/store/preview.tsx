@@ -742,7 +742,7 @@ export default function StorePreview() {
                     </div>
                     
                     <div className="text-center mt-4">
-                      <a href={`/blog?storeId=${profile.id}`} target="_blank" rel="noopener noreferrer" 
+                      <a href={`/blog?store_id=${profile.id}`} target="_blank" rel="noopener noreferrer" 
                          className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md cursor-pointer" 
                          style={{ 
                           backgroundColor: globalSettings.mainColor, 
