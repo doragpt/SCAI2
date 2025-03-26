@@ -260,9 +260,14 @@ export default function StoreDesignManager() {
 
   // 初期データのロード
   useEffect(() => {
-    if (designSettingsQuery.data) {
+    // クエリからデータが取得できた場合
+    if (designSettingsQuery.isSuccess && designSettingsQuery.data) {
+      console.log('デザイン設定データを適用:', designSettingsQuery.data);
       setSettings(designSettingsQuery.data);
-    } else if (designSettingsQuery.error) {
+    } 
+    // エラーが発生した場合
+    else if (designSettingsQuery.isError) {
+      console.error('デザイン設定の読み込みエラー:', designSettingsQuery.error);
       toast({
         title: 'データの読み込みに失敗しました',
         description: '初期設定を適用します。',
@@ -270,13 +275,15 @@ export default function StoreDesignManager() {
       });
       const defaultSettings = getDefaultSettings();
       setSettings(defaultSettings);
-    } else if (designSettingsQuery.isLoading) {
-      // ロード中の表示もここに追加できます
-    } else if (designSettingsQuery.isSuccess && !designSettingsQuery.data) {
+    } 
+    // クエリが成功したが、データがない場合
+    else if (designSettingsQuery.isSuccess && !designSettingsQuery.data) {
+      console.log('デザイン設定が存在しないため、デフォルト設定を適用します');
       const defaultSettings = getDefaultSettings();
       setSettings(defaultSettings);
     }
-  }, [designSettingsQuery.data, designSettingsQuery.error, designSettingsQuery.isLoading, designSettingsQuery.isSuccess, toast]);
+    // クエリがロード中の場合は何もしない（ローディング表示は別途行う）
+  }, [designSettingsQuery.isSuccess, designSettingsQuery.data, designSettingsQuery.isError, designSettingsQuery.error, toast]);
 
   // セクションの表示/非表示を切り替える
   const toggleSectionVisibility = (id: string) => {
