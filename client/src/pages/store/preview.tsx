@@ -296,7 +296,8 @@ export default function StorePreview() {
   };
   
   // SNS URLの型を定義
-  type SnsUrl = {
+  // SNS URL can be either a string or an object with platform, url, and name properties
+  type SnsUrl = string | {
     platform: string;
     url: string;
     name?: string;
@@ -600,7 +601,7 @@ export default function StorePreview() {
         );
         
       case 'sns_links':
-        return profile.sns_urls && Array.isArray(profile.sns_urls) && profile.sns_urls.length > 0 && (
+        return profile && profile.sns_urls && Array.isArray(profile.sns_urls) && profile.sns_urls.length > 0 && (
           <div key={sectionId} style={getSectionStyle('sns_links')} className="mb-8">
             <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
               <Share2 className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
@@ -1078,7 +1079,7 @@ export default function StorePreview() {
               )}
 
               {/* SNSリンク */}
-              {isSectionVisible('sns_links') && (
+              {isSectionVisible('sns_links') && profile && (
                 (profile.sns_id || profile.sns_url || profile.sns_text || 
                 (profile.sns_urls && profile.sns_urls.length > 0)) && (
                 <div style={getSectionStyle('sns_links')} className="mb-8">
@@ -1088,14 +1089,36 @@ export default function StorePreview() {
                   </h3>
                   
                   <SNSLinksDisplay 
-                    links={(profile.sns_urls || []).map((item: SnsUrl) => {
-                      // SnsUrl型のオブジェクトを使用
-                      return {
-                        platform: item.platform,
-                        url: item.url,
-                        text: item.name || item.platform
-                      };
-                    })}
+                    links={Array.isArray(profile.sns_urls) 
+                      ? profile.sns_urls.map((item: any) => {
+                          // 文字列またはオブジェクトの両方に対応
+                          if (typeof item === 'string') {
+                            // 文字列の場合はデフォルト値でオブジェクトを作成
+                            try {
+                              const url = new URL(item);
+                              return {
+                                platform: 'その他',
+                                url: item,
+                                text: url.hostname
+                              };
+                            } catch (e) {
+                              return {
+                                platform: 'その他',
+                                url: item,
+                                text: 'リンク'
+                              };
+                            }
+                          } else {
+                            // オブジェクトの場合はそのプロパティを使用
+                            return {
+                              platform: item.platform || 'その他',
+                              url: item.url || '#',
+                              text: item.name || item.platform || 'SNS'
+                            };
+                          }
+                        })
+                      : []
+                    }
                     snsId={profile.sns_id || undefined}
                     snsUrl={profile.sns_url || undefined}
                     snsText={profile.sns_text || undefined}
