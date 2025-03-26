@@ -265,6 +265,35 @@ export default function StoreDesignManager() {
     });
   };
   
+  // 特定のセクション順序を入れ替える（初期ロード後の一度だけ実行する特別な処理）
+  useEffect(() => {
+    if (settings.sections.length > 0) {
+      const photoGallerySection = settings.sections.find(s => s.id === 'photo_gallery');
+      const benefitsSection = settings.sections.find(s => s.id === 'benefits');
+      
+      // 両方のセクションが存在し、写真ギャラリーが待遇・環境の後にある場合
+      if (photoGallerySection && benefitsSection && photoGallerySection.order > benefitsSection.order) {
+        // 順序を入れ替える
+        const updatedSections = settings.sections.map(section => {
+          if (section.id === 'photo_gallery') {
+            return { ...section, order: benefitsSection.order };
+          } else if (section.id === 'benefits') {
+            return { ...section, order: photoGallerySection.order };
+          }
+          return section;
+        });
+        
+        // 設定を更新
+        handleSettingsChange({
+          ...settings,
+          sections: updatedSections
+        });
+        
+        console.log('写真ギャラリーと待遇・環境の順序を入れ替えました');
+      }
+    }
+  }, [settings.sections.length]);
+  
   // ドラッグアンドドロップによるセクション順序変更
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return; // ドロップ先がない場合は何もしない
