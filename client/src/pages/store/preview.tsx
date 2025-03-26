@@ -5,10 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { PhotoGalleryDisplay } from '@/components/store/PhotoGalleryDisplay';
+import { SpecialOffersDisplay } from '@/components/store/SpecialOffersDisplay';
+import { TrialEntryDisplay } from '@/components/store/TrialEntryDisplay';
+import { CampaignDisplay } from '@/components/store/CampaignDisplay';
+import { SNSLinksDisplay } from '@/components/store/SNSLinksDisplay';
 import { 
   Building2, Clock, MapPin, Phone, Mail, BadgeCheck, 
   Image, User, DollarSign, Info, ArrowLeft,
-  Monitor, Smartphone, FileText, BookOpen, File
+  Monitor, Smartphone, FileText, BookOpen, File,
+  Gift, MessageSquare, PartyPopper, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
