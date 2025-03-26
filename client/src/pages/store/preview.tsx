@@ -545,7 +545,7 @@ export default function StorePreview() {
                           backgroundColor: globalSettings.mainColor, 
                           color: '#ffffff'
                         }}>
-                        <FileText className="h-4 w-4 mr-2" />
+                        <File className="h-4 w-4 mr-2" />
                         ブログ一覧を見る
                       </span>
                     </div>

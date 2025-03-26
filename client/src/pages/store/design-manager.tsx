@@ -492,7 +492,7 @@ export default function StoreDesignManager() {
     });
   };
 
-  // セクションの順序を変更する
+  // セクションの順序を変更する（アップ・ダウンボタン用）
   const changeOrder = (sectionId: string, direction: 'up' | 'down') => {
     const sortedSections = [...settings.sections].sort((a, b) => a.order - b.order);
     const sectionIndex = sortedSections.findIndex(s => s.id === sectionId);
@@ -512,6 +512,41 @@ export default function StoreDesignManager() {
     handleSettingsChange({
       ...settings,
       sections: sortedSections
+    });
+  };
+  
+  // ドラッグアンドドロップによるセクション順序変更
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return; // ドロップ先がない場合は何もしない
+    
+    const { source, destination } = result;
+    if (source.index === destination.index) return; // 位置が変わっていない場合は何もしない
+    
+    // 並び順でソートされたセクションリストを取得
+    const sortedSections = [...settings.sections].sort((a, b) => a.order - b.order);
+    
+    // 移動するアイテムを一時保存
+    const [movedItem] = sortedSections.splice(source.index, 1);
+    
+    // 新しい位置に挿入
+    sortedSections.splice(destination.index, 0, movedItem);
+    
+    // order値を更新（1から順に振り直す）
+    const updatedSections = sortedSections.map((section, index) => ({
+      ...section,
+      order: index + 1
+    }));
+    
+    // 設定を更新
+    handleSettingsChange({
+      ...settings,
+      sections: updatedSections
+    });
+    
+    console.log('セクション順序を更新しました:', {
+      from: source.index + 1,
+      to: destination.index + 1,
+      section: movedItem.title
     });
   };
 
