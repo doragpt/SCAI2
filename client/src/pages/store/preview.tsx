@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HtmlContent } from '@/components/html-content';
-import { type StoreProfile, type DesignSettings } from '@shared/schema';
+import { type StoreProfile, type DesignSettings, type SectionSettings } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
@@ -154,7 +154,7 @@ export default function StorePreview() {
     .sort((a, b) => a.order - b.order);
 
   // セクション設定を取得する関数
-  const getSectionSettings = (sectionId: string) => {
+  const getSectionSettings = (sectionId: string): SectionSettings => {
     const section = designSettings.sections.find(s => s.id === sectionId);
     return section?.settings || {};
   };
@@ -167,7 +167,7 @@ export default function StorePreview() {
 
   // セクションスタイルを生成する関数
   const getSectionStyle = (sectionId: string) => {
-    const settings = getSectionSettings(sectionId);
+    const settings = getSectionSettings(sectionId) as SectionSettings;
     return {
       backgroundColor: settings.backgroundColor || '#ffffff',
       color: settings.textColor || '#333333',
@@ -182,7 +182,7 @@ export default function StorePreview() {
 
   // セクションタイトルのスタイルを生成する関数
   const getSectionTitleStyle = (sectionId: string) => {
-    const settings = getSectionSettings(sectionId);
+    const settings = getSectionSettings(sectionId) as SectionSettings;
     return {
       color: settings.titleColor || globalSettings.mainColor,
       fontSize: `${settings.fontSize || 18}px`,
@@ -267,11 +267,11 @@ export default function StorePreview() {
                 className="border-b">
                 <div className="max-w-4xl mx-auto px-4 py-6">
                   <h1 className="text-2xl font-bold" 
-                    style={{ color: getSectionSettings('header').titleColor || '#333333' }}>
+                    style={{ color: (getSectionSettings('header') as SectionSettings).titleColor || '#333333' }}>
                     {profile.business_name || 'テスト店舗'}
                   </h1>
                   <div className="flex items-center mt-2" 
-                    style={{ color: getSectionSettings('header').textColor || '#666666' }}>
+                    style={{ color: (getSectionSettings('header') as SectionSettings).textColor || '#666666' }}>
                     <MapPin className="h-4 w-4 mr-1" />
                     <span className="mr-3">{profile.location}</span>
                     <span className="px-2 py-0.5 rounded text-sm" 
