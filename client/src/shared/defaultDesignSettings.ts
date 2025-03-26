@@ -119,38 +119,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      {
-        id: "trial_entry",
-        title: "体験入店",
-        visible: true,
-        order: 8,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "campaigns",
-        title: "キャンペーン",
-        visible: true,
-        order: 9,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
+
       {
         id: "photo_gallery",
         title: "写真ギャラリー",

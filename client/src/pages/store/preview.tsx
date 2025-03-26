@@ -489,55 +489,7 @@ export default function StorePreview() {
           </div>
         );
         
-      case 'trial_entry':
-        return profile.trial_entry && (
-          <div key={sectionId} style={getSectionStyle('trial_entry')} className="mb-8">
-            <h3 style={getSectionTitleStyle('trial_entry')} className="flex items-center">
-              <Gift className="h-5 w-5 mr-2" style={{ color: getSectionSettings('trial_entry').titleColor || globalSettings.mainColor }} />
-              体験入店保証
-            </h3>
-            <TrialEntryDisplay trialEntry={{
-              dailyGuarantee: profile.trial_entry.daily_guarantee,
-              hourlyRate: profile.trial_entry.hourly_rate,
-              workingHours: profile.trial_entry.working_hours,
-              requirements: profile.trial_entry.requirements,
-              benefitsDescription: profile.trial_entry.benefits_description,
-              startDate: profile.trial_entry.start_date,
-              endDate: profile.trial_entry.end_date,
-              isActive: profile.trial_entry.is_active,
-              examples: profile.trial_entry.examples,
-              requiredDocuments: profile.trial_entry.required_documents,
-              qaItems: profile.trial_entry.qa_items
-            }} />
-          </div>
-        );
-        
-      case 'campaigns':
-        return profile.campaigns && profile.campaigns.length > 0 && (
-          <div key={sectionId} style={getSectionStyle('campaigns')} className="mb-8">
-            <h3 style={getSectionTitleStyle('campaigns')} className="flex items-center">
-              <PartyPopper className="h-5 w-5 mr-2" style={{ color: getSectionSettings('campaigns').titleColor || globalSettings.mainColor }} />
-              キャンペーン
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              {profile.campaigns.map((campaign, index) => (
-                <CampaignDisplay key={index} campaign={{
-                  id: campaign.id || `campaign-${index}`,
-                  title: campaign.title,
-                  description: campaign.description,
-                  amount: campaign.amount,
-                  type: campaign.type,
-                  conditions: campaign.conditions,
-                  startDate: campaign.startDate,
-                  endDate: campaign.endDate,
-                  isActive: campaign.isActive,
-                  isLimited: campaign.isLimited,
-                  targetAudience: campaign.targetAudience
-                }} />
-              ))}
-            </div>
-          </div>
-        );
+      // 体験入店保証タブとキャンペーンタブは削除されました
         
       case 'access':
         return (
