@@ -238,10 +238,13 @@ export default function StorePreview() {
           )}
 
           {/* 注意書き */}
-          <div className="p-4 bg-blue-50 border-b border-blue-100">
-            <p className="text-sm text-blue-700 flex items-center">
+          <div className="p-4 bg-pink-50 border-b border-pink-100">
+            <p className="text-sm text-pink-700 flex items-center">
               <Info className="h-4 w-4 mr-2 flex-shrink-0" />
-              これはプレビュー画面です。実際の公開ページはもう少し詳細なデザインになります。
+              <span>
+                <span className="font-bold">これはプレビュー画面です。</span> 実際の応募者向け公開ページは、ここでの設定に基づいて自動的に最適化されます。
+                <span className="block mt-1 text-xs">※写真ギャラリーの画像は実際のサイズ（幅200px × 高さ150px推奨）で表示されます。</span>
+              </span>
             </p>
           </div>
 
@@ -502,12 +505,15 @@ export default function StorePreview() {
             </main>
 
             {/* フッター */}
-            <footer className="border-t mt-8 py-4" style={{ 
+            <footer className="border-t mt-8 py-6" style={{ 
               backgroundColor: globalSettings.secondaryColor,
               color: globalSettings.mainColor 
             }}>
-              <div className="max-w-4xl mx-auto px-4 text-center text-sm">
-                <p>このプレビューは管理用です。実際の公開ページとは異なる場合があります。</p>
+              <div className="max-w-4xl mx-auto px-4 text-center">
+                <p className="text-sm mb-2">
+                  <span className="font-bold">以下は入力した情報の表示確認用です。</span>
+                </p>
+                <p className="text-xs opacity-80">実際の応募者向けページは、当社専門チームによるデザイン最適化処理が適用されます。</p>
               </div>
             </footer>
           </div>

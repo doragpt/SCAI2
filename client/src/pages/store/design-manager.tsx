@@ -64,146 +64,34 @@ interface DesignSettings {
 // サンプルのセクションデータ (実際のデータはAPIから取得)
 const defaultSections = [
   {
-    id: 'catchphrase',
-    title: 'キャッチコピー・仕事内容',
+    id: 'header',
+    title: '店舗基本情報',
     visible: true,
     order: 1,
     settings: {
-      backgroundColor: '#ffffff',
+      backgroundColor: '#fff5f9',
       textColor: '#333333',
-      borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
+      borderColor: '#ffd6dd',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
       borderWidth: 1
     }
   },
   {
-    id: 'benefits',
-    title: '待遇・環境',
+    id: 'catchphrase',
+    title: 'キャッチコピー・仕事内容',
     visible: true,
     order: 2,
     settings: {
-      backgroundColor: '#fafafa',
-      textColor: '#333333',
-      borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16, 
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'requirements',
-    title: '応募条件',
-    visible: true,
-    order: 3,
-    settings: {
       backgroundColor: '#ffffff',
       textColor: '#333333',
       borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'salary',
-    title: '給与情報',
-    visible: true,
-    order: 4,
-    settings: {
-      backgroundColor: '#fff9fa',
-      textColor: '#333333',
-      borderColor: '#ffd6dd',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'schedule',
-    title: '勤務時間',
-    visible: true,
-    order: 5,
-    settings: {
-      backgroundColor: '#ffffff',
-      textColor: '#333333',
-      borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'access',
-    title: 'アクセス・住所',
-    visible: true,
-    order: 6,
-    settings: {
-      backgroundColor: '#f8f8f8',
-      textColor: '#333333',
-      borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'contact',
-    title: '応募方法・連絡先',
-    visible: true,
-    order: 7,
-    settings: {
-      backgroundColor: '#fff9fa',
-      textColor: '#333333',
-      borderColor: '#ffd6dd',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'trial_entry',
-    title: '体験入店情報',
-    visible: true,
-    order: 8,
-    settings: {
-      backgroundColor: '#fff0f5',
-      textColor: '#333333',
-      borderColor: '#ffcce0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
-      borderWidth: 1
-    }
-  },
-  {
-    id: 'campaigns',
-    title: 'キャンペーン情報',
-    visible: true,
-    order: 9,
-    settings: {
-      backgroundColor: '#fff9f0',
-      textColor: '#333333',
-      borderColor: '#ffe0cc',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
       borderWidth: 1
     }
   },
@@ -211,15 +99,255 @@ const defaultSections = [
     id: 'photo_gallery',
     title: '写真ギャラリー',
     visible: true,
-    order: 10,
+    order: 3,
     settings: {
       backgroundColor: '#fff9fa',
       textColor: '#333333',
+      borderColor: '#ffd6dd',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'special_offers',
+    title: '特別オファー',
+    visible: true,
+    order: 4,
+    settings: {
+      backgroundColor: '#fff0f5',
+      textColor: '#333333',
+      borderColor: '#ffcce0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'salary',
+    title: '給与情報',
+    visible: true,
+    order: 5,
+    settings: {
+      backgroundColor: '#fff9fa',
+      textColor: '#333333',
+      borderColor: '#ffd6dd',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'salary_examples',
+    title: '給与例・体験保証',
+    visible: true,
+    order: 6,
+    settings: {
+      backgroundColor: '#fff5ff',
+      textColor: '#333333',
+      borderColor: '#f5d0ff',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'benefits',
+    title: '待遇・環境',
+    visible: true,
+    order: 7,
+    settings: {
+      backgroundColor: '#fafafa',
+      textColor: '#333333',
       borderColor: '#e0e0e0',
-      titleColor: '#ff6b81',
-      fontSize: 16,
-      padding: 20,
-      borderRadius: 8,
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'schedule',
+    title: '勤務時間',
+    visible: true,
+    order: 8,
+    settings: {
+      backgroundColor: '#ffffff',
+      textColor: '#333333',
+      borderColor: '#e0e0e0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'requirements',
+    title: '応募条件',
+    visible: true,
+    order: 9,
+    settings: {
+      backgroundColor: '#ffffff',
+      textColor: '#333333',
+      borderColor: '#e0e0e0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'privacy_measures',
+    title: '身バレ対策',
+    visible: true,
+    order: 10,
+    settings: {
+      backgroundColor: '#f0faff',
+      textColor: '#333333',
+      borderColor: '#d0e8ff',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'facility_features',
+    title: '店舗設備',
+    visible: true,
+    order: 11,
+    settings: {
+      backgroundColor: '#f9fff0',
+      textColor: '#333333',
+      borderColor: '#e0ffd0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'access',
+    title: 'アクセス・住所',
+    visible: true,
+    order: 12,
+    settings: {
+      backgroundColor: '#f8f8f8',
+      textColor: '#333333',
+      borderColor: '#e0e0e0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'contact',
+    title: '応募方法・連絡先',
+    visible: true,
+    order: 13,
+    settings: {
+      backgroundColor: '#fff9fa',
+      textColor: '#333333',
+      borderColor: '#ffd6dd',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'trial_entry',
+    title: '体験入店情報',
+    visible: true,
+    order: 14,
+    settings: {
+      backgroundColor: '#fff0f5',
+      textColor: '#333333',
+      borderColor: '#ffcce0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'campaigns',
+    title: 'キャンペーン情報',
+    visible: true,
+    order: 15,
+    settings: {
+      backgroundColor: '#fff9f0',
+      textColor: '#333333',
+      borderColor: '#ffe0cc',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'testimonials',
+    title: '体験談・口コミ',
+    visible: true,
+    order: 16,
+    settings: {
+      backgroundColor: '#f0f5ff',
+      textColor: '#333333',
+      borderColor: '#d0e0ff',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'job_videos',
+    title: '求人動画',
+    visible: true,
+    order: 17,
+    settings: {
+      backgroundColor: '#f5f5f5',
+      textColor: '#333333',
+      borderColor: '#e0e0e0',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
+      borderWidth: 1
+    }
+  },
+  {
+    id: 'sns',
+    title: 'SNS情報',
+    visible: true,
+    order: 18,
+    settings: {
+      backgroundColor: '#f0f0ff',
+      textColor: '#333333',
+      borderColor: '#d5d5ff',
+      titleColor: '#ff4d7d',
+      fontSize: 18,
+      padding: 24,
+      borderRadius: 10,
       borderWidth: 1
     }
   }
@@ -227,12 +355,12 @@ const defaultSections = [
 
 // デフォルトのグローバル設定
 const defaultGlobalSettings = {
-  mainColor: '#ff6b81',
-  secondaryColor: '#f9f9f9',
-  accentColor: '#41a0ff',
+  mainColor: '#ff4d7d',
+  secondaryColor: '#fff5f9',
+  accentColor: '#7854ff',
   backgroundColor: '#ffffff',
-  fontFamily: 'sans-serif',
-  borderRadius: 8,
+  fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "游ゴシック", YuGothic, Meiryo, sans-serif',
+  borderRadius: 10,
   maxWidth: 1200
 };
 
