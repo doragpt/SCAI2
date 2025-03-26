@@ -206,6 +206,22 @@ const defaultSections = [
       borderRadius: 8,
       borderWidth: 1
     }
+  },
+  {
+    id: 'photo_gallery',
+    title: '写真ギャラリー',
+    visible: true,
+    order: 10,
+    settings: {
+      backgroundColor: '#fff9fa',
+      textColor: '#333333',
+      borderColor: '#e0e0e0',
+      titleColor: '#ff6b81',
+      fontSize: 16,
+      padding: 20,
+      borderRadius: 8,
+      borderWidth: 1
+    }
   }
 ];
 
@@ -254,6 +270,7 @@ export default function StoreDesignManager() {
   // 設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
+      console.log('デザイン設定を保存中...', QUERY_KEYS.STORE_DESIGN, data);
       return await apiRequest('POST', QUERY_KEYS.STORE_DESIGN, data);
     },
     onSuccess: () => {
