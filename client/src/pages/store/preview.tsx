@@ -543,6 +543,43 @@ export default function StorePreview() {
                 </div>
               )}
 
+              {/* 特別オファー */}
+              {isSectionVisible('special_offers') && profile.special_offers && profile.special_offers.length > 0 && (
+                <div style={getSectionStyle('special_offers')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('special_offers')} className="flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2" style={{ color: getSectionSettings('special_offers').titleColor || globalSettings.mainColor }} />
+                    特別オファー
+                  </h3>
+                  <SpecialOffersDisplay specialOffers={profile.special_offers} />
+                </div>
+              )}
+
+              {/* 体験入店保証 */}
+              {isSectionVisible('trial_entry') && profile.trial_entry && (
+                <div style={getSectionStyle('trial_entry')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('trial_entry')} className="flex items-center">
+                    <Gift className="h-5 w-5 mr-2" style={{ color: getSectionSettings('trial_entry').titleColor || globalSettings.mainColor }} />
+                    体験入店保証
+                  </h3>
+                  <TrialEntryDisplay trialEntry={profile.trial_entry} />
+                </div>
+              )}
+
+              {/* キャンペーン */}
+              {isSectionVisible('campaigns') && profile.campaigns && profile.campaigns.length > 0 && (
+                <div style={getSectionStyle('campaigns')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('campaigns')} className="flex items-center">
+                    <PartyPopper className="h-5 w-5 mr-2" style={{ color: getSectionSettings('campaigns').titleColor || globalSettings.mainColor }} />
+                    キャンペーン
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {profile.campaigns.map((campaign, index) => (
+                      <CampaignDisplay key={index} campaign={campaign} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* アクセス・住所 */}
               {isSectionVisible('access') && (
                 <div style={getSectionStyle('access')} className="mb-8">
@@ -620,6 +657,40 @@ export default function StorePreview() {
                   </div>
                 </div>
               )}
+
+              {/* SNSリンク */}
+              {isSectionVisible('sns_links') && (
+                (profile.sns_id || profile.sns_url || profile.sns_text || 
+                (profile.sns_urls && profile.sns_urls.length > 0)) && (
+                <div style={getSectionStyle('sns_links')} className="mb-8">
+                  <h3 style={getSectionTitleStyle('sns_links')} className="flex items-center">
+                    <MessageSquare className="h-5 w-5 mr-2" style={{ color: getSectionSettings('sns_links').titleColor || globalSettings.mainColor }} />
+                    公式SNS
+                  </h3>
+                  
+                  <SNSLinksDisplay 
+                    links={(profile.sns_urls || []).map(url => {
+                      // URLからプラットフォームを推測
+                      let platform = 'その他';
+                      if (url.includes('twitter.com') || url.includes('x.com')) platform = 'Twitter';
+                      else if (url.includes('instagram.com')) platform = 'Instagram';
+                      else if (url.includes('facebook.com')) platform = 'Facebook';
+                      else if (url.includes('youtube.com')) platform = 'Youtube';
+                      else if (url.includes('line.me')) platform = 'Line';
+                      
+                      return {
+                        platform,
+                        url,
+                        text: platform
+                      };
+                    })}
+                    snsId={profile.sns_id}
+                    snsUrl={profile.sns_url}
+                    snsText={profile.sns_text}
+                    textColor={getSectionSettings('sns_links').textColor}
+                  />
+                </div>
+              ))}
 
               {/* 店舗ブログ */}
               {isSectionVisible('blog') && (

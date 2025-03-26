@@ -93,6 +93,50 @@ export default function StoreDesignManager() {
             textColor: "#333333",
             titleColor: "#ff69b4"
           }
+        },
+        {
+          id: "special_offers",
+          title: "特別オファー",
+          visible: true,
+          order: 6,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "trial_entry",
+          title: "体験入店保証",
+          visible: true,
+          order: 7,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "campaigns",
+          title: "キャンペーン",
+          visible: true,
+          order: 8,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
+        },
+        {
+          id: "sns_links",
+          title: "公式SNS",
+          visible: true,
+          order: 12,
+          settings: {
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            titleColor: "#ff69b4"
+          }
         }
       ],
       globalSettings: {
