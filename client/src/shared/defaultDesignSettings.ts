@@ -107,7 +107,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "access",
         title: "アクセス情報",
         visible: true,
-        order: 6,
+        order: 7,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -123,7 +123,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "contact",
         title: "問い合わせ",
         visible: true,
-        order: 7,
+        order: 8,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -136,27 +136,12 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
 
-      {
-        id: "photo_gallery",
-        title: "写真ギャラリー",
-        visible: true,
-        order: 10,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
+
       {
         id: "header",
         title: "ヘッダー",
         visible: true,
-        order: 11,
+        order: 1,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -172,7 +157,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "special_offers",
         title: "特別オファー",
         visible: true,
-        order: 12,
+        order: 9,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -188,7 +173,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "sns_links",
         title: "SNSリンク",
         visible: true,
-        order: 13,
+        order: 10,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -204,7 +189,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "blog",
         title: "店舗ブログ",
         visible: true,
-        order: 14,
+        order: 11,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
