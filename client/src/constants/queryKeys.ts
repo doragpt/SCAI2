@@ -33,10 +33,13 @@ export const QUERY_KEYS = {
   UPLOAD_PHOTO: "/upload/photo",
   SIGNED_PHOTO_URL: (key: string) => `/upload/signed-url/${key}`,
   
+  // ブログ関連
+  BLOG_POSTS: "/api/blog",
+  PUBLIC_BLOG_POSTS: "/api/blog/public",
+  BLOG_POSTS_STORE: "/api/blog/store",
+  BLOG_POST_DETAIL: (id: string) => `/api/blog/${id}`,
+  BLOG_POST_STATUS: (id: string) => `/api/blog/${id}/status`,
+  
   // その他
-  SIGNED_URL: "/storage/get-signed-url",
-  BLOG_POSTS: "/blog/posts",
-  BLOG_POSTS_STORE: "/api/blog/store-posts",
-  BLOG_POST_DETAIL: (id: string) => `/blog/posts/${id}`,
-  BLOG_POST_STATUS: (id: string) => `/blog/posts/${id}/status`
+  SIGNED_URL: "/storage/get-signed-url"
 } as const;

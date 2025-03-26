@@ -742,14 +742,15 @@ export default function StorePreview() {
                     </div>
                     
                     <div className="text-center mt-4">
-                      <span className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md" 
-                        style={{ 
+                      <a href={`/blog?storeId=${profile.id}`} target="_blank" rel="noopener noreferrer" 
+                         className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-md cursor-pointer" 
+                         style={{ 
                           backgroundColor: globalSettings.mainColor, 
                           color: '#ffffff'
-                        }}>
+                         }}>
                         <File className="h-4 w-4 mr-2" />
                         ブログ一覧を見る
-                      </span>
+                      </a>
                     </div>
                   </div>
                 </div>
