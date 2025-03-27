@@ -10,8 +10,8 @@ import { log } from '../vite';
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ブログ記事の取得（店舗管理画面用）
-router.get('/', authenticate, authorize('store'), async (req: Request, res: Response) => {
+// 店舗ブログ記事取得の共通関数
+const getBlogPostsByStore = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id as number;
     const page = parseInt(req.query.page as string) || 1;
@@ -46,6 +46,16 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
     console.error('Error fetching blog posts:', error);
     return res.status(500).json({ error: 'ブログ記事の取得中にエラーが発生しました' });
   }
+};
+
+// ブログ記事の取得（店舗管理画面用）
+router.get('/', authenticate, authorize('store'), async (req: Request, res: Response) => {
+  return getBlogPostsByStore(req, res);
+});
+
+// 店舗の投稿用エンドポイント（追加の統一性のため）
+router.get('/store-posts', authenticate, authorize('store'), async (req: Request, res: Response) => {
+  return getBlogPostsByStore(req, res);
 });
 
 // ブログ記事の取得（一般公開用）
@@ -113,7 +123,13 @@ router.get('/public', async (req: Request, res: Response) => {
 // 特定のブログ記事の取得
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const postId = parseInt(req.params.id);
+    const id = req.params.id;
+    
+    // NaNかどうかチェック
+    const postId = parseInt(id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ error: '無効なID形式です' });
+    }
     
     // 記事の取得
     const post = await db.select()
@@ -189,7 +205,13 @@ router.post('/', authenticate, authorize('store'), async (req: Request, res: Res
 // ブログ記事の更新
 router.put('/:id', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
-    const postId = parseInt(req.params.id);
+    const id = req.params.id;
+    
+    // NaNかどうかチェック
+    const postId = parseInt(id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ error: '無効なID形式です' });
+    }
     const userId = req.user?.id as number;
     const { title, content, status, scheduled_at, thumbnail, images } = req.body;
 
@@ -238,7 +260,13 @@ router.put('/:id', authenticate, authorize('store'), async (req: Request, res: R
 // ブログ記事の削除
 router.delete('/:id', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
-    const postId = parseInt(req.params.id);
+    const id = req.params.id;
+    
+    // NaNかどうかチェック
+    const postId = parseInt(id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ error: '無効なID形式です' });
+    }
     const userId = req.user?.id as number;
 
     // 記事の存在と所有権の確認
