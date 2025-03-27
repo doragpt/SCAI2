@@ -64,11 +64,12 @@ export default function StoreDesignPreview() {
     queryKey: ["store_blog_posts"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/store/blog?limit=3");
+        const response = await apiRequest("GET", "/store/blog?limit=3");
         forwardLog('店舗ブログAPI応答:', response);
         return response;
       } catch (error) {
         forwardLog('店舗ブログ取得エラー:', error);
+        console.error('ブログ記事の取得に失敗しました:', error);
         return { posts: [] };
       }
     },
@@ -525,6 +526,72 @@ export default function StoreDesignPreview() {
                         <p className="text-sm text-gray-500 italic">※特典内容は変更になる場合があります</p>
                       </div>
                     )}
+                  </div>
+                )}
+                
+                {/* 応募条件 */}
+                {section.id === 'requirements' && (
+                  <div className="space-y-6">
+                    <div className="relative">
+                      <div className="absolute -top-4 left-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                        応募条件
+                      </div>
+                      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mt-4">
+                        {profile.requirements ? (
+                          <div>
+                            <ul className="space-y-3">
+                              {profile.requirements.age_min && (
+                                <li className="flex items-center">
+                                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                  </div>
+                                  <span className="text-gray-700">年齢: {profile.requirements.age_min}歳以上</span>
+                                </li>
+                              )}
+                              {profile.requirements.tattoo_acceptance && (
+                                <li className="flex items-center">
+                                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                  </div>
+                                  <span className="text-gray-700">タトゥー: {profile.requirements.tattoo_acceptance}</span>
+                                </li>
+                              )}
+                              {profile.requirements.preferred_hair_colors && profile.requirements.preferred_hair_colors.length > 0 && (
+                                <li className="flex items-center">
+                                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                                    </svg>
+                                  </div>
+                                  <span className="text-gray-700">ヘアカラー: {profile.requirements.preferred_hair_colors.join('、')}</span>
+                                </li>
+                              )}
+                              {profile.requirements.other_conditions && profile.requirements.other_conditions.length > 0 && (
+                                <li className="flex items-center">
+                                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                  </div>
+                                  <span className="text-gray-700">その他: {profile.requirements.other_conditions.join('、')}</span>
+                                </li>
+                              )}
+                            </ul>
+                            <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                              <p className="text-sm text-gray-600">※ 応募条件についてご不明な点があれば、お気軽にお問い合わせください。条件を満たしていない場合でもご相談可能です。</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center p-4">
+                            <p className="text-gray-500">応募条件は登録されていません</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
                 

@@ -177,12 +177,29 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // 7. 応募条件
+      {
+        id: "requirements",
+        title: "応募条件",
+        visible: true,
+        order: 10,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
       // ブログ（デザイン編集で使用）
       {
         id: "blog",
         title: "店舗ブログ",
         visible: true,
-        order: 10,
+        order: 11,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
