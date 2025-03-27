@@ -59,6 +59,8 @@ export default function StoreDesignManager() {
       case 'contact': return '問い合わせ';
       case 'sns_links': return 'SNSリンク';
       case 'blog': return '店舗ブログ';
+      case 'gallery': return '写真ギャラリー'; // 互換性のために追加
+      case 'description': return '仕事内容'; // 互換性のために追加
       default: return `セクション: ${id}`;
     }
   };

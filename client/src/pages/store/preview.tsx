@@ -44,7 +44,7 @@ export default function StoreDesignPreview() {
 
   // 特別オファー情報を取得
   const specialOffersQuery = useQuery({
-    queryKey: [QUERY_KEYS.SPECIAL_OFFERS],
+    queryKey: ["special_offers"],
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/store/special-offers");
@@ -61,7 +61,7 @@ export default function StoreDesignPreview() {
   
   // 店舗ブログ情報を取得
   const storeBlogQuery = useQuery({
-    queryKey: [QUERY_KEYS.STORE_BLOG_POSTS],
+    queryKey: ["store_blog_posts"],
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/store/blog?limit=3");
@@ -306,7 +306,7 @@ export default function StoreDesignPreview() {
                 {/* 待遇・環境 */}
                 {section.id === 'benefits' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Array.isArray(profile.benefits) && profile.benefits.map((benefit, index) => (
+                    {Array.isArray(profile.benefits) && profile.benefits.map((benefit: string, index: number) => (
                       <div key={index} className="bg-muted/20 p-3 rounded-md text-center">
                         {benefit}
                       </div>
@@ -317,7 +317,7 @@ export default function StoreDesignPreview() {
                 {/* 特別オファー */}
                 {section.id === 'special_offers' && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {Array.isArray(specialOffers) && specialOffers.map((offer, index) => (
+                    {Array.isArray(specialOffers) && specialOffers.map((offer: any, index: number) => (
                       <div
                         key={offer.id || index}
                         className={`p-4 rounded-md bg-gradient-to-br ${offer.backgroundColor}`}
@@ -361,7 +361,7 @@ export default function StoreDesignPreview() {
                     {Array.isArray(profile.phone_numbers) && profile.phone_numbers.length > 0 && (
                       <div className="bg-muted/20 p-4 rounded-md">
                         <div className="text-sm text-muted-foreground mb-1">電話番号</div>
-                        {profile.phone_numbers.map((phone, index) => (
+                        {profile.phone_numbers.map((phone: string, index: number) => (
                           <div key={index} className="font-medium">{phone}</div>
                         ))}
                       </div>
@@ -370,7 +370,7 @@ export default function StoreDesignPreview() {
                     {Array.isArray(profile.email_addresses) && profile.email_addresses.length > 0 && (
                       <div className="bg-muted/20 p-4 rounded-md">
                         <div className="text-sm text-muted-foreground mb-1">メールアドレス</div>
-                        {profile.email_addresses.map((email, index) => (
+                        {profile.email_addresses.map((email: string, index: number) => (
                           <div key={index} className="font-medium">{email}</div>
                         ))}
                       </div>
@@ -381,7 +381,7 @@ export default function StoreDesignPreview() {
                 {/* SNSリンク */}
                 {section.id === 'sns_links' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.isArray(profile.sns_urls) && profile.sns_urls.map((sns, index) => (
+                    {Array.isArray(profile.sns_urls) && profile.sns_urls.map((sns: string, index: number) => (
                       <div key={index} className="bg-muted/20 p-4 rounded-md flex items-center">
                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
                           <span className="text-primary">SNS</span>
@@ -397,7 +397,7 @@ export default function StoreDesignPreview() {
                 {/* 写真ギャラリー */}
                 {section.id === 'photo_gallery' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {Array.isArray(profile.gallery_photos) && profile.gallery_photos.map((photo, index) => (
+                    {Array.isArray(profile.gallery_photos) && profile.gallery_photos.map((photo: string, index: number) => (
                       <div key={index} className="aspect-[4/3] overflow-hidden rounded-md bg-muted/20">
                         <img 
                           src={photo} 

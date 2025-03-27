@@ -372,7 +372,12 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
                 ? fullUpdateData.requirements.cup_size_conditions 
                 : []
             }
-          : existingProfile.requirements || {},
+          : existingProfile.requirements || {
+            accepts_temporary_workers: false,
+            requires_arrival_day_before: false,
+            other_conditions: [],
+            cup_size_conditions: []
+          },
         recruiter_name: fullUpdateData.recruiter_name,
         phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
         email_addresses: validateArrayField(fullUpdateData.email_addresses),
@@ -536,5 +541,86 @@ router.get("/stats", authenticate, authorize("store"), async (req: any, res) => 
 // 体験入店情報関連のエンドポイントを削除しました
 
 // キャンペーン関連のエンドポイントを削除しました
+
+// 特別オファー取得エンドポイント
+router.get("/special-offers", authenticate, authorize("store"), async (req: any, res) => {
+  try {
+    log('info', '特別オファー取得開始', {
+      userId: req.user.id,
+      displayName: req.user.display_name
+    });
+
+    // 店舗プロフィールを取得
+    const [profile] = await db
+      .select()
+      .from(store_profiles)
+      .where(eq(store_profiles.user_id, req.user.id));
+
+    if (!profile) {
+      return res.status(404).json({ message: "店舗プロフィールが見つかりません" });
+    }
+
+    // 特別オファーを取得して返す
+    const specialOffers = profile.special_offers || [];
+    
+    log('info', '特別オファー取得成功', {
+      userId: req.user.id,
+      offersCount: specialOffers.length
+    });
+
+    return res.json(specialOffers);
+  } catch (error) {
+    log('error', '特別オファー取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    return res.status(500).json({ message: "特別オファーの取得に失敗しました" });
+  }
+});
+
+// 店舗ブログ一覧取得エンドポイント
+router.get("/blog", authenticate, authorize("store"), async (req: any, res) => {
+  try {
+    log('info', '店舗ブログ記事取得開始', {
+      userId: req.user.id,
+      displayName: req.user.display_name
+    });
+
+    // クエリパラメータの取得（ページネーション用）
+    const limit = Number(req.query.limit) || 10;
+    
+    // ブログ記事テーブルは別途実装予定だが、現在はダミーレスポンスを返す
+    const dummyPosts = [
+      {
+        id: '1',
+        title: '店舗からのお知らせ',
+        content: '<p>当店からの最新情報をお届けします。</p>',
+        published_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        thumbnail: null
+      }
+    ];
+    
+    log('info', '店舗ブログ記事取得成功', {
+      userId: req.user.id,
+      postsCount: dummyPosts.length
+    });
+
+    return res.json({
+      posts: dummyPosts,
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: dummyPosts.length
+      }
+    });
+  } catch (error) {
+    log('error', '店舗ブログ記事取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    return res.status(500).json({ message: "店舗ブログ記事の取得に失敗しました" });
+  }
+});
 
 export default router;

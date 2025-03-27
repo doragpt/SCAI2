@@ -14,6 +14,8 @@ export const QUERY_KEYS = {
   STORE_PROFILE: "/store/profile",
   STORE_DESIGN: "/api/design", // 修正: /store/design から /api/design へパスを変更
   DESIGN_SETTINGS: "/api/design", // デザイン設定用
+  SPECIAL_OFFERS: "/api/store/special-offers", // 特別オファー用
+  STORE_BLOG_POSTS: "/api/store/blog", // 店舗ブログ用
 
   // タレント関連
   TALENT_PROFILE: "/talent/profile",
