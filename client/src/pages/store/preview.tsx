@@ -250,19 +250,19 @@ export default function StorePreview() {
     // セクションを検索
     const section = designSettings.sections.find(s => s.id === sectionId);
     if (!section) {
-      console.log(`[Preview] セクションが見つかりません: ${sectionId}`);
+      debugLog(`セクションが見つかりません: ${sectionId}`);
       
       // 特別に処理する必要があるセクション（プレビューでは表示する）
       const criticalSections = ['header', 'special_offers', 'sns_links', 'blog', 'requirements'];
       if (criticalSections.includes(sectionId)) {
-        console.log(`[Preview] ${sectionId} は重要なセクションなので表示します`);
+        debugLog(`${sectionId} は重要なセクションなので表示します`);
         return true;
       }
       
       // 削除されたセクションは表示しない
       const removedSections = ['trial_entry', 'campaigns'];
       if (removedSections.includes(sectionId)) {
-        console.log(`[Preview] ${sectionId} は削除されたセクションなので表示しません`);
+        debugLog(`${sectionId} は削除されたセクションなので表示しません`);
         return false;
       }
       
