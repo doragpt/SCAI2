@@ -895,53 +895,92 @@ export default function StoreDesignPreview() {
                 
                 {/* 店舗ブログ */}
                 {section.id === 'blog' && (
-                  <div className="space-y-4">
-                    {Array.isArray(blogPosts) && blogPosts.length > 0 ? (
-                      blogPosts.map((post: any) => (
-                        <div key={post.id} className="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-300">
-                          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                            {post.thumbnail && (
-                              <div className="shrink-0 w-full sm:w-32 h-32 rounded-md overflow-hidden">
-                                <img 
-                                  src={post.thumbnail} 
-                                  alt={post.title} 
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold mb-1 text-primary">{post.title}</h3>
-                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                <span className="inline-block px-2 py-1 bg-primary/10 rounded-full mr-2">
-                                  {new Date(post.published_at || post.created_at).toLocaleDateString('ja-JP')}
-                                </span>
-                                {post.status === 'published' && (
-                                  <span className="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full">
-                                    公開中
-                                  </span>
+                  <div className="space-y-6">
+                    <div className="relative">
+                      <div className="absolute -top-4 left-4 bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                        店舗ブログ
+                      </div>
+                      
+                      {Array.isArray(blogPosts) && blogPosts.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                          {blogPosts.map((post: any) => (
+                            <div 
+                              key={post.id} 
+                              className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
+                            >
+                              <div className="relative">
+                                {post.thumbnail ? (
+                                  <div className="w-full h-48 relative overflow-hidden">
+                                    <img 
+                                      src={post.thumbnail} 
+                                      alt={post.title} 
+                                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                      loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-70"></div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-48 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center">
+                                    <div className="w-16 h-16 rounded-full bg-white/80 dark:bg-gray-800/80 flex items-center justify-center text-primary">
+                                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                                      </svg>
+                                    </div>
+                                  </div>
                                 )}
+                                
+                                {/* 公開状態とタイムスタンプ */}
+                                <div className="absolute top-3 left-3 flex space-x-2">
+                                  <span className="px-2.5 py-1 bg-white/90 dark:bg-gray-800/90 text-xs font-medium rounded-full shadow-sm backdrop-blur-sm text-gray-700 dark:text-gray-300 flex items-center">
+                                    <svg className="w-3.5 h-3.5 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    {new Date(post.published_at || post.created_at).toLocaleDateString('ja-JP')}
+                                  </span>
+                                  
+                                  {post.status === 'published' && (
+                                    <span className="inline-flex items-center px-2.5 py-1 bg-green-500/90 text-xs font-medium text-white rounded-full shadow-sm backdrop-blur-sm">
+                                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                      </svg>
+                                      公開中
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="text-sm line-clamp-3 text-gray-600 dark:text-gray-300 leading-relaxed">
-                                {post.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
-                              </div>
-                              <div className="mt-3">
-                                <span className="inline-flex items-center text-xs font-medium text-primary hover:text-primary/80">
-                                  続きを読む
-                                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                                  </svg>
-                                </span>
+                              
+                              <div className="p-5">
+                                <h3 className="text-lg md:text-xl font-bold mb-3 text-gray-800 dark:text-white group-hover:text-primary transition-colors line-clamp-2">
+                                  {post.title}
+                                </h3>
+                                
+                                <div className="text-sm line-clamp-3 text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                                  {post.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                                </div>
+                                
+                                <div className="flex justify-end">
+                                  <span className="inline-flex items-center text-sm font-medium text-primary">
+                                    続きを読む
+                                    <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center p-8 bg-muted/10 rounded-md">
-                        <p className="text-muted-foreground">ブログ記事が登録されていません</p>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="bg-white dark:bg-gray-800/50 p-8 rounded-xl text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                            </svg>
+                          </div>
+                          <p className="text-gray-500 dark:text-gray-400">ブログ記事が登録されていません</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
