@@ -160,18 +160,22 @@ export default function StoreDesignPreview() {
     service_type: 'デリヘル',
     catch_phrase: 'サンプルキャッチコピー',
     description: '<p>サンプル説明文</p>',
+    top_image: '', // TOP画像URL
     gallery_photos: [],
     benefits: [],
     minimum_guarantee: 0,
     maximum_guarantee: 0,
     working_hours: '',
     average_hourly_pay: 0,
+    working_time_hours: 0, // 稼働時間
     address: '',
     access_info: '',
     recruiter_name: '',
     phone_numbers: [],
     email_addresses: [],
-    sns_urls: []
+    sns_urls: [],
+    transportation_support: false, // 交通費サポート
+    housing_support: false // 寮完備
   };
 
   // 特別オファーデータ
@@ -247,44 +251,78 @@ export default function StoreDesignPreview() {
       <div style={{ margin: '0 auto', maxWidth: globalStyles.maxWidth }}>
         {/* ヘッダー */}
         {shouldShowSection('header') && (
-          <div style={getSectionStyle('header')} className="flex flex-col items-center text-center mb-12 p-8 rounded-xl border border-primary/10 bg-gradient-to-br from-white via-primary/5 to-primary/10 shadow-md">
-            {/* 店舗ロゴ風デザイン要素 */}
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-light rounded-full flex items-center justify-center mb-4 shadow-lg" style={{ background: 'var(--gradient-primary)' }}>
-              <span className="text-2xl font-bold text-white">{profile.business_name.substring(0, 1)}</span>
-            </div>
-            
-            <h1 style={{ color: settings.globalSettings.mainColor }} className="text-3xl md:text-5xl font-bold mb-3 tracking-tight relative">
-              {profile.business_name}
-              <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-1 rounded-full" style={{ background: 'var(--gradient-primary)' }}></span>
-            </h1>
-            
-            <div className="flex items-center justify-center flex-wrap space-x-3 text-gray-600 my-6">
-              <span className="flex items-center bg-white/80 px-3 py-1.5 rounded-full shadow-sm border border-gray-100 backdrop-blur-sm">
-                <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span className="font-medium">{profile.location}</span>
-              </span>
-              
-              <span className="flex items-center bg-white/80 px-3 py-1.5 rounded-full shadow-sm border border-gray-100 backdrop-blur-sm">
-                <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-                <span className="font-medium">{profile.service_type}</span>
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-center mt-2">
-              <div className="bg-gradient-to-r from-primary to-primary-light text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md transform hover:scale-105 transition-transform duration-300 animate-pulse">
-                <span className="flex items-center">
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                  </svg>
-                  採用情報掲載中
-                </span>
+          <div style={getSectionStyle('header')} className="mb-12 rounded-xl border border-primary/10 bg-white shadow-md overflow-hidden">
+            {/* TOP画像表示 */}
+            {profile.top_image ? (
+              <div className="relative h-48 md:h-64 lg:h-80 w-full bg-gray-100">
+                <img 
+                  src={profile.top_image} 
+                  alt={profile.business_name || 'ショップ画像'} 
+                  className="w-full h-full object-cover"
+                />
+                {/* 画像の上に重ねるグラデーション */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
+                
+                {/* ショップ名と場所を表示 */}
+                <div className="absolute bottom-0 left-0 w-full p-6 text-white">
+                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight drop-shadow-md">
+                    {profile.business_name}
+                  </h1>
+                  <div className="flex items-center text-white/90 space-x-3">
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      <span className="text-sm font-medium">{profile.location}</span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                      </svg>
+                      <span className="text-sm font-medium">{profile.service_type}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* TOP画像がない場合のフォールバック */
+              <div className="flex flex-col items-center text-center p-8 bg-gradient-to-r from-primary/5 to-primary/10">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-light rounded-full flex items-center justify-center mb-4 shadow-lg" style={{ background: 'var(--gradient-primary)' }}>
+                  <span className="text-2xl font-bold text-white">{profile.business_name.substring(0, 1)}</span>
+                </div>
+                
+                <h1 style={{ color: settings.globalSettings.mainColor }} className="text-3xl md:text-4xl font-bold mb-3 tracking-tight relative">
+                  {profile.business_name}
+                  <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-1 rounded-full" style={{ background: 'var(--gradient-primary)' }}></span>
+                </h1>
+                
+                <div className="flex items-center justify-center flex-wrap space-x-3 text-gray-600 my-4">
+                  <span className="flex items-center bg-white/80 px-3 py-1.5 rounded-full shadow-sm border border-gray-100 backdrop-blur-sm">
+                    <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span className="font-medium">{profile.location}</span>
+                  </span>
+                  
+                  <span className="flex items-center bg-white/80 px-3 py-1.5 rounded-full shadow-sm border border-gray-100 backdrop-blur-sm">
+                    <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <span className="font-medium">{profile.service_type}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {/* キャッチフレーズ部分 */}
+            {profile.catch_phrase && (
+              <div className="p-5 bg-white border-t border-gray-200">
+                <h2 className="text-lg md:text-xl font-bold text-primary">{profile.catch_phrase}</h2>
+              </div>
+            )}
           </div>
         )}
 
