@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { db } from '../db';
 import { blogPosts } from '@shared/schema';
-import { eq, desc, and, gte, lte, lt, asc } from 'drizzle-orm';
+import { eq, desc, and, gte, lte, lt, asc, sql } from 'drizzle-orm';
 import multer from 'multer';
 import { uploadToS3, getSignedS3Url } from '../utils/s3';
 import { log } from '../vite';
@@ -20,7 +20,7 @@ const getBlogPostsByStore = async (req: Request, res: Response) => {
 
     // ブログ投稿数のカウント（特定の店舗の投稿のみ）
     const totalCountResult = await db.select({
-      count: db.$custom<number>`count(*)`
+      count: sql<number>`count(*)`
     })
     .from(blogPosts)
     .where(eq(blogPosts.store_id, userId));
@@ -79,14 +79,15 @@ router.get('/public', async (req: Request, res: Response) => {
     }
 
     // ブログ投稿数のカウント
+    const conditions = storeId ? 
+      and(eq(blogPosts.status, 'published'), eq(blogPosts.store_id, storeId)) :
+      eq(blogPosts.status, 'published');
+    
     const totalCountResult = await db.select({
-      count: db.$custom<number>`count(*)`
+      count: sql<number>`count(*)`
     })
     .from(blogPosts)
-    .where(and(
-      eq(blogPosts.status, 'published'),
-      storeId ? eq(blogPosts.store_id, storeId) : undefined
-    ));
+    .where(conditions);
 
     const totalItems = Number(totalCountResult[0].count);
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -100,13 +101,16 @@ router.get('/public', async (req: Request, res: Response) => {
     // 店舗名を取得（必要な場合）
     let storeName = undefined;
     if (storeId) {
-      const storeResult = await db.query.store_profiles.findFirst({
-        where: eq(db.query.store_profiles.id, storeId),
-        columns: {
-          business_name: true
-        }
-      });
-      storeName = storeResult?.business_name;
+      const storeResult = await db.select({
+        business_name: sql<string>`business_name`
+      })
+      .from(sql`store_profiles`)
+      .where(sql`id = ${storeId}`)
+      .limit(1);
+      
+      if (storeResult.length > 0) {
+        storeName = storeResult[0].business_name;
+      }
     }
 
     return res.status(200).json({
@@ -154,18 +158,20 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     // 店舗情報の取得
-    const store = await db.query.store_profiles.findFirst({
-      where: eq(db.query.store_profiles.id, post[0].store_id),
-      columns: {
-        business_name: true,
-        location: true,
-        service_type: true
-      }
-    });
+    const store = await db.select({
+      business_name: sql<string>`business_name`,
+      location: sql<string>`location`,
+      service_type: sql<string>`service_type`
+    })
+    .from(sql`store_profiles`)
+    .where(sql`id = ${post[0].store_id}`)
+    .limit(1);
+    
+    const storeInfo = store.length > 0 ? store[0] : null;
 
     return res.status(200).json({
       post: post[0],
-      store
+      store: storeInfo
     });
   } catch (error) {
     console.error('Error fetching blog post:', error);
