@@ -107,6 +107,12 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
 
 // 店舗プロフィール更新
 router.patch("/profile", authenticate, authorize("store"), async (req: any, res) => {
+  console.log("PATCH /api/store/profile エンドポイントが呼び出されました:", {
+    requestBody: req.body,
+    requestHeaders: req.headers,
+    timestamp: new Date().toISOString(),
+    userId: req.user?.id
+  });
   try {
     console.log("PATCH /profile エンドポイントが呼び出されました");
     log('info', '店舗プロフィール更新開始 - 詳細ログ', {

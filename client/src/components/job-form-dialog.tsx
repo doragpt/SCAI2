@@ -36,20 +36,60 @@ export function JobFormDialog({
   
   // 成功時のコールバック関数（確実にダイアログを閉じる）
   const handleSuccess = () => {
-    console.log("JobFormDialog: 保存成功、ダイアログを閉じます");
+    console.log("JobFormDialog: 保存成功、ダイアログを閉じます", {
+      isOpen: open,
+      timestamp: new Date().toISOString()
+    });
+    
     // 成功メッセージをトーストで表示
     toast({
       title: "店舗情報を保存しました",
       description: "変更内容が反映されました",
     });
-    // ダイアログを閉じる
-    onOpenChange(false);
+    
+    // 重要: ダイアログを明示的に閉じる
+    // setTimeout を使用して非同期処理の完了後に確実に実行する
     setShowConfirmClose(false);
+    
+    // 二重のタイムアウトを使用して確実にダイアログを閉じる
+    // React の状態更新と UI 更新のサイクルを完了させるため
+    setTimeout(() => {
+      console.log("JobFormDialog: 外側のタイマー実行");
+      
+      // 内側のタイムアウトで確実に実行（マイクロタスクキューを活用）
+      setTimeout(() => {
+        console.log("JobFormDialog: 内側のタイマー実行 - ダイアログを閉じます");
+        try {
+          // 明示的にダイアログを閉じる
+          onOpenChange(false);
+          console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました");
+        } catch (error) {
+          console.error("JobFormDialog: ダイアログを閉じる処理でエラーが発生しました", error);
+        }
+      }, 10); // 短い遅延で内側のタイマーを実行
+    }, 50); // 外側のタイマーも短い遅延
   };
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleCloseAttempt}>
+      <Dialog 
+        open={open} 
+        onOpenChange={(newOpenState) => {
+          console.log("Dialog onOpenChange イベント発生:", { 
+            currentOpen: open, 
+            newOpenState, 
+            timestamp: new Date().toISOString() 
+          });
+          
+          // ダイアログを閉じる場合のみ確認ダイアログを表示
+          if (open && !newOpenState) {
+            handleCloseAttempt();
+          } else {
+            // それ以外の場合（ダイアログを開く場合）は直接状態を変更
+            onOpenChange(newOpenState);
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>

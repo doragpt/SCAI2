@@ -279,8 +279,22 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         try {
           // apiRequest関数を使用してリクエストを送信
-          const result = await apiRequest("PATCH", "/api/store/profile", formattedData);
-          console.log("リクエスト成功:", result);
+          // 重要: 正しいAPIパスを使用（/api/store/profileではなく/api/storeにマウントされたrouterの/profile）
+          const apiEndpoint = "/api/store/profile";
+          console.log("店舗プロフィール更新 - APIリクエスト送信開始:", {
+            endpoint: apiEndpoint,
+            method: "PATCH",
+            timestamp: new Date().toISOString()
+          });
+          
+          const result = await apiRequest("PATCH", apiEndpoint, formattedData);
+          console.log("店舗プロフィール更新 - リクエスト成功:", {
+            result,
+            resultType: typeof result,
+            hasSuccess: 'success' in result,
+            successValue: result.success,
+            timestamp: new Date().toISOString()
+          });
           
           // successフラグを明示的に確認し、falseの場合はエラーをスロー
           if (result && result.success === false) {
@@ -306,6 +320,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       }
     },
     onSuccess: (data) => {
+      console.log("店舗プロフィール更新 - ミューテーション成功:", {
+        data,
+        hasSuccess: data && 'success' in data,
+        successValue: data && data.success,
+        hasOnSuccessCallback: !!onSuccess,
+        timestamp: new Date().toISOString()
+      });
+      
       // キャッシュをクリア
       queryClient.invalidateQueries({ 
         queryKey: [QUERY_KEYS.STORE_PROFILE],
@@ -319,7 +341,9 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         description: "変更内容が保存されました。",
       });
 
+      // 親コンポーネントのコールバックを実行（ダイアログを閉じるなど）
       if (onSuccess) {
+        console.log("店舗プロフィール更新 - 親コンポーネントのonSuccessコールバックを呼び出します");
         onSuccess();
       }
     },

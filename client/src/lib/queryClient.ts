@@ -77,8 +77,25 @@ export async function apiRequest<T = any>(
     // successフラグが明示的に設定されていないレスポンスに対する安全策
     // 成功レスポンスにはsuccess: trueを追加
     if (responseData && responseData.success === undefined) {
+      log('info', 'レスポンスにsuccessフラグがないため、明示的にtrueを設定します', {
+        url: fullUrl,
+        method,
+        responseDataKeys: responseData ? Object.keys(responseData) : [],
+        timestamp: new Date().toISOString()
+      });
       responseData.success = true;
     }
+    
+    // 成功時のレスポンスをログに記録（機密情報を除く）
+    log('info', 'APIリクエスト成功', {
+      url: fullUrl,
+      method,
+      status: response.status,
+      responseType: typeof responseData,
+      hasSuccessFlag: 'success' in responseData,
+      successValue: responseData.success,
+      timestamp: new Date().toISOString()
+    });
     
     return responseData as T;
   } catch (error) {
