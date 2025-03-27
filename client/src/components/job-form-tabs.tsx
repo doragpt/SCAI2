@@ -425,52 +425,105 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // special_offers配列を確認して整形
       if (cleanedData.special_offers) {
         if (Array.isArray(cleanedData.special_offers)) {
-          // 各特別オファーのデータを検証・整形
-          cleanedData.special_offers = cleanedData.special_offers
-            .filter(offer => offer !== null && typeof offer === 'object')
-            .map(offer => {
-              // インターフェースに合わせてキーとデータ分解
-              const { 
-                id,
-                textColor, 
-                backgroundColor, 
-                order,
-                isActive = true,
-                isLimited = false,
-                targetAudience = [],
-                amount = null,
-                conditions = null,
-                startDate = null,
-                endDate = null,
-                limitedCount = null,
-                // camelCaseと snake_case の両方に対応
-                ...rest 
-              } = offer;
-              
-              // SpecialOfferInterfaceの定義に合わせて必須フィールドを確認
-              const validOffer = {
-                id: id || `offer-${Math.random().toString(36).substring(2, 9)}`, // IDの保持または生成
-                type: offer.type || "特別オファー", // typeフィールドがない場合はデフォルト値を設定
-                title: offer.title || "",
-                description: offer.description || "",
-                icon: offer.icon || "",
-                order: typeof order === 'number' ? order : 0,
-                isActive: isActive === false ? false : true, // 明示的にfalseの場合だけfalse、それ以外はtrue
-                isLimited: !!isLimited,
-                backgroundColor: backgroundColor || "#fff9fa",
-                textColor: textColor || "#333333",
-                targetAudience: Array.isArray(targetAudience) ? targetAudience : [], // 未設定の場合は空配列を使用
-                amount,
-                conditions,
-                startDate,
-                endDate,
-                limitedCount
-              };
-              
-              return validOffer;
-            });
+          try {
+            // 各特別オファーのデータを検証・整形
+            cleanedData.special_offers = cleanedData.special_offers
+              .filter(offer => offer !== null && typeof offer === 'object')
+              .map(offer => {
+                try {
+                  // インターフェースに合わせてキーとデータ分解
+                  // 空文字列を防ぎ、null値を適切に処理
+                  const id = typeof offer.id === 'string' && offer.id.trim() !== '' 
+                    ? offer.id 
+                    : `offer-${Math.random().toString(36).substring(2, 9)}`;
+                    
+                  // オプションフィールドの適切な処理
+                  const amount = offer.amount !== undefined && offer.amount !== null && offer.amount !== '' 
+                    ? (typeof offer.amount === 'number' ? offer.amount : Number(offer.amount) || null) 
+                    : null;
+                    
+                  const conditions = typeof offer.conditions === 'string' && offer.conditions.trim() !== '' 
+                    ? offer.conditions 
+                    : null;
+                    
+                  const startDate = offer.startDate 
+                    ? (typeof offer.startDate === 'string' ? offer.startDate : null) 
+                    : null;
+                    
+                  const endDate = offer.endDate 
+                    ? (typeof offer.endDate === 'string' ? offer.endDate : null) 
+                    : null;
+                    
+                  const limitedCount = offer.limitedCount !== undefined && offer.limitedCount !== null && offer.limitedCount !== '' 
+                    ? (typeof offer.limitedCount === 'number' ? offer.limitedCount : Number(offer.limitedCount) || null) 
+                    : null;
+                
+                  // 必須フィールドの保証
+                  const title = typeof offer.title === 'string' ? offer.title : "";
+                  const description = typeof offer.description === 'string' ? offer.description : "";
+                  const type = typeof offer.type === 'string' && offer.type.trim() !== '' ? offer.type : "特別オファー";
+                  
+                  // プリミティブ型の保証
+                  const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
+                  const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
+                  const backgroundColor = typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' 
+                    ? offer.backgroundColor 
+                    : "#fff9fa";
+                  const textColor = typeof offer.textColor === 'string' && offer.textColor.trim() !== '' 
+                    ? offer.textColor 
+                    : "#333333";
+                  const icon = typeof offer.icon === 'string' ? offer.icon : "";
+                  const order = typeof offer.order === 'number' ? offer.order : 0;
+                  
+                  // targetAudienceの配列化保証
+                  const targetAudience = Array.isArray(offer.targetAudience) 
+                    ? offer.targetAudience.filter((item: any) => typeof item === 'string')
+                    : [];
+                  
+                  // JSON安全なオブジェクトを構築
+                  return {
+                    id,
+                    title,
+                    description,
+                    type,
+                    backgroundColor,
+                    textColor,
+                    isActive,
+                    isLimited,
+                    icon,
+                    order,
+                    targetAudience,
+                    amount,
+                    conditions,
+                    limitedCount,
+                    startDate,
+                    endDate
+                  };
+                } catch (offerError) {
+                  console.error("特別オファー個別処理エラー:", offerError);
+                  // エラーが発生した場合は最低限の有効なオブジェクトを返す
+                  return {
+                    id: `error-offer-${Math.random().toString(36).substring(2, 9)}`,
+                    title: "オファー",
+                    description: "",
+                    type: "特別オファー",
+                    backgroundColor: "#fff9fa",
+                    textColor: "#333333",
+                    isActive: true,
+                    isLimited: false,
+                    icon: "sparkles",
+                    order: 0,
+                    targetAudience: []
+                  };
+                }
+              });
+          } catch (error) {
+            console.error("special_offers全体の処理エラー:", error);
+            cleanedData.special_offers = [];
+          }
         } else {
           // 配列でない場合は空配列に設定
+          console.warn("special_offersが配列ではありません:", typeof cleanedData.special_offers);
           cleanedData.special_offers = [];
         }
       } else {
