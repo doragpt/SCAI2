@@ -36,6 +36,22 @@ function processSpecialOffers(offers: any): any[] {
     return [];
   }
   
+  // 文字列の場合はJSONとしてパースを試みる
+  if (typeof offers === 'string') {
+    try {
+      const parsedOffers = JSON.parse(offers);
+      if (Array.isArray(parsedOffers)) {
+        offers = parsedOffers;
+      } else {
+        console.log("special_offersがJSONとしてパースされましたが、配列ではありません。空配列を返します。");
+        return [];
+      }
+    } catch (e) {
+      console.log("special_offersが文字列ですが、有効なJSONではありません。空配列を返します。", e);
+      return [];
+    }
+  }
+  
   // 配列ではない場合は空配列を返す
   if (!Array.isArray(offers)) {
     console.log("special_offersが配列ではありません。空配列を返します。タイプ:", typeof offers);
@@ -341,7 +357,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          special_offers: processSpecialOffers(fullData.special_offers),
+          special_offers: JSON.stringify(processSpecialOffers(fullData.special_offers)),
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -548,7 +564,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        special_offers: processSpecialOffers(fullUpdateData.special_offers),
+        special_offers: JSON.stringify(processSpecialOffers(fullUpdateData.special_offers)),
         gallery_photos: fullUpdateData.gallery_photos || [],
         // デザイン設定の更新を処理
         design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
@@ -777,7 +793,19 @@ router.get("/special-offers", authenticate, authorize("store"), async (req: any,
     }
 
     // 特別オファーを取得して返す
-    const specialOffers = processSpecialOffers(profile.special_offers);
+    // 特別オファーデータを取得
+    let specialOffers;
+    try {
+      // string型である可能性があるのでJSON.parseを試みる
+      if (typeof profile.special_offers === 'string') {
+        specialOffers = processSpecialOffers(JSON.parse(profile.special_offers));
+      } else {
+        specialOffers = processSpecialOffers(profile.special_offers);
+      }
+    } catch (e) {
+      console.error("special_offers解析エラー:", e);
+      specialOffers = [];
+    }
     
     log('info', '特別オファー取得成功', {
       userId: req.user.id,
