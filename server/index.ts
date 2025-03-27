@@ -70,10 +70,12 @@ process.env.NODE_ENV = "development";
       serveStatic(app);
     }
 
+    // Replitの環境に適応するためにポート設定を調整
     const port = Number(process.env.PORT) || 5000;
     server.listen(port, '0.0.0.0', () => {
       log('info', `サーバーを起動しました: http://0.0.0.0:${port}`, {
         environment: process.env.NODE_ENV,
+        port: port,
         totalStartupTime: Date.now() - startTime
       });
 
