@@ -250,23 +250,23 @@ export default function StorePreview() {
       return isSectionVisible('catchphrase');
     }
     
+    // 削除されたセクションは表示しない（最初にチェック）
+    const removedSections = ['trial_entry', 'campaign', 'campaigns'];
+    if (removedSections.includes(sectionId)) {
+      debugLog(`${sectionId} は削除されたセクションなので表示しません`);
+      return false;
+    }
+    
     // セクションを検索
     const section = designSettings.sections.find(s => s.id === sectionId);
     if (!section) {
       debugLog(`セクションが見つかりません: ${sectionId}`);
       
-      // 特別に処理する必要があるセクション（プレビューでは表示する）
+      // 特別に処理する必要があるセクション（プレビューでも表示する）
       const criticalSections = ['header', 'special_offers', 'sns_links', 'blog', 'requirements'];
       if (criticalSections.includes(sectionId)) {
         debugLog(`${sectionId} は重要なセクションなので表示します`);
         return true;
-      }
-      
-      // 削除されたセクションは表示しない
-      const removedSections = ['trial_entry', 'campaigns'];
-      if (removedSections.includes(sectionId)) {
-        debugLog(`${sectionId} は削除されたセクションなので表示しません`);
-        return false;
       }
       
       return false; // 見つからない場合は非表示
@@ -664,9 +664,15 @@ export default function StorePreview() {
   // セクションの順序に従って動的にレンダリングする関数
   const renderOrderedSections = () => {
     // ヘッダーはすでに別途レンダリングされているので除外
+    // 体験入店情報とキャンペーン情報のセクションを明示的に除外
+    const removedSections = ['trial_entry', 'campaign', 'campaigns'];
+    
     // 表示可能なセクションのみを抽出
     const contentSections = [...designSettings.sections]
-      .filter(section => section.id !== 'header');
+      .filter(section => 
+        section.id !== 'header' && 
+        !removedSections.includes(section.id)
+      );
     
     // 店舗情報編集ページで設定した順序を反映するためにorder値で並べ替え
     contentSections.sort((a, b) => {

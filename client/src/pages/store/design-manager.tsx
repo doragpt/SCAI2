@@ -92,8 +92,23 @@ export default function StoreDesignManager() {
     }
   };
 
-  // 削除対象のセクションID
+  // 削除対象のセクションID（試験入店タブとキャンペーンタブは表示しない）
   const removedSectionIds = ['trial_entry', 'campaign', 'campaigns'];
+  
+  // 必須表示セクションID（店舗情報編集ダイアログの各タブに対応）
+  const requiredSectionIds = [
+    'catchphrase',   // 基本情報タブ
+    'salary',        // 給与・待遇タブ
+    'schedule',      // 給与・待遇タブ
+    'benefits',      // 給与・待遇タブ
+    'contact',       // 連絡先タブ
+    'access',        // アクセスタブ
+    'photo_gallery', // 写真ギャラリータブ
+    'requirements',  // 応募条件タブ
+    'special_offers', // オファータブ
+    'sns_links',     // SNSリンク
+    'blog'           // ブログ
+  ];
   
   // 設定を取得するクエリ
   const designSettingsQuery = useQuery<DesignSettings, Error>({
@@ -348,14 +363,38 @@ export default function StoreDesignManager() {
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      // プレビュー送信前に体験入店情報とキャンペーン情報のセクションを除外
+      // プレビュー送信前に設定を調整
       const previewSettings = { ...settings };
+      
+      // 1. 体験入店情報とキャンペーン情報のセクションを除外
       previewSettings.sections = previewSettings.sections.filter(
         section => !removedSectionIds.includes(section.id)
       );
       
+      // 2. 必須セクションの存在確認
+      const previewSectionIds = previewSettings.sections.map(s => s.id);
+      const missingRequiredSectionIds = requiredSectionIds.filter(id => !previewSectionIds.includes(id));
+      
+      // 3. 不足しているセクションがあれば追加
+      if (missingRequiredSectionIds.length > 0) {
+        const defaultSettings = getDefaultSettings();
+        const maxOrder = Math.max(...previewSettings.sections.map(s => s.order), 0);
+        
+        missingRequiredSectionIds.forEach((id, index) => {
+          const defaultSection = defaultSettings.sections.find(s => s.id === id);
+          if (defaultSection) {
+            console.log(`プレビュー用にセクション "${id}" を追加`);
+            previewSettings.sections.push({
+              ...defaultSection,
+              order: maxOrder + index + 1
+            });
+          }
+        });
+      }
+      
       console.log('プレビューを更新します:', {
         sectionsCount: previewSettings.sections.length,
+        sectionIds: previewSettings.sections.map(s => s.id),
         globalSettings: previewSettings.globalSettings
       });
       
