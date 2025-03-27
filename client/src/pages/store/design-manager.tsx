@@ -32,6 +32,8 @@ export default function StoreDesignManager() {
     BASIC_INFO: ['catchphrase'],
     // 給与・待遇タブ
     SALARY_BENEFITS: ['salary', 'schedule', 'benefits'],
+    // 応募条件タブ
+    REQUIREMENTS: ['requirements'],
     // 連絡先タブ
     CONTACT: ['contact', 'sns_links'],
     // アクセスタブ
@@ -40,8 +42,6 @@ export default function StoreDesignManager() {
     SECURITY: ['security_measures'],
     // 写真ギャラリータブ
     GALLERY: ['photo_gallery'],
-    // 応募条件タブ
-    REQUIREMENTS: ['requirements'],
     // 追加コンテンツ
     ADDITIONAL: ['special_offers', 'blog']
   };
@@ -126,11 +126,11 @@ export default function StoreDesignManager() {
       'header', // ヘッダー（常に最初）
       'catchphrase', // 基本情報
       'salary', 'schedule', 'benefits', // 給与・待遇
+      'requirements', // 応募条件
       'contact', 'sns_links', // 連絡先
       'access', // アクセス
       'security_measures', // 安全対策
       'photo_gallery', // 写真ギャラリー
-      'requirements', // 応募条件
       'special_offers', // 特別オファー
       'blog', // 店舗ブログ
     ];

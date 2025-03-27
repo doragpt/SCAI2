@@ -91,12 +91,29 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 3. 連絡先
+      // 3. 応募条件
+      {
+        id: "requirements",
+        title: "応募条件",
+        visible: true,
+        order: 5,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      // 4. 連絡先
       {
         id: "contact",
         title: "問い合わせ",
         visible: true,
-        order: 5,
+        order: 6,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -112,23 +129,6 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "sns_links",
         title: "SNSリンク",
         visible: true,
-        order: 6,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      // 4. アクセス
-      {
-        id: "access",
-        title: "アクセス情報",
-        visible: true,
         order: 7,
         settings: {
           backgroundColor: "#ffffff",
@@ -141,10 +141,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 5. 安全対策
+      // 5. アクセス
       {
-        id: "security_measures",
-        title: "安全対策",
+        id: "access",
+        title: "アクセス情報",
         visible: true,
         order: 8,
         settings: {
@@ -158,14 +158,14 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 6. 写真ギャラリー
+      // 6. 安全対策
       {
-        id: "photo_gallery",
-        title: "写真ギャラリー",
+        id: "security_measures",
+        title: "安全対策",
         visible: true,
         order: 9,
         settings: {
-          backgroundColor: "#fff9fa",
+          backgroundColor: "#ffffff",
           textColor: "#333333",
           borderColor: "#e0e0e0",
           titleColor: "#ff4d7d",
@@ -175,10 +175,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 特別オファー（デザイン編集で使用）
+      // 7. 写真ギャラリー
       {
-        id: "special_offers",
-        title: "特別オファー",
+        id: "photo_gallery",
+        title: "写真ギャラリー",
         visible: true,
         order: 10,
         settings: {
@@ -192,10 +192,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 7. 応募条件
+      // 8. 特別オファー（デザイン編集で使用）
       {
-        id: "requirements",
-        title: "応募条件",
+        id: "special_offers",
+        title: "特別オファー",
         visible: true,
         order: 11,
         settings: {
