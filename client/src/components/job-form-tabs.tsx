@@ -446,11 +446,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       amount = offer.amount;
                     } else if (typeof offer.amount === 'string') {
                       // stringの場合は安全にtrimを呼び出す
-                      const trimmedAmount = offer.amount.trim();
-                      if (trimmedAmount !== '') {
-                        const parsed = Number(trimmedAmount);
-                        if (!isNaN(parsed)) {
-                          amount = parsed;
+                      if (offer.amount) {
+                        const trimmedAmount = offer.amount.trim();
+                        if (trimmedAmount !== '') {
+                          const parsed = Number(trimmedAmount);
+                          if (!isNaN(parsed)) {
+                            amount = parsed;
+                          }
                         }
                       }
                     }
@@ -480,11 +482,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       limitedCount = offer.limitedCount;
                     } else if (typeof offer.limitedCount === 'string') {
                       // stringの場合は安全にtrimを呼び出す
-                      const trimmedCount = offer.limitedCount.trim();
-                      if (trimmedCount !== '') {
-                        const parsed = Number(trimmedCount);
-                        if (!isNaN(parsed)) {
-                          limitedCount = parsed;
+                      if (offer.limitedCount) {
+                        const trimmedCount = offer.limitedCount.trim();
+                        if (trimmedCount !== '') {
+                          const parsed = Number(trimmedCount);
+                          if (!isNaN(parsed)) {
+                            limitedCount = parsed;
+                          }
                         }
                       }
                     }
@@ -495,7 +499,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   const description = typeof offer.description === 'string' ? offer.description : "";
                   // typeの処理
                   let type = "特別オファー"; // デフォルト値
-                  if (typeof offer.type === 'string') {
+                  if (typeof offer.type === 'string' && offer.type) {
                     const trimmedType = offer.type.trim();
                     if (trimmedType !== '') {
                       type = trimmedType;
@@ -507,7 +511,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
                   // backgroundColorの処理
                   let backgroundColor = "#fff9fa"; // デフォルト値
-                  if (typeof offer.backgroundColor === 'string') {
+                  if (typeof offer.backgroundColor === 'string' && offer.backgroundColor) {
                     const trimmedBgColor = offer.backgroundColor.trim();
                     if (trimmedBgColor !== '') {
                       backgroundColor = trimmedBgColor;
@@ -515,7 +519,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   }
                   // textColorの処理
                   let textColor = "#333333"; // デフォルト値
-                  if (typeof offer.textColor === 'string') {
+                  if (typeof offer.textColor === 'string' && offer.textColor) {
                     const trimmedTextColor = offer.textColor.trim();
                     if (trimmedTextColor !== '') {
                       textColor = trimmedTextColor;

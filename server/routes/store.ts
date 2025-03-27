@@ -30,9 +30,15 @@ function validateBenefits(benefits: any): BenefitType[] {
 
 // 特別オファーの配列の整合性を確保するヘルパー関数
 function processSpecialOffers(offers: any): any[] {
+  // 入力がnullまたはundefinedの場合は空配列を返す
+  if (offers === null || offers === undefined) {
+    console.log("special_offersがnullまたはundefinedです。空配列を返します。");
+    return [];
+  }
+  
   // 配列ではない場合は空配列を返す
   if (!Array.isArray(offers)) {
-    console.log("special_offersが配列ではありません。空配列を返します。");
+    console.log("special_offersが配列ではありません。空配列を返します。タイプ:", typeof offers);
     return [];
   }
   
@@ -45,37 +51,56 @@ function processSpecialOffers(offers: any): any[] {
         let amount = null;
         if (offer.amount !== undefined) {
           if (typeof offer.amount === 'number') {
+            // 数値型の場合はそのまま使用（0を含む全ての数値）
             amount = offer.amount;
-          } else if (typeof offer.amount === 'string' && offer.amount.trim() !== '') {
-            const parsedAmount = Number(offer.amount);
-            amount = !isNaN(parsedAmount) ? parsedAmount : null;
+          } else if (typeof offer.amount === 'string') {
+            // 文字列型の場合は安全にtrimを実行
+            const trimmedAmount = offer.amount.trim();
+            if (trimmedAmount !== '') {
+              const parsedAmount = Number(trimmedAmount);
+              // NaNでなければ数値として使用
+              amount = !isNaN(parsedAmount) ? parsedAmount : null;
+            }
           }
         }
 
         let limitedCount = null;
         if (offer.limitedCount !== undefined) {
           if (typeof offer.limitedCount === 'number') {
+            // 数値型の場合はそのまま使用（0を含む全ての数値）
             limitedCount = offer.limitedCount;
-          } else if (typeof offer.limitedCount === 'string' && offer.limitedCount.trim() !== '') {
-            const parsedCount = Number(offer.limitedCount);
-            limitedCount = !isNaN(parsedCount) ? parsedCount : null;
+          } else if (typeof offer.limitedCount === 'string') {
+            // 文字列型の場合は安全にtrimを実行
+            const trimmedCount = offer.limitedCount.trim();
+            if (trimmedCount !== '') {
+              const parsedCount = Number(trimmedCount);
+              // NaNでなければ数値として使用
+              limitedCount = !isNaN(parsedCount) ? parsedCount : null;
+            }
           }
         }
+
+        // 文字列フィールドの安全な処理
+        const safeString = (value: any, defaultValue: string = "") => {
+          if (typeof value === 'string') return value;
+          return defaultValue;
+        };
 
         // 必須フィールドの確保
         const normalizedOffer = {
           id: typeof offer.id === 'string' && offer.id.trim() !== '' ? 
             offer.id : Math.random().toString(36).substring(2, 9),
-          title: typeof offer.title === 'string' ? offer.title : "",
-          description: typeof offer.description === 'string' ? offer.description : "",
-          type: typeof offer.type === 'string' && offer.type.trim() !== '' ? offer.type : "bonus",
+          title: safeString(offer.title),
+          description: safeString(offer.description),
+          type: typeof offer.type === 'string' && offer.type.trim() !== '' ? 
+            offer.type : "bonus",
           backgroundColor: typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' ? 
             offer.backgroundColor : "#fff9fa",
           textColor: typeof offer.textColor === 'string' && offer.textColor.trim() !== '' ? 
             offer.textColor : "#333333",
           isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
           isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
-          icon: typeof offer.icon === 'string' ? offer.icon : "",
+          icon: safeString(offer.icon),
           order: typeof offer.order === 'number' ? offer.order : 0,
           targetAudience: Array.isArray(offer.targetAudience) ? 
             offer.targetAudience.filter((i: any) => typeof i === 'string') : [],
