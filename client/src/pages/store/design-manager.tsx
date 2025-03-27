@@ -11,10 +11,13 @@ import { Slider } from "@/components/ui/slider";
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Save, RefreshCw, Settings, Palette, Layout, Eye, EyeOff, ArrowUp, ArrowDown, Monitor, Smartphone, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getServiceTypeLabel } from '@/lib/utils';
 import { type DesignSettings, type SectionSettings, type GlobalDesignSettings, type DesignSection } from '@shared/schema';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 
+/**
+ * 店舗デザイン管理コンポーネント
+ * 店舗情報ページのデザインをカスタマイズするための管理画面
+ */
 export default function StoreDesignManager() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<DesignSettings>(getDefaultDesignSettings());
@@ -23,57 +26,26 @@ export default function StoreDesignManager() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // デフォルトのデザイン設定を取得する関数 - 共通ファイルから取得
-  const getDefaultSettings = (): DesignSettings => {
-    // すべてのセクションを含む完全な設定を確保
-    const defaultSettings = getDefaultDesignSettings();
-    
-    // セクションの存在確認（デバッグログ）
-    const sectionIds = defaultSettings.sections.map(s => s.id);
-    console.log('デフォルト設定のセクションリスト:', sectionIds);
-    
-    // 必須セクションの存在チェック - 店舗情報編集ダイアログのタブ順序に合わせる
-    const requiredSections = [
-      'header',                 // ヘッダー（常に最初）
-      'catchphrase',            // 基本情報タブ
-      'salary', 'schedule', 'benefits', // 給与・待遇タブ
-      'contact', 'sns_links',   // 連絡先タブ
-      'access',                 // アクセスタブ
-      // 安全対策タブ（対応するセクションなし）
-      'photo_gallery',          // 写真ギャラリータブ
-      'requirements',           // 応募条件（別管理）
-      'special_offers',         // 特別オファー（デザイン編集のみ）
-      'blog'                    // 店舗ブログ（独立コンテンツ）
-    ];
-    
-    for (const id of requiredSections) {
-      if (!sectionIds.includes(id)) {
-        console.warn(`必須セクション "${id}" がデフォルト設定に存在しません。追加します。`);
-        // 不足しているセクションを追加（順序は既存の最大値+1）
-        const maxOrder = Math.max(...defaultSettings.sections.map(s => s.order));
-        defaultSettings.sections.push({
-          id,
-          title: getSectionTitle(id),
-          visible: true,
-          order: maxOrder + 1,
-          settings: {
-            backgroundColor: '#ffffff',
-            textColor: '#333333',
-            borderColor: '#e0e0e0',
-            titleColor: defaultSettings.globalSettings.mainColor,
-            fontSize: 16,
-            padding: 20,
-            borderRadius: 8,
-            borderWidth: 1
-          }
-        });
-      }
-    }
-    
-    return defaultSettings;
+  // 店舗情報の各タブに対応するセクションID
+  const SECTION_IDS = {
+    // 基本情報タブ
+    BASIC_INFO: ['catchphrase'],
+    // 給与・待遇タブ
+    SALARY_BENEFITS: ['salary', 'schedule', 'benefits'],
+    // 連絡先タブ
+    CONTACT: ['contact', 'sns_links'],
+    // アクセスタブ
+    ACCESS: ['access'],
+    // 写真ギャラリータブ
+    GALLERY: ['photo_gallery'],
+    // 追加コンテンツ
+    ADDITIONAL: ['special_offers', 'blog']
   };
-  
-  // セクションIDから表示名を取得する補助関数
+
+  // 削除対象のセクションID（体験入店情報とキャンペーンは除外）
+  const REMOVED_SECTION_IDS = ['trial_entry', 'campaign', 'campaigns'];
+
+  // セクションIDから表示名を取得する関数
   const getSectionTitle = (id: string): string => {
     switch(id) {
       case 'header': return 'ヘッダー';
@@ -82,7 +54,6 @@ export default function StoreDesignManager() {
       case 'benefits': return '待遇・環境';
       case 'salary': return '給与情報';
       case 'schedule': return '勤務時間';
-      case 'requirements': return '応募条件';
       case 'special_offers': return '特別オファー';
       case 'access': return 'アクセス情報';
       case 'contact': return '問い合わせ';
@@ -92,39 +63,14 @@ export default function StoreDesignManager() {
     }
   };
 
-  // 削除対象のセクションID（試験入店タブとキャンペーンタブは表示しない）
-  const removedSectionIds = ['trial_entry', 'campaign', 'campaigns'];
-  
-  // 必須表示セクションID（店舗情報編集ダイアログの各タブに対応）
-  const requiredSectionIds = [
-    'catchphrase',   // 基本情報タブ
-    'salary',        // 給与・待遇タブ
-    'schedule',      // 給与・待遇タブ
-    'benefits',      // 給与・待遇タブ
-    'contact',       // 連絡先タブ
-    'access',        // アクセスタブ
-    'photo_gallery', // 写真ギャラリータブ
-    'requirements',  // 応募条件タブ
-    'special_offers', // オファータブ
-    'sns_links',     // SNSリンク
-    'blog'           // ブログ
-  ];
-  
-  // 設定を取得するクエリ
+  // APIからデザイン設定を取得するクエリ
   const designSettingsQuery = useQuery<DesignSettings, Error>({
     queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
     queryFn: async () => {
       try {
         console.log('デザイン設定を取得しています...');
         const response = await apiRequest<DesignSettings>("GET", "/api/design");
-        console.log('デザイン設定の取得に成功しました:', response);
-        
-        // 体験入店情報とキャンペーン情報のセクションを除外
-        if (response && response.sections) {
-          response.sections = response.sections.filter(section => !removedSectionIds.includes(section.id));
-          console.log('不要なセクション削除後:', response.sections.map(s => s.id));
-        }
-        
+        console.log('デザイン設定の取得に成功しました');
         return response;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました:', error);
@@ -136,13 +82,13 @@ export default function StoreDesignManager() {
     retryDelay: 1000
   });
 
-  // 設定を保存するミューテーション
+  // デザイン設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
       try {
-        console.log('デザイン設定を保存しています...', data);
+        console.log('デザイン設定を保存しています...');
         const response = await apiRequest("POST", "/api/design", data);
-        console.log('デザイン設定の保存に成功しました:', response);
+        console.log('デザイン設定の保存に成功しました');
         return response;
       } catch (error) {
         console.error('デザイン設定の保存に失敗しました:', error);
@@ -165,69 +111,81 @@ export default function StoreDesignManager() {
     }
   });
 
-  // 初期データのロード
+  // デフォルト設定と必須セクションを確保するための処理
+  const ensureRequiredSections = (currentSettings: DesignSettings): DesignSettings => {
+    // 必須セクションのリスト（全てのセクションを含む）
+    const requiredSectionIds = [
+      'header', // ヘッダー（常に最初）
+      'catchphrase', // 基本情報
+      'salary', 'schedule', 'benefits', // 給与・待遇
+      'contact', 'sns_links', // 連絡先
+      'access', // アクセス
+      'photo_gallery', // 写真ギャラリー
+      'special_offers', // 特別オファー
+      'blog', // 店舗ブログ
+    ];
+
+    // 不要なセクションを削除
+    const filteredSections = currentSettings.sections.filter(
+      section => !REMOVED_SECTION_IDS.includes(section.id)
+    );
+
+    // 現在のセクションのID一覧
+    const currentSectionIds = filteredSections.map(s => s.id);
+    console.log('現在のセクション:', currentSectionIds);
+
+    // 不足しているセクションのID一覧
+    const missingSectionIds = requiredSectionIds.filter(id => !currentSectionIds.includes(id));
+    console.log('不足しているセクション:', missingSectionIds);
+
+    // 不足しているセクションがあれば追加
+    if (missingSectionIds.length > 0) {
+      // 最大の順序を取得
+      const maxOrder = Math.max(...filteredSections.map(s => s.order), 0);
+      
+      // デフォルト設定を取得
+      const defaultSettings = getDefaultDesignSettings();
+      
+      // 不足しているセクションをデフォルト設定から追加
+      missingSectionIds.forEach((id, index) => {
+        const defaultSection = defaultSettings.sections.find(s => s.id === id);
+        if (defaultSection) {
+          console.log(`セクション "${id}" を追加します`);
+          filteredSections.push({
+            ...defaultSection,
+            order: maxOrder + index + 1
+          });
+        }
+      });
+    }
+
+    // 順序を正規化（小さい順に振り直す）
+    const normalizedSections = filteredSections.sort((a, b) => {
+      // ヘッダーは常に先頭
+      if (a.id === 'header') return -1;
+      if (b.id === 'header') return 1;
+      return a.order - b.order;
+    }).map((section, index) => ({
+      ...section,
+      order: section.id === 'header' ? 0 : index + 1
+    }));
+
+    // 更新した設定を返す
+    return {
+      ...currentSettings,
+      sections: normalizedSections
+    };
+  };
+
+  // APIから取得したデータを適用
   useEffect(() => {
-    // クエリからデータが取得できた場合
     if (designSettingsQuery.isSuccess && designSettingsQuery.data) {
-      console.log('デザイン設定データを適用:', designSettingsQuery.data);
+      console.log('デザイン設定データを適用します');
       
-      // データの整合性チェック
-      const defaultSettings = getDefaultSettings();
-      // 必須セクションの存在チェック - プレビューと同じ優先順位を使用
-      const requiredSections = [
-        'header',                 // ヘッダー（常に最初）
-        'catchphrase',            // 基本情報タブ（優先度: 10）
-        'salary', 'schedule', 'benefits', // 給与・待遇タブ（優先度: 20-22）
-        'contact', 'sns_links',   // 連絡先タブ（優先度: 30-31）
-        'access',                 // アクセスタブ（優先度: 40）
-        // 安全対策タブ（対応するセクションなし）
-        'photo_gallery',          // 写真ギャラリータブ（優先度: 60）
-        'special_offers',         // 特別オファー（優先度: 70）
-        'blog',                   // 店舗ブログ（優先度: 80）
-        'requirements'            // 応募条件は常に最後（優先度: 100）
-      ];
-      
-      // APIから取得したデータのセクションIDs
-      const apiSectionIds = designSettingsQuery.data.sections.map(s => s.id);
-      console.log('APIから取得したセクションIDs:', apiSectionIds);
-      
-      // 不足しているセクションを検出
-      const missingIds = requiredSections.filter(id => !apiSectionIds.includes(id));
-      console.log('不足しているセクション:', missingIds);
-      
-      if (missingIds.length > 0) {
-        // 不足しているセクションをデフォルト設定から補完
-        const completedSettings = { ...designSettingsQuery.data };
-        const maxOrder = Math.max(...completedSettings.sections.map(s => s.order), 0);
-        
-        let orderIncrement = 1;
-        missingIds.forEach(id => {
-          const defaultSection = defaultSettings.sections.find(s => s.id === id);
-          if (defaultSection) {
-            console.log(`セクション "${id}" をデフォルト設定から追加します`);
-            completedSettings.sections.push({
-              ...defaultSection,
-              order: maxOrder + orderIncrement++
-            });
-          }
-        });
-        
-        console.log('補完されたデザイン設定を適用:', completedSettings);
-        setSettings(completedSettings);
-        
-        // 整合性が取れていない設定は自動で保存するように促す
-        setIsDirty(true);
-        toast({
-          title: '設定を修正しました',
-          description: '一部のセクションが追加されました。設定を保存することをお勧めします。',
-          duration: 5000,
-        });
-      } else {
-        // そのまま適用
-        setSettings(designSettingsQuery.data);
-      }
+      // 必須セクションを確保した設定を適用
+      const completeSettings = ensureRequiredSections(designSettingsQuery.data);
+      setSettings(completeSettings);
     } 
-    // エラーが発生した場合
     else if (designSettingsQuery.isError) {
       console.error('デザイン設定の読み込みエラー:', designSettingsQuery.error);
       toast({
@@ -235,16 +193,10 @@ export default function StoreDesignManager() {
         description: '初期設定を適用します。',
         variant: 'destructive',
       });
-      const defaultSettings = getDefaultSettings();
-      setSettings(defaultSettings);
-    } 
-    // クエリが成功したが、データがない場合
-    else if (designSettingsQuery.isSuccess) {
-      console.log('デザイン設定が存在しないため、デフォルト設定を適用します');
-      const defaultSettings = getDefaultSettings();
+      // エラーの場合はデフォルト設定を適用
+      const defaultSettings = ensureRequiredSections(getDefaultDesignSettings());
       setSettings(defaultSettings);
     }
-    // クエリがロード中の場合は何もしない（ローディング表示は別途行う）
   }, [designSettingsQuery.isSuccess, designSettingsQuery.data, designSettingsQuery.isError, designSettingsQuery.error, toast]);
 
   // セクションの表示/非表示を切り替える
@@ -293,58 +245,74 @@ export default function StoreDesignManager() {
     setIsDirty(true);
   };
 
-  // セクションの並び順を変更する
+  // セクションの順序を変更する（上へ/下へボタン）
   const changeOrder = (id: string, direction: 'up' | 'down') => {
     setSettings(prev => {
+      // セクションのコピーを作成
       const sections = [...prev.sections];
+      
+      // 対象セクションのインデックスを取得
       const currentIndex = sections.findIndex(s => s.id === id);
       if (currentIndex === -1) return prev;
-
+      
+      // 対象セクションの情報
       const currentSection = sections[currentIndex];
+      
+      // 新しい順序を計算（上へ/下へ）
       const newOrder = direction === 'up' 
-        ? Math.max(1, currentSection.order - 1)
+        ? Math.max(1, currentSection.order - 1)  // headerは0なので最小は1
         : Math.min(sections.length, currentSection.order + 1);
-
-      // すでに存在する順序を入れ替える
+      
+      // 同じ順序なら変更なし
+      if (newOrder === currentSection.order) return prev;
+      
+      // 入れ替え対象のセクションを取得
       const swapSection = sections.find(s => s.order === newOrder);
       if (swapSection) {
         swapSection.order = currentSection.order;
       }
-
+      
+      // 対象セクションの順序を更新
       currentSection.order = newOrder;
-
+      
       return { ...prev, sections: sections };
     });
     setIsDirty(true);
   };
 
-  // ドラッグ&ドロップ後の処理
+  // ドラッグ&ドロップによる順序変更
   const handleDragEnd = (result: DropResult) => {
     const { destination, source } = result;
 
-    // ドロップ先が無効な場合は何もしない
+    // ドロップ先がない場合は何もしない
     if (!destination) return;
 
     // 元の位置と同じ場合は何もしない
     if (destination.index === source.index) return;
 
     setSettings(prev => {
-      const sections = [...prev.sections];
-      const sourceIndex = sections.findIndex(s => s.order === source.index + 1);
-      const destinationIndex = sections.findIndex(s => s.order === destination.index + 1);
-
-      if (sourceIndex === -1 || destinationIndex === -1) return prev;
-
-      const [removed] = sections.splice(sourceIndex, 1);
-      sections.splice(destinationIndex, 0, removed);
-
-      // 順序を再計算
-      const reorderedSections = sections.map((section, index) => ({
+      // ドラッグ可能なセクションのみを抽出（headerは除外）
+      const draggableSections = prev.sections.filter(s => s.id !== 'header');
+      
+      // ドラッグされたセクションを移動
+      const [removed] = draggableSections.splice(source.index, 1);
+      draggableSections.splice(destination.index, 0, removed);
+      
+      // 順序を振り直す
+      const reorderedSections = draggableSections.map((section, index) => ({
         ...section,
-        order: index + 1
+        order: index + 1  // headerは0、それ以外は1から
       }));
-
-      return { ...prev, sections: reorderedSections };
+      
+      // headerセクションを保持
+      const headerSection = prev.sections.find(s => s.id === 'header');
+      
+      // 全てのセクションを結合
+      const allSections = headerSection 
+        ? [headerSection, ...reorderedSections]
+        : reorderedSections;
+      
+      return { ...prev, sections: allSections };
     });
     setIsDirty(true);
   };
@@ -352,45 +320,16 @@ export default function StoreDesignManager() {
   // 設定を保存する
   const handleSave = () => {
     // 保存前に体験入店情報とキャンペーン情報のセクションを除外
-    const filteredSettings = { ...settings };
-    filteredSettings.sections = filteredSettings.sections.filter(
-      section => !removedSectionIds.includes(section.id)
-    );
-    console.log('保存前に不要なセクションを除外:', filteredSettings.sections.map(s => s.id));
+    const filteredSettings = ensureRequiredSections(settings);
+    console.log('保存する設定:', filteredSettings.sections.map(s => s.id));
     saveSettingsMutation.mutate(filteredSettings);
   };
 
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      // プレビュー送信前に設定を調整
-      const previewSettings = { ...settings };
-      
-      // 1. 体験入店情報とキャンペーン情報のセクションを除外
-      previewSettings.sections = previewSettings.sections.filter(
-        section => !removedSectionIds.includes(section.id)
-      );
-      
-      // 2. 必須セクションの存在確認
-      const previewSectionIds = previewSettings.sections.map(s => s.id);
-      const missingRequiredSectionIds = requiredSectionIds.filter(id => !previewSectionIds.includes(id));
-      
-      // 3. 不足しているセクションがあれば追加
-      if (missingRequiredSectionIds.length > 0) {
-        const defaultSettings = getDefaultSettings();
-        const maxOrder = Math.max(...previewSettings.sections.map(s => s.order), 0);
-        
-        missingRequiredSectionIds.forEach((id, index) => {
-          const defaultSection = defaultSettings.sections.find(s => s.id === id);
-          if (defaultSection) {
-            console.log(`プレビュー用にセクション "${id}" を追加`);
-            previewSettings.sections.push({
-              ...defaultSection,
-              order: maxOrder + index + 1
-            });
-          }
-        });
-      }
+      // プレビュー送信前に設定を正規化
+      const previewSettings = ensureRequiredSections(settings);
       
       console.log('プレビューを更新します:', {
         sectionsCount: previewSettings.sections.length,
@@ -427,8 +366,12 @@ export default function StoreDesignManager() {
   
   // 設定が変更されたら自動的にプレビューを更新
   useEffect(() => {
-    // 設定が変更されるたびに、常にプレビューを更新
-    refreshPreview();
+    // 設定変更時にプレビューを更新
+    const timer = setTimeout(() => {
+      refreshPreview();
+    }, 500); // デバウンス処理
+    
+    return () => clearTimeout(timer);
   }, [settings]);
 
   // セクション詳細設定のコンポーネント
@@ -436,7 +379,7 @@ export default function StoreDesignManager() {
     const sectionSettings = section.settings || {
       backgroundColor: '#ffffff',
       textColor: '#333333',
-      titleColor: '#ff6b81',
+      titleColor: '#ff4d7d',
       borderColor: '#e0e0e0',
       fontSize: 16,
       padding: 20,
@@ -490,12 +433,12 @@ export default function StoreDesignManager() {
               <Input 
                 id={`${section.id}-title-color`}
                 type="color" 
-                value={sectionSettings.titleColor || '#ff6b81'} 
+                value={sectionSettings.titleColor || '#ff4d7d'} 
                 onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
                 className="w-10 h-10 p-1 mr-2"
               />
               <Input 
-                value={sectionSettings.titleColor || '#ff6b81'} 
+                value={sectionSettings.titleColor || '#ff4d7d'} 
                 onChange={(e) => updateSectionSettings(section.id, { titleColor: e.target.value })}
                 className="flex-1"
               />
@@ -580,6 +523,18 @@ export default function StoreDesignManager() {
       </div>
     );
   };
+
+  // ローディング中の表示
+  if (designSettingsQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
+          <p>デザイン設定を読み込んでいます...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -670,8 +625,9 @@ export default function StoreDesignManager() {
                     >
                       {settings.sections
                         .filter(section => 
-                          section.id !== 'requirements' && // 応募条件セクションはデザイン管理から除外
-                          !removedSectionIds.includes(section.id) // 体験入店情報とキャンペーン情報のセクションを除外
+                          // ヘッダーは特別扱い、REMOVED_SECTION_IDSのセクションは除外
+                          section.id === 'header' || 
+                          (!REMOVED_SECTION_IDS.includes(section.id))
                         )
                         // ヘッダーは特別扱い、その他は通常の順序で表示
                         .sort((a, b) => {
@@ -683,7 +639,13 @@ export default function StoreDesignManager() {
                           return a.order - b.order;
                         })
                         .map((section, index) => (
-                          <Draggable key={section.id} draggableId={section.id} index={index}>
+                          <Draggable 
+                            key={section.id} 
+                            draggableId={section.id} 
+                            index={index}
+                            // ヘッダーはドラッグ不可
+                            isDragDisabled={section.id === 'header'}
+                          >
                             {(provided) => (
                               <div
                                 ref={provided.innerRef}
@@ -699,20 +661,22 @@ export default function StoreDesignManager() {
                                       onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
                                     >
                                       <div className="flex items-center">
-                                        <span
-                                          {...provided.dragHandleProps}
-                                          className="mr-2 cursor-grab"
-                                          title="ドラッグして順序を変更"
-                                        >
-                                          <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                        </span>
+                                        {section.id !== 'header' && (
+                                          <span
+                                            {...provided.dragHandleProps}
+                                            className="mr-2 cursor-grab"
+                                            title="ドラッグして順序を変更"
+                                          >
+                                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                          </span>
+                                        )}
                                         {section.visible ? (
                                           <Eye className="h-4 w-4 mr-2 text-muted-foreground" />
                                         ) : (
                                           <EyeOff className="h-4 w-4 mr-2 text-muted-foreground" />
                                         )}
                                         <span className={section.visible ? '' : 'text-muted-foreground line-through'}>
-                                          {section.title}
+                                          {section.title || getSectionTitle(section.id)}
                                         </span>
                                       </div>
                                       <div className="flex items-center space-x-1">
@@ -724,6 +688,8 @@ export default function StoreDesignManager() {
                                             e.stopPropagation();
                                             toggleSectionVisibility(section.id);
                                           }}
+                                          // ヘッダーは常に表示
+                                          disabled={section.id === 'header'}
                                         >
                                           {section.visible ? (
                                             <EyeOff className="h-4 w-4" />
@@ -731,34 +697,37 @@ export default function StoreDesignManager() {
                                             <Eye className="h-4 w-4" />
                                           )}
                                         </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            changeOrder(section.id, 'up');
-                                          }}
-                                          disabled={section.order === 1}
-                                        >
-                                          <ArrowUp className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            changeOrder(section.id, 'down');
-                                          }}
-                                          disabled={section.order === settings.sections.length}
-                                        >
-                                          <ArrowDown className="h-4 w-4" />
-                                        </Button>
+                                        {section.id !== 'header' && (
+                                          <>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-7 w-7"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                changeOrder(section.id, 'up');
+                                              }}
+                                              disabled={section.order <= 1} // 最小順序は1
+                                            >
+                                              <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-7 w-7"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                changeOrder(section.id, 'down');
+                                              }}
+                                              disabled={section.order >= settings.sections.filter(s => s.id !== 'header').length}
+                                            >
+                                              <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                          </>
+                                        )}
                                       </div>
                                     </div>
                                     
-                                    {/* セクション詳細設定 */}
                                     {activeSection === section.id && (
                                       <SectionDetailSettings section={section} />
                                     )}
@@ -776,9 +745,9 @@ export default function StoreDesignManager() {
             </TabsContent>
 
             {/* スタイルタブ */}
-            <TabsContent value="styles" className="space-y-4">
+            <TabsContent value="styles" className="space-y-6">
               <div className="text-sm text-muted-foreground mb-2">
-                サイト全体のスタイル設定を変更できます。全体的な色調やデザインの雰囲気に影響します。
+                全体のデザインスタイルを設定できます。
               </div>
               
               <div className="space-y-4">
@@ -799,7 +768,7 @@ export default function StoreDesignManager() {
                     />
                   </div>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="secondary-color">サブカラー</Label>
                   <div className="flex">
@@ -817,7 +786,7 @@ export default function StoreDesignManager() {
                     />
                   </div>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="accent-color">アクセントカラー</Label>
                   <div className="flex">
@@ -835,7 +804,7 @@ export default function StoreDesignManager() {
                     />
                   </div>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="background-color">背景色</Label>
                   <div className="flex">
@@ -853,23 +822,26 @@ export default function StoreDesignManager() {
                     />
                   </div>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="font-family">フォント</Label>
                   <select
                     id="font-family"
-                    className="w-full border rounded px-3 py-2"
                     value={settings.globalSettings.fontFamily}
                     onChange={(e) => updateGlobalSettings({ fontFamily: e.target.value })}
+                    className="w-full p-2 border border-input rounded-md bg-background"
                   >
-                    <option value="sans-serif">ゴシック体</option>
-                    <option value="serif">明朝体</option>
-                    <option value="'Noto Sans JP', sans-serif">Noto Sans JP</option>
-                    <option value="'M PLUS 1p', sans-serif">M PLUS 1p</option>
-                    <option value="'Kosugi Maru', sans-serif">Kosugi Maru</option>
+                    <option value="sans-serif">Sans-serif</option>
+                    <option value="serif">Serif</option>
+                    <option value="monospace">Monospace</option>
+                    <option value="'Hiragino Kaku Gothic Pro', sans-serif">ヒラギノ角ゴ Pro</option>
+                    <option value="'Hiragino Mincho Pro', serif">ヒラギノ明朝 Pro</option>
+                    <option value="'Meiryo', sans-serif">メイリオ</option>
+                    <option value="'MS Gothic', sans-serif">ＭＳ ゴシック</option>
+                    <option value="'MS Mincho', serif">ＭＳ 明朝</option>
                   </select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="border-radius">
                     全体の角丸: {settings.globalSettings.borderRadius}px
@@ -883,7 +855,7 @@ export default function StoreDesignManager() {
                     onValueChange={(value) => updateGlobalSettings({ borderRadius: value[0] })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="max-width">
                     最大幅: {settings.globalSettings.maxWidth}px
@@ -891,7 +863,7 @@ export default function StoreDesignManager() {
                   <Slider
                     id="max-width"
                     defaultValue={[settings.globalSettings.maxWidth]}
-                    min={800}
+                    min={600}
                     max={1600}
                     step={50}
                     onValueChange={(value) => updateGlobalSettings({ maxWidth: value[0] })}
@@ -903,134 +875,57 @@ export default function StoreDesignManager() {
             {/* 設定タブ */}
             <TabsContent value="settings" className="space-y-4">
               <div className="text-sm text-muted-foreground mb-2">
-                その他の設定を変更できます。
+                店舗情報ページの詳細設定ができます。
               </div>
               
-              <div className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-medium">プレビュー設定</h3>
-                        <p className="text-sm text-muted-foreground">
-                          プレビューの表示方法を設定します。
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="device-view">デバイス表示</Label>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant={deviceView === 'pc' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setDeviceView('pc')}
-                            className="flex-1"
-                          >
-                            <Monitor className="h-4 w-4 mr-2" />
-                            PC
-                          </Button>
-                          <Button
-                            variant={deviceView === 'smartphone' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setDeviceView('smartphone')}
-                            className="flex-1"
-                          >
-                            <Smartphone className="h-4 w-4 mr-2" />
-                            スマートフォン
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-medium">保存・リセット</h3>
-                        <p className="text-sm text-muted-foreground">
-                          設定の保存やリセットを行います。
-                        </p>
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="default"
-                          onClick={handleSave}
-                          disabled={!isDirty || saveSettingsMutation.isPending}
-                          className="flex-1"
-                        >
-                          {saveSettingsMutation.isPending ? (
-                            <>
-                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              保存中...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" />
-                              設定を保存
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            if (designSettingsQuery.data) {
-                              setSettings(designSettingsQuery.data);
-                            } else {
-                              setSettings(getDefaultSettings());
-                            }
-                            setIsDirty(false);
-                          }}
-                          disabled={!isDirty || saveSettingsMutation.isPending}
-                          className="flex-1"
-                        >
-                          変更を破棄
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="p-4 bg-primary/10 rounded-md">
+                <h3 className="text-sm font-medium mb-2">デザイン設定の初期化</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  全てのデザイン設定をデフォルトに戻します。この操作は元に戻せません。
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    // 確認ダイアログを表示
+                    if (window.confirm('全てのデザイン設定をデフォルトに戻しますか？この操作は元に戻せません。')) {
+                      const defaultSettings = ensureRequiredSections(getDefaultDesignSettings());
+                      setSettings(defaultSettings);
+                      setIsDirty(true);
+                      toast({
+                        title: '設定をリセットしました',
+                        description: 'デザイン設定がデフォルトに戻されました。'
+                      });
+                    }
+                  }}
+                >
+                  設定をリセット
+                </Button>
               </div>
             </TabsContent>
           </Tabs>
         </div>
 
         {/* プレビュー */}
-        <div className="flex-1 overflow-auto p-4 bg-muted/20">
-          <div className="flex flex-col h-full items-center">
-            <div className="mb-2 text-center">
-              <h2 className="text-lg font-bold">プレビュー</h2>
-              <p className="text-sm text-muted-foreground">
-                設定変更はリアルタイムで反映されます。実際の表示とは若干異なる場合があります。
-              </p>
-            </div>
-            
-            <div 
-              className={`mt-4 flex-1 relative overflow-hidden border border-border rounded-lg shadow ${
-                deviceView === 'smartphone' 
-                  ? 'w-[375px] max-w-full' 
-                  : 'w-full max-w-[1200px]'
-              }`}
-            >
-              {designSettingsQuery.isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-                  読み込み中...
+        <div className="flex-1 overflow-hidden bg-muted relative">
+          <div className="absolute inset-0 p-4">
+            <div className="h-full rounded-md bg-background shadow-md flex flex-col">
+              <div className="p-2 bg-muted/50 border-b flex justify-center">
+                <div className="text-sm text-muted-foreground">
+                  {deviceView === 'pc' ? 'PCビュー' : 'スマートフォンビュー'}
                 </div>
-              ) : (
-                <iframe
-                  ref={iframeRef}
-                  src="/store/preview"
-                  className="w-full h-full bg-white"
-                  title="店舗プレビュー"
-                />
-              )}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <div className={`h-full transition-all duration-300 ${deviceView === 'smartphone' ? 'max-w-[375px] mx-auto' : 'w-full'}`}>
+                  <iframe 
+                    ref={iframeRef}
+                    src="/store/preview" 
+                    className="w-full h-full border-0"
+                    title="プレビュー"
+                  />
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              {deviceView === 'pc' ? 'PCビュー' : 'スマートフォンビュー'} - リアルタイムプレビュー
-            </p>
           </div>
         </div>
       </div>
