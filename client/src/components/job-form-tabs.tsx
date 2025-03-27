@@ -438,13 +438,31 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     : `offer-${Math.random().toString(36).substring(2, 9)}`;
                     
                   // オプションフィールドの適切な処理
-                  const amount = offer.amount !== undefined && offer.amount !== null && offer.amount !== '' 
-                    ? (typeof offer.amount === 'number' ? offer.amount : (isNaN(Number(offer.amount)) ? null : Number(offer.amount))) 
-                    : null;
+                  // amountの適切な処理 (number|null)
+                  let amount = null;
+                  if (offer.amount !== undefined && offer.amount !== null) {
+                    if (typeof offer.amount === 'number') {
+                      amount = offer.amount;
+                    } else if (typeof offer.amount === 'string') {
+                      // stringの場合は安全にtrimを呼び出す
+                      const trimmedAmount = offer.amount.trim();
+                      if (trimmedAmount !== '') {
+                        const parsed = Number(trimmedAmount);
+                        if (!isNaN(parsed)) {
+                          amount = parsed;
+                        }
+                      }
+                    }
+                  }
                     
-                  const conditions = typeof offer.conditions === 'string' && offer.conditions.trim() !== '' 
-                    ? offer.conditions 
-                    : null;
+                  // conditionsの処理
+                  let conditions = null;
+                  if (typeof offer.conditions === 'string') {
+                    const trimmedConditions = offer.conditions.trim();
+                    if (trimmedConditions !== '') {
+                      conditions = trimmedConditions;
+                    }
+                  }
                     
                   const startDate = offer.startDate 
                     ? (typeof offer.startDate === 'string' ? offer.startDate : null) 
@@ -454,24 +472,54 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     ? (typeof offer.endDate === 'string' ? offer.endDate : null) 
                     : null;
                     
-                  const limitedCount = offer.limitedCount !== undefined && offer.limitedCount !== null && offer.limitedCount !== '' 
-                    ? (typeof offer.limitedCount === 'number' ? offer.limitedCount : (isNaN(Number(offer.limitedCount)) ? null : Number(offer.limitedCount))) 
-                    : null;
+                  // limitedCountの適切な処理 (number|null)
+                  let limitedCount = null;
+                  if (offer.limitedCount !== undefined && offer.limitedCount !== null) {
+                    if (typeof offer.limitedCount === 'number') {
+                      limitedCount = offer.limitedCount;
+                    } else if (typeof offer.limitedCount === 'string') {
+                      // stringの場合は安全にtrimを呼び出す
+                      const trimmedCount = offer.limitedCount.trim();
+                      if (trimmedCount !== '') {
+                        const parsed = Number(trimmedCount);
+                        if (!isNaN(parsed)) {
+                          limitedCount = parsed;
+                        }
+                      }
+                    }
+                  }
                 
                   // 必須フィールドの保証
                   const title = typeof offer.title === 'string' ? offer.title : "";
                   const description = typeof offer.description === 'string' ? offer.description : "";
-                  const type = typeof offer.type === 'string' && offer.type.trim() !== '' ? offer.type : "特別オファー";
+                  // typeの処理
+                  let type = "特別オファー"; // デフォルト値
+                  if (typeof offer.type === 'string') {
+                    const trimmedType = offer.type.trim();
+                    if (trimmedType !== '') {
+                      type = trimmedType;
+                    }
+                  }
                   
                   // プリミティブ型の保証
                   const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
                   const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
-                  const backgroundColor = typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' 
-                    ? offer.backgroundColor 
-                    : "#fff9fa";
-                  const textColor = typeof offer.textColor === 'string' && offer.textColor.trim() !== '' 
-                    ? offer.textColor 
-                    : "#333333";
+                  // backgroundColorの処理
+                  let backgroundColor = "#fff9fa"; // デフォルト値
+                  if (typeof offer.backgroundColor === 'string') {
+                    const trimmedBgColor = offer.backgroundColor.trim();
+                    if (trimmedBgColor !== '') {
+                      backgroundColor = trimmedBgColor;
+                    }
+                  }
+                  // textColorの処理
+                  let textColor = "#333333"; // デフォルト値
+                  if (typeof offer.textColor === 'string') {
+                    const trimmedTextColor = offer.textColor.trim();
+                    if (trimmedTextColor !== '') {
+                      textColor = trimmedTextColor;
+                    }
+                  }
                   const icon = typeof offer.icon === 'string' ? offer.icon : "";
                   const order = typeof offer.order === 'number' ? offer.order : 0;
                   

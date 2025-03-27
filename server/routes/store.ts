@@ -41,25 +41,88 @@ function processSpecialOffers(offers: any): any[] {
     return offers
       .filter(offer => typeof offer === 'object' && offer !== null)
       .map(offer => {
-        // 必須フィールドのデフォルト値を設定
-        return {
-          id: typeof offer.id === 'string' ? offer.id : Math.random().toString(36).substring(2, 9),
+        // 数値フィールドの適切な処理
+        let amount = null;
+        if (offer.amount !== undefined) {
+          if (typeof offer.amount === 'number') {
+            amount = offer.amount;
+          } else if (typeof offer.amount === 'string' && offer.amount.trim() !== '') {
+            const parsedAmount = Number(offer.amount);
+            amount = !isNaN(parsedAmount) ? parsedAmount : null;
+          }
+        }
+
+        let limitedCount = null;
+        if (offer.limitedCount !== undefined) {
+          if (typeof offer.limitedCount === 'number') {
+            limitedCount = offer.limitedCount;
+          } else if (typeof offer.limitedCount === 'string' && offer.limitedCount.trim() !== '') {
+            const parsedCount = Number(offer.limitedCount);
+            limitedCount = !isNaN(parsedCount) ? parsedCount : null;
+          }
+        }
+
+        // 必須フィールドの確保
+        const normalizedOffer = {
+          id: typeof offer.id === 'string' && offer.id.trim() !== '' ? 
+            offer.id : Math.random().toString(36).substring(2, 9),
           title: typeof offer.title === 'string' ? offer.title : "",
           description: typeof offer.description === 'string' ? offer.description : "",
-          type: typeof offer.type === 'string' ? offer.type : "bonus",
-          backgroundColor: typeof offer.backgroundColor === 'string' ? offer.backgroundColor : "#fff9fa",
-          textColor: typeof offer.textColor === 'string' ? offer.textColor : "#333333",
+          type: typeof offer.type === 'string' && offer.type.trim() !== '' ? offer.type : "bonus",
+          backgroundColor: typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' ? 
+            offer.backgroundColor : "#fff9fa",
+          textColor: typeof offer.textColor === 'string' && offer.textColor.trim() !== '' ? 
+            offer.textColor : "#333333",
           isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
           isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
           icon: typeof offer.icon === 'string' ? offer.icon : "",
           order: typeof offer.order === 'number' ? offer.order : 0,
-          targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience.filter((i: any) => typeof i === 'string') : [],
-          amount: offer.amount || null,
-          conditions: typeof offer.conditions === 'string' ? offer.conditions : null,
-          limitedCount: offer.limitedCount || null,
-          startDate: typeof offer.startDate === 'string' ? offer.startDate : null,
-          endDate: typeof offer.endDate === 'string' ? offer.endDate : null
+          targetAudience: Array.isArray(offer.targetAudience) ? 
+            offer.targetAudience.filter((i: any) => typeof i === 'string') : [],
+          amount: amount,
+          conditions: typeof offer.conditions === 'string' && offer.conditions.trim() !== '' ? 
+            offer.conditions : null,
+          limitedCount: limitedCount,
+          startDate: typeof offer.startDate === 'string' && offer.startDate.trim() !== '' ? 
+            offer.startDate : null,
+          endDate: typeof offer.endDate === 'string' && offer.endDate.trim() !== '' ? 
+            offer.endDate : null
         };
+
+        // JSON.stringifyでエラーが出ないことを確認するためのシンプルテスト
+        try {
+          JSON.stringify(normalizedOffer);
+        } catch (jsonError) {
+          console.error("JSON変換エラー:", jsonError, "問題のフィールド:", Object.keys(normalizedOffer).map(key => {
+            // keyが存在することを確認してから適用する
+            return { 
+              key, 
+              type: typeof normalizedOffer[key as keyof typeof normalizedOffer], 
+              value: normalizedOffer[key as keyof typeof normalizedOffer]
+            };
+          }));
+          // エラーが発生した場合は最低限のオブジェクトを返す
+          return {
+            id: Math.random().toString(36).substring(2, 9),
+            title: "エラー発生オファー",
+            description: "",
+            type: "bonus",
+            backgroundColor: "#fff9fa",
+            textColor: "#333333",
+            isActive: true,
+            isLimited: false,
+            icon: "",
+            order: 0,
+            targetAudience: [],
+            amount: null,
+            conditions: null,
+            limitedCount: null,
+            startDate: null,
+            endDate: null
+          };
+        }
+
+        return normalizedOffer;
       });
   } catch (error) {
     console.error("special_offers処理中のエラー:", error);
