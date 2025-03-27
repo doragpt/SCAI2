@@ -287,7 +287,10 @@ router.post("/login", async (req, res, next) => {
 
       if (!user) {
         log('warn', '認証失敗', { message: info?.message });
-        return res.status(401).json({ message: info?.message || "認証に失敗しました" });
+        return res.status(401).json({ 
+          success: false,
+          message: info?.message || "認証に失敗しました" 
+        });
       }
 
       req.login(user, (err) => {
@@ -323,6 +326,7 @@ router.post("/login", async (req, res, next) => {
 
         // クライアントに返すレスポンスの形式を統一
         const response = {
+          success: true,
           id: user.id,
           email: user.email,
           username: user.username,
@@ -343,6 +347,7 @@ router.post("/login", async (req, res, next) => {
     });
 
     res.status(400).json({
+      success: false,
       message: error instanceof Error ? error.message : "ログインに失敗しました"
     });
   }
@@ -353,14 +358,20 @@ router.post("/logout", (req, res) => {
   const userRole = req.user?.role;
   req.logout((err) => {
     if (err) {
-      return res.status(500).json({ message: "ログアウトに失敗しました" });
+      return res.status(500).json({ 
+        success: false,
+        message: "ログアウトに失敗しました" 
+      });
     }
     // セッションを破棄
     req.session.destroy((err) => {
       if (err) {
         console.error('Session destruction error:', err);
       }
-      res.json({ role: userRole });
+      res.json({ 
+        success: true,
+        role: userRole 
+      });
     });
   });
 });
@@ -368,7 +379,10 @@ router.post("/logout", (req, res) => {
 // セッションチェックエンドポイント
 router.get("/check", (req, res) => {
   if (!req.isAuthenticated() || !req.user) {
-    return res.status(401).json({ message: "認証が必要です" });
+    return res.status(401).json({ 
+      success: false,
+      message: "認証が必要です" 
+    });
   }
 
   log('info', 'セッションチェック成功', {
@@ -379,6 +393,7 @@ router.get("/check", (req, res) => {
 
   // 必要なユーザー情報のみを返す
   const response = {
+    success: true,
     id: req.user.id,
     email: req.user.email,
     username: req.user.username,

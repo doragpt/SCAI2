@@ -63,7 +63,10 @@ export function authenticate(
         path: req.path,
         sessionID: req.sessionID
       });
-      return res.status(401).json({ message: 'セッションが無効です' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'セッションが無効です' 
+      });
     }
 
     // Passport.jsによる認証が成功していれば、セッションの詳細チェックは行わない
@@ -83,6 +86,7 @@ export function authenticate(
       error: error instanceof Error ? error.message : 'Unknown error'
     });
     return res.status(500).json({ 
+      success: false,
       message: error instanceof Error ? error.message : '認証に失敗しました'
     });
   }
@@ -93,7 +97,10 @@ export function authorize(role: UserRole) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       log('warn', '認可エラー: ユーザーが認証されていません');
-      return res.status(401).json({ message: '認証が必要です' });
+      return res.status(401).json({ 
+        success: false,
+        message: '認証が必要です' 
+      });
     }
 
     if (req.user.role !== role) {
@@ -104,6 +111,7 @@ export function authorize(role: UserRole) {
         service_type: req.user.service_type
       });
       return res.status(403).json({ 
+        success: false,
         message: `この操作には${role === 'store' ? '店舗' : '女性'}アカウントが必要です`
       });
     }
@@ -116,6 +124,7 @@ export function authorize(role: UserRole) {
         service_type: req.user.service_type
       });
       return res.status(403).json({ 
+        success: false,
         message: '店舗情報が不完全です。管理者にお問い合わせください。'
       });
     }

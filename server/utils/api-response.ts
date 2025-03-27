@@ -44,9 +44,23 @@ export const ApiErrorMessages: Record<ApiErrorType, string> = {
 
 /**
  * 成功レスポンスを返す
+ * 常にsuccess: trueを含めて、クライアント側での処理を統一します
  */
 export function sendSuccess<T>(res: Response, data: T, status = 200): void {
-  res.status(status).json(data);
+  // データがオブジェクトの場合は、successフラグを追加
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const responseData = {
+      success: true,
+      ...data
+    };
+    res.status(status).json(responseData);
+  } else {
+    // データがプリミティブ値または配列の場合は、オブジェクトでラップ
+    res.status(status).json({
+      success: true,
+      data
+    });
+  }
 }
 
 /**
@@ -63,6 +77,7 @@ export function sendError(
   const defaultMessage = ApiErrorMessages[type];
   
   const errorResponse = {
+    success: false,
     error: type,
     message: message || defaultMessage,
     ...(details && { details })

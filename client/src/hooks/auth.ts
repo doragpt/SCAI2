@@ -27,7 +27,13 @@ export const useAuth = () => {
     mutationFn: async (data: { email: string; password: string; role?: string }) => {
       try {
         // 正しいAPIエンドポイントを使用
-        return await apiRequest("POST", "/api/auth/login", data);
+        const response = await apiRequest("POST", "/api/auth/login", data);
+        // successフラグをチェック
+        if (response && response.success === true) {
+          return response;
+        } else {
+          throw new Error(response.message || "ログインに失敗しました");
+        }
       } catch (error) {
         console.error("ログイン処理エラー:", error);
         throw error;
@@ -49,9 +55,15 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await apiRequest("POST", "/api/auth/logout");
-      setUser(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/check'] });
+      const response = await apiRequest("POST", "/api/auth/logout");
+      // successフラグをチェック
+      if (response && response.success === true) {
+        setUser(null);
+        queryClient.invalidateQueries({ queryKey: ['/api/check'] });
+        return response;
+      } else {
+        throw new Error(response.message || "ログアウトに失敗しました");
+      }
     } catch (error) {
       console.error("ログアウトエラー:", error);
       throw error;
@@ -65,8 +77,16 @@ export const useAuth = () => {
         // クエリキー定数を使用
         const userData = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
         console.log("認証チェック成功:", userData);
-        setUser(userData);
-        return userData;
+        
+        // successフラグをチェック
+        if (userData && userData.success === true) {
+          setUser(userData);
+          return userData;
+        } else {
+          console.log("認証チェック失敗: success === false", userData);
+          setUser(null);
+          return null;
+        }
       } catch (error) {
         console.error("Auth check error:", error);
         setUser(null);
