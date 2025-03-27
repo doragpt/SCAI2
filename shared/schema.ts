@@ -69,11 +69,13 @@ export interface SpecialOfferInterface {
   limitedCount?: number;
   targetAudience?: string[];
   // デザイン関連のプロパティを追加
-  backgroundColor?: string;
-  textColor?: string;
-  icon?: string;
-  order?: number;
+  backgroundColor: string;
+  textColor: string;
+  icon: string;
+  order: number;
 }
+
+// 特別オファーの型 (SpecialOffer は393行目で定義されているので削除)
 
 // Constants
 export const prefectures = [
@@ -387,6 +389,7 @@ export const facilityFeatureSchema = z.object({
   icon: z.string().optional(), // 互換性のため
 });
 
+// z.infer<typeof specialOfferSchema>の型を使用できるよう、ここでエクスポート
 export type SpecialOffer = z.infer<typeof specialOfferSchema>;
 
 // Service Type Labels

@@ -193,7 +193,24 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           working_time_hours: Number(data.working_time_hours) || 0,
           average_hourly_pay: Number(data.average_hourly_pay) || 0,
           status: data.status || "draft",
-          requirements: data.requirements,
+          
+          // 応募条件の整形
+          requirements: typeof data.requirements === 'object' && data.requirements
+            ? {
+                ...data.requirements,
+                // cup_size_conditionsが配列であることを保証
+                cup_size_conditions: Array.isArray(data.requirements?.cup_size_conditions) 
+                  ? data.requirements?.cup_size_conditions 
+                  : []
+              }
+            : {
+                accepts_temporary_workers: false,
+                requires_arrival_day_before: false,
+                prioritize_titles: false,
+                other_conditions: [],
+                cup_size_conditions: []
+              },
+              
           working_hours: data.working_hours || "",
           transportation_support: data.transportation_support || false,
           housing_support: data.housing_support || false,
@@ -201,8 +218,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           // 連絡先情報（必須項目）
           address: data.address || "",
           recruiter_name: data.recruiter_name || "", // 必須項目
-          phone_numbers: data.phone_numbers.filter(p => p.trim() !== ''), // 必須項目、最低1つ
-          email_addresses: data.email_addresses?.filter(e => e.trim() !== '') || [],
+          phone_numbers: data.phone_numbers.filter(p => p && p.trim() !== ''), // 必須項目、最低1つ
+          email_addresses: data.email_addresses?.filter(e => e && e.trim() !== '') || [],
           
           // SNS情報
           sns_id: data.sns_id || "",
@@ -219,13 +236,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           security_measures: data.security_measures || "",
           
           // 店舗写真ギャラリー
-          gallery_photos: data.gallery_photos || [],
+          gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : [],
         };
         
         console.log("送信データ:", formattedData);
         
-        // フェッチAPIを直接使用して詳細なエラーハンドリングを実装
-        // app.tsでは /api/store のエンドポイント設定があり、store.tsでは /profile を処理
         const response = await fetch('/api/store/profile', {
           method: 'PATCH',
           headers: {
@@ -238,12 +253,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         console.log("リクエスト結果:", {
           status: response.status,
           statusText: response.statusText,
-          ok: response.ok,
-          // ヘッダー情報を単純化して表示
-          headers: {
-            contentType: response.headers.get('content-type'),
-            server: response.headers.get('server')
-          }
+          ok: response.ok
         });
         
         if (!response.ok) {
@@ -332,6 +342,28 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 電話番号とメールアドレスの空データをフィルタリング
       cleanedData.phone_numbers = validPhoneNumbers;
       cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
+      
+      // requirements オブジェクトの確認と整形
+      if (cleanedData.requirements && typeof cleanedData.requirements === 'object') {
+        const req = cleanedData.requirements;
+        cleanedData.requirements = {
+          ...req,
+          cup_size_conditions: Array.isArray(req.cup_size_conditions) ? req.cup_size_conditions : []
+        };
+      } else {
+        cleanedData.requirements = {
+          accepts_temporary_workers: false,
+          requires_arrival_day_before: false,
+          prioritize_titles: false,
+          other_conditions: [],
+          cup_size_conditions: []
+        };
+      }
+      
+      // gallery_photosが配列であることを確認
+      if (!Array.isArray(cleanedData.gallery_photos)) {
+        cleanedData.gallery_photos = [];
+      }
       
       console.log("送信前の整形データ:", cleanedData);
       
