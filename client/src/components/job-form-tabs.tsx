@@ -437,12 +437,18 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                 order,
                 isActive = true,
                 isLimited = false,
+                targetAudience = [],
+                amount = null,
+                conditions = null,
+                startDate = null,
+                endDate = null,
+                limitedCount = null,
                 // camelCaseと snake_case の両方に対応
                 ...rest 
               } = offer;
               
               // SpecialOfferInterfaceの定義に合わせて必須フィールドを確認
-              return {
+              const validOffer = {
                 id: id || `offer-${Math.random().toString(36).substring(2, 9)}`, // IDの保持または生成
                 type: offer.type || "特別オファー", // typeフィールドがない場合はデフォルト値を設定
                 title: offer.title || "",
@@ -452,8 +458,16 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                 isActive: isActive === false ? false : true, // 明示的にfalseの場合だけfalse、それ以外はtrue
                 isLimited: !!isLimited,
                 backgroundColor: backgroundColor || "#fff9fa",
-                textColor: textColor || "#333333"
+                textColor: textColor || "#333333",
+                targetAudience: Array.isArray(targetAudience) ? targetAudience : [], // 未設定の場合は空配列を使用
+                amount,
+                conditions,
+                startDate,
+                endDate,
+                limitedCount
               };
+              
+              return validOffer;
             });
         } else {
           // 配列でない場合は空配列に設定

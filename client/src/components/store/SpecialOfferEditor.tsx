@@ -105,10 +105,14 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
       id: uuidv4(),
       title: "",
       description: "",
+      type: "特別オファー",
       icon: "Award",
       backgroundColor: "from-purple-100 to-purple-200",
       textColor: "text-purple-700",
       order: fields.length,
+      targetAudience: [],
+      isActive: true,
+      isLimited: false
     });
     setEditIndex(null);
     setIsOpen(true);
@@ -127,10 +131,14 @@ export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorP
       id: uuidv4(),
       title: template.title,
       description: template.description,
+      type: "特別オファー", // 必須フィールド
       icon: template.icon,
       backgroundColor: template.backgroundColor,
       textColor: template.textColor,
       order: fields.length,
+      targetAudience: [], // 空配列として追加
+      isActive: true,
+      isLimited: false
     };
     const newFields = [...fields, newOffer];
     updateFields(newFields);

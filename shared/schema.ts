@@ -60,15 +60,17 @@ export interface SpecialOfferInterface {
   id: string;
   title: string;
   description: string;
-  amount?: number;
+  amount?: number | null;
   type: string;
-  conditions?: string;
-  startDate?: Date;
-  endDate?: Date;
+  conditions?: string | null;
+  // Date型ではなく文字列としてJSONに保存
+  startDate?: string | null;
+  endDate?: string | null;
   isActive: boolean;
   isLimited: boolean;
-  limitedCount?: number;
-  targetAudience?: string[];
+  limitedCount?: number | null;
+  // 必ず配列を持つように変更 (undefinedではなく空配列をデフォルト値として使用)
+  targetAudience: string[];
   // デザイン関連のプロパティを追加
   backgroundColor: string;
   textColor: string;
@@ -323,19 +325,41 @@ export const specialOfferSchema = z.object({
   title: z.string(),
   description: z.string(),
   type: z.string(),
-  amount: z.number().optional(),
-  conditions: z.string().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
+  amount: z.number().optional().nullable(),
+  conditions: z.string().optional().nullable(),
+  // 日付フィールドは文字列として保存（JSONBとの互換性を確保）
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
   isLimited: z.boolean().default(false),
-  limitedCount: z.number().optional(),
-  targetAudience: z.array(z.string()).optional(),
+  limitedCount: z.number().optional().nullable(),
+  targetAudience: z.array(z.string()).optional().default([]),
   // デザイン関連のプロパティを追加
   backgroundColor: z.string().default("#ff4d7d"), // テーマカラー
   textColor: z.string().default("#ffffff"),
   icon: z.string().default("sparkles"), // Lucideアイコン名
   order: z.number().default(0),
+});
+
+// JSON互換性を確保するためのパーサー
+export const safeSpecialOfferSchema = z.object({
+  id: z.string().default(() => Math.random().toString(36).substring(2, 9)),
+  title: z.string().default(""),
+  description: z.string().default(""),
+  type: z.string().default("bonus"),
+  amount: z.union([z.number(), z.string().transform(val => Number(val) || 0), z.null()]).optional().nullable(),
+  conditions: z.union([z.string(), z.null()]).optional().nullable(),
+  // Date型ではなく文字列としてJSONに保存
+  startDate: z.union([z.string(), z.null()]).optional().nullable(),
+  endDate: z.union([z.string(), z.null()]).optional().nullable(),
+  isActive: z.union([z.boolean(), z.string().transform(val => val === "true"), z.number().transform(val => val !== 0)]).default(true),
+  isLimited: z.union([z.boolean(), z.string().transform(val => val === "true"), z.number().transform(val => val !== 0)]).default(false),
+  limitedCount: z.union([z.number(), z.string().transform(val => Number(val) || 0), z.null()]).optional().nullable(),
+  targetAudience: z.union([z.array(z.string()), z.null()]).default([]),
+  backgroundColor: z.union([z.string(), z.null()]).default("#ff4d7d"),
+  textColor: z.union([z.string(), z.null()]).default("#ffffff"),
+  icon: z.union([z.string(), z.null()]).default("sparkles"),
+  order: z.union([z.number(), z.string().transform(val => Number(val) || 0)]).default(0),
 });
 
 // 求人動画コンテンツのスキーマ
