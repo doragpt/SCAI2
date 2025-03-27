@@ -282,6 +282,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // ギャラリー写真（重要：ここが抜けていたため写真が保存されなかった）
       gallery_photos: req.body.gallery_photos || existingProfile.gallery_photos || [],
       
+      // デザイン設定
+      design_settings: req.body.design_settings || existingProfile.design_settings,
+      
       updated_at: new Date()
     };
 
@@ -342,13 +345,17 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       special_offers: updateData.special_offers,
       
       // ギャラリー写真
-      gallery_photos: updateData.gallery_photos
+      gallery_photos: updateData.gallery_photos,
+      
+      // デザイン設定
+      design_settings: updateData.design_settings
     });
 
     // 更新用のオブジェクトを作成
     const fullUpdateData = {
       ...validatedData,
-      updated_at: updateData.updated_at
+      updated_at: updateData.updated_at,
+      design_settings: updateData.design_settings
     };
 
     log('info', 'SQLクエリ実行準備中', {
@@ -404,6 +411,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         housing_support: fullUpdateData.housing_support,
         special_offers: fullUpdateData.special_offers || [],
         gallery_photos: fullUpdateData.gallery_photos || [],
+        // デザイン設定の更新を処理
+        design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
         updated_at: fullUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))

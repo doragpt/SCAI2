@@ -889,6 +889,9 @@ export const storeProfileSchema = z.object({
   // SNSリンク
   sns_urls: z.array(z.string().url("有効なURLを入力してください")).optional(),
   
+  // デザイン設定
+  design_settings: designSettingsSchema.optional(),
+  
   // 体験入店保証とキャンペーン情報は削除されました
 });
 

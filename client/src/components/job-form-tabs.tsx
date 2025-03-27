@@ -179,7 +179,23 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: StoreProfile) => {
+      console.log("ミューテーション開始 - データ受信:", { 
+        dataKeys: Object.keys(data),
+        hasRequirements: !!data.requirements,
+        requirementsType: typeof data.requirements,
+        hasSpecialOffers: Array.isArray(data.special_offers),
+        specialOffersCount: Array.isArray(data.special_offers) ? data.special_offers.length : 0
+      });
+      
       try {
+        // design_settings フィールドがあるか確認
+        const hasDesignSettings = data.design_settings !== undefined;
+        console.log("design_settings確認:", { 
+          hasDesignSettings, 
+          type: typeof data.design_settings, 
+          value: data.design_settings
+        });
+        
         // データを整形
         const formattedData = {
           // 基本情報
@@ -241,19 +257,45 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           
           // 店舗写真ギャラリー
           gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : [],
+          
+          // デザイン設定がある場合はそれも含める
+          design_settings: data.design_settings || null,
         };
         
-        console.log("送信データ:", formattedData);
+        console.log("送信データ:", { 
+          dataKeys: Object.keys(formattedData),
+          specialOffersType: typeof formattedData.special_offers,
+          specialOffersLength: Array.isArray(formattedData.special_offers) ? formattedData.special_offers.length : 'not array',
+          requirementsType: typeof formattedData.requirements,
+          designSettingsIncluded: formattedData.design_settings !== undefined
+        });
+        
+        // リクエスト送信前のデバッグ
+        console.log("apiRequest実行準備完了:", { 
+          url: "/api/store/profile", 
+          method: "PATCH",
+          timestamp: new Date().toISOString()
+        });
         
         try {
           // apiRequest関数を使用してリクエストを送信
-          return await apiRequest("PATCH", "/api/store/profile", formattedData);
+          const result = await apiRequest("PATCH", "/api/store/profile", formattedData);
+          console.log("リクエスト成功:", result);
+          return result;
         } catch (error) {
-          console.error("apiRequest処理中のエラー:", error);
+          console.error("apiRequest処理中のエラー:", { 
+            errorMessage: error instanceof Error ? error.message : String(error),
+            errorStack: error instanceof Error ? error.stack : 'no stack',
+            timestamp: new Date().toISOString()
+          });
           throw error;
         }
       } catch (error) {
-        console.error("送信処理中のエラー:", error);
+        console.error("送信処理中のエラー:", { 
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : 'no stack',
+          timestamp: new Date().toISOString() 
+        });
         throw error;
       }
     },
@@ -285,6 +327,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
   });
 
   const onSubmit = (data: StoreProfile) => {
+    console.log("フォーム送信が開始されました", { formValid: form.formState.isValid });
+    
+    // フォームのエラーをすべて出力
+    if (Object.keys(form.formState.errors).length > 0) {
+      console.error("フォームにエラーがあります:", form.formState.errors);
+    }
+    
     // 必須フィールドの確認
     if (!data.recruiter_name) {
       form.setError('recruiter_name', { 
@@ -297,6 +346,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         description: "採用担当者名を入力してください",
         variant: "destructive",
       });
+      console.error("採用担当者名が入力されていません");
       return;
     }
 
