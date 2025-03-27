@@ -357,7 +357,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
   });
 
   const onSubmit = (data: StoreProfile) => {
-    console.log("フォーム送信が開始されました", { formValid: form.formState.isValid });
+    console.log("フォーム送信が開始されました", { 
+      formValid: form.formState.isValid,
+      timestamp: new Date().toISOString()
+    });
     
     // フォームのエラーをすべて出力
     if (Object.keys(form.formState.errors).length > 0) {
@@ -421,15 +424,45 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         cleanedData.gallery_photos = [];
       }
       
-      console.log("送信前の整形データ:", cleanedData);
-      
-      // mutate実行
-      mutate(cleanedData);
+      console.log("送信前の整形データ:", {
+        dataKeys: Object.keys(cleanedData),
+        timestamp: new Date().toISOString() 
+      });
       
       // 送信を開始したことをユーザーに通知
       toast({
         title: "保存中...",
         description: "店舗情報を保存しています",
+      });
+      
+      // mutate実行
+      mutate(cleanedData, {
+        // 明示的にonSuccessと追加
+        onSuccess: (result) => {
+          console.log("mutate直接コールバック - 保存成功:", {
+            result,
+            hasSuccessCallback: !!onSuccess,
+            timestamp: new Date().toISOString()
+          });
+          
+          // 成功時のコールバックを明示的に呼び出し
+          if (onSuccess) {
+            console.log("親コンポーネントのonSuccessコールバックを直接呼び出します");
+            onSuccess();
+          }
+        },
+        onError: (error) => {
+          console.error("mutate直接コールバック - エラー:", {
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString()
+          });
+          
+          toast({
+            variant: "destructive",
+            title: "保存に失敗しました",
+            description: error instanceof Error ? error.message : "不明なエラーが発生しました",
+          });
+        }
       });
     } catch (error) {
       console.error("送信前エラー:", error);

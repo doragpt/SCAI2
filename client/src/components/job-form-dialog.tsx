@@ -41,33 +41,57 @@ export function JobFormDialog({
       timestamp: new Date().toISOString()
     });
     
+    // 成功処理フラグをセット（onOpenChangeで自動閉じの際に判別するため）
+    try {
+      window.localStorage.setItem('form_save_confirmed', 'true');
+      console.log("保存確認フラグをセットしました");
+    } catch (storageError) {
+      console.error("ローカルストレージへの保存に失敗:", storageError);
+    }
+    
     // 成功メッセージをトーストで表示
     toast({
       title: "店舗情報を保存しました",
       description: "変更内容が反映されました",
     });
     
-    // 重要: ダイアログを明示的に閉じる
-    // setTimeout を使用して非同期処理の完了後に確実に実行する
+    // 確認ダイアログを隠す
     setShowConfirmClose(false);
     
-    // 二重のタイムアウトを使用して確実にダイアログを閉じる
-    // React の状態更新と UI 更新のサイクルを完了させるため
-    setTimeout(() => {
-      console.log("JobFormDialog: 外側のタイマー実行");
+    try {
+      // 直接ダイアログを閉じる
+      console.log("JobFormDialog: 即時にダイアログを閉じる試行", { timestamp: new Date().toISOString() });
+      onOpenChange(false);
       
-      // 内側のタイムアウトで確実に実行（マイクロタスクキューを活用）
+      // 閉じることに成功したらローカルストレージをクリア
       setTimeout(() => {
-        console.log("JobFormDialog: 内側のタイマー実行 - ダイアログを閉じます");
+        window.localStorage.removeItem('form_save_confirmed');
+      }, 500);
+    } catch (error) {
+      console.error("JobFormDialog: ダイアログを閉じる処理で即時エラー", error);
+      
+      // エラーが発生した場合は、タイムアウトで再試行
+      setTimeout(() => {
+        console.log("JobFormDialog: ダイアログを閉じる (タイムアウト経由での再試行)");
         try {
-          // 明示的にダイアログを閉じる
           onOpenChange(false);
-          console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました");
-        } catch (error) {
-          console.error("JobFormDialog: ダイアログを閉じる処理でエラーが発生しました", error);
+          console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました (タイムアウト経由)");
+          
+          // 閉じることに成功したらローカルストレージをクリア
+          setTimeout(() => {
+            window.localStorage.removeItem('form_save_confirmed');
+          }, 500);
+        } catch (innerError) {
+          console.error("JobFormDialog: ダイアログを閉じる処理でタイムアウト後もエラー発生", innerError);
+          
+          // 最後の手段として強制的に状態リセット
+          setTimeout(() => {
+            window.localStorage.removeItem('form_save_confirmed');
+            window.location.href = window.location.pathname;
+          }, 1000);
         }
-      }, 10); // 短い遅延で内側のタイマーを実行
-    }, 50); // 外側のタイマーも短い遅延
+      }, 100);
+    }
   };
 
   return (
@@ -81,9 +105,17 @@ export function JobFormDialog({
             timestamp: new Date().toISOString() 
           });
           
-          // ダイアログを閉じる場合のみ確認ダイアログを表示
+          // フォーム送信後の強制閉鎖と通常のキャンセルを区別
           if (open && !newOpenState) {
-            handleCloseAttempt();
+            // 直近の操作がフォーム保存だった場合は確認なしで閉じる（直接閉じられた場合）
+            if (window.localStorage.getItem('form_save_confirmed') === 'true') {
+              console.log("保存確認済みフラグを検出、ダイアログを閉じます");
+              window.localStorage.removeItem('form_save_confirmed');
+              onOpenChange(false);
+            } else {
+              // 通常のキャンセル時は確認ダイアログを表示
+              handleCloseAttempt();
+            }
           } else {
             // それ以外の場合（ダイアログを開く場合）は直接状態を変更
             onOpenChange(newOpenState);
