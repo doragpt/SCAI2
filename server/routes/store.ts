@@ -30,54 +30,119 @@ function validateBenefits(benefits: any): BenefitType[] {
 
 // 特別オファーの配列の整合性を確保するヘルパー関数
 function processSpecialOffers(offers: any): any[] {
+  // デバッグログを追加
+  console.log("処理前のspecial_offers:", JSON.stringify(offers));
+  
   if (!Array.isArray(offers)) {
+    console.log("special_offersが配列ではありません。空配列を返します。");
     return [];
   }
   
-  return offers.map(offer => {
-    if (typeof offer !== 'object' || offer === null) {
-      return null;
-    }
+  try {
+    const processedOffers = offers.map(offer => {
+      if (typeof offer !== 'object' || offer === null) {
+        console.log("無効なオファーオブジェクト:", offer);
+        return null;
+      }
+      
+      // 必須フィールドの存在を確認
+      const id = typeof offer.id === 'string' ? offer.id : Math.random().toString(36).substring(2, 9);
+      const title = typeof offer.title === 'string' ? offer.title : "";
+      const description = typeof offer.description === 'string' ? offer.description : "";
+      const type = typeof offer.type === 'string' ? offer.type : "bonus";
+      
+      // キャメルケースとスネークケースの両方に対応（バックグラウンドカラー）
+      const backgroundColor = typeof offer.backgroundColor === 'string' ? offer.backgroundColor : 
+                              typeof offer.background_color === 'string' ? offer.background_color : "#fff9fa";
+      
+      // キャメルケースとスネークケースの両方に対応（テキストカラー）
+      const textColor = typeof offer.textColor === 'string' ? offer.textColor : 
+                        typeof offer.text_color === 'string' ? offer.text_color : "#333333";
+      
+      // 他のフィールドの整合性確保
+      const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
+      const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
+      const icon = typeof offer.icon === 'string' ? offer.icon : "";
+      const order = typeof offer.order === 'number' ? offer.order : 0;
+      
+      // 新しいオブジェクトを構築
+      const cleanedOffer = {
+        id,
+        title,
+        description,
+        type,
+        backgroundColor,
+        textColor,
+        isActive,
+        isLimited,
+        icon,
+        order
+      };
+      
+      // 型安全なアクセス用にオブジェクトを拡張
+      const typedOffer: Record<string, any> = cleanedOffer;
+      
+      // オプションのフィールドは型チェック後に追加
+      if (offer.amount !== undefined) {
+        typedOffer.amount = typeof offer.amount === 'number' ? offer.amount : Number(offer.amount) || 0;
+      }
+      
+      if (offer.conditions !== undefined) {
+        typedOffer.conditions = typeof offer.conditions === 'string' ? offer.conditions : String(offer.conditions);
+      }
+      
+      // Date型は特別に処理
+      if (offer.startDate) {
+        try {
+          // ISO文字列に変換してからJSONで安全に扱えるようにする
+          if (offer.startDate instanceof Date) {
+            typedOffer.startDate = offer.startDate.toISOString();
+          } else if (typeof offer.startDate === 'string') {
+            const date = new Date(offer.startDate);
+            if (!isNaN(date.getTime())) {
+              typedOffer.startDate = date.toISOString();
+            }
+          }
+        } catch (e) {
+          console.error("startDate処理エラー:", e);
+        }
+      }
+      
+      if (offer.endDate) {
+        try {
+          if (offer.endDate instanceof Date) {
+            typedOffer.endDate = offer.endDate.toISOString();
+          } else if (typeof offer.endDate === 'string') {
+            const date = new Date(offer.endDate);
+            if (!isNaN(date.getTime())) {
+              typedOffer.endDate = date.toISOString();
+            }
+          }
+        } catch (e) {
+          console.error("endDate処理エラー:", e);
+        }
+      }
+      
+      if (offer.limitedCount !== undefined) {
+        typedOffer.limitedCount = typeof offer.limitedCount === 'number' ? 
+          offer.limitedCount : Number(offer.limitedCount) || 0;
+      }
+      
+      if (offer.targetAudience !== undefined) {
+        typedOffer.targetAudience = Array.isArray(offer.targetAudience) ? 
+          offer.targetAudience.filter((item: any) => typeof item === 'string') : [];
+      }
+      
+      return cleanedOffer;
+    }).filter(Boolean); // null値を除外
     
-    // 必須フィールドの存在を確認
-    const id = offer.id || Math.random().toString(36).substring(2, 9);
-    const title = offer.title || "";
-    const description = offer.description || "";
-    const type = offer.type || "bonus";
-    
-    // キャメルケースとスネークケースの両方に対応（バックグラウンドカラー）
-    const backgroundColor = offer.backgroundColor || offer.background_color || "#fff9fa";
-    
-    // キャメルケースとスネークケースの両方に対応（テキストカラー）
-    const textColor = offer.textColor || offer.text_color || "#333333";
-    
-    // 他のフィールドの整合性確保
-    const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
-    const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
-    const icon = offer.icon || "";
-    const order = typeof offer.order === 'number' ? offer.order : 0;
-    
-    // 正規化されたオブジェクトを返す
-    return {
-      id,
-      title,
-      description,
-      type,
-      backgroundColor,
-      textColor,
-      isActive,
-      isLimited,
-      icon,
-      order,
-      // オプションのフィールドは存在する場合のみ含める
-      ...(offer.amount !== undefined && { amount: Number(offer.amount) }),
-      ...(offer.conditions !== undefined && { conditions: String(offer.conditions) }),
-      ...(offer.startDate !== undefined && { startDate: offer.startDate }),
-      ...(offer.endDate !== undefined && { endDate: offer.endDate }),
-      ...(offer.limitedCount !== undefined && { limitedCount: Number(offer.limitedCount) }),
-      ...(offer.targetAudience !== undefined && { targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience : [] })
-    };
-  }).filter(Boolean); // null値を除外
+    console.log("処理後のspecial_offers:", JSON.stringify(processedOffers));
+    return processedOffers;
+  } catch (error) {
+    console.error("special_offers処理中のエラー:", error);
+    // エラーが発生しても最低限の形式を保持する
+    return [];
+  }
 }
 
 const router = Router();
@@ -494,6 +559,28 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         success: true,
         timestamp: new Date().toISOString()
       });
+      
+      // 特別オファーが正しく保存されたか確認
+      try {
+        // データベースに保存された special_offers をJSON文字列化して、有効なJSONであることを確認
+        const specialOffersJson = JSON.stringify(updatedProfile.special_offers);
+        // 文字列化したものを再度パースして問題ないか確認
+        const parsedSpecialOffers = JSON.parse(specialOffersJson);
+        
+        console.log("特別オファーのJSON検証:", {
+          isValid: true,
+          serialized: specialOffersJson.substring(0, 100) + "...", // 長すぎる場合は切る
+          objectAfterParse: typeof parsedSpecialOffers
+        });
+      } catch (jsonError) {
+        console.error("特別オファーのJSON検証エラー:", {
+          error: jsonError instanceof Error ? jsonError.message : String(jsonError),
+          specialOffers: updatedProfile.special_offers
+        });
+        
+        // 特別オファーが無効な場合は安全な配列に置き換える
+        updatedProfile.special_offers = [];
+      }
       
       // クライアント側での処理のためにレスポンスの形式を明確に
       const response = {
