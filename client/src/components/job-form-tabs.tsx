@@ -439,7 +439,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     
                   // オプションフィールドの適切な処理
                   const amount = offer.amount !== undefined && offer.amount !== null && offer.amount !== '' 
-                    ? (typeof offer.amount === 'number' ? offer.amount : Number(offer.amount) || null) 
+                    ? (typeof offer.amount === 'number' ? offer.amount : (isNaN(Number(offer.amount)) ? null : Number(offer.amount))) 
                     : null;
                     
                   const conditions = typeof offer.conditions === 'string' && offer.conditions.trim() !== '' 
@@ -455,7 +455,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     : null;
                     
                   const limitedCount = offer.limitedCount !== undefined && offer.limitedCount !== null && offer.limitedCount !== '' 
-                    ? (typeof offer.limitedCount === 'number' ? offer.limitedCount : Number(offer.limitedCount) || null) 
+                    ? (typeof offer.limitedCount === 'number' ? offer.limitedCount : (isNaN(Number(offer.limitedCount)) ? null : Number(offer.limitedCount))) 
                     : null;
                 
                   // 必須フィールドの保証
