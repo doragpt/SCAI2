@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils';
 
 interface PrivacyMeasuresDisplayProps {
   measures?: z.infer<typeof privacyMeasureSchema>[];
+  securityMeasures?: string;
+  privacyMeasures?: string;
+  commitment?: string;
   compact?: boolean;
   className?: string;
 }
@@ -14,8 +17,18 @@ interface PrivacyMeasuresDisplayProps {
 /**
  * 身バレ対策表示コンポーネント
  */
-export function PrivacyMeasuresDisplay({ measures, compact = false, className }: PrivacyMeasuresDisplayProps) {
-  if (!measures || measures.length === 0) {
+export function PrivacyMeasuresDisplay({ 
+  measures, 
+  securityMeasures,
+  privacyMeasures,
+  commitment,
+  compact = false, 
+  className 
+}: PrivacyMeasuresDisplayProps) {
+  const hasTextContent = securityMeasures || privacyMeasures || commitment;
+  const hasMeasures = measures && measures.length > 0;
+  
+  if (!hasMeasures && !hasTextContent) {
     return null;
   }
 
@@ -66,54 +79,119 @@ export function PrivacyMeasuresDisplay({ measures, compact = false, className }:
       {!compact && (
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />
-          <span>身バレ対策</span>
+          <span>安全対策</span>
         </h3>
       )}
       
-      <div className={cn(
-        "grid gap-4",
-        compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-      )}>
-        {measures.map((measure) => (
-          <Card key={measure.id} className="overflow-hidden border">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex-shrink-0">
-                  {getIcon(measure.type)}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <h4 className="font-semibold text-base">
-                      {measure.title || '対策項目'}
-                    </h4>
-                    {getLevelLabel(measure.level)}
+      {/* テキストコンテンツセクション */}
+      {hasTextContent && (
+        <div className="mb-6 space-y-5">
+          {securityMeasures && (
+            <Card className="overflow-hidden border">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <ShieldCheck className="h-5 w-5 text-green-500" />
                   </div>
-                  
-                  {measure.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {measure.description}
-                    </p>
-                  )}
-                  
-                  {measure.steps && measure.steps.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {measure.steps.map((step, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-                            {index + 1}
-                          </div>
-                          <p className="text-sm flex-1">{step}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-base mb-2">安全への取り組み</h4>
+                    <p className="text-sm whitespace-pre-line">{securityMeasures}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {privacyMeasures && (
+            <Card className="overflow-hidden border">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <Lock className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-base mb-2">プライバシー保護</h4>
+                    <p className="text-sm whitespace-pre-line">{privacyMeasures}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {commitment && (
+            <Card className="overflow-hidden border">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <Eye className="h-5 w-5 text-indigo-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-base mb-2">お店のコミットメント</h4>
+                    <p className="text-sm whitespace-pre-line">{commitment}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+      
+      {/* 身バレ対策構造化データ */}
+      {hasMeasures && (
+        <>
+          {!compact && hasTextContent && (
+            <h4 className="text-md font-medium mb-3 flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span>身バレ対策</span>
+            </h4>
+          )}
+          
+          <div className={cn(
+            "grid gap-4",
+            compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+          )}>
+            {measures && measures.map((measure) => (
+              <Card key={measure.id} className="overflow-hidden border">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex-shrink-0">
+                      {getIcon(measure.type)}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <h4 className="font-semibold text-base">
+                          {measure.title || '対策項目'}
+                        </h4>
+                        {getLevelLabel(measure.level)}
+                      </div>
+                      
+                      {measure.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {measure.description}
+                        </p>
+                      )}
+                      
+                      {measure.steps && measure.steps.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {measure.steps.map((step, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
+                                {index + 1}
+                              </div>
+                              <p className="text-sm flex-1">{step}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
