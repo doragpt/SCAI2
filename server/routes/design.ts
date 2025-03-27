@@ -226,13 +226,21 @@ router.post('/', authenticate, authorize('store'), async (req: Request, res: Res
     });
     
     // デザイン設定を更新
-    await db.update(store_profiles)
-      .set({ design_settings: designSettings })
-      .where(eq(store_profiles.user_id, userId));
+    // JSONBカラムを更新するため、明示的なクエリを使用
+    const result = await db.execute(
+      `UPDATE store_profiles 
+      SET design_settings = $1::jsonb 
+      WHERE user_id = $2`,
+      [
+        JSON.stringify(designSettings),
+        userId
+      ]
+    );
     
     console.log('デザイン設定更新成功:', {
       userId,
-      sectionsCount: designSettings.sections.length
+      sectionsCount: designSettings.sections.length,
+      result
     });
     
     res.json({ 
