@@ -91,7 +91,11 @@ router.get("/profile", authenticate, authorize("store"), async (req: any, res) =
       requirementsData: profile.requirements
     });
 
-    return res.json(profile);
+    // 明示的にsuccess:trueフラグを付けて返却
+    return res.json({
+      ...profile,
+      success: true
+    });
   } catch (error) {
     log('error', '店舗プロフィール取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',

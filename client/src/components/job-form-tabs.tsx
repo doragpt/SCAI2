@@ -281,6 +281,12 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           // apiRequest関数を使用してリクエストを送信
           const result = await apiRequest("PATCH", "/api/store/profile", formattedData);
           console.log("リクエスト成功:", result);
+          
+          // successフラグを明示的に確認し、falseの場合はエラーをスロー
+          if (result && result.success === false) {
+            throw new Error(result.message || "店舗プロフィールの更新に失敗しました");
+          }
+          
           return result;
         } catch (error) {
           console.error("apiRequest処理中のエラー:", { 

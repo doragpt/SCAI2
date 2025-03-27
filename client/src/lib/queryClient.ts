@@ -68,9 +68,16 @@ export async function apiRequest<T = any>(
     if (responseData && responseData.success === false) {
       log('error', 'APIリクエストはHTTP 200だがレスポンスに失敗', {
         url: fullUrl,
-        responseData
+        responseData,
+        fullResponse: JSON.stringify(responseData)
       });
       throw new Error(responseData.message || "処理は完了しましたが、エラーが発生しました");
+    }
+    
+    // successフラグが明示的に設定されていないレスポンスに対する安全策
+    // 成功レスポンスにはsuccess: trueを追加
+    if (responseData && responseData.success === undefined) {
+      responseData.success = true;
     }
     
     return responseData as T;

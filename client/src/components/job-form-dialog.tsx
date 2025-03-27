@@ -9,6 +9,7 @@ import { JobForm } from "./job-form";
 import { type StoreProfile } from "@shared/schema";
 import { useState } from "react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type JobFormDialogProps = {
   open: boolean;
@@ -22,6 +23,7 @@ export function JobFormDialog({
   initialData
 }: JobFormDialogProps) {
   const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const { toast } = useToast();
 
   const handleCloseAttempt = () => {
     setShowConfirmClose(true);
@@ -30,6 +32,19 @@ export function JobFormDialog({
   const handleConfirmedClose = () => {
     setShowConfirmClose(false);
     onOpenChange(false);
+  };
+  
+  // 成功時のコールバック関数（確実にダイアログを閉じる）
+  const handleSuccess = () => {
+    console.log("JobFormDialog: 保存成功、ダイアログを閉じます");
+    // 成功メッセージをトーストで表示
+    toast({
+      title: "店舗情報を保存しました",
+      description: "変更内容が反映されました",
+    });
+    // ダイアログを閉じる
+    onOpenChange(false);
+    setShowConfirmClose(false);
   };
 
   return (
@@ -46,10 +61,7 @@ export function JobFormDialog({
           </DialogHeader>
           <JobForm
             initialData={initialData}
-            onSuccess={() => {
-              onOpenChange(false);
-              setShowConfirmClose(false);
-            }}
+            onSuccess={handleSuccess}
             onCancel={handleCloseAttempt}
           />
         </DialogContent>
