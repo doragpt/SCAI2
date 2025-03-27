@@ -58,40 +58,49 @@ export function JobFormDialog({
     // 確認ダイアログを隠す
     setShowConfirmClose(false);
     
-    try {
-      // 直接ダイアログを閉じる
-      console.log("JobFormDialog: 即時にダイアログを閉じる試行", { timestamp: new Date().toISOString() });
-      onOpenChange(false);
-      
-      // 閉じることに成功したらローカルストレージをクリア
-      setTimeout(() => {
-        window.localStorage.removeItem('form_save_confirmed');
-      }, 500);
-    } catch (error) {
-      console.error("JobFormDialog: ダイアログを閉じる処理で即時エラー", error);
-      
-      // エラーが発生した場合は、タイムアウトで再試行
-      setTimeout(() => {
-        console.log("JobFormDialog: ダイアログを閉じる (タイムアウト経由での再試行)");
-        try {
-          onOpenChange(false);
-          console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました (タイムアウト経由)");
-          
-          // 閉じることに成功したらローカルストレージをクリア
-          setTimeout(() => {
-            window.localStorage.removeItem('form_save_confirmed');
-          }, 500);
-        } catch (innerError) {
-          console.error("JobFormDialog: ダイアログを閉じる処理でタイムアウト後もエラー発生", innerError);
-          
-          // 最後の手段として強制的に状態リセット
-          setTimeout(() => {
-            window.localStorage.removeItem('form_save_confirmed');
-            window.location.href = window.location.pathname;
-          }, 1000);
-        }
-      }, 100);
-    }
+    // ダイアログを遅延なしで直接閉じる試行
+    console.log("JobFormDialog: ダイアログを即時に閉じる試行開始");
+    
+    // DOM操作を優先させるために実行をスケジュール
+    // マイクロタスクキューに入れることでレンダリングより先に実行される
+    Promise.resolve().then(() => {
+      try {
+        console.log("JobFormDialog: Promise内でダイアログを閉じる試行");
+        onOpenChange(false);
+        console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました (即時)");
+        
+        // 閉じることに成功したらローカルストレージをクリア (少し遅延させる)
+        setTimeout(() => {
+          window.localStorage.removeItem('form_save_confirmed');
+          console.log("保存確認フラグを削除しました (即時処理成功)");
+        }, 200);
+      } catch (error) {
+        console.error("JobFormDialog: Promiseでのダイアログ閉じる処理でエラー", error);
+        
+        // エラー発生時のフォールバック: タイムアウトを使用して再試行
+        setTimeout(() => {
+          console.log("JobFormDialog: ダイアログを閉じる (タイムアウト経由での再試行)");
+          try {
+            onOpenChange(false);
+            console.log("JobFormDialog: ダイアログを閉じるコールバックが実行されました (タイムアウト経由)");
+            
+            setTimeout(() => {
+              window.localStorage.removeItem('form_save_confirmed');
+              console.log("保存確認フラグを削除しました (タイムアウト処理成功)");
+            }, 200);
+          } catch (innerError) {
+            console.error("JobFormDialog: ダイアログを閉じる処理でタイムアウト後もエラー発生", innerError);
+            
+            // 最後の手段として強制的に状態リセット
+            setTimeout(() => {
+              console.log("JobFormDialog: 緊急対応として画面リフレッシュを試行");
+              window.localStorage.removeItem('form_save_confirmed');
+              window.location.href = window.location.pathname;
+            }, 500);
+          }
+        }, 100);
+      }
+    });
   };
 
   return (

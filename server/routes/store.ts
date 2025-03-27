@@ -436,12 +436,36 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
 
     // Drizzleの返却値の型を明示的に処理して応答を正確に整形
     if (updatedProfile) {
-      return res.status(200).json({
+      console.log("店舗プロフィール更新レスポンス送信前:", {
+        profileId: updatedProfile.id,
+        responseStatus: 200,
+        success: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      // クライアント側での処理のためにレスポンスの形式を明確に
+      const response = {
         ...updatedProfile,
         success: true,
         message: "店舗プロフィールを更新しました"
+      };
+      
+      // レスポンスデータをログ出力
+      log('info', '店舗プロフィール更新レスポンスの詳細', {
+        userId: req.user.id,
+        profileId: updatedProfile.id,
+        responseKeys: Object.keys(response),
+        responseSuccess: response.success,
+        timestamp: new Date().toISOString()
       });
+      
+      return res.status(200).json(response);
     } else {
+      console.error("店舗プロフィール更新エラー - 更新後のデータが取得できない:", {
+        userId: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+      
       return res.status(500).json({ 
         success: false, 
         message: "店舗プロフィールの更新処理は完了しましたが、更新後のデータを取得できませんでした"
