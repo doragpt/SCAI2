@@ -316,7 +316,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          special_offers: processSpecialOffers(fullData.special_offers) || [],
+          special_offers: processSpecialOffers(fullData.special_offers),
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -521,7 +521,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        special_offers: processSpecialOffers(fullUpdateData.special_offers) || [],
+        special_offers: processSpecialOffers(fullUpdateData.special_offers),
         gallery_photos: fullUpdateData.gallery_photos || [],
         // デザイン設定の更新を処理
         design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
@@ -750,7 +750,7 @@ router.get("/special-offers", authenticate, authorize("store"), async (req: any,
     }
 
     // 特別オファーを取得して返す
-    const specialOffers = processSpecialOffers(profile.special_offers) || [];
+    const specialOffers = processSpecialOffers(profile.special_offers);
     
     log('info', '特別オファー取得成功', {
       userId: req.user.id,
