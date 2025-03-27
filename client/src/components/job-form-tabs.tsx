@@ -422,11 +422,39 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       cleanedData.phone_numbers = validPhoneNumbers;
       cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
       
+      // special_offers配列を確認して整形
+      if (cleanedData.special_offers) {
+        if (Array.isArray(cleanedData.special_offers)) {
+          // 各特別オファーのデータを検証・整形
+          cleanedData.special_offers = cleanedData.special_offers
+            .filter(offer => offer !== null && typeof offer === 'object')
+            .map(offer => {
+              // 必須フィールドの存在を確認
+              return {
+                type: offer.type || "特別オファー", // typeフィールドがない場合はデフォルト値を設定
+                title: offer.title || "",
+                description: offer.description || "",
+                icon: offer.icon || "",
+                background_color: offer.background_color || "#fff9fa",
+                text_color: offer.text_color || "#333333"
+              };
+            });
+        } else {
+          // 配列でない場合は空配列に設定
+          cleanedData.special_offers = [];
+        }
+      } else {
+        cleanedData.special_offers = [];
+      }
+      
       // requirements オブジェクトの確認と整形
       if (cleanedData.requirements && typeof cleanedData.requirements === 'object') {
         const req = cleanedData.requirements;
         cleanedData.requirements = {
-          ...req,
+          accepts_temporary_workers: !!req.accepts_temporary_workers,
+          requires_arrival_day_before: !!req.requires_arrival_day_before,
+          prioritize_titles: !!req.prioritize_titles,
+          other_conditions: Array.isArray(req.other_conditions) ? req.other_conditions : [],
           cup_size_conditions: Array.isArray(req.cup_size_conditions) ? req.cup_size_conditions : []
         };
       } else {
