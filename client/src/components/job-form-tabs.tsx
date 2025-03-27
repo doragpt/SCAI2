@@ -259,7 +259,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : [],
           
           // デザイン設定がある場合はそれも含める
-          design_settings: data.design_settings || null,
+          // design_settingsの処理
+          design_settings: data.design_settings ? data.design_settings : undefined,
         };
         
         console.log("送信データ:", { 
