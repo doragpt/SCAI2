@@ -1,30 +1,30 @@
 export const QUERY_KEYS = {
   // ユーザー関連
-  USER: "/auth/user",
-  USER_PROFILE: "/auth/user/profile",
+  USER: "/api/auth/user",
+  USER_PROFILE: "/api/auth/user/profile",
 
   // 認証関連
-  AUTH_CHECK: "/check",
-  AUTH_LOGIN: "/auth/login",
-  AUTH_LOGOUT: "/auth/logout",
-  AUTH_REGISTER: "/auth/register",
+  AUTH_CHECK: "/api/check",
+  AUTH_LOGIN: "/api/auth/login",
+  AUTH_LOGOUT: "/api/auth/logout",
+  AUTH_REGISTER: "/api/auth/register",
 
   // 店舗関連
-  STORE_STATS: "/store/stats",
-  STORE_PROFILE: "/store/profile",
+  STORE_STATS: "/api/store/stats",
+  STORE_PROFILE: "/api/store/profile",
   STORE_DESIGN: "/api/design", // 修正: /store/design から /api/design へパスを変更
   DESIGN_SETTINGS: "/api/design", // デザイン設定用
   SPECIAL_OFFERS: "/api/store/special-offers", // 特別オファー用
   STORE_BLOG_POSTS: "/api/store/blog", // 店舗ブログ用
 
   // タレント関連
-  TALENT_PROFILE: "/talent/profile",
+  TALENT_PROFILE: "/api/talent/profile",
 
   // 求人関連
-  JOBS_PUBLIC: "/jobs",
-  JOBS_SEARCH: "/jobs",
-  JOBS_STORE: "/store/jobs",
-  JOB_DETAIL: (id: string | number | null | undefined) => id ? `/jobs/${id}` : '/jobs',
+  JOBS_PUBLIC: "/api/jobs",
+  JOBS_SEARCH: "/api/jobs",
+  JOBS_STORE: "/api/store/jobs",
+  JOB_DETAIL: (id: string | number | null | undefined) => id ? `/api/jobs/${id}` : '/api/jobs',
 
   // 応募関連
   APPLICATIONS_TALENT: "/api/applications/talent",
@@ -32,8 +32,8 @@ export const QUERY_KEYS = {
   APPLICATION_CREATE: "/api/applications",
   
   // アップロード関連
-  UPLOAD_PHOTO: "/upload/photo",
-  SIGNED_PHOTO_URL: (key: string) => `/upload/signed-url/${key}`,
+  UPLOAD_PHOTO: "/api/upload/photo",
+  SIGNED_PHOTO_URL: (key: string) => `/api/upload/signed-url/${key}`,
   
   // ブログ関連
   BLOG_POSTS: "/api/blog",

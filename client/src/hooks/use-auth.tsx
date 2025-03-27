@@ -11,6 +11,7 @@ import {
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -33,9 +34,9 @@ function useLoginMutation() {
       const expectedRole = currentPath.includes('manager') ? 'store' : 'talent';
       credentials.role = expectedRole;
 
-      // パスを修正: /api/login → /auth/login
+      // QUERY_KEYSからログインエンドポイントを取得
       try {
-        return await apiRequest("POST", "/auth/login", credentials);
+        return await apiRequest("POST", QUERY_KEYS.AUTH_LOGIN, credentials);
       } catch (error) {
         console.error('店舗ログインエラー:', error);
         throw new Error(error instanceof Error ? error.message : "ログインに失敗しました");
@@ -43,7 +44,7 @@ function useLoginMutation() {
     },
     onSuccess: (user: SelectUser) => {
       // ユーザーデータをキャッシュにセット
-      queryClient.setQueryData(["/check"], user);
+      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], user);
 
       // 全ての関連クエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api"] });
@@ -75,9 +76,9 @@ function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      // パスを修正: /api/logout → /auth/logout
+      // QUERY_KEYSからログアウトエンドポイントを取得
       try {
-        return await apiRequest("POST", "/auth/logout");
+        return await apiRequest("POST", QUERY_KEYS.AUTH_LOGOUT);
       } catch (error) {
         console.error('ログアウトエラー:', error);
         throw new Error("ログアウトに失敗しました");
@@ -88,7 +89,7 @@ function useLogoutMutation() {
       queryClient.clear();
 
       // ユーザーデータを明示的に削除
-      queryClient.setQueryData(["/check"], null);
+      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], null);
 
       toast({
         title: "ログアウト完了",
@@ -117,9 +118,9 @@ function useRegisterMutation() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      // パスを修正: /api/auth/register → /auth/register
+      // QUERY_KEYSから登録エンドポイントを取得
       try {
-        return await apiRequest("POST", "/auth/register", data);
+        return await apiRequest("POST", QUERY_KEYS.AUTH_REGISTER, data);
       } catch (error) {
         console.error('登録エラー:', error);
         // APIからのエラーメッセージを処理
@@ -135,7 +136,7 @@ function useRegisterMutation() {
     },
     onSuccess: (userData: SelectUser) => {
       // ユーザーデータをキャッシュにセット
-      queryClient.setQueryData(["/check"], userData);
+      queryClient.setQueryData([QUERY_KEYS.AUTH_CHECK], userData);
 
       // 全ての関連クエリを無効化して再取得を強制
       queryClient.invalidateQueries({ queryKey: ["/api"] });
@@ -167,11 +168,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<SelectUser | null>({
-    queryKey: ["/check"],
+    queryKey: [QUERY_KEYS.AUTH_CHECK],
     queryFn: async () => {
       try {
-        // パスを修正: /api/check → /check
-        return await apiRequest("GET", "/check");
+        // QUERY_KEYSから認証チェックエンドポイントを取得
+        return await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
       } catch (error) {
         console.error('Auth check error:', error);
         return null;

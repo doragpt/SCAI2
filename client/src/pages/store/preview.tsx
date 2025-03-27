@@ -64,7 +64,7 @@ export default function StoreDesignPreview() {
     queryKey: ["store_blog_posts"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/store/blog?limit=3");
+        const response = await apiRequest("GET", "/api/store/blog?limit=3");
         forwardLog('店舗ブログAPI応答:', response);
         return response;
       } catch (error) {

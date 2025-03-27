@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { apiRequest } from '@/lib/queryClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 
 interface AuthState {
   user: any | null;
@@ -24,14 +25,13 @@ export const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string; role?: string }) => {
-      const response = await apiRequest("POST", "/api/login", data);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "ログインに失敗しました");
+      try {
+        // 正しいAPIエンドポイントを使用
+        return await apiRequest("POST", "/api/auth/login", data);
+      } catch (error) {
+        console.error("ログイン処理エラー:", error);
+        throw error;
       }
-
-      return response.json();
     },
     onSuccess: (data) => {
       setUser(data);
@@ -49,7 +49,7 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await apiRequest("POST", "/api/logout");
+      await apiRequest("POST", "/api/auth/logout");
       setUser(null);
       queryClient.invalidateQueries({ queryKey: ['/api/check'] });
     } catch (error) {
@@ -61,20 +61,17 @@ export const useAuth = () => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("GET", "/api/check");
-
-      if (!response.ok) {
+      try {
+        // クエリキー定数を使用
+        const userData = await apiRequest("GET", QUERY_KEYS.AUTH_CHECK);
+        console.log("認証チェック成功:", userData);
+        setUser(userData);
+        return userData;
+      } catch (error) {
+        console.error("Auth check error:", error);
         setUser(null);
         return null;
       }
-
-      const userData = await response.json();
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error("認証チェックエラー:", error);
-      setUser(null);
-      return null;
     } finally {
       setIsLoading(false);
     }
