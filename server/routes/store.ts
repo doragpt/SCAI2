@@ -76,7 +76,9 @@ function processSpecialOffers(offers: any): any[] {
         isActive,
         isLimited,
         icon,
-        order
+        order,
+        targetAudience: Array.isArray(offer.targetAudience) ? 
+          offer.targetAudience.filter((item: any) => typeof item === 'string') : []
       };
       
       // 型安全なアクセス用にオブジェクトを拡張
@@ -128,10 +130,7 @@ function processSpecialOffers(offers: any): any[] {
           offer.limitedCount : Number(offer.limitedCount) || 0;
       }
       
-      if (offer.targetAudience !== undefined) {
-        typedOffer.targetAudience = Array.isArray(offer.targetAudience) ? 
-          offer.targetAudience.filter((item: any) => typeof item === 'string') : [];
-      }
+      // targetAudienceは初期オブジェクトで既に処理済み
       
       return cleanedOffer;
     }).filter(Boolean); // null値を除外
