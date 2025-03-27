@@ -36,8 +36,12 @@ export default function StoreDesignManager() {
     CONTACT: ['contact', 'sns_links'],
     // アクセスタブ
     ACCESS: ['access'],
+    // 安全対策タブ
+    SECURITY: ['security_measures'],
     // 写真ギャラリータブ
     GALLERY: ['photo_gallery'],
+    // 応募条件タブ
+    REQUIREMENTS: ['requirements'],
     // 追加コンテンツ
     ADDITIONAL: ['special_offers', 'blog']
   };
@@ -49,7 +53,7 @@ export default function StoreDesignManager() {
   const getSectionTitle = (id: string): string => {
     switch(id) {
       case 'header': return 'ヘッダー';
-      case 'catchphrase': return 'キャッチコピー・仕事内容';
+      case 'catchphrase': return 'お仕事詳細';
       case 'photo_gallery': return '写真ギャラリー';
       case 'benefits': return '待遇・環境';
       case 'salary': return '給与情報';
@@ -58,6 +62,8 @@ export default function StoreDesignManager() {
       case 'access': return 'アクセス情報';
       case 'contact': return '問い合わせ';
       case 'sns_links': return 'SNSリンク';
+      case 'security_measures': return '安全対策';
+      case 'requirements': return '応募条件';
       case 'blog': return '店舗ブログ';
       case 'gallery': return '写真ギャラリー'; // 互換性のために追加
       case 'description': return '仕事内容'; // 互換性のために追加
@@ -122,7 +128,9 @@ export default function StoreDesignManager() {
       'salary', 'schedule', 'benefits', // 給与・待遇
       'contact', 'sns_links', // 連絡先
       'access', // アクセス
+      'security_measures', // 安全対策
       'photo_gallery', // 写真ギャラリー
+      'requirements', // 応募条件
       'special_offers', // 特別オファー
       'blog', // 店舗ブログ
     ];

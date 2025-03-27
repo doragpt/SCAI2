@@ -28,7 +28,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
       // 1. 基本情報
       {
         id: "catchphrase",
-        title: "キャッチコピー・仕事内容",
+        title: "お仕事詳細",
         visible: true,
         order: 1,
         settings: {
@@ -141,14 +141,29 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 5. 安全対策（安全対策セクションは特にないため、実装なし）
-      
+      // 5. 安全対策
+      {
+        id: "security_measures",
+        title: "安全対策",
+        visible: true,
+        order: 8,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
       // 6. 写真ギャラリー
       {
         id: "photo_gallery",
         title: "写真ギャラリー",
         visible: true,
-        order: 8,
+        order: 9,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -165,7 +180,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "special_offers",
         title: "特別オファー",
         visible: true,
-        order: 9,
+        order: 10,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -182,7 +197,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "requirements",
         title: "応募条件",
         visible: true,
-        order: 10,
+        order: 11,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -199,7 +214,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "blog",
         title: "店舗ブログ",
         visible: true,
-        order: 11,
+        order: 12,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
