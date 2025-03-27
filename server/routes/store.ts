@@ -65,7 +65,37 @@ function processSpecialOffers(offers: any): any[] {
       const icon = typeof offer.icon === 'string' ? offer.icon : "";
       const order = typeof offer.order === 'number' ? offer.order : 0;
       
-      // 新しいオブジェクトを構築
+      // 新しいオブジェクトを構築 (すべてのプロパティを明示的に設定)
+      const targetAudienceArray = Array.isArray(offer.targetAudience) ? 
+        offer.targetAudience.filter((item: any) => typeof item === 'string') : [];
+      
+      const amount = typeof offer.amount === 'number' ? offer.amount : 
+                    typeof offer.amount === 'string' && offer.amount ? Number(offer.amount) : null;
+                    
+      const conditions = typeof offer.conditions === 'string' ? offer.conditions : null;
+      
+      const limitedCount = typeof offer.limitedCount === 'number' ? offer.limitedCount : 
+                          typeof offer.limitedCount === 'string' && offer.limitedCount ? Number(offer.limitedCount) : null;
+                          
+      // 日付フィールドは文字列として保存
+      let startDate = null;
+      if (offer.startDate) {
+        if (offer.startDate instanceof Date) {
+          startDate = offer.startDate.toISOString();
+        } else if (typeof offer.startDate === 'string') {
+          startDate = offer.startDate;
+        }
+      }
+      
+      let endDate = null;
+      if (offer.endDate) {
+        if (offer.endDate instanceof Date) {
+          endDate = offer.endDate.toISOString();
+        } else if (typeof offer.endDate === 'string') {
+          endDate = offer.endDate;
+        }
+      }
+      
       const cleanedOffer = {
         id,
         title,
@@ -77,8 +107,12 @@ function processSpecialOffers(offers: any): any[] {
         isLimited,
         icon,
         order,
-        targetAudience: Array.isArray(offer.targetAudience) ? 
-          offer.targetAudience.filter((item: any) => typeof item === 'string') : []
+        targetAudience: targetAudienceArray,
+        amount,
+        conditions,
+        limitedCount,
+        startDate,
+        endDate
       };
       
       // 型安全なアクセス用にオブジェクトを拡張
@@ -132,7 +166,30 @@ function processSpecialOffers(offers: any): any[] {
       
       // targetAudienceは初期オブジェクトで既に処理済み
       
-      return cleanedOffer;
+      // オブジェクトを完全に新しく作り直し、PostgreSQLのJSONB型に安全な値だけを含める
+      const jsonSafeObject = {
+        id,
+        title,
+        description,
+        type,
+        backgroundColor,
+        textColor,
+        isActive,
+        isLimited,
+        icon,
+        order,
+        targetAudience: Array.isArray(cleanedOffer.targetAudience) ? cleanedOffer.targetAudience : [],
+        amount: cleanedOffer.amount,
+        conditions: cleanedOffer.conditions,
+        limitedCount: cleanedOffer.limitedCount,
+        startDate: cleanedOffer.startDate,
+        endDate: cleanedOffer.endDate
+      };
+      
+      // 各オファーの処理後の状態をログ出力
+      console.log(`オファー "${title}" の処理後のデータ:`, JSON.stringify(jsonSafeObject));
+      
+      return jsonSafeObject;
     }).filter(Boolean); // null値を除外
     
     console.log("処理後のspecial_offers:", JSON.stringify(processedOffers));

@@ -507,6 +507,19 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         timestamp: new Date().toISOString() 
       });
       
+      // 特別オファーのデータ構造を詳細にログ出力
+      if (cleanedData.special_offers && Array.isArray(cleanedData.special_offers)) {
+        console.log("送信前の各特別オファーの詳細:", cleanedData.special_offers.map(offer => ({
+          id: offer.id,
+          type: offer.type,
+          title: offer.title,
+          targetAudience: offer.targetAudience,
+          hasTargetAudience: Array.isArray(offer.targetAudience),
+          targetAudienceType: typeof offer.targetAudience,
+          keys: Object.keys(offer)
+        })));
+      }
+      
       // 送信を開始したことをユーザーに通知
       toast({
         title: "保存中...",
