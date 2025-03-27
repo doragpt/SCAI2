@@ -28,7 +28,7 @@ import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
  * デザイン管理機能で設定されたスタイルやセクションの表示/非表示、順序を反映します
  */
 // デバッグ用関数（コンポーネント外で定義して一貫して使用）
-const DEBUG_MODE = false; // デバッグログを有効/無効にするフラグ
+const DEBUG_MODE = true; // デバッグログを有効/無効にするフラグ
 function debugLog(message: string, data?: any) {
   if (DEBUG_MODE) {
     if (data) {
@@ -197,10 +197,8 @@ export default function StorePreview() {
 
   const globalSettings = designSettings.globalSettings;
   
-  // 表示するセクションを取得し、順序でソート
-  const visibleSections = designSettings.sections
-    .filter(section => section.visible)
-    .sort((a, b) => a.order - b.order);
+  // デバッグ情報：利用可能なセクション
+  debugLog('利用可能なセクション:', designSettings.sections.map(s => s.id).join(', '));
 
   // debugLog関数はコンポーネント外で定義済み
 
@@ -666,39 +664,27 @@ export default function StorePreview() {
   // セクションの順序に従って動的にレンダリングする関数
   const renderOrderedSections = () => {
     // ヘッダーはすでに別途レンダリングされているので除外
-    const contentSections = [...visibleSections];
+    // 表示可能なセクションのみを抽出
+    const contentSections = [...designSettings.sections]
+      .filter(section => section.id !== 'header');
     
-    // 店舗情報編集ダイアログのタブ順序に合わせてセクションを並べ替え
+    // 店舗情報編集ページで設定した順序を反映するためにorder値で並べ替え
     contentSections.sort((a, b) => {
       // ヘッダーは常に先頭（ただし別途レンダリングされるので、ここでは無視）
       if (a.id === 'header') return -1;
       if (b.id === 'header') return 1;
       
-      // 固定順序のセクション優先順位
-      const sectionPriority: {[key: string]: number} = {
-        'catchphrase': 10,           // 基本情報タブ
-        'salary': 20, 'schedule': 21, 'benefits': 22, // 給与・待遇タブ
-        'contact': 30, 'sns_links': 31, // 連絡先タブ
-        'access': 40,                // アクセスタブ
-        // 安全対策タブ（対応するセクションなし）
-        'photo_gallery': 60,         // 写真ギャラリータブ
-        'special_offers': 70,        // 特別オファー
-        'blog': 80,                  // ブログ
-        'requirements': 100          // 応募条件は常に最後
-      };
-      
-      // 優先度が定義されているセクションの場合はそれを使用
-      if (a.id in sectionPriority && b.id in sectionPriority) {
-        return sectionPriority[a.id] - sectionPriority[b.id];
-      } else if (a.id in sectionPriority) {
-        return -1;
-      } else if (b.id in sectionPriority) {
-        return 1;
-      }
-      
-      // その他のセクションは通常の順序で
+      // orderプロパティに基づいてセクションを並べ替え（デザイン管理ページの順序を維持）
       return a.order - b.order;
     });
+    
+    // デバッグ用：設定・順番の詳細情報を出力
+    debugLog(`詳細な順序情報:`, contentSections.map(s => ({
+      id: s.id,
+      order: s.order,
+      title: s.title,
+      visible: s.visible
+    })));
     
     // デバッグ用のセクション順序ログ
     debugLog(`レンダリング順序: ${contentSections.map(s => s.id).join(', ')}`);

@@ -158,18 +158,18 @@ export default function StoreDesignManager() {
       
       // データの整合性チェック
       const defaultSettings = getDefaultSettings();
-      // 必須セクションの存在チェック - 店舗情報編集ダイアログのタブ順序に合わせる
+      // 必須セクションの存在チェック - プレビューと同じ優先順位を使用
       const requiredSections = [
         'header',                 // ヘッダー（常に最初）
-        'catchphrase',            // 基本情報タブ
-        'salary', 'schedule', 'benefits', // 給与・待遇タブ
-        'contact', 'sns_links',   // 連絡先タブ
-        'access',                 // アクセスタブ
+        'catchphrase',            // 基本情報タブ（優先度: 10）
+        'salary', 'schedule', 'benefits', // 給与・待遇タブ（優先度: 20-22）
+        'contact', 'sns_links',   // 連絡先タブ（優先度: 30-31）
+        'access',                 // アクセスタブ（優先度: 40）
         // 安全対策タブ（対応するセクションなし）
-        'photo_gallery',          // 写真ギャラリータブ
-        'requirements',           // 応募条件（別管理）
-        'special_offers',         // 特別オファー（デザイン編集のみ）
-        'blog'                    // 店舗ブログ（独立コンテンツ）
+        'photo_gallery',          // 写真ギャラリータブ（優先度: 60）
+        'special_offers',         // 特別オファー（優先度: 70）
+        'blog',                   // 店舗ブログ（優先度: 80）
+        'requirements'            // 応募条件は常に最後（優先度: 100）
       ];
       
       // APIから取得したデータのセクションIDs
