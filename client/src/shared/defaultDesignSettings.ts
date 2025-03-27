@@ -24,7 +24,8 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 以下は実際の表示順序（1から始まる）
+      // 以下は店舗情報編集ダイアログのタブ順に合わせる
+      // 1. 基本情報
       {
         id: "catchphrase",
         title: "キャッチコピー・仕事内容",
@@ -41,43 +42,12 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      {
-        id: "photo_gallery",
-        title: "写真ギャラリー",
-        visible: true,
-        order: 2,
-        settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: "benefits",
-        title: "待遇・環境",
-        visible: true,
-        order: 3,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
+      // 2. 給与・待遇
       {
         id: "salary",
         title: "給与情報",
         visible: true,
-        order: 4,
+        order: 2,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -93,7 +63,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "schedule",
         title: "勤務時間",
         visible: true,
-        order: 5,
+        order: 3,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -106,10 +76,10 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "access",
-        title: "アクセス情報",
+        id: "benefits",
+        title: "待遇・環境",
         visible: true,
-        order: 6,
+        order: 4,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -121,11 +91,12 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // 3. 連絡先
       {
         id: "contact",
         title: "問い合わせ",
         visible: true,
-        order: 7,
+        order: 5,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -141,7 +112,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "sns_links",
         title: "SNSリンク",
         visible: true,
-        order: 8,
+        order: 6,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -153,6 +124,43 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // 4. アクセス
+      {
+        id: "access",
+        title: "アクセス情報",
+        visible: true,
+        order: 7,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      // 5. 安全対策（安全対策セクションは特にないため、実装なし）
+      
+      // 6. 写真ギャラリー
+      {
+        id: "photo_gallery",
+        title: "写真ギャラリー",
+        visible: true,
+        order: 8,
+        settings: {
+          backgroundColor: "#fff9fa",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      // 特別オファー（デザイン編集で使用）
       {
         id: "special_offers",
         title: "特別オファー",
@@ -169,6 +177,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // ブログ（デザイン編集で使用）
       {
         id: "blog",
         title: "店舗ブログ",
@@ -185,7 +194,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // requirements（応募条件）をデザイン設定とは別に最後に配置
+      // 応募条件（デザイン編集で使用）
       {
         id: "requirements",
         title: "応募条件",

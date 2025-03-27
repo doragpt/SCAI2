@@ -668,17 +668,35 @@ export default function StorePreview() {
     // ヘッダーはすでに別途レンダリングされているので除外
     const contentSections = [...visibleSections];
     
-    // セクションを適切な順序でソート
+    // 店舗情報編集ダイアログのタブ順序に合わせてセクションを並べ替え
     contentSections.sort((a, b) => {
       // ヘッダーは常に先頭（ただし別途レンダリングされるので、ここでは無視）
       if (a.id === 'header') return -1;
       if (b.id === 'header') return 1;
       
-      // 応募条件は常に最後
-      if (a.id === 'requirements') return 1;
-      if (b.id === 'requirements') return -1;
+      // 固定順序のセクション優先順位
+      const sectionPriority: {[key: string]: number} = {
+        'catchphrase': 10,           // 基本情報タブ
+        'salary': 20, 'schedule': 21, 'benefits': 22, // 給与・待遇タブ
+        'contact': 30, 'sns_links': 31, // 連絡先タブ
+        'access': 40,                // アクセスタブ
+        // 安全対策タブ（対応するセクションなし）
+        'photo_gallery': 60,         // 写真ギャラリータブ
+        'special_offers': 70,        // 特別オファー
+        'blog': 80,                  // ブログ
+        'requirements': 100          // 応募条件は常に最後
+      };
       
-      // その他は通常の順序で
+      // 優先度が定義されているセクションの場合はそれを使用
+      if (a.id in sectionPriority && b.id in sectionPriority) {
+        return sectionPriority[a.id] - sectionPriority[b.id];
+      } else if (a.id in sectionPriority) {
+        return -1;
+      } else if (b.id in sectionPriority) {
+        return 1;
+      }
+      
+      // その他のセクションは通常の順序で
       return a.order - b.order;
     });
     

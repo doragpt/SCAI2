@@ -32,10 +32,19 @@ export default function StoreDesignManager() {
     const sectionIds = defaultSettings.sections.map(s => s.id);
     console.log('デフォルト設定のセクションリスト:', sectionIds);
     
-    // 必須セクションの存在チェック
-    const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
-      'salary', 'schedule', 'requirements', 'special_offers', 
-      'access', 'contact', 'sns_links', 'blog'];
+    // 必須セクションの存在チェック - 店舗情報編集ダイアログのタブ順序に合わせる
+    const requiredSections = [
+      'header',                 // ヘッダー（常に最初）
+      'catchphrase',            // 基本情報タブ
+      'salary', 'schedule', 'benefits', // 給与・待遇タブ
+      'contact', 'sns_links',   // 連絡先タブ
+      'access',                 // アクセスタブ
+      // 安全対策タブ（対応するセクションなし）
+      'photo_gallery',          // 写真ギャラリータブ
+      'requirements',           // 応募条件（別管理）
+      'special_offers',         // 特別オファー（デザイン編集のみ）
+      'blog'                    // 店舗ブログ（独立コンテンツ）
+    ];
     
     for (const id of requiredSections) {
       if (!sectionIds.includes(id)) {
@@ -139,10 +148,19 @@ export default function StoreDesignManager() {
       
       // データの整合性チェック
       const defaultSettings = getDefaultSettings();
-      // 注：requirementsはデザイン設定に含めるが、特別処理するため末尾に配置
-      const requiredSections = ['header', 'catchphrase', 'photo_gallery', 'benefits', 
-        'salary', 'schedule', 'access', 'contact', 'sns_links', 
-        'special_offers', 'blog', 'requirements'];
+      // 必須セクションの存在チェック - 店舗情報編集ダイアログのタブ順序に合わせる
+      const requiredSections = [
+        'header',                 // ヘッダー（常に最初）
+        'catchphrase',            // 基本情報タブ
+        'salary', 'schedule', 'benefits', // 給与・待遇タブ
+        'contact', 'sns_links',   // 連絡先タブ
+        'access',                 // アクセスタブ
+        // 安全対策タブ（対応するセクションなし）
+        'photo_gallery',          // 写真ギャラリータブ
+        'requirements',           // 応募条件（別管理）
+        'special_offers',         // 特別オファー（デザイン編集のみ）
+        'blog'                    // 店舗ブログ（独立コンテンツ）
+      ];
       
       // APIから取得したデータのセクションIDs
       const apiSectionIds = designSettingsQuery.data.sections.map(s => s.id);
