@@ -19,9 +19,11 @@ const getBlogPostsByStore = async (req: Request, res: Response) => {
     const offset = (page - 1) * pageSize;
 
     // ブログ投稿数のカウント（特定の店舗の投稿のみ）
-    const totalCountResult = await db.select({ count: db.fn.count() })
-      .from(blogPosts)
-      .where(eq(blogPosts.store_id, userId));
+    const totalCountResult = await db.select({
+      count: db.$custom<number>`count(*)`
+    })
+    .from(blogPosts)
+    .where(eq(blogPosts.store_id, userId));
 
     const totalItems = Number(totalCountResult[0].count);
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -77,12 +79,14 @@ router.get('/public', async (req: Request, res: Response) => {
     }
 
     // ブログ投稿数のカウント
-    const totalCountResult = await db.select({ count: db.fn.count() })
-      .from(blogPosts)
-      .where(and(
-        eq(blogPosts.status, 'published'),
-        storeId ? eq(blogPosts.store_id, storeId) : undefined
-      ));
+    const totalCountResult = await db.select({
+      count: db.$custom<number>`count(*)`
+    })
+    .from(blogPosts)
+    .where(and(
+      eq(blogPosts.status, 'published'),
+      storeId ? eq(blogPosts.store_id, storeId) : undefined
+    ));
 
     const totalItems = Number(totalCountResult[0].count);
     const totalPages = Math.ceil(totalItems / pageSize);

@@ -203,7 +203,8 @@ export default function BlogManagement() {
       if (search) params.append("search", search);
 
       // APIエンドポイントを定数から取得（クエリキーと一致させる）
-      const apiUrl = `/api/blog/store-posts?${params.toString()}`;
+      // ルートはサーバー側のblogs.tsのパスと一致させる
+      const apiUrl = `/api/blog?${params.toString()}`;
       
       try {
         // APIリクエスト実行 - apiRequestヘルパーを使用
