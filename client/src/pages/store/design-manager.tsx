@@ -92,6 +92,9 @@ export default function StoreDesignManager() {
     }
   };
 
+  // 削除対象のセクションID
+  const removedSectionIds = ['trial_entry', 'campaign', 'campaigns'];
+  
   // 設定を取得するクエリ
   const designSettingsQuery = useQuery<DesignSettings, Error>({
     queryKey: [QUERY_KEYS.DESIGN_SETTINGS],
@@ -100,6 +103,13 @@ export default function StoreDesignManager() {
         console.log('デザイン設定を取得しています...');
         const response = await apiRequest<DesignSettings>("GET", "/api/design");
         console.log('デザイン設定の取得に成功しました:', response);
+        
+        // 体験入店情報とキャンペーン情報のセクションを除外
+        if (response && response.sections) {
+          response.sections = response.sections.filter(section => !removedSectionIds.includes(section.id));
+          console.log('不要なセクション削除後:', response.sections.map(s => s.id));
+        }
+        
         return response;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました:', error);
@@ -326,21 +336,33 @@ export default function StoreDesignManager() {
 
   // 設定を保存する
   const handleSave = () => {
-    saveSettingsMutation.mutate(settings);
+    // 保存前に体験入店情報とキャンペーン情報のセクションを除外
+    const filteredSettings = { ...settings };
+    filteredSettings.sections = filteredSettings.sections.filter(
+      section => !removedSectionIds.includes(section.id)
+    );
+    console.log('保存前に不要なセクションを除外:', filteredSettings.sections.map(s => s.id));
+    saveSettingsMutation.mutate(filteredSettings);
   };
 
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
+      // プレビュー送信前に体験入店情報とキャンペーン情報のセクションを除外
+      const previewSettings = { ...settings };
+      previewSettings.sections = previewSettings.sections.filter(
+        section => !removedSectionIds.includes(section.id)
+      );
+      
       console.log('プレビューを更新します:', {
-        sectionsCount: settings.sections.length,
-        globalSettings: settings.globalSettings
+        sectionsCount: previewSettings.sections.length,
+        globalSettings: previewSettings.globalSettings
       });
       
       iframeRef.current.contentWindow.postMessage({
         type: 'UPDATE_DESIGN',
         timestamp: new Date().toISOString(),
-        settings: settings
+        settings: previewSettings
       }, '*');
     }
   };
@@ -608,7 +630,10 @@ export default function StoreDesignManager() {
                       className="space-y-3"
                     >
                       {settings.sections
-                        .filter(section => section.id !== 'requirements') // 応募条件セクションはデザイン管理から除外
+                        .filter(section => 
+                          section.id !== 'requirements' && // 応募条件セクションはデザイン管理から除外
+                          !removedSectionIds.includes(section.id) // 体験入店情報とキャンペーン情報のセクションを除外
+                        )
                         // ヘッダーは特別扱い、その他は通常の順序で表示
                         .sort((a, b) => {
                           // ヘッダーは常に先頭
