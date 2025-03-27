@@ -443,42 +443,88 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       const apiPath = '/api/store/profile';
       console.log("店舗プロフィール更新 - API呼び出し情報:", {
         path: apiPath,
-        method: "PATCH",
-        dataSize: JSON.stringify(cleanedData).length,
+        method: "PATCH", 
+        formDataKeys: Object.keys(cleanedData),
+        hasRequiredFields: {
+          recruiter_name: !!cleanedData.recruiter_name,
+          phone_numbers: Array.isArray(cleanedData.phone_numbers) && cleanedData.phone_numbers.length > 0,
+        },
         timestamp: new Date().toISOString()
       });
+      
+      // 必須項目の再検証
+      if (!cleanedData.recruiter_name || !cleanedData.phone_numbers || !cleanedData.phone_numbers.length) {
+        console.error("必須項目が不足しています（最終チェック）:", {
+          recruiter_name: cleanedData.recruiter_name,
+          phone_numbers: cleanedData.phone_numbers
+        });
+        
+        toast({
+          variant: "destructive",
+          title: "必須項目エラー",
+          description: "採用担当者名と電話番号を入力してください",
+        });
+        return;
+      }
+      
+      // JSONデータをコンソールに出力（トラブルシューティング用）
+      const jsonData = JSON.stringify(cleanedData);
+      console.log("送信する実際のJSONデータ:", jsonData);
       
       // fetchを使って直接APIを呼び出す
       try {
         console.log("直接fetchによるAPIリクエスト試行");
+        
+        // 直接fetch呼び出し
         const response = await fetch(apiPath, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
           },
-          body: JSON.stringify(cleanedData),
-          credentials: 'include'
+          body: jsonData,
+          credentials: 'include',
+          // Replicが問題を起こす可能性があるため、キャッシュをオフに
+          cache: 'no-store' 
         });
         
         console.log("直接fetchレスポンス受信:", {
           status: response.status,
           ok: response.ok,
-          timestamp: new Date().toISOString()
+          statusText: response.statusText,
+          timestamp: new Date().toISOString(),
+          headers: Object.fromEntries([...response.headers.entries()])
         });
         
-        const result = await response.json();
-        console.log("直接fetch結果:", {
-          status: response.status,
-          ok: response.ok,
-          result,
-          timestamp: new Date().toISOString()
-        });
+        // レスポンスボディの取得
+        const result = await response.text();
+        let parsedResult;
+        
+        try {
+          // JSONとして解析を試みる
+          parsedResult = JSON.parse(result);
+          console.log("直接fetch結果（JSON）:", {
+            status: response.status,
+            ok: response.ok,
+            result: parsedResult,
+            timestamp: new Date().toISOString()
+          });
+        } catch (jsonError) {
+          // JSON解析に失敗した場合はテキストとして扱う
+          console.error("JSONの解析に失敗:", { 
+            textResult: result, 
+            error: jsonError 
+          });
+          parsedResult = { success: false, message: "サーバーからの応答を解析できませんでした" };
+        }
         
         // 成功したらキャッシュを更新してコールバックを呼び出す
         if (response.ok) {
           console.log("直接fetchによる保存成功");
           
-          // キャッシュを更新
+          // キャッシュを強制的に無効化
+          console.log("キャッシュを無効化しています");
           queryClient.invalidateQueries({ 
             queryKey: [QUERY_KEYS.STORE_PROFILE],
           });
@@ -491,22 +537,32 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
             description: "変更内容が保存されました。",
           });
           
+          // ダイアログを閉じるコールバックを呼び出す
           if (onSuccess) {
             console.log("成功時のコールバックを呼び出します");
-            onSuccess();
+            window.setTimeout(() => {
+              onSuccess();
+            }, 100);
           }
           
           return; // 成功したので以降の処理は不要
         } else {
-          console.error("直接fetchエラー:", result);
+          // エラーレスポンスの処理
+          console.error("直接fetchエラー:", parsedResult);
           toast({
             variant: "destructive",
             title: "保存に失敗しました",
-            description: result.message || "不明なエラーが発生しました",
+            description: parsedResult?.message || `エラー: ${response.status} ${response.statusText}`,
           });
         }
       } catch (directFetchError) {
-        console.error("直接fetch中のエラー:", directFetchError);
+        console.error("直接fetch中の例外:", directFetchError);
+        toast({
+          variant: "destructive",
+          title: "通信エラー",
+          description: directFetchError instanceof Error ? directFetchError.message : "サーバーとの通信中にエラーが発生しました",
+        });
+        
         // エラーがあってもmutateを試す
       }
       
@@ -549,9 +605,76 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     }
   };
 
+  // フォーム送信を直接処理する関数（form.handleSubmitを使わない）
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // デフォルトの送信動作を防止
+    
+    console.log("送信ボタンがクリックされました - 直接ハンドラ", {
+      isDirty: form.formState.isDirty,
+      isValid: form.formState.isValid,
+      timestamp: new Date().toISOString()
+    });
+    
+    // フォームのエラーをリセット
+    form.clearErrors();
+    
+    // フォームの現在の値を取得
+    const formData = form.getValues();
+    console.log("フォームデータ取得:", {
+      formDataKeys: Object.keys(formData),
+      hasRecruiterName: !!formData.recruiter_name,
+      phoneNumbersLength: formData.phone_numbers?.length
+    });
+    
+    // 必須項目の検証
+    let hasErrors = false;
+    
+    // 採用担当者名の検証
+    if (!formData.recruiter_name) {
+      form.setError('recruiter_name', { 
+        type: 'manual', 
+        message: '採用担当者名を入力してください' 
+      });
+      hasErrors = true;
+      console.error("採用担当者名が入力されていません");
+    }
+    
+    // 電話番号の検証
+    const validPhoneNumbers = formData.phone_numbers?.filter(phone => phone && phone.trim() !== '') || [];
+    if (validPhoneNumbers.length === 0) {
+      form.setError('phone_numbers.0', {
+        type: 'manual',
+        message: '電話番号を少なくとも1つ入力してください'
+      });
+      hasErrors = true;
+      console.error("有効な電話番号がありません");
+    }
+    
+    if (hasErrors) {
+      toast({
+        title: "入力エラー",
+        description: "必須項目を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // 検証に成功したら、処理を続行
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error("フォーム送信中にエラーが発生しました:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error instanceof Error ? error.message : "不明なエラーが発生しました",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleFormSubmit} className="space-y-8">
         <Tabs defaultValue="basic" className="w-full">
           <TabsList className="grid grid-cols-6 mb-6">
             <TabsTrigger value="basic" className="flex items-center gap-2">
@@ -1577,9 +1700,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
             </Button>
           )}
           <Button
-            type="submit"
+            type="button" // submitからbuttonに変更して明示的にclickイベントを処理
             disabled={isPending}
             className="ml-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              console.log("保存ボタンが直接クリックされました");
+              handleFormSubmit(e);
+            }}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             保存する
