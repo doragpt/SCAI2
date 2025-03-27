@@ -529,6 +529,67 @@ export default function StoreDesignPreview() {
                   </div>
                 )}
                 
+                {/* 安全対策 */}
+                {section.id === 'security_measures' && (
+                  <div className="space-y-6">
+                    <div className="relative">
+                      <div className="absolute -top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                        安全対策
+                      </div>
+                      <div className="bg-gradient-to-r from-teal-50 to-green-50 dark:from-teal-900/10 dark:to-green-900/10 p-6 rounded-xl border border-teal-100 dark:border-teal-800/30 shadow-md">
+                        <div className="grid md:grid-cols-2 gap-6 mt-2">
+                          <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-sm border border-teal-100 dark:border-teal-800/20">
+                            <div className="flex items-center mb-3">
+                              <svg className="w-6 h-6 text-teal-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                              </svg>
+                              <div className="text-base font-bold text-gray-700 dark:text-gray-200">安全への取り組み</div>
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-300 space-y-2">
+                              <p>すべての女性が安心して働けるよう、以下の対策を徹底しています：</p>
+                              <ul className="list-disc pl-5 space-y-1 text-sm">
+                                <li>身分証明書による年齢確認</li>
+                                <li>マネージャー常駐によるサポート体制</li>
+                                <li>24時間相談窓口の設置</li>
+                                <li>勤務時間の柔軟な調整</li>
+                              </ul>
+                            </div>
+                          </div>
+                        
+                          <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-sm border border-teal-100 dark:border-teal-800/20">
+                            <div className="flex items-center mb-3">
+                              <svg className="w-6 h-6 text-teal-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                              </svg>
+                              <div className="text-base font-bold text-gray-700 dark:text-gray-200">プライバシー保護</div>
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-300 space-y-2">
+                              <ul className="list-disc pl-5 space-y-1 text-sm">
+                                <li>個人情報の厳重な管理と保護</li>
+                                <li>SNSやメディア露出の自己選択制</li>
+                                <li>顧客情報のデータベース管理</li>
+                                <li>勤務地域の選択が可能</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-6 bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-sm border border-teal-100 dark:border-teal-800/20">
+                          <div className="flex items-center mb-3">
+                            <svg className="w-6 h-6 text-teal-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            </svg>
+                            <div className="text-base font-bold text-gray-700 dark:text-gray-200">コミットメント</div>
+                          </div>
+                          <div className="text-gray-600 dark:text-gray-300">
+                            <p>当店は女性スタッフの安全と働きやすさを最優先に考え、常に環境改善に取り組んでいます。不安なことや質問があれば、いつでもお気軽にご相談ください。あなたのプライバシーと安全を守りながら、充実した職場環境を提供いたします。</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* 応募条件 */}
                 {section.id === 'requirements' && (
                   <div className="space-y-6">
