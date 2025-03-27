@@ -28,6 +28,58 @@ function validateBenefits(benefits: any): BenefitType[] {
   return [];
 }
 
+// 特別オファーの配列の整合性を確保するヘルパー関数
+function processSpecialOffers(offers: any): any[] {
+  if (!Array.isArray(offers)) {
+    return [];
+  }
+  
+  return offers.map(offer => {
+    if (typeof offer !== 'object' || offer === null) {
+      return null;
+    }
+    
+    // 必須フィールドの存在を確認
+    const id = offer.id || Math.random().toString(36).substring(2, 9);
+    const title = offer.title || "";
+    const description = offer.description || "";
+    const type = offer.type || "bonus";
+    
+    // キャメルケースとスネークケースの両方に対応（バックグラウンドカラー）
+    const backgroundColor = offer.backgroundColor || offer.background_color || "#fff9fa";
+    
+    // キャメルケースとスネークケースの両方に対応（テキストカラー）
+    const textColor = offer.textColor || offer.text_color || "#333333";
+    
+    // 他のフィールドの整合性確保
+    const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
+    const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
+    const icon = offer.icon || "";
+    const order = typeof offer.order === 'number' ? offer.order : 0;
+    
+    // 正規化されたオブジェクトを返す
+    return {
+      id,
+      title,
+      description,
+      type,
+      backgroundColor,
+      textColor,
+      isActive,
+      isLimited,
+      icon,
+      order,
+      // オプションのフィールドは存在する場合のみ含める
+      ...(offer.amount !== undefined && { amount: Number(offer.amount) }),
+      ...(offer.conditions !== undefined && { conditions: String(offer.conditions) }),
+      ...(offer.startDate !== undefined && { startDate: offer.startDate }),
+      ...(offer.endDate !== undefined && { endDate: offer.endDate }),
+      ...(offer.limitedCount !== undefined && { limitedCount: Number(offer.limitedCount) }),
+      ...(offer.targetAudience !== undefined && { targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience : [] })
+    };
+  }).filter(Boolean); // null値を除外
+}
+
 const router = Router();
 
 // ルータレベルのミドルウェアでリクエストをログ出力
@@ -214,7 +266,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          special_offers: fullData.special_offers || [],
+          special_offers: processSpecialOffers(fullData.special_offers) || [],
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -419,7 +471,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        special_offers: fullUpdateData.special_offers || [],
+        special_offers: processSpecialOffers(fullUpdateData.special_offers) || [],
         gallery_photos: fullUpdateData.gallery_photos || [],
         // デザイン設定の更新を処理
         design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
@@ -626,7 +678,7 @@ router.get("/special-offers", authenticate, authorize("store"), async (req: any,
     }
 
     // 特別オファーを取得して返す
-    const specialOffers = profile.special_offers || [];
+    const specialOffers = processSpecialOffers(profile.special_offers) || [];
     
     log('info', '特別オファー取得成功', {
       userId: req.user.id,
