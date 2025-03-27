@@ -800,31 +800,7 @@ export const requiredDocumentTypes = [
 ] as const;
 export type RequiredDocumentType = typeof requiredDocumentTypes[number];
 
-// キャンペーンタイプ
-export const campaignTypeOptions = [
-  "入店祝い金", 
-  "特別保証", 
-  "友達紹介", 
-  "体験入店特典", 
-  "期間限定特典",
-  "その他"
-] as const;
-export type CampaignType = typeof campaignTypeOptions[number];
-
-// キャンペーン対象者
-export const targetAudienceOptions = [
-  "未経験", 
-  "経験者", 
-  "出稼ぎ", 
-  "学生", 
-  "主婦", 
-  "全員対象"
-] as const;
-export type TargetAudience = typeof targetAudienceOptions[number];
-
-// 体験入店スキーマは削除されました
-
-// キャンペーンスキーマは削除されました
+// キャンペーン・体験入店関連のスキーマは完全に削除されました
 
 export const storeProfileSchema = z.object({
   // 基本情報
