@@ -55,8 +55,8 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
   return getBlogPostsByStore(req, res);
 });
 
-// 店舗の投稿用エンドポイント（追加の統一性のため）
-router.get('/store-posts', authenticate, authorize('store'), async (req: Request, res: Response) => {
+// 店舗の投稿用エンドポイント
+router.get('/store', authenticate, authorize('store'), async (req: Request, res: Response) => {
   return getBlogPostsByStore(req, res);
 });
 

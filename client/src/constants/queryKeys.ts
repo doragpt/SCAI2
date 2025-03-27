@@ -38,7 +38,7 @@ export const QUERY_KEYS = {
   // ブログ関連
   BLOG_POSTS: "/api/blog",
   PUBLIC_BLOG_POSTS: "/api/blog/public",
-  BLOG_POSTS_STORE: "/api/blog/store",
+  BLOG_POSTS_STORE: "/api/blog",
   BLOG_POST_DETAIL: (id: string) => `/api/blog/${id}`,
   BLOG_POST_STATUS: (id: string) => `/api/blog/${id}/status`,
   
