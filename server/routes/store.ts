@@ -385,20 +385,26 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 勤務時間と応募条件
       working_hours: req.body.working_hours || existingProfile.working_hours || "",
-      requirements: typeof req.body.requirements === 'object' 
-        ? {
-            ...req.body.requirements,
-            // cup_size_conditionsが配列であることを保証
-            cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions) 
-              ? req.body.requirements.cup_size_conditions 
-              : []
-          }
-        : existingProfile.requirements || {
-            accepts_temporary_workers: false,
-            requires_arrival_day_before: false,
-            other_conditions: [],
-            cup_size_conditions: []
-          },
+      requirements: req.body.requirements 
+        ? (typeof req.body.requirements === 'string' 
+            ? req.body.requirements 
+            : JSON.stringify(typeof req.body.requirements === 'object' 
+              ? {
+                ...req.body.requirements,
+                // cup_size_conditionsが配列であることを保証
+                cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions) 
+                  ? req.body.requirements.cup_size_conditions 
+                  : []
+              }
+              : {}))
+        : (typeof existingProfile.requirements === 'string'
+            ? existingProfile.requirements
+            : JSON.stringify(existingProfile.requirements || {
+              accepts_temporary_workers: false,
+              requires_arrival_day_before: false,
+              other_conditions: [],
+              cup_size_conditions: []
+            })),
       
       // 追加フィールド
       recruiter_name: req.body.recruiter_name,
@@ -434,11 +440,23 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         ? processSpecialOffers(req.body.special_offers) 
         : (existingProfile.special_offers || []),
       
-      // ギャラリー写真（重要：ここが抜けていたため写真が保存されなかった）
-      gallery_photos: req.body.gallery_photos || existingProfile.gallery_photos || [],
+      // ギャラリー写真（JSON文字列として処理）
+      gallery_photos: req.body.gallery_photos 
+        ? (typeof req.body.gallery_photos === 'string' 
+            ? req.body.gallery_photos 
+            : JSON.stringify(req.body.gallery_photos))
+        : (typeof existingProfile.gallery_photos === 'string'
+            ? existingProfile.gallery_photos
+            : JSON.stringify(existingProfile.gallery_photos || [])),
       
-      // デザイン設定
-      design_settings: req.body.design_settings || existingProfile.design_settings,
+      // デザイン設定（JSON文字列として処理）
+      design_settings: req.body.design_settings 
+        ? (typeof req.body.design_settings === 'string' 
+            ? req.body.design_settings 
+            : JSON.stringify(req.body.design_settings))
+        : (typeof existingProfile.design_settings === 'string'
+            ? existingProfile.design_settings
+            : JSON.stringify(existingProfile.design_settings || {})),
       
       updated_at: new Date()
     };
@@ -590,24 +608,34 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 特別オファーが正しく保存されたか確認
       try {
-        // データベースに保存された special_offers をJSON文字列化して、有効なJSONであることを確認
-        const specialOffersJson = JSON.stringify(updatedProfile.special_offers);
-        // 文字列化したものを再度パースして問題ないか確認
-        const parsedSpecialOffers = JSON.parse(specialOffersJson);
+        // データベースに保存された special_offers が文字列かどうか確認
+        const specialOffersData = updatedProfile.special_offers;
+        let specialOffersJson, parsedSpecialOffers;
+        
+        if (typeof specialOffersData === 'string') {
+          // すでに文字列の場合はパースを試みる
+          specialOffersJson = specialOffersData;
+          parsedSpecialOffers = JSON.parse(specialOffersJson);
+        } else {
+          // オブジェクトの場合は文字列化してから再度パース
+          specialOffersJson = JSON.stringify(specialOffersData);
+          parsedSpecialOffers = JSON.parse(specialOffersJson);
+        }
         
         console.log("特別オファーのJSON検証:", {
           isValid: true,
-          serialized: specialOffersJson.substring(0, 100) + "...", // 長すぎる場合は切る
+          dataType: typeof specialOffersData,
+          serialized: (typeof specialOffersJson === 'string') ? specialOffersJson.substring(0, 100) + "..." : "invalid", // 長すぎる場合は切る
           objectAfterParse: typeof parsedSpecialOffers
         });
       } catch (jsonError) {
         console.error("特別オファーのJSON検証エラー:", {
           error: jsonError instanceof Error ? jsonError.message : String(jsonError),
-          specialOffers: updatedProfile.special_offers
+          specialOffersType: typeof updatedProfile.special_offers
         });
         
-        // 特別オファーが無効な場合は安全な配列に置き換える
-        updatedProfile.special_offers = [];
+        // 特別オファーが無効な場合は安全な空の配列文字列に置き換える
+        updatedProfile.special_offers = "[]";
       }
       
       // クライアント側での処理のためにレスポンスの形式を明確に
