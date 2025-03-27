@@ -110,7 +110,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 8. 特別オファー（デザイン編集で使用）
+      // 8. 特別オファー
       {
         id: "special_offers",
         title: "特別オファー",
@@ -127,7 +127,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 9. 待遇・環境
+      // 9. 待遇・環境（特別オファーの後に表示）
       {
         id: "benefits",
         title: "待遇・環境",
@@ -144,7 +144,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      // 3. 応募条件
+      // 3. 応募条件（連絡先の前に表示）
       {
         id: "requirements",
         title: "応募条件",

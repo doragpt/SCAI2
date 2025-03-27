@@ -26,7 +26,7 @@ export default function StoreDesignManager() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // 店舗情報の各タブに対応するセクションID
+  // 店舗情報の各タブに対応するセクションID - サイドバーでの表示順序に影響
   const SECTION_IDS = {
     // 基本情報タブ
     BASIC_INFO: ['catchphrase'],
@@ -36,14 +36,16 @@ export default function StoreDesignManager() {
     SECURITY: ['security_measures'],
     // 写真ギャラリータブ
     GALLERY: ['photo_gallery'],
+    // 特別オファーと待遇・環境
+    ADDITIONAL_1: ['special_offers', 'benefits'],
     // 応募条件タブ
     REQUIREMENTS: ['requirements'],
     // 連絡先タブ
     CONTACT: ['contact', 'sns_links'],
     // アクセスタブ
     ACCESS: ['access'],
-    // 追加コンテンツ
-    ADDITIONAL: ['special_offers', 'benefits', 'blog']
+    // ブログ
+    BLOG: ['blog']
   };
 
   // 削除対象のセクションID（体験入店情報とキャンペーンは除外）
@@ -121,7 +123,10 @@ export default function StoreDesignManager() {
 
   // デフォルト設定と必須セクションを確保するための処理
   const ensureRequiredSections = (currentSettings: DesignSettings): DesignSettings => {
-    // 必須セクションのリスト（全てのセクションを含む）
+    // デフォルト設定を取得
+    const defaultSettings = getDefaultDesignSettings();
+    
+    // 必須セクションのリスト（全てのセクションを含む）- 正確な順序を定義
     const requiredSectionIds = [
       'header', // ヘッダー（常に最初）
       'catchphrase', // 基本情報
@@ -136,55 +141,70 @@ export default function StoreDesignManager() {
       'blog', // 店舗ブログ
     ];
 
-    // 不要なセクションを削除
-    const filteredSections = currentSettings.sections.filter(
+    // 既存のセクションを保持（削除対象以外）
+    const existingSections = currentSettings.sections.filter(
       section => !REMOVED_SECTION_IDS.includes(section.id)
     );
-
-    // 現在のセクションのID一覧
-    const currentSectionIds = filteredSections.map(s => s.id);
-    console.log('現在のセクション:', currentSectionIds);
-
-    // 不足しているセクションのID一覧
-    const missingSectionIds = requiredSectionIds.filter(id => !currentSectionIds.includes(id));
-    console.log('不足しているセクション:', missingSectionIds);
-
-    // 不足しているセクションがあれば追加
-    if (missingSectionIds.length > 0) {
-      // 最大の順序を取得
-      const maxOrder = Math.max(...filteredSections.map(s => s.order), 0);
+    
+    // 最終的なセクションリスト
+    let finalSections: DesignSection[] = [];
+    
+    // ヘッダーは特別扱い
+    const headerSection = existingSections.find(s => s.id === 'header');
+    if (headerSection) {
+      finalSections.push({
+        ...headerSection,
+        order: 0,
+        visible: true
+      });
+    } else {
+      // ヘッダーがなければデフォルトから追加
+      const defaultHeader = defaultSettings.sections.find(s => s.id === 'header');
+      if (defaultHeader) {
+        finalSections.push({
+          ...defaultHeader,
+          order: 0,
+          visible: true
+        });
+      }
+    }
+    
+    // 残りのセクションを追加 - 必須セクションの順序で追加
+    let orderIndex = 1; // ヘッダーは0なので1から開始
+    
+    // 必須セクションの順序でセクションを追加
+    for (const id of requiredSectionIds) {
+      // ヘッダーはすでに追加済みなのでスキップ
+      if (id === 'header') continue;
       
-      // デフォルト設定を取得
-      const defaultSettings = getDefaultDesignSettings();
+      // 既存のセクションを検索
+      const existingSection = existingSections.find(s => s.id === id);
       
-      // 不足しているセクションをデフォルト設定から追加
-      missingSectionIds.forEach((id, index) => {
+      if (existingSection) {
+        // 既存のセクションがあれば追加（順序は上書き）
+        finalSections.push({
+          ...existingSection,
+          order: orderIndex++
+        });
+      } else {
+        // なければデフォルトから追加
         const defaultSection = defaultSettings.sections.find(s => s.id === id);
         if (defaultSection) {
           console.log(`セクション "${id}" を追加します`);
-          filteredSections.push({
+          finalSections.push({
             ...defaultSection,
-            order: maxOrder + index + 1
+            order: orderIndex++
           });
         }
-      });
+      }
     }
 
-    // 順序を正規化（小さい順に振り直す）
-    const normalizedSections = filteredSections.sort((a, b) => {
-      // ヘッダーは常に先頭
-      if (a.id === 'header') return -1;
-      if (b.id === 'header') return 1;
-      return a.order - b.order;
-    }).map((section, index) => ({
-      ...section,
-      order: section.id === 'header' ? 0 : index + 1
-    }));
-
+    console.log('最終セクション構成:', finalSections.map(s => s.id));
+    
     // 更新した設定を返す
     return {
       ...currentSettings,
-      sections: normalizedSections
+      sections: finalSections
     };
   };
 

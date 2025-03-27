@@ -244,6 +244,8 @@ export default function StoreDesignPreview() {
       fontSize: `${(section.settings?.fontSize || 16) + 4}px`,
       fontWeight: 'bold',
       marginBottom: '16px',
+      // セクションヘッダーを非表示にする
+      display: 'none',
     };
   };
 
