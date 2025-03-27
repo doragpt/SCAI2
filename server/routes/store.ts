@@ -414,7 +414,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       housing_support: req.body.housing_support !== undefined ? req.body.housing_support : (existingProfile.housing_support || false),
       
       // カスタム特典
-      special_offers: req.body.special_offers || existingProfile.special_offers || [],
+      special_offers: Array.isArray(req.body.special_offers) 
+        ? processSpecialOffers(req.body.special_offers) 
+        : (existingProfile.special_offers || []),
       
       // ギャラリー写真（重要：ここが抜けていたため写真が保存されなかった）
       gallery_photos: req.body.gallery_photos || existingProfile.gallery_photos || [],
