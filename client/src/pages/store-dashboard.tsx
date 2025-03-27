@@ -1229,6 +1229,13 @@ export default function StoreDashboard() {
                                   <p className="text-sm whitespace-pre-line">{profile.application_requirements}</p>
                                 </div>
                               )}
+                              
+                              {profile.application_notes && (
+                                <div className="px-4 py-3 bg-muted rounded-md mt-3">
+                                  <h4 className="text-sm font-medium mb-1.5">応募時の注意事項</h4>
+                                  <p className="text-sm whitespace-pre-line">{profile.application_notes}</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}

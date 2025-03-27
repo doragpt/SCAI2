@@ -1283,7 +1283,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
 
                 <FormField
                   control={form.control}
-                  name="application_requirements"
+                  name="application_notes"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-medium">応募時の注意事項</FormLabel>

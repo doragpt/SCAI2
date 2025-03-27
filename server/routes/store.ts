@@ -264,6 +264,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 応募要件
       application_requirements: req.body.application_requirements || existingProfile.application_requirements || "",
+      application_notes: req.body.application_notes || existingProfile.application_notes || "",
       
       // アクセス情報とセキュリティ対策
       access_info: req.body.access_info || existingProfile.access_info || "",
@@ -325,6 +326,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 応募要件
       application_requirements: updateData.application_requirements,
+      application_notes: updateData.application_notes,
       
       // アクセス情報とセキュリティ対策
       access_info: updateData.access_info,
@@ -393,6 +395,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         pc_website_url: fullUpdateData.pc_website_url,
         mobile_website_url: fullUpdateData.mobile_website_url,
         application_requirements: fullUpdateData.application_requirements,
+        application_notes: updateData.application_notes || existingProfile.application_notes || "",
         access_info: fullUpdateData.access_info,
         security_measures: fullUpdateData.security_measures,
         privacy_measures: updateData.privacy_measures || existingProfile.privacy_measures || "",

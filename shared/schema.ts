@@ -506,6 +506,7 @@ export const store_profiles = pgTable("store_profiles", {
   pc_website_url: text("pc_website_url"), // PCオフィシャルサイト（任意）
   mobile_website_url: text("mobile_website_url"), // スマホオフィシャルサイト（任意）
   application_requirements: text("application_requirements"), // 応募資格（任意）
+  application_notes: text("application_notes"), // 応募時の注意事項（任意）
   // 新規追加項目
   access_info: text("access_info"), // アクセス情報（最寄り駅・交通手段）
   security_measures: text("security_measures"), // 安全への取り組み
@@ -858,6 +859,7 @@ export const storeProfileSchema = z.object({
   
   // 応募要件
   application_requirements: z.string().max(1000, "応募資格は1000文字以内で入力してください").optional(), // 応募資格（任意）
+  application_notes: z.string().max(1000, "応募時の注意事項は1000文字以内で入力してください").optional(), // 応募時の注意事項（任意）
   
   // 追加項目
   access_info: z.string().max(1000, "アクセス情報は1000文字以内で入力してください").optional(), // アクセス情報

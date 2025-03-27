@@ -666,6 +666,22 @@ export default function StoreDesignPreview() {
                             <p className="text-gray-500">応募条件は登録されていません</p>
                           </div>
                         )}
+
+                        {/* テキストベースの応募条件表示 */}
+                        {profile.application_requirements && (
+                          <div className="mt-6 bg-white p-5 rounded-lg shadow-sm border border-indigo-100">
+                            <h4 className="font-medium text-indigo-700 mb-3">応募資格</h4>
+                            <p className="text-gray-700 whitespace-pre-line">{profile.application_requirements}</p>
+                          </div>
+                        )}
+                        
+                        {/* 応募時の注意事項表示 */}
+                        {profile.application_notes && (
+                          <div className="mt-4 bg-white p-5 rounded-lg shadow-sm border border-indigo-100">
+                            <h4 className="font-medium text-indigo-700 mb-3">応募時の注意事項</h4>
+                            <p className="text-gray-700 whitespace-pre-line">{profile.application_notes}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
