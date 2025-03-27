@@ -32,16 +32,16 @@ export default function StoreDesignManager() {
     BASIC_INFO: ['catchphrase'],
     // 給与情報タブ
     SALARY_BENEFITS: ['salary', 'schedule'],
-    // 応募条件タブ
-    REQUIREMENTS: ['requirements'],
-    // 連絡先タブ
-    CONTACT: ['contact', 'sns_links'],
     // アクセスタブ
     ACCESS: ['access'],
     // 安全対策タブ
     SECURITY: ['security_measures'],
     // 写真ギャラリータブ
     GALLERY: ['photo_gallery'],
+    // 応募条件タブ
+    REQUIREMENTS: ['requirements'],
+    // 連絡先タブ
+    CONTACT: ['contact', 'sns_links'],
     // 追加コンテンツ
     ADDITIONAL: ['special_offers', 'benefits', 'blog']
   };

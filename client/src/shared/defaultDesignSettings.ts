@@ -75,13 +75,13 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-
+      
       // 3. 応募条件
       {
         id: "requirements",
         title: "応募条件",
         visible: true,
-        order: 5,
+        order: 4,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -98,7 +98,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "contact",
         title: "問い合わせ",
         visible: true,
-        order: 6,
+        order: 5,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -114,7 +114,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "sns_links",
         title: "SNSリンク",
         visible: true,
-        order: 7,
+        order: 6,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -131,7 +131,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "access",
         title: "アクセス情報",
         visible: true,
-        order: 8,
+        order: 7,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -148,7 +148,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "security_measures",
         title: "安全対策",
         visible: true,
-        order: 9,
+        order: 8,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -165,7 +165,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "photo_gallery",
         title: "写真ギャラリー",
         visible: true,
-        order: 10,
+        order: 9,
         settings: {
           backgroundColor: "#fff9fa",
           textColor: "#333333",
@@ -182,7 +182,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "special_offers",
         title: "特別オファー",
         visible: true,
-        order: 11,
+        order: 10,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -199,7 +199,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "benefits",
         title: "待遇・環境",
         visible: true,
-        order: 12,
+        order: 11,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
@@ -216,7 +216,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         id: "blog",
         title: "店舗ブログ",
         visible: true,
-        order: 13,
+        order: 12,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
