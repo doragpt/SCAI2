@@ -30,8 +30,8 @@ export default function StoreDesignManager() {
   const SECTION_IDS = {
     // 基本情報タブ
     BASIC_INFO: ['catchphrase'],
-    // 給与・待遇タブ
-    SALARY_BENEFITS: ['salary', 'schedule', 'benefits'],
+    // 給与情報タブ
+    SALARY_BENEFITS: ['salary', 'schedule'],
     // 応募条件タブ
     REQUIREMENTS: ['requirements'],
     // 連絡先タブ
@@ -43,7 +43,7 @@ export default function StoreDesignManager() {
     // 写真ギャラリータブ
     GALLERY: ['photo_gallery'],
     // 追加コンテンツ
-    ADDITIONAL: ['special_offers', 'blog']
+    ADDITIONAL: ['special_offers', 'benefits', 'blog']
   };
 
   // 削除対象のセクションID（体験入店情報とキャンペーンは除外）
@@ -125,13 +125,14 @@ export default function StoreDesignManager() {
     const requiredSectionIds = [
       'header', // ヘッダー（常に最初）
       'catchphrase', // 基本情報
-      'salary', 'schedule', 'benefits', // 給与・待遇
+      'salary', 'schedule', // 給与情報
       'requirements', // 応募条件
       'contact', 'sns_links', // 連絡先
       'access', // アクセス
       'security_measures', // 安全対策
       'photo_gallery', // 写真ギャラリー
       'special_offers', // 特別オファー
+      'benefits', // 待遇・環境
       'blog', // 店舗ブログ
     ];
 

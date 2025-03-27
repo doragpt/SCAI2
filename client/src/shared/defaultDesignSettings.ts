@@ -75,22 +75,7 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
-      {
-        id: "benefits",
-        title: "待遇・環境",
-        visible: true,
-        order: 4,
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
+
       // 3. 応募条件
       {
         id: "requirements",
@@ -209,12 +194,29 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderWidth: 1
         }
       },
+      // 9. 待遇・環境
+      {
+        id: "benefits",
+        title: "待遇・環境",
+        visible: true,
+        order: 12,
+        settings: {
+          backgroundColor: "#ffffff",
+          textColor: "#333333",
+          borderColor: "#e0e0e0",
+          titleColor: "#ff4d7d",
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
       // ブログ（デザイン編集で使用）
       {
         id: "blog",
         title: "店舗ブログ",
         visible: true,
-        order: 12,
+        order: 13,
         settings: {
           backgroundColor: "#ffffff",
           textColor: "#333333",
