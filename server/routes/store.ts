@@ -30,169 +30,122 @@ function validateBenefits(benefits: any): BenefitType[] {
 
 // 特別オファーの配列の整合性を確保するヘルパー関数
 function processSpecialOffers(offers: any): any[] {
-  // デバッグログを追加
-  console.log("処理前のspecial_offers:", JSON.stringify(offers));
-  
-  if (!Array.isArray(offers)) {
-    console.log("special_offersが配列ではありません。空配列を返します。");
-    return [];
-  }
-  
   try {
+    // JSONを安全に扱うためのデバッグログ
+    console.log("処理前のspecial_offers:", typeof offers, Array.isArray(offers) ? `配列の長さ: ${offers.length}` : 'Not an array');
+    
+    if (!Array.isArray(offers)) {
+      console.log("special_offersが配列ではありません。空配列を返します。");
+      return [];
+    }
+    
     const processedOffers = offers.map(offer => {
-      if (typeof offer !== 'object' || offer === null) {
-        console.log("無効なオファーオブジェクト:", offer);
+      try {
+        if (typeof offer !== 'object' || offer === null) {
+          console.log("無効なオファーオブジェクト:", typeof offer);
+          return null;
+        }
+        
+        // 必須フィールドの存在を確認と適切なデフォルト値設定
+        const id = typeof offer.id === 'string' ? offer.id : Math.random().toString(36).substring(2, 9);
+        const title = typeof offer.title === 'string' ? offer.title : "";
+        const description = typeof offer.description === 'string' ? offer.description : "";
+        const type = typeof offer.type === 'string' ? offer.type : "bonus";
+        
+        // キャメルケースとスネークケースの両方に対応（バックグラウンドカラー）
+        const backgroundColor = typeof offer.backgroundColor === 'string' ? offer.backgroundColor : 
+                                typeof offer.background_color === 'string' ? offer.background_color : "#fff9fa";
+        
+        // キャメルケースとスネークケースの両方に対応（テキストカラー）
+        const textColor = typeof offer.textColor === 'string' ? offer.textColor : 
+                          typeof offer.text_color === 'string' ? offer.text_color : "#333333";
+        
+        // 他のフィールドの整合性確保 - プリミティブ型を保証
+        const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
+        const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
+        const icon = typeof offer.icon === 'string' ? offer.icon : "";
+        const order = typeof offer.order === 'number' ? offer.order : 0;
+        
+        // 配列は空配列をデフォルトとして使用
+        const targetAudience = Array.isArray(offer.targetAudience) ? 
+          offer.targetAudience.filter((item: any) => typeof item === 'string') : [];
+        
+        // 数値は明示的にnull、または数値に変換
+        let amount = null;
+        if (offer.amount !== undefined && offer.amount !== null) {
+          amount = typeof offer.amount === 'number' ? offer.amount : 
+                  typeof offer.amount === 'string' && offer.amount.trim() !== '' ? Number(offer.amount) : null;
+        }
+        
+        const conditions = typeof offer.conditions === 'string' ? offer.conditions : null;
+        
+        let limitedCount = null;
+        if (offer.limitedCount !== undefined && offer.limitedCount !== null) {
+          limitedCount = typeof offer.limitedCount === 'number' ? offer.limitedCount : 
+                        typeof offer.limitedCount === 'string' && offer.limitedCount.trim() !== '' ? 
+                        Number(offer.limitedCount) : null;
+        }
+        
+        // 日付フィールドは文字列として安全に保存
+        let startDate = null;
+        if (offer.startDate) {
+          if (offer.startDate instanceof Date) {
+            startDate = offer.startDate.toISOString();
+          } else if (typeof offer.startDate === 'string' && offer.startDate.trim() !== '') {
+            try {
+              const date = new Date(offer.startDate);
+              if (!isNaN(date.getTime())) {
+                startDate = date.toISOString();
+              }
+            } catch (e) {
+              console.error("startDate変換エラー:", e);
+            }
+          }
+        }
+        
+        let endDate = null;
+        if (offer.endDate) {
+          if (offer.endDate instanceof Date) {
+            endDate = offer.endDate.toISOString();
+          } else if (typeof offer.endDate === 'string' && offer.endDate.trim() !== '') {
+            try {
+              const date = new Date(offer.endDate);
+              if (!isNaN(date.getTime())) {
+                endDate = date.toISOString();
+              }
+            } catch (e) {
+              console.error("endDate変換エラー:", e);
+            }
+          }
+        }
+        
+        // JSONに安全なオブジェクトを構築
+        const jsonSafeObject = {
+          id,
+          title,
+          description,
+          type,
+          backgroundColor,
+          textColor,
+          isActive,
+          isLimited,
+          icon,
+          order,
+          targetAudience,
+          amount,
+          conditions,
+          limitedCount,
+          startDate,
+          endDate
+        };
+        
+        return jsonSafeObject;
+      } catch (offerError) {
+        console.error("個別オファー処理エラー:", offerError);
         return null;
       }
-      
-      // 必須フィールドの存在を確認
-      const id = typeof offer.id === 'string' ? offer.id : Math.random().toString(36).substring(2, 9);
-      const title = typeof offer.title === 'string' ? offer.title : "";
-      const description = typeof offer.description === 'string' ? offer.description : "";
-      const type = typeof offer.type === 'string' ? offer.type : "bonus";
-      
-      // キャメルケースとスネークケースの両方に対応（バックグラウンドカラー）
-      const backgroundColor = typeof offer.backgroundColor === 'string' ? offer.backgroundColor : 
-                              typeof offer.background_color === 'string' ? offer.background_color : "#fff9fa";
-      
-      // キャメルケースとスネークケースの両方に対応（テキストカラー）
-      const textColor = typeof offer.textColor === 'string' ? offer.textColor : 
-                        typeof offer.text_color === 'string' ? offer.text_color : "#333333";
-      
-      // 他のフィールドの整合性確保
-      const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
-      const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
-      const icon = typeof offer.icon === 'string' ? offer.icon : "";
-      const order = typeof offer.order === 'number' ? offer.order : 0;
-      
-      // 新しいオブジェクトを構築 (すべてのプロパティを明示的に設定)
-      const targetAudienceArray = Array.isArray(offer.targetAudience) ? 
-        offer.targetAudience.filter((item: any) => typeof item === 'string') : [];
-      
-      const amount = typeof offer.amount === 'number' ? offer.amount : 
-                    typeof offer.amount === 'string' && offer.amount ? Number(offer.amount) : null;
-                    
-      const conditions = typeof offer.conditions === 'string' ? offer.conditions : null;
-      
-      const limitedCount = typeof offer.limitedCount === 'number' ? offer.limitedCount : 
-                          typeof offer.limitedCount === 'string' && offer.limitedCount ? Number(offer.limitedCount) : null;
-                          
-      // 日付フィールドは文字列として保存
-      let startDate = null;
-      if (offer.startDate) {
-        if (offer.startDate instanceof Date) {
-          startDate = offer.startDate.toISOString();
-        } else if (typeof offer.startDate === 'string') {
-          startDate = offer.startDate;
-        }
-      }
-      
-      let endDate = null;
-      if (offer.endDate) {
-        if (offer.endDate instanceof Date) {
-          endDate = offer.endDate.toISOString();
-        } else if (typeof offer.endDate === 'string') {
-          endDate = offer.endDate;
-        }
-      }
-      
-      const cleanedOffer = {
-        id,
-        title,
-        description,
-        type,
-        backgroundColor,
-        textColor,
-        isActive,
-        isLimited,
-        icon,
-        order,
-        targetAudience: targetAudienceArray,
-        amount,
-        conditions,
-        limitedCount,
-        startDate,
-        endDate
-      };
-      
-      // 型安全なアクセス用にオブジェクトを拡張
-      const typedOffer: Record<string, any> = cleanedOffer;
-      
-      // オプションのフィールドは型チェック後に追加
-      if (offer.amount !== undefined) {
-        typedOffer.amount = typeof offer.amount === 'number' ? offer.amount : Number(offer.amount) || 0;
-      }
-      
-      if (offer.conditions !== undefined) {
-        typedOffer.conditions = typeof offer.conditions === 'string' ? offer.conditions : String(offer.conditions);
-      }
-      
-      // Date型は特別に処理
-      if (offer.startDate) {
-        try {
-          // ISO文字列に変換してからJSONで安全に扱えるようにする
-          if (offer.startDate instanceof Date) {
-            typedOffer.startDate = offer.startDate.toISOString();
-          } else if (typeof offer.startDate === 'string') {
-            const date = new Date(offer.startDate);
-            if (!isNaN(date.getTime())) {
-              typedOffer.startDate = date.toISOString();
-            }
-          }
-        } catch (e) {
-          console.error("startDate処理エラー:", e);
-        }
-      }
-      
-      if (offer.endDate) {
-        try {
-          if (offer.endDate instanceof Date) {
-            typedOffer.endDate = offer.endDate.toISOString();
-          } else if (typeof offer.endDate === 'string') {
-            const date = new Date(offer.endDate);
-            if (!isNaN(date.getTime())) {
-              typedOffer.endDate = date.toISOString();
-            }
-          }
-        } catch (e) {
-          console.error("endDate処理エラー:", e);
-        }
-      }
-      
-      if (offer.limitedCount !== undefined) {
-        typedOffer.limitedCount = typeof offer.limitedCount === 'number' ? 
-          offer.limitedCount : Number(offer.limitedCount) || 0;
-      }
-      
-      // targetAudienceは初期オブジェクトで既に処理済み
-      
-      // オブジェクトを完全に新しく作り直し、PostgreSQLのJSONB型に安全な値だけを含める
-      const jsonSafeObject = {
-        id,
-        title,
-        description,
-        type,
-        backgroundColor,
-        textColor,
-        isActive,
-        isLimited,
-        icon,
-        order,
-        targetAudience: Array.isArray(cleanedOffer.targetAudience) ? cleanedOffer.targetAudience : [],
-        amount: cleanedOffer.amount,
-        conditions: cleanedOffer.conditions,
-        limitedCount: cleanedOffer.limitedCount,
-        startDate: cleanedOffer.startDate,
-        endDate: cleanedOffer.endDate
-      };
-      
-      // 各オファーの処理後の状態をログ出力
-      console.log(`オファー "${title}" の処理後のデータ:`, JSON.stringify(jsonSafeObject));
-      
-      return jsonSafeObject;
     }).filter(Boolean); // null値を除外
     
-    console.log("処理後のspecial_offers:", JSON.stringify(processedOffers));
     return processedOffers;
   } catch (error) {
     console.error("special_offers処理中のエラー:", error);
