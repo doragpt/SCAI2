@@ -96,9 +96,9 @@ export default function StoreDesignManager() {
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
       try {
-        console.log('デザイン設定を保存しています...');
+        console.log('デザイン設定を保存しています...', JSON.stringify(data, null, 2));
         const response = await apiRequest("POST", "/api/design", data);
-        console.log('デザイン設定の保存に成功しました');
+        console.log('デザイン設定の保存に成功しました', response);
         return response;
       } catch (error) {
         console.error('デザイン設定の保存に失敗しました:', error);

@@ -197,10 +197,12 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
 router.post('/', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
+    console.log('デザイン設定の保存リクエスト受信:', { userId });
     
     // リクエストボディをバリデーション
     const validationResult = designSettingsSchema.safeParse(req.body);
     if (!validationResult.success) {
+      console.error('デザイン設定のバリデーションエラー:', validationResult.error.format());
       return res.status(400).json({ 
         error: 'デザイン設定のバリデーションに失敗しました',
         details: validationResult.error.format()
@@ -208,18 +210,30 @@ router.post('/', authenticate, authorize('store'), async (req: Request, res: Res
     }
     
     const designSettings = validationResult.data;
+    console.log('バリデーション成功 - セクション数:', designSettings.sections.length, 'セクションID:', designSettings.sections.map(s => s.id));
     
     // 店舗プロフィールを取得
     const storeProfile = await storage.getStoreProfile(userId);
     
     if (!storeProfile) {
+      console.error('店舗プロフィールが見つかりません:', { userId });
       return res.status(404).json({ error: '店舗プロフィールが見つかりません' });
     }
+    
+    console.log('店舗プロフィール取得成功:', { 
+      storeId: storeProfile.id, 
+      businessName: storeProfile.business_name
+    });
     
     // デザイン設定を更新
     await db.update(store_profiles)
       .set({ design_settings: designSettings })
       .where(eq(store_profiles.user_id, userId));
+    
+    console.log('デザイン設定更新成功:', {
+      userId,
+      sectionsCount: designSettings.sections.length
+    });
     
     res.json({ 
       success: true, 
