@@ -252,17 +252,17 @@ export default function StoreDesignPreview() {
         {/* ヘッダー */}
         {shouldShowSection('header') && (
           <div style={getSectionStyle('header')} className="mb-12 rounded-xl border border-primary/10 bg-white shadow-md overflow-hidden">
-            {/* TOP画像表示 - 640×640推奨サイズ */}
+            {/* TOP画像表示 - 640x640推奨サイズ */}
             {profile.top_image ? (
               <div className="relative w-full bg-gray-100 flex justify-center">
-                <div className="relative w-[640px] h-[640px] overflow-hidden">
+                <div className="relative w-full max-w-2xl aspect-square overflow-hidden">
                   <img 
                     src={profile.top_image} 
                     alt={profile.business_name || 'ショップ画像'} 
                     className="w-full h-full object-cover"
                   />
                   {/* 画像の上に重ねるグラデーション */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
                   
                   {/* ショップ名と場所を表示 */}
                   <div className="absolute bottom-0 left-0 w-full p-6 text-white">
