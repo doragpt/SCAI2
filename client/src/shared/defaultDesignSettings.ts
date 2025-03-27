@@ -193,23 +193,6 @@ export const getDefaultDesignSettings = (): DesignSettings => {
           borderRadius: 8,
           borderWidth: 1
         }
-      },
-      // 応募条件（デザイン編集で使用）
-      {
-        id: "requirements",
-        title: "応募条件",
-        visible: true,
-        order: 11, // 最後の位置に配置
-        settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
       }
     ],
     globalSettings: {
