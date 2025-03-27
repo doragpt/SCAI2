@@ -4,7 +4,7 @@ import { db } from '../db';
 import { store_profiles } from '@shared/schema';
 import { designSettingsSchema, type DesignSettings } from '@shared/schema';
 import { storage } from '../storage';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -225,22 +225,16 @@ router.post('/', authenticate, authorize('store'), async (req: Request, res: Res
       businessName: storeProfile.business_name
     });
     
-    // デザイン設定を更新
-    // JSONBカラムを更新するため、明示的なクエリを使用
-    const result = await db.execute(
-      `UPDATE store_profiles 
-      SET design_settings = $1::jsonb 
-      WHERE user_id = $2`,
-      [
-        JSON.stringify(designSettings),
-        userId
-      ]
-    );
+    // デザイン設定を更新（Drizzle ORMを使用）
+    await db.update(store_profiles)
+      .set({ 
+        design_settings: designSettings as any 
+      })
+      .where(eq(store_profiles.user_id, userId));
     
     console.log('デザイン設定更新成功:', {
       userId,
-      sectionsCount: designSettings.sections.length,
-      result
+      sectionsCount: designSettings.sections.length
     });
     
     res.json({ 

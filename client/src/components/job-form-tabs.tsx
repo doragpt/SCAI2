@@ -245,41 +245,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         console.log("送信データ:", formattedData);
         
-        const response = await fetch('/api/store/profile', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formattedData),
-          credentials: 'include' // 認証情報（Cookie）を含める
-        });
-        
-        console.log("リクエスト結果:", {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok
-        });
-        
-        if (!response.ok) {
-          // エラーレスポンスの場合は詳細情報を出力
-          const errorText = await response.text();
-          console.error("エラーレスポンス:", {
-            status: response.status,
-            text: errorText
-          });
-          
-          try {
-            // JSONパースを試みる
-            const errorJson = JSON.parse(errorText);
-            throw new Error(errorJson.message || `エラー: ${response.status} ${response.statusText}`);
-          } catch (parseError) {
-            // JSONパースに失敗した場合はテキストそのままを表示
-            throw new Error(`エラー: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
-          }
+        try {
+          // apiRequest関数を使用してリクエストを送信
+          return await apiRequest("PATCH", "/api/store/profile", formattedData);
+        } catch (error) {
+          console.error("apiRequest処理中のエラー:", error);
+          throw error;
         }
-        
-        // 成功した場合はJSONレスポンスをパース
-        return await response.json();
       } catch (error) {
         console.error("送信処理中のエラー:", error);
         throw error;
