@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type StoreProfile, type BlogPost, cupSizes, type CupSize, trialEntrySchema, campaignSchema } from "@shared/schema";
+import { type StoreProfile, type BlogPost, cupSizes, type CupSize } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { ThumbnailImage } from "@/components/blog/thumbnail-image";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { HtmlContent } from "@/components/html-content";
 import { type LucideIcon } from "lucide-react";
-import { TrialEntryDisplay } from "@/components/store/TrialEntryDisplay";
-import { TrialEntryFormTab } from "@/components/store/TrialEntryFormTab";
-import { CampaignDisplay } from "@/components/store/CampaignDisplay";
-import { CampaignFormTab } from "@/components/store/CampaignFormTab";
+
 import { PhotoGalleryDisplay } from "@/components/store/PhotoGalleryDisplay";
 import { apiRequest } from "@/lib/queryClient";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -885,14 +882,6 @@ export default function StoreDashboard() {
                 <TabsTrigger value="blog" className="py-2 rounded-lg">
                   <Pencil className="h-4 w-4 mr-2" />
                   ブログ管理
-                </TabsTrigger>
-                <TabsTrigger value="trialEntry" className="py-2 rounded-lg">
-                  <Award className="h-4 w-4 mr-2" />
-                  体験入店
-                </TabsTrigger>
-                <TabsTrigger value="campaigns" className="py-2 rounded-lg">
-                  <Gift className="h-4 w-4 mr-2" />
-                  キャンペーン
                 </TabsTrigger>
                 <TabsTrigger value="recruitmentLogic" className="py-2 rounded-lg">
                   <Briefcase className="h-4 w-4 mr-2" />
