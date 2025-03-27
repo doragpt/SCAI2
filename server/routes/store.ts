@@ -588,34 +588,47 @@ router.get("/blog", authenticate, authorize("store"), async (req: any, res) => {
     });
 
     // クエリパラメータの取得（ページネーション用）
+    const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
     
-    // ブログ記事テーブルは別途実装予定だが、現在はダミーレスポンスを返す
-    const dummyPosts = [
-      {
-        id: '1',
-        title: '店舗からのお知らせ',
-        content: '<p>当店からの最新情報をお届けします。</p>',
-        published_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        thumbnail: null
-      }
-    ];
+    // blogPostsテーブルからブログ記事データを取得する
+    const { blogPosts } = await import('@shared/schema');
+    
+    // 総記事数のカウントを取得
+    const countResult = await db
+      .select({ count: count() })
+      .from(blogPosts)
+      .where(eq(blogPosts.store_id, req.user.id));
+    
+    const totalItems = countResult[0].count;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    // 記事一覧を取得
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.store_id, req.user.id))
+      .orderBy(desc(blogPosts.created_at))
+      .limit(limit)
+      .offset(offset);
     
     log('info', '店舗ブログ記事取得成功', {
       userId: req.user.id,
-      postsCount: dummyPosts.length
+      postsCount: posts.length,
+      totalItems: totalItems
     });
 
     return res.json({
-      posts: dummyPosts,
+      posts: posts,
       pagination: {
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: dummyPosts.length
+        currentPage: page,
+        totalPages: totalPages,
+        totalItems: totalItems
       }
     });
   } catch (error) {
+    console.error('ブログ記事取得エラー:', error);
     log('error', '店舗ブログ記事取得エラー', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userId: req.user?.id
