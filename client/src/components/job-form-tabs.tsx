@@ -356,7 +356,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     },
   });
 
-  const onSubmit = (data: StoreProfile) => {
+  const onSubmit = async (data: StoreProfile) => {
     console.log("フォーム送信が開始されました", { 
       formValid: form.formState.isValid,
       timestamp: new Date().toISOString()
@@ -395,6 +395,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     }
     
     try {
+      console.log("フォーム検証通過 - 送信処理開始", {
+        timestamp: new Date().toISOString()
+      });
+      
       // データを整形
       const cleanedData = { ...data };
       
@@ -435,9 +439,80 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         description: "店舗情報を保存しています",
       });
       
-      // mutate実行
+      // API パスを明示的に確認
+      const apiPath = '/api/store/profile';
+      console.log("店舗プロフィール更新 - API呼び出し情報:", {
+        path: apiPath,
+        method: "PATCH",
+        dataSize: JSON.stringify(cleanedData).length,
+        timestamp: new Date().toISOString()
+      });
+      
+      // fetchを使って直接APIを呼び出す
+      try {
+        console.log("直接fetchによるAPIリクエスト試行");
+        const response = await fetch(apiPath, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(cleanedData),
+          credentials: 'include'
+        });
+        
+        console.log("直接fetchレスポンス受信:", {
+          status: response.status,
+          ok: response.ok,
+          timestamp: new Date().toISOString()
+        });
+        
+        const result = await response.json();
+        console.log("直接fetch結果:", {
+          status: response.status,
+          ok: response.ok,
+          result,
+          timestamp: new Date().toISOString()
+        });
+        
+        // 成功したらキャッシュを更新してコールバックを呼び出す
+        if (response.ok) {
+          console.log("直接fetchによる保存成功");
+          
+          // キャッシュを更新
+          queryClient.invalidateQueries({ 
+            queryKey: [QUERY_KEYS.STORE_PROFILE],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [QUERY_KEYS.STORE_STATS],
+          });
+          
+          toast({
+            title: "店舗情報を保存しました",
+            description: "変更内容が保存されました。",
+          });
+          
+          if (onSuccess) {
+            console.log("成功時のコールバックを呼び出します");
+            onSuccess();
+          }
+          
+          return; // 成功したので以降の処理は不要
+        } else {
+          console.error("直接fetchエラー:", result);
+          toast({
+            variant: "destructive",
+            title: "保存に失敗しました",
+            description: result.message || "不明なエラーが発生しました",
+          });
+        }
+      } catch (directFetchError) {
+        console.error("直接fetch中のエラー:", directFetchError);
+        // エラーがあってもmutateを試す
+      }
+      
+      // fetchが失敗した場合のバックアップとしてmutateを実行
+      console.log("mutate実行開始");
       mutate(cleanedData, {
-        // 明示的にonSuccessと追加
         onSuccess: (result) => {
           console.log("mutate直接コールバック - 保存成功:", {
             result,
