@@ -3,6 +3,7 @@ import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import memorystore from "memorystore";
 import { log } from "./utils/logger";
 
 // User型とInsertUser型の定義
@@ -10,6 +11,7 @@ type User = typeof users.$inferSelect;
 type InsertUser = Omit<User, 'id' | 'created_at' | 'updated_at'>;
 
 const PgSession = connectPgSimple(session);
+const MemoryStore = memorystore(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -27,11 +29,19 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    // メモリベースのセッションストアを使用
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // 24時間ごとに古いセッションをプルーニング
+    });
+    
+    // PostgreSQLベースのセッションストアコメントアウト（問題が解決したら戻す）
+    /*
     this.sessionStore = new PgSession({
       pool,
       tableName: 'session',
       createTableIfMissing: true
     });
+    */
   }
 
   async getUser(id: number): Promise<User | undefined> {

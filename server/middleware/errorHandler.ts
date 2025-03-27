@@ -1,12 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../utils/logger';
 import { ZodError } from 'zod';
+import { ApiErrorType, sendError } from '../utils/api-response';
 
 export interface ApiError extends Error {
   statusCode?: number;
   code?: string;
+  type?: ApiErrorType;
+  details?: any;
 }
 
+/**
+ * 標準化された集中エラーハンドリングミドルウェア
+ */
 export function errorHandler(
   err: Error,
   req: Request,
@@ -24,29 +30,60 @@ export function errorHandler(
 
   // Zodバリデーションエラーの処理
   if (err instanceof ZodError) {
-    return res.status(400).json({
-      message: 'バリデーションエラー',
-      errors: err.errors.map(e => ({
-        path: e.path.join('.'),
-        message: e.message
-      }))
-    });
+    return sendError(
+      res, 
+      'ValidationError', 
+      'バリデーションエラー', 
+      {
+        errors: err.errors.map(e => ({
+          path: e.path.join('.'),
+          message: e.message
+        }))
+      }
+    );
   }
 
-  // APIエラーの処理
-  if ((err as ApiError).statusCode) {
-    const apiError = err as ApiError;
-    return res.status(apiError.statusCode).json({
-      message: apiError.message,
-      code: apiError.code
-    });
+  // 明示的なAPIエラータイプがある場合
+  const apiError = err as ApiError;
+  if (apiError.type) {
+    return sendError(
+      res,
+      apiError.type,
+      apiError.message,
+      apiError.details
+    );
   }
 
-  // その他のエラーの処理
-  const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  res.status(statusCode).json({
-    message: process.env.NODE_ENV === 'development' 
+  // 旧形式のAPIエラー（statusCodeがある場合）
+  if (apiError.statusCode) {
+    // 旧形式のステータスコードから新しいエラータイプへのマッピング
+    let errorType: ApiErrorType = 'InternalServerError';
+    
+    switch(apiError.statusCode) {
+      case 400: errorType = 'BadRequest'; break;
+      case 401: errorType = 'Unauthorized'; break;
+      case 403: errorType = 'Forbidden'; break;
+      case 404: errorType = 'NotFound'; break;
+      case 409: errorType = 'ConflictError'; break;
+      case 422: errorType = 'ValidationError'; break;
+      case 503: errorType = 'ServiceUnavailable'; break;
+      default: errorType = 'InternalServerError';
+    }
+    
+    return sendError(
+      res,
+      errorType,
+      apiError.message,
+      apiError.code ? { code: apiError.code } : undefined
+    );
+  }
+
+  // その他の予期しないエラー
+  return sendError(
+    res,
+    'InternalServerError',
+    process.env.NODE_ENV === 'development' 
       ? err.message 
-      : '内部サーバーエラー'
-  });
+      : undefined
+  );
 }

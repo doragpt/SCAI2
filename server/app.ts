@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { errorHandler } from './middleware/errorHandler';
+import { errorHandler, ApiError } from './middleware/errorHandler';
 import { log } from './utils/logger';
 import { registerRoutes } from './routes';
 import { setupAuth } from './auth';
@@ -13,6 +13,7 @@ import { authenticate } from './middleware/auth';
 import { db } from './db';
 import { store_profiles } from '../shared/schema';
 import { eq, and, like, sql } from 'drizzle-orm';
+import { sendError, sendSuccess } from './utils/api-response';
 
 const app = express();
 
@@ -48,11 +49,12 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// 認証関連のルートを最初に登録
-app.use('/auth', authRouter);
+// すべてのAPIルートを/apiプレフィックスの下に統合
+// 認証関連のルート
+app.use('/api/auth', authRouter);
 
 // 認証状態チェック用エンドポイント
-app.get('/check', authenticate, (req, res) => {
+app.get('/api/check', authenticate, (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: "認証が必要です" });
   }
@@ -61,16 +63,31 @@ app.get('/check', authenticate, (req, res) => {
 
 // 保護されたAPIルートを登録
 app.use('/api/talent', talentRouter);
-app.use('/talent', talentRouter); // 両方のパスをサポート
-app.use('/store', storeRouter);
-app.use('/api/store', storeRouter); // クライアント側からのAPIリクエスト用のパスを追加
-// ブログルーターの登録
+app.use('/api/store', storeRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/upload', uploadRouter);
 
 // デザイン関連のAPIルートを登録
 import designRouter from './routes/design';
 app.use('/api/design', designRouter);
+
+// 後方互換性のために一時的に古いパスもサポート（将来的に削除予定）
+app.use('/auth', (req, res, next) => {
+  log('warn', '非推奨パス使用', { path: req.path, method: req.method });
+  res.redirect(307, `/api${req.url}`);
+});
+app.use('/check', (req, res, next) => {
+  log('warn', '非推奨パス使用', { path: req.path, method: req.method });
+  res.redirect(307, `/api${req.url}`);
+});
+app.use('/talent', (req, res, next) => {
+  log('warn', '非推奨パス使用', { path: req.path, method: req.method });
+  res.redirect(307, `/api${req.url}`);
+});
+app.use('/store', (req, res, next) => {
+  log('warn', '非推奨パス使用', { path: req.path, method: req.method });
+  res.redirect(307, `/api${req.url}`);
+});
 
 // 求人関連のAPIルートを登録
 
@@ -138,7 +155,7 @@ app.get('/api/jobs', async (req, res) => {
     });
     
     // 結果をフォーマットして返却
-    return res.json({
+    return sendSuccess(res, {
       jobs: storeProfiles,
       pagination: {
         currentPage: page,
@@ -148,10 +165,7 @@ app.get('/api/jobs', async (req, res) => {
     });
   } catch (error) {
     log('error', 'API 求人一覧取得エラー', { error });
-    return res.status(500).json({
-      error: 'InternalServerError',
-      message: '求人情報の取得に失敗しました'
-    });
+    return sendError(res, 'InternalServerError', '求人情報の取得に失敗しました');
   }
 });
 
@@ -199,19 +213,13 @@ app.get('/api/jobs/:id', async (req, res) => {
     .limit(1);
     
     if (!job || job.length === 0) {
-      return res.status(404).json({
-        error: 'NotFound',
-        message: '指定された求人が見つかりませんでした'
-      });
+      return sendError(res, 'NotFound', '指定された求人が見つかりませんでした');
     }
     
-    return res.json(job[0]);
+    return sendSuccess(res, job[0]);
   } catch (error) {
     log('error', 'API 求人詳細取得エラー', { error });
-    return res.status(500).json({
-      error: 'InternalServerError',
-      message: '求人詳細の取得に失敗しました'
-    });
+    return sendError(res, 'InternalServerError', '求人詳細の取得に失敗しました');
   }
 });
 
@@ -235,9 +243,7 @@ app.use('/api/*', (req, res) => {
     isAuthenticated: req.isAuthenticated(),
     sessionID: req.sessionID
   });
-  res.status(404).json({
-    message: '指定されたAPIエンドポイントが見つかりません'
-  });
+  sendError(res, 'NotFound', '指定されたAPIエンドポイントが見つかりません');
 });
 
 export default app;
