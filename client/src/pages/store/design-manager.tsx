@@ -128,11 +128,11 @@ export default function StoreDesignManager() {
       'salary', 'schedule', // 給与情報
       'security_measures', // 安全対策
       'photo_gallery', // 写真ギャラリー
+      'special_offers', // 特別オファー
+      'benefits', // 待遇・環境
       'requirements', // 応募条件
       'contact', 'sns_links', // 連絡先
       'access', // アクセス
-      'special_offers', // 特別オファー
-      'benefits', // 待遇・環境
       'blog', // 店舗ブログ
     ];
 
