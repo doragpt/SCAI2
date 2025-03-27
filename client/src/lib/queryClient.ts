@@ -42,19 +42,37 @@ export async function apiRequest<T = any>(
     });
 
     // レスポンスのJSON解析
-    const responseData = await response.json();
+    const responseData = await response.json().catch(e => {
+      log('error', 'JSONパース失敗', {
+        error: e instanceof Error ? e.message : 'Unknown error',
+        status: response.status,
+        url: fullUrl
+      });
+      return { success: false, message: "レスポンスの解析に失敗しました" };
+    });
     
     if (!response.ok) {
       log('error', 'APIリクエストエラー', {
         status: response.status,
         statusText: response.statusText,
-        url: fullUrl
+        url: fullUrl,
+        responseData
       });
 
       throw new Error(responseData.message || "APIリクエストに失敗しました");
     }
 
     console.log(`API Response from ${url}:`, responseData);
+    
+    // サーバー側でsuccess: falseで返ってきた場合もエラーとして処理
+    if (responseData && responseData.success === false) {
+      log('error', 'APIリクエストはHTTP 200だがレスポンスに失敗', {
+        url: fullUrl,
+        responseData
+      });
+      throw new Error(responseData.message || "処理は完了しましたが、エラーが発生しました");
+    }
+    
     return responseData as T;
   } catch (error) {
     log('error', 'APIリクエストエラー', {

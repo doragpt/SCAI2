@@ -35,15 +35,26 @@ export function authenticate(
         role: req.user.role,
         display_name: req.user.display_name,
         service_type: req.user.service_type
-      } : null
+      } : null,
+      cookies: req.cookies ? Object.keys(req.cookies) : [],
+      headers: {
+        'content-type': req.headers['content-type'],
+        'accept': req.headers['accept'],
+        'user-agent': req.headers['user-agent']?.substring(0, 50)
+      }
     });
 
     if (!req.isAuthenticated() || !req.user) {
       log('warn', '未認証アクセス', {
         path: req.path,
-        method: req.method
+        method: req.method,
+        sessionID: req.sessionID || 'session-id-missing',
+        cookies: req.cookies ? Object.keys(req.cookies) : []
       });
-      return res.status(401).json({ message: '認証が必要です' });
+      return res.status(401).json({ 
+        success: false,
+        message: '認証が必要です'
+      });
     }
 
     // セッションの有効性を確認

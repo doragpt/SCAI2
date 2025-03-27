@@ -424,7 +424,19 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       updatedData: validatedData
     });
 
-    return res.json(updatedProfile);
+    // Drizzleの返却値の型を明示的に処理して応答を正確に整形
+    if (updatedProfile) {
+      return res.status(200).json({
+        ...updatedProfile,
+        success: true,
+        message: "店舗プロフィールを更新しました"
+      });
+    } else {
+      return res.status(500).json({ 
+        success: false, 
+        message: "店舗プロフィールの更新処理は完了しましたが、更新後のデータを取得できませんでした"
+      });
+    }
 
   } catch (error) {
     console.error('詳細エラー情報:', error);
