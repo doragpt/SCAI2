@@ -180,7 +180,8 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
           backgroundColor: '#ffffff',
           fontFamily: 'sans-serif',
           borderRadius: 8,
-          maxWidth: 1200
+          maxWidth: 1200,
+          hideSectionTitles: false
         }
       };
       
