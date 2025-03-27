@@ -339,9 +339,12 @@ export default function StoreDesignPreview() {
                 
                 {/* キャッチコピー・仕事内容 */}
                 {section.id === 'catchphrase' && (
-                  <div className="space-y-4">
-                    <div className="text-lg font-medium">{profile.catch_phrase}</div>
-                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: profile.description }} />
+                  <div className="space-y-6">
+                    {/* キャッチフレーズは既にヘッダーに表示されているので、ここではお仕事内容のみを表示 */}
+                    <div className="bg-white p-5 rounded-lg shadow-sm">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2 border-gray-200">お仕事詳細</h3>
+                      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: profile.description }} />
+                    </div>
                   </div>
                 )}
                 
