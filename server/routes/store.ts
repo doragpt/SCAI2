@@ -375,6 +375,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           : existingProfile.requirements || {
             accepts_temporary_workers: false,
             requires_arrival_day_before: false,
+            prioritize_titles: false,
             other_conditions: [],
             cup_size_conditions: []
           },
