@@ -120,6 +120,7 @@ export default function StoreDesignPreview() {
     '--accent-color': settings.globalSettings.accentColor || '#ff9eb8',
     '--border-radius': `${settings.globalSettings.borderRadius || 8}px`,
     maxWidth: `${settings.globalSettings.maxWidth || 1200}px`,
+    color: '#333333',
   } as React.CSSProperties;
 
   // データ読み込み中の表示
@@ -241,14 +242,28 @@ export default function StoreDesignPreview() {
       <div style={{ margin: '0 auto', maxWidth: globalStyles.maxWidth }}>
         {/* ヘッダー */}
         {shouldShowSection('header') && (
-          <div style={getSectionStyle('header')} className="flex flex-col items-center text-center mb-8">
-            <h1 style={{ color: settings.globalSettings.mainColor }} className="text-3xl font-bold mb-2">
+          <div style={getSectionStyle('header')} className="flex flex-col items-center text-center mb-8 p-6 rounded-lg border border-primary/20 bg-gradient-to-b from-white to-primary/5 shadow-sm">
+            <h1 style={{ color: settings.globalSettings.mainColor }} className="text-3xl md:text-4xl font-bold mb-3">
               {profile.business_name}
             </h1>
-            <div className="flex items-center space-x-2 text-gray-600 mb-2">
-              <span>{profile.location}</span>
-              <span>•</span>
-              <span>{profile.service_type}</span>
+            <div className="flex items-center space-x-3 text-gray-600 mb-4">
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                {profile.location}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                {profile.service_type}
+              </span>
+            </div>
+            <div className="bg-primary/10 rounded-full px-4 py-1.5 text-sm font-medium text-primary">
+              採用情報掲載中
             </div>
           </div>
         )}
@@ -275,22 +290,42 @@ export default function StoreDesignPreview() {
                 {/* 給与情報 */}
                 {section.id === 'salary' && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-muted/20 p-4 rounded-md">
-                        <div className="text-sm text-muted-foreground">最低保証</div>
-                        <div className="text-xl font-bold">{profile.minimum_guarantee?.toLocaleString()}円〜</div>
+                    <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-md border border-green-100 dark:border-green-800/30">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">参考給与例</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">日給</div>
+                      <div className="text-xl font-bold text-green-700 dark:text-green-400">
+                        {profile.minimum_guarantee && profile.maximum_guarantee ? 
+                          `${profile.minimum_guarantee.toLocaleString()}円〜${profile.maximum_guarantee.toLocaleString()}円` : 
+                          '応相談'}
                       </div>
-                      <div className="bg-muted/20 p-4 rounded-md">
-                        <div className="text-sm text-muted-foreground">最高給与</div>
-                        <div className="text-xl font-bold">{profile.maximum_guarantee?.toLocaleString()}円</div>
-                      </div>
+                      
+                      {profile.average_hourly_pay > 0 && profile.working_time_hours > 0 && (
+                        <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">平均給与</div>
+                          <div className="font-medium text-green-700 dark:text-green-400">
+                            {profile.working_time_hours}時間勤務　{profile.average_hourly_pay.toLocaleString()}円
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            （時給換算：{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円）
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {profile.average_hourly_pay > 0 && (
-                      <div className="bg-muted/20 p-4 rounded-md">
-                        <div className="text-sm text-muted-foreground">平均時給</div>
-                        <div className="text-xl font-bold">{profile.average_hourly_pay?.toLocaleString()}円</div>
-                      </div>
-                    )}
+                    
+                    {/* 待遇アイコン */}
+                    <div className="flex flex-wrap gap-2">
+                      {profile.transportation_support && (
+                        <div className="flex items-center bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border border-green-200 dark:border-green-800">
+                          <span className="text-xs font-medium text-green-700 dark:text-green-300">交通費支給</span>
+                        </div>
+                      )}
+                      
+                      {profile.housing_support && (
+                        <div className="flex items-center bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border border-green-200 dark:border-green-800">
+                          <span className="text-xs font-medium text-green-700 dark:text-green-300">寮完備</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 
@@ -306,11 +341,22 @@ export default function StoreDesignPreview() {
                 {/* 待遇・環境 */}
                 {section.id === 'benefits' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Array.isArray(profile.benefits) && profile.benefits.map((benefit: string, index: number) => (
-                      <div key={index} className="bg-muted/20 p-3 rounded-md text-center">
-                        {benefit}
+                    {Array.isArray(profile.benefits) && profile.benefits.length > 0 ? (
+                      profile.benefits.map((benefit: string, index: number) => (
+                        <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-md text-center shadow-sm border border-primary/10 hover:border-primary/30 transition-all duration-300">
+                          <span className="inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <svg className="w-4 h-4 mr-1.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {benefit}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center p-8 bg-muted/10 rounded-md">
+                        <p className="text-muted-foreground">待遇情報が登録されていません</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
                 
@@ -380,64 +426,132 @@ export default function StoreDesignPreview() {
                 
                 {/* SNSリンク */}
                 {section.id === 'sns_links' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.isArray(profile.sns_urls) && profile.sns_urls.map((sns: string, index: number) => (
-                      <div key={index} className="bg-muted/20 p-4 rounded-md flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                          <span className="text-primary">SNS</span>
+                  <div className="space-y-4">
+                    {/* 通常のSNSリンク */}
+                    {Array.isArray(profile.sns_urls) && profile.sns_urls.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {profile.sns_urls.map((sns: string, index: number) => (
+                          <div key={index} className="bg-muted/20 p-4 rounded-md flex items-center">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                              <span className="text-primary">SNS</span>
+                            </div>
+                            <div>
+                              <div className="font-medium truncate">{sns}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* LINE情報 */}
+                    {(profile.sns_id || profile.sns_url) && (
+                      <div className="bg-[#06c755]/10 p-4 rounded-md">
+                        <div className="flex items-center mb-2">
+                          <div className="w-10 h-10 rounded-full bg-[#06c755] flex items-center justify-center mr-3 text-white font-bold">
+                            LINE
+                          </div>
+                          <div className="font-medium">公式LINE</div>
                         </div>
-                        <div>
-                          <div className="font-medium truncate">{sns}</div>
+                        
+                        {profile.sns_text && (
+                          <p className="mb-3 text-sm">{profile.sns_text}</p>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {profile.sns_id && (
+                            <div className="flex items-center text-sm bg-white px-3 py-2 rounded-lg">
+                              <span className="font-bold mr-2">ID:</span>
+                              <span>{profile.sns_id}</span>
+                            </div>
+                          )}
+                          
+                          {profile.sns_url && (
+                            <a
+                              href={profile.sns_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center p-2 rounded-md bg-[#06C755] hover:bg-[#05b64d] text-white text-sm font-medium"
+                            >
+                              <span>友だち追加</span>
+                            </a>
+                          )}
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
                 
                 {/* 写真ギャラリー */}
                 {section.id === 'photo_gallery' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {Array.isArray(profile.gallery_photos) && profile.gallery_photos.map((photo: string, index: number) => (
-                      <div key={index} className="aspect-[4/3] overflow-hidden rounded-md bg-muted/20">
-                        <img 
-                          src={photo} 
-                          alt={`ギャラリー画像 ${index + 1}`} 
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
+                    {Array.isArray(profile.gallery_photos) && profile.gallery_photos.length > 0 ? (
+                      profile.gallery_photos.map((photo: any, index: number) => (
+                        <div key={index} className="aspect-[4/3] overflow-hidden rounded-md shadow-sm hover:shadow-md transition-all duration-300">
+                          <img 
+                            src={typeof photo === 'string' ? photo : photo.url} 
+                            alt={`ギャラリー画像 ${index + 1}`} 
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center p-8 bg-muted/10 rounded-md">
+                        <p className="text-muted-foreground">写真が登録されていません</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
                 
                 {/* 店舗ブログ */}
                 {section.id === 'blog' && (
                   <div className="space-y-4">
-                    {blogPosts.map((post: any) => (
-                      <div key={post.id} className="bg-muted/20 p-4 rounded-md">
-                        <div className="flex items-start">
-                          {post.thumbnail && (
-                            <div className="shrink-0 w-24 h-24 mr-4 rounded-md overflow-hidden">
-                              <img 
-                                src={post.thumbnail} 
-                                alt={post.title} 
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-bold mb-1">{post.title}</h3>
-                            <div className="text-sm text-muted-foreground mb-2">
-                              {new Date(post.published_at || post.created_at).toLocaleDateString()}
-                            </div>
-                            <div className="text-sm line-clamp-2">
-                              {post.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                    {Array.isArray(blogPosts) && blogPosts.length > 0 ? (
+                      blogPosts.map((post: any) => (
+                        <div key={post.id} className="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-300">
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                            {post.thumbnail && (
+                              <div className="shrink-0 w-full sm:w-32 h-32 rounded-md overflow-hidden">
+                                <img 
+                                  src={post.thumbnail} 
+                                  alt={post.title} 
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold mb-1 text-primary">{post.title}</h3>
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                <span className="inline-block px-2 py-1 bg-primary/10 rounded-full mr-2">
+                                  {new Date(post.published_at || post.created_at).toLocaleDateString('ja-JP')}
+                                </span>
+                                {post.status === 'published' && (
+                                  <span className="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full">
+                                    公開中
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm line-clamp-3 text-gray-600 dark:text-gray-300 leading-relaxed">
+                                {post.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                              </div>
+                              <div className="mt-3">
+                                <span className="inline-flex items-center text-xs font-medium text-primary hover:text-primary/80">
+                                  続きを読む
+                                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                  </svg>
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center p-8 bg-muted/10 rounded-md">
+                        <p className="text-muted-foreground">ブログ記事が登録されていません</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>

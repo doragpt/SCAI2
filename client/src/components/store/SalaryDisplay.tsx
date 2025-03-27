@@ -100,11 +100,19 @@ export function SalaryDisplay({
           {/* 時給表示を追加 */}
           {workingTimeHours && workingTimeHours > 0 && averageHourlyPay && averageHourlyPay > 0 && (
             <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-1.5 text-green-600 dark:text-green-400" />
-                <span className="text-sm text-green-700 dark:text-green-300">
-                  {workingTimeHours}時間{averageHourlyPay.toLocaleString()}円 時給換算{averageHourlyPay.toLocaleString()}円
-                </span>
+              <div className="flex flex-col">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">平均給与</p>
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-1.5 text-green-600 dark:text-green-400" />
+                  <span className="font-medium text-green-700 dark:text-green-300">
+                    {workingTimeHours}時間勤務　{averageHourlyPay.toLocaleString()}円
+                  </span>
+                </div>
+                <div className="flex items-center mt-1 ml-5">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    （時給換算：{Math.round(averageHourlyPay / workingTimeHours).toLocaleString()}円）
+                  </span>
+                </div>
               </div>
             </div>
           )}
