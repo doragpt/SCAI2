@@ -28,9 +28,14 @@ import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
  * デザイン管理機能で設定されたスタイルやセクションの表示/非表示、順序を反映します
  */
 // デバッグ用関数（コンポーネント外で定義して一貫して使用）
+const DEBUG_MODE = false; // デバッグログを有効/無効にするフラグ
 function debugLog(message: string, data?: any) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[Preview Debug] ${message}`, data || '');
+  if (DEBUG_MODE) {
+    if (data) {
+      console.log(`[Preview] ${message}`, data);
+    } else {
+      console.log(`[Preview] ${message}`);
+    }
   }
 }
 
@@ -44,12 +49,12 @@ export default function StorePreview() {
     queryKey: [QUERY_KEYS.STORE_PROFILE],
     queryFn: async () => {
       try {
-        console.log('店舗プロフィールを取得しています...');
+        debugLog('店舗プロフィールを取得しています...');
         const response = await apiRequest("GET", "/store/profile");
-        console.log('店舗プロフィール取得成功:', response);
+        debugLog('店舗プロフィール取得成功:', response);
         return response as StoreProfile;
       } catch (error) {
-        console.error('店舗プロフィール取得エラー:', error);
+        debugLog('店舗プロフィール取得エラー:', error);
         throw error;
       }
     }
@@ -71,7 +76,7 @@ export default function StorePreview() {
       // フォントファミリーを設定
       document.body.style.fontFamily = global.fontFamily;
       
-      console.log('デザイン設定を適用しました', {
+      debugLog('デザイン設定を適用しました', {
         time: new Date().toISOString(),
         mainColor: global.mainColor
       });
@@ -141,23 +146,23 @@ export default function StorePreview() {
             
             debugLog('デザイン設定を適用しました');
           } catch (error) {
-            console.error('デザイン設定の適用に失敗しました:', error);
+            debugLog('デザイン設定の適用に失敗しました:', error);
           }
         } else {
-          console.warn('デザイン設定が見つかりません:', event.data);
+          debugLog('デザイン設定が見つかりません:', event.data);
         }
       }
     };
     
     window.addEventListener('message', handleMessage);
-    console.log('メッセージリスナーを登録しました', { time: new Date().toISOString() });
+    debugLog('メッセージリスナーを登録しました', { time: new Date().toISOString() });
     
     // 親ウィンドウに準備完了を通知
     try {
       window.parent.postMessage({ type: 'PREVIEW_READY', timestamp: new Date().toISOString() }, '*');
-      console.log('親ウィンドウに準備完了を通知しました');
+      debugLog('親ウィンドウに準備完了を通知しました');
     } catch (error) {
-      console.warn('親ウィンドウへの通知に失敗しました:', error);
+      debugLog('親ウィンドウへの通知に失敗しました:', error);
     }
     
     return () => {
@@ -243,7 +248,7 @@ export default function StorePreview() {
     if (sectionId === 'description') {
       // descriptionセクションはcatchphraseセクションに統合されているため
       // catchphraseセクションの可視性を継承する
-      console.log(`[Preview] descriptionセクションはcatchphraseセクションの可視性を継承します`);
+      debugLog(`descriptionセクションはcatchphraseセクションの可視性を継承します`);
       return isSectionVisible('catchphrase');
     }
     
