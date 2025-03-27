@@ -350,7 +350,9 @@ export default function StoreDesignPreview() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                           </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800">お仕事詳細</h3>
+                        {!settings.globalSettings.hideSectionTitles && (
+                          <h3 className="text-xl font-bold text-gray-800">お仕事詳細</h3>
+                        )}
                       </div>
                       <div className="prose prose-sm max-w-none prose-headings:text-primary prose-img:mx-auto prose-img:rounded-lg" dangerouslySetInnerHTML={{ __html: profile.description }} />
                     </div>
@@ -490,9 +492,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'special_offers' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-primary text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        限定特典
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-primary text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          限定特典
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4">
                         {Array.isArray(specialOffers) && specialOffers.map((offer: any, index: number) => (
                           <div
@@ -535,9 +539,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'security_measures' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        安全対策
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          安全対策
+                        </div>
+                      )}
                       <div className="bg-gradient-to-r from-teal-50 to-green-50 dark:from-teal-900/10 dark:to-green-900/10 p-6 rounded-xl border border-teal-100 dark:border-teal-800/30 shadow-md">
                         {profile.security_measures ? (
                           <div className="grid md:grid-cols-2 gap-6 mt-2">
@@ -632,9 +638,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'requirements' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        応募条件
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          応募条件
+                        </div>
+                      )}
                       <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mt-4">
                         {profile.requirements ? (
                           <div>
@@ -698,9 +706,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'access' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        アクセス情報
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          アクセス情報
+                        </div>
+                      )}
                       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/10 dark:to-purple-900/10 p-6 rounded-xl border border-indigo-100 dark:border-indigo-800/30 shadow-md">
                         <div className="grid md:grid-cols-2 gap-6 mt-2">
                           {profile.address && (
@@ -762,9 +772,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'contact' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        お問い合わせ
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-teal-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          お問い合わせ
+                        </div>
+                      )}
                       <div className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/10 dark:to-cyan-900/10 p-6 rounded-xl border border-teal-100 dark:border-teal-800/30 shadow-md">
                         <div className="grid md:grid-cols-2 gap-6 mt-2">
                           {profile.recruiter_name && (
@@ -858,9 +870,11 @@ export default function StoreDesignPreview() {
                 {section.id === 'sns_links' && (
                   <div className="space-y-6">
                     <div className="relative">
-                      <div className="absolute -top-4 left-4 bg-violet-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-                        SNS
-                      </div>
+                      {!settings.globalSettings.hideSectionTitles && (
+                        <div className="absolute -top-4 left-4 bg-violet-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                          SNS
+                        </div>
+                      )}
                       
                       <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/10 dark:to-fuchsia-900/10 p-6 rounded-xl border border-violet-100 dark:border-violet-800/30 shadow-md">
                         <div className="flex flex-col space-y-6">

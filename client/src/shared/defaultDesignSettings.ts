@@ -236,7 +236,8 @@ export const getDefaultDesignSettings = (): DesignSettings => {
       backgroundColor: "#fff5f9",
       fontFamily: "sans-serif",
       borderRadius: 8,
-      maxWidth: 1200
+      maxWidth: 1200,
+      hideSectionTitles: true // セクションタイトルを非表示にする設定
     }
   };
 };

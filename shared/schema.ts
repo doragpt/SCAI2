@@ -32,6 +32,7 @@ export const globalDesignSettingsSchema = z.object({
   fontFamily: z.string(),
   borderRadius: z.number(),
   maxWidth: z.number(),
+  hideSectionTitles: z.boolean().optional().default(false),
 });
 
 export const designSettingsSchema = z.object({
@@ -617,7 +618,8 @@ export const store_profiles = pgTable("store_profiles", {
       backgroundColor: "#ffffff",
       fontFamily: "Arial, sans-serif",
       borderRadius: 8,
-      maxWidth: 1200
+      maxWidth: 1200,
+      hideSectionTitles: false
     }
   }),
   
