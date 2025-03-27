@@ -362,6 +362,22 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       timestamp: new Date().toISOString()
     });
     
+    // special_offersのデータ検証と修正
+    if (data.special_offers && Array.isArray(data.special_offers)) {
+      // special_offersの各項目にtypeプロパティがあるか確認し、ない場合は追加
+      const validSpecialOffers = data.special_offers.map(offer => {
+        if (!offer.type) {
+          return {
+            ...offer,
+            type: "特別オファー" // デフォルト値を設定
+          };
+        }
+        return offer;
+      });
+      data.special_offers = validSpecialOffers;
+      console.log("special_offers修正後:", data.special_offers);
+    }
+    
     // フォームのエラーをすべて出力
     if (Object.keys(form.formState.errors).length > 0) {
       console.error("フォームにエラーがあります:", form.formState.errors);
@@ -494,7 +510,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           ok: response.ok,
           statusText: response.statusText,
           timestamp: new Date().toISOString(),
-          headers: Object.fromEntries([...response.headers.entries()])
+          headers: Object.fromEntries(Array.from(response.headers.entries()))
         });
         
         // レスポンスボディの取得
