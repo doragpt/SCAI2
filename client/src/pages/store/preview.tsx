@@ -626,7 +626,11 @@ export default function StoreDesignPreview() {
                             <div className="text-base font-bold text-gray-700 dark:text-gray-200">コミットメント</div>
                           </div>
                           <div className="text-gray-600 dark:text-gray-300">
-                            <p>当店は女性スタッフの安全と働きやすさを最優先に考え、常に環境改善に取り組んでいます。不安なことや質問があれば、いつでもお気軽にご相談ください。あなたのプライバシーと安全を守りながら、充実した職場環境を提供いたします。</p>
+                            {profile.commitment ? (
+                              <div dangerouslySetInnerHTML={{ __html: profile.commitment }} />
+                            ) : (
+                              <p>当店は女性スタッフの安全と働きやすさを最優先に考え、常に環境改善に取り組んでいます。不安なことや質問があれば、いつでもお気軽にご相談ください。あなたのプライバシーと安全を守りながら、充実した職場環境を提供いたします。</p>
+                            )}
                           </div>
                         </div>
                       </div>

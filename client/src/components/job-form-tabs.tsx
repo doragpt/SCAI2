@@ -95,6 +95,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 追加フィールド
       access_info: initialData?.access_info || "",
       security_measures: initialData?.security_measures || "",
+      privacy_measures: initialData?.privacy_measures || "",
+      commitment: initialData?.commitment || "",
       
       // サポート情報
       transportation_support: initialData?.transportation_support || false,
@@ -234,6 +236,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           application_requirements: data.application_requirements || "",
           access_info: data.access_info || "",
           security_measures: data.security_measures || "",
+          privacy_measures: data.privacy_measures || "",
+          commitment: data.commitment || "",
           
           // 店舗写真ギャラリー
           gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : [],
@@ -1309,12 +1313,56 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   name="security_measures"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-medium">セキュリティ対策・プライバシー保護</FormLabel>
+                      <FormLabel className="font-medium">安全への取り組み</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           value={field.value || ''}
-                          placeholder="例：防犯カメラ完備、送迎サービスあり、顔出し不要、プライバシー保護対策あり"
+                          placeholder="例：防犯カメラ完備、24時間警備スタッフ常駐、送迎サービスあり"
+                          className="min-h-[150px]"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        店舗の安全対策について説明してください。
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="privacy_measures"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">プライバシー保護</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="例：顔出し不要、SNSやネット上での情報管理対策、個人情報の厳重管理"
+                          className="min-h-[150px]"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        プライバシー保護のための対策について説明してください。
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="commitment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">コミットメント</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="例：当店は女性スタッフの安全と働きやすさを最優先に考え、常に環境改善に取り組んでいます。"
                           className="min-h-[150px]"
                         />
                       </FormControl>
