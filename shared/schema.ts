@@ -508,12 +508,13 @@ export const store_profiles = pgTable("store_profiles", {
   application_requirements: text("application_requirements"), // 応募資格（任意）
   // 新規追加項目
   access_info: text("access_info"), // アクセス情報（最寄り駅・交通手段）
-  security_measures: text("security_measures"), // セキュリティ対策・プライバシー配慮
+  security_measures: text("security_measures"), // 安全への取り組み
+  privacy_measures: text("privacy_measures"), // プライバシー保護
+  commitment: text("commitment"), // コミットメント
   
   // バニラ風の拡張項目
   job_videos: jsonb("job_videos").$type<z.infer<typeof jobVideoSchema>[]>().default([]), // 求人動画コンテンツ
   salary_examples: jsonb("salary_examples").$type<z.infer<typeof salaryExampleSchema>[]>().default([]), // 給与例・体験保証ケース
-  privacy_measures: jsonb("privacy_measures").$type<z.infer<typeof privacyMeasureSchema>[]>().default([]), // 身バレ対策
   facility_features: jsonb("facility_features").$type<z.infer<typeof facilityFeatureSchema>[]>().default([]), // 店舗設備
   testimonials: jsonb("testimonials").$type<{
     user_name: string;
@@ -860,12 +861,14 @@ export const storeProfileSchema = z.object({
   
   // 追加項目
   access_info: z.string().max(1000, "アクセス情報は1000文字以内で入力してください").optional(), // アクセス情報
-  security_measures: z.string().max(1000, "セキュリティ対策は1000文字以内で入力してください").optional(), // セキュリティ対策
+  security_measures: z.string().max(1000, "安全への取り組みは1000文字以内で入力してください").optional(), // 安全への取り組み
+  privacy_measures: z.string().max(1000, "プライバシー保護は1000文字以内で入力してください").optional(), // プライバシー保護
+  commitment: z.string().max(1000, "コミットメントは1000文字以内で入力してください").optional(), // コミットメント
   
   // バニラ風の拡張項目
   job_videos: z.array(jobVideoSchema).optional(), // 求人動画コンテンツ
   salary_examples: z.array(salaryExampleSchema).optional(), // 給与例・体験保証ケース
-  privacy_measures: z.array(privacyMeasureSchema).optional(), // 身バレ対策
+  privacy_measure_details: z.array(privacyMeasureSchema).optional(), // 身バレ対策
   facility_features: z.array(facilityFeatureSchema).optional(), // 店舗設備
   testimonials: z.array(
     z.object({
