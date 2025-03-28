@@ -4,6 +4,7 @@ import storeRoutes from './routes/store';
 import applicationsRoutes from './routes/applications';
 import blogRoutes from './routes/blog';
 import dashboardRoutes from './routes/dashboard';
+import designRoutes from './routes/design';
 import { log } from './utils/logger';
 import multer from "multer";
 import { errorHandler } from './middleware/errorHandler';
@@ -45,6 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/applications', applicationsRoutes);
   app.use('/api/blog', blogRoutes);
   app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/design', designRoutes);
 
   // エラーハンドリングミドルウェアを最後に登録
   app.use(errorHandler);
