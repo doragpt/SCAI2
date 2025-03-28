@@ -27,7 +27,9 @@ import EditBlogPost from "@/pages/store/blog/edit/[id]";
 import BlogPostView from "@/pages/blog/[id]";
 import BlogManagement from "@/pages/store/blog/index";
 import StoreDesignManager from "@/pages/store/design-manager";
+import StoreDesignManagerNew from "@/pages/store/design-manager-new";
 import StorePreview from "@/pages/store/preview";
+import StorePreviewNew from "@/pages/store/preview-new";
 import BlogList from "@/pages/store/blog/list";
 import PublicBlogList from "@/pages/blog/index";
 
@@ -82,8 +84,18 @@ function Router() {
         roleRequired="store"
       />
       <ProtectedRoute 
+        path="/store/design-manager-new" 
+        component={StoreDesignManagerNew as RouteComponent}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
         path="/store/preview" 
         component={StorePreview as RouteComponent}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/preview-new" 
+        component={StorePreviewNew as RouteComponent}
         roleRequired="store"
       />
       <Route path="/blog" component={PublicBlogList as RouteComponent} />

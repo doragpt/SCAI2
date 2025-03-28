@@ -25,6 +25,7 @@ export interface IStorage {
   createOrUpdateStoreProfile(userId: number, data: InsertStoreProfile): Promise<StoreProfile>;
   getDesignSettings(userId: number): Promise<any | null>;
   updateDesignSettings(userId: number, data: any): Promise<any>;
+  saveDesignSettings(userId: number, data: any): Promise<any>;
   sessionStore: session.Store;
 }
 
@@ -563,6 +564,59 @@ export class DatabaseStorage implements IStorage {
   }
   
   // デザイン設定の更新
+  // デザイン設定の保存（完全上書き）
+  async saveDesignSettings(userId: number, data: any): Promise<any> {
+    try {
+      log('info', 'デザイン設定保存開始', { userId });
+      
+      // まず存在するか確認
+      const checkQuery = 'SELECT * FROM design_settings WHERE user_id = $1';
+      const checkResult = await pool.query(checkQuery, [userId]);
+      
+      let result;
+      
+      // 文字列データをJSON形式に変換する処理をここで実施
+      const jsonData = typeof data === 'string' ? JSON.parse(data) : data;
+      
+      if (checkResult.rows.length > 0) {
+        // 既存の設定を上書き
+        const updateQuery = `
+          UPDATE design_settings 
+          SET settings = $1, updated_at = now() 
+          WHERE user_id = $2 
+          RETURNING *
+        `;
+        result = await pool.query(updateQuery, [jsonData, userId]);
+      } else {
+        // 新規作成
+        const insertQuery = `
+          INSERT INTO design_settings (user_id, settings, created_at, updated_at) 
+          VALUES ($1, $2, now(), now()) 
+          RETURNING *
+        `;
+        result = await pool.query(insertQuery, [userId, jsonData]);
+      }
+      
+      if (!result || result.rows.length === 0) {
+        throw new Error('デザイン設定の保存に失敗しました');
+      }
+      
+      log('info', 'デザイン設定保存成功', { 
+        userId,
+        timestamp: new Date().toISOString()
+      });
+      
+      return result.rows[0];
+    } catch (error) {
+      log('error', 'デザイン設定保存エラー', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
+  }
+  
+  // デザイン設定の更新（部分的更新）
   async updateDesignSettings(userId: number, data: any): Promise<any> {
     try {
       log('info', 'デザイン設定更新開始', { 

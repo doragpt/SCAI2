@@ -1,160 +1,165 @@
 import express, { Request, Response } from 'express';
-import { authenticate, authorize } from '../middleware/auth';
-import { db } from '../db';
-import { store_profiles } from '@shared/schema';
-import { designSettingsSchema, type DesignSettings } from '@shared/schema';
-import { storage } from '../storage';
-import { eq } from 'drizzle-orm';
-import { dataUtils } from '@shared/utils/dataTypeUtils';
 import { log } from '../utils/logger';
+import { authenticate, authorize } from '../middleware/auth';
+import { storage } from '../storage';
+import { sendSuccess, sendError } from '../utils/api-response';
 import { getDefaultDesignSettings } from '../shared/defaultDesignSettings';
+import { dataUtils } from '@shared/utils/dataTypeUtils';
 
 const router = express.Router();
 
-// デザイン設定を取得するエンドポイント
+/**
+ * デザイン設定の取得
+ */
 router.get('/', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
-    log('info', 'デザイン設定取得リクエスト受信', { userId });
-    
-    // 店舗プロフィールを取得
-    const storeProfile = await storage.getStoreProfile(userId);
-    
-    if (!storeProfile) {
-      log('error', '店舗プロフィールが見つかりません', { userId });
-      return res.status(404).json({ 
-        success: false,
-        error: '店舗プロフィールが見つかりません'
-      });
+    const userId = req.user?.id;
+    if (!userId) {
+      return sendError(res, 'Unauthorized', '認証が必要です');
     }
+
+    // データベースからデザイン設定を取得
+    const designSettings = await storage.getDesignSettings(userId);
     
-    // design_settingsフィールドがあればそれを返す、なければデフォルト設定を返す
-    if (storeProfile.design_settings) {
-      // 返却前に整合性をチェック
-      const processedSettings = dataUtils.processDesignSettings(storeProfile.design_settings);
-      
-      log('info', 'デザイン設定取得成功', { 
-        userId, 
-        sectionsCount: processedSettings.sections ? processedSettings.sections.length : 0,
-        hasGlobalSettings: !!processedSettings.globalSettings,
-        dataType: typeof processedSettings
-      });
-      
-      return res.json({
-        success: true,
-        data: processedSettings
-      });
-    } else {
-      // デフォルトのデザイン設定を使用
-      const defaultSettings = getDefaultDesignSettings();
-      
-      log('info', 'デフォルトデザイン設定を返却', { 
-        userId,
-        sectionsCount: defaultSettings.sections.length
-      });
-      
-      return res.json({
-        success: true,
-        data: defaultSettings,
+    // 設定が見つからない場合はデフォルト設定を返す
+    if (!designSettings) {
+      log('info', 'デザイン設定が見つかりません。デフォルト設定を使用します。', { userId });
+      return sendSuccess(res, { 
+        data: getDefaultDesignSettings(),
         isDefault: true
       });
     }
+    
+    // 取得したデータを処理（型の一貫性確保）
+    const processedSettings = dataUtils.processDesignSettings(designSettings);
+    
+    return sendSuccess(res, { 
+      data: processedSettings,
+      isDefault: false
+    });
   } catch (error) {
-    log('error', 'デザイン設定の取得中にエラーが発生しました', { 
+    log('error', 'デザイン設定の取得エラー', { 
       error: error instanceof Error ? error.message : String(error)
     });
-    res.status(500).json({ 
-      success: false,
-      error: 'デザイン設定の取得中にエラーが発生しました'
-    });
+    return sendError(res, 'InternalServerError', 'デザイン設定の取得に失敗しました');
   }
 });
 
-// デザイン設定を保存するエンドポイント
+/**
+ * デザイン設定の保存
+ */
 router.post('/', authenticate, authorize('store'), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
-    log('info', 'デザイン設定の保存リクエスト受信', { userId });
-    
-    // 入力データの事前処理（構造整合性の確保）
-    const processedData = dataUtils.processDesignSettings(req.body);
-    
-    // リクエストボディをバリデーション
-    const validationResult = designSettingsSchema.safeParse(processedData);
-    if (!validationResult.success) {
-      log('error', 'デザイン設定のバリデーションエラー', {
-        details: validationResult.error.format()
-      });
-      return res.status(400).json({ 
-        success: false,
-        error: 'デザイン設定のバリデーションに失敗しました',
-        details: validationResult.error.format()
-      });
+    const userId = req.user?.id;
+    if (!userId) {
+      return sendError(res, 'Unauthorized', '認証が必要です');
     }
     
-    const designSettings = validationResult.data;
-    log('info', 'バリデーション成功', { 
-      sectionsCount: designSettings.sections.length, 
-      sectionIds: designSettings.sections.map(s => s.id).join(','),
-      hasGlobalSettings: !!designSettings.globalSettings
+    const { settings } = req.body;
+    if (!settings) {
+      return sendError(res, 'BadRequest', 'デザイン設定データが不足しています');
+    }
+    
+    // 入力データを検証・加工
+    try {
+      // セクションが配列であることを確認
+      if (!settings.sections || !Array.isArray(settings.sections)) {
+        settings.sections = [];
+        log('warn', 'デザイン設定のセクションが無効です。空配列を使用します。', { userId });
+      }
+      
+      // グローバル設定がオブジェクトであることを確認
+      if (!settings.globalSettings || typeof settings.globalSettings !== 'object') {
+        settings.globalSettings = {
+          mainColor: '#ff6b81',
+          secondaryColor: '#f9f9f9',
+          accentColor: '#41a0ff',
+          backgroundColor: '#ffffff',
+          fontFamily: 'sans-serif',
+          borderRadius: 8,
+          maxWidth: 1200,
+          hideSectionTitles: false
+        };
+        log('warn', 'デザイン設定のグローバル設定が無効です。デフォルト値を使用します。', { userId });
+      }
+    } catch (validationError) {
+      log('error', 'デザイン設定の検証エラー', { 
+        error: validationError instanceof Error ? validationError.message : String(validationError),
+        userId
+      });
+      return sendError(res, 'BadRequest', 'デザイン設定データが無効です');
+    }
+    
+    // 設定を保存
+    await storage.saveDesignSettings(userId, settings);
+    
+    log('info', 'デザイン設定を保存しました', { 
+      userId,
+      sectionsCount: settings.sections?.length || 0
     });
+    
+    return sendSuccess(res, { 
+      message: 'デザイン設定を保存しました',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    log('error', 'デザイン設定の保存エラー', { 
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return sendError(res, 'InternalServerError', 'デザイン設定の保存に失敗しました');
+  }
+});
+
+/**
+ * プレビュー用のデータを取得
+ * クライアント側から直接呼び出されるエンドポイント（共通のプレビューデータを返す）
+ */
+router.get('/preview', authenticate, authorize('store'), async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return sendError(res, 'Unauthorized', '認証が必要です');
+    }
     
     // 店舗プロフィールを取得
     const storeProfile = await storage.getStoreProfile(userId);
-    
     if (!storeProfile) {
       log('error', '店舗プロフィールが見つかりません', { userId });
-      return res.status(404).json({ 
-        success: false,
-        error: '店舗プロフィールが見つかりません'
-      });
+      return sendError(res, 'NotFound', '店舗プロフィールが見つかりません');
     }
     
-    log('info', '店舗プロフィール取得成功', { 
-      storeId: storeProfile.id, 
-      businessName: storeProfile.business_name
+    // デザイン設定を取得
+    let designData = await storage.getDesignSettings(userId);
+    
+    // 設定が見つからない場合はデフォルト設定を使用
+    if (!designData) {
+      log('info', 'デザイン設定が見つかりません。デフォルト設定を使用します', { userId });
+      designData = getDefaultDesignSettings();
+    } else {
+      // データ型変換の一貫性を確保
+      try {
+        designData = dataUtils.processDesignSettings(designData);
+      } catch (processError) {
+        log('error', 'デザイン設定の処理中にエラー', { 
+          error: processError instanceof Error ? processError.message : String(processError),
+          userId 
+        });
+        // エラー時はデフォルト設定
+        designData = getDefaultDesignSettings();
+      }
+    }
+    
+    // プレビュー用のデータを返す
+    return sendSuccess(res, {
+      storeProfile,
+      designData,
+      timestamp: new Date().toISOString()
     });
-    
-    try {
-      // デザイン設定を更新（Drizzle ORMを使用）
-      await db.update(store_profiles)
-        .set({ 
-          design_settings: designSettings,
-          updated_at: new Date()
-        })
-        .where(eq(store_profiles.user_id, userId));
-      
-      log('info', 'デザイン設定更新成功', {
-        userId,
-        sectionsCount: designSettings.sections.length
-      });
-      
-      res.json({ 
-        success: true, 
-        message: 'デザイン設定が正常に保存されました',
-        data: designSettings
-      });
-    } catch (dbError) {
-      log('error', 'データベース更新エラー', { 
-        error: dbError instanceof Error ? dbError.message : String(dbError),
-        userId
-      });
-      
-      // データベースエラーの場合は明確なエラーメッセージを返す
-      return res.status(500).json({ 
-        success: false,
-        error: 'デザイン設定の保存時にデータベースエラーが発生しました'
-      });
-    }
   } catch (error) {
-    log('error', 'デザイン設定の保存中にエラーが発生しました', { 
+    log('error', 'プレビューデータの取得エラー', { 
       error: error instanceof Error ? error.message : String(error)
     });
-    
-    res.status(500).json({ 
-      success: false,
-      error: 'デザイン設定の保存中にエラーが発生しました'
-    });
+    return sendError(res, 'InternalServerError', 'プレビューデータの取得に失敗しました');
   }
 });
 

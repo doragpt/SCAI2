@@ -1,58 +1,64 @@
-import { DesignSettings } from '@shared/schema';
+import { type DesignSettings } from '@shared/schema';
 
 /**
- * デザイン設定のデフォルト値
- * 他のコンポーネントから参照されるため、共通化
+ * デフォルトのデザイン設定を取得する関数
+ * ユーザーが設定を保存していない場合や、エラー時に使用
  */
-export const getDefaultDesignSettings = (): DesignSettings => {
-  return {
+export function getDefaultDesignSettings(): DesignSettings {
+  const defaultSettings: DesignSettings = {
+    globalSettings: {
+      mainColor: '#ff6b81',
+      secondaryColor: '#f9f9f9',
+      accentColor: '#41a0ff',
+      backgroundColor: '#ffffff',
+      fontFamily: 'sans-serif',
+      borderRadius: 8,
+      maxWidth: 1200,
+      hideSectionTitles: false
+    },
     sections: [
-      // ヘッダーは常に先頭（特別扱い）
       {
-        id: "header",
-        title: "ヘッダー",
+        id: 'header',
+        order: 0,
+        title: 'ヘッダー',
         visible: true,
-        order: 0, // 特別な順序として0を使用
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 以下は店舗情報編集ダイアログのタブ順に合わせる
-      // 1. 基本情報
       {
-        id: "catchphrase",
-        title: "お仕事詳細",
-        visible: true,
+        id: 'catchphrase',
         order: 1,
+        title: 'お仕事詳細',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 2. 給与・待遇
       {
-        id: "salary",
-        title: "給与情報",
-        visible: true,
+        id: 'photo_gallery',
         order: 2,
+        title: '写真ギャラリー',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#ffd6dd",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -60,118 +66,111 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "schedule",
-        title: "勤務時間",
-        visible: true,
+        id: 'benefits',
         order: 3,
+        title: '待遇・環境',
+        visible: true,
         settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      
-      // 6. 安全対策
       {
-        id: "security_measures",
-        title: "安全対策",
-        visible: true,
+        id: 'salary',
         order: 4,
+        title: '給与情報',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 7. 写真ギャラリー
       {
-        id: "photo_gallery",
-        title: "写真ギャラリー",
-        visible: true,
+        id: 'schedule',
         order: 5,
+        title: '勤務時間',
+        visible: true,
         settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 8. 特別オファー
       {
-        id: "special_offers",
-        title: "特別オファー",
-        visible: true,
+        id: 'special_offers',
         order: 6,
+        title: '特別オファー',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 9. 待遇・環境（特別オファーの後に表示）
       {
-        id: "benefits",
-        title: "待遇・環境",
-        visible: true,
+        id: 'access',
         order: 7,
+        title: 'アクセス情報',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 3. 応募条件（連絡先の前に表示）
       {
-        id: "requirements",
-        title: "応募条件",
-        visible: true,
+        id: 'contact',
         order: 8,
+        title: 'お問い合わせ',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 4. 連絡先
       {
-        id: "contact",
-        title: "問い合わせ",
-        visible: true,
+        id: 'sns_links',
         order: 9,
+        title: 'SNSリンク',
+        visible: true,
         settings: {
-          backgroundColor: "#fff9fa",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -179,65 +178,55 @@ export const getDefaultDesignSettings = (): DesignSettings => {
         }
       },
       {
-        id: "sns_links",
-        title: "SNSリンク",
-        visible: true,
+        id: 'security_measures',
         order: 10,
+        title: '安全対策',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // 5. アクセス
       {
-        id: "access",
-        title: "アクセス情報",
-        visible: true,
+        id: 'requirements',
         order: 11,
+        title: '応募条件',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       },
-      // ブログ（デザイン編集で使用）
       {
-        id: "blog",
-        title: "店舗ブログ",
-        visible: true,
+        id: 'blog',
         order: 12,
+        title: '店舗ブログ',
+        visible: true,
         settings: {
-          backgroundColor: "#ffffff",
-          textColor: "#333333",
-          borderColor: "#e0e0e0",
-          titleColor: "#ff4d7d",
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff6b81',
+          borderColor: '#f0f0f0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
       }
-    ],
-    globalSettings: {
-      mainColor: "#ff4d7d",
-      secondaryColor: "#ffc7d8",
-      accentColor: "#ff9eb8",
-      backgroundColor: "#fff5f9",
-      fontFamily: "sans-serif",
-      borderRadius: 8,
-      maxWidth: 1200,
-      hideSectionTitles: true // セクションタイトルを非表示にする設定
-    }
+    ]
   };
-};
+
+  return defaultSettings;
+}
