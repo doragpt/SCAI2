@@ -12,6 +12,7 @@ import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
 import { dataUtils, DEFAULT_REQUIREMENTS } from '@shared/utils/dataTypeUtils';
 import { customJsonb } from '@shared/utils/customTypes';
+import { processAllFields, prepareFieldForDatabase, extractJsonErrorDetails } from '@shared/utils/dataTypeHandler';
 
 // 配列フィールドを安全に処理するヘルパー関数
 function validateArrayField(field: any): string[] {
@@ -963,15 +964,16 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         application_notes: updateData.application_notes || existingProfile.application_notes || "",
         access_info: typedUpdateData.access_info,
         security_measures: typedUpdateData.security_measures,
-        privacy_measures: dataUtils.processTextFields(updateData.privacy_measures || existingProfile.privacy_measures, ""),
-        commitment: dataUtils.processTextFields(updateData.commitment || existingProfile.commitment, ""),
+        // テキストフィールドを適切に処理
+        privacy_measures: prepareFieldForDatabase('privacy_measures', updateData.privacy_measures || existingProfile.privacy_measures),
+        commitment: prepareFieldForDatabase('commitment', updateData.commitment || existingProfile.commitment),
         transportation_support: typedUpdateData.transportation_support,
         housing_support: typedUpdateData.housing_support,
-        // 新しいユーティリティ関数を使用して正規化
-        special_offers: dataUtils.processSpecialOffers(typedUpdateData.special_offers),
-        gallery_photos: dataUtils.processGalleryPhotos(typedUpdateData.gallery_photos || []),
+        // JSONBフィールドを適切に処理
+        special_offers: prepareFieldForDatabase('special_offers', typedUpdateData.special_offers),
+        gallery_photos: prepareFieldForDatabase('gallery_photos', typedUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理（JSONB型として正しく保存）
-        design_settings: dataUtils.processDesignSettings(typedUpdateData.design_settings || existingProfile.design_settings),
+        design_settings: prepareFieldForDatabase('design_settings', typedUpdateData.design_settings || existingProfile.design_settings),
         updated_at: typedUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))
@@ -985,6 +987,21 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
 
     // Drizzleの返却値の型を明示的に処理して応答を正確に整形
     if (updatedProfile) {
+      // 更新されたデータを出力（デバッグ用）
+      const fieldTypes = {
+        privacy_measures: typeof updatedProfile.privacy_measures,
+        privacy_measures_sample: typeof updatedProfile.privacy_measures === 'string' 
+          ? updatedProfile.privacy_measures.substring(0, 30)
+          : String(updatedProfile.privacy_measures).substring(0, 30),
+        commitment: typeof updatedProfile.commitment,
+        requirements: typeof updatedProfile.requirements,
+        special_offers: typeof updatedProfile.special_offers,
+        gallery_photos: typeof updatedProfile.gallery_photos,
+        design_settings: typeof updatedProfile.design_settings,
+      };
+      
+      console.log("更新されたフィールドタイプ:", fieldTypes);
+      
       console.log("店舗プロフィール更新レスポンス送信前:", {
         profileId: updatedProfile.id,
         responseStatus: 200,
@@ -1057,6 +1074,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     console.error('詳細エラー情報:', error);
     
     if (error instanceof Error) {
+      // 拡張エラー診断情報を取得
+      const errorInfo = extractJsonErrorDetails(error, req.body);
+      
       // PostgreSQLの「Token x is invalid」エラーメッセージからトークン情報を抽出
       const tokenRegex = /Token "([^"]+)" is invalid/;
       const tokenMatch = error.message.match(tokenRegex);
@@ -1066,6 +1086,14 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       const sqlErrorFieldPattern = /column "([^"]+)"/;
       const columnMatch = error.message.match(sqlErrorFieldPattern);
       const errorField = columnMatch ? columnMatch[1] : null;
+      
+      // 期待される型とフィールド情報をログに出力
+      console.log('拡張エラー診断情報:', {
+        ...errorInfo,
+        invalidToken,
+        errorField,
+        timestamp: new Date().toISOString()
+      });
       
       // より詳細なエラー情報をログに記録
       log('error', '店舗プロフィール更新エラー - 詳細分析', {
@@ -1130,7 +1158,11 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       body: req.body
     });
 
-    return res.status(500).json({ message: "店舗プロフィールの更新に失敗しました" });
+    // 新しいエラーハンドラを使用してエラー情報を抽出
+    const errorDetails = extractJsonErrorDetails(error, req.body);
+    console.error('SQLエラー詳細:', errorDetails);
+
+    return res.status(500).json(errorDetails);
   }
 });
 

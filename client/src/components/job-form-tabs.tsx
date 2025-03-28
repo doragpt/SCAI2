@@ -697,6 +697,28 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     // データのコピーを作成
     const cleanedData = { ...data };
     
+    // TEXT型フィールドを確実に文字列として処理
+    const textFields = ['privacy_measures', 'commitment', 'security_measures'];
+    textFields.forEach(field => {
+      if (field in cleanedData) {
+        const value = (cleanedData as any)[field];
+        // オブジェクトや配列が誤って渡された場合でも文字列に変換
+        if (typeof value === 'object' && value !== null) {
+          try {
+            (cleanedData as any)[field] = JSON.stringify(value);
+            console.log(`TEXTフィールド "${field}" をJSON.stringifyで文字列に変換しました`);
+          } catch (e) {
+            console.error(`${field}の文字列化に失敗しました:`, e);
+            (cleanedData as any)[field] = ''; // 失敗した場合は空文字列に
+          }
+        } else if (value === null || value === undefined) {
+          (cleanedData as any)[field] = ''; // null/undefinedの場合は空文字列に
+        } else if (typeof value !== 'string') {
+          (cleanedData as any)[field] = String(value); // その他の型は文字列に変換
+        }
+      }
+    });
+    
     // 1. special_offers - JSONB型カラム: 配列にする
     // データベースカラムの型に合わせて、確実に配列になるように処理する
     try {
