@@ -18,6 +18,7 @@ import { JobEditor } from "@/components/job-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { dataUtils, DEFAULT_REQUIREMENTS } from "@shared/utils/dataTypeUtils";
 import { PhotoGalleryFormTab } from "./store/PhotoGalleryFormTab";
 
 type JobFormProps = {
@@ -357,71 +358,95 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     },
   });
 
+  /**
+   * フォームデータを送信前に整形する関数
+   * データベースのカラム型（JSONB/TEXT）と合わせて適切な型に変換する
+   */
+  const prepareFormData = (data: StoreProfile): StoreProfile => {
+    // 処理前にデータ構造をログに出力
+    dataUtils.logDataStructure(data, "送信前の元データ");
+    
+    // データのコピーを作成
+    const cleanedData = { ...data };
+    
+    // 1. special_offers - TEXT型カラム: 文字列にする
+    cleanedData.special_offers = dataUtils.prepareTextJson(
+      cleanedData.special_offers, 
+      '[]'
+    );
+    
+    // special_offersが文字列になった後に、内部のオブジェクトにtypeフィールドを確保
+    try {
+      if (typeof cleanedData.special_offers === 'string') {
+        const parsedOffers = JSON.parse(cleanedData.special_offers);
+        if (Array.isArray(parsedOffers)) {
+          // 各要素にtypeプロパティがあるか確認して追加
+          const validSpecialOffers = parsedOffers.map(offer => ({
+            ...offer,
+            type: offer.type || "特別オファー" // typeがない場合にデフォルト値を設定
+          }));
+          
+          // 文字列として再設定
+          cleanedData.special_offers = JSON.stringify(validSpecialOffers);
+        }
+      }
+    } catch (error) {
+      console.error("special_offers検証中のエラー:", error);
+      cleanedData.special_offers = "[]";
+    }
+    
+    // 2. gallery_photos - JSONB型カラム: 配列にする
+    cleanedData.gallery_photos = dataUtils.prepareJsonbArray(
+      cleanedData.gallery_photos
+    );
+    
+    // 3. requirements - JSONB型カラム: オブジェクトにする
+    if (cleanedData.requirements) {
+      if (typeof cleanedData.requirements === 'object') {
+        // オブジェクトの場合、必須フィールドを確保
+        cleanedData.requirements = {
+          ...DEFAULT_REQUIREMENTS,
+          ...cleanedData.requirements,
+          // cup_size_conditionsが配列であることを保証
+          cup_size_conditions: Array.isArray(cleanedData.requirements.cup_size_conditions) 
+            ? cleanedData.requirements.cup_size_conditions 
+            : []
+        };
+      } else if (typeof cleanedData.requirements === 'string') {
+        // 文字列の場合はJSONとしてパース
+        try {
+          const parsedReq = JSON.parse(cleanedData.requirements);
+          cleanedData.requirements = {
+            ...DEFAULT_REQUIREMENTS,
+            ...parsedReq
+          };
+        } catch (e) {
+          // パースに失敗した場合はデフォルト値を設定
+          cleanedData.requirements = { ...DEFAULT_REQUIREMENTS };
+        }
+      } else {
+        // その他の型の場合はデフォルト値を設定
+        cleanedData.requirements = { ...DEFAULT_REQUIREMENTS };
+      }
+    } else {
+      // 値が存在しない場合はデフォルト値を設定
+      cleanedData.requirements = { ...DEFAULT_REQUIREMENTS };
+    }
+    
+    // 処理後のデータ構造をログに出力
+    dataUtils.logDataStructure(cleanedData, "送信前の処理済みデータ");
+    
+    return cleanedData;
+  };
+
   const onSubmit = async (data: StoreProfile) => {
     console.log("フォーム送信が開始されました", { 
       formValid: form.formState.isValid,
       timestamp: new Date().toISOString()
     });
     
-    // special_offersのデータ検証と修正
-    try {
-      if (data.special_offers) {
-        // 文字列の場合はパースを試みる
-        if (typeof data.special_offers === 'string') {
-          try {
-            const parsedOffers = JSON.parse(data.special_offers);
-            if (Array.isArray(parsedOffers)) {
-              // 各要素にtypeプロパティがあるか確認して追加
-              const validSpecialOffers = parsedOffers.map(offer => {
-                if (!offer.type) {
-                  return {
-                    ...offer,
-                    type: "特別オファー" // デフォルト値を設定
-                  };
-                }
-                return offer;
-              });
-              
-              // 文字列として設定
-              data.special_offers = JSON.stringify(validSpecialOffers);
-            }
-          } catch (parseError) {
-            console.error("special_offers文字列のパースエラー:", parseError);
-            data.special_offers = "[]";
-          }
-        } else if (Array.isArray(data.special_offers)) {
-          // 配列の場合は直接処理
-          const offers = data.special_offers as Array<{ type?: string; [key: string]: any }>;
-          const validSpecialOffers = offers
-            .filter(offer => typeof offer === 'object' && offer !== null)
-            .map(offer => {
-              if (!offer.type) {
-                return {
-                  ...offer,
-                  type: "特別オファー" // デフォルト値を設定
-                };
-              }
-              return offer;
-            });
-          
-          // 文字列に変換して設定
-          data.special_offers = JSON.stringify(validSpecialOffers);
-        } else {
-          // 配列でも文字列でもない場合
-          console.warn("special_offersが不明な型です:", typeof data.special_offers);
-          data.special_offers = "[]";
-        }
-      } else {
-        data.special_offers = "[]";
-      }
-      console.log("special_offers修正後:", typeof data.special_offers === 'string' ? 
-        (data.special_offers.length > 100 ? data.special_offers.substring(0, 100) + "..." : data.special_offers) : 
-        '(非文字列)'
-      );
-    } catch (error) {
-      console.error("special_offers検証中のエラー:", error);
-      data.special_offers = "[]";
-    }
+    // データを適切な型に変換
+    const cleanedData = prepareFormData(data);
     
     // フォームのエラーをすべて出力
     if (Object.keys(form.formState.errors).length > 0) {
@@ -460,271 +485,16 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         timestamp: new Date().toISOString()
       });
       
-      // データを整形
-      const cleanedData: any = { 
-        ...data,
-        // 初期確認 - gallery_photosを確実に配列にする
-        gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : []
-      }; // 一時的な_special_offers_array用にany型を使用
-      
       // 電話番号とメールアドレスの空データをフィルタリング
       cleanedData.phone_numbers = validPhoneNumbers;
       cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
       
-      // special_offers配列を確認して整形（TEXT型として保存するため文字列化が必要）
-      try {
-        if (cleanedData.special_offers) {
-          // 文字列の場合はパースを試みる
-          if (typeof cleanedData.special_offers === 'string') {
-            try {
-              const parsedOffers = JSON.parse(cleanedData.special_offers);
-              if (Array.isArray(parsedOffers)) {
-                // 処理のために一時的に配列として保持
-                cleanedData._special_offers_array = parsedOffers;
-              } else {
-                // パースできたが配列でない場合は空配列を設定
-                console.warn("special_offersがパースできましたが配列ではありません", typeof parsedOffers);
-                cleanedData._special_offers_array = [];
-              }
-            } catch (parseError) {
-              console.error("special_offers文字列のパースエラー:", parseError);
-              cleanedData._special_offers_array = [];
-              cleanedData.special_offers = "[]";
-            }
-          }
-          
-          // 一時的な配列を確認
-          const processArray = Array.isArray(cleanedData._special_offers_array) ? 
-            cleanedData._special_offers_array : 
-            (Array.isArray(cleanedData.special_offers) ? cleanedData.special_offers : []);
-            
-          // 特別オファーを処理
-          if (processArray.length > 0) {
-            // 各特別オファーのデータを検証・整形
-            const validSpecialOffers = processArray
-              .filter((offer: any) => offer !== null && typeof offer === 'object')
-              .map((offer: any) => {
-                try {
-                  // インターフェースに合わせてキーとデータ分解
-                  // 空文字列を防ぎ、null値を適切に処理
-                  const id = typeof offer.id === 'string' && offer.id.trim() !== '' 
-                    ? offer.id 
-                    : `offer-${Math.random().toString(36).substring(2, 9)}`;
-                    
-                  // オプションフィールドの適切な処理
-                  // amountの適切な処理 (number|null)
-                  let amount = null;
-                  if (offer.amount !== undefined && offer.amount !== null) {
-                    if (typeof offer.amount === 'number') {
-                      amount = offer.amount;
-                    } else if (typeof offer.amount === 'string') {
-                      // stringの場合は安全にtrimを呼び出す
-                      if (offer.amount) {
-                        const trimmedAmount = offer.amount.trim();
-                        if (trimmedAmount !== '') {
-                          const parsed = Number(trimmedAmount);
-                          if (!isNaN(parsed)) {
-                            amount = parsed;
-                          }
-                        }
-                      }
-                    }
-                  }
-                    
-                  // conditionsの処理
-                  let conditions = null;
-                  if (typeof offer.conditions === 'string') {
-                    const trimmedConditions = offer.conditions.trim();
-                    if (trimmedConditions !== '') {
-                      conditions = trimmedConditions;
-                    }
-                  }
-                    
-                  const startDate = offer.startDate 
-                    ? (typeof offer.startDate === 'string' ? offer.startDate : null) 
-                    : null;
-                    
-                  const endDate = offer.endDate 
-                    ? (typeof offer.endDate === 'string' ? offer.endDate : null) 
-                    : null;
-                    
-                  // limitedCountの適切な処理 (number|null)
-                  let limitedCount = null;
-                  if (offer.limitedCount !== undefined && offer.limitedCount !== null) {
-                    if (typeof offer.limitedCount === 'number') {
-                      limitedCount = offer.limitedCount;
-                    } else if (typeof offer.limitedCount === 'string') {
-                      // stringの場合は安全にtrimを呼び出す
-                      if (offer.limitedCount) {
-                        const trimmedCount = offer.limitedCount.trim();
-                        if (trimmedCount !== '') {
-                          const parsed = Number(trimmedCount);
-                          if (!isNaN(parsed)) {
-                            limitedCount = parsed;
-                          }
-                        }
-                      }
-                    }
-                  }
-                
-                  // 必須フィールドの保証
-                  const title = typeof offer.title === 'string' ? offer.title : "";
-                  const description = typeof offer.description === 'string' ? offer.description : "";
-                  // typeの処理
-                  let type = "特別オファー"; // デフォルト値
-                  if (typeof offer.type === 'string' && offer.type) {
-                    const trimmedType = offer.type.trim();
-                    if (trimmedType !== '') {
-                      type = trimmedType;
-                    }
-                  }
-                  
-                  // プリミティブ型の保証
-                  const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
-                  const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
-                  
-                  // backgroundColorの処理
-                  let backgroundColor = "#fff9fa"; // デフォルト値
-                  if (typeof offer.backgroundColor === 'string' && offer.backgroundColor) {
-                    const trimmedBgColor = offer.backgroundColor.trim();
-                    if (trimmedBgColor !== '') {
-                      backgroundColor = trimmedBgColor;
-                    }
-                  }
-                  
-                  // textColorの処理
-                  let textColor = "#333333"; // デフォルト値
-                  if (typeof offer.textColor === 'string' && offer.textColor) {
-                    const trimmedTextColor = offer.textColor.trim();
-                    if (trimmedTextColor !== '') {
-                      textColor = trimmedTextColor;
-                    }
-                  }
-                  
-                  const icon = typeof offer.icon === 'string' ? offer.icon : "";
-                  const order = typeof offer.order === 'number' ? offer.order : 0;
-                  
-                  // targetAudienceの配列化保証
-                  const targetAudience = Array.isArray(offer.targetAudience) 
-                    ? offer.targetAudience.filter((item: any) => typeof item === 'string')
-                    : [];
-                  
-                  // JSON安全なオブジェクトを構築
-                  return {
-                    id,
-                    title,
-                    description,
-                    type,
-                    backgroundColor,
-                    textColor,
-                    isActive,
-                    isLimited,
-                    icon,
-                    order,
-                    targetAudience,
-                    amount,
-                    conditions,
-                    limitedCount,
-                    startDate,
-                    endDate
-                  };
-                } catch (offerError) {
-                  console.error("特別オファー個別処理エラー:", offerError);
-                  // エラーが発生した場合は最低限の有効なオブジェクトを返す
-                  return {
-                    id: `error-offer-${Math.random().toString(36).substring(2, 9)}`,
-                    title: "オファー",
-                    description: "",
-                    type: "特別オファー",
-                    backgroundColor: "#fff9fa",
-                    textColor: "#333333",
-                    isActive: true,
-                    isLimited: false,
-                    icon: "sparkles",
-                    order: 0,
-                    targetAudience: []
-                  };
-                }
-              });
-              
-            // 配列を文字列化（TEXT型として保存するため）
-            cleanedData.special_offers = JSON.stringify(validSpecialOffers);
-            console.log("special_offers処理後（文字列）:", cleanedData.special_offers.substring(0, 100) + "...");
-          } else {
-            // 配列でない場合は空配列の文字列に設定
-            console.warn("special_offersが配列ではありません:", typeof cleanedData.special_offers);
-            cleanedData.special_offers = "[]";
-          }
-        } else {
-          // undefinedやnullの場合は空配列の文字列に設定
-          cleanedData.special_offers = "[]";
-        }
-      } catch (error) {
-        console.error("special_offers全体の処理エラー:", error);
-        cleanedData.special_offers = "[]";
-      }
-      
-      // requirements オブジェクトの確認と整形
-      if (cleanedData.requirements) {
-        if (typeof cleanedData.requirements === 'object') {
-          const req = cleanedData.requirements;
-          cleanedData.requirements = {
-            accepts_temporary_workers: !!req.accepts_temporary_workers,
-            requires_arrival_day_before: !!req.requires_arrival_day_before,
-            prioritize_titles: !!req.prioritize_titles,
-            other_conditions: Array.isArray(req.other_conditions) ? req.other_conditions : [],
-            cup_size_conditions: Array.isArray(req.cup_size_conditions) ? req.cup_size_conditions : []
-          };
-        } else if (typeof cleanedData.requirements === 'string') {
-          try {
-            // 文字列の場合はJSONとしてパース
-            const parsedReq = JSON.parse(cleanedData.requirements);
-            cleanedData.requirements = {
-              accepts_temporary_workers: !!parsedReq.accepts_temporary_workers,
-              requires_arrival_day_before: !!parsedReq.requires_arrival_day_before,
-              prioritize_titles: !!parsedReq.prioritize_titles,
-              other_conditions: Array.isArray(parsedReq.other_conditions) ? parsedReq.other_conditions : [],
-              cup_size_conditions: Array.isArray(parsedReq.cup_size_conditions) ? parsedReq.cup_size_conditions : []
-            };
-          } catch (e) {
-            // パースに失敗した場合はデフォルト値を設定
-            console.error("requirementsのパースに失敗:", e);
-            cleanedData.requirements = {
-              accepts_temporary_workers: false,
-              requires_arrival_day_before: false,
-              prioritize_titles: false,
-              other_conditions: [],
-              cup_size_conditions: []
-            };
-          }
-        } else {
-          // オブジェクトでも文字列でもない場合はデフォルト値を設定
-          cleanedData.requirements = {
-            accepts_temporary_workers: false,
-            requires_arrival_day_before: false,
-            prioritize_titles: false,
-            other_conditions: [],
-            cup_size_conditions: []
-          };
-        }
-      } else {
-        // nullまたはundefinedの場合
-        cleanedData.requirements = {
-          accepts_temporary_workers: false,
-          requires_arrival_day_before: false,
-          prioritize_titles: false,
-          other_conditions: [],
-          cup_size_conditions: []
-        };
-      }
-      
-      // gallery_photosが配列であることを確認
-      if (!Array.isArray(cleanedData.gallery_photos)) {
-        cleanedData.gallery_photos = [];
-      }
-      
+      // 簡易データ構造ログを出力
       console.log("送信前の整形データ:", {
         dataKeys: Object.keys(cleanedData),
+        specialOffersType: typeof cleanedData.special_offers,
+        requirementsType: typeof cleanedData.requirements,
+        galleryPhotosIsArray: Array.isArray(cleanedData.gallery_photos),
         timestamp: new Date().toISOString() 
       });
       

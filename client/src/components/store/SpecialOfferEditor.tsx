@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SpecialOffer } from "@shared/schema";
+import { dataUtils } from "@shared/utils/dataTypeUtils";
 
 // 利用可能なアイコンのリスト
 const AVAILABLE_ICONS = [
@@ -83,34 +84,30 @@ interface SpecialOfferEditorProps {
 export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEditorProps) {
   // 文字列形式のデータを配列に変換して状態管理
   const [fields, setFields] = useState<SpecialOffer[]>(() => {
-    try {
-      // valueが文字列の場合はJSONとしてパース
-      if (typeof value === 'string') {
-        return JSON.parse(value) || [];
-      }
-      // valueが配列の場合はそのまま使用
-      return Array.isArray(value) ? value : [];
-    } catch (e) {
-      console.error("Invalid special_offers value format:", e);
-      return [];
-    }
+    // dataUtilsを使用して配列を確実に取得
+    const offers = dataUtils.ensureArray(value);
+    
+    // typeフィールドが欠けている場合は追加
+    return offers.map(offer => ({
+      ...offer,
+      // typeフィールドが存在しない場合は追加
+      type: offer.type || "特別オファー"
+    }));
   });
   
   // 値の変更をトラッキングし親コンポーネントに通知
   useEffect(() => {
-    try {
-      // valueが文字列の場合はJSONとしてパース
-      if (typeof value === 'string') {
-        setFields(JSON.parse(value) || []);
-      } 
-      // valueが配列の場合はそのまま使用
-      else if (Array.isArray(value)) {
-        setFields(value);
-      }
-    } catch (e) {
-      console.error("Error parsing special_offers in useEffect:", e);
-      setFields([]);
-    }
+    // dataUtilsを使用して配列を確実に取得
+    const offers = dataUtils.ensureArray(value);
+    
+    // typeフィールドが欠けている場合は追加
+    const validOffers = offers.map(offer => ({
+      ...offer,
+      // typeフィールドが存在しない場合は追加
+      type: offer.type || "特別オファー"
+    }));
+    
+    setFields(validOffers);
   }, [value]);
   
   // 値が変更されたときに親コンポーネントに通知（文字列に変換）
@@ -150,7 +147,15 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
   
   // 編集
   const handleEditOffer = (offer: SpecialOffer, index: number) => {
-    setEditingOffer(JSON.parse(JSON.stringify(offer)));
+    // ディープコピーを作成し、typeフィールドが確実にあることを確認
+    const offerCopy = JSON.parse(JSON.stringify(offer));
+    
+    // typeフィールドが欠けている場合は追加
+    if (!offerCopy.type) {
+      offerCopy.type = "特別オファー";
+    }
+    
+    setEditingOffer(offerCopy);
     setEditIndex(index);
     setIsOpen(true);
   };
@@ -178,16 +183,25 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
   const handleSaveOffer = () => {
     if (!editingOffer) return;
     
+    // 必須フィールドを確保
+    const safeOffer = {
+      ...editingOffer,
+      // typeフィールドが欠けている場合は追加
+      type: editingOffer.type || "特別オファー"
+    };
+    
     let newFields = [...fields];
     
     if (editIndex !== null && editIndex >= 0 && editIndex < fields.length) {
       // 既存オファーを更新
-      newFields[editIndex] = {...editingOffer};
+      newFields[editIndex] = safeOffer;
     } else {
       // 新規オファーを追加
-      newFields = [...newFields, {...editingOffer}];
+      newFields = [...newFields, safeOffer];
     }
     
+    // データの整合性を確認してから更新
+    dataUtils.logDataStructure(newFields, "特別オファー保存前");
     updateFields(newFields);
     
     // ダイアログを閉じてフォーム状態をリセット
