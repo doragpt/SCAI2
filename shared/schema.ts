@@ -518,7 +518,7 @@ export const store_profiles = pgTable("store_profiles", {
   working_hours: text("working_hours"),
   transportation_support: boolean("transportation_support").default(false),
   housing_support: boolean("housing_support").default(false),
-  special_offers: text("special_offers").default('[]'),
+  special_offers: jsonb("special_offers").$type<SpecialOffer[]>().default([]),
   // 新規追加項目
   address: text("address"), // 住所（任意）
   recruiter_name: text("recruiter_name"), // 採用担当者名（必須）
@@ -854,7 +854,7 @@ export const storeProfileSchema = z.object({
   working_hours: z.string().optional(),
   transportation_support: z.boolean().default(false),
   housing_support: z.boolean().default(false),
-  special_offers: z.array(specialOfferSchema).optional(),
+  special_offers: z.array(specialOfferSchema).default([]),
   
   // 新規追加項目
   address: z.string().optional(), // 住所（任意）

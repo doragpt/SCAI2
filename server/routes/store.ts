@@ -36,7 +36,8 @@ function processSpecialOffers(offers: any): any[] {
     return [];
   }
   
-  // 文字列の場合はJSONとしてパースを試みる
+  // JSONB型への変更に伴う修正: 文字列の場合はJSONとしてパースを試みる
+  // この処理は互換性のためだけに残します
   if (typeof offers === 'string') {
     try {
       const parsedOffers = JSON.parse(offers);
@@ -102,12 +103,13 @@ function processSpecialOffers(offers: any): any[] {
           return defaultValue;
         };
 
-        // 必須フィールドの確保
+        // 必須フィールドの確保 - 各項目にデフォルト値を設定して対応
         const normalizedOffer = {
           id: typeof offer.id === 'string' && offer.id.trim() !== '' ? 
             offer.id : Math.random().toString(36).substring(2, 9),
           title: safeString(offer.title),
           description: safeString(offer.description),
+          // 重要: typeが必須項目であることを明示し、必ず妥当な値を持つようにする
           type: typeof offer.type === 'string' && offer.type.trim() !== '' ? 
             offer.type : "bonus",
           backgroundColor: typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' ? 
@@ -116,7 +118,7 @@ function processSpecialOffers(offers: any): any[] {
             offer.textColor : "#333333",
           isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
           isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
-          icon: safeString(offer.icon),
+          icon: safeString(offer.icon, "sparkles"),
           order: typeof offer.order === 'number' ? offer.order : 0,
           targetAudience: Array.isArray(offer.targetAudience) ? 
             offer.targetAudience.filter((i: any) => typeof i === 'string') : [],
@@ -130,12 +132,12 @@ function processSpecialOffers(offers: any): any[] {
             offer.endDate : null
         };
 
-        // JSON.stringifyでエラーが出ないことを確認するためのシンプルテスト
+        // JSON互換性チェック - JSONBカラムに保存するための重要なステップ
         try {
           JSON.stringify(normalizedOffer);
+          console.log("オファー処理成功:", normalizedOffer.title, "type:", normalizedOffer.type);
         } catch (jsonError) {
           console.error("JSON変換エラー:", jsonError, "問題のフィールド:", Object.keys(normalizedOffer).map(key => {
-            // keyが存在することを確認してから適用する
             return { 
               key, 
               type: typeof normalizedOffer[key as keyof typeof normalizedOffer], 
@@ -147,12 +149,12 @@ function processSpecialOffers(offers: any): any[] {
             id: Math.random().toString(36).substring(2, 9),
             title: "エラー発生オファー",
             description: "",
-            type: "bonus",
+            type: "bonus", // 必ず型を持つようにする
             backgroundColor: "#fff9fa",
             textColor: "#333333",
             isActive: true,
             isLimited: false,
-            icon: "",
+            icon: "alert-triangle",
             order: 0,
             targetAudience: [],
             amount: null,
@@ -357,7 +359,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          special_offers: JSON.stringify(processSpecialOffers(fullData.special_offers)),
+          special_offers: processSpecialOffers(fullData.special_offers),
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -582,7 +584,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        special_offers: JSON.stringify(processSpecialOffers(fullUpdateData.special_offers)),
+        special_offers: processSpecialOffers(fullUpdateData.special_offers),
         gallery_photos: fullUpdateData.gallery_photos || [],
         // デザイン設定の更新を処理
         design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
@@ -634,8 +636,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           specialOffersType: typeof updatedProfile.special_offers
         });
         
-        // 特別オファーが無効な場合は安全な空の配列文字列に置き換える
-        updatedProfile.special_offers = "[]";
+        // 特別オファーが無効な場合は安全な空の配列に置き換える
+        updatedProfile.special_offers = [];
       }
       
       // クライアント側での処理のためにレスポンスの形式を明確に
