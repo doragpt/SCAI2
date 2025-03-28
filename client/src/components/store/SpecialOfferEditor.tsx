@@ -135,7 +135,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
       id: uuidv4(),
       title: "",
       description: "",
-      type: "特別オファー",
+      type: "特別オファー", // 必須フィールド
       icon: "Award",
       backgroundColor: "from-purple-100 to-purple-200",
       textColor: "text-purple-700",

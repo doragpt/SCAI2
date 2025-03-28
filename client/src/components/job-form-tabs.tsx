@@ -461,7 +461,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       });
       
       // データを整形
-      const cleanedData: any = { ...data }; // 一時的な_special_offers_array用にany型を使用
+      const cleanedData: any = { 
+        ...data,
+        // 初期確認 - gallery_photosを確実に配列にする
+        gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : []
+      }; // 一時的な_special_offers_array用にany型を使用
       
       // 電話番号とメールアドレスの空データをフィルタリング
       cleanedData.phone_numbers = validPhoneNumbers;
@@ -661,16 +665,50 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       }
       
       // requirements オブジェクトの確認と整形
-      if (cleanedData.requirements && typeof cleanedData.requirements === 'object') {
-        const req = cleanedData.requirements;
-        cleanedData.requirements = {
-          accepts_temporary_workers: !!req.accepts_temporary_workers,
-          requires_arrival_day_before: !!req.requires_arrival_day_before,
-          prioritize_titles: !!req.prioritize_titles,
-          other_conditions: Array.isArray(req.other_conditions) ? req.other_conditions : [],
-          cup_size_conditions: Array.isArray(req.cup_size_conditions) ? req.cup_size_conditions : []
-        };
+      if (cleanedData.requirements) {
+        if (typeof cleanedData.requirements === 'object') {
+          const req = cleanedData.requirements;
+          cleanedData.requirements = {
+            accepts_temporary_workers: !!req.accepts_temporary_workers,
+            requires_arrival_day_before: !!req.requires_arrival_day_before,
+            prioritize_titles: !!req.prioritize_titles,
+            other_conditions: Array.isArray(req.other_conditions) ? req.other_conditions : [],
+            cup_size_conditions: Array.isArray(req.cup_size_conditions) ? req.cup_size_conditions : []
+          };
+        } else if (typeof cleanedData.requirements === 'string') {
+          try {
+            // 文字列の場合はJSONとしてパース
+            const parsedReq = JSON.parse(cleanedData.requirements);
+            cleanedData.requirements = {
+              accepts_temporary_workers: !!parsedReq.accepts_temporary_workers,
+              requires_arrival_day_before: !!parsedReq.requires_arrival_day_before,
+              prioritize_titles: !!parsedReq.prioritize_titles,
+              other_conditions: Array.isArray(parsedReq.other_conditions) ? parsedReq.other_conditions : [],
+              cup_size_conditions: Array.isArray(parsedReq.cup_size_conditions) ? parsedReq.cup_size_conditions : []
+            };
+          } catch (e) {
+            // パースに失敗した場合はデフォルト値を設定
+            console.error("requirementsのパースに失敗:", e);
+            cleanedData.requirements = {
+              accepts_temporary_workers: false,
+              requires_arrival_day_before: false,
+              prioritize_titles: false,
+              other_conditions: [],
+              cup_size_conditions: []
+            };
+          }
+        } else {
+          // オブジェクトでも文字列でもない場合はデフォルト値を設定
+          cleanedData.requirements = {
+            accepts_temporary_workers: false,
+            requires_arrival_day_before: false,
+            prioritize_titles: false,
+            other_conditions: [],
+            cup_size_conditions: []
+          };
+        }
       } else {
+        // nullまたはundefinedの場合
         cleanedData.requirements = {
           accepts_temporary_workers: false,
           requires_arrival_day_before: false,
