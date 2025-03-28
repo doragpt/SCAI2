@@ -711,8 +711,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // アクセス情報とセキュリティ対策
       access_info: req.body.access_info || existingProfile.access_info || "",
       security_measures: req.body.security_measures || existingProfile.security_measures || "",
-      privacy_measures: req.body.privacy_measures || existingProfile.privacy_measures || "",
-      commitment: req.body.commitment || existingProfile.commitment || "",
+      // TEXT型として正しく処理
+      privacy_measures: dataUtils.processTextFields(req.body.privacy_measures || existingProfile.privacy_measures, ""),
+      commitment: dataUtils.processTextFields(req.body.commitment || existingProfile.commitment, ""),
       
       // 各種サポート情報
       transportation_support: req.body.transportation_support !== undefined ? req.body.transportation_support : (existingProfile.transportation_support || false),
@@ -782,8 +783,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // アクセス情報とセキュリティ対策
       access_info: updateData.access_info,
       security_measures: updateData.security_measures,
-      privacy_measures: updateData.privacy_measures,
-      commitment: updateData.commitment,
+      privacy_measures: dataUtils.processTextFields(updateData.privacy_measures),
+      commitment: dataUtils.processTextFields(updateData.commitment),
       
       // 各種サポート情報
       transportation_support: updateData.transportation_support,
@@ -905,8 +906,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         application_notes: updateData.application_notes || existingProfile.application_notes || "",
         access_info: fullUpdateData.access_info,
         security_measures: fullUpdateData.security_measures,
-        privacy_measures: updateData.privacy_measures || existingProfile.privacy_measures || "",
-        commitment: updateData.commitment || existingProfile.commitment || "",
+        privacy_measures: dataUtils.processTextFields(updateData.privacy_measures || existingProfile.privacy_measures, ""),
+        commitment: dataUtils.processTextFields(updateData.commitment || existingProfile.commitment, ""),
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
         // special_offersを正規の配列として処理（SQLテンプレートリテラルは使わない）

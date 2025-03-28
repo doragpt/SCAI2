@@ -167,6 +167,32 @@ export const dataUtils = {
   },
 
   /**
+   * プライバシー対策などの文字列フィールドを適切に処理する
+   * privacy_measuresなどのTEXT型カラムに保存するプレーンなテキストデータを準備
+   * 誤ってJSONBとして扱われないようにする
+   */
+  processTextFields: (value: any, defaultValue: string = ""): string => {
+    if (value === null || value === undefined) return defaultValue;
+    
+    // オブジェクトや配列が誤って渡された場合に文字列化
+    if (typeof value === 'object') {
+      try {
+        console.warn('テキストフィールドにオブジェクトが渡されました。文字列化します。', { type: typeof value });
+        return JSON.stringify(value);
+      } catch (e) {
+        console.error('テキストフィールドの変換エラー:', e);
+        return defaultValue;
+      }
+    }
+    
+    // 文字列の場合はそのまま返す
+    if (typeof value === 'string') return value;
+    
+    // その他の型は文字列化
+    return String(value || defaultValue);
+  },
+
+  /**
    * データ構造をログ出力
    * デバッグ用の詳細ログ
    */
@@ -222,6 +248,25 @@ export const dataUtils = {
           Array.isArray(data.design_settings.sections) 
             ? data.design_settings.sections.length 
             : 'not array'
+      } : 'undefined',
+      // TEXT型フィールドの情報も追加
+      privacy_measures: data.privacy_measures ? {
+        type: typeof data.privacy_measures,
+        sample: typeof data.privacy_measures === 'string' 
+          ? data.privacy_measures.substring(0, 50) + (data.privacy_measures.length > 50 ? '...' : '')
+          : (data.privacy_measures ? String(data.privacy_measures).substring(0, 50) : 'null or undefined')
+      } : 'undefined',
+      security_measures: data.security_measures ? {
+        type: typeof data.security_measures,
+        sample: typeof data.security_measures === 'string' 
+          ? data.security_measures.substring(0, 50) + (data.security_measures.length > 50 ? '...' : '')
+          : (data.security_measures ? String(data.security_measures).substring(0, 50) : 'null or undefined')
+      } : 'undefined',
+      commitment: data.commitment ? {
+        type: typeof data.commitment,
+        sample: typeof data.commitment === 'string' 
+          ? data.commitment.substring(0, 50) + (data.commitment.length > 50 ? '...' : '')
+          : (data.commitment ? String(data.commitment).substring(0, 50) : 'null or undefined')
       } : 'undefined'
     });
   }
