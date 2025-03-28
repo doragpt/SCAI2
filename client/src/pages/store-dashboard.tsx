@@ -891,7 +891,7 @@ export default function StoreDashboard() {
                   value="design" 
                   className="py-2 rounded-lg"
                   onClick={() => {
-                    window.location.href = '/store/design-manager';
+                    setLocation('/store/design-manager');
                   }}
                 >
                   <PenBox className="h-4 w-4 mr-2" />
@@ -917,7 +917,7 @@ export default function StoreDashboard() {
                       )}
                       <div className="flex gap-2 mt-2 sm:mt-0">
                         <Button
-                          onClick={() => window.location.href = '/store/preview'}
+                          onClick={() => setLocation('/store/preview')}
                           variant="secondary"
                           size="sm"
                         >
@@ -944,7 +944,7 @@ export default function StoreDashboard() {
                         <span className="font-semibold">注意：</span>以下は入力した情報の一覧です。実際に応募者から見える店舗デザインは
                         <span 
                           className="underline cursor-pointer font-medium ml-1" 
-                          onClick={() => window.open(`/store/preview?id=${profile?.id}`, '_blank')}
+                          onClick={() => setLocation(`/store/preview?id=${profile?.id}`)}
                         >
                           プレビュー
                         </span>
