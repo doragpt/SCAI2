@@ -320,11 +320,18 @@ export type BenefitType = typeof allBenefitTypes[number];
 export type BenefitCategory = keyof typeof benefitTypes;
 
 // カスタムオファー用の型定義
+/**
+ * 特別オファーのスキーマ定義
+ * 
+ * クライアント側とサーバー側で一貫したデフォルト値を使用するために
+ * すべての必須フィールドに明示的なデフォルト値を設定
+ */
 export const specialOfferSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  type: z.string(),
+  id: z.string().default(() => `offer-${Math.random().toString(36).substring(2, 9)}`),
+  title: z.string().default("特別オファー"),
+  description: z.string().default(""),
+  // typeフィールドは重要: 統一したデフォルト値として"bonus"を使用
+  type: z.string().default("bonus"),
   amount: z.number().optional().nullable(),
   conditions: z.string().optional().nullable(),
   // 日付フィールドは文字列として保存（JSONBとの互換性を確保）
@@ -333,7 +340,7 @@ export const specialOfferSchema = z.object({
   isActive: z.boolean().default(true),
   isLimited: z.boolean().default(false),
   limitedCount: z.number().optional().nullable(),
-  targetAudience: z.array(z.string()).optional().default([]),
+  targetAudience: z.array(z.string()).default([]),
   // デザイン関連のプロパティを追加
   backgroundColor: z.string().default("#ff4d7d"), // テーマカラー
   textColor: z.string().default("#ffffff"),
