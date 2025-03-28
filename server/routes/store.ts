@@ -173,6 +173,93 @@ function processSpecialOffers(offers: any): any[] {
   }
 }
 
+// ギャラリー写真の配列の整合性を確保するヘルパー関数
+function processGalleryPhotos(photos: any): any[] {
+  // 入力がnullまたはundefinedの場合は空配列を返す
+  if (photos === null || photos === undefined) {
+    console.log("gallery_photosがnullまたはundefinedです。空配列を返します。");
+    return [];
+  }
+  
+  // JSONB型への変更に伴う修正: 文字列の場合はJSONとしてパースを試みる
+  if (typeof photos === 'string') {
+    try {
+      const parsedPhotos = JSON.parse(photos);
+      if (Array.isArray(parsedPhotos)) {
+        photos = parsedPhotos;
+      } else {
+        console.log("gallery_photosがJSONとしてパースされましたが、配列ではありません。空配列を返します。");
+        return [];
+      }
+    } catch (e) {
+      console.log("gallery_photosが文字列ですが、有効なJSONではありません。空配列を返します。", e);
+      return [];
+    }
+  }
+  
+  // 配列ではない場合は空配列を返す
+  if (!Array.isArray(photos)) {
+    console.log("gallery_photosが配列ではありません。空配列を返します。タイプ:", typeof photos);
+    return [];
+  }
+  
+  try {
+    // 有効な写真オブジェクトのみフィルタリング
+    return photos
+      .filter(photo => typeof photo === 'object' && photo !== null)
+      .map(photo => {
+        // 文字列フィールドの安全な処理
+        const safeString = (value: any, defaultValue: string = "") => {
+          if (typeof value === 'string') return value;
+          return defaultValue;
+        };
+
+        // 必須フィールドの確保 - 各項目にデフォルト値を設定して対応
+        const normalizedPhoto = {
+          id: typeof photo.id === 'string' && photo.id.trim() !== '' ? 
+            photo.id : `photo-${Math.random().toString(36).substring(2, 15)}`,
+          url: safeString(photo.url),
+          title: safeString(photo.title, `写真 ${photo.order || 0}`),
+          description: safeString(photo.description),
+          alt: safeString(photo.alt),
+          category: safeString(photo.category, "その他"),
+          featured: typeof photo.featured === 'boolean' ? photo.featured : false,
+          order: typeof photo.order === 'number' ? photo.order : 0
+        };
+
+        // JSON互換性チェック - JSONBカラムに保存するための重要なステップ
+        try {
+          JSON.stringify(normalizedPhoto);
+          console.log("写真処理成功:", normalizedPhoto.title);
+        } catch (jsonError) {
+          console.error("JSON変換エラー:", jsonError, "問題のフィールド:", Object.keys(normalizedPhoto).map(key => {
+            return { 
+              key, 
+              type: typeof normalizedPhoto[key as keyof typeof normalizedPhoto], 
+              value: normalizedPhoto[key as keyof typeof normalizedPhoto]
+            };
+          }));
+          // エラーが発生した場合は最低限のオブジェクトを返す
+          return {
+            id: `photo-error-${Math.random().toString(36).substring(2, 9)}`,
+            url: "",
+            title: "エラー発生写真",
+            description: "",
+            alt: "",
+            category: "その他",
+            featured: false,
+            order: 0
+          };
+        }
+
+        return normalizedPhoto;
+      });
+  } catch (error) {
+    console.error("gallery_photos処理中のエラー:", error);
+    return [];
+  }
+}
+
 const router = Router();
 
 // ルータレベルのミドルウェアでリクエストをログ出力
@@ -442,14 +529,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         ? processSpecialOffers(req.body.special_offers) 
         : (existingProfile.special_offers || []),
       
-      // ギャラリー写真（JSON文字列として処理）
-      gallery_photos: req.body.gallery_photos 
-        ? (typeof req.body.gallery_photos === 'string' 
-            ? req.body.gallery_photos 
-            : JSON.stringify(req.body.gallery_photos))
-        : (typeof existingProfile.gallery_photos === 'string'
-            ? existingProfile.gallery_photos
-            : JSON.stringify(existingProfile.gallery_photos || [])),
+      // ギャラリー写真（JSONB型として処理）
+      gallery_photos: req.body.gallery_photos
+        ? processGalleryPhotos(req.body.gallery_photos)
+        : (existingProfile.gallery_photos || []),
       
       // デザイン設定（JSON文字列として処理）
       design_settings: req.body.design_settings 
@@ -585,7 +668,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
         special_offers: processSpecialOffers(fullUpdateData.special_offers),
-        gallery_photos: fullUpdateData.gallery_photos || [],
+        gallery_photos: processGalleryPhotos(fullUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理
         design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
         updated_at: fullUpdateData.updated_at
@@ -849,6 +932,53 @@ router.get("/special-offers", authenticate, authorize("store"), async (req: any,
       userId: req.user?.id
     });
     return res.status(500).json({ message: "特別オファーの取得に失敗しました" });
+  }
+});
+
+// ギャラリー写真取得エンドポイント
+router.get("/gallery-photos", authenticate, authorize("store"), async (req: any, res) => {
+  try {
+    log('info', 'ギャラリー写真取得開始', {
+      userId: req.user.id,
+      displayName: req.user.display_name
+    });
+
+    // 店舗プロフィールを取得
+    const [profile] = await db
+      .select()
+      .from(store_profiles)
+      .where(eq(store_profiles.user_id, req.user.id));
+
+    if (!profile) {
+      return res.status(404).json({ message: "店舗プロフィールが見つかりません" });
+    }
+
+    // ギャラリー写真データを取得
+    let galleryPhotos;
+    try {
+      // string型である可能性があるのでJSON.parseを試みる
+      if (typeof profile.gallery_photos === 'string') {
+        galleryPhotos = processGalleryPhotos(JSON.parse(profile.gallery_photos));
+      } else {
+        galleryPhotos = processGalleryPhotos(profile.gallery_photos);
+      }
+    } catch (e) {
+      console.error("gallery_photos解析エラー:", e);
+      galleryPhotos = [];
+    }
+    
+    log('info', 'ギャラリー写真取得成功', {
+      userId: req.user.id,
+      photosCount: galleryPhotos.length
+    });
+
+    return res.json(galleryPhotos);
+  } catch (error) {
+    log('error', 'ギャラリー写真取得エラー', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user?.id
+    });
+    return res.status(500).json({ message: "ギャラリー写真の取得に失敗しました" });
   }
 });
 
