@@ -4,6 +4,8 @@ import { sendSuccess } from '../utils/api-response';
 import { log } from '../utils/logger';
 import { storage } from '../storage';
 import path from 'path';
+import { dataUtils } from '@shared/utils/dataTypeUtils';
+import { getDefaultDesignSettings } from '../shared/defaultDesignSettings';
 
 const router = express.Router();
 
@@ -11,37 +13,76 @@ const router = express.Router();
  * デザインプレビューAPI
  * デザイン管理画面のiframeプレビュー用データを返す
  */
-router.get('/', authenticate, authorize('store'), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user!.id;
+    // 認証情報があれば取得、なければデモモード
+    const userId = req.user?.id;
+    const isDemo = !userId;
+    
     log('info', 'プレビューAPIリクエスト受信', { 
-      userId,
+      userId: userId || 'demo-mode',
+      isDemo,
       query: req.query 
     });
 
     // embedded=true の場合はJSON APIとして動作
     if (req.query.embedded === 'true') {
-      // 店舗プロフィールを取得
-      const storeProfile = await storage.getStoreProfile(userId);
+      let storeProfile;
+      let designData;
       
-      if (!storeProfile) {
-        log('error', '店舗プロフィールが見つかりません', { userId });
-        return res.status(404).json({ 
-          success: false,
-          error: '店舗プロフィールが見つかりません'
-        });
+      if (isDemo) {
+        // デモモード: デフォルトデータを使用
+        log('info', 'デモモードでプレビューを提供します');
+        
+        // デモ用店舗プロフィール
+        storeProfile = {
+          business_name: 'デモ店舗',
+          location: '東京都',
+          service_type: 'デリヘル',
+          catch_phrase: 'プレビューモードのサンプル表示です',
+          description: '<p>ここにはお店の説明文が表示されます。</p>',
+          gallery_photos: []
+        };
+        
+        // デモ用デザインデータ
+        designData = getDefaultDesignSettings();
+      } else {
+        // 通常モード: データベースからデータを取得
+        storeProfile = await storage.getStoreProfile(userId);
+        
+        if (!storeProfile) {
+          log('error', '店舗プロフィールが見つかりません', { userId });
+          return res.status(404).json({ 
+            success: false,
+            error: '店舗プロフィールが見つかりません'
+          });
+        }
+        
+        // デザイン設定を取得
+        designData = await storage.getDesignSettings(userId);
+      
+        // デザイン設定が見つからない場合はデフォルト設定を使用
+        if (!designData) {
+          log('info', 'デザイン設定が見つかりません。デフォルト設定を使用します', { userId });
+          designData = getDefaultDesignSettings();
+        } else {
+          // データ型変換の一貫性を確保するために処理
+          designData = dataUtils.processDesignSettings(designData);
+        }
       }
       
-      // デザイン設定を取得
-      const designData = await storage.getDesignSettings(userId);
-      
       // プレビュー用のデータを返す
+      log('info', 'プレビューデータ送信', {
+        hasDesignData: !!designData,
+        sectionsCount: designData?.sections?.length || 0
+      });
+      
       return sendSuccess(res, {
         message: 'プレビュー用データ取得成功',
         timestamp: new Date().toISOString(),
         mode: 'preview',
         storeProfile,
-        designData: designData || null
+        designData
       });
     } 
     

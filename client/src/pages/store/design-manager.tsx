@@ -466,7 +466,7 @@ export default function StoreDesignManager() {
 
   // プレビューを更新する
   const refreshPreview = () => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
+    if (iframeRef.current) {
       // プレビュー送信前に設定を正規化
       const previewSettings = ensureRequiredSections(settings);
       
@@ -476,11 +476,48 @@ export default function StoreDesignManager() {
         globalSettings: previewSettings.globalSettings
       });
       
-      iframeRef.current.contentWindow.postMessage({
-        type: 'UPDATE_DESIGN',
-        timestamp: new Date().toISOString(),
-        settings: previewSettings
-      }, '*');
+      // iframeを更新するベストな方法
+      try {
+        // 現在のURLを取得
+        // プレビューのURLを構築（APIエンドポイントを指定）
+        const url = new URL('/api/preview', window.location.origin);
+        
+        // キャッシュを無効化するためのタイムスタンプを追加
+        url.searchParams.set('t', Date.now().toString());
+        url.searchParams.set('embedded', 'true');
+        
+        // iframeを一旦クリアしてから再設定
+        iframeRef.current.src = '';
+        
+        // 少し待ってから新しいURLをセット
+        setTimeout(() => {
+          if (iframeRef.current) {
+            iframeRef.current.src = url.toString();
+            
+            // iframe読み込み後にメッセージを送信するため少し待つ
+            setTimeout(() => {
+              if (iframeRef.current && iframeRef.current.contentWindow) {
+                iframeRef.current.contentWindow.postMessage({
+                  type: 'UPDATE_DESIGN',
+                  timestamp: new Date().toISOString(),
+                  settings: previewSettings
+                }, '*');
+              }
+            }, 300);
+          }
+        }, 100);
+      } catch (e) {
+        console.error('プレビュー更新エラー:', e);
+        
+        // エラー時は直接メッセージ送信を試みる
+        if (iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            type: 'UPDATE_DESIGN',
+            timestamp: new Date().toISOString(),
+            settings: previewSettings
+          }, '*');
+        }
+      }
     }
   };
 
@@ -1060,9 +1097,11 @@ export default function StoreDesignManager() {
                     {/* 通常のiframeプレビュー用 */}
                     <iframe 
                       ref={iframeRef}
-                      src="/store/preview?embedded=true" 
+                      src={`/api/preview?embedded=true&t=${Date.now()}`} 
                       className="w-full h-full border-0"
                       title="プレビュー"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+                      sandbox="allow-same-origin allow-scripts allow-forms"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-slate-800/70 text-white text-xs px-2 py-1">
                       プレビューモード - 表示のみ

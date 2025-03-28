@@ -41,7 +41,8 @@ export default function StoreDesignPreview() {
       if (!embedded) return null;
       
       try {
-        const response = await apiRequest<any>("GET", "/api/preview?embedded=true");
+        // 常に最新のデータを取得するためにタイムスタンプを追加
+        const response = await apiRequest<any>(`GET`, `/api/preview?embedded=true&t=${Date.now()}`);
         forwardLog('プレビューデータAPI応答:', response);
         
         // デザイン設定があればセット
