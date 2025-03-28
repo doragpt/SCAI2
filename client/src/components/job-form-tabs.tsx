@@ -41,7 +41,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 基本情報
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
-      special_offers: initialData?.special_offers || [],
+      special_offers: initialData?.special_offers || "[]",
       top_image: initialData?.top_image || "",
       gallery_photos: initialData?.gallery_photos || [],
       
@@ -202,7 +202,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           catch_phrase: data.catch_phrase || "",
           description: data.description || "",
           top_image: data.top_image || "",
-          special_offers: data.special_offers || [],
+          special_offers: data.special_offers || "[]",
           
           // 給与・待遇情報
           benefits: data.benefits || [],
@@ -364,19 +364,60 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     });
     
     // special_offersのデータ検証と修正
-    if (data.special_offers && Array.isArray(data.special_offers)) {
-      // special_offersの各項目にtypeプロパティがあるか確認し、ない場合は追加
-      const validSpecialOffers = data.special_offers.map(offer => {
-        if (!offer.type) {
-          return {
-            ...offer,
-            type: "特別オファー" // デフォルト値を設定
-          };
+    try {
+      if (data.special_offers) {
+        // 文字列の場合はパースを試みる
+        if (typeof data.special_offers === 'string') {
+          try {
+            const parsedOffers = JSON.parse(data.special_offers);
+            if (Array.isArray(parsedOffers)) {
+              // 各要素にtypeプロパティがあるか確認して追加
+              const validSpecialOffers = parsedOffers.map(offer => {
+                if (!offer.type) {
+                  return {
+                    ...offer,
+                    type: "特別オファー" // デフォルト値を設定
+                  };
+                }
+                return offer;
+              });
+              
+              // 文字列として設定
+              data.special_offers = JSON.stringify(validSpecialOffers);
+            }
+          } catch (parseError) {
+            console.error("special_offers文字列のパースエラー:", parseError);
+            data.special_offers = "[]";
+          }
+        } else if (Array.isArray(data.special_offers)) {
+          // 配列の場合は直接処理
+          const validSpecialOffers = data.special_offers.map(offer => {
+            if (!offer.type) {
+              return {
+                ...offer,
+                type: "特別オファー" // デフォルト値を設定
+              };
+            }
+            return offer;
+          });
+          
+          // 文字列に変換して設定
+          data.special_offers = JSON.stringify(validSpecialOffers);
+        } else {
+          // 配列でも文字列でもない場合
+          console.warn("special_offersが不明な型です:", typeof data.special_offers);
+          data.special_offers = "[]";
         }
-        return offer;
-      });
-      data.special_offers = validSpecialOffers;
-      console.log("special_offers修正後:", data.special_offers);
+      } else {
+        data.special_offers = "[]";
+      }
+      console.log("special_offers修正後:", typeof data.special_offers === 'string' ? 
+        (data.special_offers.length > 100 ? data.special_offers.substring(0, 100) + "..." : data.special_offers) : 
+        '(非文字列)'
+      );
+    } catch (error) {
+      console.error("special_offers検証中のエラー:", error);
+      data.special_offers = "[]";
     }
     
     // フォームのエラーをすべて出力
@@ -417,20 +458,45 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       });
       
       // データを整形
-      const cleanedData = { ...data };
+      const cleanedData: any = { ...data }; // 一時的な_special_offers_array用にany型を使用
       
       // 電話番号とメールアドレスの空データをフィルタリング
       cleanedData.phone_numbers = validPhoneNumbers;
       cleanedData.email_addresses = data.email_addresses?.filter(email => email && email.trim() !== '') || [];
       
-      // special_offers配列を確認して整形
-      if (cleanedData.special_offers) {
-        if (Array.isArray(cleanedData.special_offers)) {
-          try {
+      // special_offers配列を確認して整形（TEXT型として保存するため文字列化が必要）
+      try {
+        if (cleanedData.special_offers) {
+          // 文字列の場合はパースを試みる
+          if (typeof cleanedData.special_offers === 'string') {
+            try {
+              const parsedOffers = JSON.parse(cleanedData.special_offers);
+              if (Array.isArray(parsedOffers)) {
+                // 処理のために一時的に配列として保持
+                cleanedData._special_offers_array = parsedOffers;
+              } else {
+                // パースできたが配列でない場合は空配列を設定
+                console.warn("special_offersがパースできましたが配列ではありません", typeof parsedOffers);
+                cleanedData._special_offers_array = [];
+              }
+            } catch (parseError) {
+              console.error("special_offers文字列のパースエラー:", parseError);
+              cleanedData._special_offers_array = [];
+              cleanedData.special_offers = "[]";
+            }
+          }
+          
+          // 一時的な配列を確認
+          const processArray = Array.isArray(cleanedData._special_offers_array) ? 
+            cleanedData._special_offers_array : 
+            (Array.isArray(cleanedData.special_offers) ? cleanedData.special_offers : []);
+            
+          // 特別オファーを処理
+          if (processArray.length > 0) {
             // 各特別オファーのデータを検証・整形
-            cleanedData.special_offers = cleanedData.special_offers
-              .filter(offer => offer !== null && typeof offer === 'object')
-              .map(offer => {
+            const validSpecialOffers = processArray
+              .filter((offer: any) => offer !== null && typeof offer === 'object')
+              .map((offer: any) => {
                 try {
                   // インターフェースに合わせてキーとデータ分解
                   // 空文字列を防ぎ、null値を適切に処理
@@ -509,6 +575,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   // プリミティブ型の保証
                   const isActive = typeof offer.isActive === 'boolean' ? offer.isActive : true;
                   const isLimited = typeof offer.isLimited === 'boolean' ? offer.isLimited : false;
+                  
                   // backgroundColorの処理
                   let backgroundColor = "#fff9fa"; // デフォルト値
                   if (typeof offer.backgroundColor === 'string' && offer.backgroundColor) {
@@ -517,6 +584,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       backgroundColor = trimmedBgColor;
                     }
                   }
+                  
                   // textColorの処理
                   let textColor = "#333333"; // デフォルト値
                   if (typeof offer.textColor === 'string' && offer.textColor) {
@@ -525,6 +593,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       textColor = trimmedTextColor;
                     }
                   }
+                  
                   const icon = typeof offer.icon === 'string' ? offer.icon : "";
                   const order = typeof offer.order === 'number' ? offer.order : 0;
                   
@@ -570,17 +639,22 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   };
                 }
               });
-          } catch (error) {
-            console.error("special_offers全体の処理エラー:", error);
-            cleanedData.special_offers = [];
+              
+            // 配列を文字列化（TEXT型として保存するため）
+            cleanedData.special_offers = JSON.stringify(validSpecialOffers);
+            console.log("special_offers処理後（文字列）:", cleanedData.special_offers.substring(0, 100) + "...");
+          } else {
+            // 配列でない場合は空配列の文字列に設定
+            console.warn("special_offersが配列ではありません:", typeof cleanedData.special_offers);
+            cleanedData.special_offers = "[]";
           }
         } else {
-          // 配列でない場合は空配列に設定
-          console.warn("special_offersが配列ではありません:", typeof cleanedData.special_offers);
-          cleanedData.special_offers = [];
+          // undefinedやnullの場合は空配列の文字列に設定
+          cleanedData.special_offers = "[]";
         }
-      } else {
-        cleanedData.special_offers = [];
+      } catch (error) {
+        console.error("special_offers全体の処理エラー:", error);
+        cleanedData.special_offers = "[]";
       }
       
       // requirements オブジェクトの確認と整形
@@ -1242,15 +1316,47 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                     control={form.control}
                     name="special_offers"
                     render={({ field }) => {
-                      // 正しくフィールド値が設定されていることをコンソールで確認
-                      console.log("special_offers フィールド値：", field.value);
+                      // 文字列型のフィールドをパースしてコンポーネントに配列として渡す
+                      console.log("special_offers フィールド値タイプ:", typeof field.value);
+                      
+                      let offersArray = [];
+                      try {
+                        if (typeof field.value === 'string') {
+                          // 文字列の場合はパースを試みる
+                          offersArray = JSON.parse(field.value);
+                          if (!Array.isArray(offersArray)) {
+                            console.warn("特別オファーのパース結果が配列ではありません", typeof offersArray);
+                            offersArray = [];
+                          }
+                        } else if (Array.isArray(field.value)) {
+                          // すでに配列の場合はそのまま使用
+                          offersArray = field.value;
+                        } else {
+                          console.warn("特別オファーが配列でも文字列でもありません", typeof field.value);
+                          offersArray = [];
+                        }
+                      } catch (error) {
+                        console.error("特別オファーのパースエラー", error);
+                        offersArray = [];
+                      }
+                      
+                      // カスタムonChangeハンドラ - 配列を文字列化して保存
+                      const handleOffersChange = (newOffers: any[]) => {
+                        try {
+                          // 配列をJSON文字列化して保存
+                          field.onChange(JSON.stringify(newOffers));
+                        } catch (error) {
+                          console.error("特別オファーの文字列化エラー", error);
+                          field.onChange("[]");
+                        }
+                      };
                       
                       return (
                         <FormItem>
                           <FormControl>
                             <SpecialOfferEditor 
-                              value={field.value || []} 
-                              onChange={field.onChange}
+                              value={offersArray} 
+                              onChange={handleOffersChange}
                             />
                           </FormControl>
                           <FormDescription className="text-xs mt-2">
