@@ -252,8 +252,56 @@ function processSpecialOffers(offers: any): any[] {
       jsonStringLength: finalJsonString ? finalJsonString.length : 0
     });
     
+    // PostgreSQLのJSONB型との互換性を確認するための追加検証
+    if (!Array.isArray(normalizedOffers)) {
+      console.error("重大なエラー: normalizedOffersが配列ではありません。データ型:", typeof normalizedOffers);
+      console.log("データ内容:", normalizedOffers);
+      // 配列でない場合は常に空配列を返す
+      return [];
+    }
+    
+    // 各要素のチェックと修正を追加
+    const finalOffers = normalizedOffers.map(offer => {
+      // 各特別オファーがオブジェクトであることを確認
+      if (typeof offer !== 'object' || offer === null) {
+        console.error("特別オファー要素が有効なオブジェクトではありません:", offer);
+        return {
+          id: `offer-${Math.random().toString(36).substring(2, 9)}`,
+          title: "特別オファー",
+          description: "",
+          type: "bonus", // 必須フィールド
+          backgroundColor: "#fff9fa",
+          textColor: "#333333",
+          isActive: true,
+          isLimited: false,
+          icon: "sparkles",
+          order: 0,
+          targetAudience: [],
+          amount: null,
+          conditions: "",
+          limitedCount: null,
+          startDate: "",
+          endDate: ""
+        };
+      }
+      
+      // typeフィールドが"bonus"であることを強制
+      if (offer.type !== "bonus") {
+        console.log(`特別オファー[${offer.id}]のtypeを強制的に"bonus"に設定します。元の値:`, offer.type);
+        offer.type = "bonus";
+      }
+      
+      return offer;
+    });
+    
+    console.log("最終的な特別オファー配列:", {
+      isArray: Array.isArray(finalOffers),
+      length: finalOffers.length,
+      allElementsHaveType: finalOffers.every(o => o.type === "bonus")
+    });
+    
     console.log("===== processSpecialOffers関数終了 =====");
-    return normalizedOffers;
+    return finalOffers;
   } catch (error) {
     console.error("special_offers処理中の一般エラー:", error);
     return [];
@@ -535,8 +583,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          // 修正: special_offersをSQL文としてJSONBに直接変換してPostgreSQLの二重エンコードを回避
-          special_offers: sql`${JSON.stringify(processSpecialOffers(fullData.special_offers))}::jsonb`,
+          // special_offersを正規の配列として処理（SQLテンプレートリテラルは使わない）
+          special_offers: processSpecialOffers(fullData.special_offers),
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -619,12 +667,12 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         ? processSpecialOffers(req.body.special_offers)
         : (existingProfile.special_offers || []),
       
-      // ギャラリー写真（JSONB型として処理）
+      // ギャラリー写真（JSONB型として処理、SQLテンプレートリテラルを使用しない）
       gallery_photos: req.body.gallery_photos
         ? processGalleryPhotos(req.body.gallery_photos)
         : (existingProfile.gallery_photos || []),
       
-      // デザイン設定（JSONB型として処理）
+      // デザイン設定（JSONB型として処理、SQLテンプレートリテラルを使用しない）
       design_settings: req.body.design_settings 
         ? dataUtils.processDesignSettings(req.body.design_settings)
         : (existingProfile.design_settings || { sections: [], globalSettings: {} }),
