@@ -191,6 +191,163 @@ export const dataUtils = {
     // その他の型は文字列化
     return String(value || defaultValue);
   },
+  
+  /**
+   * ギャラリー写真の処理
+   * gallery_photosフィールドを処理し、配列として正規化
+   */
+  processGalleryPhotos: (value: any): any[] => {
+    // 配列が期待される
+    try {
+      if (Array.isArray(value)) {
+        // 各写真のIDとURLを確認
+        return value.filter(photo => {
+          const isValid = photo && typeof photo === 'object' && photo.id && photo.url;
+          if (!isValid) {
+            console.warn('無効なギャラリー写真データを除外:', photo);
+          }
+          return isValid;
+        }).map((photo, index) => ({
+          ...photo,
+          order: photo.order ?? index // orderがなければインデックスを使用
+        }));
+      }
+      
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (Array.isArray(parsed)) {
+            return dataUtils.processGalleryPhotos(parsed); // 再帰的に処理
+          }
+          console.warn('ギャラリー写真が文字列から解析されましたが、配列ではありません:', typeof parsed);
+          return [];
+        } catch (e) {
+          console.error('ギャラリー写真の解析エラー:', e);
+          return [];
+        }
+      }
+      
+      console.warn('ギャラリー写真の形式が無効です。空配列を使用します。', { type: typeof value });
+      return [];
+    } catch (error) {
+      console.error('ギャラリー写真処理中の予期せぬエラー:', error);
+      return [];
+    }
+  },
+
+  /**
+   * 要件データの処理
+   * requirementsフィールドをオブジェクトとして正規化
+   */
+  processRequirements: (value: any): any => {
+    const defaultRequirements = {
+      cup_size_conditions: [],
+      accepts_temporary_workers: true,
+      requires_arrival_day_before: false,
+      prioritize_titles: false,
+      other_conditions: []
+    };
+    
+    try {
+      // 文字列の場合はパース
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            // オブジェクトとして正常にパースできた場合
+            return {
+              ...defaultRequirements,
+              ...parsed,
+              // cup_size_conditionsが配列であることを確保
+              cup_size_conditions: Array.isArray(parsed.cup_size_conditions) 
+                ? parsed.cup_size_conditions 
+                : defaultRequirements.cup_size_conditions,
+              // other_conditionsが配列であることを確保
+              other_conditions: Array.isArray(parsed.other_conditions)
+                ? parsed.other_conditions
+                : defaultRequirements.other_conditions
+            };
+          }
+          
+          console.warn('要件データが文字列からパースされましたが、有効なオブジェクトではありません。', typeof parsed);
+          return defaultRequirements;
+        } catch (e) {
+          console.error('要件データの解析エラー:', e);
+          return defaultRequirements;
+        }
+      }
+      
+      // オブジェクトの場合
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return {
+          ...defaultRequirements,
+          ...value,
+          // cup_size_conditionsが配列であることを確保
+          cup_size_conditions: Array.isArray(value.cup_size_conditions) 
+            ? value.cup_size_conditions 
+            : defaultRequirements.cup_size_conditions,
+          // other_conditionsが配列であることを確保
+          other_conditions: Array.isArray(value.other_conditions)
+            ? value.other_conditions
+            : defaultRequirements.other_conditions
+        };
+      }
+      
+      console.warn('要件データの形式が無効です。デフォルト値を使用します。', { type: typeof value });
+      return defaultRequirements;
+    } catch (error) {
+      console.error('要件データ処理中の予期せぬエラー:', error);
+      return defaultRequirements;
+    }
+  },
+
+  /**
+   * 特別オファーの処理
+   * special_offersフィールドを配列として正規化
+   */
+  processSpecialOffers: (value: any): any[] => {
+    try {
+      // 配列の場合
+      if (Array.isArray(value)) {
+        // 各オファーをバリデーション
+        return value.filter(offer => {
+          const isValid = offer && typeof offer === 'object' && offer.id && offer.title;
+          if (!isValid) {
+            console.warn('無効な特別オファーデータを除外:', offer);
+          }
+          return isValid;
+        }).map((offer, index) => ({
+          ...offer,
+          type: offer.type || "bonus", // typeが未設定の場合は"bonus"をデフォルト値として使用
+          order: offer.order ?? index, // orderがなければインデックスを使用
+          isActive: offer.isActive ?? true,
+          isLimited: offer.isLimited ?? false,
+          targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience : []
+        }));
+      }
+      
+      // 文字列の場合はJSONパースを試みる
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (Array.isArray(parsed)) {
+            return dataUtils.processSpecialOffers(parsed); // 再帰的に処理
+          }
+          console.warn('特別オファーが文字列から解析されましたが、配列ではありません:', typeof parsed);
+          return [];
+        } catch (e) {
+          console.error('特別オファーの解析エラー:', e);
+          return [];
+        }
+      }
+      
+      console.warn('特別オファーの形式が無効です。空配列を使用します。', { type: typeof value });
+      return [];
+    } catch (error) {
+      console.error('特別オファー処理中の予期せぬエラー:', error);
+      return [];
+    }
+  },
 
   /**
    * データ構造をログ出力

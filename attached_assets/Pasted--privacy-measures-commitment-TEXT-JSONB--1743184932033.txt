@@ -1,0 +1,131 @@
+１．現状の概要と修正点
+privacy_measures（およびcommitment）の問題
+
+本来はテキスト型（TEXT）として定義すべきフィールドが、誤ってJSONB型として処理され、プレーンな文字列（例："顔出し不要で安心"）がそのまま渡されていたため、PostgreSQL側で JSON として解析されず「invalid input syntax for type json」エラーが発生していました。
+
+対策として、専用の処理関数（processTextFields()）を追加し、オブジェクトや配列が誤って渡された場合は安全に文字列に変換するよう実装しました。
+
+サーバー側の複数箇所（リクエスト初期処理、バリデーション後、最終DB更新処理）でprivacy_measuresとcommitmentの処理を修正済みです。
+
+その他のJSONBフィールド
+
+requirements や special_offers、design_settings、gallery_photos などはIIFEパターンで処理・検証済みですが、依然として不正な形式のデータがDBに渡されるケースがあり得るため、全体のデータ型整合性について再検証が必要です。
+
+デバッグログの拡充
+
+logDataStructure 関数の拡張により、privacy_measuresなどのテキストフィールドも含めた各フィールドの型や値の状態をログ出力しています。
+
+２．現在のエラー原因と考えられる追加の問題点
+エラーメッセージ「invalid input syntax for type json」
+
+PostgreSQL が「Token "顔出し不要で安心" is invalid」とエラーを出しているため、privacy_measures などのフィールドがプレーンな文字列として渡され、JSON としてパースできずにエラーとなっています。
+
+また、他のフィールド（例：requirements 内のcup_size_conditionsなど）も、もしかすると正しく正規化できていない可能性があります。
+
+クライアント側の検証不足
+
+job-form-tabs.tsx などから送信されるデータについて、送信直前のデータ形式をより詳細にログ出力・検証し、どのフィールドが不正な形式になっているか切り分ける必要があります。
+
+最小限のテストによる切り分け
+
+curlやPostman等で、特定のフィールド（例：privacy_measuresのみ、requirementsのみ）の更新リクエストを行い、どのフィールドがエラーを引き起こしているかを切り分けることが推奨されます。
+
+３．次に実施すべき具体的な対策
+(1) DBスキーマの再確認
+privacy_measuresおよびcommitmentのカラム型
+
+これらのフィールドが本来テキストとして扱うべきであれば、DB側のカラム型が TEXT になっているか確認してください。
+
+もしJSONB型である必要がない場合は、スキーマ変更を検討してください。
+
+(2) サーバー側更新処理直前のデバッグログ強化
+更新処理直前に、各JSONBフィールド（privacy_measures、design_settings、gallery_photos、requirements など）の最終的な値と型、JSON文字列としての状態をログ出力してください。
+
+例:
+
+typescript
+コピーする
+logger.info("DB更新直前のフィールド検証", {
+  privacyMeasures: typeof data.privacy_measures,
+  privacyMeasuresValue: JSON.stringify(data.privacy_measures),
+  requirements: JSON.stringify(data.requirements),
+  designSettings: JSON.stringify(data.design_settings).substring(0, 100),
+  galleryPhotos: JSON.stringify(data.gallery_photos).substring(0, 100)
+});
+このログにより、どのフィールドが正しいJSON形式になっていないかを特定できます。
+
+(3) クライアント側の送信前データ検証の強化
+job-form-tabs.tsx など、クライアント側で送信データを生成する箇所で、特に JSONB 型として渡す予定のフィールドについて、以下の点を確認してください：
+
+文字列フィールドが単なるプレーンテキストの場合、必要であれば JSON.stringify を適用し、DB側が期待する形式に合わせる。
+例:
+
+javascript
+コピーする
+if (typeof data.privacy_measures === 'string') {
+  data.privacy_measures = JSON.stringify(data.privacy_measures);
+}
+送信前に、各フィールドの内容をコンソールログに出力して検証し、予期せぬ型（objectやarray）が含まれていないか確認してください。
+
+(4) 最小限のテストケースによる切り分け
+curlやPostman等で、各JSONBフィールドを個別に更新するリクエストを作成し、エラーが発生するか確認してください。
+
+例えば、privacy_measuresのみを更新するテストリクエストを実施し、エラーの有無を確認する。
+
+(5) エラーハンドリングの強化
+server/routes/store.ts のエラー処理部分（約1022行目付近）を見直し、SQLエラーの詳細情報（エラー発生箇所、無効と判断されたトークンの内容など）をより詳細にログ出力するようにしてください。
+
+これにより、具体的にどのフィールドで「Token ○○ is invalid」エラーが発生しているのかを特定できるはずです。
+
+４．指示書サンプル（エンジニア向け）
+件名：PATCH /api/store/profile 更新時の「invalid input syntax for type json」エラー対策
+
+お疲れ様です。
+現在、店舗プロフィール更新時に発生している「invalid input syntax for type json」エラーについて、以下の対応をお願いします。
+
+1. DBスキーマの確認
+privacy_measures と commitment のカラムが、実際に TEXT 型になっているか確認してください。
+
+もし不要なJSONB型になっている場合、TEXT型へ変更するか、更新処理時に適切なJSON形式に変換する対応をお願いします。
+
+2. サーバー側のデバッグログ強化
+更新処理直前（DBに渡す直前）の各JSONBフィールドの状態を詳細にログ出力してください。
+
+特に、privacy_measures、requirements、design_settings、gallery_photos の各フィールドについて、typeof と JSON.stringify() の結果を確認してください。
+
+例:
+
+typescript
+コピーする
+logger.info("DB更新直前のフィールド検証", {
+  privacyMeasures: typeof data.privacy_measures,
+  privacyMeasuresValue: JSON.stringify(data.privacy_measures),
+  requirements: JSON.stringify(data.requirements),
+  designSettings: JSON.stringify(data.design_settings).substring(0, 100),
+  galleryPhotos: JSON.stringify(data.gallery_photos).substring(0, 100)
+});
+3. クライアント側の送信前検証強化
+job-form-tabs.tsx など、クライアント側でJSONBフィールドとして送信する値について、送信前にデータ形式をチェックし、必要に応じて JSON.stringify() を適用してください。
+
+例:
+
+javascript
+コピーする
+if (typeof data.privacy_measures === 'string') {
+  data.privacy_measures = JSON.stringify(data.privacy_measures);
+}
+送信前の全データをコンソールに出力し、各フィールドの内容と型を確認してください。
+
+4. 最小限のリクエストによる切り分けテスト
+curlやPostmanで、privacy_measures のみを更新するリクエストを作成し、エラーの有無を確認してください。
+
+同様に、requirementsやdesign_settingsなど個別のフィールド単位でテストを実施し、どのフィールドが原因かを特定してください。
+
+5. エラーハンドリングの強化
+server/routes/store.ts のエラー処理部分を強化し、SQLエラーの詳細情報（エラー発生箇所、無効なトークンの内容など）をログ出力するようにしてください。
+
+これにより、具体的にどのフィールドでエラーが発生しているのか、より正確に把握できるはずです。
+
+上記の対応後、再度更新処理の動作を確認し、エラーが解消されるかご報告ください。
+
+よろしくお願いいたします。

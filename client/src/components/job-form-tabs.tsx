@@ -553,6 +553,53 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           designSettingsIncluded: formattedData.design_settings !== undefined
         });
         
+        // JSONB型フィールドの詳細ログ
+        console.log("JSONB型フィールド詳細:", {
+          // テキストフィールド
+          privacy_measures: {
+            type: typeof formattedData.privacy_measures,
+            value: formattedData.privacy_measures ? 
+                  formattedData.privacy_measures.substring(0, 100) : null
+          },
+          commitment: {
+            type: typeof formattedData.commitment,
+            value: formattedData.commitment ?
+                  formattedData.commitment.substring(0, 100) : null
+          },
+          // オブジェクトフィールド
+          requirements: {
+            type: typeof formattedData.requirements,
+            structure: formattedData.requirements ? 
+                     Object.keys(formattedData.requirements) : [],
+            cup_size_conditions: formattedData.requirements && 
+                                formattedData.requirements.cup_size_conditions ?
+                                JSON.stringify(formattedData.requirements.cup_size_conditions) : 'undefined',
+            sample: JSON.stringify(formattedData.requirements).substring(0, 100)
+          },
+          // 配列フィールド
+          special_offers: {
+            type: typeof formattedData.special_offers,
+            isArray: Array.isArray(formattedData.special_offers),
+            length: Array.isArray(formattedData.special_offers) ? 
+                   formattedData.special_offers.length : 'not array',
+            sample: JSON.stringify(formattedData.special_offers).substring(0, 100)
+          },
+          gallery_photos: {
+            type: typeof formattedData.gallery_photos,
+            isArray: Array.isArray(formattedData.gallery_photos),
+            length: Array.isArray(formattedData.gallery_photos) ? 
+                   formattedData.gallery_photos.length : 'not array',
+            sample: JSON.stringify(formattedData.gallery_photos).substring(0, 100)
+          },
+          // 複雑なオブジェクト
+          design_settings: {
+            type: typeof formattedData.design_settings,
+            structure: formattedData.design_settings ? 
+                     Object.keys(formattedData.design_settings) : [],
+            sample: JSON.stringify(formattedData.design_settings).substring(0, 100)
+          }
+        });
+        
         // リクエスト送信前のデバッグ
         console.log("apiRequest実行準備完了:", { 
           url: "/api/store/profile", 

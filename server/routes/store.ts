@@ -10,7 +10,7 @@ import {
 import { eq, and, gte, sql, count, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
-import { dataUtils } from '@shared/utils/dataTypeUtils';
+import { dataUtils, DEFAULT_REQUIREMENTS } from '@shared/utils/dataTypeUtils';
 import { customJsonb } from '@shared/utils/customTypes';
 
 // 配列フィールドを安全に処理するヘルパー関数
@@ -807,6 +807,12 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       design_settings: updateData.design_settings
     };
 
+    // 簡易バージョンのログ出力（エラー解決後に詳細版に戻す）
+    log('info', 'データ更新準備中', {
+      userId: req.user.id,
+      profileId: existingProfile.id
+    });
+    
     log('info', 'SQLクエリ実行準備中', {
       userId: req.user.id,
       profileId: existingProfile.id
@@ -826,51 +832,11 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         status: fullUpdateData.status,
         top_image: fullUpdateData.top_image,
         working_hours: fullUpdateData.working_hours,
-        // requirementsフィールドをオブジェクトとして確実に処理（SQLテンプレートリテラルは使わない）
+        // requirementsフィールドをオブジェクトとして確実に処理
         requirements: (() => {
           try {
-            let requirementsObj;
-            
-            // 検証済みのデータを使用
-            if (typeof fullUpdateData.requirements === 'object' && fullUpdateData.requirements !== null) {
-              requirementsObj = { ...fullUpdateData.requirements };
-              
-              // cup_size_conditionsを確実に配列として処理
-              requirementsObj.cup_size_conditions = Array.isArray(requirementsObj.cup_size_conditions)
-                ? requirementsObj.cup_size_conditions
-                : [];
-                
-              // デフォルト値の設定を確保
-              requirementsObj.accepts_temporary_workers = 
-                typeof requirementsObj.accepts_temporary_workers === 'boolean'
-                  ? requirementsObj.accepts_temporary_workers
-                  : false;
-                  
-              requirementsObj.requires_arrival_day_before = 
-                typeof requirementsObj.requires_arrival_day_before === 'boolean'
-                  ? requirementsObj.requires_arrival_day_before
-                  : false;
-                  
-              requirementsObj.prioritize_titles = 
-                typeof requirementsObj.prioritize_titles === 'boolean'
-                  ? requirementsObj.prioritize_titles
-                  : false;
-                  
-              requirementsObj.other_conditions = Array.isArray(requirementsObj.other_conditions)
-                ? requirementsObj.other_conditions
-                : [];
-            } else {
-              // 既存データまたはデフォルト値を使用
-              requirementsObj = typeof existingProfile.requirements === 'object' && existingProfile.requirements !== null
-                ? { ...existingProfile.requirements }
-                : {
-                    accepts_temporary_workers: false,
-                    requires_arrival_day_before: false,
-                    prioritize_titles: false,
-                    other_conditions: [],
-                    cup_size_conditions: []
-                  };
-            }
+            // 新しいユーティリティ関数を使用
+            let requirementsObj = dataUtils.processRequirements(fullUpdateData.requirements || existingProfile.requirements);
             
             // データ検証ログ
             log('info', 'DB保存直前のrequirements検証', {
@@ -885,11 +851,11 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
             console.error('Requirements最終処理エラー:', error);
             // エラー時はデフォルト値を返す
             return {
-              accepts_temporary_workers: false,
+              cup_size_conditions: [],
+              accepts_temporary_workers: true,
               requires_arrival_day_before: false,
               prioritize_titles: false,
-              other_conditions: [],
-              cup_size_conditions: []
+              other_conditions: []
             };
           }
         })(),
@@ -910,9 +876,9 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: dataUtils.processTextFields(updateData.commitment || existingProfile.commitment, ""),
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        // special_offersを正規の配列として処理（SQLテンプレートリテラルは使わない）
-        special_offers: processSpecialOffers(fullUpdateData.special_offers),
-        gallery_photos: processGalleryPhotos(fullUpdateData.gallery_photos || []),
+        // 新しいユーティリティ関数を使用して正規化
+        special_offers: dataUtils.processSpecialOffers(fullUpdateData.special_offers),
+        gallery_photos: dataUtils.processGalleryPhotos(fullUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理（JSONB型として正しく保存）
         design_settings: dataUtils.processDesignSettings(fullUpdateData.design_settings || existingProfile.design_settings),
         updated_at: fullUpdateData.updated_at
@@ -1000,12 +966,28 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     console.error('詳細エラー情報:', error);
     
     if (error instanceof Error) {
+      // PostgreSQLの「Token x is invalid」エラーメッセージからトークン情報を抽出
+      const tokenRegex = /Token "([^"]+)" is invalid/;
+      const tokenMatch = error.message.match(tokenRegex);
+      const invalidToken = tokenMatch ? tokenMatch[1] : null;
+      
+      // より詳細なエラー情報をログに記録
       log('error', '店舗プロフィール更新エラー - 詳細', {
         message: error.message,
         stack: error.stack,
         name: error.name,
         userId: req.user?.id,
-        requestBody: JSON.stringify(req.body)
+        requestBody: JSON.stringify(req.body),
+        invalidToken: invalidToken,
+        // さらに詳細な情報も追加
+        requestDataTypes: {
+          privacy_measures: typeof req.body.privacy_measures,
+          commitment: typeof req.body.commitment,
+          requirements: typeof req.body.requirements,
+          special_offers: typeof req.body.special_offers,
+          gallery_photos: typeof req.body.gallery_photos,
+          design_settings: typeof req.body.design_settings
+        }
       });
 
       if (error.name === 'ZodError') {
@@ -1016,11 +998,17 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       }
       
       if (error.message.includes('relation') || error.message.includes('column') || error.message.includes('syntax')) {
-        // SQL関連のエラー
-        return res.status(500).json({ 
-          message: "データベースエラーが発生しました", 
-          sqlError: error.message 
-        });
+        // SQL関連のエラー - 詳細情報を追加
+        const errorDetails = {
+          message: "データベースエラーが発生しました",
+          sqlError: error.message,
+          invalidToken: invalidToken,
+          errorField: invalidToken ? `不正な値「${invalidToken}」が含まれているフィールドを確認してください` : null
+        };
+        
+        console.error('SQLエラー詳細:', errorDetails);
+        
+        return res.status(500).json(errorDetails);
       }
     }
 
@@ -1155,9 +1143,9 @@ router.get("/special-offers", authenticate, authorize("store"), async (req: any,
     try {
       // string型である可能性があるのでJSON.parseを試みる
       if (typeof profile.special_offers === 'string') {
-        specialOffers = processSpecialOffers(JSON.parse(profile.special_offers));
+        specialOffers = dataUtils.processSpecialOffers(JSON.parse(profile.special_offers));
       } else {
-        specialOffers = processSpecialOffers(profile.special_offers);
+        specialOffers = dataUtils.processSpecialOffers(profile.special_offers);
       }
     } catch (e) {
       console.error("special_offers解析エラー:", e);
@@ -1202,9 +1190,9 @@ router.get("/gallery-photos", authenticate, authorize("store"), async (req: any,
     try {
       // string型である可能性があるのでJSON.parseを試みる
       if (typeof profile.gallery_photos === 'string') {
-        galleryPhotos = processGalleryPhotos(JSON.parse(profile.gallery_photos));
+        galleryPhotos = dataUtils.processGalleryPhotos(JSON.parse(profile.gallery_photos));
       } else {
-        galleryPhotos = processGalleryPhotos(profile.gallery_photos);
+        galleryPhotos = dataUtils.processGalleryPhotos(profile.gallery_photos);
       }
     } catch (e) {
       console.error("gallery_photos解析エラー:", e);
