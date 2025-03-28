@@ -616,7 +616,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // カスタム特典
       special_offers: Array.isArray(req.body.special_offers) 
-        ? sql`${JSON.stringify(processSpecialOffers(req.body.special_offers))}::jsonb` 
+        ? processSpecialOffers(req.body.special_offers)
         : (existingProfile.special_offers || []),
       
       // ギャラリー写真（JSONB型として処理）
@@ -753,8 +753,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        // 修正: special_offersをSQL文としてJSONBに直接変換してPostgreSQLの二重エンコードを回避
-        special_offers: sql`${JSON.stringify(processSpecialOffers(fullUpdateData.special_offers))}::jsonb`,
+        // special_offersを正規の配列として処理（SQLテンプレートリテラルは使わない）
+        special_offers: processSpecialOffers(fullUpdateData.special_offers),
         gallery_photos: processGalleryPhotos(fullUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理（JSONB型として正しく保存）
         design_settings: dataUtils.processDesignSettings(fullUpdateData.design_settings || existingProfile.design_settings),
