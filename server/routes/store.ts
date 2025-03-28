@@ -32,33 +32,50 @@ function validateBenefits(benefits: any): BenefitType[] {
 
 // 特別オファーの配列の整合性を確保するヘルパー関数
 function processSpecialOffers(offers: any): any[] {
+  console.log("===== processSpecialOffers関数開始 =====");
+  console.log("受け取った特別オファーデータ:", {
+    type: typeof offers,
+    isArray: Array.isArray(offers),
+    isNull: offers === null,
+    isUndefined: offers === undefined,
+    rawValue: offers
+  });
+  
   // 入力がnullまたはundefinedの場合は空配列を返す
   if (offers === null || offers === undefined) {
-    console.log("special_offersがnullまたはundefinedです。空配列を返します。");
+    console.log("特別オファーがnullまたはundefinedです。空配列を返します。");
     return [];
   }
   
   // JSONB型への変更に伴う修正: 文字列の場合はJSONとしてパースを試みる
   if (typeof offers === 'string') {
     try {
-      console.log("特別オファーが文字列として渡されました。JSON解析を試みます。");
+      console.log("特別オファーが文字列として渡されました。JSON解析を試みます:", offers);
       const parsedOffers = JSON.parse(offers);
+      console.log("JSON解析結果:", {
+        type: typeof parsedOffers,
+        isArray: Array.isArray(parsedOffers),
+        keys: typeof parsedOffers === 'object' ? Object.keys(parsedOffers) : 'not-an-object'
+      });
+      
       if (Array.isArray(parsedOffers)) {
         console.log("文字列からJSONに変換成功。配列として処理します。要素数:", parsedOffers.length);
         offers = parsedOffers;
       } else {
-        console.log("special_offersがJSONとしてパースされましたが、配列ではありません。空配列を返します。");
+        console.log("特別オファーがJSONとしてパースされましたが、配列ではありません。空配列を返します。");
         return [];
       }
     } catch (e) {
-      console.error("special_offersが文字列ですが、有効なJSONではありません:", e);
+      console.error("特別オファーが文字列ですが、JSON解析に失敗しました:", e);
+      console.log("問題のある文字列値:", offers);
       return [];
     }
   }
   
   // 配列ではない場合は空配列を返す
   if (!Array.isArray(offers)) {
-    console.log("special_offersが配列ではありません。空配列を返します。タイプ:", typeof offers);
+    console.log("特別オファーが配列ではありません。空配列を返します。データタイプ:", typeof offers);
+    console.log("データ内容：", offers);
     return [];
   }
   
@@ -70,10 +87,28 @@ function processSpecialOffers(offers: any): any[] {
       after: filteredOffers.length,
     });
     
+    // 各オファーの詳細をログ出力
+    filteredOffers.forEach((offer, index) => {
+      console.log(`オファー[${index}]の詳細:`, {
+        id: offer.id,
+        type: offer.type,
+        title: offer.title,
+        isObject: typeof offer === 'object',
+        hasSpecialChars: offer.title && /["\\\/\b\f\n\r\t]/g.test(offer.title), // 特殊文字チェック
+        keys: typeof offer === 'object' ? Object.keys(offer) : 'not-an-object'
+      });
+    });
+    
     // 有効なオファーオブジェクトのみをマッピングして正規化
     const normalizedOffers = filteredOffers
-      .filter(offer => typeof offer === 'object')
-      .map(offer => {
+      .filter(offer => {
+        const isValidObject = typeof offer === 'object';
+        if (!isValidObject) {
+          console.log("無効なオファーをスキップします:", offer);
+        }
+        return isValidObject;
+      })
+      .map((offer, index) => {
         // 数値フィールドの適切な処理
         let amount = null;
         if (offer.amount !== undefined) {
@@ -102,59 +137,73 @@ function processSpecialOffers(offers: any): any[] {
         }
 
         // 文字列フィールドの安全な処理
-        const safeString = (value: any, defaultValue: string = "") => {
-          if (typeof value === 'string') return value;
+        const safeString = (value: any, defaultValue: string = "", fieldName: string = "unknown") => {
+          if (typeof value === 'string') {
+            // 特殊文字のチェック
+            if (/["\\\/\b\f\n\r\t]/g.test(value)) {
+              console.log(`警告: ${fieldName}フィールド[${index}]に特殊文字が含まれています:`, value);
+            }
+            return value;
+          }
+          console.log(`フィールド'${fieldName}'が文字列ではないためデフォルト値を使用:`, {
+            originalValue: value,
+            originalType: typeof value,
+            defaultValue: defaultValue
+          });
           return defaultValue;
         };
+        
+        // null許容文字列フィールド用の処理関数
+        const safeNullableString = (value: any, fieldName: string = "unknown") => {
+          if (value === null) return "";
+          if (typeof value === 'string') return value;
+          console.log(`nullable フィールド'${fieldName}'が文字列ではないため空文字を使用:`, {
+            originalValue: value,
+            originalType: typeof value
+          });
+          return "";
+        };
 
+        // 一意のIDを確保
+        const id = (typeof offer.id === 'string' && offer.id.trim() !== '') ? 
+          offer.id : `offer-${Math.random().toString(36).substring(2, 9)}`;
+        
         // 必須フィールドの確保 - 各項目にデフォルト値を設定して対応
         const normalizedOffer = {
-          id: typeof offer.id === 'string' && offer.id.trim() !== '' ? 
-            offer.id : Math.random().toString(36).substring(2, 9),
-          title: safeString(offer.title, "特別オファー"),
-          description: safeString(offer.description, ""),
+          id: id,
+          title: safeString(offer.title, "特別オファー", "title"),
+          description: safeString(offer.description, "", "description"),
           // 重要: typeフィールドは常に"bonus"を使用（必須フィールド）
           type: "bonus",
-          backgroundColor: typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' ? 
-            offer.backgroundColor : "#fff9fa",
-          textColor: typeof offer.textColor === 'string' && offer.textColor.trim() !== '' ? 
-            offer.textColor : "#333333",
+          backgroundColor: safeString(offer.backgroundColor, "#fff9fa", "backgroundColor"),
+          textColor: safeString(offer.textColor, "#333333", "textColor"),
           isActive: typeof offer.isActive === 'boolean' ? offer.isActive : true,
           isLimited: typeof offer.isLimited === 'boolean' ? offer.isLimited : false,
-          icon: safeString(offer.icon, "sparkles"),
+          icon: safeString(offer.icon, "sparkles", "icon"),
           order: typeof offer.order === 'number' ? offer.order : 0,
           targetAudience: Array.isArray(offer.targetAudience) ? 
             offer.targetAudience.filter((i: any) => typeof i === 'string') : [],
           amount: amount,
-          conditions: typeof offer.conditions === 'string' && offer.conditions.trim() !== '' ? 
-            offer.conditions : null,
+          // 空文字をデフォルト値に設定
+          conditions: typeof offer.conditions === 'string' ? offer.conditions : "",
           limitedCount: limitedCount,
-          startDate: typeof offer.startDate === 'string' && offer.startDate.trim() !== '' ? 
-            offer.startDate : null,
-          endDate: typeof offer.endDate === 'string' && offer.endDate.trim() !== '' ? 
-            offer.endDate : null
+          // null 値を許容しない文字列フィールド
+          startDate: typeof offer.startDate === 'string' ? offer.startDate : "",
+          endDate: typeof offer.endDate === 'string' ? offer.endDate : ""
         };
 
         // JSON互換性チェック - JSONBカラムに保存するための重要なステップ
         try {
           const serialized = JSON.stringify(normalizedOffer);
-          console.log("オファー処理成功:", {
-            title: normalizedOffer.title,
-            type: normalizedOffer.type,
-            serializedLength: serialized.length
-          });
+          console.log(`オファー[${index}]: 正規化完了 - ID: ${normalizedOffer.id}, Type: ${normalizedOffer.type}`);
           return normalizedOffer;
         } catch (jsonError) {
-          console.error("JSON変換エラー:", jsonError, "問題のフィールド:", Object.keys(normalizedOffer).map(key => {
-            return { 
-              key, 
-              type: typeof normalizedOffer[key as keyof typeof normalizedOffer], 
-              value: normalizedOffer[key as keyof typeof normalizedOffer]
-            };
-          }));
+          console.error(`オファー[${index}]: JSON変換エラー:`, jsonError);
+          console.log("問題のあるオファーデータ:", normalizedOffer);
+          
           // エラーが発生した場合は最低限のオブジェクトを返す
           return {
-            id: Math.random().toString(36).substring(2, 9),
+            id: id,
             title: "エラー発生オファー",
             description: "",
             type: "bonus", // 必ず型を持つようにする
@@ -166,25 +215,44 @@ function processSpecialOffers(offers: any): any[] {
             order: 0,
             targetAudience: [],
             amount: null,
-            conditions: null,
+            conditions: "",
             limitedCount: null,
-            startDate: null,
-            endDate: null
+            startDate: "",
+            endDate: ""
           };
         }
       });
     
-    console.log("特別オファーの処理完了。最終的な配列サイズ:", normalizedOffers.length);
+    console.log("特別オファーの処理完了。最終配列サイズ:", normalizedOffers.length);
     
-    // 処理結果の詳細なデバッグ情報を出力
-    console.log("特別オファーの処理結果 (JSON形式):", JSON.stringify(normalizedOffers, null, 2));
-    console.log("特別オファーの処理結果 (型情報):", {
+    // 最終結果のJSON文字列を生成して検証
+    let finalJsonString;
+    try {
+      finalJsonString = JSON.stringify(normalizedOffers);
+      console.log("最終JSONデータ (安全な長さに切り詰め):", 
+        finalJsonString.length > 200 ? 
+        finalJsonString.substring(0, 200) + "..." : 
+        finalJsonString
+      );
+      // 検証のため再パース
+      JSON.parse(finalJsonString);
+      console.log("JSONデータの検証: 有効なJSON形式です");
+    } catch (finalJsonError) {
+      console.error("最終JSONデータの検証でエラー:", finalJsonError);
+      // 空配列を返す - 重大なJSONエラーがある場合
+      return [];
+    }
+    
+    // 詳細な型情報
+    console.log("特別オファー処理結果 (型情報):", {
       isArray: Array.isArray(normalizedOffers),
       length: normalizedOffers.length,
       objectType: typeof normalizedOffers,
-      firstItem: normalizedOffers.length > 0 ? Object.keys(normalizedOffers[0]) : 'empty'
+      firstItem: normalizedOffers.length > 0 ? Object.keys(normalizedOffers[0]) : 'empty',
+      jsonStringLength: finalJsonString ? finalJsonString.length : 0
     });
     
+    console.log("===== processSpecialOffers関数終了 =====");
     return normalizedOffers;
   } catch (error) {
     console.error("special_offers処理中の一般エラー:", error);
@@ -548,7 +616,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // カスタム特典
       special_offers: Array.isArray(req.body.special_offers) 
-        ? processSpecialOffers(req.body.special_offers) 
+        ? sql`${JSON.stringify(processSpecialOffers(req.body.special_offers))}::jsonb` 
         : (existingProfile.special_offers || []),
       
       // ギャラリー写真（JSONB型として処理）

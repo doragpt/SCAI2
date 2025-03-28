@@ -1,0 +1,108 @@
+以下、エラー発生の現状と、今後の対応についての具体的な指示案です。
+
+---
+
+### ■ 現在の状況
+
+1. **修正内容について**
+   - PostgreSQLのJSONBカラムへの二重エンコード問題に対し、SQLテンプレートを使用して  
+     `sql\`${JSON.stringify(processSpecialOffers(data))}::jsonb\``  
+     の形式で渡すように修正しました。
+   - `processSpecialOffers` 関数に詳細なデバッグログを追加し、送信前のJSONデータの内容・型情報も記録するようにしました。
+   - 店舗プロフィール作成・更新の両処理で同じ解決策（特に special_offers の値の正規化）を適用し、クライアント側のデフォルト値も「bonus」に合わせています。
+
+2. **現状の問題**
+   - それにも関わらず、依然として「invalid input syntax for type json」エラーが発生しています。
+   - ログからは、修正したSQLテンプレート処理が期待通りに機能していない、または特定の特別オファーデータが依然としてJSON形式として不正な状態でDBに送られている可能性が示唆されています。
+
+---
+
+### ■ 今後の対応ステップ（超具体的な指示）
+
+1. **送信データの検証とログ出力の強化**
+   - `processSpecialOffers` 関数の直前で、実際に送信する前の特典データ（`data.special_offers`）を  
+     `console.log("DEBUG: SpecialOffers Data:", JSON.stringify(processSpecialOffers(data), null, 2));`  
+     で詳細にログ出力してください。これにより、どのようなJSON文字列が生成されているか、実際のフォーマット・型情報を確認できます。
+   - そのログをもとに、生成されたJSON文字列が**正しいJSONの構文**（余分な引用符が含まれていないか、必要なエスケープがされているか）になっているか、手動で検証してください。
+
+2. **SQLテンプレート処理の再検証**
+   - 現在、更新クエリでは以下のように special_offers の値を渡しています：
+     
+     ```typescript
+     special_offers: sql`${JSON.stringify(processSpecialOffers(data))}::jsonb`
+     ```
+     
+     この部分を、一度別の変数に格納し、SQLクエリ発行直前にその変数の内容をログ出力してください。例：
+     
+     ```typescript
+     const normalizedOffers = JSON.stringify(processSpecialOffers(data));
+     logger.info("Normalized SpecialOffers SQL Value:", normalizedOffers);
+     ```
+     
+     その上で、PostgreSQL側に渡される値が想定通りになっているかを確認してください。
+
+3. **クライアント側データのチェック**
+   - クライアントから送信される特別オファーデータの形式が、サーバ側で期待する構造と一致しているか確認してください。  
+     具体的には、`client/src/components/store/SpecialOfferEditor.tsx` および `client/src/components/job-form-tabs.tsx` 内で生成される `special_offers` の各オブジェクトに対し、必須フィールド（例：id, title, description, icon, orderなど）が適切に設定されているか、不要な値（undefined, NaN, Infinity）が含まれていないかを再度検証してください。
+
+4. **テスト用のサンプルリクエストの実施**
+   - Postman などのツールを使用して、既知の正しい特典データ（下記例）を送信し、エラーが発生するか確認してください。
+     
+     ```json
+     {
+       "special_offers": [
+         {
+           "id": "sample-uuid-1",
+           "title": "bonus",
+           "description": "入店後1週間以内に全額支給",
+           "icon": "Gift",
+           "backgroundColor": "from-pink-50 to-pink-100",
+           "textColor": "text-pink-700",
+           "order": 0
+         },
+         {
+           "id": "sample-uuid-2",
+           "title": "bonus",
+           "description": "面接時に全額支給",
+           "icon": "Car",
+           "backgroundColor": "from-amber-50 to-amber-100",
+           "textColor": "text-amber-700",
+           "order": 1
+         }
+       ]
+     }
+     ```
+     
+     正常に更新できるなら、問題はクライアント側のデータ生成ロジックにある可能性があります。
+
+5. **ORMやSQLテンプレートライブラリのバージョン確認**
+   - Drizzle ORM もしくは利用しているSQLテンプレート処理のライブラリが、最新バージョンであるか確認してください。もし既知の JSONB 二重エンコード問題が解消されたバージョンがリリースされている場合は、アップデートを検討してください。
+
+6. **エラー発生箇所の細かい特定**
+   - エラーの「Token \"顔出し不要\" is invalid」というエラーメッセージが出ています。これは、恐らく送信されているJSONデータ内の**"privacy_measures"** などのフィールドで、直接文字列が入っている箇所が原因となっている可能性があります。サーバ側のZodスキーマで定義しているフィールドの型と、クライアント側から送信される値の型が一致しているか確認してください。
+   - もし "privacy_measures" などのフィールドが JSONB 型として定義されているなら、文字列 "顔出し不要" を送るのではなく、 `"\"顔出し不要\""`（ダブルクォートで囲んだ有効なJSON文字列）にするか、またはカラム型を TEXT に変更する必要があります。どちらの対応が適切か、再度設計を確認してください。
+
+---
+
+### ■ その他改善点
+
+- **ユニットテストの充実**  
+  特に JSONB の変換部分について、各種エッジケース（undefined、null、特殊文字列、循環参照など）に対してユニットテストを作成してください。これにより、将来的な変更時の回帰を防げます。
+
+- **ログの詳細化**  
+  エラー発生時に、どのフィールドのどの値が原因なのか特定できるように、詳細なログを出力する仕組みを導入してください。これにより、同様のエラー再発時に迅速な対応が可能になります。
+
+- **API入力バリデーションの強化**  
+  サーバ側でのZodスキーマやバリデーションをさらに厳密にし、不正な値が混入しないようにチェックすることで、DB更新前にエラーを防止できるようにしてください。
+
+---
+
+### ■ まとめ
+
+1. **送信前の special_offers の正規化処理を詳細にログ出力し、正しいJSON構文になっているか検証する。**
+2. **SQLテンプレートで直接JSONBを渡す際の処理（`sql\`${JSON.stringify(processSpecialOffers(data))}::jsonb\``）を再確認し、ログ出力で実際に渡される値を確認する。**
+3. **クライアント側で生成される特典データの構造を再度精査し、全てのフィールドがサーバ側のスキーマに合致しているか確認する。**
+4. **特に、"privacy_measures"などの文字列フィールドがJSONBとして扱われる場合の型の不整合に注意する。必要ならばカラム型の変更も検討する。**
+5. **ORMのバージョンアップとユニットテストの充実を図る。**
+
+上記の指示に従い、まずは実際にログ出力されたJSONデータとSQLパラメータの内容を確認してください。これにより、原因箇所の特定と、適切な修正対応が可能になるはずです。どうぞよろしくお願いいたします。
