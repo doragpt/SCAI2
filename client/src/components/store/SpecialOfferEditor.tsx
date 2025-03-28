@@ -76,23 +76,53 @@ const OFFER_TEMPLATES = [
 ];
 
 interface SpecialOfferEditorProps {
-  value: SpecialOffer[];
-  onChange: (value: SpecialOffer[]) => void;
+  value: string | SpecialOffer[];
+  onChange: (value: string) => void;
 }
 
-export function SpecialOfferEditor({ value = [], onChange }: SpecialOfferEditorProps) {
-  // 渡されたpropsを使用するための状態管理
-  const [fields, setFields] = useState<SpecialOffer[]>(value || []);
+export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEditorProps) {
+  // 文字列形式のデータを配列に変換して状態管理
+  const [fields, setFields] = useState<SpecialOffer[]>(() => {
+    try {
+      // valueが文字列の場合はJSONとしてパース
+      if (typeof value === 'string') {
+        return JSON.parse(value) || [];
+      }
+      // valueが配列の場合はそのまま使用
+      return Array.isArray(value) ? value : [];
+    } catch (e) {
+      console.error("Invalid special_offers value format:", e);
+      return [];
+    }
+  });
   
   // 値の変更をトラッキングし親コンポーネントに通知
   useEffect(() => {
-    setFields(value || []);
+    try {
+      // valueが文字列の場合はJSONとしてパース
+      if (typeof value === 'string') {
+        setFields(JSON.parse(value) || []);
+      } 
+      // valueが配列の場合はそのまま使用
+      else if (Array.isArray(value)) {
+        setFields(value);
+      }
+    } catch (e) {
+      console.error("Error parsing special_offers in useEffect:", e);
+      setFields([]);
+    }
   }, [value]);
   
-  // 値が変更されたときに親コンポーネントに通知
+  // 値が変更されたときに親コンポーネントに通知（文字列に変換）
   const updateFields = (newFields: SpecialOffer[]) => {
     setFields(newFields);
-    onChange(newFields);
+    try {
+      const jsonString = JSON.stringify(newFields);
+      onChange(jsonString);
+    } catch (e) {
+      console.error("Error stringifying special_offers:", e);
+      onChange("[]");
+    }
   };
   
   const [isOpen, setIsOpen] = useState(false);

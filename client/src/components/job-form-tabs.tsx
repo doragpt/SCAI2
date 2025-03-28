@@ -391,15 +391,18 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           }
         } else if (Array.isArray(data.special_offers)) {
           // 配列の場合は直接処理
-          const validSpecialOffers = data.special_offers.map(offer => {
-            if (!offer.type) {
-              return {
-                ...offer,
-                type: "特別オファー" // デフォルト値を設定
-              };
-            }
-            return offer;
-          });
+          const offers = data.special_offers as Array<{ type?: string; [key: string]: any }>;
+          const validSpecialOffers = offers
+            .filter(offer => typeof offer === 'object' && offer !== null)
+            .map(offer => {
+              if (!offer.type) {
+                return {
+                  ...offer,
+                  type: "特別オファー" // デフォルト値を設定
+                };
+              }
+              return offer;
+            });
           
           // 文字列に変換して設定
           data.special_offers = JSON.stringify(validSpecialOffers);
@@ -688,16 +691,23 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       });
       
       // 特別オファーのデータ構造を詳細にログ出力
-      if (cleanedData.special_offers && Array.isArray(cleanedData.special_offers)) {
-        console.log("送信前の各特別オファーの詳細:", cleanedData.special_offers.map(offer => ({
-          id: offer.id,
-          type: offer.type,
-          title: offer.title,
-          targetAudience: offer.targetAudience,
-          hasTargetAudience: Array.isArray(offer.targetAudience),
-          targetAudienceType: typeof offer.targetAudience,
-          keys: Object.keys(offer)
-        })));
+      if (cleanedData.special_offers && typeof cleanedData.special_offers === 'string') {
+        try {
+          const parsedOffers = JSON.parse(cleanedData.special_offers);
+          if (Array.isArray(parsedOffers)) {
+            console.log("送信前の各特別オファーの詳細:", parsedOffers.map((offer: any) => ({
+              id: offer.id,
+              type: offer.type,
+              title: offer.title,
+              targetAudience: offer.targetAudience,
+              hasTargetAudience: Array.isArray(offer.targetAudience),
+              targetAudienceType: typeof offer.targetAudience,
+              keys: Object.keys(offer)
+            })));
+          }
+        } catch (e) {
+          console.error("特別オファーの詳細ログ出力時にパースエラー:", e);
+        }
       }
       
       // 送信を開始したことをユーザーに通知
@@ -1340,11 +1350,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                         offersArray = [];
                       }
                       
-                      // カスタムonChangeハンドラ - 配列を文字列化して保存
-                      const handleOffersChange = (newOffers: any[]) => {
+                      // カスタムonChangeハンドラ - 文字列として保存
+                      const handleOffersChange = (newOffersJson: string) => {
                         try {
-                          // 配列をJSON文字列化して保存
-                          field.onChange(JSON.stringify(newOffers));
+                          // すでに文字列なのでそのまま保存
+                          field.onChange(newOffersJson);
                         } catch (error) {
                           console.error("特別オファーの文字列化エラー", error);
                           field.onChange("[]");
@@ -1355,7 +1365,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                         <FormItem>
                           <FormControl>
                             <SpecialOfferEditor 
-                              value={offersArray} 
+                              value={typeof field.value === 'string' ? field.value : JSON.stringify(offersArray)} 
                               onChange={handleOffersChange}
                             />
                           </FormControl>

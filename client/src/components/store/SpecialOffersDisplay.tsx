@@ -1,7 +1,7 @@
 import { SpecialOffer } from "@shared/schema";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SparklesIcon, Star, Lightbulb, Gift, BadgePercent, Clock, Heart } from "lucide-react";
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 // アイコンマッピング
 const iconMap: Record<string, ReactNode> = {
@@ -15,7 +15,7 @@ const iconMap: Record<string, ReactNode> = {
 };
 
 interface SpecialOffersDisplayProps {
-  specialOffers: SpecialOffer[];
+  specialOffers: string | SpecialOffer[];
   className?: string;
 }
 
@@ -26,12 +26,27 @@ export function SpecialOffersDisplay({
   specialOffers,
   className = "",
 }: SpecialOffersDisplayProps) {
-  if (!specialOffers || specialOffers.length === 0) {
+  // 配列形式に変換して処理
+  const offersArray = React.useMemo(() => {
+    try {
+      // 文字列形式の場合はパース
+      if (typeof specialOffers === 'string') {
+        return JSON.parse(specialOffers) || [];
+      }
+      // 配列の場合はそのまま
+      return Array.isArray(specialOffers) ? specialOffers : [];
+    } catch (e) {
+      console.error("Invalid special_offers format in display component:", e);
+      return [];
+    }
+  }, [specialOffers]);
+
+  if (!offersArray || offersArray.length === 0) {
     return null;
   }
   
   // オファーを順番に並べ替え
-  const sortedOffers = [...specialOffers].sort((a, b) => a.order - b.order);
+  const sortedOffers = [...offersArray].sort((a, b) => a.order - b.order);
   
   return (
     <Card className={`border-0 shadow-md overflow-hidden ${className}`}>
