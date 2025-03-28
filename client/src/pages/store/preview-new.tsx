@@ -33,15 +33,30 @@ export default function StorePreviewNewPage() {
           };
         }
         
+        // レスポンス内容をログ出力
         console.log('プレビューデータの取得に成功しました', {
           hasStoreProfile: !!response.storeProfile,
           hasDesignData: !!response.designData,
+          responseType: typeof response,
+          designDataType: typeof response.designData,
           timestamp: response.timestamp
         });
         
+        // designDataが文字列の場合はパースを試みる
+        let parsedDesignData = response.designData;
+        if (typeof parsedDesignData === 'string') {
+          try {
+            parsedDesignData = JSON.parse(parsedDesignData);
+            console.log('文字列形式のデザインデータをJSONに変換しました');
+          } catch (parseError) {
+            console.error('デザインデータのJSONパースに失敗しました:', parseError);
+            parsedDesignData = getDefaultDesignSettings();
+          }
+        }
+        
         return {
           storeProfile: response.storeProfile,
-          designData: response.designData || getDefaultDesignSettings()
+          designData: parsedDesignData || getDefaultDesignSettings()
         };
       } catch (error) {
         console.error('プレビューデータの取得エラー:', error);
@@ -155,7 +170,7 @@ export default function StorePreviewNewPage() {
           {/* インラインプレビュー - 新方式 */}
           <PreviewRenderer
             settings={designData || getDefaultDesignSettings()}
-            storeProfile={{ data: storeProfile }}
+            storeProfile={storeProfile}
             deviceView={deviceView}
           />
         </div>

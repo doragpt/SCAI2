@@ -40,7 +40,7 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
     .filter(section => section.visible);
 
   // 店舗情報が存在しない場合のフォールバック
-  const profile = storeProfile?.data || {
+  const profile = storeProfile?.data || storeProfile || {
     business_name: '店舗情報が読み込めません',
     catch_phrase: 'プレビュー表示中',
     description: '店舗情報の取得に失敗しました。ページをリロードしてください。',
