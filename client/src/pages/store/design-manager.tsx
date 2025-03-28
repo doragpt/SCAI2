@@ -122,7 +122,7 @@ export default function StoreDesignManager() {
           isDefault: response.isDefault || false,
           sectionsCount: designSettings.sections.length,
           hasGlobalSettings: !!designSettings.globalSettings,
-          sectionIds: designSettings.sections.map(s => s.id)
+          sectionIds: designSettings.sections.map((s: DesignSection) => s.id)
         });
         
         return designSettings;
@@ -173,7 +173,7 @@ export default function StoreDesignManager() {
         console.log('デザイン設定を保存しています...', {
           sectionsCount: data.sections.length,
           hasGlobalSettings: !!data.globalSettings,
-          sectionIds: data.sections.map(s => s.id)
+          sectionIds: data.sections.map((s: DesignSection) => s.id)
         });
         
         // APIにリクエスト送信
@@ -472,7 +472,7 @@ export default function StoreDesignManager() {
       
       console.log('プレビューを更新します:', {
         sectionsCount: previewSettings.sections.length,
-        sectionIds: previewSettings.sections.map(s => s.id),
+        sectionIds: previewSettings.sections.map((s: DesignSection) => s.id),
         globalSettings: Object.keys(previewSettings.globalSettings || {}),
         timestamp: new Date().toISOString()
       });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/constants/queryKeys';
@@ -392,8 +392,52 @@ export default function StoreDesignPreview() {
     };
   };
 
+  // 構造やJSONデータのデバッグ情報をコンソールに記録
+  useEffect(() => {
+    if (embedded) {
+      forwardLog('プレビューページの現在の状態:', {
+        hasSettings: !!settings,
+        settingsType: typeof settings,
+        sectionsCount: settings?.sections?.length || 0,
+        globalSettingsExists: !!settings?.globalSettings,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [embedded, settings]);
+
+  // サーバーから取得したデザイン設定データが有効かどうかをチェック
+  const hasValidSettings = useMemo(() => {
+    return settings && 
+           Array.isArray(settings.sections) && 
+           settings.sections.length > 0 && 
+           settings.globalSettings && 
+           typeof settings.globalSettings === 'object';
+  }, [settings]);
+
   // 埋め込みモードの場合はシンプルなプレビュー表示
   if (embedded) {
+    // 無効なデータの場合はエラー表示
+    if (!hasValidSettings) {
+      return (
+        <div className="min-h-screen py-4 px-2 flex items-center justify-center bg-gray-100">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md text-center">
+            <h2 className="text-xl font-bold text-red-500 mb-4">デザイン設定データエラー</h2>
+            <p className="text-gray-600 mb-4">
+              デザイン設定データが正しく読み込まれていないか、無効なデータです。
+              設定を保存してから再度お試しください。
+            </p>
+            <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-32 text-left">
+              {JSON.stringify({
+                settingsExists: !!settings,
+                sectionsCount: settings?.sections?.length || 0,
+                globalSettingsExists: !!settings?.globalSettings
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={globalStyles} className="min-h-screen py-4 px-2">
         <div className="border-2 border-dashed border-primary p-4 rounded-md mb-4 bg-primary/5 text-center">

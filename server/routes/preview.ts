@@ -92,13 +92,45 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         sectionsCount: designData?.sections?.length || 0
       });
       
-      return sendSuccess(res, {
+      // データが適切に処理されていることを確認
+      if (designData && typeof designData === 'string') {
+        try {
+          // 文字列の場合はJSONパースを試みる
+          const parsedData = JSON.parse(designData);
+          // 正常にパースできれば利用
+          designData = parsedData;
+          log('info', '文字列形式のデザインデータをJSONに変換しました', { userId });
+        } catch (parseError) {
+          log('error', 'デザインデータのパースに失敗しました', { 
+            error: parseError instanceof Error ? parseError.message : String(parseError),
+            userId 
+          });
+          // パースに失敗した場合はデフォルト設定を使用
+          designData = getDefaultDesignSettings();
+        }
+      }
+      
+      // 明示的に整形したデータを作成（クライアントでの処理をシンプルにするため）
+      const formattedData = {
         message: 'プレビュー用データ取得成功',
         timestamp: new Date().toISOString(),
         mode: 'preview',
         storeProfile,
-        designData
-      });
+        designData: designData
+      };
+      
+      // 安全のために重要なJSONデータの構造を検証
+      if (formattedData.designData) {
+        log('debug', 'フォーマット済みデザインデータの構造', {
+          hasData: !!formattedData.designData,
+          hasSections: !!(formattedData.designData.sections),
+          sectionsIsArray: Array.isArray(formattedData.designData.sections),
+          sectionsCount: Array.isArray(formattedData.designData.sections) ? formattedData.designData.sections.length : 'not an array',
+          hasGlobalSettings: !!(formattedData.designData.globalSettings)
+        });
+      }
+      
+      return sendSuccess(res, formattedData);
     } 
     
     // embedded=true パラメータがない場合は、SPAとして処理

@@ -427,7 +427,7 @@ export class DatabaseStorage implements IStorage {
           // 新規追加フィールド
           hair_color: result.hair_color,
           look_type: result.look_type,
-          tattoo_level: result.tattoo_level,
+          // tattoo_level: result.tattoo_level, // この行はスキーマから削除された項目
           titles: result.titles ? result.titles.length : 0, // タイトル数のみログに記録
         }
       });
