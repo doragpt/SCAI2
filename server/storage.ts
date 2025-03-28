@@ -22,6 +22,8 @@ export interface IStorage {
   createOrUpdateTalentProfile(userId: number, data: TalentProfileData): Promise<TalentProfileData>;
   getStoreProfile(userId: number): Promise<StoreProfile | null>;
   createOrUpdateStoreProfile(userId: number, data: InsertStoreProfile): Promise<StoreProfile>;
+  getDesignSettings(userId: number): Promise<any | null>;
+  updateDesignSettings(userId: number, data: any): Promise<any>;
   sessionStore: session.Store;
 }
 
@@ -532,6 +534,105 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       log('error', '店舗プロフィール作成/更新エラー', {
         error: error instanceof Error ? error.message : 'Unknown error',
+        userId
+      });
+      throw error;
+    }
+  }
+  
+  // デザイン設定の取得
+  async getDesignSettings(userId: number): Promise<any | null> {
+    try {
+      log('info', 'デザイン設定取得開始', { userId });
+      
+      const query = 'SELECT * FROM design_settings WHERE user_id = $1';
+      const result = await pool.query(query, [userId]);
+      
+      if (!result.rows[0]) {
+        log('info', 'デザイン設定が見つかりません。デフォルト設定を使用します', { userId });
+        return null;
+      }
+      
+      log('info', 'デザイン設定取得成功', { 
+        userId,
+        sectionsCount: result.rows[0].sections?.length || 0
+      });
+      
+      return result.rows[0];
+    } catch (error) {
+      log('error', 'デザイン設定取得エラー', {
+        error: error instanceof Error ? error.message : String(error),
+        userId
+      });
+      return null;
+    }
+  }
+  
+  // デザイン設定の更新
+  async updateDesignSettings(userId: number, data: any): Promise<any> {
+    try {
+      log('info', 'デザイン設定更新開始', { 
+        userId,
+        sectionsCount: data.sections?.length || 0
+      });
+      
+      // 既存のデータがあるか確認
+      const checkQuery = 'SELECT * FROM design_settings WHERE user_id = $1';
+      const checkResult = await pool.query(checkQuery, [userId]);
+      
+      let result;
+      
+      if (checkResult.rows.length > 0) {
+        // 更新
+        const updateQuery = `
+          UPDATE design_settings 
+          SET 
+            global_settings = $1,
+            sections = $2,
+            updated_at = $3
+          WHERE user_id = $4
+          RETURNING *
+        `;
+        
+        result = await pool.query(updateQuery, [
+          data.globalSettings,
+          data.sections,
+          new Date(),
+          userId
+        ]);
+      } else {
+        // 新規作成
+        const insertQuery = `
+          INSERT INTO design_settings (
+            user_id, 
+            global_settings, 
+            sections, 
+            created_at, 
+            updated_at
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        `;
+        
+        result = await pool.query(insertQuery, [
+          userId,
+          data.globalSettings,
+          data.sections,
+          new Date(),
+          new Date()
+        ]);
+      }
+      
+      log('info', 'デザイン設定更新成功', { 
+        userId,
+        success: !!result.rows[0],
+        sectionsCount: result.rows[0]?.sections?.length || 0
+      });
+      
+      return result.rows[0];
+    } catch (error) {
+      log('error', 'デザイン設定更新エラー', {
+        error: error instanceof Error ? error.message : String(error),
         userId
       });
       throw error;

@@ -1056,12 +1056,18 @@ export default function StoreDesignManager() {
               </div>
               <div className="flex-1 overflow-hidden">
                 <div className={`h-full transition-all duration-300 ${deviceView === 'smartphone' ? 'max-w-[375px] mx-auto' : 'w-full'}`}>
-                  <iframe 
-                    ref={iframeRef}
-                    src="/store/preview?embedded=true" 
-                    className="w-full h-full border-0"
-                    title="プレビュー"
-                  />
+                  <div className="w-full h-full border-0 relative">
+                    {/* 通常のiframeプレビュー用 */}
+                    <iframe 
+                      ref={iframeRef}
+                      src="/store/preview?embedded=true" 
+                      className="w-full h-full border-0"
+                      title="プレビュー"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-slate-800/70 text-white text-xs px-2 py-1">
+                      プレビューモード - 表示のみ
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -198,11 +198,11 @@ export default function StoreDesignPreview() {
   // ブログ投稿データ
   const blogPosts = storeBlogQuery.data?.posts || [];
   
-  // プレビューデータを取得
-  const previewData = previewDataQuery.data;
+  // 埋め込みモードで取得したデータを使用する
+  const storeProfile = embedded ? previewData?.storeProfile : storeProfileQuery.data;
   
-  // 埋め込みモードで取得したデータを使用
-  const storeProfile = embedded && previewData ? previewData.storeProfile : storeProfileQuery.data;
+  // プレビューデータ
+  const previewData = previewDataQuery.data;
   
   // 適切なプロフィールデータを使用
   const defaultProfile = {
