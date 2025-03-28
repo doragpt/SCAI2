@@ -479,8 +479,8 @@ export default function StoreDesignManager() {
       
       // iframeを更新するベストな方法
       try {
-        // プレビューのURLを構築（APIエンドポイントを指定）
-        const url = new URL('/api/preview', window.location.origin);
+        // プレビューのURLを構築（HTMLページを指定）
+        const url = new URL('/store/preview', window.location.origin);
         
         // キャッシュを無効化するためのタイムスタンプを追加
         const timestamp = Date.now();
@@ -1215,7 +1215,7 @@ export default function StoreDesignManager() {
                     {/* 通常のiframeプレビュー用 */}
                     <iframe 
                       ref={iframeRef}
-                      src={`/api/preview?embedded=true&t=${Date.now()}`} 
+                      src={`/store/preview?embedded=true&t=${Date.now()}`} 
                       className="w-full h-full border-0"
                       title="プレビュー"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
