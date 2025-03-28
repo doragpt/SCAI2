@@ -38,18 +38,19 @@ function processSpecialOffers(offers: any): any[] {
   }
   
   // JSONB型への変更に伴う修正: 文字列の場合はJSONとしてパースを試みる
-  // この処理は互換性のためだけに残します
   if (typeof offers === 'string') {
     try {
+      console.log("特別オファーが文字列として渡されました。JSON解析を試みます。");
       const parsedOffers = JSON.parse(offers);
       if (Array.isArray(parsedOffers)) {
+        console.log("文字列からJSONに変換成功。配列として処理します。要素数:", parsedOffers.length);
         offers = parsedOffers;
       } else {
         console.log("special_offersがJSONとしてパースされましたが、配列ではありません。空配列を返します。");
         return [];
       }
     } catch (e) {
-      console.log("special_offersが文字列ですが、有効なJSONではありません。空配列を返します。", e);
+      console.error("special_offersが文字列ですが、有効なJSONではありません:", e);
       return [];
     }
   }
@@ -61,22 +62,26 @@ function processSpecialOffers(offers: any): any[] {
   }
   
   try {
-    // 有効なオファーオブジェクトのみフィルタリング
-    return offers
-      .filter(offer => typeof offer === 'object' && offer !== null)
+    // 有効な要素を持つ配列に変換（null、undefinedを除去）
+    const filteredOffers = offers.filter(offer => offer !== null && offer !== undefined);
+    console.log("フィルタリング前後の配列サイズ比較:", {
+      before: offers.length,
+      after: filteredOffers.length,
+    });
+    
+    // 有効なオファーオブジェクトのみをマッピングして正規化
+    const normalizedOffers = filteredOffers
+      .filter(offer => typeof offer === 'object')
       .map(offer => {
         // 数値フィールドの適切な処理
         let amount = null;
         if (offer.amount !== undefined) {
           if (typeof offer.amount === 'number') {
-            // 数値型の場合はそのまま使用（0を含む全ての数値）
             amount = offer.amount;
           } else if (typeof offer.amount === 'string') {
-            // 文字列型の場合は安全にtrimを実行
             const trimmedAmount = offer.amount.trim();
             if (trimmedAmount !== '') {
               const parsedAmount = Number(trimmedAmount);
-              // NaNでなければ数値として使用
               amount = !isNaN(parsedAmount) ? parsedAmount : null;
             }
           }
@@ -85,14 +90,11 @@ function processSpecialOffers(offers: any): any[] {
         let limitedCount = null;
         if (offer.limitedCount !== undefined) {
           if (typeof offer.limitedCount === 'number') {
-            // 数値型の場合はそのまま使用（0を含む全ての数値）
             limitedCount = offer.limitedCount;
           } else if (typeof offer.limitedCount === 'string') {
-            // 文字列型の場合は安全にtrimを実行
             const trimmedCount = offer.limitedCount.trim();
             if (trimmedCount !== '') {
               const parsedCount = Number(trimmedCount);
-              // NaNでなければ数値として使用
               limitedCount = !isNaN(parsedCount) ? parsedCount : null;
             }
           }
@@ -108,11 +110,10 @@ function processSpecialOffers(offers: any): any[] {
         const normalizedOffer = {
           id: typeof offer.id === 'string' && offer.id.trim() !== '' ? 
             offer.id : Math.random().toString(36).substring(2, 9),
-          title: safeString(offer.title),
-          description: safeString(offer.description),
-          // 重要: typeが必須項目であることを明示し、必ず妥当な値を持つようにする
-          type: typeof offer.type === 'string' && offer.type.trim() !== '' ? 
-            offer.type : "bonus",
+          title: safeString(offer.title, "特別オファー"),
+          description: safeString(offer.description, ""),
+          // 重要: typeフィールドは常に"bonus"を使用（必須フィールド）
+          type: "bonus",
           backgroundColor: typeof offer.backgroundColor === 'string' && offer.backgroundColor.trim() !== '' ? 
             offer.backgroundColor : "#fff9fa",
           textColor: typeof offer.textColor === 'string' && offer.textColor.trim() !== '' ? 
@@ -135,8 +136,13 @@ function processSpecialOffers(offers: any): any[] {
 
         // JSON互換性チェック - JSONBカラムに保存するための重要なステップ
         try {
-          JSON.stringify(normalizedOffer);
-          console.log("オファー処理成功:", normalizedOffer.title, "type:", normalizedOffer.type);
+          const serialized = JSON.stringify(normalizedOffer);
+          console.log("オファー処理成功:", {
+            title: normalizedOffer.title,
+            type: normalizedOffer.type,
+            serializedLength: serialized.length
+          });
+          return normalizedOffer;
         } catch (jsonError) {
           console.error("JSON変換エラー:", jsonError, "問題のフィールド:", Object.keys(normalizedOffer).map(key => {
             return { 
@@ -165,11 +171,12 @@ function processSpecialOffers(offers: any): any[] {
             endDate: null
           };
         }
-
-        return normalizedOffer;
       });
+    
+    console.log("特別オファーの処理完了。最終的な配列サイズ:", normalizedOffers.length);
+    return normalizedOffers;
   } catch (error) {
-    console.error("special_offers処理中のエラー:", error);
+    console.error("special_offers処理中の一般エラー:", error);
     return [];
   }
 }

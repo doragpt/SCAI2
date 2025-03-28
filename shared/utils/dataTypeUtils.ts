@@ -13,15 +13,25 @@ export const dataUtils = {
    * @returns 配列
    */
   ensureArray: (value: any, defaultValue: any[] = []): any[] => {
-    if (Array.isArray(value)) return value;
+    if (Array.isArray(value)) {
+      // 配列の場合は各要素を検証（nullやundefinedを除去）
+      return value.filter(item => item !== null && item !== undefined);
+    }
+    
     if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : defaultValue;
-      } catch {
+        if (Array.isArray(parsed)) {
+          // パースされた配列の要素を検証（nullやundefinedを除去）
+          return parsed.filter(item => item !== null && item !== undefined);
+        }
+        return defaultValue;
+      } catch (error) {
+        console.error("JSON解析エラー:", error);
         return defaultValue;
       }
     }
+    
     return defaultValue;
   },
 
