@@ -818,6 +818,53 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       profileId: existingProfile.id
     });
     
+    // TEXT型フィールドを文字列に確実に変換（オブジェクトが誤って入力された場合の保護）
+    // これらのフィールドがオブジェクトの場合、文字列化する
+    const textFields = ['privacy_measures', 'commitment', 'security_measures'];
+    
+    textFields.forEach(field => {
+      if (typeof fullUpdateData[field] === 'object' && fullUpdateData[field] !== null) {
+        console.warn(`TEXT型フィールド "${field}" にオブジェクトが渡されました。文字列に変換します。`, {
+          type: typeof fullUpdateData[field],
+          isArray: Array.isArray(fullUpdateData[field])
+        });
+        
+        // 文字列化
+        try {
+          fullUpdateData[field] = JSON.stringify(fullUpdateData[field]);
+        } catch (e) {
+          console.error(`${field}の文字列化に失敗しました:`, e);
+          // 失敗した場合は空の文字列にフォールバック
+          fullUpdateData[field] = '';
+        }
+      }
+    });
+    
+    // JSONB型フィールドが文字列の場合、パースして確保
+    const jsonbFields = ['special_offers', 'gallery_photos', 'design_settings', 'requirements'];
+    
+    jsonbFields.forEach(field => {
+      if (typeof fullUpdateData[field] === 'string' && field !== 'requirements') { // requirementsは特別処理するので除外
+        console.warn(`JSONB型フィールド "${field}" に文字列が渡されました。オブジェクトにパースします。`, {
+          value: (fullUpdateData[field] as string).substring(0, 30) + '...',
+          length: (fullUpdateData[field] as string).length
+        });
+        
+        // パース試行
+        try {
+          fullUpdateData[field] = JSON.parse(fullUpdateData[field] as string);
+        } catch (e) {
+          console.error(`${field}のパースに失敗しました:`, e);
+          // フィールドによってデフォルト値を設定
+          if (field === 'special_offers' || field === 'gallery_photos') {
+            fullUpdateData[field] = [];
+          } else if (field === 'design_settings') {
+            fullUpdateData[field] = {};
+          }
+        }
+      }
+    });
+    
     // DrizzleのupdateOne操作を使用
     const [updatedProfile] = await db
       .update(store_profiles)
@@ -971,14 +1018,21 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       const tokenMatch = error.message.match(tokenRegex);
       const invalidToken = tokenMatch ? tokenMatch[1] : null;
       
+      // SQL構文エラーのカラム名を抽出する正規表現
+      const sqlErrorFieldPattern = /column "([^"]+)"/;
+      const columnMatch = error.message.match(sqlErrorFieldPattern);
+      const errorField = columnMatch ? columnMatch[1] : null;
+      
       // より詳細なエラー情報をログに記録
-      log('error', '店舗プロフィール更新エラー - 詳細', {
+      log('error', '店舗プロフィール更新エラー - 詳細分析', {
         message: error.message,
         stack: error.stack,
         name: error.name,
         userId: req.user?.id,
         requestBody: JSON.stringify(req.body),
         invalidToken: invalidToken,
+        errorField: errorField,
+        
         // さらに詳細な情報も追加
         requestDataTypes: {
           privacy_measures: typeof req.body.privacy_measures,
@@ -987,6 +1041,19 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           special_offers: typeof req.body.special_offers,
           gallery_photos: typeof req.body.gallery_photos,
           design_settings: typeof req.body.design_settings
+        },
+        
+        // 各フィールドのサンプル値
+        fieldSamples: {
+          privacy_measures: typeof req.body.privacy_measures === 'string' 
+            ? req.body.privacy_measures.substring(0, 50) + (req.body.privacy_measures.length > 50 ? '...' : '')
+            : JSON.stringify(req.body.privacy_measures || '').substring(0, 50) + '...',
+          commitment: typeof req.body.commitment === 'string'
+            ? req.body.commitment.substring(0, 50) + (req.body.commitment.length > 50 ? '...' : '')
+            : JSON.stringify(req.body.commitment || '').substring(0, 50) + '...',
+          security_measures: typeof req.body.security_measures === 'string'
+            ? req.body.security_measures.substring(0, 50) + (req.body.security_measures.length > 50 ? '...' : '')
+            : JSON.stringify(req.body.security_measures || '').substring(0, 50) + '...'
         }
       });
 
@@ -1003,7 +1070,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           message: "データベースエラーが発生しました",
           sqlError: error.message,
           invalidToken: invalidToken,
-          errorField: invalidToken ? `不正な値「${invalidToken}」が含まれているフィールドを確認してください` : null
+          errorField: errorField || (invalidToken ? `不正な値「${invalidToken}」が含まれているフィールドを確認してください` : null)
         };
         
         console.error('SQLエラー詳細:', errorDetails);

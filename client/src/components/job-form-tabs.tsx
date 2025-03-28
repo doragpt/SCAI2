@@ -829,6 +829,82 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       cleanedData.requirements = { ...DEFAULT_REQUIREMENTS };
     }
     
+    // TEXT型フィールドの特別処理 - privacy_measuresとcommitmentが文字列であることを確保
+    try {
+      // privacy_measures処理
+      if (data.privacy_measures !== undefined) {
+        // オブジェクトや配列が誤って渡された場合に文字列化
+        if (typeof data.privacy_measures === 'object') {
+          console.warn('privacy_measuresがオブジェクト型のため文字列化します', {
+            type: typeof data.privacy_measures,
+            isArray: Array.isArray(data.privacy_measures)
+          });
+          cleanedData.privacy_measures = JSON.stringify(data.privacy_measures);
+        }
+      }
+
+      // commitment処理
+      if (data.commitment !== undefined) {
+        // オブジェクトや配列が誤って渡された場合に文字列化
+        if (typeof data.commitment === 'object') {
+          console.warn('commitmentがオブジェクト型のため文字列化します', {
+            type: typeof data.commitment,
+            isArray: Array.isArray(data.commitment)
+          });
+          cleanedData.commitment = JSON.stringify(data.commitment);
+        }
+      }
+
+      // security_measures処理
+      if (data.security_measures !== undefined) {
+        // オブジェクトや配列が誤って渡された場合に文字列化
+        if (typeof data.security_measures === 'object') {
+          console.warn('security_measuresがオブジェクト型のため文字列化します', {
+            type: typeof data.security_measures,
+            isArray: Array.isArray(data.security_measures)
+          });
+          cleanedData.security_measures = JSON.stringify(data.security_measures);
+        }
+      }
+    } catch (error) {
+      console.error("TEXTフィールド処理中のエラー:", error);
+    }
+    
+    // 送信前の詳細なデータログ
+    console.log("送信前の各フィールド詳細:", {
+      timestamp: new Date().toISOString(),
+      privacy_measures: {
+        type: typeof cleanedData.privacy_measures,
+        value: cleanedData.privacy_measures,
+        length: typeof cleanedData.privacy_measures === 'string' ? cleanedData.privacy_measures.length : 'not string'
+      },
+      commitment: {
+        type: typeof cleanedData.commitment,
+        value: cleanedData.commitment,
+        length: typeof cleanedData.commitment === 'string' ? cleanedData.commitment.length : 'not string'
+      },
+      security_measures: {
+        type: typeof cleanedData.security_measures, 
+        value: cleanedData.security_measures,
+        length: typeof cleanedData.security_measures === 'string' ? cleanedData.security_measures.length : 'not string'
+      },
+      requirements: {
+        type: typeof cleanedData.requirements,
+        isObject: typeof cleanedData.requirements === 'object' && !Array.isArray(cleanedData.requirements),
+        // nullチェックを含むより安全な実装
+        keys: typeof cleanedData.requirements === 'object' && 
+              cleanedData.requirements !== null && 
+              !Array.isArray(cleanedData.requirements)
+              ? Object.keys(cleanedData.requirements as Record<string, unknown>) 
+              : 'not an object'
+      },
+      special_offers: {
+        type: typeof cleanedData.special_offers,
+        isArray: Array.isArray(cleanedData.special_offers),
+        length: Array.isArray(cleanedData.special_offers) ? cleanedData.special_offers.length : 'not array'
+      }
+    });
+    
     // 処理後のデータ構造をログに出力
     dataUtils.logDataStructure(cleanedData, "送信前の処理済みデータ");
     

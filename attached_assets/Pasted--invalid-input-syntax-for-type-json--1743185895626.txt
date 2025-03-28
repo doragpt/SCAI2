@@ -1,0 +1,78 @@
+以下は、現在のログと実装状況を踏まえた修正指示のサンプルです。各項目ごとに確認・対応していただくと、今回の「invalid input syntax for type json」エラーの原因特定と解消に繋がると考えます。
+
+１．スキーマ定義とORMマッピングの再確認
+問題の症状
+エラーメッセージから、「Token "顔出し不要で安心" is invalid」となっており、プレーンな文字列がJSONとして扱われ、パースに失敗していると考えられます。
+
+確認事項
+
+privacy_measures や commitment など、本来はテキスト（TEXT型）で扱うべきカラムについて、実際のDBスキーマおよびDrizzleのORMマッピングが正しく TEXT 型になっているか確認してください。
+
+もしこれらのカラムが誤ってJSONB型として定義されている場合は、TEXT型に変更するか、もしくは送信前に【JSON.stringify】するなど、処理方法を統一してください。
+
+２．カスタム変換関数（customJsonb、processTextFields など）の動作確認
+現状の修正点
+
+customJsonb() 関数を用いてDrizzle ORMのJSONB型の二重エンコードを防止する実装を追加済み。
+
+dataUtils.processTextFields() や他の専用関数（processSpecialOffers, processGalleryPhotos, processRequirements, processDesignSettings）を各フィールドごとに呼び出している。
+
+確認事項
+
+特に privacy_measures や commitment のフィールドに対して、processTextFields() が正しく適用され、単なる文字列がそのままTEXTとして扱われているかを、更新前のログ（DB保存直前のログ）で確認してください。
+
+ログ出力をさらに詳細にし、例えば以下のように各フィールドの型と内容（JSON.stringify()済みのもの）を出力して、対象のフィールドが「string」になっているか確認してください。
+
+js
+コピーする
+logger.info("DB更新直前フィールド検証", {
+  privacy_measures_type: typeof data.privacy_measures,
+  privacy_measures_value: data.privacy_measures,
+  commitment_type: typeof data.commitment,
+  commitment_value: data.commitment,
+  // 他のJSONB型フィールドも同様に…
+});
+３．クライアント側の送信データのチェック
+確認事項
+
+クライアント側（例：job-form-tabs.tsx）のフォーム送信処理において、privacy_measures（およびcommitment）などの値がどのような型で送信されているか確認してください。
+
+もしフォームデータがプレーンな文字列である場合、サーバー側では TEXT として扱う必要があるため、送信前にその値が JSON.stringify されないようにするか、サーバー側で processTextFields() を確実に適用してください。
+
+テスト
+
+curlやPostmanを使い、該当フィールドのみ（たとえば privacy_measures に「顔出し不要で安心」という文字列）を更新する最小限のリクエストを発行して、エラーが再現するか確認してください。
+
+４．エラーハンドリングとログの強化
+現状のログ
+
+ログ出力はかなり詳細ですが、「invalid input syntax for type json」とだけ出ており、どのパラメータ（たとえば $28 など）が原因か明確ではありません。
+
+対応策
+
+サーバー側のエラーハンドリング部分（server/routes/store.ts の PATCH エンドポイント付近）で、SQLクエリ実行直前の各パラメータの値と型を出力するようにしてください。
+
+これにより、特定のパラメータに対して「文字列として渡すべきなのに JSON として扱われている」などの問題を切り分けられます。
+
+５．まとめ・次のステップ
+スキーマ再確認
+
+privacy_measures と commitment など、本来 TEXT であるべきフィールドのDB型とORMマッピングをチェックし、必要ならスキーマ変更または変換処理を統一する。
+
+変換関数の動作確認とログ強化
+
+customJsonb() や processTextFields() などのユーティリティ関数が各フィールドに正しく適用され、更新前の値が正しい型（たとえば TEXT なら string 型）になっているか詳細ログで確認する。
+
+クライアント側のデータ生成の検証
+
+送信前に、該当フィールドの型・内容をコンソールに出力し、意図しない JSON シリアライズが行われていないか確認する。
+
+個別テストによる切り分け
+
+curl や Postman を使って、privacy_measures など個別フィールドの更新リクエストを発行し、エラーの再現性を確認する。
+
+エラー詳細情報の出力
+
+PostgreSQL側のエラー出力をより詳細に取得し、問題のあるトークンやフィールドを特定する。
+
+以上の対応を行った上で、再度ログと動作確認を実施し、問題の根本原因を特定してください。これにより、今回のエラー「invalid input syntax for type json」の解消に近づくはずです。
