@@ -81,7 +81,7 @@ export const dataUtils = {
 
       // 各セクションの設定フィールドを処理
       if (Array.isArray(processedSettings.sections)) {
-        processedSettings.sections = processedSettings.sections.map((section: any) => {
+        processedSettings.sections = processedSettings.sections.map(section => {
           if (section.settings && typeof section.settings === 'string') {
             try {
               section.settings = JSON.parse(section.settings);
