@@ -110,8 +110,33 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         }
       }
       
+      // セクションと設定データを検証・修正
+      if (designData && typeof designData === 'object') {
+        // セクションが配列であることを確認
+        if (!designData.sections || !Array.isArray(designData.sections)) {
+          designData.sections = [];
+          log('info', 'デザインデータのセクションが無効なため空配列を使用', { userId });
+        }
+        
+        // グローバル設定がオブジェクトであることを確認
+        if (!designData.globalSettings || typeof designData.globalSettings !== 'object') {
+          designData.globalSettings = {
+            mainColor: '#ff6b81',
+            secondaryColor: '#f9f9f9',
+            accentColor: '#41a0ff',
+            backgroundColor: '#ffffff',
+            fontFamily: 'sans-serif',
+            borderRadius: 8,
+            maxWidth: 1200,
+            hideSectionTitles: false
+          };
+          log('info', 'デザインデータのグローバル設定が無効なためデフォルト設定を使用', { userId });
+        }
+      }
+      
       // 明示的に整形したデータを作成（クライアントでの処理をシンプルにするため）
       const formattedData = {
+        success: true,
         message: 'プレビュー用データ取得成功',
         timestamp: new Date().toISOString(),
         mode: 'preview',

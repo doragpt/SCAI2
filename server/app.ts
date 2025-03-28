@@ -98,7 +98,11 @@ app.use('/preview', (req, res, next) => {
       method: req.method, 
       query: req.query
     });
-    res.redirect(307, `/api${req.url}`);
+    
+    // embedded=true の場合は /api/preview にリダイレクト
+    // ただし元のURLパラメータを維持する
+    const redirectUrl = `/api/preview?${new URLSearchParams(req.query as any).toString()}`;
+    res.redirect(307, redirectUrl);
   } else {
     // embedded パラメータがない場合はSPAルートとして処理
     next();

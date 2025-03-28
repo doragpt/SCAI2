@@ -91,7 +91,11 @@ export default function StoreDesignPreview() {
               };
             }
             
+            // 設定をステートにセット
             setDesignSettings(designData);
+            
+            // 応答データに設定を適用 (参照渡しに注意)
+            response.designData = designData;
           } catch (processingError) {
             forwardLog('デザイン設定の処理中にエラーが発生しました:', processingError);
             // エラー発生時もできるだけ元のデータを使用
@@ -107,7 +111,7 @@ export default function StoreDesignPreview() {
     },
     enabled: embedded,
     staleTime: 5 * 60 * 1000,
-    retry: 1
+    retry: 2 // リトライ回数を増やす
   });
 
   // 店舗情報を取得（埋め込みモードでない場合のみ）

@@ -526,17 +526,32 @@ export default function StoreDesignManager() {
                       };
                     }
                     
-                    // 設定データを送信
-                    iframeRef.current.contentWindow.postMessage({
+                    // 設定データを送信（リトライメカニズム付き）
+                    const timestamp = new Date().toISOString();
+                    const messageData = {
                       type: 'UPDATE_DESIGN',
                       settings: previewSettings,
-                      timestamp: new Date().toISOString()
-                    }, '*');
+                      timestamp
+                    };
                     
-                    console.log('デザイン設定の更新メッセージを送信しました', {
-                      timestamp,
-                      sectionsCount: previewSettings.sections.length
-                    });
+                    // データを送信し、3回までリトライする
+                    const sendDesignData = (retryCount = 0) => {
+                      if (iframeRef.current && iframeRef.current.contentWindow) {
+                        console.log(`iframeにデザイン設定を送信します`, { 
+                          timestamp: new Date().toISOString(),
+                          sectionsCount: previewSettings.sections.length
+                        });
+                        iframeRef.current.contentWindow.postMessage(messageData, '*');
+                      }
+                      
+                      // 最大リトライ回数に達していなければ、再試行
+                      if (retryCount < 2) {
+                        setTimeout(() => sendDesignData(retryCount + 1), 500);
+                      }
+                    };
+                    
+                    // 初回送信
+                    sendDesignData();
                     
                     // 受信確認を待つ
                     const receiveTimeout = setTimeout(() => {
@@ -1219,7 +1234,7 @@ export default function StoreDesignManager() {
                       className="w-full h-full border-0"
                       title="プレビュー"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
-                      sandbox="allow-same-origin allow-scripts allow-forms"
+                      sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-slate-800/70 text-white text-xs px-2 py-1">
                       プレビューモード - 表示のみ
