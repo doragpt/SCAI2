@@ -88,9 +88,21 @@ app.use('/store', (req, res, next) => {
   log('warn', '非推奨パス使用', { path: req.path, method: req.method });
   res.redirect(307, `/api${req.url}`);
 });
+// プレビューAPIは特殊なケース
+// 通常の /preview はSPAルートとして扱う
+// クエリパラメータ embedded=true の場合のみAPIとして扱う
 app.use('/preview', (req, res, next) => {
-  log('warn', '非推奨パス使用', { path: req.path, method: req.method, query: req.query });
-  res.redirect(307, `/api${req.url}`);
+  if (req.query.embedded === 'true') {
+    log('info', 'プレビューAPI呼び出し', { 
+      path: req.path, 
+      method: req.method, 
+      query: req.query
+    });
+    res.redirect(307, `/api${req.url}`);
+  } else {
+    // embedded パラメータがない場合はSPAルートとして処理
+    next();
+  }
 });
 
 // 求人関連のAPIルートを登録
