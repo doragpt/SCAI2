@@ -9,6 +9,7 @@ import authRouter from './routes/auth';
 import storeRouter from './routes/store';
 import blogRouter from './routes/blog';
 import uploadRouter from './routes/upload';
+import previewRouter from './routes/preview';
 import { authenticate } from './middleware/auth';
 import { db } from './db';
 import { store_profiles } from '../shared/schema';
@@ -66,6 +67,7 @@ app.use('/api/talent', talentRouter);
 app.use('/api/store', storeRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/preview', previewRouter);
 
 // デザイン関連のAPIルートは server/routes.ts で一元的に登録・管理されています
 
@@ -84,6 +86,10 @@ app.use('/talent', (req, res, next) => {
 });
 app.use('/store', (req, res, next) => {
   log('warn', '非推奨パス使用', { path: req.path, method: req.method });
+  res.redirect(307, `/api${req.url}`);
+});
+app.use('/preview', (req, res, next) => {
+  log('warn', '非推奨パス使用', { path: req.path, method: req.method, query: req.query });
   res.redirect(307, `/api${req.url}`);
 });
 

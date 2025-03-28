@@ -1058,7 +1058,7 @@ export default function StoreDesignManager() {
                 <div className={`h-full transition-all duration-300 ${deviceView === 'smartphone' ? 'max-w-[375px] mx-auto' : 'w-full'}`}>
                   <iframe 
                     ref={iframeRef}
-                    src="/store/preview" 
+                    src="/store/preview?embedded=true" 
                     className="w-full h-full border-0"
                     title="プレビュー"
                   />
