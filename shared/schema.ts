@@ -665,6 +665,18 @@ export const store_profiles = pgTable("store_profiles", {
 }));
 
 
+// デザイン設定のテーブル定義
+export const design_settings = pgTable("design_settings", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").notNull().references(() => users.id),
+  // JSONBフィールドとして保存
+  settings: jsonb("settings").$type<DesignSettings>(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  user_id_idx: index("design_settings_user_id_idx").on(table.user_id)
+}));
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
