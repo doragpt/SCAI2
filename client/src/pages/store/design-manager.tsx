@@ -1233,8 +1233,8 @@ export default function StoreDesignManager() {
                       src={`/store/preview?embedded=true&t=${Date.now()}`} 
                       className="w-full h-full border-0"
                       title="プレビュー"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
-                      sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; same-origin"
+                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-slate-800/70 text-white text-xs px-2 py-1">
                       プレビューモード - 表示のみ

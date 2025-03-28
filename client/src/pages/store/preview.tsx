@@ -42,20 +42,39 @@ export default function StoreDesignPreview() {
       
       try {
         // APIから最新のデータを取得（タイムスタンプでキャッシュ無効化）
-        const response = await apiRequest<any>(`GET`, `/api/preview?embedded=true&t=${Date.now()}`);
+        forwardLog('プレビューデータ取得開始', { timestamp: new Date().toISOString() });
+        
+        // 直接フェッチを使用してレスポンスタイプを制御
+        const response = await fetch(`/api/preview?embedded=true&t=${Date.now()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
+        }
+        
+        // JSONとして解析
+        const data = await response.json();
+        
         forwardLog('プレビューデータAPI応答:', {
-          success: response?.success,
-          hasDesignData: !!response?.designData,
-          hasStoreProfile: !!response?.storeProfile,
-          sectionCount: response?.designData?.sections?.length || 0
+          success: data?.success,
+          hasDesignData: !!data?.designData,
+          hasStoreProfile: !!data?.storeProfile,
+          sectionCount: data?.designData?.sections?.length || 0,
+          status: response.status,
+          contentType: response.headers.get('content-type')
         });
         
         // デザイン設定があれば適切なデータ処理を行ってからセット
-        if (response?.designData) {
+        if (data?.designData) {
           // デザイン設定の型変換を行う
           try {
             // 特に文字列からのパース処理など、必要に応じて追加の変換処理
-            let designData = response.designData;
+            let designData = data.designData;
             
             // 文字列の場合はパースを試みる
             if (typeof designData === 'string') {
@@ -95,23 +114,43 @@ export default function StoreDesignPreview() {
             setDesignSettings(designData);
             
             // 応答データに設定を適用 (参照渡しに注意)
-            response.designData = designData;
+            data.designData = designData;
           } catch (processingError) {
             forwardLog('デザイン設定の処理中にエラーが発生しました:', processingError);
             // エラー発生時もできるだけ元のデータを使用
-            setDesignSettings(response.designData);
+            setDesignSettings(data.designData);
           }
+        } else {
+          // デザイン設定がない場合はデフォルト設定を使用
+          const defaultSettings = getDefaultDesignSettings();
+          setDesignSettings(defaultSettings);
+          data.designData = defaultSettings;
+          forwardLog('デザイン設定がないためデフォルト設定を使用します');
         }
         
-        return response;
+        return data;
       } catch (error) {
         forwardLog('プレビューデータ取得エラー:', error);
-        return null;
+        // エラー時はデフォルト設定を使用
+        const defaultSettings = getDefaultDesignSettings();
+        setDesignSettings(defaultSettings);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+          designData: defaultSettings,
+          storeProfile: {
+            business_name: 'エラー発生時のデフォルト店舗',
+            location: '東京都',
+            service_type: 'デリヘル',
+            catch_phrase: 'データ取得エラーが発生しました',
+            description: '<p>設定を保存し直してから再度お試しください。</p>'
+          }
+        };
       }
     },
     enabled: embedded,
     staleTime: 5 * 60 * 1000,
-    retry: 2 // リトライ回数を増やす
+    retry: 3 // リトライ回数を増やす
   });
 
   // 店舗情報を取得（埋め込みモードでない場合のみ）

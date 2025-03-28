@@ -93,16 +93,34 @@ app.use('/store', (req, res, next) => {
 // クエリパラメータ embedded=true の場合のみAPIとして扱う
 app.use('/preview', (req, res, next) => {
   if (req.query.embedded === 'true') {
-    log('info', 'プレビューAPI呼び出し', { 
+    log('warn', '非推奨パス使用', { 
       path: req.path, 
       method: req.method, 
       query: req.query
     });
     
-    // embedded=true の場合は /api/preview にリダイレクト
-    // ただし元のURLパラメータを維持する
-    const redirectUrl = `/api/preview?${new URLSearchParams(req.query as any).toString()}`;
-    res.redirect(307, redirectUrl);
+    // embedded=true の場合は /api/preview にリダイレクトはせず、プロキシする
+    try {
+      log('info', '/preview -> /api/preview にプロキシ', {
+        params: req.query,
+        headers: {
+          accept: req.headers.accept,
+          contentType: req.headers['content-type']
+        }
+      });
+      
+      // 明示的にリクエストを転送
+      req.url = `/api/preview${req.url.substring(req.path.length)}`;
+      app._router.handle(req, res);
+    } catch (error) {
+      log('error', 'プレビューパスのプロキシエラー', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ 
+        success: false, 
+        error: 'プレビューデータの取得中にエラーが発生しました' 
+      });
+    }
   } else {
     // embedded パラメータがない場合はSPAルートとして処理
     next();

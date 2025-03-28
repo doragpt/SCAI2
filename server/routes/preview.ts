@@ -22,7 +22,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     log('info', 'プレビューAPIリクエスト受信', { 
       userId: userId || 'demo-mode',
       isDemo,
-      query: req.query 
+      query: req.query,
+      contentType: req.headers['content-type'],
+      accept: req.headers.accept
     });
 
     // embedded=true の場合はJSON APIとして動作
@@ -86,12 +88,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         }
       }
       
-      // プレビュー用のデータを返す
-      log('info', 'プレビューデータ送信', {
-        hasDesignData: !!designData,
-        sectionsCount: designData?.sections?.length || 0
-      });
-      
       // データが適切に処理されていることを確認
       if (designData && typeof designData === 'string') {
         try {
@@ -114,12 +110,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       if (designData && typeof designData === 'object') {
         // セクションが配列であることを確認
         if (!designData.sections || !Array.isArray(designData.sections)) {
-          designData.sections = [];
           log('info', 'デザインデータのセクションが無効なため空配列を使用', { userId });
+          designData.sections = [];
         }
         
         // グローバル設定がオブジェクトであることを確認
         if (!designData.globalSettings || typeof designData.globalSettings !== 'object') {
+          log('info', 'デザインデータのグローバル設定が無効なためデフォルト設定を使用', { userId });
           designData.globalSettings = {
             mainColor: '#ff6b81',
             secondaryColor: '#f9f9f9',
@@ -130,8 +127,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             maxWidth: 1200,
             hideSectionTitles: false
           };
-          log('info', 'デザインデータのグローバル設定が無効なためデフォルト設定を使用', { userId });
         }
+      } else {
+        // designDataがオブジェクトでない場合、デフォルトオブジェクトを使用
+        designData = getDefaultDesignSettings();
+        log('info', 'デザインデータが無効なためデフォルト設定を使用', { 
+          designDataType: typeof designData,
+          userId 
+        });
       }
       
       // 明示的に整形したデータを作成（クライアントでの処理をシンプルにするため）
@@ -140,22 +143,34 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         message: 'プレビュー用データ取得成功',
         timestamp: new Date().toISOString(),
         mode: 'preview',
-        storeProfile,
+        storeProfile: storeProfile || {
+          business_name: 'デフォルト店舗',
+          location: '東京都',
+          service_type: 'デリヘル',
+          catch_phrase: 'プレビュー表示用のデフォルトデータです',
+          description: '<p>店舗情報が設定されていません。</p>'
+        },
         designData: designData
       };
       
       // 安全のために重要なJSONデータの構造を検証
-      if (formattedData.designData) {
-        log('debug', 'フォーマット済みデザインデータの構造', {
-          hasData: !!formattedData.designData,
-          hasSections: !!(formattedData.designData.sections),
-          sectionsIsArray: Array.isArray(formattedData.designData.sections),
-          sectionsCount: Array.isArray(formattedData.designData.sections) ? formattedData.designData.sections.length : 'not an array',
-          hasGlobalSettings: !!(formattedData.designData.globalSettings)
-        });
-      }
+      log('info', 'フォーマット済みデザインデータの構造', {
+        hasData: !!formattedData.designData,
+        dataType: typeof formattedData.designData,
+        hasSections: !!(formattedData.designData && formattedData.designData.sections),
+        sectionsIsArray: formattedData.designData && Array.isArray(formattedData.designData.sections),
+        sectionsCount: formattedData.designData && Array.isArray(formattedData.designData.sections) 
+          ? formattedData.designData.sections.length 
+          : 'not an array',
+        hasGlobalSettings: !!(formattedData.designData && formattedData.designData.globalSettings),
+        storeProfileExists: !!formattedData.storeProfile
+      });
       
-      return sendSuccess(res, formattedData);
+      // 明示的にContent-Typeを設定
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      
+      // 結果を返す
+      return res.status(200).json(formattedData);
     } 
     
     // embedded=true パラメータがない場合は、SPAとして処理
@@ -163,12 +178,19 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     return next();
   } catch (error) {
     log('error', 'プレビューAPIエラー', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
     
-    res.status(500).json({
+    // 明示的にContent-Typeを設定
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    // エラーレスポンスを返す
+    return res.status(500).json({
       success: false,
-      error: 'プレビューデータの取得中にエラーが発生しました'
+      error: 'プレビューデータの取得中にエラーが発生しました',
+      message: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString()
     });
   }
 });
