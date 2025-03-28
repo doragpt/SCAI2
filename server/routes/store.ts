@@ -11,6 +11,7 @@ import { eq, and, gte, sql, count, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
 import { dataUtils } from '@shared/utils/dataTypeUtils';
+import { customJsonb } from '@shared/utils/customTypes';
 
 // 配列フィールドを安全に処理するヘルパー関数
 function validateArrayField(field: any): string[] {
@@ -174,6 +175,16 @@ function processSpecialOffers(offers: any): any[] {
       });
     
     console.log("特別オファーの処理完了。最終的な配列サイズ:", normalizedOffers.length);
+    
+    // 処理結果の詳細なデバッグ情報を出力
+    console.log("特別オファーの処理結果 (JSON形式):", JSON.stringify(normalizedOffers, null, 2));
+    console.log("特別オファーの処理結果 (型情報):", {
+      isArray: Array.isArray(normalizedOffers),
+      length: normalizedOffers.length,
+      objectType: typeof normalizedOffers,
+      firstItem: normalizedOffers.length > 0 ? Object.keys(normalizedOffers[0]) : 'empty'
+    });
+    
     return normalizedOffers;
   } catch (error) {
     console.error("special_offers処理中の一般エラー:", error);
@@ -456,7 +467,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           average_hourly_pay: fullData.average_hourly_pay,
           status: fullData.status,
           top_image: fullData.top_image,
-          special_offers: processSpecialOffers(fullData.special_offers),
+          // 修正: special_offersをSQL文としてJSONBに直接変換してPostgreSQLの二重エンコードを回避
+          special_offers: sql`${JSON.stringify(processSpecialOffers(fullData.special_offers))}::jsonb`,
           created_at: fullData.created_at,
           updated_at: fullData.updated_at
         })
@@ -673,7 +685,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         commitment: updateData.commitment || existingProfile.commitment || "",
         transportation_support: fullUpdateData.transportation_support,
         housing_support: fullUpdateData.housing_support,
-        special_offers: processSpecialOffers(fullUpdateData.special_offers),
+        // 修正: special_offersをSQL文としてJSONBに直接変換してPostgreSQLの二重エンコードを回避
+        special_offers: sql`${JSON.stringify(processSpecialOffers(fullUpdateData.special_offers))}::jsonb`,
         gallery_photos: processGalleryPhotos(fullUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理（JSONB型として正しく保存）
         design_settings: dataUtils.processDesignSettings(fullUpdateData.design_settings || existingProfile.design_settings),

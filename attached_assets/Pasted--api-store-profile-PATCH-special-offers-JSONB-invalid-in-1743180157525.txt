@@ -1,0 +1,150 @@
+以下、エンジニア向けの超具体的な修正指示です。特に、`/api/store/profile` のPATCH処理における special_offers のJSONB更新時に発生する「invalid input syntax for type json」エラーについて、原因と修正策を示します。
+
+---
+
+### 1. Drizzle ORM の JSONB 型二重エンコード問題への対策
+
+**現状の問題:**
+
+- 現在、サーバー側の `server/routes/store.ts` 内の `processSpecialOffers` 関数で、クライアントから受け取った special_offers のデータをそのままDBに渡しています。
+- Drizzle ORM の内部処理で、既にオブジェクトとして保持しているデータに対してさらに JSON.stringify を実施し、結果として二重にエンコードされた文字列が PostgreSQL に渡され、正しい JSON として解釈されずエラーが発生しています。
+
+**修正手順:**
+
+1. **カスタムJSONB型の定義:**
+
+   サーバー側で Drizzle ORM 用のカスタム型を作成し、JSONBの値を「そのまま」DBに渡すようにします。以下はサンプルコードです。
+
+   ```typescript
+   // server/db/customTypes.ts
+   import { customType } from 'drizzle-orm';
+
+   export const customJsonb = customType<any>('jsonb', {
+     toDriver(value: any) {
+       // すでにオブジェクトならそのまま返す（文字列化しない）
+       return value;
+     },
+     fromDriver(value: any) {
+       return value;
+     },
+   });
+   ```
+
+2. **スキーマの更新:**
+
+   `store_profiles` テーブルの special_offers カラムの型定義を、通常の JSONB 型から先ほど定義した customJsonb 型に変更してください。例えば、
+
+   ```typescript
+   // server/db/schema.ts
+   import { customJsonb } from './customTypes';
+
+   export const storeProfiles = mysqlTable('store_profiles', {
+     // 他のカラム定義…
+     special_offers: customJsonb('special_offers'),
+     // …
+   });
+   ```
+
+   ※ 上記はDrizzle ORMのスキーマ定義例です。実際のコードベースに合わせて調整してください。
+
+3. **動作確認のためのデバッグログの追加:**
+
+   `processSpecialOffers` 関数内で、DBに送信する直前に `special_offers` の値をログ出力してください。例えば：
+
+   ```typescript
+   logger.info("Normalized special_offers:", JSON.stringify(normalizedSpecialOffers));
+   ```
+
+   これにより、送信されるデータが正しいJSON形式になっているか確認できます。
+
+---
+
+### 2. クライアント側データ正規化の見直し
+
+**確認ポイント:**
+
+- **client/src/components/store/SpecialOfferEditor.tsx** および **client/src/components/job-form-tabs.tsx** で、特別オファーデータが編集・生成される流れを再確認してください。
+- 送信前に `normalizeSpecialOffers` 関数で、各特典オブジェクトの必須フィールド（id、title、description、icon、order など）が存在し、値が正しい型（文字列、数値、ブール値）であるかチェックし、不要なフィールドや undefined、NaN などが含まれていないかを厳密に検証してください。
+
+**必要であれば、** 以下のように追加の検証ロジックを導入してください。
+
+```typescript
+function normalizeSpecialOffers(offers: any[]): any[] {
+  return offers
+    .filter(offer => typeof offer === 'object' && offer !== null)
+    .map(offer => {
+      return {
+        id: offer.id || generateUUID(),  // idが無ければ新規生成
+        title: typeof offer.title === 'string' ? offer.title : "特別オファー",
+        description: typeof offer.description === 'string' ? offer.description : "",
+        icon: typeof offer.icon === 'string' ? offer.icon : "Gift",
+        backgroundColor: typeof offer.backgroundColor === 'string' ? offer.backgroundColor : "",
+        textColor: typeof offer.textColor === 'string' ? offer.textColor : "",
+        order: Number.isFinite(offer.order) ? offer.order : 0,
+        // 他の必要なフィールドを追加…
+      };
+    });
+}
+```
+
+---
+
+### 3. エラー発生時のテストと検証
+
+- **テストシナリオ:**  
+  Postmanなどを利用し、以下のような known-good JSON 例を送信してください。
+
+  ```json
+  {
+    "special_offers": [
+      {
+        "id": "sample-uuid-1",
+        "title": "入店祝い金",
+        "description": "入店後1週間以内に全額支給",
+        "icon": "Gift",
+        "backgroundColor": "from-pink-50 to-pink-100",
+        "textColor": "text-pink-700",
+        "order": 0
+      },
+      {
+        "id": "sample-uuid-2",
+        "title": "面接交通費",
+        "description": "面接時に全額支給",
+        "icon": "Car",
+        "backgroundColor": "from-amber-50 to-amber-100",
+        "textColor": "text-amber-700",
+        "order": 1
+      }
+    ]
+  }
+  ```
+
+  これで更新が正しく動作するか、そしてDB側に正しいJSONB形式で格納されるか確認してください。
+
+- **エラーテスト:**  
+  逆に、意図的に不正な値（例えば、単一の文字列 "顔出し不要" を直接送信するなど）を送信し、エラーが発生することを確認し、期待通りのエラーハンドリングが実装されているかも検証してください。
+
+---
+
+### 4. その他の修正点
+
+- **ORM バージョンの確認:**  
+  Drizzle ORM の最新版にアップデートすることで、既知の JSONB 型の不具合が解消されている可能性もあります。まずは、現在のバージョンとリリースノートを確認してください。
+
+- **テストコードの充実:**  
+  特に JSONB へのデータ保存に関して、ユニットテストや統合テストを作成し、様々な edge case（undefined、null、NaN、特殊文字を含む文字列など）に対して正しく動作するか検証できるようにしましょう。
+
+- **エラーログの充実:**  
+  エラーが発生した際に、どのフィールドでエラーが起きたか、受け取った raw な JSON 文字列も含めた詳細なログを出力することで、将来的なデバッグが容易になります。
+
+---
+
+### まとめ
+
+1. **Drizzle ORM の JSONB 二重エンコードを防ぐために、カスタム JSONB 型 customJsonb を実装・使用する。**
+2. **processSpecialOffers 関数内で、送信前の special_offers の値を詳細にログ出力し、正しいJSON形式であることを検証する。**
+3. **クライアント側の normalizeSpecialOffers 関数を見直し、必須フィールドの型チェックと未定義値、特殊数値の除外を徹底する。**
+4. **テストシナリオを作成して、正常系およびエラーケースの動作確認を実施する。**
+5. **ORMのバージョンアップやエラーログの充実など、将来的な保守性を高めるための改善も検討する。**
+
+以上の手順で修正を進めていただければ、今回の「invalid input syntax for type json」エラーは解消され、特別オファーデータが正しくJSONBカラムに保存されるようになると考えられます。どうぞよろしくお願いいたします。
