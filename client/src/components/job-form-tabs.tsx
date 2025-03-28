@@ -381,7 +381,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               id: `offer-${Math.random().toString(36).substring(2, 9)}`,
               title: "特別オファー",
               description: "",
-              type: "特別オファー", // 必須フィールド
+              type: "bonus", // 必須フィールド
               icon: "Award",
               backgroundColor: "#fff9fa",
               textColor: "#333333",
@@ -395,7 +395,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           return {
             ...offer,
             id: offer.id || `offer-${Math.random().toString(36).substring(2, 9)}`,
-            type: offer.type || "特別オファー",
+            type: offer.type || "bonus",
             title: offer.title || "特別オファー",
             description: offer.description || "",
             targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience : []
@@ -417,7 +417,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                   id: `offer-${Math.random().toString(36).substring(2, 9)}`,
                   title: "特別オファー",
                   description: "",
-                  type: "特別オファー",
+                  type: "bonus",
                   icon: "Award",
                   backgroundColor: "#fff9fa",
                   textColor: "#333333",
@@ -431,7 +431,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               return {
                 ...offer,
                 id: offer.id || `offer-${Math.random().toString(36).substring(2, 9)}`,
-                type: offer.type || "特別オファー",
+                type: offer.type || "bonus",
                 title: offer.title || "特別オファー",
                 targetAudience: Array.isArray(offer.targetAudience) ? offer.targetAudience : []
               };

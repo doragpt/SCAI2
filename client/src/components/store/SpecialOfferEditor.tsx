@@ -91,7 +91,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
     return offers.map(offer => ({
       ...offer,
       // typeフィールドが存在しない場合は追加
-      type: offer.type || "特別オファー"
+      type: offer.type || "bonus"
     }));
   });
   
@@ -104,7 +104,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
     const validOffers = offers.map(offer => ({
       ...offer,
       // typeフィールドが存在しない場合は追加
-      type: offer.type || "特別オファー"
+      type: offer.type || "bonus"
     }));
     
     setFields(validOffers);
@@ -132,7 +132,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
       id: uuidv4(),
       title: "",
       description: "",
-      type: "特別オファー", // 必須フィールド
+      type: "bonus", // 必須フィールド
       icon: "Award",
       backgroundColor: "from-purple-100 to-purple-200",
       textColor: "text-purple-700",
@@ -152,7 +152,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
     
     // typeフィールドが欠けている場合は追加
     if (!offerCopy.type) {
-      offerCopy.type = "特別オファー";
+      offerCopy.type = "bonus";
     }
     
     setEditingOffer(offerCopy);
@@ -166,7 +166,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
       id: uuidv4(),
       title: template.title,
       description: template.description,
-      type: "特別オファー", // 必須フィールド
+      type: "bonus", // 必須フィールド
       icon: template.icon,
       backgroundColor: template.backgroundColor,
       textColor: template.textColor,
@@ -187,7 +187,7 @@ export function SpecialOfferEditor({ value = "[]", onChange }: SpecialOfferEdito
     const safeOffer = {
       ...editingOffer,
       // typeフィールドが欠けている場合は追加
-      type: editingOffer.type || "特別オファー"
+      type: editingOffer.type || "bonus"
     };
     
     let newFields = [...fields];
