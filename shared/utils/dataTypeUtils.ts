@@ -96,6 +96,25 @@ export const dataUtils = {
   },
 
   /**
+   * デザイン設定のJSONB処理
+   * design_settingsフィールドを処理し、JSONB型として正しく保存するための準備
+   */
+  processDesignSettings: (value: any): any => {
+    // デザイン設定はオブジェクト型で処理
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        console.error('デザイン設定の解析エラー:', e);
+        return { sections: [], globalSettings: {} };
+      }
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value;
+    }
+    return { sections: [], globalSettings: {} };
+  },
+
+  /**
    * データ構造をログ出力
    * デバッグ用の詳細ログ
    */
@@ -136,6 +155,21 @@ export const dataUtils = {
         keys: data.requirements && typeof data.requirements === 'object' && !Array.isArray(data.requirements)
           ? Object.keys(data.requirements)
           : 'not object'
+      } : 'undefined',
+      design_settings: data.design_settings ? {
+        type: typeof data.design_settings,
+        isObject: data.design_settings && typeof data.design_settings === 'object' && !Array.isArray(data.design_settings),
+        hasSections: data.design_settings && 
+          typeof data.design_settings === 'object' && 
+          !Array.isArray(data.design_settings) && 
+          'sections' in data.design_settings,
+        sectionsCount: data.design_settings && 
+          typeof data.design_settings === 'object' && 
+          !Array.isArray(data.design_settings) && 
+          'sections' in data.design_settings &&
+          Array.isArray(data.design_settings.sections) 
+            ? data.design_settings.sections.length 
+            : 'not array'
       } : 'undefined'
     });
   }

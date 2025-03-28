@@ -10,6 +10,7 @@ import {
 import { eq, and, gte, sql, count, desc } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import { authenticate, authorize } from '../middleware/auth';
+import { dataUtils } from '@shared/utils/dataTypeUtils';
 
 // 配列フィールドを安全に処理するヘルパー関数
 function validateArrayField(field: any): string[] {
@@ -172,6 +173,8 @@ function processSpecialOffers(offers: any): any[] {
     return [];
   }
 }
+
+
 
 // ギャラリー写真の配列の整合性を確保するヘルパー関数
 function processGalleryPhotos(photos: any): any[] {
@@ -534,14 +537,10 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         ? processGalleryPhotos(req.body.gallery_photos)
         : (existingProfile.gallery_photos || []),
       
-      // デザイン設定（JSON文字列として処理）
+      // デザイン設定（JSONB型として処理）
       design_settings: req.body.design_settings 
-        ? (typeof req.body.design_settings === 'string' 
-            ? req.body.design_settings 
-            : JSON.stringify(req.body.design_settings))
-        : (typeof existingProfile.design_settings === 'string'
-            ? existingProfile.design_settings
-            : JSON.stringify(existingProfile.design_settings || {})),
+        ? dataUtils.processDesignSettings(req.body.design_settings)
+        : (existingProfile.design_settings || { sections: [], globalSettings: {} }),
       
       updated_at: new Date()
     };
@@ -669,8 +668,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         housing_support: fullUpdateData.housing_support,
         special_offers: processSpecialOffers(fullUpdateData.special_offers),
         gallery_photos: processGalleryPhotos(fullUpdateData.gallery_photos || []),
-        // デザイン設定の更新を処理
-        design_settings: fullUpdateData.design_settings || existingProfile.design_settings,
+        // デザイン設定の更新を処理（JSONB型として正しく保存）
+        design_settings: dataUtils.processDesignSettings(fullUpdateData.design_settings || existingProfile.design_settings),
         updated_at: fullUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))
