@@ -59,7 +59,16 @@ export async function apiRequest<T = any>(
         responseData
       });
 
-      throw new Error(responseData.message || "APIリクエストに失敗しました");
+      // 認証関連のエラーの場合は特別なエラーメッセージ
+      if (response.status === 401) {
+        throw new Error('401: 認証に失敗しました。ログインが必要です。');
+      } else if (response.status === 403) {
+        throw new Error('403: このアクションの実行権限がありません。');
+      }
+
+      throw new Error(
+        `${response.status}: ${responseData.message || "APIリクエストに失敗しました"}`
+      );
     }
 
     console.log(`API Response from ${url}:`, responseData);

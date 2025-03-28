@@ -103,14 +103,56 @@ export const dataUtils = {
     // デザイン設定はオブジェクト型で処理
     if (typeof value === 'string') {
       try {
-        return JSON.parse(value);
+        const parsed = JSON.parse(value);
+        console.log('デザイン設定を文字列からJSONに変換しました', { 
+          before: typeof value,
+          after: typeof parsed,
+          hasSections: parsed && parsed.sections && Array.isArray(parsed.sections)
+        });
+        
+        // セクションが配列であることを確認し、必要な構造を持っているか検証
+        if (parsed && typeof parsed === 'object' && parsed.sections) {
+          if (!Array.isArray(parsed.sections)) {
+            console.warn('デザイン設定のsectionsが配列ではありません。空配列で初期化します。');
+            parsed.sections = [];
+          }
+          
+          if (!parsed.globalSettings || typeof parsed.globalSettings !== 'object') {
+            console.warn('デザイン設定のglobalSettingsが存在しないか、オブジェクトではありません。空オブジェクトで初期化します。');
+            parsed.globalSettings = {};
+          }
+          
+          return parsed;
+        }
+        
+        return parsed;
       } catch (e) {
         console.error('デザイン設定の解析エラー:', e);
         return { sections: [], globalSettings: {} };
       }
     } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // オブジェクトの場合は構造を検証
+      if (!value.sections) {
+        console.warn('デザイン設定のsectionsプロパティがありません。空配列で初期化します。');
+        value.sections = [];
+      } else if (!Array.isArray(value.sections)) {
+        console.warn('デザイン設定のsectionsが配列ではありません。空配列で初期化します。');
+        value.sections = [];
+      }
+      
+      if (!value.globalSettings || typeof value.globalSettings !== 'object') {
+        console.warn('デザイン設定のglobalSettingsが存在しないか、オブジェクトではありません。空オブジェクトで初期化します。');
+        value.globalSettings = {};
+      }
+      
       return value;
     }
+    
+    console.warn('デザイン設定が無効な形式です。デフォルト設定を使用します。', { 
+      type: typeof value, 
+      valueProvided: value !== null && value !== undefined 
+    });
+    
     return { sections: [], globalSettings: {} };
   },
 

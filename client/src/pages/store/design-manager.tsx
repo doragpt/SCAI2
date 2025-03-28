@@ -13,14 +13,22 @@ import { Save, RefreshCw, Settings, Palette, Layout, Eye, EyeOff, ArrowUp, Arrow
 import { useToast } from '@/hooks/use-toast';
 import { type DesignSettings, type SectionSettings, type GlobalDesignSettings, type DesignSection } from '@shared/schema';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
+// デフォルト設定のインポートの検証
+console.log('getDefaultDesignSettings関数の検証:', {
+  isFunction: typeof getDefaultDesignSettings === 'function',
+  import: '@/shared/defaultDesignSettings'
+});
 
 /**
  * 店舗デザイン管理コンポーネント
  * 店舗情報ページのデザインをカスタマイズするための管理画面
  */
+// 初期設定を関数コンポーネントの外部で取得（初期化の順序問題を回避）
+const initialDesignSettings = getDefaultDesignSettings();
+
 export default function StoreDesignManager() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<DesignSettings>(getDefaultDesignSettings());
+  const [settings, setSettings] = useState<DesignSettings>(initialDesignSettings);
   const [isDirty, setIsDirty] = useState(false);
   const [deviceView, setDeviceView] = useState<'pc' | 'smartphone'>('pc');
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -79,29 +87,129 @@ export default function StoreDesignManager() {
     queryFn: async () => {
       try {
         console.log('デザイン設定を取得しています...');
-        const response = await apiRequest<DesignSettings>("GET", "/api/design");
-        console.log('デザイン設定の取得に成功しました');
-        return response;
+        const response = await apiRequest<{success: boolean, data: DesignSettings, isDefault?: boolean}>("GET", "/api/design");
+        
+        // 成功/データの検証
+        if (!response || !response.success || !response.data) {
+          console.warn('デザイン設定のレスポンスが不正です。デフォルト設定を使用します。', { response });
+          return getDefaultDesignSettings();
+        }
+        
+        const designSettings = response.data;
+        
+        // 応答データの構造検証
+        if (!designSettings || typeof designSettings !== 'object') {
+          console.warn('デザイン設定データの形式が不正です。デフォルト設定を使用します。', { designSettings });
+          return getDefaultDesignSettings();
+        }
+        
+        // sectionsが存在しない、または配列でない場合は修正
+        if (!designSettings.sections || !Array.isArray(designSettings.sections)) {
+          console.warn('デザイン設定のsectionsが不正です。空配列で初期化します。', { 
+            hasSection: 'sections' in designSettings,
+            sectionsType: designSettings.sections ? typeof designSettings.sections : 'undefined'
+          });
+          designSettings.sections = [];
+        }
+        
+        // globalSettingsが存在しない場合は初期化
+        if (!designSettings.globalSettings || typeof designSettings.globalSettings !== 'object') {
+          console.warn('デザイン設定のglobalSettingsが不正です。デフォルト設定を使用します。');
+          designSettings.globalSettings = getDefaultDesignSettings().globalSettings;
+        }
+        
+        console.log('デザイン設定の取得に成功しました', { 
+          isDefault: response.isDefault || false,
+          sectionsCount: designSettings.sections.length,
+          hasGlobalSettings: !!designSettings.globalSettings,
+          sectionIds: designSettings.sections.map(s => s.id)
+        });
+        
+        return designSettings;
       } catch (error) {
         console.error('デザイン設定の取得に失敗しました:', error);
-        throw error;
+        
+        // 認証エラーの場合は特別なメッセージを表示
+        if (error instanceof Error && error.message.includes('401')) {
+          toast({
+            title: '認証エラー',
+            description: 'セッションが期限切れになりました。再ログインしてください。',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'データ取得エラー',
+            description: 'デザイン設定の取得に失敗しました。デフォルト設定を使用します。',
+            variant: 'destructive',
+          });
+        }
+        
+        // デフォルト設定を返す
+        return getDefaultDesignSettings();
       }
     },
     staleTime: 5 * 60 * 1000, // 5分間キャッシュ
-    retry: 1,
-    retryDelay: 1000
+    retry: 2, // リトライ回数を増やす
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000), // 指数バックオフ
   });
+
+  // getDefaultDesignSettings は @shared/defaultDesignSettings からインポート済み
 
   // デザイン設定を保存するミューテーション
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: DesignSettings) => {
       try {
-        console.log('デザイン設定を保存しています...', JSON.stringify(data, null, 2));
-        const response = await apiRequest("POST", "/api/design", data);
-        console.log('デザイン設定の保存に成功しました', response);
-        return response;
+        // データの整合性チェック
+        if (!data.sections) {
+          console.warn('保存前のデータにsectionsがありません。空配列で初期化します。');
+          data.sections = [];
+        }
+        
+        if (!data.globalSettings) {
+          console.warn('保存前のデータにglobalSettingsがありません。デフォルト値で初期化します。');
+          data.globalSettings = getDefaultDesignSettings().globalSettings;
+        }
+        
+        console.log('デザイン設定を保存しています...', {
+          sectionsCount: data.sections.length,
+          hasGlobalSettings: !!data.globalSettings,
+          sectionIds: data.sections.map(s => s.id)
+        });
+        
+        // APIにリクエスト送信
+        const response = await apiRequest<{success: boolean, message: string, data: DesignSettings}>("POST", "/api/design", data);
+        
+        // 成功レスポンスの検証
+        if (!response || !response.success) {
+          throw new Error(response?.message || 'デザイン設定の保存に失敗しました');
+        }
+        
+        console.log('デザイン設定の保存に成功しました', {
+          success: response.success,
+          message: response.message
+        });
+        
+        return response.data;
       } catch (error) {
         console.error('デザイン設定の保存に失敗しました:', error);
+        
+        // 認証エラーの場合は特別なメッセージを表示
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            toast({
+              title: '認証エラー',
+              description: 'セッションが期限切れになりました。再ログインしてください。',
+              variant: 'destructive',
+            });
+          } else if (error.message.includes('404')) {
+            toast({
+              title: 'プロフィールが見つかりません',
+              description: '店舗プロフィールが見つからないため、設定を保存できませんでした。',
+              variant: 'destructive',
+            });
+          }
+        }
+        
         throw error;
       }
     },

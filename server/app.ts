@@ -67,10 +67,7 @@ app.use('/api/store', storeRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/upload', uploadRouter);
 
-// 注: デザイン関連のAPIルートは server/routes.ts でも登録されています
-// 重複登録を避けるためコメントアウト
-// import designRouter from './routes/design';
-// app.use('/api/design', designRouter);
+// デザイン関連のAPIルートは server/routes.ts で一元的に登録・管理されています
 
 // 後方互換性のために一時的に古いパスもサポート（将来的に削除予定）
 app.use('/auth', (req, res, next) => {
