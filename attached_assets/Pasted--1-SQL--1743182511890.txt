@@ -1,0 +1,166 @@
+以下は、現状の修正内容とエラー原因、そして次のステップについての具体的な説明とエンジニア向け指示例です。
+
+---
+
+### ■ 現状の修正内容
+
+1. **SQLテンプレートリテラルの削除**  
+   - 以前は  
+     ```typescript
+     sql`${JSON.stringify(processSpecialOffers(data))}::jsonb`
+     ```  
+     の形式で、Drizzle ORM の自動JSON.stringify処理と二重エンコードが発生していました。  
+   - 現在は、店舗プロフィール新規作成時および更新時の `special_offers`、さらに `gallery_photos` や `design_settings` の取り扱いについて、SQLテンプレートリテラルを使用せず、Drizzle ORM の標準の動作に任せるように修正しています。
+
+2. **processSpecialOffers関数の強化**  
+   - 特別オファーが常に配列として処理されるよう、!Array.isArray(normalizedOffers) のチェックを追加し、配列でない場合は早期に捕捉。  
+   - 各特別オファー要素がオブジェクトであること、またその `type` フィールドを常に `"bonus"` に強制するロジックを導入。  
+   - null や無効な値があった場合、デフォルト値を設定することで、最終的なレスポンスで `special_offers` が一貫した配列形式になるように改善しました。
+
+3. **型チェックとフォールバックの強化**  
+   - 特別オファーの各フィールドについて、期待する型が保持されているかをチェックし、必要に応じてデフォルト値（例："bonus" や空文字列、数値の0など）にフォールバックする実装に改めました。
+
+---
+
+### ■ 現在のエラー状況
+
+- コンソールログには、以下のエラーが発生しています：
+  ```json
+  {
+    "message": "データベースエラーが発生しました",
+    "sqlError": "invalid input syntax for type json"
+  }
+  ```
+- このエラーは、PostgreSQLが渡されたJSONデータを正しく処理できていないことを示しており、特に `special_offers` だけでなく、`requirements` など他のJSONBフィールドでも同様の問題がある可能性があります。
+
+---
+
+### ■ 考えられる原因
+
+1. **JSONBフィールド全般のデータ不整合**  
+   - `special_offers` に関しては、十分に配列化と型の正規化を行っているはずですが、依然として不正な形式が混入している可能性があります。  
+   - 特に、**requirements** フィールドについては、サーバー側での処理が非常に複雑です。  
+     - 現在のコードでは、`req.body.requirements` が文字列かオブジェクトかをチェックし、必要に応じて JSON.stringify を適用しているため、意図しない形式になっている可能性があります。
+
+2. **クライアント側からの送信データの問題**  
+   - `job-form-tabs.tsx` や `SpecialOfferEditor.tsx` で、特別オファーのデータが期待通りの配列形式になっているか再度確認する必要があります。
+
+3. **SQLテンプレートリテラルの廃止による影響**  
+   - 修正後、Drizzle ORM がオブジェクトを適切にシリアライズできていない場合、依然として二重エンコードや型不整合が発生している可能性も考えられます。
+
+---
+
+### ■ 次のステップと具体的な指示
+
+1. **requirements フィールドの処理改善**  
+   - 現在のコード：
+     ```typescript
+     requirements: req.body.requirements 
+       ? (typeof req.body.requirements === 'string' 
+           ? req.body.requirements 
+           : JSON.stringify(typeof req.body.requirements === 'object' 
+             ? {
+               ...req.body.requirements,
+               cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions) 
+                 ? req.body.requirements.cup_size_conditions 
+                 : []
+             }
+             : {}))
+       : (typeof existingProfile.requirements === 'string'
+           ? existingProfile.requirements
+           : JSON.stringify(existingProfile.requirements || {
+             accepts_temporary_workers: false,
+             requires_arrival_day_before: false,
+             other_conditions: [],
+             cup_size_conditions: []
+           }))
+     ```
+   - **指示**: この部分を見直し、必ず **オブジェクト**として一旦内部変数に格納し、最後に一度だけ JSON.stringify を適用して文字列として DB に渡すようにしてください。  
+     例：
+     ```typescript
+     let requirementsObj;
+     if (req.body.requirements) {
+       if (typeof req.body.requirements === 'string') {
+         try {
+           requirementsObj = JSON.parse(req.body.requirements);
+         } catch (e) {
+           // エラー処理
+         }
+       } else if (typeof req.body.requirements === 'object') {
+         requirementsObj = {
+           ...req.body.requirements,
+           cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions)
+             ? req.body.requirements.cup_size_conditions
+             : []
+         };
+       }
+     } else {
+       requirementsObj = existingProfile.requirements
+         ? (typeof existingProfile.requirements === 'string'
+             ? JSON.parse(existingProfile.requirements)
+             : existingProfile.requirements)
+         : {
+             accepts_temporary_workers: false,
+             requires_arrival_day_before: false,
+             other_conditions: [],
+             cup_size_conditions: []
+           };
+     }
+     const requirementsToStore = JSON.stringify(requirementsObj);
+     ```
+     これにより、requirements は必ず正しいJSON文字列として DB に渡されるはずです。
+
+2. **special_offers の再検証とログ出力の強化**  
+   - `processSpecialOffers` 関数の処理直前に、最終的なデータが必ず配列になっているかを確認するため、以下のようなデバッグログを追加してください。
+     ```typescript
+     const normalizedOffers = processSpecialOffers(data);
+     if (!Array.isArray(normalizedOffers)) {
+       logger.error("normalizedOffers is not an array:", normalizedOffers);
+       throw new Error("special_offers must be an array");
+     }
+     logger.info("DEBUG: normalizedOffers =", JSON.stringify(normalizedOffers, null, 2));
+     ```
+   - クライアント側の送信データも、送信直前に同様のログを出力し、配列形式であることを検証してください。
+
+3. **その他のJSONBフィールドの確認**  
+   - `gallery_photos` や `design_settings` も同様に、送信前のデータを詳細にログ出力し、正しいJSON形式になっているか確認する。  
+   - 必要なら、それぞれのフィールドについても正規化関数を導入して、確実に JSON.stringify 可能なオブジェクト/配列に変換してください。
+
+4. **テストリクエストの実施**  
+   - Postmanなどを使って、明示的に配列形式の正しい `special_offers` および `requirements` を含むデータを送信し、エラーが解消されるか確認してください。
+
+5. **ORMの動作確認**  
+   - 修正後のDrizzle ORMが、受け取ったJavaScriptオブジェクトを適切にJSONにシリアライズしているか、場合によっては単一のJSON.stringifyのみが適用されるようにドキュメントやIssueを再確認してください。
+
+---
+
+### ■ エンジニア向け超具体的な指示例
+
+> **件名：PATCH /api/store/profile JSONBフィールド更新時のエラー対策について**
+> 
+> お疲れ様です。
+> 
+> 現在、店舗プロフィール更新時に「invalid input syntax for type json」というエラーが発生しています。調査の結果、以下の点が原因として考えられます。
+> 
+> 1. **requirements フィールドの処理**  
+>    - 受信した `req.body.requirements` の型が文字列の場合とオブジェクトの場合とで処理が分岐しており、その結果として DB に渡す際に不正なJSON形式になっている可能性があります。  
+>    - 対策として、まず受信した値をオブジェクトに統一し、最後に JSON.stringify を一度だけ適用する処理に修正してください。（上記サンプルコードを参照）
+> 
+> 2. **special_offers の再検証**  
+>    - 現在 `processSpecialOffers` 関数で特典データを配列に正規化する処理を行っていますが、送信直前にデバッグログでその値が必ず配列になっているか確認してください。  
+>    - もし配列でない場合は、明示的にエラーを投げるか、空配列にフォールバックする処理を追加してください。
+> 
+> 3. **その他の JSONB フィールド**  
+>    - `gallery_photos` や `design_settings` などの他のJSONBフィールドも同様に、送信前に正しい形式（JSON.stringify可能なオブジェクトまたは配列）になっているかをログ出力し、検証してください。
+> 
+> 4. **テストリクエストの実施とORMの挙動確認**  
+>    - 修正後、Postmanなどを利用し、明示的に正しい形式のデータを送信して更新が成功するか確認してください。  
+>    - また、Drizzle ORM が単一のJSON.stringifyのみを適用する動作になっているか、ドキュメントや最新のIssueを再確認してください。
+> 
+> これらの対応を行った上で、再度ログを確認し、どのフィールドで不正なJSON形式が発生しているかを特定してください。何か不明点があれば、再度ご連絡ください。  
+> 
+> よろしくお願いいたします。
+
+---
+
+このように、requirements の統一処理、special_offers の配列保証、その他JSONBフィールドの検証という具体的な対応と、テスト・ログ出力の強化を行うことで、エラーの原因を解消し、正しい形式のJSONBデータがDBに渡されるようにしてください。

@@ -612,26 +612,78 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       
       // 勤務時間と応募条件
       working_hours: req.body.working_hours || existingProfile.working_hours || "",
-      requirements: req.body.requirements 
-        ? (typeof req.body.requirements === 'string' 
-            ? req.body.requirements 
-            : JSON.stringify(typeof req.body.requirements === 'object' 
-              ? {
-                ...req.body.requirements,
-                // cup_size_conditionsが配列であることを保証
-                cup_size_conditions: Array.isArray(req.body.requirements.cup_size_conditions) 
-                  ? req.body.requirements.cup_size_conditions 
-                  : []
-              }
-              : {}))
-        : (typeof existingProfile.requirements === 'string'
-            ? existingProfile.requirements
-            : JSON.stringify(existingProfile.requirements || {
-              accepts_temporary_workers: false,
-              requires_arrival_day_before: false,
-              other_conditions: [],
-              cup_size_conditions: []
-            })),
+      // requirementsフィールドの処理改善 - 一貫したオブジェクト処理と型安全性の向上
+      requirements: (() => {
+        let requirementsObj: any = {
+          accepts_temporary_workers: false,
+          requires_arrival_day_before: false,
+          other_conditions: [],
+          cup_size_conditions: []
+        };
+        
+        // 新しいrequirementsデータがある場合
+        if (req.body.requirements) {
+          try {
+            // 文字列の場合はパースを試みる
+            if (typeof req.body.requirements === 'string') {
+              requirementsObj = JSON.parse(req.body.requirements);
+            } 
+            // オブジェクトの場合は直接使用
+            else if (typeof req.body.requirements === 'object') {
+              requirementsObj = { ...req.body.requirements };
+            }
+            
+            // cup_size_conditionsが配列であることを保証
+            requirementsObj.cup_size_conditions = Array.isArray(requirementsObj.cup_size_conditions)
+              ? requirementsObj.cup_size_conditions
+              : [];
+              
+            // その他の必須フィールドが存在することを確認
+            requirementsObj.accepts_temporary_workers = 
+              typeof requirementsObj.accepts_temporary_workers === 'boolean' 
+                ? requirementsObj.accepts_temporary_workers 
+                : false;
+                
+            requirementsObj.requires_arrival_day_before = 
+              typeof requirementsObj.requires_arrival_day_before === 'boolean' 
+                ? requirementsObj.requires_arrival_day_before 
+                : false;
+                
+            requirementsObj.other_conditions = Array.isArray(requirementsObj.other_conditions)
+              ? requirementsObj.other_conditions
+              : [];
+          } catch (error) {
+            console.error('Requirements パース中のエラー:', error);
+            // エラー時は既存のプロファイルの値を使用
+            requirementsObj = existingProfile.requirements || requirementsObj;
+          }
+        }
+        // 新しいデータがない場合は既存のデータを使用
+        else if (existingProfile.requirements) {
+          try {
+            if (typeof existingProfile.requirements === 'string') {
+              requirementsObj = JSON.parse(existingProfile.requirements);
+            } else if (typeof existingProfile.requirements === 'object') {
+              requirementsObj = { ...existingProfile.requirements };
+            }
+          } catch (error) {
+            console.error('既存 Requirements パース中のエラー:', error);
+            // デフォルト値は既に設定済みなのでそのまま使用
+          }
+        }
+        
+        // ログ出力でデバッグ
+        log('info', 'Requirements オブジェクト検証', {
+          requirementsType: typeof requirementsObj,
+          hasArrayProperties: requirementsObj && Array.isArray(requirementsObj.cup_size_conditions),
+          cupSizeConditionsLength: requirementsObj && Array.isArray(requirementsObj.cup_size_conditions) 
+            ? requirementsObj.cup_size_conditions.length 
+            : 'not an array'
+        });
+        
+        // オブジェクトをそのまま返す (Drizzle ORM が自動的に処理)
+        return requirementsObj;
+      })(),
       
       // 追加フィールド
       recruiter_name: req.body.recruiter_name,
@@ -769,21 +821,73 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         status: fullUpdateData.status,
         top_image: fullUpdateData.top_image,
         working_hours: fullUpdateData.working_hours,
-        requirements: typeof fullUpdateData.requirements === 'object' 
-          ? {
-              ...fullUpdateData.requirements,
-              // cup_size_conditionsが配列であることを保証
-              cup_size_conditions: Array.isArray(fullUpdateData.requirements.cup_size_conditions) 
-                ? fullUpdateData.requirements.cup_size_conditions 
-                : []
+        // requirementsフィールドをオブジェクトとして確実に処理（SQLテンプレートリテラルは使わない）
+        requirements: (() => {
+          try {
+            let requirementsObj;
+            
+            // 検証済みのデータを使用
+            if (typeof fullUpdateData.requirements === 'object' && fullUpdateData.requirements !== null) {
+              requirementsObj = { ...fullUpdateData.requirements };
+              
+              // cup_size_conditionsを確実に配列として処理
+              requirementsObj.cup_size_conditions = Array.isArray(requirementsObj.cup_size_conditions)
+                ? requirementsObj.cup_size_conditions
+                : [];
+                
+              // デフォルト値の設定を確保
+              requirementsObj.accepts_temporary_workers = 
+                typeof requirementsObj.accepts_temporary_workers === 'boolean'
+                  ? requirementsObj.accepts_temporary_workers
+                  : false;
+                  
+              requirementsObj.requires_arrival_day_before = 
+                typeof requirementsObj.requires_arrival_day_before === 'boolean'
+                  ? requirementsObj.requires_arrival_day_before
+                  : false;
+                  
+              requirementsObj.prioritize_titles = 
+                typeof requirementsObj.prioritize_titles === 'boolean'
+                  ? requirementsObj.prioritize_titles
+                  : false;
+                  
+              requirementsObj.other_conditions = Array.isArray(requirementsObj.other_conditions)
+                ? requirementsObj.other_conditions
+                : [];
+            } else {
+              // 既存データまたはデフォルト値を使用
+              requirementsObj = typeof existingProfile.requirements === 'object' && existingProfile.requirements !== null
+                ? { ...existingProfile.requirements }
+                : {
+                    accepts_temporary_workers: false,
+                    requires_arrival_day_before: false,
+                    prioritize_titles: false,
+                    other_conditions: [],
+                    cup_size_conditions: []
+                  };
             }
-          : existingProfile.requirements || {
-            accepts_temporary_workers: false,
-            requires_arrival_day_before: false,
-            prioritize_titles: false,
-            other_conditions: [],
-            cup_size_conditions: []
-          },
+            
+            // データ検証ログ
+            log('info', 'DB保存直前のrequirements検証', {
+              requirementsType: typeof requirementsObj,
+              isNull: requirementsObj === null,
+              hasArrayProperties: requirementsObj && 'cup_size_conditions' in requirementsObj && Array.isArray(requirementsObj.cup_size_conditions),
+              sample: JSON.stringify(requirementsObj).substring(0, 100) + "..."
+            });
+            
+            return requirementsObj;
+          } catch (error) {
+            console.error('Requirements最終処理エラー:', error);
+            // エラー時はデフォルト値を返す
+            return {
+              accepts_temporary_workers: false,
+              requires_arrival_day_before: false,
+              prioritize_titles: false,
+              other_conditions: [],
+              cup_size_conditions: []
+            };
+          }
+        })(),
         recruiter_name: fullUpdateData.recruiter_name,
         phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
         email_addresses: validateArrayField(fullUpdateData.email_addresses),
