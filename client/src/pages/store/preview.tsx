@@ -43,11 +43,57 @@ export default function StoreDesignPreview() {
       try {
         // 常に最新のデータを取得するためにタイムスタンプを追加
         const response = await apiRequest<any>(`GET`, `/api/preview?embedded=true&t=${Date.now()}`);
-        forwardLog('プレビューデータAPI応答:', response);
+        forwardLog('プレビューデータAPI応答:', {
+          success: response?.success,
+          hasDesignData: !!response?.designData,
+          hasStoreProfile: !!response?.storeProfile,
+          sectionCount: response?.designData?.sections?.length || 0
+        });
         
-        // デザイン設定があればセット
+        // デザイン設定があれば適切なデータ処理を行ってからセット
         if (response?.designData) {
-          setDesignSettings(response.designData);
+          // デザイン設定の型変換を行う
+          try {
+            // 特に文字列からのパース処理など、必要に応じて追加の変換処理
+            let designData = response.designData;
+            
+            // 文字列の場合はパースを試みる
+            if (typeof designData === 'string') {
+              try {
+                designData = JSON.parse(designData);
+                forwardLog('デザイン設定を文字列からパースしました');
+              } catch (parseError) {
+                forwardLog('デザイン設定のパースに失敗しました:', parseError);
+              }
+            }
+            
+            // セクションが配列であることを確認
+            if (!designData.sections || !Array.isArray(designData.sections)) {
+              forwardLog('デザイン設定のセクションが無効です。デフォルト配列を使用します');
+              designData.sections = [];
+            }
+            
+            // グローバル設定がオブジェクトであることを確認
+            if (!designData.globalSettings || typeof designData.globalSettings !== 'object') {
+              forwardLog('デザイン設定のグローバル設定が無効です。デフォルト設定を使用します');
+              designData.globalSettings = {
+                mainColor: '#ff6b81',
+                secondaryColor: '#f9f9f9',
+                accentColor: '#41a0ff',
+                backgroundColor: '#ffffff',
+                fontFamily: 'sans-serif',
+                borderRadius: 8,
+                maxWidth: 1200,
+                hideSectionTitles: false
+              };
+            }
+            
+            setDesignSettings(designData);
+          } catch (processingError) {
+            forwardLog('デザイン設定の処理中にエラーが発生しました:', processingError);
+            // エラー発生時もできるだけ元のデータを使用
+            setDesignSettings(response.designData);
+          }
         }
         
         return response;
@@ -130,15 +176,63 @@ export default function StoreDesignPreview() {
   // 親ウィンドウからのメッセージを受け取る
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // UPDATE_DESIGNメッセージを受け取った場合
-      if (event.data && event.data.type === 'UPDATE_DESIGN') {
-        forwardLog('デザイン設定を受信しました:', {
-          timestamp: event.data.timestamp,
-          sectionsCount: event.data.settings.sections.length,
-          sectionIds: event.data.settings.sections.map((s: DesignSection) => s.id)
-        });
+      try {
+        // メッセージの安全性チェック
+        if (!event.data) {
+          return;
+        }
         
-        setDesignSettings(event.data.settings);
+        // UPDATE_DESIGNメッセージを受け取った場合
+        if (event.data.type === 'UPDATE_DESIGN') {
+          // 設定データの存在チェック
+          if (!event.data.settings) {
+            forwardLog('警告: 受信したメッセージに settings が含まれていません', event.data);
+            return;
+          }
+          
+          // 設定データの構造チェック
+          const settingsData = event.data.settings;
+          if (!settingsData.sections || !Array.isArray(settingsData.sections)) {
+            forwardLog('警告: 受信した設定データの sections が無効です', settingsData);
+            // 最低限の構造を持つデータを作成
+            settingsData.sections = [];
+          }
+          
+          forwardLog('デザイン設定を受信しました:', {
+            timestamp: event.data.timestamp,
+            sectionsCount: settingsData.sections.length,
+            sectionIds: settingsData.sections.map((s: DesignSection) => s.id),
+            hasGlobalSettings: !!settingsData.globalSettings
+          });
+          
+          // グローバル設定の存在チェック
+          if (!settingsData.globalSettings || typeof settingsData.globalSettings !== 'object') {
+            forwardLog('警告: グローバル設定が不足しています。デフォルト値を使用します');
+            settingsData.globalSettings = {
+              mainColor: '#ff6b81',
+              secondaryColor: '#f9f9f9',
+              accentColor: '#41a0ff',
+              backgroundColor: '#ffffff',
+              fontFamily: 'sans-serif',
+              borderRadius: 8,
+              maxWidth: 1200,
+              hideSectionTitles: false
+            };
+          }
+          
+          setDesignSettings(settingsData);
+          
+          // 受信確認を親ウィンドウに送り返す
+          if (window.parent !== window) {
+            window.parent.postMessage({
+              type: 'DESIGN_UPDATE_RECEIVED',
+              timestamp: new Date().toISOString(),
+              sectionsCount: settingsData.sections.length
+            }, '*');
+          }
+        }
+      } catch (error) {
+        forwardLog('メッセージ処理中にエラーが発生しました:', error);
       }
     };
 

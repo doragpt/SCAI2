@@ -473,17 +473,17 @@ export default function StoreDesignManager() {
       console.log('プレビューを更新します:', {
         sectionsCount: previewSettings.sections.length,
         sectionIds: previewSettings.sections.map(s => s.id),
-        globalSettings: previewSettings.globalSettings
+        globalSettings: Object.keys(previewSettings.globalSettings || {})
       });
       
       // iframeを更新するベストな方法
       try {
-        // 現在のURLを取得
         // プレビューのURLを構築（APIエンドポイントを指定）
         const url = new URL('/api/preview', window.location.origin);
         
         // キャッシュを無効化するためのタイムスタンプを追加
-        url.searchParams.set('t', Date.now().toString());
+        const timestamp = Date.now();
+        url.searchParams.set('t', timestamp.toString());
         url.searchParams.set('embedded', 'true');
         
         // iframeを一旦クリアしてから再設定
@@ -494,29 +494,90 @@ export default function StoreDesignManager() {
           if (iframeRef.current) {
             iframeRef.current.src = url.toString();
             
-            // iframe読み込み後にメッセージを送信するため少し待つ
-            setTimeout(() => {
-              if (iframeRef.current && iframeRef.current.contentWindow) {
-                iframeRef.current.contentWindow.postMessage({
-                  type: 'UPDATE_DESIGN',
-                  timestamp: new Date().toISOString(),
-                  settings: previewSettings
-                }, '*');
+            // プレビューの準備完了を受信するためのイベントリスナー
+            const messageListener = (event: MessageEvent) => {
+              // プレビューの準備完了を受信したら設定データを送信
+              if (event.data && event.data.type === 'PREVIEW_READY') {
+                console.log('プレビューの準備完了を受信しました');
+                
+                // 設定データを送信
+                if (iframeRef.current && iframeRef.current.contentWindow) {
+                  try {
+                    // 設定データの整合性チェック
+                    // セクションが配列であることを確認
+                    if (!Array.isArray(previewSettings.sections)) {
+                      console.warn('セクションが配列ではありません。空配列を使用します。');
+                      previewSettings.sections = [];
+                    }
+                    
+                    // グローバル設定がオブジェクトであることを確認
+                    if (!previewSettings.globalSettings || typeof previewSettings.globalSettings !== 'object') {
+                      console.warn('グローバル設定がオブジェクトではありません。デフォルト設定を使用します。');
+                      previewSettings.globalSettings = {
+                        mainColor: '#ff6b81',
+                        secondaryColor: '#f9f9f9',
+                        accentColor: '#41a0ff',
+                        backgroundColor: '#ffffff',
+                        fontFamily: 'sans-serif',
+                        borderRadius: 8,
+                        maxWidth: 1200,
+                        hideSectionTitles: false
+                      };
+                    }
+                    
+                    // 設定データを送信
+                    iframeRef.current.contentWindow.postMessage({
+                      type: 'UPDATE_DESIGN',
+                      settings: previewSettings,
+                      timestamp: new Date().toISOString()
+                    }, '*');
+                    
+                    console.log('デザイン設定の更新メッセージを送信しました', {
+                      timestamp,
+                      sectionsCount: previewSettings.sections.length
+                    });
+                    
+                    // 受信確認を待つ
+                    const receiveTimeout = setTimeout(() => {
+                      console.warn('デザイン設定更新の受信確認がタイムアウトしました');
+                    }, 3000);
+                    
+                    // 受信確認リスナー
+                    const confirmListener = (confirmEvent: MessageEvent) => {
+                      if (confirmEvent.data && confirmEvent.data.type === 'DESIGN_UPDATE_RECEIVED') {
+                        console.log('デザイン設定更新の受信確認を受け取りました', confirmEvent.data);
+                        clearTimeout(receiveTimeout);
+                        window.removeEventListener('message', confirmListener);
+                      }
+                    };
+                    
+                    window.addEventListener('message', confirmListener);
+                  } catch (sendError) {
+                    console.error('デザイン設定の送信エラー:', sendError);
+                  }
+                }
+                
+                // リスナーを削除
+                window.removeEventListener('message', messageListener);
               }
-            }, 300);
+            };
+            
+            // リスナーを登録
+            window.addEventListener('message', messageListener);
+            
+            // 5秒後にリスナーを自動的に削除（クリーンアップ）
+            setTimeout(() => {
+              window.removeEventListener('message', messageListener);
+            }, 5000);
           }
         }, 100);
-      } catch (e) {
-        console.error('プレビュー更新エラー:', e);
-        
-        // エラー時は直接メッセージ送信を試みる
-        if (iframeRef.current.contentWindow) {
-          iframeRef.current.contentWindow.postMessage({
-            type: 'UPDATE_DESIGN',
-            timestamp: new Date().toISOString(),
-            settings: previewSettings
-          }, '*');
-        }
+      } catch (error) {
+        console.error('プレビュー更新エラー:', error);
+        toast({
+          title: 'プレビュー更新エラー',
+          description: 'プレビューの更新に失敗しました。再度お試しください。',
+          variant: 'destructive',
+        });
       }
     }
   };
