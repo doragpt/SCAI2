@@ -189,12 +189,96 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       });
       
       try {
-        // design_settings フィールドがあるか確認
-        const hasDesignSettings = data.design_settings !== undefined;
-        console.log("design_settings確認:", { 
-          hasDesignSettings, 
-          type: typeof data.design_settings, 
-          value: data.design_settings
+        // JSONB型フィールドのデータ検証と正規化
+        // 送信前に確実に正しいデータ型（配列/オブジェクト）になるよう検証
+
+        // 1. special_offers が必ず配列になるよう確保
+        let validSpecialOffers = [];
+        if (Array.isArray(data.special_offers)) {
+          validSpecialOffers = data.special_offers.map(offer => ({
+            ...offer,
+            // typeフィールドを強制的に"bonus"に設定
+            type: "bonus"
+          }));
+        } else if (typeof data.special_offers === 'string') {
+          try {
+            // 文字列の場合はパースを試みる
+            const parsed = JSON.parse(data.special_offers);
+            if (Array.isArray(parsed)) {
+              validSpecialOffers = parsed.map(offer => ({
+                ...offer,
+                type: "bonus" // typeフィールドを常に"bonus"に
+              }));
+            }
+          } catch (e) {
+            console.error("special_offers文字列のパースエラー:", e);
+          }
+        }
+        
+        // 2. requirementsオブジェクトの検証
+        let validRequirements = {
+          accepts_temporary_workers: false,
+          requires_arrival_day_before: false,
+          prioritize_titles: false,
+          other_conditions: [],
+          cup_size_conditions: []
+        };
+        
+        if (typeof data.requirements === 'object' && data.requirements !== null) {
+          validRequirements = {
+            ...validRequirements,
+            ...data.requirements,
+            // 必ず配列として確保
+            cup_size_conditions: Array.isArray(data.requirements.cup_size_conditions) 
+              ? data.requirements.cup_size_conditions 
+              : [],
+            other_conditions: Array.isArray(data.requirements.other_conditions)
+              ? data.requirements.other_conditions
+              : []
+          };
+        }
+        
+        // 3. gallery_photos の配列検証
+        const validGalleryPhotos = Array.isArray(data.gallery_photos) 
+          ? data.gallery_photos 
+          : [];
+        
+        // 4. design_settings の検証
+        let validDesignSettings = data.design_settings;
+        if (typeof data.design_settings === 'string') {
+          try {
+            validDesignSettings = JSON.parse(data.design_settings);
+          } catch (e) {
+            console.error("design_settings文字列のパースエラー:", e);
+            validDesignSettings = { sections: [], globalSettings: {} };
+          }
+        } else if (data.design_settings === null || data.design_settings === undefined) {
+          validDesignSettings = { sections: [], globalSettings: {} };
+        }
+        
+        // 送信前のデータを詳細にログ出力
+        console.log("JSONB型フィールド検証結果:", {
+          specialOffers: {
+            isArray: Array.isArray(validSpecialOffers),
+            length: Array.isArray(validSpecialOffers) ? validSpecialOffers.length : 'not array',
+            sample: validSpecialOffers.length > 0 ? validSpecialOffers[0] : 'empty array'
+          },
+          requirements: {
+            isObject: typeof validRequirements === 'object',
+            hasArrayProps: validRequirements && 
+              Array.isArray(validRequirements.cup_size_conditions) && 
+              Array.isArray(validRequirements.other_conditions),
+            keys: validRequirements ? Object.keys(validRequirements) : 'no keys'
+          },
+          galleryPhotos: {
+            isArray: Array.isArray(validGalleryPhotos),
+            length: Array.isArray(validGalleryPhotos) ? validGalleryPhotos.length : 'not array'
+          },
+          designSettings: {
+            isObject: typeof validDesignSettings === 'object',
+            hasSections: validDesignSettings && 'sections' in validDesignSettings,
+            hasGlobalSettings: validDesignSettings && 'globalSettings' in validDesignSettings
+          }
         });
         
         // データを整形
@@ -203,7 +287,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           catch_phrase: data.catch_phrase || "",
           description: data.description || "",
           top_image: data.top_image || "",
-          special_offers: Array.isArray(data.special_offers) ? data.special_offers : [],
+          special_offers: validSpecialOffers, // 検証済み配列
           
           // 給与・待遇情報
           benefits: data.benefits || [],
@@ -213,22 +297,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           average_hourly_pay: Number(data.average_hourly_pay) || 0,
           status: data.status || "draft",
           
-          // 応募条件の整形
-          requirements: typeof data.requirements === 'object' && data.requirements
-            ? {
-                ...data.requirements,
-                // cup_size_conditionsが配列であることを保証
-                cup_size_conditions: Array.isArray(data.requirements?.cup_size_conditions) 
-                  ? data.requirements?.cup_size_conditions 
-                  : []
-              }
-            : {
-                accepts_temporary_workers: false,
-                requires_arrival_day_before: false,
-                prioritize_titles: false,
-                other_conditions: [],
-                cup_size_conditions: []
-              },
+          // 応募条件の整形（検証済みオブジェクト）
+          requirements: validRequirements,
               
           working_hours: data.working_hours || "",
           transportation_support: data.transportation_support || false,

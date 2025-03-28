@@ -30,15 +30,21 @@ function validateBenefits(benefits: any): BenefitType[] {
   return [];
 }
 
-// 特別オファーの配列の整合性を確保するヘルパー関数
+/**
+ * 特別オファーデータを処理し、正規化する関数
+ * - 文字列をパースして配列にする
+ * - すべてのオファーにtypeフィールドを"bonus"として統一
+ * - 必須フィールドを保証する
+ * @param offers 変換対象のデータ
+ * @returns 正規化された特別オファー配列
+ */
 function processSpecialOffers(offers: any): any[] {
   console.log("===== processSpecialOffers関数開始 =====");
   console.log("受け取った特別オファーデータ:", {
     type: typeof offers,
     isArray: Array.isArray(offers),
     isNull: offers === null,
-    isUndefined: offers === undefined,
-    rawValue: offers
+    isUndefined: offers === undefined
   });
   
   // 入力がnullまたはundefinedの場合は空配列を返す
@@ -50,7 +56,7 @@ function processSpecialOffers(offers: any): any[] {
   // JSONB型への変更に伴う修正: 文字列の場合はJSONとしてパースを試みる
   if (typeof offers === 'string') {
     try {
-      console.log("特別オファーが文字列として渡されました。JSON解析を試みます:", offers);
+      console.log("特別オファーが文字列として渡されました。JSON解析を試みます");
       const parsedOffers = JSON.parse(offers);
       console.log("JSON解析結果:", {
         type: typeof parsedOffers,
@@ -67,7 +73,6 @@ function processSpecialOffers(offers: any): any[] {
       }
     } catch (e) {
       console.error("特別オファーが文字列ですが、JSON解析に失敗しました:", e);
-      console.log("問題のある文字列値:", offers);
       return [];
     }
   }
@@ -75,7 +80,6 @@ function processSpecialOffers(offers: any): any[] {
   // 配列ではない場合は空配列を返す
   if (!Array.isArray(offers)) {
     console.log("特別オファーが配列ではありません。空配列を返します。データタイプ:", typeof offers);
-    console.log("データ内容：", offers);
     return [];
   }
   
