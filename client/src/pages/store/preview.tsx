@@ -64,6 +64,9 @@ export default function StoreDesignPreview() {
                 forwardLog('デザイン設定を文字列からパースしました');
               } catch (parseError) {
                 forwardLog('デザイン設定のパースに失敗しました:', parseError);
+                // エラー回復: デフォルト設定を使う
+                designData = getDefaultDesignSettings();
+                forwardLog('パースエラーのためデフォルト設定を使用します');
               }
             }
             

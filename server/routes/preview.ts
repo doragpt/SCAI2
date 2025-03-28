@@ -67,7 +67,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
           designData = getDefaultDesignSettings();
         } else {
           // データ型変換の一貫性を確保するために処理
-          designData = dataUtils.processDesignSettings(designData);
+          try {
+            designData = dataUtils.processDesignSettings(designData);
+            log('info', 'デザイン設定の処理が成功しました', { 
+              userId,
+              sectionsCount: designData.sections ? designData.sections.length : 0,
+              hasGlobalSettings: !!designData.globalSettings
+            });
+          } catch (processError) {
+            log('error', 'デザイン設定の処理中にエラーが発生しました', { 
+              error: processError instanceof Error ? processError.message : String(processError),
+              userId 
+            });
+            // エラー発生時はデフォルト設定を使用
+            designData = getDefaultDesignSettings();
+            log('info', 'エラーのためデフォルト設定を使用します', { userId });
+          }
         }
       }
       

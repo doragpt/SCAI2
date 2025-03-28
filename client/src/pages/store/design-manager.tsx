@@ -467,13 +467,14 @@ export default function StoreDesignManager() {
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current) {
-      // プレビュー送信前に設定を正規化
-      const previewSettings = ensureRequiredSections(settings);
+      // プレビュー送信前に設定を正規化（ディープコピーで参照を切断）
+      const previewSettings = JSON.parse(JSON.stringify(ensureRequiredSections(settings)));
       
       console.log('プレビューを更新します:', {
         sectionsCount: previewSettings.sections.length,
         sectionIds: previewSettings.sections.map(s => s.id),
-        globalSettings: Object.keys(previewSettings.globalSettings || {})
+        globalSettings: Object.keys(previewSettings.globalSettings || {}),
+        timestamp: new Date().toISOString()
       });
       
       // iframeを更新するベストな方法
@@ -565,49 +566,65 @@ export default function StoreDesignManager() {
             // リスナーを登録
             window.addEventListener('message', messageListener);
             
-            // 直接メッセージを送信 (即時)
-            if (iframeRef.current && iframeRef.current.contentWindow) {
-              console.log('iframeが読み込まれたので直接メッセージを送信します');
-              try {
-                // 設定データの整合性チェック
-                if (!Array.isArray(previewSettings.sections)) {
-                  console.warn('セクションが配列ではありません。空配列で補正します');
-                  previewSettings.sections = [];
-                }
+            // 直接メッセージを送信する（複数回試行）
+            const sendPreviewMessage = () => {
+              if (iframeRef.current && iframeRef.current.contentWindow) {
+                console.log('iframeにデザイン設定を送信します', { 
+                  timestamp: new Date().toISOString(),
+                  sectionsCount: previewSettings.sections ? previewSettings.sections.length : 0
+                });
                 
-                if (!previewSettings.globalSettings || typeof previewSettings.globalSettings !== 'object') {
-                  console.warn('グローバル設定がオブジェクトではありません。デフォルト設定を使用します');
-                  previewSettings.globalSettings = {
-                    mainColor: '#ff6b81',
-                    secondaryColor: '#f9f9f9',
-                    accentColor: '#41a0ff',
-                    backgroundColor: '#ffffff',
-                    fontFamily: 'sans-serif',
-                    borderRadius: 8,
-                    maxWidth: 1200,
-                    hideSectionTitles: false
-                  };
-                }
-                
-                // 非同期での設定送信
-                setTimeout(() => {
-                  if (iframeRef.current && iframeRef.current.contentWindow) {
-                    iframeRef.current.contentWindow.postMessage({
-                      type: 'UPDATE_DESIGN',
-                      settings: previewSettings,
-                      timestamp: new Date().toISOString()
-                    }, '*');
-                    console.log('1秒後に設定を送信しました');
+                try {
+                  // 設定データの整合性チェック
+                  const safeSettings = { ...previewSettings };
+                  
+                  if (!Array.isArray(safeSettings.sections)) {
+                    console.warn('セクションが配列ではありません。空配列で補正します');
+                    safeSettings.sections = [];
                   }
-                }, 1000);
-              } catch (e) {
-                console.error('直接メッセージング中のエラー:', e);
+                  
+                  if (!safeSettings.globalSettings || typeof safeSettings.globalSettings !== 'object') {
+                    console.warn('グローバル設定がオブジェクトではありません。デフォルト設定を使用します');
+                    safeSettings.globalSettings = {
+                      mainColor: '#ff6b81',
+                      secondaryColor: '#f9f9f9',
+                      accentColor: '#41a0ff',
+                      backgroundColor: '#ffffff',
+                      fontFamily: 'sans-serif',
+                      borderRadius: 8,
+                      maxWidth: 1200,
+                      hideSectionTitles: false
+                    };
+                  }
+                  
+                  // メッセージ送信
+                  iframeRef.current.contentWindow.postMessage({
+                    type: 'UPDATE_DESIGN',
+                    settings: safeSettings,
+                    timestamp: new Date().toISOString()
+                  }, '*');
+                } catch (e) {
+                  console.error('メッセージング中のエラー:', e);
+                }
+              } else {
+                console.warn('iframeが準備できていません。後でリトライします。');
               }
-            }
+            };
             
-            // 5秒後にリスナーを自動的に削除（クリーンアップ）
+            // 複数回試行するスケジュール
+            sendPreviewMessage(); // 即時試行
+            
+            // 0.5秒, 1秒, 2秒後にも試行
+            const retryTimers = [
+              setTimeout(() => sendPreviewMessage(), 500),
+              setTimeout(() => sendPreviewMessage(), 1000),
+              setTimeout(() => sendPreviewMessage(), 2000)
+            ];
+            
+            // 5秒後にリスナーとタイマーを自動的に削除（クリーンアップ）
             setTimeout(() => {
               window.removeEventListener('message', messageListener);
+              retryTimers.forEach(timer => clearTimeout(timer));
             }, 5000);
           }
         }, 100);
