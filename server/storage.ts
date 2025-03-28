@@ -5,6 +5,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import memorystore from "memorystore";
 import { log } from "./utils/logger";
+import { dataUtils } from "@shared/utils/dataTypeUtils";
 
 // User型とInsertUser型の定義
 type User = typeof users.$inferSelect;
@@ -447,22 +448,9 @@ export class DatabaseStorage implements IStorage {
     try {
       log('info', '店舗プロフィール取得開始', { userId });
 
+      // すべてのフィールドを明示的に選択（design_settingsを含む）
       const [result] = await db
-        .select({
-          id: store_profiles.id,
-          user_id: store_profiles.user_id,
-          business_name: store_profiles.business_name,
-          location: store_profiles.location,
-          service_type: store_profiles.service_type,
-          catch_phrase: store_profiles.catch_phrase,
-          description: store_profiles.description,
-          benefits: store_profiles.benefits,
-          minimum_guarantee: store_profiles.minimum_guarantee,
-          maximum_guarantee: store_profiles.maximum_guarantee,
-          status: store_profiles.status,
-          created_at: store_profiles.created_at,
-          updated_at: store_profiles.updated_at
-        })
+        .select()
         .from(store_profiles)
         .where(eq(store_profiles.user_id, userId));
 
@@ -474,8 +462,14 @@ export class DatabaseStorage implements IStorage {
       log('info', '店舗プロフィール取得成功', {
         userId,
         business_name: result.business_name,
-        service_type: result.service_type
+        service_type: result.service_type,
+        hasDesignSettings: !!result.design_settings
       });
+
+      // データ型の一貫性を確保するための処理
+      if (result.design_settings) {
+        result.design_settings = dataUtils.processDesignSettings(result.design_settings);
+      }
 
       return result;
     } catch (error) {

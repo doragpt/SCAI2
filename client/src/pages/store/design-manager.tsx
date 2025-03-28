@@ -565,6 +565,46 @@ export default function StoreDesignManager() {
             // リスナーを登録
             window.addEventListener('message', messageListener);
             
+            // 直接メッセージを送信 (即時)
+            if (iframeRef.current && iframeRef.current.contentWindow) {
+              console.log('iframeが読み込まれたので直接メッセージを送信します');
+              try {
+                // 設定データの整合性チェック
+                if (!Array.isArray(previewSettings.sections)) {
+                  console.warn('セクションが配列ではありません。空配列で補正します');
+                  previewSettings.sections = [];
+                }
+                
+                if (!previewSettings.globalSettings || typeof previewSettings.globalSettings !== 'object') {
+                  console.warn('グローバル設定がオブジェクトではありません。デフォルト設定を使用します');
+                  previewSettings.globalSettings = {
+                    mainColor: '#ff6b81',
+                    secondaryColor: '#f9f9f9',
+                    accentColor: '#41a0ff',
+                    backgroundColor: '#ffffff',
+                    fontFamily: 'sans-serif',
+                    borderRadius: 8,
+                    maxWidth: 1200,
+                    hideSectionTitles: false
+                  };
+                }
+                
+                // 非同期での設定送信
+                setTimeout(() => {
+                  if (iframeRef.current && iframeRef.current.contentWindow) {
+                    iframeRef.current.contentWindow.postMessage({
+                      type: 'UPDATE_DESIGN',
+                      settings: previewSettings,
+                      timestamp: new Date().toISOString()
+                    }, '*');
+                    console.log('1秒後に設定を送信しました');
+                  }
+                }, 1000);
+              } catch (e) {
+                console.error('直接メッセージング中のエラー:', e);
+              }
+            }
+            
             // 5秒後にリスナーを自動的に削除（クリーンアップ）
             setTimeout(() => {
               window.removeEventListener('message', messageListener);

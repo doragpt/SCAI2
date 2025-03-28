@@ -36,7 +36,8 @@ router.get('/', authenticate, authorize('store'), async (req: Request, res: Resp
       log('info', 'デザイン設定取得成功', { 
         userId, 
         sectionsCount: processedSettings.sections ? processedSettings.sections.length : 0,
-        hasGlobalSettings: !!processedSettings.globalSettings
+        hasGlobalSettings: !!processedSettings.globalSettings,
+        dataType: typeof processedSettings
       });
       
       return res.json({
