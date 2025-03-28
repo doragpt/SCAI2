@@ -42,7 +42,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 基本情報
       catch_phrase: initialData?.catch_phrase || "",
       description: initialData?.description || "",
-      special_offers: initialData?.special_offers || "[]",
+      special_offers: initialData?.special_offers || [],
       top_image: initialData?.top_image || "",
       gallery_photos: initialData?.gallery_photos || [],
       
@@ -203,7 +203,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           catch_phrase: data.catch_phrase || "",
           description: data.description || "",
           top_image: data.top_image || "",
-          special_offers: data.special_offers || "[]",
+          special_offers: Array.isArray(data.special_offers) ? data.special_offers : [],
           
           // 給与・待遇情報
           benefits: data.benefits || [],
@@ -369,8 +369,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     // データのコピーを作成
     const cleanedData = { ...data };
     
-    // 1. special_offers - TEXT型カラム: 文字列にする
-    // special_offers が配列の場合、オブジェクトの各要素にtypeフィールドが確実にあることを確認してから文字列化
+    // 1. special_offers - JSONB型カラム: 配列にする
+    // データベースカラムの型に合わせて、確実に配列になるように処理する
     try {
       if (Array.isArray(cleanedData.special_offers)) {
         console.log("special_offers フィールド値タイプ:", typeof cleanedData.special_offers);
@@ -402,11 +402,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           };
         });
         
-        // 配列を文字列に変換（TEXT型カラム用）
-        cleanedData.special_offers = JSON.stringify(validOffers);
+        // 配列をそのまま設定（JSONB型カラム用）
+        cleanedData.special_offers = validOffers;
       } 
       else if (typeof cleanedData.special_offers === 'string') {
-        // すでに文字列の場合は、内容を検証して必要なフィールドを追加
+        // 文字列の場合は、パースして配列に変換
         try {
           const parsedOffers = JSON.parse(cleanedData.special_offers);
           if (Array.isArray(parsedOffers)) {
@@ -437,23 +437,23 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
               };
             });
             
-            // 文字列として再設定
-            cleanedData.special_offers = JSON.stringify(validSpecialOffers);
+            // 配列として設定
+            cleanedData.special_offers = validSpecialOffers;
           } else {
             // 配列でない場合は空配列に設定
-            cleanedData.special_offers = "[]";
+            cleanedData.special_offers = [];
           }
         } catch (error) {
           console.error("special_offers文字列のパースエラー:", error);
-          cleanedData.special_offers = "[]";
+          cleanedData.special_offers = [];
         }
       } else {
-        // 他の型の場合は空配列の文字列に設定
-        cleanedData.special_offers = "[]";
+        // 他の型の場合は空配列に設定
+        cleanedData.special_offers = [];
       }
     } catch (error) {
       console.error("special_offers検証中のエラー:", error);
-      cleanedData.special_offers = "[]";
+      cleanedData.special_offers = [];
     }
     
     // 2. gallery_photos - JSONB型カラム: 配列にする
@@ -586,22 +586,35 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       });
       
       // 特別オファーのデータ構造を詳細にログ出力
-      if (cleanedData.special_offers && typeof cleanedData.special_offers === 'string') {
-        try {
-          const parsedOffers = JSON.parse(cleanedData.special_offers);
-          if (Array.isArray(parsedOffers)) {
-            console.log("送信前の各特別オファーの詳細:", parsedOffers.map((offer: any) => ({
-              id: offer.id,
-              type: offer.type,
-              title: offer.title,
-              targetAudience: offer.targetAudience,
-              hasTargetAudience: Array.isArray(offer.targetAudience),
-              targetAudienceType: typeof offer.targetAudience,
-              keys: Object.keys(offer)
-            })));
+      if (cleanedData.special_offers) {
+        if (typeof cleanedData.special_offers === 'string') {
+          try {
+            const parsedOffers = JSON.parse(cleanedData.special_offers);
+            if (Array.isArray(parsedOffers)) {
+              console.log("送信前の各特別オファーの詳細(文字列型):", parsedOffers.map((offer: any) => ({
+                id: offer.id,
+                type: offer.type,
+                title: offer.title,
+                targetAudience: offer.targetAudience,
+                hasTargetAudience: Array.isArray(offer.targetAudience),
+                targetAudienceType: typeof offer.targetAudience,
+                keys: Object.keys(offer)
+              })));
+            }
+          } catch (e) {
+            console.error("特別オファーの詳細ログ出力時にパースエラー:", e);
           }
-        } catch (e) {
-          console.error("特別オファーの詳細ログ出力時にパースエラー:", e);
+        } else if (Array.isArray(cleanedData.special_offers)) {
+          // 配列の場合は直接マッピング
+          console.log("送信前の各特別オファーの詳細(配列型):", cleanedData.special_offers.map((offer: any) => ({
+            id: offer.id,
+            type: offer.type,
+            title: offer.title,
+            targetAudience: offer.targetAudience,
+            hasTargetAudience: Array.isArray(offer.targetAudience),
+            targetAudienceType: typeof offer.targetAudience,
+            keys: Object.keys(offer)
+          })));
         }
       }
       
