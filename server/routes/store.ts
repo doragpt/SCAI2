@@ -818,48 +818,92 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       profileId: existingProfile.id
     });
     
-    // TEXT型フィールドを文字列に確実に変換（オブジェクトが誤って入力された場合の保護）
-    // これらのフィールドがオブジェクトの場合、文字列化する
+    // Type augmentation to support indexable properties
+    interface StoreProfileData {
+      [key: string]: any;
+      privacy_measures?: any;
+      commitment?: any;
+      security_measures?: any;
+      special_offers?: any;
+      gallery_photos?: any;
+      design_settings?: any;
+      requirements?: any;
+      // 他の重要な既知のフィールドも列挙（タイプセーフティのため）
+      updated_at: Date;
+      catch_phrase: string;
+      description: string;
+      benefits: string[];
+      status: "draft" | "published" | "closed";
+    }
+    
+    // TEXTタイプのフィールドを文字列に確実に変換
     const textFields = ['privacy_measures', 'commitment', 'security_measures'];
     
-    textFields.forEach(field => {
-      if (typeof fullUpdateData[field] === 'object' && fullUpdateData[field] !== null) {
-        console.warn(`TEXT型フィールド "${field}" にオブジェクトが渡されました。文字列に変換します。`, {
-          type: typeof fullUpdateData[field],
-          isArray: Array.isArray(fullUpdateData[field])
-        });
-        
-        // 文字列化
+    // キャストしてフィールドへのインデックスアクセスを安全に
+    const typedUpdateData = fullUpdateData as StoreProfileData;
+    
+    // 安全にオブジェクトフィールドにアクセスするヘルパー関数
+    const safeGetField = (data: StoreProfileData, field: string): any => {
+      return data && typeof data === 'object' && field in data ? data[field] : null;
+    };
+    
+    // 安全に文字列にセットするヘルパー関数
+    const safeSetTextField = (data: StoreProfileData, field: string, value: any): void => {
+      if (!data || typeof data !== 'object') return;
+      
+      if (typeof value === 'object' && value !== null) {
         try {
-          fullUpdateData[field] = JSON.stringify(fullUpdateData[field]);
+          data[field] = JSON.stringify(value);
+          console.log(`TEXT型フィールド "${field}" をJSON.stringifyで変換しました`);
         } catch (e) {
           console.error(`${field}の文字列化に失敗しました:`, e);
-          // 失敗した場合は空の文字列にフォールバック
-          fullUpdateData[field] = '';
+          data[field] = ''; // 失敗した場合は空文字列に
         }
+      } else if (typeof value === 'string') {
+        data[field] = value;
+      } else if (value === null || value === undefined) {
+        data[field] = ''; // null/undefinedの場合は空文字列に
+      } else {
+        data[field] = String(value); // その他の型は文字列に変換
       }
+    };
+    
+    // 各TEXTフィールドを処理
+    textFields.forEach(field => {
+      const fieldValue = safeGetField(typedUpdateData, field);
+      
+      console.log(`TEXTフィールド "${field}" の処理:`, {
+        type: typeof fieldValue,
+        value: fieldValue,
+        isArray: Array.isArray(fieldValue)
+      });
+      
+      safeSetTextField(typedUpdateData, field, fieldValue);
     });
     
     // JSONB型フィールドが文字列の場合、パースして確保
     const jsonbFields = ['special_offers', 'gallery_photos', 'design_settings', 'requirements'];
     
     jsonbFields.forEach(field => {
-      if (typeof fullUpdateData[field] === 'string' && field !== 'requirements') { // requirementsは特別処理するので除外
+      const fieldValue = safeGetField(typedUpdateData, field);
+      
+      if (typeof fieldValue === 'string' && field !== 'requirements') { // requirementsは特別処理するので除外
         console.warn(`JSONB型フィールド "${field}" に文字列が渡されました。オブジェクトにパースします。`, {
-          value: (fullUpdateData[field] as string).substring(0, 30) + '...',
-          length: (fullUpdateData[field] as string).length
+          value: (fieldValue as string).substring(0, 30) + '...',
+          length: (fieldValue as string).length
         });
         
         // パース試行
         try {
-          fullUpdateData[field] = JSON.parse(fullUpdateData[field] as string);
+          typedUpdateData[field] = JSON.parse(fieldValue as string);
+          console.log(`JSONBフィールド "${field}" をパースしました`);
         } catch (e) {
           console.error(`${field}のパースに失敗しました:`, e);
           // フィールドによってデフォルト値を設定
           if (field === 'special_offers' || field === 'gallery_photos') {
-            fullUpdateData[field] = [];
+            typedUpdateData[field] = [];
           } else if (field === 'design_settings') {
-            fullUpdateData[field] = {};
+            typedUpdateData[field] = {};
           }
         }
       }
@@ -869,21 +913,21 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     const [updatedProfile] = await db
       .update(store_profiles)
       .set({
-        catch_phrase: fullUpdateData.catch_phrase,
-        description: fullUpdateData.description,
-        benefits: validateBenefits(fullUpdateData.benefits),
-        minimum_guarantee: fullUpdateData.minimum_guarantee,
-        maximum_guarantee: fullUpdateData.maximum_guarantee,
-        working_time_hours: fullUpdateData.working_time_hours,
-        average_hourly_pay: fullUpdateData.average_hourly_pay,
-        status: fullUpdateData.status,
-        top_image: fullUpdateData.top_image,
-        working_hours: fullUpdateData.working_hours,
+        catch_phrase: typedUpdateData.catch_phrase,
+        description: typedUpdateData.description,
+        benefits: validateBenefits(typedUpdateData.benefits),
+        minimum_guarantee: typedUpdateData.minimum_guarantee,
+        maximum_guarantee: typedUpdateData.maximum_guarantee,
+        working_time_hours: typedUpdateData.working_time_hours,
+        average_hourly_pay: typedUpdateData.average_hourly_pay,
+        status: typedUpdateData.status,
+        top_image: typedUpdateData.top_image,
+        working_hours: typedUpdateData.working_hours,
         // requirementsフィールドをオブジェクトとして確実に処理
         requirements: (() => {
           try {
             // 新しいユーティリティ関数を使用
-            let requirementsObj = dataUtils.processRequirements(fullUpdateData.requirements || existingProfile.requirements);
+            let requirementsObj = dataUtils.processRequirements(typedUpdateData.requirements || existingProfile.requirements);
             
             // データ検証ログ
             log('info', 'DB保存直前のrequirements検証', {
@@ -906,29 +950,29 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
             };
           }
         })(),
-        recruiter_name: fullUpdateData.recruiter_name,
-        phone_numbers: validateArrayField(fullUpdateData.phone_numbers),
-        email_addresses: validateArrayField(fullUpdateData.email_addresses),
-        address: fullUpdateData.address,
-        sns_id: fullUpdateData.sns_id,
-        sns_url: fullUpdateData.sns_url,
-        sns_text: fullUpdateData.sns_text,
-        pc_website_url: fullUpdateData.pc_website_url,
-        mobile_website_url: fullUpdateData.mobile_website_url,
-        application_requirements: fullUpdateData.application_requirements,
+        recruiter_name: typedUpdateData.recruiter_name,
+        phone_numbers: validateArrayField(typedUpdateData.phone_numbers),
+        email_addresses: validateArrayField(typedUpdateData.email_addresses),
+        address: typedUpdateData.address,
+        sns_id: typedUpdateData.sns_id,
+        sns_url: typedUpdateData.sns_url,
+        sns_text: typedUpdateData.sns_text,
+        pc_website_url: typedUpdateData.pc_website_url,
+        mobile_website_url: typedUpdateData.mobile_website_url,
+        application_requirements: typedUpdateData.application_requirements,
         application_notes: updateData.application_notes || existingProfile.application_notes || "",
-        access_info: fullUpdateData.access_info,
-        security_measures: fullUpdateData.security_measures,
+        access_info: typedUpdateData.access_info,
+        security_measures: typedUpdateData.security_measures,
         privacy_measures: dataUtils.processTextFields(updateData.privacy_measures || existingProfile.privacy_measures, ""),
         commitment: dataUtils.processTextFields(updateData.commitment || existingProfile.commitment, ""),
-        transportation_support: fullUpdateData.transportation_support,
-        housing_support: fullUpdateData.housing_support,
+        transportation_support: typedUpdateData.transportation_support,
+        housing_support: typedUpdateData.housing_support,
         // 新しいユーティリティ関数を使用して正規化
-        special_offers: dataUtils.processSpecialOffers(fullUpdateData.special_offers),
-        gallery_photos: dataUtils.processGalleryPhotos(fullUpdateData.gallery_photos || []),
+        special_offers: dataUtils.processSpecialOffers(typedUpdateData.special_offers),
+        gallery_photos: dataUtils.processGalleryPhotos(typedUpdateData.gallery_photos || []),
         // デザイン設定の更新を処理（JSONB型として正しく保存）
-        design_settings: dataUtils.processDesignSettings(fullUpdateData.design_settings || existingProfile.design_settings),
-        updated_at: fullUpdateData.updated_at
+        design_settings: dataUtils.processDesignSettings(typedUpdateData.design_settings || existingProfile.design_settings),
+        updated_at: typedUpdateData.updated_at
       })
       .where(eq(store_profiles.user_id, req.user.id))
       .returning();

@@ -901,7 +901,8 @@ export const storeProfileSchema = z.object({
   // バニラ風の拡張項目
   job_videos: z.array(jobVideoSchema).optional(), // 求人動画コンテンツ
   salary_examples: z.array(salaryExampleSchema).optional(), // 給与例・体験保証ケース
-  privacy_measure_details: z.array(privacyMeasureSchema).optional(), // 身バレ対策
+  privacy_measures: z.string().optional(), // 身バレ対策（TEXT型）
+  privacy_measure_details: z.array(privacyMeasureSchema).optional(), // 身バレ対策の詳細（詳細オブジェクトの配列型）
   facility_features: z.array(facilityFeatureSchema).optional(), // 店舗設備
   testimonials: z.array(
     z.object({
@@ -1416,7 +1417,7 @@ export interface JobResponse {
   // バニラ風の拡張項目
   job_videos?: z.infer<typeof jobVideoSchema>[];       // 求人動画コンテンツ
   salary_examples?: z.infer<typeof salaryExampleSchema>[]; // 給与例・体験保証ケース
-  privacy_measures?: z.infer<typeof privacyMeasureSchema>[]; // 身バレ対策
+  privacy_measures?: string; // プライバシー保護（TEXT型）
   facility_features?: z.infer<typeof facilityFeatureSchema>[]; // 店舗設備
   testimonials?: {                 // 口コミ・体験談
     user_name: string;
