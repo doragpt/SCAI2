@@ -1,0 +1,80 @@
+現在、店舗プロフィール更新時に依然として「invalid input syntax for type json」のエラーが発生しています。以下の修正は既に実施済みです：
+
+requirementsフィールドの処理改善
+
+IIFEパターンを用いて受信データをオブジェクトに統一、型チェック・nullチェック、try-catch ブロックを追加。
+
+cup_size_conditions が必ず配列になるよう正規化し、各フィールドにデフォルト値を設定しました。
+
+データベース更新処理の改良
+
+special_offers、gallery_photos、design_settings などのJSONB型フィールドに対し、SQLテンプレートリテラルの使用を完全に排除し、Drizzle ORM の自動シリアライズ機能に任せる方式に統一しました。
+
+special_offers は processSpecialOffers 関数で必ず配列として正規化され、各要素の type は "bonus" に強制済みです。
+
+しかし、依然として以下のエラーが発生しています：
+
+python
+コピーする
+"直接fetchエラー:{"message":"データベースエラーが発生しました","sqlError":"invalid input syntax for type json"}"
+【考えられる原因】
+
+クライアント側から送信されるデータ（特に special_offers や requirements）が、期待される形式になっていない可能性。
+
+design_settings、gallery_photos など他の JSONB フィールドにおいても、同様の不整合が残っている可能性。
+
+Drizzle ORM の自動シリアライズ処理時に、データが二重に文字列化されるなどの型変換の不具合がある可能性。
+
+【対応手順】
+
+クライアント側データの検証
+
+job-form-tabs.tsx 内で、APIリクエスト直前に送信する全データ（特に special_offers と requirements）の形式をログ出力し、必ず配列またはオブジェクトになっているか確認してください。
+
+もし配列でなければ、以下のようにフォールバック処理を追加してください：
+
+typescript
+コピーする
+if (!Array.isArray(data.special_offers)) {
+  data.special_offers = [];
+  logger.warn("special_offersが配列ではなかったため、空配列に設定しました");
+}
+if (typeof data.requirements !== 'object' || data.requirements === null) {
+  data.requirements = {};
+  logger.warn("requirementsがオブジェクトではなかったため、空オブジェクトに設定しました");
+}
+サーバー側での最終データ検証ログの追加
+
+更新直前に、各JSONB型フィールド（requirements, special_offers, design_settings, gallery_photos）の最終データ状態を詳細にログ出力してください。例：
+
+typescript
+コピーする
+logger.info("DB格納直前のデータ:", {
+  requirementsType: typeof requirements,
+  requirementsValue: JSON.stringify(requirements).substring(0, 100),
+  specialOffersType: typeof special_offers,
+  specialOffersValue: JSON.stringify(special_offers).substring(0, 100),
+  designSettingsType: typeof design_settings,
+  designSettingsValue: JSON.stringify(design_settings).substring(0, 100),
+  galleryPhotosType: typeof gallery_photos,
+  galleryPhotosValue: JSON.stringify(gallery_photos).substring(0, 100)
+});
+requirements フィールドの再正規化
+
+現在の実装を見直し、受信した requirements を必ずオブジェクトに統一し、cup_size_conditions が配列であることを保証した上で、最後に一度だけ JSON.stringify してDBに渡す実装に修正してください。（サンプルコード参照）
+
+design_settings と gallery_photos の確認
+
+これらのフィールドについても、同様に正規化処理が正しく行われているか、送信前のデータ形式を詳細にログ出力して検証してください。
+
+最小限データでの単体テスト
+
+特定の JSONB フィールドのみ（例：special_offers だけ、requirements だけ）を含む更新リクエストを作成し、問題箇所を切り分けてください。
+
+ORM のシリアライズ処理の確認
+
+Drizzle ORM が受け取った JavaScript オブジェクトをどのように JSON に変換しているか、最新のドキュメントやIssueを再確認し、期待する形式であることを確認してください。
+
+上記の対応を段階的に進め、各フィールドの送信前と更新直前の状態を詳細に検証した上で、どのフィールドで問題が発生しているかを特定してください。結果を確認後、再度エラーの有無をご報告いただければと思います。
+
+よろしくお願いいたします。

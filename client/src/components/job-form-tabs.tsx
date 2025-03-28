@@ -216,26 +216,88 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         }
         
         // 2. requirementsオブジェクトの検証
+        // Zod定義と互換性のあるデフォルト値を設定
         let validRequirements = {
           accepts_temporary_workers: false,
           requires_arrival_day_before: false,
           prioritize_titles: false,
-          other_conditions: [],
-          cup_size_conditions: []
+          other_conditions: [] as string[],
+          cup_size_conditions: [] as Array<{
+            spec_min: number;
+            cup_size: typeof cupSizes[number];
+          }>
         };
         
         if (typeof data.requirements === 'object' && data.requirements !== null) {
+          // cup_size_conditionsがArray<{spec_min: number, cup_size: string}>形式であることを確認
+          // 型を明示的に定義
+          type CupSizeCondition = {
+            spec_min: number;
+            cup_size: typeof cupSizes[number];
+          };
+          
+          let validCupSizeConditions: CupSizeCondition[] = [];
+          if (Array.isArray(data.requirements.cup_size_conditions)) {
+            validCupSizeConditions = data.requirements.cup_size_conditions
+              .filter(item => 
+                typeof item === 'object' && 
+                item !== null && 
+                'spec_min' in item && 
+                'cup_size' in item &&
+                typeof item.spec_min === 'number' &&
+                typeof item.cup_size === 'string' &&
+                cupSizes.includes(item.cup_size as any)
+              )
+              .map(item => ({
+                spec_min: Number(item.spec_min) || 0,
+                cup_size: item.cup_size as typeof cupSizes[number]
+              }));
+          }
+          
+          // other_conditionsが常に文字列配列であることを確認
+          let validOtherConditions: string[] = [];
+          if (Array.isArray(data.requirements.other_conditions)) {
+            validOtherConditions = data.requirements.other_conditions
+              .filter(item => typeof item === 'string')
+              .map(item => String(item));
+          }
+          
+          // 基本フラグのブール値確認
           validRequirements = {
             ...validRequirements,
-            ...data.requirements,
-            // 必ず配列として確保
-            cup_size_conditions: Array.isArray(data.requirements.cup_size_conditions) 
-              ? data.requirements.cup_size_conditions 
-              : [],
-            other_conditions: Array.isArray(data.requirements.other_conditions)
-              ? data.requirements.other_conditions
-              : []
+            accepts_temporary_workers: typeof data.requirements.accepts_temporary_workers === 'boolean' 
+              ? data.requirements.accepts_temporary_workers 
+              : false,
+            requires_arrival_day_before: typeof data.requirements.requires_arrival_day_before === 'boolean'
+              ? data.requirements.requires_arrival_day_before
+              : false,
+            prioritize_titles: typeof data.requirements.prioritize_titles === 'boolean'
+              ? data.requirements.prioritize_titles
+              : false,
+            // 検証済み配列で置き換え
+            cup_size_conditions: validCupSizeConditions,
+            other_conditions: validOtherConditions
           };
+          
+          console.log("requirements検証結果:", {
+            accepts_temporary_workers: validRequirements.accepts_temporary_workers,
+            requires_arrival_day_before: validRequirements.requires_arrival_day_before,
+            prioritize_titles: validRequirements.prioritize_titles,
+            cup_size_conditions: {
+              isArray: Array.isArray(validRequirements.cup_size_conditions),
+              length: validRequirements.cup_size_conditions.length,
+              sample: validRequirements.cup_size_conditions.length > 0 
+                ? validRequirements.cup_size_conditions[0]
+                : 'empty'
+            },
+            other_conditions: {
+              isArray: Array.isArray(validRequirements.other_conditions),
+              length: validRequirements.other_conditions.length,
+              sample: validRequirements.other_conditions.length > 0
+                ? validRequirements.other_conditions[0]
+                : 'empty'
+            }
+          });
         }
         
         // 3. gallery_photos の配列検証
@@ -244,17 +306,166 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           : [];
         
         // 4. design_settings の検証
-        let validDesignSettings = data.design_settings;
+        // 必須フィールドを持つデフォルト値を定義
+        
+        // セクションの型定義
+        type SectionSettings = {
+          backgroundColor?: string;
+          textColor?: string;
+          borderColor?: string;
+          titleColor?: string;
+          fontSize?: number;
+          padding?: number;
+          borderRadius?: number;
+          borderWidth?: number;
+          titleFontSize?: number;
+          titleFontWeight?: string;
+        };
+        
+        type Section = {
+          id: string;
+          title: string;
+          order: number;
+          visible: boolean;
+          settings?: SectionSettings;
+          content?: string;
+        };
+        
+        // グローバル設定の型定義
+        type GlobalSettings = {
+          backgroundColor: string;
+          borderRadius: number;
+          mainColor: string;
+          secondaryColor: string;
+          accentColor: string;
+          fontFamily: string;
+          maxWidth: number;
+          hideSectionTitles: boolean;
+        };
+        
+        // デザイン設定全体の型定義
+        type DesignSettings = {
+          sections: Section[];
+          globalSettings: GlobalSettings;
+        };
+        
+        const defaultDesignSettings: DesignSettings = {
+          sections: [] as Section[],
+          globalSettings: {
+            backgroundColor: "#fff5f9",
+            borderRadius: 8,
+            mainColor: "#ff4d7d",
+            secondaryColor: "#ffc7d8",
+            accentColor: "#ff9eb8",
+            fontFamily: "sans-serif",
+            maxWidth: 1200,
+            hideSectionTitles: false
+          }
+        };
+        
+        let validDesignSettings = { ...defaultDesignSettings };
+        
+        // 文字列の場合はパースして処理
         if (typeof data.design_settings === 'string') {
           try {
-            validDesignSettings = JSON.parse(data.design_settings);
+            const parsed = JSON.parse(data.design_settings);
+            // パースしたデータを構造検証
+            if (
+              typeof parsed === 'object' && 
+              parsed !== null &&
+              'sections' in parsed && 
+              'globalSettings' in parsed &&
+              Array.isArray(parsed.sections) &&
+              typeof parsed.globalSettings === 'object'
+            ) {
+              // グローバル設定がすべての必須フィールドを持っていることを確認
+              const globalSettings = {
+                ...defaultDesignSettings.globalSettings,
+                ...parsed.globalSettings
+              };
+              
+              // セクションが配列であることを確認し、各セクションの型を検証
+              let validSections: Section[] = [];
+              if (Array.isArray(parsed.sections)) {
+                validSections = parsed.sections.map((section: any) => {
+                  // 各セクションに必須フィールドがあることを確認
+                  return {
+                    id: typeof section.id === 'string' ? section.id : `section-${Math.random().toString(36).substring(2, 9)}`,
+                    title: typeof section.title === 'string' ? section.title : "無題セクション",
+                    order: typeof section.order === 'number' ? section.order : 0,
+                    visible: typeof section.visible === 'boolean' ? section.visible : true,
+                    // オプショナルフィールド
+                    settings: section.settings || undefined,
+                    content: typeof section.content === 'string' ? section.content : undefined
+                  };
+                });
+              }
+              
+              validDesignSettings = {
+                sections: validSections,
+                globalSettings
+              };
+            }
           } catch (e) {
             console.error("design_settings文字列のパースエラー:", e);
-            validDesignSettings = { sections: [], globalSettings: {} };
           }
-        } else if (data.design_settings === null || data.design_settings === undefined) {
-          validDesignSettings = { sections: [], globalSettings: {} };
+        } 
+        // オブジェクトの場合は型とフィールドを検証
+        else if (
+          data.design_settings && 
+          typeof data.design_settings === 'object'
+        ) {
+          // フィールドの検証
+          const hasValidStructure = 
+            'sections' in data.design_settings && 
+            'globalSettings' in data.design_settings &&
+            Array.isArray(data.design_settings.sections) &&
+            typeof data.design_settings.globalSettings === 'object';
+          
+          if (hasValidStructure) {
+            // グローバル設定の必須フィールドを確実に含める
+            const globalSettings = {
+              ...defaultDesignSettings.globalSettings,
+              ...data.design_settings.globalSettings
+            };
+            
+            // セクションが配列であることを確認し、各セクションの型を検証
+            let validSections: Section[] = [];
+            if (Array.isArray(data.design_settings.sections)) {
+              validSections = data.design_settings.sections.map((section: any) => {
+                // 各セクションに必須フィールドがあることを確認
+                // Section型に基づいた基本オブジェクトを作成
+                const validSection: Section = {
+                  id: typeof section.id === 'string' ? section.id : `section-${Math.random().toString(36).substring(2, 9)}`,
+                  title: typeof section.title === 'string' ? section.title : "無題セクション",
+                  order: typeof section.order === 'number' ? section.order : 0,
+                  visible: typeof section.visible === 'boolean' ? section.visible : true,
+                  settings: section.settings || undefined,
+                  content: typeof section.content === 'string' ? section.content : undefined
+                };
+                
+                return validSection;
+              });
+            }
+                  
+            validDesignSettings = {
+              sections: validSections,
+              globalSettings
+            };
+          }
         }
+        
+        console.log("design_settings検証結果:", {
+          isValidObject: (
+            typeof validDesignSettings === 'object' && 
+            validDesignSettings !== null
+          ),
+          hasSections: 'sections' in validDesignSettings,
+          sectionsIsArray: Array.isArray(validDesignSettings.sections),
+          hasGlobalSettings: 'globalSettings' in validDesignSettings,
+          globalSettingsKeys: validDesignSettings.globalSettings ? 
+            Object.keys(validDesignSettings.globalSettings) : 'no globalSettings'
+        });
         
         // 送信前のデータを詳細にログ出力
         console.log("JSONB型フィールド検証結果:", {
@@ -330,8 +541,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           gallery_photos: Array.isArray(data.gallery_photos) ? data.gallery_photos : [],
           
           // デザイン設定がある場合はそれも含める
-          // design_settingsの処理
-          design_settings: data.design_settings ? data.design_settings : undefined,
+          // 検証済みのdesign_settingsを使用
+          design_settings: validDesignSettings,
         };
         
         console.log("送信データ:", { 
