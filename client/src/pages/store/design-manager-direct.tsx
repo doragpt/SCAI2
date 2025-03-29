@@ -26,7 +26,8 @@ import {
   resetSectionToDefault,
   getSectionTitle,
   ensureRequiredSections,
-  processProfileJsonFields
+  processProfileJsonFields,
+  prepareDesignSettingsForDatabase
 } from '../../utils/storeDesignUtils';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 import PreviewRenderer from '@/components/store/PreviewRenderer';
@@ -104,7 +105,17 @@ export default function StoreDesignManagerDirect() {
   // デザイン設定を保存するmutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (newSettings: DesignSettings) => {
-      const response = await apiRequest<any>('POST', '/api/design', { designData: newSettings });
+      // 保存前にJSONB形式に変換
+      const jsonbData = prepareDesignSettingsForDatabase(newSettings);
+      console.log('APIリクエストに送信するデータ形式:', {
+        type: typeof jsonbData, 
+        isString: typeof jsonbData === 'string'
+      });
+      
+      // APIリクエストで送信
+      const response = await apiRequest<any>('POST', '/api/design', { 
+        designData: jsonbData 
+      });
       return response;
     },
     onSuccess: () => {

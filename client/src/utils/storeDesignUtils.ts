@@ -13,7 +13,7 @@ import {
   StoreProfile
 } from '../../../shared/schema';
 import { getDefaultDesignSettings } from '../shared/defaultDesignSettings';
-import { dataUtils } from '../../../shared/utils/dataTypeUtils';
+import { processJsonField, ensureArray, convertToJsonB } from '../utils/dataTypeUtils';
 
 /**
  * デザイン設定をデータベースから読み込んで適切な形式に変換する
@@ -230,12 +230,25 @@ function processSectionSettings(settings: unknown, defaultSettings: SectionSetti
  */
 export function prepareDesignSettingsForDatabase(designSettings: DesignSettings): unknown {
   try {
-    // dataUtilsを使用して安全にJSONBとして保存できる形式に変換
-    return dataUtils.prepareObjectForJsonb(designSettings);
+    // PostgreSQLのJSONB型に保存するための適切な形式に変換
+    console.log('デザイン設定を保存形式に変換します', {
+      type: typeof designSettings,
+      hasGlobalSettings: designSettings && designSettings.globalSettings,
+      hasSections: designSettings && designSettings.sections && Array.isArray(designSettings.sections)
+    });
+    
+    // データがオブジェクトで要素があることを確認
+    if (!designSettings || typeof designSettings !== 'object') {
+      console.error('無効なデザイン設定形式です', designSettings);
+      return null;
+    }
+    
+    // このオブジェクトをデータベースに保存できる形式に変換
+    return convertToJsonB(designSettings);
   } catch (error) {
     console.error('デザイン設定のデータベース保存準備でエラーが発生しました:', error);
-    // エラーの場合はそのまま返す（API側でバリデーションが必要）
-    return designSettings;
+    // エラーの場合はnullを返す（API側でバリデーションが必要）
+    return null;
   }
 }
 
@@ -365,54 +378,103 @@ export function processProfileJsonFields(profileData: any): any {
   }
   
   try {
-    // dataUtilsを使用して各フィールドを処理
+    // 新しいdataTypeUtilsを使用して各フィールドを処理
     const processedProfile = {
       ...profileData,
-      // JSONBフィールドの正規化
-      gallery_photos: dataUtils.processGalleryPhotos(profileData.gallery_photos),
-      special_offers: dataUtils.processSpecialOffers(profileData.special_offers),
-      requirements: dataUtils.processRequirements(profileData.requirements),
-      design_settings: dataUtils.processDesignSettings(profileData.design_settings),
-      // TEXTフィールドで特別処理が必要なもの
-      privacy_measures: dataUtils.processPrivacyMeasures(profileData.privacy_measures),
-      security_measures: dataUtils.processSecurityMeasures(profileData.security_measures),
     };
     
-    // 追加フィールドの処理
-    // commitmentフィールドの処理
+    // ギャラリー写真の処理
+    if ('gallery_photos' in profileData) {
+      processedProfile.gallery_photos = processJsonField(profileData.gallery_photos, [], true);
+    }
+    
+    // 特別オファーの処理
+    if ('special_offers' in profileData) {
+      processedProfile.special_offers = processJsonField(profileData.special_offers, [], true);
+    }
+    
+    // 応募条件の処理
+    if ('requirements' in profileData) {
+      processedProfile.requirements = processJsonField(profileData.requirements, {});
+    }
+    
+    // デザイン設定の処理
+    if ('design_settings' in profileData) {
+      processedProfile.design_settings = processDesignSettings(profileData.design_settings);
+    }
+    
+    // プライバシー対策の処理 (string[] or string)
+    if ('privacy_measures' in profileData) {
+      processedProfile.privacy_measures = processJsonField(profileData.privacy_measures, [], true);
+    }
+    
+    // セキュリティ対策の処理 (string[] or object[])
+    if ('security_measures' in profileData) {
+      processedProfile.security_measures = processJsonField(profileData.security_measures, [], true);
+    }
+    
+    // コミットメント（取り組み）の処理
     if ('commitment' in profileData) {
-      processedProfile.commitment = dataUtils.processJsonField(profileData.commitment, '');
+      processedProfile.commitment = processJsonField(profileData.commitment, '');
     }
     
-    // salary_examplesフィールドの処理
+    // 給与例の処理
     if ('salary_examples' in profileData) {
-      processedProfile.salary_examples = dataUtils.processJsonField(profileData.salary_examples, []);
+      processedProfile.salary_examples = processJsonField(profileData.salary_examples, [], true);
     }
     
-    // working_hoursフィールドの処理
+    // 勤務時間情報の処理
     if ('working_hours' in profileData) {
-      processedProfile.working_hours = dataUtils.processJsonField(profileData.working_hours, {});
+      processedProfile.working_hours = processJsonField(profileData.working_hours, {});
     }
     
-    // job_videosフィールドの処理
+    // 求人動画の処理
     if ('job_videos' in profileData) {
-      processedProfile.job_videos = dataUtils.processJsonField(profileData.job_videos, []);
+      processedProfile.job_videos = processJsonField(profileData.job_videos, [], true);
     }
     
-    // facility_featuresフィールドの処理
+    // 施設・設備の特徴
     if ('facility_features' in profileData) {
-      processedProfile.facility_features = dataUtils.processJsonField(profileData.facility_features, []);
+      processedProfile.facility_features = processJsonField(profileData.facility_features, [], true);
     }
     
-    // sns_urlsフィールドの処理
+    // SNSリンク
+    if ('sns_links' in profileData) {
+      processedProfile.sns_links = processJsonField(profileData.sns_links, [], true);
+    }
+    
+    // SNS URL
     if ('sns_urls' in profileData) {
-      processedProfile.sns_urls = dataUtils.processJsonField(profileData.sns_urls, []);
+      processedProfile.sns_urls = processJsonField(profileData.sns_urls, [], true);
     }
     
-    // testimonialsフィールドの処理
+    // 体験談・口コミ
     if ('testimonials' in profileData) {
-      processedProfile.testimonials = dataUtils.processJsonField(profileData.testimonials, []);
+      processedProfile.testimonials = processJsonField(profileData.testimonials, [], true);
     }
+    
+    // ブログ記事
+    if ('blog_posts' in profileData) {
+      processedProfile.blog_posts = processJsonField(profileData.blog_posts, [], true);
+    }
+    
+    // 電話番号（配列）
+    if ('phone_numbers' in profileData) {
+      processedProfile.phone_numbers = ensureArray(profileData.phone_numbers);
+    }
+    
+    // メールアドレス（配列）
+    if ('email_addresses' in profileData) {
+      processedProfile.email_addresses = ensureArray(profileData.email_addresses);
+    }
+    
+    // デバッグ出力
+    console.log('処理済みプロフィールデータ:', {
+      special_offers: processedProfile.special_offers,
+      requirements: processedProfile.requirements,
+      security_measures: processedProfile.security_measures,
+      privacy_measures: processedProfile.privacy_measures
+    });
     
     return processedProfile;
   } catch (error) {
