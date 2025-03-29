@@ -181,8 +181,24 @@ export const dataUtils = {
           processedProfile[field] = this.convertJsonValue(processedProfile[field]);
           
           // 配列型の場合、値が配列になっていることを確認
-          if (
-            ['special_offers', 'benefits', 'requirements', 'gallery_images', 
+          // requirements は特殊処理 - オブジェクト型を許可
+          if (field === 'requirements') {
+            // requirementsはオブジェクト型（複雑な構造）の場合そのまま
+            if (typeof processedProfile[field] === 'object' && !Array.isArray(processedProfile[field])) {
+              // オブジェクト形式でOK
+              console.log(`requirements オブジェクト形式: `, processedProfile[field]);
+            } else if (Array.isArray(processedProfile[field])) {
+              // 配列形式の場合も許可
+              console.log(`requirements 配列形式: 長さ=${processedProfile[field].length}`);
+            } else {
+              // どちらでもない場合は空のオブジェクトに設定
+              console.warn(`requirements はオブジェクトまたは配列であるべきですが、別の型です。空オブジェクトを使用します。`);
+              processedProfile[field] = { accepts_temporary_workers: false };
+            }
+          }
+          // その他の配列型フィールド
+          else if (
+            ['special_offers', 'benefits', 'gallery_images', 
              'sns_links', 'sns_urls', 'gallery_photos', 'security_measures', 
              'privacy_measures', 'testimonials'].includes(field)
           ) {
@@ -193,11 +209,19 @@ export const dataUtils = {
           }
         } catch (e) {
           console.error(`フィールド ${field} の処理中にエラーが発生しました`, e);
-          // エラーが発生した場合、空配列または空オブジェクトをデフォルト値として使用
-          processedProfile[field] = 
-            ['requirements', 'special_offers', 'sns_links', 'gallery_images'].includes(field) 
-              ? [] 
-              : {};
+          // エラーが発生した場合、適切なデフォルト値を設定
+          if (field === 'requirements') {
+            // requirements はオブジェクト形式でデフォルト値を設定
+            processedProfile[field] = { accepts_temporary_workers: false };
+          } else if (['special_offers', 'benefits', 'sns_links', 'gallery_images', 
+                       'gallery_photos', 'security_measures', 'privacy_measures', 
+                       'testimonials'].includes(field)) {
+            // 他の配列型フィールドは空配列を設定
+            processedProfile[field] = [];
+          } else {
+            // その他は空オブジェクト
+            processedProfile[field] = {};
+          }
         }
       }
     }

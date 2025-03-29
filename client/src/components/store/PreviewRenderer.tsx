@@ -84,11 +84,33 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
     };
   }
 
+  // requirements オブジェクトの安全な取得
+  const getRequirements = (): any => {
+    if (profile.requirements) {
+      if (typeof profile.requirements === 'object' && !Array.isArray(profile.requirements)) {
+        return profile.requirements;
+      } else if (typeof profile.requirements === 'string') {
+        try {
+          const parsed = JSON.parse(profile.requirements);
+          if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (e) {
+          console.error('Requirements JSONパースエラー:', e);
+        }
+      }
+    }
+    return { accepts_temporary_workers: false };
+  };
+  
+  // 表示用のrequirements
+  const requirements = getRequirements();
+  
   // セクションIDのマッピング - defaultDesignSettingsのIDからPreviewRendererで使用するIDへ変換
   const sectionIdMapping: Record<string, string> = {
     'header': 'header',                // ヘッダー
     'main_visual': 'main_visual',      // メインビジュアル
-    'intro': 'catchphrase',           // 店舗紹介 → キャッチフレーズ
+    'intro': 'catchphrase',            // 店舗紹介 → キャッチフレーズ
     'benefits': 'benefits',            // 待遇・福利厚生
     'work_environment': 'schedule',    // 働く環境 → スケジュール
     'requirements': 'requirements',    // 応募条件
@@ -456,29 +478,10 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
               <ul className="list-disc pl-5 space-y-2">
                 <li>18歳以上（高校生不可）</li>
                 <li>未経験者歓迎</li>
-                {/* 出稼ぎ受け入れ可能な場合のみ表示 - requirementsはオブジェクトとして処理 */}
-                {(() => {
-                  // 要件データをオブジェクトとして安全に取得
-                  let req: any = null;
-                  
-                  // オブジェクトとして直接アクセス可能な場合
-                  if (profile.requirements && typeof profile.requirements === 'object' && !Array.isArray(profile.requirements)) {
-                    req = profile.requirements;
-                  } 
-                  // 文字列の場合はJSONとしてパース
-                  else if (typeof profile.requirements === 'string') {
-                    try {
-                      req = JSON.parse(profile.requirements);
-                    } catch (e) {
-                      console.error('要件データの解析エラー:', e);
-                    }
-                  }
-                  
-                  // 条件に応じたリスト項目を返す
-                  return req && req.accepts_temporary_workers ? (
-                    <li className="font-bold text-green-600">出稼ぎ可能</li>
-                  ) : null;
-                })()}
+                {/* 出稼ぎ受け入れ可能な場合のみ表示 */}
+                {requirements.accepts_temporary_workers && (
+                  <li className="font-bold text-green-600">出稼ぎ可能</li>
+                )}
                 <li>日本語でのコミュニケーションが可能な方</li>
               </ul>
             </div>
