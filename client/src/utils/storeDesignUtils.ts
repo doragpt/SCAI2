@@ -366,7 +366,7 @@ export function processProfileJsonFields(profileData: any): any {
   
   try {
     // dataUtilsを使用して各フィールドを処理
-    return {
+    const processedProfile = {
       ...profileData,
       // JSONBフィールドの正規化
       gallery_photos: dataUtils.processGalleryPhotos(profileData.gallery_photos),
@@ -377,6 +377,44 @@ export function processProfileJsonFields(profileData: any): any {
       privacy_measures: dataUtils.processPrivacyMeasures(profileData.privacy_measures),
       security_measures: dataUtils.processSecurityMeasures(profileData.security_measures),
     };
+    
+    // 追加フィールドの処理
+    // commitmentフィールドの処理
+    if ('commitment' in profileData) {
+      processedProfile.commitment = dataUtils.processJsonField(profileData.commitment, '');
+    }
+    
+    // salary_examplesフィールドの処理
+    if ('salary_examples' in profileData) {
+      processedProfile.salary_examples = dataUtils.processJsonField(profileData.salary_examples, []);
+    }
+    
+    // working_hoursフィールドの処理
+    if ('working_hours' in profileData) {
+      processedProfile.working_hours = dataUtils.processJsonField(profileData.working_hours, {});
+    }
+    
+    // job_videosフィールドの処理
+    if ('job_videos' in profileData) {
+      processedProfile.job_videos = dataUtils.processJsonField(profileData.job_videos, []);
+    }
+    
+    // facility_featuresフィールドの処理
+    if ('facility_features' in profileData) {
+      processedProfile.facility_features = dataUtils.processJsonField(profileData.facility_features, []);
+    }
+    
+    // sns_urlsフィールドの処理
+    if ('sns_urls' in profileData) {
+      processedProfile.sns_urls = dataUtils.processJsonField(profileData.sns_urls, []);
+    }
+    
+    // testimonialsフィールドの処理
+    if ('testimonials' in profileData) {
+      processedProfile.testimonials = dataUtils.processJsonField(profileData.testimonials, []);
+    }
+    
+    return processedProfile;
   } catch (error) {
     console.error('プロフィールデータの処理中にエラーが発生しました:', error);
     return profileData;

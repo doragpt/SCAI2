@@ -138,7 +138,7 @@ export default function StoreDesignManagerDirect() {
     }
   }, [designSettingsQuery.data, storeProfileQuery.data]);
 
-  // ドラッグアンドドロップでセクションの順序を変更
+  // ドラッグアンドドロップでセクションの順序を変更（改善版）
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
@@ -147,47 +147,56 @@ export default function StoreDesignManagerDirect() {
 
     if (sourceIndex === destIndex) return;
 
-    // ドラッグしたセクションのID
-    const sectionId = result.draggableId;
-
-    // 現在のセクションリスト（ヘッダーを除く）を取得
-    const currentSections = settings.sections
-      .filter(s => s.id !== 'header')
+    // より単純で直感的な実装
+    // 現在の表示順序でソートされたセクションリストを取得
+    const sortedSections = [...settings.sections]
+      .filter(s => s.id !== 'header') // ヘッダーを除外
       .sort((a, b) => a.order - b.order);
 
-    // 移動元のセクションを取得
-    const section = settings.sections.find(s => s.id === sectionId);
-    if (!section) return;
+    // ドラッグ元の要素を取り出す
+    const [movedItem] = sortedSections.splice(sourceIndex, 1);
+    
+    // 目的地に挿入
+    sortedSections.splice(destIndex, 0, movedItem);
+    
+    // 新しい順序を付与
+    const newSections = settings.sections.map(section => {
+      if (section.id === 'header') return section; // ヘッダーは常に0
 
-    // 新しい順序リストを作成（headerは常に0）
-    const newSections = settings.sections.map(s => {
-      // ヘッダーの場合は変更しない
-      if (s.id === 'header') return s;
-
-      // 動かしたセクションの場合は新しい位置を設定
-      if (s.id === sectionId) {
-        return { ...s, order: destIndex + 1 }; // +1 は header が 0 なので
+      // sortedSectionsの新しい順序に基づいて順序を更新
+      const indexInSorted = sortedSections.findIndex(s => s.id === section.id);
+      if (indexInSorted !== -1) {
+        return { ...section, order: indexInSorted + 1 }; // +1 はヘッダーが0なので
       }
-
-      // その他のセクションの位置を調整
-      const currentIndex = currentSections.findIndex(cs => cs.id === s.id);
-      // 移動していないセクションは処理しない
-      if (currentIndex === -1) return s;
-
-      // 移動元より後の位置にあるセクションが移動先より前に来る場合は1つ後ろにずらす
-      if (currentIndex >= sourceIndex && destIndex < sourceIndex && currentIndex <= destIndex) {
-        return { ...s, order: s.order + 1 };
-      }
-      // 移動元より前の位置にあるセクションが移動先より後に来る場合は1つ前にずらす
-      else if (currentIndex <= sourceIndex && destIndex > sourceIndex && currentIndex >= destIndex) {
-        return { ...s, order: s.order - 1 };
-      }
-
-      return s;
+      
+      return section;
     });
 
+    console.log('ドラッグ後のセクション順序:', newSections.map(s => `${s.id}: ${s.order}`));
     setSettings({ ...settings, sections: newSections });
     setIsDirty(true);
+    
+    // 自動保存を有効化
+    const autoSave = false; // 明示的にfalseに設定しておき、必要に応じて有効化
+    if (autoSave) {
+      const sanitizedSettings = {
+        ...settings,
+        sections: newSections.map(section => ({
+          ...section,
+          settings: section.settings || {
+            backgroundColor: '#ffffff',
+            textColor: '#333333',
+            titleColor: settings.globalSettings.mainColor,
+            borderColor: '#e0e0e0',
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        }))
+      };
+      saveSettingsMutation.mutate(sanitizedSettings);
+    }
   };
 
   // セクションの表示/非表示を切り替える

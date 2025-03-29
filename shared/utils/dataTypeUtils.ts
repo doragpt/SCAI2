@@ -7,6 +7,79 @@
 
 export const dataUtils = {
   /**
+   * 汎用JSONフィールド処理関数
+   * あらゆる型のJSONB/TEXT型フィールドを適切に処理し、指定したデフォルト値の型に合わせる
+   * 
+   * @param value 処理する値
+   * @param defaultValue デフォルト値
+   * @returns 処理された値（デフォルト値と同じ型）
+   */
+  processJsonField: (value: any, defaultValue: any = []): any => {
+    if (value === null || value === undefined) return defaultValue;
+    
+    // デフォルト値の型に基づいて適切な処理方法を選択
+    if (Array.isArray(defaultValue)) {
+      // 配列が期待される場合
+      if (Array.isArray(value)) return value;
+      
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (Array.isArray(parsed)) return parsed;
+          // 配列でない場合は単一要素の配列として返す
+          return [parsed];
+        } catch (e) {
+          // パースに失敗した場合は文字列を要素とする配列として返す
+          return [value];
+        }
+      }
+      
+      // オブジェクトの場合は要素として配列化
+      if (typeof value === 'object') return [value];
+      
+      // その他の型も要素として配列化
+      return [value];
+    } 
+    else if (typeof defaultValue === 'object' && defaultValue !== null) {
+      // オブジェクトが期待される場合
+      if (typeof value === 'object' && !Array.isArray(value)) return value || defaultValue;
+      
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+          console.warn('値がオブジェクトとして期待されていますが、パース結果は異なる型です:', typeof parsed);
+          return defaultValue;
+        } catch (e) {
+          console.warn('オブジェクトの文字列解析に失敗しました:', e);
+          return defaultValue;
+        }
+      }
+      
+      console.warn('オブジェクトが期待されていますが、異なる型が提供されました:', typeof value);
+      return defaultValue;
+    }
+    else if (typeof defaultValue === 'string') {
+      // 文字列が期待される場合
+      if (typeof value === 'string') return value;
+      
+      if (typeof value === 'object') {
+        try {
+          return JSON.stringify(value);
+        } catch (e) {
+          console.warn('オブジェクトの文字列化に失敗しました:', e);
+          return defaultValue;
+        }
+      }
+      
+      // その他の型も文字列化
+      return String(value);
+    }
+    
+    // その他の型（数値、真偽値など）
+    return (typeof value === typeof defaultValue) ? value : defaultValue;
+  },
+  /**
    * 店舗プロフィールデータを処理
    * 各フィールドのデータ型を正規化し、適切な形式に変換
    */
