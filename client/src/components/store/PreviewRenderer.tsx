@@ -305,37 +305,159 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         );
 
       case 'salary':
+        // 給与フィールドの処理
+        const minGuarantee = profile.minimum_guarantee ? 
+          (typeof profile.minimum_guarantee === 'number' ? 
+            profile.minimum_guarantee.toLocaleString() : profile.minimum_guarantee) : '';
+        
+        const maxGuarantee = profile.maximum_guarantee ? 
+          (typeof profile.maximum_guarantee === 'number' ? 
+            profile.maximum_guarantee.toLocaleString() : profile.maximum_guarantee) : '';
+            
+        const avgSalary = profile.average_salary ? 
+          (typeof profile.average_salary === 'number' ? 
+            profile.average_salary.toLocaleString() : profile.average_salary) : '';
+            
+        // 給与例データの取得
+        const salaryExamples = profile.salary_examples && Array.isArray(profile.salary_examples) ? 
+          profile.salary_examples : [];
+        
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>給与情報</h2>}
-            <div className="space-y-2">
-              <p>
-                <strong>給与体系:</strong> {profile.salary_system || '日払い制'}
-              </p>
-              <p>
-                <strong>給与目安:</strong> {profile.salary_range || '日給35,000円〜80,000円'}
-              </p>
-              <p>
-                <strong>ボーナス:</strong> {profile.bonus_system || 'あり（業績による）'}
-              </p>
+            <div className="space-y-4">
+              {/* 給与保証情報 */}
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <h3 className="text-lg font-bold mb-2" style={{ color: mainColor }}>給与保証</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-700 text-sm">最低保証</p>
+                    <p className="text-xl font-bold">{minGuarantee ? `${minGuarantee}円` : '要相談'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700 text-sm">最高保証</p>
+                    <p className="text-xl font-bold">{maxGuarantee ? `${maxGuarantee}円` : '要相談'}</p>
+                  </div>
+                </div>
+                {avgSalary && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-gray-700 text-sm">平均給与</p>
+                    <p className="text-xl font-bold">{avgSalary}円</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* 給与例がある場合 */}
+              {salaryExamples.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-bold mb-2" style={{ color: accentColor }}>給与例</h3>
+                  <div className="space-y-3">
+                    {salaryExamples.map((example: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border shadow-sm">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">{example.title || `給与例 ${index + 1}`}</p>
+                            <p className="text-sm text-gray-500">{example.conditions || ''}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold" style={{ color: mainColor }}>
+                              {typeof example.amount === 'number' ? example.amount.toLocaleString() : example.amount}円
+                            </p>
+                            {example.period && <p className="text-xs text-gray-500">{example.period}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
 
       case 'schedule':
+        // 勤務時間関連の情報を処理
+        const workingHours = profile.working_hours || {};
+        const workingTimeHours = profile.working_time_hours || '';
+        
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>勤務時間</h2>}
-            <div className="space-y-2">
-              <p>
-                <strong>営業時間:</strong> {profile.business_hours || '10:00〜22:00'}
-              </p>
-              <p>
-                <strong>シフト:</strong> {profile.shift_system || '自由出勤制'}
-              </p>
-              <p>
-                <strong>休日:</strong> {profile.holidays || '自由（週1日以上の出勤をお願いしています）'}
-              </p>
+            <div className="space-y-4">
+              {/* 勤務時間 */}
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <h3 className="text-lg font-bold mb-3" style={{ color: mainColor }}>営業・勤務時間</h3>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-700 text-sm font-medium">営業時間</p>
+                    <p className="text-lg">{profile.business_hours || '10:00〜22:00'}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-gray-700 text-sm font-medium">1日の勤務時間</p>
+                    <p className="text-lg">{workingTimeHours || '6〜8時間程度'}</p>
+                  </div>
+                </div>
+                
+                {/* シフト情報 */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-gray-700 text-sm font-medium">シフト体制</p>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      {workingHours.system || profile.shift_system || '自由出勤制'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {/* 曜日シフト表示 */}
+                    {workingHours.days_available && Array.isArray(workingHours.days_available) && workingHours.days_available.length > 0 ? (
+                      <div className="w-full grid grid-cols-7 gap-1 text-center">
+                        {['月', '火', '水', '木', '金', '土', '日'].map((day, idx) => {
+                          const isAvailable = workingHours.days_available.includes(day) || 
+                                            workingHours.days_available.includes(idx) || 
+                                            workingHours.days_available.includes(idx.toString());
+                          return (
+                            <div 
+                              key={day} 
+                              className={`p-2 rounded ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-500'}`}
+                            >
+                              {day}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                  
+                  {/* 休日情報 */}
+                  <div className="mt-4">
+                    <p className="text-gray-700 text-sm font-medium">休日</p>
+                    <p>{profile.holidays || workingHours.holidays || '自由（週1日以上の出勤をお願いしています）'}</p>
+                  </div>
+                  
+                  {/* 勤務開始日 */}
+                  {workingHours.start_date && (
+                    <div className="mt-3">
+                      <p className="text-gray-700 text-sm font-medium">勤務開始可能日</p>
+                      <p>{workingHours.start_date}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* 勤務条件等の補足情報 */}
+              {requirements && requirements.accepts_temporary_workers && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <h4 className="text-amber-700 font-bold">出稼ぎ情報</h4>
+                  <ul className="mt-1 text-sm list-disc pl-5 space-y-1">
+                    <li>出稼ぎ歓迎</li>
+                    {requirements.requires_arrival_day_before && (
+                      <li>前日入りをお願いします</li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         );
