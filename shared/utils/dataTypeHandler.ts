@@ -15,7 +15,6 @@
 export function prepareFieldForDatabase(fieldName: string, value: any): any {
   // TEXT型としてデータベースに保存するフィールド
   const textFields = [
-    'privacy_measures', 
     'commitment', 
     'security_measures',
     'application_notes'
@@ -23,6 +22,7 @@ export function prepareFieldForDatabase(fieldName: string, value: any): any {
   
   // JSONB型としてデータベースに保存するフィールド
   const jsonbFields = [
+    'privacy_measures', // データベーススキーマとして正しくJSONB型
     'requirements', 
     'special_offers', 
     'gallery_photos', 
@@ -72,7 +72,6 @@ export function prepareFieldForDatabase(fieldName: string, value: any): any {
 export function processFieldFromDatabase(fieldName: string, value: any): any {
   // TEXT型としてデータベースに保存されているフィールド
   const textFields = [
-    'privacy_measures', 
     'commitment', 
     'security_measures',
     'application_notes'
@@ -80,6 +79,7 @@ export function processFieldFromDatabase(fieldName: string, value: any): any {
   
   // JSONB型としてデータベースに保存されているフィールド
   const jsonbFields = [
+    'privacy_measures', // データベーススキーマとして正しくJSONB型
     'requirements', 
     'special_offers', 
     'gallery_photos', 
@@ -175,13 +175,13 @@ export function extractJsonErrorDetails(error: any, requestData?: Record<string,
       
       // TEXT型とJSONB型のフィールドリスト
       const textFields = [
-        'privacy_measures', 
         'commitment', 
         'security_measures',
         'application_notes'
       ];
       
       const jsonbFields = [
+        'privacy_measures', // データベーススキーマとして正しくJSONB型
         'requirements', 
         'special_offers', 
         'gallery_photos', 

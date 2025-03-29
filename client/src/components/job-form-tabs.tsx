@@ -701,7 +701,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     const cleanedData = { ...data };
     
     // TEXT型フィールドを確実に文字列として処理
-    const textFields = ['privacy_measures', 'commitment', 'security_measures'];
+    const textFields = ['commitment', 'security_measures']; // privacy_measuresはJSONB型
     textFields.forEach(field => {
       if (field in cleanedData) {
         const value = (cleanedData as any)[field];
@@ -856,16 +856,29 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     
     // TEXT型フィールドの特別処理 - privacy_measuresとcommitmentが文字列であることを確保
     try {
-      // privacy_measures処理
+      // privacy_measures処理 - JSONB型フィールド
       if (data.privacy_measures !== undefined) {
-        // オブジェクトや配列が誤って渡された場合に文字列化
-        if (typeof data.privacy_measures === 'object') {
-          console.warn('privacy_measuresがオブジェクト型のため文字列化します', {
-            type: typeof data.privacy_measures,
-            isArray: Array.isArray(data.privacy_measures)
-          });
-          cleanedData.privacy_measures = JSON.stringify(data.privacy_measures);
+        // 文字列の場合は有効なJSON形式であることを確認
+        if (typeof data.privacy_measures === 'string') {
+          // 空の文字列は空の配列に変換
+          if (data.privacy_measures.trim() === '') {
+            cleanedData.privacy_measures = [];
+          } else {
+            try {
+              // 文字列をパースしてJSON互換性を確認
+              const parsed = JSON.parse(data.privacy_measures);
+              // 配列またはオブジェクトとして扱う
+              cleanedData.privacy_measures = parsed;
+            } catch (e) {
+              // JSONとして解析できない文字列は配列にラップ
+              cleanedData.privacy_measures = [data.privacy_measures];
+            }
+          }
+        } else if (data.privacy_measures === null) {
+          // nullの場合は空の配列に
+          cleanedData.privacy_measures = [];
         }
+        // オブジェクト型の場合はそのまま（配列またはオブジェクト）
       }
 
       // commitment処理
