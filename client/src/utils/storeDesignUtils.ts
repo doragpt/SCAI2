@@ -319,7 +319,7 @@ export function ensureRequiredSections(settings: DesignSettings): DesignSettings
   }
   
   // 必須セクションのID
-  const requiredSectionIds = ['header', 'hero', 'about', 'benefits', 'requirements', 'contact', 'footer'];
+  const requiredSectionIds = ['header', 'catchphrase', 'photo_gallery', 'benefits', 'salary', 'schedule', 'special_offers', 'access', 'contact', 'sns_links', 'security_measures', 'requirements', 'blog', 'footer'];
   
   // デフォルト設定
   const defaultSettings = getDefaultDesignSettings();
