@@ -134,33 +134,58 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         );
 
       case 'photo_gallery':
+        // ギャラリー写真を取得
+        const galleryPhotos = profile.gallery_photos || [];
+        
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>写真ギャラリー</h2>}
-            <div className="grid grid-cols-2 gap-4">
-              {profile.gallery_images && profile.gallery_images.length > 0 ? (
-                profile.gallery_images.map((image: string, index: number) => (
-                  <div key={index} className="overflow-hidden rounded" style={{ aspectRatio: '3/4' }}>
-                    <img 
-                      src={image} 
-                      alt={`ギャラリー画像 ${index + 1}`} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {galleryPhotos && galleryPhotos.length > 0 ? (
+                // ギャラリー写真を順番通りに表示（最大6枚）
+                galleryPhotos
+                  .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                  .slice(0, 6)
+                  .map((photo: any, index: number) => (
+                    <div 
+                      key={photo.id || index} 
+                      className="overflow-hidden rounded shadow-sm hover:shadow-md transition-shadow"
+                      style={{ aspectRatio: '4/3' }}
+                    >
+                      <img 
+                        src={photo.url} 
+                        alt={photo.title || photo.alt || `店舗写真 ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {photo.title && (
+                        <div className="p-2 bg-white bg-opacity-90 text-sm text-center border-t">
+                          {photo.title}
+                        </div>
+                      )}
+                    </div>
+                  ))
               ) : (
                 // ダミー画像
-                Array.from({ length: 4 }).map((_, index) => (
+                Array.from({ length: 6 }).map((_, index) => (
                   <div 
                     key={index} 
                     className="overflow-hidden rounded bg-gray-200 flex items-center justify-center"
-                    style={{ aspectRatio: '3/4' }}
+                    style={{ aspectRatio: '4/3' }}
                   >
-                    <span className="text-gray-400">画像 {index + 1}</span>
+                    <span className="text-gray-400">写真 {index + 1}</span>
                   </div>
                 ))
               )}
             </div>
+            {galleryPhotos && galleryPhotos.length > 6 && (
+              <div className="mt-4 text-center">
+                <button 
+                  className="px-4 py-2 rounded-full text-sm font-medium border"
+                  style={{ borderColor: mainColor, color: mainColor }}>
+                  もっと見る ({galleryPhotos.length - 6}枚)
+                </button>
+              </div>
+            )}
           </div>
         );
 
@@ -334,7 +359,9 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
               {profile.security_measures && profile.security_measures.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-2">
                   {profile.security_measures.map((measure: any, index: number) => (
-                    <li key={index}>{measure}</li>
+                    <li key={index}>
+                      {typeof measure === 'object' ? measure.title || measure.description || JSON.stringify(measure) : measure}
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -354,51 +381,90 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>応募条件</h2>}
             <div>
-              {profile.requirements && profile.requirements.items && profile.requirements.items.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-2">
-                  {profile.requirements.items.map((item: string, index: number) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              ) : (
-                <>
-                  <p>
-                    <strong>年齢:</strong> 18歳以上 (高校生不可)
-                  </p>
-                  <ul className="list-disc pl-5 mt-3 space-y-2">
-                    <li>未経験者歓迎</li>
-                    <li>経験者優遇</li>
-                    <li>容姿端麗な方歓迎</li>
-                    <li>日本語での会話が可能な方</li>
-                  </ul>
-                </>
-              )}
+              <ul className="list-disc pl-5 space-y-2">
+                <li>18歳以上（高校生不可）</li>
+                <li>未経験者歓迎</li>
+                {/* 出稼ぎ受け入れ可能な場合のみ表示 */}
+                {profile.requirements && 
+                 typeof profile.requirements === 'object' && 
+                 profile.requirements.accepts_temporary_workers && (
+                  <li className="font-bold text-green-600">出稼ぎ可能</li>
+                )}
+                <li>日本語でのコミュニケーションが可能な方</li>
+              </ul>
             </div>
           </div>
         );
 
       case 'blog':
+        // ブログ記事を直接取得 (将来的には blog_posts APIから取得することもできる)
+        const blogPosts = profile.blog_posts || [];
+        
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>店舗ブログ</h2>}
             <div className="grid grid-cols-1 gap-4">
-              {profile.recent_blog_posts && profile.recent_blog_posts.length > 0 ? (
-                profile.recent_blog_posts.map((post: any, index: number) => (
-                  <div key={index} className="border p-3 rounded">
-                    <h3 className="font-bold">{post.title}</h3>
-                    <p className="text-sm text-gray-500">{post.publishedAt}</p>
-                    <p className="mt-2">{post.excerpt}</p>
+              {blogPosts && blogPosts.length > 0 ? (
+                blogPosts.slice(0, 3).map((post: any, index: number) => (
+                  <div key={index} className="border p-3 rounded shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-lg">{post.title || "無題のブログ"}</h3>
+                      {post.published_at && (
+                        <p className="text-sm text-gray-500">
+                          {new Date(post.published_at).toLocaleDateString('ja-JP')}
+                        </p>
+                      )}
+                    </div>
+                    {post.thumbnail && (
+                      <div className="my-3 h-32 overflow-hidden rounded">
+                        <img 
+                          src={post.thumbnail} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="mt-2 line-clamp-3 text-sm overflow-hidden" 
+                         style={{ maxHeight: "4.5rem" }}>
+                      {/* HTMLコンテンツからプレーンテキストを抽出 */}
+                      {post.content ? (
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: post.content.length > 150 
+                            ? post.content.substring(0, 150) + '...' 
+                            : post.content 
+                        }} />
+                      ) : (
+                        <p>記事の内容がありません</p>
+                      )}
+                    </div>
+                    <div className="mt-3 text-right">
+                      <button 
+                        className="text-sm font-medium" 
+                        style={{ color: accentColor }}>
+                        続きを読む
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
                 Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="border p-3 rounded">
+                  <div key={index} className="border p-3 rounded shadow-sm">
                     <h3 className="font-bold">ブログタイトル {index + 1}</h3>
                     <p className="text-sm text-gray-500">2025年3月{index + 1}日</p>
+                    <div className="mt-2 bg-gray-100 h-24 rounded flex items-center justify-center">
+                      <span className="text-gray-400">ブログ画像</span>
+                    </div>
                     <p className="mt-2">これはブログ記事のサンプルテキストです。実際の記事はデータベースから取得されます。</p>
                   </div>
                 ))
               )}
+            </div>
+            <div className="mt-4 text-center">
+              <button 
+                className="px-4 py-2 rounded text-sm font-medium"
+                style={{ color: 'white', backgroundColor: mainColor }}>
+                すべてのブログ記事を見る
+              </button>
             </div>
           </div>
         );
