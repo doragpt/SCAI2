@@ -441,6 +441,7 @@ export default function StoreDashboard() {
         address: profile?.address || "",
         access_info: profile?.access_info || "",
         security_measures: profile?.security_measures || "",
+        privacy_measures: profile?.privacy_measures || [], // プライバシー保護に対する情報を追加
         application_requirements: profile?.application_requirements || "",
         
         // ステータスは現在のものを維持
@@ -566,6 +567,7 @@ export default function StoreDashboard() {
       address: profile?.address || "",
       access_info: profile?.access_info || "",
       security_measures: profile?.security_measures || "",
+      privacy_measures: profile?.privacy_measures || [],
       application_requirements: profile?.application_requirements || "",
       status: profile?.status || "draft"
     };
@@ -633,6 +635,7 @@ export default function StoreDashboard() {
       address: profile?.address || "",
       access_info: profile?.access_info || "",
       security_measures: profile?.security_measures || "",
+      privacy_measures: profile?.privacy_measures || [],
       application_requirements: profile?.application_requirements || "",
       status: profile?.status || "draft"
     };
@@ -725,6 +728,7 @@ export default function StoreDashboard() {
         email_addresses: profile?.email_addresses || [],
         address: profile?.address || "",
         access_info: profile?.access_info || "",
+        privacy_measures: profile?.privacy_measures || [],
         security_measures: profile?.security_measures || "",
         application_requirements: profile?.application_requirements || "",
         
@@ -1667,6 +1671,7 @@ export default function StoreDashboard() {
                                     phone_numbers: profile?.phone_numbers || [],
                                     email_addresses: profile?.email_addresses || [],
                                     address: profile?.address || "",
+                                    privacy_measures: profile?.privacy_measures || [],
                                     access_info: profile?.access_info || "",
                                     security_measures: profile?.security_measures || "",
                                     application_requirements: profile?.application_requirements || "",
