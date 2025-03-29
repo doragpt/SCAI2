@@ -415,28 +415,163 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         );
 
       case 'contact':
+        // 複数の電話番号とメールアドレスをサポート
+        const phoneNumbers = Array.isArray(profile.phone_numbers) ? profile.phone_numbers : 
+          (profile.phone_numbers ? [profile.phone_numbers] : []);
+        
+        const emailAddresses = Array.isArray(profile.email_addresses) ? profile.email_addresses :
+          (profile.email_addresses ? [profile.email_addresses] : []);
+          
+        // フォールバックオプション
+        if (profile.contact_phone && phoneNumbers.length === 0) {
+          phoneNumbers.push(profile.contact_phone);
+        }
+        
+        if (profile.contact_email && emailAddresses.length === 0) {
+          emailAddresses.push(profile.contact_email);
+        }
+          
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>お問い合わせ</h2>}
-            <div className="space-y-2">
-              <p>
-                <strong>メール:</strong> {profile.contact_email || 'contact@example.com'}
-              </p>
-              <p>
-                <strong>電話:</strong> {profile.contact_phone || '03-xxxx-xxxx'}
-              </p>
-              <p>
-                <strong>受付時間:</strong> {profile.contact_hours || '10:00〜20:00（年中無休）'}
-              </p>
+            <div className="p-4 bg-white shadow-sm rounded-lg border border-gray-100">
+              <div className="mb-4">
+                <h3 className="font-bold text-lg mb-3" style={{ color: mainColor }}>
+                  お気軽にお問い合わせください
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  求人に関するご質問や面接のご予約など、お気軽にお問い合わせください。
+                  24時間体制でスタッフが対応いたします。
+                </p>
+              </div>
+              
+              {/* 電話番号 */}
+              <div className="mb-4">
+                <h4 className="font-semibold flex items-center mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{ color: accentColor }} viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  電話番号
+                </h4>
+                
+                {phoneNumbers.length > 0 ? (
+                  <div className="space-y-2">
+                    {phoneNumbers.map((phone, index) => (
+                      <div key={index} className="flex items-center">
+                        <a href={`tel:${phone}`} className="text-lg font-bold" style={{ color: mainColor }}>
+                          {phone}
+                        </a>
+                        {index === 0 && <span className="ml-2 text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">採用担当直通</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-lg font-bold" style={{ color: mainColor }}>03-xxxx-xxxx</p>
+                )}
+                
+                <p className="text-sm text-gray-500 mt-1">
+                  受付時間: {profile.contact_hours || '10:00〜20:00（年中無休）'}
+                </p>
+              </div>
+              
+              {/* メールアドレス */}
+              <div className="mb-4">
+                <h4 className="font-semibold flex items-center mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{ color: accentColor }} viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  メールアドレス
+                </h4>
+                
+                {emailAddresses.length > 0 ? (
+                  <div className="space-y-2">
+                    {emailAddresses.map((email, index) => (
+                      <div key={index}>
+                        <a href={`mailto:${email}`} className="text-md font-semibold" style={{ color: mainColor }}>
+                          {email}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-md font-semibold" style={{ color: mainColor }}>contact@example.com</p>
+                )}
+                
+                <p className="text-sm text-gray-500 mt-1">
+                  24時間受付中・お返事は営業時間内となります
+                </p>
+              </div>
+              
+              {/* 応募ボタン */}
+              <div className="mt-5">
+                <button 
+                  className="w-full py-3 rounded-lg font-bold text-white text-lg"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  今すぐ応募する
+                </button>
+              </div>
             </div>
           </div>
         );
 
       case 'sns_links':
+        // LINE情報や個別のSNS情報を統合して表示
+        const hasSnsId = !!profile.sns_id;
+        const hasSnsUrl = !!profile.sns_url;
+        const hasSnsText = !!profile.sns_text;
+        const hasLineSetting = hasSnsId || hasSnsUrl || hasSnsText;
+        
+        // SNSリンク配列またはLINE情報のどちらかがある場合に表示
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>SNS</h2>}
-            <div className="flex gap-4">
+            
+            {/* LINE情報がある場合 */}
+            {hasLineSetting && (
+              <div className="mb-5 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center mb-3">
+                  <div className="bg-green-500 text-white p-2 rounded-full mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-lg">LINE公式アカウント</h3>
+                </div>
+                
+                {profile.sns_text && (
+                  <p className="mb-3">{profile.sns_text}</p>
+                )}
+                
+                {profile.sns_id && (
+                  <div className="flex items-center mb-2">
+                    <span className="font-semibold mr-2">LINE ID:</span>
+                    <span className="bg-white px-2 py-1 rounded border">{profile.sns_id}</span>
+                  </div>
+                )}
+                
+                {profile.sns_url && (
+                  <div className="mt-3">
+                    <a 
+                      href={profile.sns_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                    >
+                      <span className="mr-2">LINEで友だち追加</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                      </svg>
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* その他SNSリンク */}
+            <div className="flex flex-wrap gap-4">
               {profile.sns_links && profile.sns_links.length > 0 ? (
                 profile.sns_links.map((sns: any, index: number) => (
                   <div key={index} className="text-center">
@@ -447,12 +582,14 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                       className="inline-block p-3 rounded-full"
                       style={{ backgroundColor: mainColor, color: 'white' }}
                     >
-                      {sns.platform}
+                      {typeof sns === 'object' ? (sns.platform || sns.name || 'SNS') : sns}
                     </a>
-                    <p className="mt-1 text-sm">{sns.platform}</p>
+                    <p className="mt-1 text-sm">
+                      {typeof sns === 'object' ? (sns.platform || sns.name || 'SNS') : sns}
+                    </p>
                   </div>
                 ))
-              ) : (
+              ) : !hasLineSetting && (
                 <>
                   <div className="text-center">
                     <span
@@ -615,75 +752,172 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         );
 
       case 'blog':
-        // ブログ記事を直接取得 (将来的には blog_posts APIから取得することもできる)
-        const blogPosts = profile.blog_posts || [];
+        // ブログ記事のデータ取得
+        // プロフィールデータから直接取得またはAPIデータを使用
+        let blogPostsData: any[] = [];
+        
+        // blogPosts プロパティが直接ある場合
+        if (profile.blog_posts && Array.isArray(profile.blog_posts) && profile.blog_posts.length > 0) {
+          blogPostsData = profile.blog_posts;
+        } 
+        // JSON文字列の場合をパース
+        else if (typeof profile.blog_posts === 'string') {
+          try {
+            const parsed = JSON.parse(profile.blog_posts);
+            if (Array.isArray(parsed)) {
+              blogPostsData = parsed;
+            }
+          } catch (e) {
+            console.log("ブログ記事のJSONパースに失敗:", e);
+          }
+        }
+        
+        // 日付フォーマッター
+        const formatDate = (dateString: string) => {
+          try {
+            return new Date(dateString).toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          } catch (e) {
+            return '日付なし';
+          }
+        };
+        
+        // コンテンツの安全な表示
+        const safeContent = (content: string, maxLength: number = 150) => {
+          if (!content) return '記事の内容がありません';
+          
+          try {
+            // HTMLタグを取り除いてプレーンテキスト化
+            const plainText = content.replace(/<[^>]*>/g, ' ');
+            
+            if (plainText.length > maxLength) {
+              return plainText.substring(0, maxLength) + '...';
+            }
+            return plainText;
+          } catch (e) {
+            return content.substring(0, maxLength);
+          }
+        };
         
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>店舗ブログ</h2>}
-            <div className="grid grid-cols-1 gap-4">
-              {blogPosts && blogPosts.length > 0 ? (
-                blogPosts.slice(0, 3).map((post: any, index: number) => (
-                  <div key={index} className="border p-3 rounded shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-lg">{post.title || "無題のブログ"}</h3>
-                      {post.published_at && (
-                        <p className="text-sm text-gray-500">
-                          {new Date(post.published_at).toLocaleDateString('ja-JP')}
-                        </p>
-                      )}
-                    </div>
-                    {post.thumbnail && (
-                      <div className="my-3 h-32 overflow-hidden rounded">
-                        <img 
-                          src={post.thumbnail} 
-                          alt={post.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="mt-2 line-clamp-3 text-sm overflow-hidden" 
-                         style={{ maxHeight: "4.5rem" }}>
-                      {/* HTMLコンテンツからプレーンテキストを抽出 */}
-                      {post.content ? (
-                        <div dangerouslySetInnerHTML={{ 
-                          __html: post.content.length > 150 
-                            ? post.content.substring(0, 150) + '...' 
-                            : post.content 
-                        }} />
+            <div className="grid grid-cols-1 gap-6">
+              {blogPostsData.length > 0 ? (
+                blogPostsData.slice(0, 3).map((post: any, index: number) => (
+                  <div key={index} className="border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
+                    <div className="flex flex-col md:flex-row md:items-start">
+                      {/* サムネイル画像 */}
+                      {post.thumbnail ? (
+                        <div className="md:w-1/3 mb-4 md:mb-0 md:mr-4">
+                          <div className="h-48 overflow-hidden rounded">
+                            <img 
+                              src={post.thumbnail} 
+                              alt={post.title || "ブログ画像"} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.jp/30/dddddd/ffffff/300x200.png?text=No+Image';
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : post.images && Array.isArray(post.images) && post.images.length > 0 ? (
+                        <div className="md:w-1/3 mb-4 md:mb-0 md:mr-4">
+                          <div className="h-48 overflow-hidden rounded">
+                            <img 
+                              src={post.images[0].url || post.images[0]} 
+                              alt={post.title || "ブログ画像"} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.jp/30/dddddd/ffffff/300x200.png?text=No+Image';
+                              }}
+                            />
+                          </div>
+                        </div>
                       ) : (
-                        <p>記事の内容がありません</p>
+                        <div className="md:w-1/3 mb-4 md:mb-0 md:mr-4">
+                          <div className="h-48 bg-gray-100 flex items-center justify-center rounded">
+                            <span className="text-gray-400">画像なし</span>
+                          </div>
+                        </div>
                       )}
-                    </div>
-                    <div className="mt-3 text-right">
-                      <button 
-                        className="text-sm font-medium" 
-                        style={{ color: accentColor }}>
-                        続きを読む
-                      </button>
+                      
+                      {/* ブログコンテンツ */}
+                      <div className="md:w-2/3">
+                        <div className="mb-3">
+                          <h3 className="font-bold text-xl" style={{ color: mainColor }}>
+                            {post.title || "新しいブログ記事"}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {post.published_at ? formatDate(post.published_at) : 
+                             post.created_at ? formatDate(post.created_at) : 
+                             '2025年3月' + (index + 1) + '日'}
+                          </p>
+                        </div>
+                        
+                        {/* コンテンツプレビュー */}
+                        <div className="prose prose-sm">
+                          {post.content ? (
+                            <p className="text-gray-700">{safeContent(post.content)}</p>
+                          ) : (
+                            <p className="text-gray-500 italic">記事の内容がありません。</p>
+                          )}
+                        </div>
+                        
+                        {/* 続きを読むボタン */}
+                        <div className="mt-4 flex justify-end">
+                          <button 
+                            className="text-sm font-medium flex items-center" 
+                            style={{ color: accentColor }}>
+                            続きを読む
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="h-4 w-4 ml-1" 
+                              fill="none" 
+                              viewBox="0 0 24 24" 
+                              stroke="currentColor"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={2} 
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="border p-3 rounded shadow-sm">
-                    <h3 className="font-bold">ブログタイトル {index + 1}</h3>
-                    <p className="text-sm text-gray-500">2025年3月{index + 1}日</p>
-                    <div className="mt-2 bg-gray-100 h-24 rounded flex items-center justify-center">
-                      <span className="text-gray-400">ブログ画像</span>
-                    </div>
-                    <p className="mt-2">これはブログ記事のサンプルテキストです。実際の記事はデータベースから取得されます。</p>
-                  </div>
-                ))
+                <div className="text-center p-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <div className="text-5xl mb-4" style={{ color: accentColor }}>📝</div>
+                  <h3 className="text-lg font-semibold mb-2">ブログ記事はまだありません</h3>
+                  <p className="text-gray-600">
+                    最新情報やスタッフの紹介など、定期的にブログを更新していきます。<br />
+                    また後日チェックしてください。
+                  </p>
+                </div>
               )}
             </div>
-            <div className="mt-4 text-center">
-              <button 
-                className="px-4 py-2 rounded text-sm font-medium"
-                style={{ color: 'white', backgroundColor: mainColor }}>
-                すべてのブログ記事を見る
-              </button>
-            </div>
+            
+            {blogPostsData.length > 0 && (
+              <div className="mt-6 text-center">
+                <button 
+                  className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ 
+                    color: 'white', 
+                    backgroundColor: mainColor,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+                  }}>
+                  すべてのブログ記事を見る
+                </button>
+              </div>
+            )}
           </div>
         );
         
