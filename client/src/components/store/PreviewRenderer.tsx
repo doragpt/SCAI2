@@ -687,6 +687,30 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                   </ul>
                 </div>
               )}
+              
+              {/* コミットメント（約束事項）の表示 */}
+              {profile.commitment && (
+                <div className="mt-5 p-4 bg-white border rounded-lg shadow-sm">
+                  <h3 className="font-bold mb-2 text-lg" style={{ color: accentColor }}>当店のお約束</h3>
+                  {typeof profile.commitment === 'string' ? (
+                    <div className="prose max-w-none">
+                      <p>{profile.commitment}</p>
+                    </div>
+                  ) : Array.isArray(profile.commitment) ? (
+                    <ul className="list-disc pl-5 space-y-1">
+                      {profile.commitment.map((item: any, index: number) => (
+                        <li key={index} className="text-sm">
+                          {typeof item === 'object' ? item.text || JSON.stringify(item) : item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : typeof profile.commitment === 'object' ? (
+                    <div className="prose max-w-none">
+                      <p>{JSON.stringify(profile.commitment)}</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -869,7 +893,8 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                         
                         {/* 続きを読むボタン */}
                         <div className="mt-4 flex justify-end">
-                          <button 
+                          <a 
+                            href={`/store/blog/${post.id}`}
                             className="text-sm font-medium flex items-center" 
                             style={{ color: accentColor }}>
                             続きを読む
@@ -887,7 +912,7 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                                 d="M13 7l5 5m0 0l-5 5m5-5H6" 
                               />
                             </svg>
-                          </button>
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -907,15 +932,16 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
             
             {blogPostsData.length > 0 && (
               <div className="mt-6 text-center">
-                <button 
-                  className="px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                <a 
+                  href="/store/blog"
+                  className="inline-block px-5 py-2 rounded-lg text-sm font-medium transition-colors"
                   style={{ 
                     color: 'white', 
                     backgroundColor: mainColor,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
                   }}>
                   すべてのブログ記事を見る
-                </button>
+                </a>
               </div>
             )}
           </div>
