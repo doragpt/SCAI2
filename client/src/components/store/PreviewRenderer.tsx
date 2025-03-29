@@ -349,14 +349,47 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                 <ul className="list-disc pl-5 space-y-2">
                   {profile.special_offers.map((offer: any, index: number) => (
                     <li key={index}>
-                      <strong>{offer.title}</strong>: {offer.description}
+                      {typeof offer === 'object' ? (
+                        <>
+                          <strong className="text-lg" style={{ color: mainColor }}>
+                            {offer.title || '特別オファー'}
+                          </strong>
+                          {offer.description && (
+                            <p className="mt-1">{offer.description}</p>
+                          )}
+                          {offer.expire_date && (
+                            <p className="text-sm mt-1 font-italic">
+                              期限: {new Date(offer.expire_date).toLocaleDateString('ja-JP')} まで
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <span>{offer}</span>
+                      )}
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div>
-                  <p className="font-bold">期間限定キャンペーン実施中!</p>
+                  <p className="font-bold" style={{ color: mainColor }}>期間限定キャンペーン実施中!</p>
                   <p className="mt-2">入店祝い金最大10万円プレゼント</p>
+                  <p className="text-sm mt-2 italic">※詳細は面接時にご説明いたします</p>
+                </div>
+              )}
+              
+              {/* 求人手当や交通費サポートなどの情報 */}
+              {profile.transportation_support && (
+                <div className="mt-4 p-3 bg-white bg-opacity-50 rounded">
+                  <p className="font-semibold">交通費サポート</p>
+                  <p>{profile.transportation_support}</p>
+                </div>
+              )}
+              
+              {/* 住居サポート情報 */}
+              {profile.housing_support && (
+                <div className="mt-3 p-3 bg-white bg-opacity-50 rounded">
+                  <p className="font-semibold">住居サポート</p>
+                  <p>{profile.housing_support}</p>
                 </div>
               )}
             </div>
@@ -451,20 +484,71 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
             {!hideSectionTitles && <h2 style={titleStyle}>安全対策</h2>}
             <div>
               {profile.security_measures && profile.security_measures.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-2">
+                <div className="space-y-4">
                   {profile.security_measures.map((measure: any, index: number) => (
-                    <li key={index}>
-                      {typeof measure === 'object' ? measure.title || measure.description || JSON.stringify(measure) : measure}
-                    </li>
+                    <div 
+                      key={index} 
+                      className="bg-gray-50 p-3 rounded border-l-4" 
+                      style={{ borderLeftColor: mainColor }}
+                    >
+                      {typeof measure === 'object' ? (
+                        <>
+                          <h3 className="font-bold mb-2" style={{ color: mainColor }}>
+                            {measure.title || '安全対策'}
+                          </h3>
+                          {measure.description && (
+                            <p className="text-sm text-gray-700">{measure.description}</p>
+                          )}
+                          {measure.category && (
+                            <span className="inline-block text-xs bg-gray-200 rounded-full px-2 py-1 mt-2">
+                              {measure.category === 'other' ? '一般' : 
+                               measure.category === 'face' ? '顔出し関連' : 
+                               measure.category === 'emergency' ? '緊急時対応' : 
+                               measure.category === 'data' ? '個人情報' : 
+                               measure.category === 'location' ? '所在地関連' : 
+                               measure.category}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <p>{measure}</p>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
               ) : (
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>定期的な健康チェック実施</li>
-                  <li>安全対策研修あり</li>
-                  <li>警備スタッフ常駐</li>
-                  <li>24時間サポート体制</li>
-                </ul>
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+                  <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: mainColor }}>
+                    <h3 className="font-bold" style={{ color: mainColor }}>定期的な健康チェック</h3>
+                    <p className="text-sm text-gray-700">スタッフの健康管理を徹底しています</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: mainColor }}>
+                    <h3 className="font-bold" style={{ color: mainColor }}>安全対策研修</h3>
+                    <p className="text-sm text-gray-700">全スタッフに対して定期的に実施しています</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: mainColor }}>
+                    <h3 className="font-bold" style={{ color: mainColor }}>警備スタッフ常駐</h3>
+                    <p className="text-sm text-gray-700">24時間体制でセキュリティを確保</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded border-l-4" style={{ borderLeftColor: mainColor }}>
+                    <h3 className="font-bold" style={{ color: mainColor }}>24時間サポート体制</h3>
+                    <p className="text-sm text-gray-700">いつでも相談できる窓口を用意しています</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* プライバシー対策の表示 */}
+              {profile.privacy_measures && profile.privacy_measures.length > 0 && (
+                <div className="mt-5">
+                  <h3 className="font-bold mb-3" style={{ color: accentColor }}>プライバシー保護対策</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {Array.isArray(profile.privacy_measures) && profile.privacy_measures.map((measure: any, index: number) => (
+                      <li key={index} className="text-sm">
+                        {typeof measure === 'object' ? measure.title || measure.description || JSON.stringify(measure) : measure}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           </div>
@@ -476,12 +560,54 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
             {!hideSectionTitles && <h2 style={titleStyle}>応募条件</h2>}
             <div>
               <ul className="list-disc pl-5 space-y-2">
-                <li>18歳以上（高校生不可）</li>
-                <li>未経験者歓迎</li>
-                {/* 出稼ぎ受け入れ可能な場合のみ表示 */}
+                {/* 年齢条件 */}
+                <li>
+                  {requirements.age_min ? `${requirements.age_min}歳以上` : '18歳以上'}（高校生不可）
+                </li>
+                
+                {/* 出稼ぎ受け入れ可能な場合 */}
                 {requirements.accepts_temporary_workers && (
                   <li className="font-bold text-green-600">出稼ぎ可能</li>
                 )}
+                
+                {/* 出稼ぎの場合は前日入りが必要か */}
+                {requirements.accepts_temporary_workers && requirements.requires_arrival_day_before && (
+                  <li>出稼ぎの場合は前日入りをお願いします</li>
+                )}
+                
+                {/* タトゥー条件 */}
+                {requirements.tattoo_acceptance && (
+                  <li>タトゥー: {requirements.tattoo_acceptance}</li>
+                )}
+                
+                {/* 希望ルックス */}
+                {requirements.preferred_look_types && requirements.preferred_look_types.length > 0 && (
+                  <li>
+                    希望ルックス: {Array.isArray(requirements.preferred_look_types) 
+                      ? requirements.preferred_look_types.join('、') 
+                      : requirements.preferred_look_types}
+                  </li>
+                )}
+                
+                {/* 希望髪色 */}
+                {requirements.preferred_hair_colors && requirements.preferred_hair_colors.length > 0 && (
+                  <li>
+                    希望髪色: {Array.isArray(requirements.preferred_hair_colors) 
+                      ? requirements.preferred_hair_colors.join('、') 
+                      : requirements.preferred_hair_colors}
+                  </li>
+                )}
+                
+                {/* その他の条件 */}
+                {requirements.other_conditions && requirements.other_conditions.length > 0 && 
+                  Array.isArray(requirements.other_conditions) && 
+                  requirements.other_conditions.map((condition: string, index: number) => (
+                    <li key={`other-condition-${index}`}>{condition}</li>
+                  ))
+                }
+                
+                {/* 標準的な条件 */}
+                <li>未経験者歓迎</li>
                 <li>日本語でのコミュニケーションが可能な方</li>
               </ul>
             </div>
