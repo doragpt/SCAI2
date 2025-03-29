@@ -42,7 +42,7 @@ export default function StoreDesignPreview() {
       
       try {
         // APIから最新のデータを取得（タイムスタンプでキャッシュ無効化）
-        forwardLog('プレビューデータ取得開始', { timestamp: new Date().toISOString() });
+        forwardLog('プレビューデータ取得開始', '時刻: ' + new Date().toISOString());
         
         // 直接フェッチを使用してレスポンスタイプを制御
         const response = await fetch(`/api/preview?embedded=true&t=${Date.now()}`, {
@@ -60,14 +60,14 @@ export default function StoreDesignPreview() {
         // JSONとして解析
         const data = await response.json();
         
-        forwardLog('プレビューデータAPI応答:', {
-          success: data?.success,
-          hasDesignData: !!data?.designData,
-          hasStoreProfile: !!data?.storeProfile,
-          sectionCount: data?.designData?.sections?.length || 0,
-          status: response.status,
-          contentType: response.headers.get('content-type')
-        });
+        forwardLog('プレビューデータAPI応答:',
+          '成功: ' + (data?.success ? 'はい' : 'いいえ'),
+          'デザインデータ: ' + (!!data?.designData ? 'あり' : 'なし'),
+          'プロフィール: ' + (!!data?.storeProfile ? 'あり' : 'なし'),
+          'セクション数: ' + (data?.designData?.sections?.length || 0),
+          'ステータス: ' + response.status,
+          'コンテンツタイプ: ' + response.headers.get('content-type')
+        );
         
         // デザイン設定があれば適切なデータ処理を行ってからセット
         if (data?.designData) {
@@ -244,12 +244,12 @@ export default function StoreDesignPreview() {
             settingsData.sections = [];
           }
           
-          forwardLog('デザイン設定を受信しました:', {
-            timestamp: event.data.timestamp,
-            sectionsCount: settingsData.sections.length,
-            sectionIds: settingsData.sections.map((s: DesignSection) => s.id),
-            hasGlobalSettings: !!settingsData.globalSettings
-          });
+          // JSONデータを直接表示せず、シンプルにログ出力
+          forwardLog('デザイン設定を受信しました:',
+            '時刻: ' + event.data.timestamp,
+            'セクション数: ' + settingsData.sections.length,
+            'グローバル設定: ' + (!!settingsData.globalSettings ? 'あり' : 'なし')
+          );
           
           // グローバル設定の存在チェック
           if (!settingsData.globalSettings || typeof settingsData.globalSettings !== 'object') {
@@ -438,13 +438,13 @@ export default function StoreDesignPreview() {
   // 構造やJSONデータのデバッグ情報をコンソールに記録
   useEffect(() => {
     if (embedded) {
-      forwardLog('プレビューページの現在の状態:', {
-        hasSettings: !!settings,
-        settingsType: typeof settings,
-        sectionsCount: settings?.sections?.length || 0,
-        globalSettingsExists: !!settings?.globalSettings,
-        timestamp: new Date().toISOString()
-      });
+      forwardLog('プレビューページの現在の状態:',
+        '設定の有無: ' + (!!settings ? 'あり' : 'なし'),
+        '設定タイプ: ' + typeof settings,
+        'セクション数: ' + (settings?.sections?.length || 0),
+        'グローバル設定: ' + (!!settings?.globalSettings ? 'あり' : 'なし'),
+        '時刻: ' + new Date().toISOString()
+      );
     }
   }, [embedded, settings]);
 
