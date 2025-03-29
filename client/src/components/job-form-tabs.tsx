@@ -469,6 +469,11 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         // 送信前のデータを詳細にログ出力
         console.log("JSONB型フィールド検証結果:", {
+          privacy_measures: {
+            isArray: Array.isArray(data.privacy_measures),
+            length: Array.isArray(data.privacy_measures) ? data.privacy_measures.length : 'not array',
+            sample: Array.isArray(data.privacy_measures) && data.privacy_measures.length > 0 ? data.privacy_measures[0] : 'empty array'
+          },
           specialOffers: {
             isArray: Array.isArray(validSpecialOffers),
             length: Array.isArray(validSpecialOffers) ? validSpecialOffers.length : 'not array',
@@ -537,7 +542,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           security_measures: typeof data.security_measures === 'string' ? data.security_measures : 
                             (Array.isArray(data.security_measures) ? 
                             data.security_measures.join(', ') : ''),
-          privacy_measures: data.privacy_measures || "",
+          // privacy_measuresはJSONB型として処理
+          privacy_measures: data.privacy_measures || [],
           commitment: data.commitment || "",
           
           // 店舗写真ギャラリー
@@ -558,11 +564,13 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         
         // JSONB型フィールドの詳細ログ
         console.log("JSONB型フィールド詳細:", {
-          // テキストフィールド
+          // JSONBフィールド (privacy_measures)
           privacy_measures: {
             type: typeof formattedData.privacy_measures,
-            value: formattedData.privacy_measures ? 
-                  formattedData.privacy_measures.substring(0, 100) : null
+            isArray: Array.isArray(formattedData.privacy_measures),
+            length: Array.isArray(formattedData.privacy_measures) ? 
+                   formattedData.privacy_measures.length : 'not array',
+            sample: JSON.stringify(formattedData.privacy_measures).substring(0, 100)
           },
           commitment: {
             type: typeof formattedData.commitment,
