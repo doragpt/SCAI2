@@ -20,7 +20,11 @@ import {
 
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { ensureRequiredSections, getSectionTitle } from '@/utils/storeDesignUtils';
+import { 
+  ensureRequiredSections, 
+  getSectionTitle, 
+  processProfileJsonFields 
+} from '@/utils/storeDesignUtils';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 import PreviewRenderer from '@/components/store/PreviewRenderer';
 import { type DesignSettings, type DesignSection, type GlobalDesignSettings } from '@shared/schema';
@@ -125,7 +129,9 @@ export default function StoreDesignManagerDirect() {
     }
 
     if (storeProfileQuery.data) {
-      setStoreProfile(storeProfileQuery.data);
+      // プロフィールデータのJSONB型フィールドを正しく処理
+      const processedProfile = processProfileJsonFields(storeProfileQuery.data);
+      setStoreProfile(processedProfile);
     }
   }, [designSettingsQuery.data, storeProfileQuery.data]);
 
