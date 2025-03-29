@@ -467,15 +467,26 @@ export default function StoreDesignManager() {
   // プレビューを更新する
   const refreshPreview = () => {
     if (iframeRef.current) {
-      // プレビュー送信前に設定を正規化（ディープコピーで参照を切断）
-      const previewSettings = JSON.parse(JSON.stringify(ensureRequiredSections(settings)));
+      // プレビュー送信前に設定を正規化
+      // ディープクローンではなく、必要な構造体のみを複製
+      const currentSettings = ensureRequiredSections(settings);
+      const previewSettings = {
+        sections: currentSettings.sections.map(section => ({
+          id: section.id,
+          title: section.title,
+          order: section.order,
+          visible: section.visible,
+          settings: section.settings ? { ...section.settings } : undefined
+        })),
+        globalSettings: { ...currentSettings.globalSettings }
+      };
       
-      console.log('プレビューを更新します:', {
-        sectionsCount: previewSettings.sections.length,
-        sectionIds: previewSettings.sections.map((s: DesignSection) => s.id),
-        globalSettings: Object.keys(previewSettings.globalSettings || {}),
-        timestamp: new Date().toISOString()
-      });
+      console.log('プレビューを更新します:',
+        'セクション数: ' + previewSettings.sections.length,
+        'セクションID: ' + previewSettings.sections.map((s: DesignSection) => s.id).join(', '),
+        'グローバル設定: ' + Object.keys(previewSettings.globalSettings || {}).join(', '),
+        '時刻: ' + new Date().toISOString()
+      );
       
       // iframeを更新するベストな方法
       try {
@@ -537,10 +548,10 @@ export default function StoreDesignManager() {
                     // データを送信し、3回までリトライする
                     const sendDesignData = (retryCount = 0) => {
                       if (iframeRef.current && iframeRef.current.contentWindow) {
-                        console.log(`iframeにデザイン設定を送信します`, { 
-                          timestamp: new Date().toISOString(),
-                          sectionsCount: previewSettings.sections.length
-                        });
+                        console.log(`iframeにデザイン設定を送信します`, 
+                          '時刻: ' + new Date().toISOString(),
+                          'セクション数: ' + previewSettings.sections.length
+                        );
                         iframeRef.current.contentWindow.postMessage(messageData, '*');
                       }
                       
@@ -561,7 +572,10 @@ export default function StoreDesignManager() {
                     // 受信確認リスナー
                     const confirmListener = (confirmEvent: MessageEvent) => {
                       if (confirmEvent.data && confirmEvent.data.type === 'DESIGN_UPDATE_RECEIVED') {
-                        console.log('デザイン設定更新の受信確認を受け取りました', confirmEvent.data);
+                        console.log('デザイン設定更新の受信確認を受け取りました', 
+                          '時刻: ' + confirmEvent.data.timestamp,
+                          'セクション数: ' + (confirmEvent.data.sectionsCount || 'なし')
+                        );
                         clearTimeout(receiveTimeout);
                         window.removeEventListener('message', confirmListener);
                       }
@@ -584,10 +598,10 @@ export default function StoreDesignManager() {
             // 直接メッセージを送信する（複数回試行）
             const sendPreviewMessage = () => {
               if (iframeRef.current && iframeRef.current.contentWindow) {
-                console.log('iframeにデザイン設定を送信します', { 
-                  timestamp: new Date().toISOString(),
-                  sectionsCount: previewSettings.sections ? previewSettings.sections.length : 0
-                });
+                console.log('iframeにデザイン設定を送信します', 
+                  '時刻: ' + new Date().toISOString(),
+                  'セクション数: ' + (previewSettings.sections ? previewSettings.sections.length : 0)
+                );
                 
                 try {
                   // 設定データの整合性チェック
@@ -659,7 +673,19 @@ export default function StoreDesignManager() {
     const handleMessage = (event: MessageEvent) => {
       // プレビューページからのログを親ウィンドウのコンソールに出力
       if (event.data.type === 'forward-log') {
-        console.log('プレビューウィンドウからのログ:', event.data);
+        // ログメッセージを表示可能なテキスト形式に変換
+        const args = event.data.args || [];
+        const formattedArgs = args.map((arg: any) => {
+          if (typeof arg === 'object' && arg !== null) {
+            return JSON.stringify(arg, null, 2).replace(/"/g, '');
+          }
+          return arg;
+        });
+        
+        console.log('プレビューウィンドウからのログ:', 
+          '時刻: ' + event.data.timestamp,
+          ...formattedArgs
+        );
       }
       // iframeがロードされた通知を受け取ったら設定を送信
       else if (event.data.type === 'PREVIEW_READY') {

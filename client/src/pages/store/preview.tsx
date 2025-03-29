@@ -130,7 +130,7 @@ export default function StoreDesignPreview() {
         
         return data;
       } catch (error) {
-        forwardLog('プレビューデータ取得エラー:', error);
+        forwardLog('プレビューデータ取得エラー: ' + (error instanceof Error ? error.message : String(error)));
         // エラー時はデフォルト設定を使用
         const defaultSettings = getDefaultDesignSettings();
         setDesignSettings(defaultSettings);
@@ -159,7 +159,10 @@ export default function StoreDesignPreview() {
     queryFn: async () => {
       try {
         const response = await apiRequest<any>("GET", "/api/store/profile");
-        forwardLog('店舗プロフィールAPI応答:', response);
+        forwardLog('店舗プロフィールAPI応答:',
+          '時刻: ' + new Date().toISOString(),
+          'ステータス: ' + (response.success ? '成功' : '失敗')
+        );
         return response;
       } catch (error) {
         forwardLog('店舗プロフィール取得エラー:', error);
@@ -177,10 +180,13 @@ export default function StoreDesignPreview() {
     queryFn: async () => {
       try {
         const response = await apiRequest<any>("GET", "/api/store/special-offers");
-        forwardLog('special_offers フィールド値：', response);
+        forwardLog('special_offers フィールド値：',
+          '時刻: ' + new Date().toISOString(),
+          '項目数: ' + (Array.isArray(response) ? response.length : 0)
+        );
         return response;
       } catch (error) {
-        forwardLog('special_offers 取得エラー:', error);
+        forwardLog('special_offers 取得エラー: ' + (error instanceof Error ? error.message : String(error)));
         throw error;
       }
     },
@@ -195,10 +201,13 @@ export default function StoreDesignPreview() {
     queryFn: async () => {
       try {
         const response = await apiRequest<any>("GET", "/api/store/blog?limit=3");
-        forwardLog('店舗ブログAPI応答:', response);
+        forwardLog('店舗ブログAPI応答:',
+          '時刻: ' + new Date().toISOString(),
+          '記事数: ' + (response?.posts?.length || 0)
+        );
         return response;
       } catch (error) {
-        forwardLog('店舗ブログ取得エラー:', error);
+        forwardLog('店舗ブログ取得エラー: ' + (error instanceof Error ? error.message : String(error)));
         console.error('ブログ記事の取得に失敗しました:', error);
         return { posts: [] };
       }
@@ -278,7 +287,7 @@ export default function StoreDesignPreview() {
           }
         }
       } catch (error) {
-        forwardLog('メッセージ処理中にエラーが発生しました:', error);
+        forwardLog('メッセージ処理中にエラーが発生しました: ' + (error instanceof Error ? error.message : String(error)));
       }
     };
 
