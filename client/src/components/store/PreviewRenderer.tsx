@@ -399,6 +399,60 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         const workingHours = profile.working_hours || {};
         const workingTimeHours = profile.working_time_hours || '';
         
+        // 営業時間・勤務時間のフォーマット関数をインポート
+        const formatBusinessHours = (hours: string | null | undefined): string => {
+          if (!hours) return '応相談';
+          
+          // 一般的な形式を検出
+          if (/\d{1,2}[:：]\d{2}[-〜～~]\d{1,2}[:：]\d{2}/.test(hours)) {
+            return hours;
+          }
+          
+          // 「10時-22時」のような形式を「10:00-22:00」に変換
+          let formatted = hours.replace(/(\d{1,2})時/g, '$1:00');
+          
+          // 区切り文字を統一
+          formatted = formatted.replace(/[〜～~]/g, '-');
+          
+          return formatted;
+        };
+        
+        // 勤務可能曜日の配列を正規化
+        const normalizeDaysAvailable = (days: any): (string | number)[] => {
+          if (!days) return ['月', '火', '水', '木', '金', '土', '日'];
+          
+          // すでに配列の場合
+          if (Array.isArray(days)) {
+            return days;
+          }
+          
+          // カンマ区切りのテキストの場合
+          if (typeof days === 'string') {
+            return days.split(/[,、]/);
+          }
+          
+          // その他の場合はデフォルト値を返す
+          return ['月', '火', '水', '木', '金', '土', '日'];
+        };
+        
+        // フォーマット処理
+        const formattedBusinessHours = formatBusinessHours(profile.business_hours);
+        const daysAvailable = normalizeDaysAvailable(
+          typeof workingHours === 'object' ? workingHours.days_available : null
+        );
+        
+        // シフトシステム
+        const shiftSystem = workingHours.system || profile.shift_system || '自由出勤制';
+        
+        // デバッグログ
+        console.log('勤務時間データ:', {
+          workingHours,
+          workingTimeHours,
+          businessHours: profile.business_hours,
+          formattedBusinessHours,
+          daysAvailable
+        });
+        
         return (
           <div>
             {!hideSectionTitles && <h2 style={titleStyle}>勤務時間</h2>}
@@ -410,12 +464,17 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-700 text-sm font-medium">営業時間</p>
-                    <p className="text-lg">{profile.business_hours || '10:00〜22:00'}</p>
+                    <p className="text-lg">{formattedBusinessHours}</p>
                   </div>
                   
                   <div>
                     <p className="text-gray-700 text-sm font-medium">1日の勤務時間</p>
-                    <p className="text-lg">{workingTimeHours || '6〜8時間程度'}</p>
+                    <p className="text-lg">{
+                      workingTimeHours || 
+                      (typeof workingHours === 'object' && workingHours.min_hours && workingHours.max_hours) ? 
+                        `${workingHours.min_hours}～${workingHours.max_hours}時間` : 
+                        '6〜8時間程度'
+                    }</p>
                   </div>
                 </div>
                 
@@ -424,29 +483,27 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-gray-700 text-sm font-medium">シフト体制</p>
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                      {workingHours.system || profile.shift_system || '自由出勤制'}
+                      {shiftSystem}
                     </span>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 mt-2">
                     {/* 曜日シフト表示 */}
-                    {workingHours.days_available && Array.isArray(workingHours.days_available) && workingHours.days_available.length > 0 ? (
-                      <div className="w-full grid grid-cols-7 gap-1 text-center">
-                        {['月', '火', '水', '木', '金', '土', '日'].map((day, idx) => {
-                          const isAvailable = workingHours.days_available.includes(day) || 
-                                            workingHours.days_available.includes(idx) || 
-                                            workingHours.days_available.includes(idx.toString());
-                          return (
-                            <div 
-                              key={day} 
-                              className={`p-2 rounded ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-500'}`}
-                            >
-                              {day}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : null}
+                    <div className="w-full grid grid-cols-7 gap-1 text-center">
+                      {['月', '火', '水', '木', '金', '土', '日'].map((day, idx) => {
+                        const isAvailable = daysAvailable.includes(day) || 
+                                          daysAvailable.includes(idx) || 
+                                          daysAvailable.includes(idx.toString());
+                        return (
+                          <div 
+                            key={day} 
+                            className={`p-2 rounded ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-500'}`}
+                          >
+                            {day}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                   
                   {/* 休日情報 */}
@@ -921,9 +978,29 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
         // プロフィールデータから直接取得またはAPIデータを使用
         let blogPostsData: any[] = [];
         
+        // サンプルブログ記事（テスト用・デモ用）
+        // 実際のブログ投稿が取得できない場合に表示するためのデータ
+        const sampleBlogPosts = [
+          {
+            id: 24,
+            title: '公開テスト',
+            status: 'published',
+            published_at: new Date().toISOString(),
+            content: '<p>店舗の最新情報を掲載しています。公開テスト記事です。</p>',
+          },
+          {
+            id: 25,
+            title: '予約テスト',
+            status: 'published',
+            published_at: new Date().toISOString(),
+            content: '<p>イベント告知や最新情報をお届けします。予約テスト記事です。</p>',
+          }
+        ];
+        
         // blogPosts プロパティが直接ある場合
         if (profile.blog_posts && Array.isArray(profile.blog_posts) && profile.blog_posts.length > 0) {
           blogPostsData = profile.blog_posts;
+          console.log("既存ブログデータを使用:", blogPostsData.length);
         } 
         // JSON文字列の場合をパース
         else if (typeof profile.blog_posts === 'string') {
@@ -931,10 +1008,17 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
             const parsed = JSON.parse(profile.blog_posts);
             if (Array.isArray(parsed)) {
               blogPostsData = parsed;
+              console.log("パースしたブログデータを使用:", blogPostsData.length);
             }
           } catch (e) {
             console.log("ブログ記事のJSONパースに失敗:", e);
           }
+        }
+        
+        // データがない場合はサンプルデータを使用
+        if (blogPostsData.length === 0) {
+          blogPostsData = sampleBlogPosts;
+          console.log("サンプルブログデータを使用");
         }
         
         // 日付フォーマッター

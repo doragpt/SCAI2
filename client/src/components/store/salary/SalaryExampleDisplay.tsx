@@ -1,6 +1,6 @@
 import React from 'react';
-import { SalaryExample } from '@/types/salary';
-import { calculateHourlyRate } from '@/utils/salaryUtils';
+import { SalaryExample } from '@types/salary';
+import { processSalaryExample } from '@utils/salaryUtils';
 
 interface SalaryExampleDisplayProps {
   example: SalaryExample;
@@ -14,65 +14,69 @@ interface SalaryExampleDisplayProps {
  */
 export default function SalaryExampleDisplay({
   example,
-  accentColor = '#41a0ff',
-  mainColor = '#ff6b81'
+  accentColor = '#FF6B6B',
+  mainColor = '#4A4A4A'
 }: SalaryExampleDisplayProps) {
-  // 必要なデータがあるかチェック
-  const hasHourlyRate = example.hourlyRate && example.hourlyRate > 0;
-  const hasHours = example.hours || example.workingHours;
-  const hasAmount = typeof example.amount === 'number' || (typeof example.amount === 'string' && example.amount);
-  
-  // 時給を計算（まだ計算されていない場合）
-  const hourlyRate = hasHourlyRate 
-    ? example.hourlyRate 
-    : (hasHours && hasAmount 
-      ? calculateHourlyRate(example.amount, example.hours || example.workingHours || 0) 
-      : 0);
-  
-  // 金額を整形
-  const formattedAmount = typeof example.amount === 'number' 
-    ? example.amount.toLocaleString() 
-    : example.amount;
-    
-  // 勤務時間と時給換算の表示テキスト
-  const workingHoursText = hasHours 
-    ? `${example.hours || example.workingHours}時間勤務` 
-    : '';
-    
-  const hourlyRateText = hourlyRate > 0 
-    ? `時給換算: ${hourlyRate.toLocaleString()}円` 
-    : '';
-  
+  // 給与データの処理
+  const processedExample = React.useMemo(() => {
+    return processSalaryExample(example);
+  }, [example]);
+
+  // 表示用のフォーマット済みデータ
+  const {
+    title,
+    formatted,
+    conditions,
+    hourlyFormatted,
+    period
+  } = processedExample;
+
+  // 期間表示のマッピング
+  const periodDisplay = React.useMemo(() => {
+    if (!period) return '';
+    const periodMap: Record<string, string> = {
+      hourly: '時給',
+      daily: '日給',
+      weekly: '週給',
+      monthly: '月給',
+      yearly: '年収'
+    };
+    return periodMap[period.toLowerCase()] || '';
+  }, [period]);
+
   return (
-    <div className="bg-white p-3 rounded-lg border shadow-sm">
-      <div className="flex flex-col">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-medium">{example.title || '給与例'}</p>
-            <p className="text-sm text-gray-500">{example.conditions || ''}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold" style={{ color: mainColor }}>
-              {formattedAmount}円
-            </p>
-            {example.period && <p className="text-xs text-gray-500">{example.period}</p>}
-          </div>
-        </div>
-        
-        {/* 勤務時間と時給換算情報 */}
-        {(workingHoursText || hourlyRateText) && (
-          <div className="mt-2 pt-2 border-t border-gray-100">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-gray-600">
-                {workingHoursText || example.formatted || ''}
-              </p>
-              <p className="text-sm font-medium text-green-600">
-                {hourlyRateText || example.hourlyFormatted || ''}
-              </p>
-            </div>
-          </div>
-        )}
+    <div className="salary-example bg-white p-4 rounded-lg border shadow-sm">
+      {/* 給与タイトル */}
+      {title && (
+        <h4 className="text-lg font-bold mb-2" style={{ color: mainColor }}>
+          {title}
+        </h4>
+      )}
+
+      {/* 給与額 */}
+      <div className="flex items-baseline mb-2">
+        <span className="text-sm mr-2">{periodDisplay}</span>
+        <span className="text-2xl font-bold" style={{ color: accentColor }}>
+          {formatted}
+        </span>
       </div>
+
+      {/* 時給換算 */}
+      {hourlyFormatted && (
+        <div className="text-sm bg-gray-50 p-2 rounded mb-2">
+          <span className="font-medium">時給換算: </span>
+          <span className="font-bold" style={{ color: accentColor }}>
+            {hourlyFormatted}
+          </span>
+        </div>
+      )}
+
+      {/* 条件 */}
+      {conditions && (
+        <div className="text-sm text-gray-600 mt-2">
+          <p>{conditions}</p>
+        </div>
+      )}
     </div>
   );
 }
