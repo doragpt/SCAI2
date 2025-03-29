@@ -38,6 +38,7 @@ import {
   User,
   Pencil,
   Eye,
+  ShieldCheck,
   CheckCircle,
   Image as ImageIcon,
   Banknote,
@@ -441,7 +442,8 @@ export default function StoreDashboard() {
         address: profile?.address || "",
         access_info: profile?.access_info || "",
         security_measures: profile?.security_measures || "",
-        privacy_measures: profile?.privacy_measures || [], // プライバシー保護に対する情報を追加
+        privacy_measures: profile?.privacy_measures || [],
+      commitment: profile?.commitment || "", // プライバシー保護に対する情報を追加
         application_requirements: profile?.application_requirements || "",
         
         // ステータスは現在のものを維持
@@ -568,6 +570,7 @@ export default function StoreDashboard() {
       access_info: profile?.access_info || "",
       security_measures: profile?.security_measures || "",
       privacy_measures: profile?.privacy_measures || [],
+      commitment: profile?.commitment || "",
       application_requirements: profile?.application_requirements || "",
       status: profile?.status || "draft"
     };
@@ -636,6 +639,7 @@ export default function StoreDashboard() {
       access_info: profile?.access_info || "",
       security_measures: profile?.security_measures || "",
       privacy_measures: profile?.privacy_measures || [],
+      commitment: profile?.commitment || "",
       application_requirements: profile?.application_requirements || "",
       status: profile?.status || "draft"
     };
@@ -729,6 +733,7 @@ export default function StoreDashboard() {
         address: profile?.address || "",
         access_info: profile?.access_info || "",
         privacy_measures: profile?.privacy_measures || [],
+      commitment: profile?.commitment || "",
         security_measures: profile?.security_measures || "",
         application_requirements: profile?.application_requirements || "",
         
@@ -1298,6 +1303,42 @@ export default function StoreDashboard() {
                           </div>
                         )}
                         
+                        {/* プライバシー保護対策 - 新規追加 */}
+                        {profile.privacy_measures && profile.privacy_measures.length > 0 && (
+                          <div className="py-4 px-1">
+                            <div className="border rounded-md p-3">
+                              <h3 className="flex items-center text-base font-medium mb-2">
+                                <ShieldCheck className="h-5 w-5 mr-2 text-gray-500" />
+                                プライバシー保護
+                              </h3>
+                              
+                              <div className="bg-gray-50 p-3 rounded">
+                                <ul className="list-disc pl-5 space-y-1">
+                                  {profile.privacy_measures.map((measure, index) => (
+                                    <li key={index} className="text-sm">{measure}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* お店のコミットメント - 新規追加 */}
+                        {profile.commitment && (
+                          <div className="py-4 px-1">
+                            <div className="border rounded-md p-3">
+                              <h3 className="flex items-center text-base font-medium mb-2">
+                                <Eye className="h-5 w-5 mr-2 text-gray-500" />
+                                お店のコミットメント
+                              </h3>
+                              
+                              <div className="bg-gray-50 p-3 rounded">
+                                <p className="text-sm whitespace-pre-line">{profile.commitment}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 連絡先情報 - シンプル化 */}
                         {(profile.recruiter_name || (profile.phone_numbers && profile.phone_numbers.length > 0) || 
                           (profile.email_addresses && profile.email_addresses.length > 0) || 
@@ -1672,6 +1713,7 @@ export default function StoreDashboard() {
                                     email_addresses: profile?.email_addresses || [],
                                     address: profile?.address || "",
                                     privacy_measures: profile?.privacy_measures || [],
+      commitment: profile?.commitment || "",
                                     access_info: profile?.access_info || "",
                                     security_measures: profile?.security_measures || "",
                                     application_requirements: profile?.application_requirements || "",
