@@ -539,9 +539,22 @@ export default function StoreDesignManager() {
                     
                     // 設定データを送信（リトライメカニズム付き）
                     const timestamp = new Date().toISOString();
+                    
+                    // 安全な設定データコピーを作成（循環参照を避けるため）
+                    const safeSettings = {
+                      globalSettings: { ...previewSettings.globalSettings },
+                      sections: previewSettings.sections.map(section => ({
+                        id: section.id,
+                        order: section.order,
+                        title: section.title,
+                        visible: section.visible,
+                        settings: section.settings ? { ...section.settings } : {}
+                      }))
+                    };
+                    
                     const messageData = {
                       type: 'UPDATE_DESIGN',
-                      settings: previewSettings,
+                      settings: safeSettings,
                       timestamp
                     };
                     
@@ -604,8 +617,18 @@ export default function StoreDesignManager() {
                 );
                 
                 try {
-                  // 設定データの整合性チェック
-                  const safeSettings = { ...previewSettings };
+                  // 設定データの整合性チェック - 安全なコピーを作成（循環参照を避けるため）
+                  const safeSettings = {
+                    globalSettings: previewSettings.globalSettings ? { ...previewSettings.globalSettings } : null,
+                    sections: Array.isArray(previewSettings.sections) ? 
+                      previewSettings.sections.map(section => ({
+                        id: section.id,
+                        order: section.order,
+                        title: section.title,
+                        visible: section.visible,
+                        settings: section.settings ? { ...section.settings } : {}
+                      })) : []
+                  };
                   
                   if (!Array.isArray(safeSettings.sections)) {
                     console.warn('セクションが配列ではありません。空配列で補正します');
@@ -673,18 +696,12 @@ export default function StoreDesignManager() {
     const handleMessage = (event: MessageEvent) => {
       // プレビューページからのログを親ウィンドウのコンソールに出力
       if (event.data.type === 'forward-log') {
-        // ログメッセージを表示可能なテキスト形式に変換
+        // ログメッセージをそのまま表示（フォーマットはforwardLog内で処理済み）
         const args = event.data.args || [];
-        const formattedArgs = args.map((arg: any) => {
-          if (typeof arg === 'object' && arg !== null) {
-            return JSON.stringify(arg, null, 2).replace(/"/g, '');
-          }
-          return arg;
-        });
         
         console.log('プレビューウィンドウからのログ:', 
           '時刻: ' + event.data.timestamp,
-          ...formattedArgs
+          ...args
         );
       }
       // iframeがロードされた通知を受け取ったら設定を送信

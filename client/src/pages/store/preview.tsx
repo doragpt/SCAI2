@@ -7,13 +7,36 @@ import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 
 // コンソールログを親ウィンドウに転送するヘルパー関数
 const forwardLog = (...args: any[]) => {
+  // オブジェクトを適切な文字列表現に変換する関数
+  const formatArg = (arg: any): any => {
+    if (arg === null) return 'null';
+    if (arg === undefined) return 'undefined';
+    
+    if (typeof arg === 'object') {
+      // 循環参照を防ぐため、シンプルな表現に変換
+      if (Array.isArray(arg)) {
+        return `配列[${arg.length}項目]`;
+      } else {
+        // オブジェクトのキー数を数える
+        const keys = Object.keys(arg);
+        return `オブジェクト{${keys.length}プロパティ}`;
+      }
+    }
+    
+    return arg;
+  };
+  
+  // 送信前に変換
+  const safeArgs = args.map(formatArg);
+  
   if (window.parent !== window) {
     window.parent.postMessage({
       type: 'forward-log',
-      args,
+      args: safeArgs,
       timestamp: new Date().toISOString()
     }, '*');
   }
+  
   console.log(...args);
 };
 
