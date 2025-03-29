@@ -7,6 +7,46 @@
 
 export const dataUtils = {
   /**
+   * 店舗プロフィールデータを処理
+   * 各フィールドのデータ型を正規化し、適切な形式に変換
+   */
+  processStoreProfile: (data: any): any => {
+    if (!data) return {};
+    
+    // 各特殊フィールドの処理を行う
+    const processedData = { ...data };
+    
+    // フィールド毎の処理ロジックを適用
+    const processingFields = [
+      { field: 'requirements', processor: 'processRequirements' },
+      { field: 'security_measures', processor: 'processSecurityMeasures' },
+      { field: 'privacy_measures', processor: 'processPrivacyMeasures' },
+      { field: 'gallery_photos', processor: 'processGalleryPhotos' },
+      { field: 'special_offers', processor: 'processSpecialOffers' },
+      { field: 'design_settings', processor: 'processDesignSettings' },
+      { field: 'commitment', processor: 'processTextFields' }
+    ];
+
+    // 各フィールドに対して対応する処理を適用
+    processingFields.forEach(({ field, processor }) => {
+      if (field in data) {
+        console.log(`プロフィールフィールド処理: ${field}`, {
+          type: typeof data[field],
+          value: data[field]
+        });
+        
+        try {
+          // @ts-ignore - 動的メソッド呼び出し
+          processedData[field] = dataUtils[processor](data[field]);
+        } catch (error) {
+          console.error(`フィールド処理エラー: ${field}`, error);
+        }
+      }
+    });
+    
+    return processedData;
+  },
+  /**
    * プライバシー対策データ処理特化関数
    * privacy_measuresフィールド専用の処理ロジック
    * 常に文字列配列として正規化

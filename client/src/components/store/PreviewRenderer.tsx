@@ -84,9 +84,32 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
     };
   }
 
+  // セクションIDのマッピング - defaultDesignSettingsのIDからPreviewRendererで使用するIDへ変換
+  const sectionIdMapping: Record<string, string> = {
+    'header': 'header',                // ヘッダー
+    'main_visual': 'main_visual',      // メインビジュアル
+    'intro': 'catchphrase',           // 店舗紹介 → キャッチフレーズ
+    'benefits': 'benefits',            // 待遇・福利厚生
+    'work_environment': 'schedule',    // 働く環境 → スケジュール
+    'requirements': 'requirements',    // 応募条件
+    'application_info': 'contact',     // 応募情報 → お問い合わせ
+    'faq': 'security_measures',        // よくある質問 → セキュリティ対策
+    'gallery': 'photo_gallery',        // 写真ギャラリー
+    'blog': 'blog',                    // ブログ
+    'news': 'access',                  // お知らせ → アクセス
+    'campaign': 'special_offers',      // キャンペーン → 特別オファー
+    'experience': 'sns_links',         // 体験談 → SNSリンク
+    'footer': 'footer'                 // フッター
+  };
+
   // セクションの内容をレンダリングするヘルパー関数
   const renderSectionContent = (section: DesignSection) => {
-    const { id, settings: sectionSettings = {} } = section;
+    // 元のセクションID
+    const originalId = section.id;
+    // マッピングを適用（マッピングになければ元のID）
+    const id = sectionIdMapping[originalId] || originalId;
+    
+    const { settings: sectionSettings = {} } = section;
     const sectionStyle = {
       backgroundColor: sectionSettings.backgroundColor || '#ffffff',
       color: sectionSettings.textColor || '#333333',
@@ -96,6 +119,8 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
       fontSize: `${sectionSettings.fontSize || 16}px`,
       marginBottom: '20px'
     };
+    
+    console.log(`レンダリング: セクション=${originalId}, マッピング=${id}`);
 
     const titleStyle = {
       color: sectionSettings.titleColor || mainColor,
@@ -118,6 +143,49 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
           </div>
         );
 
+      case 'main_visual':
+        return (
+          <div style={{ 
+            height: `${sectionSettings.height || 500}px`, 
+            position: 'relative',
+            backgroundImage: sectionSettings.imageUrl ? `url(${sectionSettings.imageUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: sectionSettings.backgroundColor || '#f9f9f9'
+          }}>
+            <div style={{ 
+              position: 'absolute', 
+              inset: 0, 
+              backgroundColor: sectionSettings.overlayColor || 'rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px'
+            }}>
+              <h2 style={{ 
+                color: sectionSettings.titleColor || '#ffffff', 
+                fontSize: '36px', 
+                fontWeight: 'bold',
+                marginBottom: '20px',
+                textAlign: 'center',
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+              }}>
+                {sectionSettings.titleText || profile.catch_phrase || '当店の魅力'}
+              </h2>
+              <p style={{ 
+                color: sectionSettings.textColor || '#ffffff',
+                fontSize: '18px',
+                textAlign: 'center',
+                maxWidth: '800px',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+              }}>
+                {profile.catch_phrase || '最高の環境で、あなたの可能性を広げませんか？'}
+              </p>
+            </div>
+          </div>
+        );
+        
       case 'catchphrase':
         return (
           <div>
@@ -388,12 +456,29 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
               <ul className="list-disc pl-5 space-y-2">
                 <li>18歳以上（高校生不可）</li>
                 <li>未経験者歓迎</li>
-                {/* 出稼ぎ受け入れ可能な場合のみ表示 */}
-                {profile.requirements && 
-                 typeof profile.requirements === 'object' && 
-                 profile.requirements.accepts_temporary_workers && (
-                  <li className="font-bold text-green-600">出稼ぎ可能</li>
-                )}
+                {/* 出稼ぎ受け入れ可能な場合のみ表示 - requirementsはオブジェクトとして処理 */}
+                {(() => {
+                  // 要件データをオブジェクトとして安全に取得
+                  let req: any = null;
+                  
+                  // オブジェクトとして直接アクセス可能な場合
+                  if (profile.requirements && typeof profile.requirements === 'object' && !Array.isArray(profile.requirements)) {
+                    req = profile.requirements;
+                  } 
+                  // 文字列の場合はJSONとしてパース
+                  else if (typeof profile.requirements === 'string') {
+                    try {
+                      req = JSON.parse(profile.requirements);
+                    } catch (e) {
+                      console.error('要件データの解析エラー:', e);
+                    }
+                  }
+                  
+                  // 条件に応じたリスト項目を返す
+                  return req && req.accepts_temporary_workers ? (
+                    <li className="font-bold text-green-600">出稼ぎ可能</li>
+                  ) : null;
+                })()}
                 <li>日本語でのコミュニケーションが可能な方</li>
               </ul>
             </div>
@@ -469,6 +554,53 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                 style={{ color: 'white', backgroundColor: mainColor }}>
                 すべてのブログ記事を見る
               </button>
+            </div>
+          </div>
+        );
+        
+      case 'footer':
+        return (
+          <div style={{ 
+            backgroundColor: sectionSettings.backgroundColor || '#333333',
+            color: sectionSettings.textColor || '#ffffff',
+            padding: '30px 20px',
+            marginTop: '40px'
+          }}>
+            <div className="container mx-auto">
+              <div className="flex flex-col md:flex-row md:justify-between">
+                <div className="mb-6 md:mb-0">
+                  <h3 className="text-lg font-bold mb-4" style={{ color: sectionSettings.accentColor || mainColor }}>
+                    {profile.business_name}
+                  </h3>
+                  <p className="text-sm">
+                    {profile.location}<br />
+                    {profile.access_info}
+                  </p>
+                </div>
+                
+                <div className="mb-6 md:mb-0">
+                  <h4 className="text-md font-bold mb-3" style={{ color: sectionSettings.accentColor || mainColor }}>
+                    お問い合わせ
+                  </h4>
+                  <ul className="text-sm">
+                    <li className="mb-2">TEL: {profile.contact_phone || '03-xxxx-xxxx'}</li>
+                    <li>MAIL: {profile.contact_email || 'contact@example.com'}</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="text-md font-bold mb-3" style={{ color: sectionSettings.accentColor || mainColor }}>
+                    営業情報
+                  </h4>
+                  <ul className="text-sm">
+                    <li className="mb-2">営業時間: {profile.business_hours || '10:00〜22:00'}</li>
+                    <li>定休日: {profile.holidays || '年中無休'}</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-8 pt-6 border-t border-gray-600 text-center text-sm">
+                <p>&copy; {new Date().getFullYear()} {profile.business_name} All Rights Reserved.</p>
+              </div>
             </div>
           </div>
         );
