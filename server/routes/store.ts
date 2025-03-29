@@ -536,7 +536,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         minimum_guarantee: Number(req.body.minimum_guarantee) || 0,
         maximum_guarantee: Number(req.body.maximum_guarantee) || 0,
         working_time_hours: Number(req.body.working_time_hours) || 0,
-        average_hourly_pay: Number(req.body.average_hourly_pay) || 0,
+        average_salary: Number(req.body.average_salary) || 0,
         status: req.body.status || "draft",
         top_image: req.body.top_image || "",
         special_offers: req.body.special_offers || [],
@@ -554,7 +554,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         minimum_guarantee: insertData.minimum_guarantee,
         maximum_guarantee: insertData.maximum_guarantee,
         working_time_hours: insertData.working_time_hours,
-        average_hourly_pay: insertData.average_hourly_pay,
+        average_salary: insertData.average_salary,
         status: insertData.status,
         top_image: insertData.top_image,
         special_offers: insertData.special_offers
@@ -585,7 +585,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
           minimum_guarantee: fullData.minimum_guarantee,
           maximum_guarantee: fullData.maximum_guarantee,
           working_time_hours: fullData.working_time_hours,
-          average_hourly_pay: fullData.average_hourly_pay,
+          average_salary: fullData.average_salary,
           status: fullData.status,
           top_image: fullData.top_image,
           // special_offersを正規の配列として処理（SQLテンプレートリテラルは使わない）
@@ -611,7 +611,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       minimum_guarantee: Number(req.body.minimum_guarantee) || existingProfile.minimum_guarantee,
       maximum_guarantee: Number(req.body.maximum_guarantee) || existingProfile.maximum_guarantee,
       working_time_hours: Number(req.body.working_time_hours) || existingProfile.working_time_hours || 0,
-      average_hourly_pay: Number(req.body.average_hourly_pay) || existingProfile.average_hourly_pay || 0,
+      average_salary: Number(req.body.average_salary) || existingProfile.average_salary || 0,
       status: req.body.status || existingProfile.status,
       top_image: req.body.top_image || existingProfile.top_image,
       
@@ -754,7 +754,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       minimum_guarantee: updateData.minimum_guarantee,
       maximum_guarantee: updateData.maximum_guarantee,
       working_time_hours: updateData.working_time_hours,
-      average_hourly_pay: updateData.average_hourly_pay,
+      average_salary: updateData.average_salary,
       status: updateData.status,
       top_image: updateData.top_image,
       
@@ -920,7 +920,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
         minimum_guarantee: typedUpdateData.minimum_guarantee,
         maximum_guarantee: typedUpdateData.maximum_guarantee,
         working_time_hours: typedUpdateData.working_time_hours,
-        average_hourly_pay: typedUpdateData.average_hourly_pay,
+        average_salary: typedUpdateData.average_salary,
         status: typedUpdateData.status,
         top_image: typedUpdateData.top_image,
         working_hours: typedUpdateData.working_hours,

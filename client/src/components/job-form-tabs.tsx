@@ -51,7 +51,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       minimum_guarantee: initialData?.minimum_guarantee || 0,
       maximum_guarantee: initialData?.maximum_guarantee || 0,
       working_time_hours: initialData?.working_time_hours || 0,
-      average_hourly_pay: initialData?.average_hourly_pay || 0,
+      average_salary: initialData?.average_salary || 0,
       status: initialData?.status || "draft",
       
       // 住所・担当者情報
@@ -519,7 +519,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           minimum_guarantee: Number(data.minimum_guarantee) || 0,
           maximum_guarantee: Number(data.maximum_guarantee) || 0,
           working_time_hours: Number(data.working_time_hours) || 0,
-          average_hourly_pay: Number(data.average_hourly_pay) || 0,
+          average_salary: Number(data.average_salary) || 0,
           status: data.status || "draft",
           
           // 応募条件の整形（検証済みオブジェクト）
@@ -1606,10 +1606,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
 
                     <FormField
                       control={form.control}
-                      name="average_hourly_pay"
+                      name="average_salary"
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel className="font-medium">平均給与（円）</FormLabel>
+                          <FormLabel className="font-medium">平均給与（月額、円）</FormLabel>
                           <FormControl>
                             <input
                               type="number"
@@ -1627,8 +1627,8 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                       )}
                     />
                   </div>
-                  <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務で平均給与〇円」という形式で表示されます</p>
-                  <p className="text-sm text-gray-500">※ 基本給与・上限給与の入力がある場合は従来の表示形式も併用されます</p>
+                  <p className="text-sm text-amber-700 mt-2">※ この情報を入力すると「〇時間勤務で月給〇円」という形式で表示されます</p>
+                  <p className="text-sm text-gray-500">※ 最低保証・最高保証の入力がある場合は従来の表示形式も併用されます</p>
                 </div>
                 
                 {/* 勤務時間帯 */}

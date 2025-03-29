@@ -513,7 +513,7 @@ export const store_profiles = pgTable("store_profiles", {
   minimum_guarantee: integer("minimum_guarantee").default(0),
   maximum_guarantee: integer("maximum_guarantee").default(0),
   working_time_hours: integer("working_time_hours").default(0),
-  average_hourly_pay: integer("average_hourly_pay").default(0),
+  average_salary: integer("average_salary").default(0),
   status: text("status", { enum: jobStatusTypes }).notNull().default("draft"),
   requirements: jsonb("requirements").$type<JobRequirements>().default({
     cup_size_conditions: [],
@@ -867,7 +867,7 @@ export const storeProfileSchema = z.object({
   minimum_guarantee: z.coerce.number().nonnegative("最低保証は0以上の値を入力してください").default(0),
   maximum_guarantee: z.coerce.number().nonnegative("最高保証は0以上の値を入力してください").default(0),
   working_time_hours: z.coerce.number().nonnegative("勤務時間は0以上の値を入力してください").default(0),
-  average_hourly_pay: z.coerce.number().nonnegative("時給単価は0以上の値を入力してください").default(0),
+  average_salary: z.coerce.number().nonnegative("平均給与は0以上の値を入力してください").default(0),
   status: z.enum(jobStatusTypes).default("draft"),
   requirements: z.union([z.string(), jobRequirementsSchema]).optional(),
   working_hours: z.string().optional(),

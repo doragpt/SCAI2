@@ -1056,10 +1056,10 @@ export default function StoreDashboard() {
                               {/* 平均給与の表示 - シンプル化 */}
                               <div className="bg-gray-50 p-2 rounded-md">
                                 <div className="text-xs text-gray-500 mb-1">平均給与</div>
-                                {(profile.working_time_hours && profile.average_hourly_pay) ? (
+                                {(profile.working_time_hours && profile.average_salary) ? (
                                   <div>
-                                    <div><span className="font-semibold">{profile.working_time_hours}時間勤務　{profile.average_hourly_pay.toLocaleString()}円</span></div>
-                                    <div className="text-xs mt-1">（時給換算：<span className="font-semibold">{Math.round(profile.average_hourly_pay / profile.working_time_hours).toLocaleString()}円</span>）</div>
+                                    <div><span className="font-semibold">{profile.working_time_hours}時間勤務　月給{profile.average_salary.toLocaleString()}円</span></div>
+                                    <div className="text-xs mt-1">（時給換算：<span className="font-semibold">{Math.round(profile.average_salary / profile.working_time_hours).toLocaleString()}円</span>）</div>
                                   </div>
                                 ) : (profile.minimum_guarantee || profile.maximum_guarantee) ? (
                                   <div>
