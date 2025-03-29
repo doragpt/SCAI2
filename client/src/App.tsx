@@ -30,6 +30,7 @@ import StoreDesignManager from "@/pages/store/design-manager";
 import StoreDesignManagerNew from "@/pages/store/design-manager-new";
 import StoreDesignManagerDirect from "@/pages/store/design-manager-direct";
 import StoreDesignManagerRedirect from "@/pages/store/design-manager-redirect";
+import StoreDesignManagerNavFix from "@/pages/store/design-manager-nav-fix";
 import StorePreview from "@/pages/store/preview";
 import StorePreviewNew from "@/pages/store/preview-new";
 import BlogList from "@/pages/store/blog/list";
@@ -109,6 +110,16 @@ function Router() {
       <Route path="/blog/:id" component={BlogPostView as RouteComponent} />
       <ProtectedRoute path="/basic-info/view" component={BasicInfoView as RouteComponent} />
       <ProtectedRoute path="/basic-info/edit" component={BasicInfoEdit as RouteComponent} />
+      <ProtectedRoute 
+        path="/design-manager" 
+        component={StoreDesignManagerNavFix as RouteComponent}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/design-manager-direct" 
+        component={StoreDesignManagerNavFix as RouteComponent}
+        roleRequired="store"
+      />
       <Route component={NotFound as RouteComponent} />
     </Switch>
   );
