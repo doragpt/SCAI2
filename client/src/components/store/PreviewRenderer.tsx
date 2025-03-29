@@ -126,8 +126,12 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
               <h3 style={{ fontSize: '22px', color: accentColor, fontWeight: 'bold' }}>
                 {profile.catch_phrase || 'お仕事のキャッチフレーズ'}
               </h3>
-              <div className="mt-4" style={{ whiteSpace: 'pre-wrap' }}>
-                {profile.description || '仕事内容の詳細説明がここに表示されます。'}
+              <div className="mt-4">
+                {profile.description ? (
+                  <div dangerouslySetInnerHTML={{ __html: profile.description }} />
+                ) : (
+                  <p>仕事内容の詳細説明がここに表示されます。</p>
+                )}
               </div>
             </div>
           </div>
