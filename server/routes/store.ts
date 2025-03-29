@@ -712,8 +712,8 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // アクセス情報とセキュリティ対策
       access_info: req.body.access_info || existingProfile.access_info || "",
       security_measures: req.body.security_measures || existingProfile.security_measures || "",
-      // TEXT型として正しく処理
-      privacy_measures: dataUtils.processTextFields(req.body.privacy_measures || existingProfile.privacy_measures, ""),
+      // privacy_measuresはJSONB型の配列として処理
+      privacy_measures: prepareFieldForDatabase('privacy_measures', req.body.privacy_measures || existingProfile.privacy_measures),
       commitment: dataUtils.processTextFields(req.body.commitment || existingProfile.commitment, ""),
       
       // 各種サポート情報
@@ -784,7 +784,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
       // アクセス情報とセキュリティ対策
       access_info: updateData.access_info,
       security_measures: updateData.security_measures,
-      privacy_measures: dataUtils.processTextFields(updateData.privacy_measures),
+      privacy_measures: prepareFieldForDatabase('privacy_measures', updateData.privacy_measures),
       commitment: dataUtils.processTextFields(updateData.commitment),
       
       // 各種サポート情報

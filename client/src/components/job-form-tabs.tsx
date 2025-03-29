@@ -101,8 +101,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         ? initialData.privacy_measures 
         : (initialData?.privacy_measures 
             ? (typeof initialData.privacy_measures === 'string' 
-                ? [initialData.privacy_measures] 
-                : []) 
+                ? initialData.privacy_measures.trim() !== '' 
+                  ? [initialData.privacy_measures] 
+                  : []
+                : initialData.privacy_measures ? [String(initialData.privacy_measures)] : []) 
             : []),
       commitment: initialData?.commitment || "",
       
@@ -551,10 +553,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
                             data.security_measures.join(', ') : ''),
           // privacy_measuresはJSONB型として処理（確実に配列にする）
           privacy_measures: Array.isArray(data.privacy_measures) 
-            ? data.privacy_measures 
+            ? data.privacy_measures.filter(item => item && typeof item === 'string' && item.trim() !== '')
             : (typeof data.privacy_measures === 'string' && data.privacy_measures.trim() !== '' 
-                ? [data.privacy_measures] 
-                : []),
+                ? [data.privacy_measures.trim()] 
+                : (data.privacy_measures ? [String(data.privacy_measures).trim()] : [])),
           commitment: data.commitment || "",
           
           // 店舗写真ギャラリー
@@ -875,44 +877,78 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     
     // TEXT型フィールドの特別処理 - privacy_measuresとcommitmentが文字列であることを確保
     try {
-      // privacy_measures処理 - JSONB型フィールド
+      // privacy_measures処理 - JSONB型フィールド（常に文字列配列として処理）
       if (data.privacy_measures !== undefined) {
-        // privacy_measuresは配列であることを保証する
+        // 1. 配列の場合 - 各要素が文字列であることを保証
         if (Array.isArray(data.privacy_measures)) {
-          // すでに配列の場合はそのまま使用
-          cleanedData.privacy_measures = data.privacy_measures;
-        } else if (typeof data.privacy_measures === 'string') {
+          // 各要素を検証し、文字列以外の要素はフィルタリングか文字列に変換
+          cleanedData.privacy_measures = data.privacy_measures
+            .filter(item => item !== null && item !== undefined)
+            .map(item => typeof item === 'string' ? item.trim() : String(item).trim())
+            .filter(item => item !== ''); // 空文字列を除外
+        } 
+        // 2. 文字列の場合 - JSONパースを試みる
+        else if (typeof data.privacy_measures === 'string') {
           // 空の文字列は空の配列に変換
           if (data.privacy_measures.trim() === '') {
             cleanedData.privacy_measures = [];
           } else {
             try {
-              // 文字列をパースして配列かどうか確認
+              // JSON文字列として解析を試みる
               const parsed = JSON.parse(data.privacy_measures);
               if (Array.isArray(parsed)) {
-                // パースした結果が配列ならそのまま使用
-                cleanedData.privacy_measures = parsed;
+                // パースした結果が配列なら各要素を検証
+                cleanedData.privacy_measures = parsed
+                  .filter(item => item !== null && item !== undefined)
+                  .map(item => typeof item === 'string' ? item.trim() : String(item).trim())
+                  .filter(item => item !== '');
               } else {
-                // 配列でない場合は単一要素の配列にラップ
-                cleanedData.privacy_measures = [data.privacy_measures];
+                // 配列でないJSONオブジェクトの場合は文字列化して配列に
+                cleanedData.privacy_measures = [data.privacy_measures.trim()];
               }
             } catch (e) {
-              // JSONとして解析できない文字列は配列にラップ
-              cleanedData.privacy_measures = [data.privacy_measures];
+              // JSONとして解析できない通常の文字列は、単一要素の配列として扱う
+              cleanedData.privacy_measures = [data.privacy_measures.trim()];
             }
           }
-        } else if (data.privacy_measures === null) {
-          // nullの場合は空の配列に
+        } 
+        // 3. nullの場合 - 空の配列を設定
+        else if (data.privacy_measures === null) {
           cleanedData.privacy_measures = [];
-        } else if (typeof data.privacy_measures === 'object') {
-          // オブジェクトの場合は配列にラップする
-          cleanedData.privacy_measures = [JSON.stringify(data.privacy_measures)];
-        } else {
-          // その他の型（数値や真偽値など）も文字列化して配列にラップ
-          cleanedData.privacy_measures = [String(data.privacy_measures)];
+        } 
+        // 4. オブジェクトの場合 - JSON文字列化して配列にラップ
+        else if (typeof data.privacy_measures === 'object') {
+          try {
+            const jsonString = JSON.stringify(data.privacy_measures);
+            if (jsonString !== '{}' && jsonString !== '[]') {
+              cleanedData.privacy_measures = [jsonString];
+            } else {
+              cleanedData.privacy_measures = [];
+            }
+          } catch (e) {
+            cleanedData.privacy_measures = [];
+          }
+        } 
+        // 5. その他の型 - 文字列化して配列にラップ
+        else {
+          const valueStr = String(data.privacy_measures).trim();
+          if (valueStr !== '') {
+            cleanedData.privacy_measures = [valueStr];
+          } else {
+            cleanedData.privacy_measures = [];
+          }
         }
       } else {
         // undefinedの場合は空の配列をセット
+        cleanedData.privacy_measures = [];
+      }
+      
+      // 最終確認 - privacy_measuresが絶対に配列であることを保証
+      if (!Array.isArray(cleanedData.privacy_measures)) {
+        console.warn('最終チェックでprivacy_measuresが配列ではありませんでした。空の配列を設定します。', {
+          type: typeof cleanedData.privacy_measures,
+          value: cleanedData.privacy_measures
+        });
         cleanedData.privacy_measures = [];
       }
 
