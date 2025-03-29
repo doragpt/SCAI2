@@ -533,7 +533,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           // 応募要件・アクセス情報
           application_requirements: data.application_requirements || "",
           access_info: data.access_info || "",
-          security_measures: data.security_measures || "",
+          // セキュリティ対策は配列もしくは空配列に変換する
+          security_measures: Array.isArray(data.security_measures) ? data.security_measures : 
+                            (typeof data.security_measures === 'string' && data.security_measures.trim() !== '' ? 
+                            [data.security_measures] : []),
           privacy_measures: data.privacy_measures || "",
           commitment: data.commitment || "",
           
