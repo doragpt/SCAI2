@@ -28,6 +28,8 @@ import BlogPostView from "@/pages/blog/[id]";
 import BlogManagement from "@/pages/store/blog/index";
 import StoreDesignManager from "@/pages/store/design-manager";
 import StoreDesignManagerNew from "@/pages/store/design-manager-new";
+import StoreDesignManagerDirect from "@/pages/store/design-manager-direct";
+import StoreDesignManagerRedirect from "@/pages/store/design-manager-redirect";
 import StorePreview from "@/pages/store/preview";
 import StorePreviewNew from "@/pages/store/preview-new";
 import BlogList from "@/pages/store/blog/list";
@@ -80,12 +82,17 @@ function Router() {
       />
       <ProtectedRoute 
         path="/store/design-manager" 
-        component={StoreDesignManager as RouteComponent}
+        component={StoreDesignManagerRedirect as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 
         path="/store/design-manager-new" 
         component={StoreDesignManagerNew as RouteComponent}
+        roleRequired="store"
+      />
+      <ProtectedRoute 
+        path="/store/design-manager-direct" 
+        component={StoreDesignManagerDirect as RouteComponent}
         roleRequired="store"
       />
       <ProtectedRoute 

@@ -2,63 +2,53 @@ import { type DesignSettings } from '@shared/schema';
 
 /**
  * デフォルトのデザイン設定を取得する関数
- * ユーザーが設定を保存していない場合や、エラー時に使用
+ * @returns デフォルトのデザイン設定
  */
 export function getDefaultDesignSettings(): DesignSettings {
-  const defaultSettings: DesignSettings = {
+  return {
     globalSettings: {
-      mainColor: '#ff6b81',
-      secondaryColor: '#f9f9f9',
-      accentColor: '#41a0ff',
+      primaryColor: '#ff4d7d',
+      secondaryColor: '#7c40ff',
       backgroundColor: '#ffffff',
       fontFamily: 'sans-serif',
-      borderRadius: 8,
-      maxWidth: 1200,
-      hideSectionTitles: false
+      containerMaxWidth: 1200
     },
     sections: [
       {
         id: 'header',
         order: 0,
-        title: 'ヘッダー',
         visible: true,
         settings: {
           backgroundColor: '#ffffff',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
+          accentColor: '#ff4d7d',
+          logoWidth: 240,
+          fixed: true
         }
       },
       {
-        id: 'catchphrase',
+        id: 'main_visual',
         order: 1,
-        title: 'お仕事詳細',
         visible: true,
         settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
+          backgroundColor: '#f9f9f9',
+          textColor: '#ffffff',
+          titleColor: '#ffffff',
+          overlayColor: 'rgba(0,0,0,0.3)',
+          height: 500,
+          imageUrl: '',
+          titleText: '当店の魅力'
         }
       },
       {
-        id: 'photo_gallery',
+        id: 'intro',
         order: 2,
-        title: '写真ギャラリー',
         visible: true,
         settings: {
           backgroundColor: '#ffffff',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -68,13 +58,12 @@ export function getDefaultDesignSettings(): DesignSettings {
       {
         id: 'benefits',
         order: 3,
-        title: '待遇・環境',
         visible: true,
         settings: {
-          backgroundColor: '#ffffff',
+          backgroundColor: '#f9f9f9',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -82,111 +71,14 @@ export function getDefaultDesignSettings(): DesignSettings {
         }
       },
       {
-        id: 'salary',
+        id: 'work_environment',
         order: 4,
-        title: '給与情報',
         visible: true,
         settings: {
           backgroundColor: '#ffffff',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'schedule',
-        order: 5,
-        title: '勤務時間',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'special_offers',
-        order: 6,
-        title: '特別オファー',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'access',
-        order: 7,
-        title: 'アクセス情報',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'contact',
-        order: 8,
-        title: 'お問い合わせ',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'sns_links',
-        order: 9,
-        title: 'SNSリンク',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
-          fontSize: 16,
-          padding: 20,
-          borderRadius: 8,
-          borderWidth: 1
-        }
-      },
-      {
-        id: 'security_measures',
-        order: 10,
-        title: '安全対策',
-        visible: true,
-        settings: {
-          backgroundColor: '#ffffff',
-          textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -195,14 +87,13 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'requirements',
-        order: 11,
-        title: '応募条件',
+        order: 5,
         visible: true,
         settings: {
-          backgroundColor: '#ffffff',
+          backgroundColor: '#f9f9f9',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
@@ -210,23 +101,124 @@ export function getDefaultDesignSettings(): DesignSettings {
         }
       },
       {
-        id: 'blog',
-        order: 12,
-        title: '店舗ブログ',
+        id: 'application_info',
+        order: 6,
         visible: true,
         settings: {
           backgroundColor: '#ffffff',
           textColor: '#333333',
-          titleColor: '#ff6b81',
-          borderColor: '#f0f0f0',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
           fontSize: 16,
           padding: 20,
           borderRadius: 8,
           borderWidth: 1
         }
+      },
+      {
+        id: 'faq',
+        order: 7,
+        visible: true,
+        settings: {
+          backgroundColor: '#f9f9f9',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: 'gallery',
+        order: 8,
+        visible: true,
+        settings: {
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1,
+          columnCount: 3
+        }
+      },
+      {
+        id: 'blog',
+        order: 9,
+        visible: true,
+        settings: {
+          backgroundColor: '#f9f9f9',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1,
+          postsToShow: 3
+        }
+      },
+      {
+        id: 'news',
+        order: 10,
+        visible: true,
+        settings: {
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1,
+          itemsToShow: 5
+        }
+      },
+      {
+        id: 'campaign',
+        order: 11,
+        visible: false,
+        settings: {
+          backgroundColor: '#fff2f6',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: 'experience',
+        order: 12,
+        visible: false,
+        settings: {
+          backgroundColor: '#f0f8ff',
+          textColor: '#333333',
+          titleColor: '#ff4d7d',
+          borderColor: '#e0e0e0',
+          fontSize: 16,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1
+        }
+      },
+      {
+        id: 'footer',
+        order: 13,
+        visible: true,
+        settings: {
+          backgroundColor: '#333333',
+          textColor: '#ffffff',
+          accentColor: '#ff4d7d',
+          fontSize: 14
+        }
       }
     ]
   };
-
-  return defaultSettings;
 }
