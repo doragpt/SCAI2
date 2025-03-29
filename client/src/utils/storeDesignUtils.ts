@@ -103,27 +103,81 @@ export function processProfileJsonFields(profile: any): any {
   // 処理済みデータを格納するオブジェクト
   const processedProfile = { ...profile };
   
-  // requirementsフィールドの処理（配列を想定）
+  // requirementsフィールドの処理（オブジェクトまたは配列を想定）
   if (profile.requirements) {
     try {
-      // オブジェクトが渡された場合（APIのJSONB型は配列を想定）
+      // オブジェクトの場合はそのまま使用（APIはJSONB型としてオブジェクト形式で格納）
       if (typeof profile.requirements === 'object' && !Array.isArray(profile.requirements)) {
-        console.warn('フィールド requirements は配列であるべきですが、配列ではありません。空配列を使用します。');
-        processedProfile.requirements = [];
+        // そのまま使用（オブジェクトは有効な形式）
+        console.log('requirementsはオブジェクト形式です。', {
+          keys: Object.keys(profile.requirements)
+        });
       }
-      // 文字列の場合はパースを試みる
+      // 文字列の場合はJSONパースを試みる
       else if (typeof profile.requirements === 'string') {
         try {
           const parsed = JSON.parse(profile.requirements);
-          processedProfile.requirements = Array.isArray(parsed) ? parsed : [];
+          // パースした結果がオブジェクトならそのまま使用
+          if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+            processedProfile.requirements = parsed;
+          } 
+          // 配列の場合は特別処理（本来はオブジェクトを想定）
+          else if (Array.isArray(parsed)) {
+            console.warn('requirementsが配列形式です。この形式は想定外ですが対応します。');
+            // 配列の場合は適切なオブジェクト構造に変換
+            processedProfile.requirements = {
+              age_min: 18,
+              spec_min: 0,
+              other_conditions: parsed,
+              tattoo_acceptance: '',
+              cup_size_conditions: [],
+              preferred_look_types: [],
+              preferred_hair_colors: [],
+              accepts_temporary_workers: false,
+              requires_arrival_day_before: false
+            };
+          } else {
+            // その他の場合はデフォルト値
+            processedProfile.requirements = {
+              age_min: 18,
+              spec_min: 0,
+              other_conditions: [],
+              tattoo_acceptance: '',
+              cup_size_conditions: [],
+              preferred_look_types: [],
+              preferred_hair_colors: [],
+              accepts_temporary_workers: false,
+              requires_arrival_day_before: false
+            };
+          }
         } catch (e) {
-          console.warn('requirements文字列のパースに失敗しました', e);
-          processedProfile.requirements = [];
+          console.warn('requirements文字列のJSONパースに失敗しました', e);
+          processedProfile.requirements = {
+            age_min: 18,
+            spec_min: 0,
+            other_conditions: [],
+            tattoo_acceptance: '',
+            cup_size_conditions: [],
+            preferred_look_types: [],
+            preferred_hair_colors: [],
+            accepts_temporary_workers: false,
+            requires_arrival_day_before: false
+          };
         }
       }
     } catch (e) {
       console.error('requirementsフィールドの処理中にエラーが発生しました', e);
-      processedProfile.requirements = [];
+      processedProfile.requirements = {
+        age_min: 18,
+        spec_min: 0,
+        other_conditions: [],
+        tattoo_acceptance: '',
+        cup_size_conditions: [],
+        preferred_look_types: [],
+        preferred_hair_colors: [],
+        accepts_temporary_workers: false,
+        requires_arrival_day_before: false
+      };
     }
   }
   
@@ -166,8 +220,8 @@ export function processProfileJsonFields(profile: any): any {
       if (Array.isArray(profile.privacy_measures)) {
         // 各要素が文字列であることを確認
         processedProfile.privacy_measures = profile.privacy_measures
-          .filter(item => item !== null && item !== undefined)
-          .map(item => typeof item === 'string' ? item : String(item));
+          .filter((item: any) => item !== null && item !== undefined)
+          .map((item: any) => typeof item === 'string' ? item : String(item));
       }
       // 文字列の場合はJSON解析を試みる
       else if (typeof profile.privacy_measures === 'string') {
@@ -186,6 +240,32 @@ export function processProfileJsonFields(profile: any): any {
     } catch (e) {
       console.error('privacy_measuresフィールドの処理中にエラーが発生しました', e);
       processedProfile.privacy_measures = [];
+    }
+  }
+  
+  // special_offersフィールドの処理（特別なオファー情報、JSONBとして保存）
+  if (profile.special_offers) {
+    try {
+      // オブジェクトの場合はそのまま使用
+      if (typeof profile.special_offers === 'object' && !Array.isArray(profile.special_offers)) {
+        // そのまま使用（オブジェクトは有効な形式）
+        console.log('special_offersはオブジェクト形式です。', {
+          keys: Object.keys(profile.special_offers)
+        });
+      }
+      // 文字列の場合はJSONパースを試みる
+      else if (typeof profile.special_offers === 'string') {
+        try {
+          const parsed = JSON.parse(profile.special_offers);
+          processedProfile.special_offers = parsed;
+        } catch (e) {
+          console.warn('special_offers文字列のJSONパースに失敗しました', e);
+          processedProfile.special_offers = {};
+        }
+      }
+    } catch (e) {
+      console.error('special_offersフィールドの処理中にエラーが発生しました', e);
+      processedProfile.special_offers = {};
     }
   }
   

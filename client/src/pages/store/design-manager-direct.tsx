@@ -276,10 +276,32 @@ export default function StoreDesignManagerDirect() {
 
   // 設定を保存する
   const handleSave = () => {
-    // 保存前に体験入店情報とキャンペーン情報のセクションを除外
+    // 保存前に必須セクションがない場合は追加し、不要なセクションを除外
     const filteredSettings = ensureRequiredSections(settings);
-    console.log('保存する設定:', filteredSettings.sections.map((s: DesignSection) => s.id));
-    saveSettingsMutation.mutate(filteredSettings);
+    
+    // sanitizeDesignSettingsを使用して設定の整合性を確保
+    const sanitizedSettings = {
+      ...filteredSettings,
+      sections: filteredSettings.sections.map((section: DesignSection) => {
+        // 各セクションが最低限必要な設定を持っていることを確認
+        return {
+          ...section,
+          settings: section.settings || {
+            backgroundColor: '#ffffff',
+            textColor: '#333333',
+            titleColor: '#ff4d7d',
+            borderColor: '#e0e0e0',
+            fontSize: 16,
+            padding: 20,
+            borderRadius: 8,
+            borderWidth: 1
+          }
+        };
+      })
+    };
+    
+    console.log('保存する設定:', sanitizedSettings.sections.map((s: DesignSection) => s.id));
+    saveSettingsMutation.mutate(sanitizedSettings);
   };
 
   // セクション詳細設定のコンポーネント
