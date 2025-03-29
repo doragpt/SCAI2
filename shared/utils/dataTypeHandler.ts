@@ -5,6 +5,8 @@
  * 保つための変換関数を提供します。
  */
 
+import { dataUtils } from './dataTypeUtils';
+
 /**
  * フィールド名に基づいて、データベースに送信する前に適切なデータ型に変換する
  * 
@@ -16,7 +18,6 @@ export function prepareFieldForDatabase(fieldName: string, value: any): any {
   // TEXT型としてデータベースに保存するフィールド
   const textFields = [
     'commitment', 
-    'security_measures',
     'application_notes'
   ];
   
@@ -33,10 +34,37 @@ export function prepareFieldForDatabase(fieldName: string, value: any): any {
     'testimonials'
   ];
   
-  // フィールドの種類に応じた変換処理
+  // フィールド名に応じた特殊処理
+  switch (fieldName) {
+    case 'privacy_measures':
+      // privacy_measuresは常に文字列配列として正規化
+      return dataUtils.processPrivacyMeasures(value);
+    
+    case 'security_measures':
+      // security_measuresはJSONB型または文字列として扱うためカスタム処理
+      return dataUtils.processSecurityMeasures(value);
+    
+    case 'requirements':
+      // requirementsは複雑なオブジェクトとして標準化
+      return dataUtils.processRequirements(value);
+      
+    case 'special_offers':
+      // special_offersは配列として処理
+      return dataUtils.processSpecialOffers(value);
+      
+    case 'gallery_photos':
+      // gallery_photosは配列として処理
+      return dataUtils.processGalleryPhotos(value);
+      
+    case 'design_settings':
+      // design_settingsはオブジェクトとして処理
+      return dataUtils.processDesignSettings(value);
+  }
+  
+  // 一般的なフィールドの種類に応じた変換処理
   if (textFields.includes(fieldName)) {
     // TEXTフィールドは常に文字列として扱う
-    return typeof value === 'string' ? value : String(value || '');
+    return dataUtils.processTextFields(value, '');
   } 
   else if (jsonbFields.includes(fieldName)) {
     // JSONBフィールドの場合

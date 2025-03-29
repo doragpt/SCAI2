@@ -14,6 +14,17 @@ export const sectionSettingsSchema = z.object({
   padding: z.number().optional(),
   borderRadius: z.number().optional(),
   borderWidth: z.number().optional(),
+  // 特殊なセクション設定
+  accentColor: z.string().optional(),      // header, footer
+  fixed: z.boolean().optional(),           // header
+  logoWidth: z.number().optional(),        // header
+  height: z.number().optional(),           // main_visual
+  imageUrl: z.string().optional(),         // main_visual
+  titleText: z.string().optional(),        // main_visual
+  overlayColor: z.string().optional(),     // main_visual
+  columnCount: z.number().optional(),      // gallery
+  postsToShow: z.number().optional(),      // blog
+  itemsToShow: z.number().optional(),      // news
 });
 
 export const designSectionSchema = z.object({

@@ -1,273 +1,384 @@
-import { type DesignSettings, type DesignSection } from '@shared/schema';
-import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
+/**
+ * storeDesignUtils.ts
+ * 
+ * ストアのデザイン設定に関するユーティリティ関数を提供する
+ * JSONB型と通常のJavaScript型の変換や、特殊なセクション設定の処理を行う
+ */
+
+import { 
+  DesignSettings, 
+  DesignSection, 
+  GlobalDesignSettings,
+  SectionSettings,
+  StoreProfile
+} from '../../../shared/schema';
+import { getDefaultDesignSettings } from '../shared/defaultDesignSettings';
+import { dataUtils } from '../../../shared/utils/dataTypeUtils';
 
 /**
- * セクションIDからタイトルを取得する関数
- * @param id セクションID
+ * デザイン設定をデータベースから読み込んで適切な形式に変換する
+ * 
+ * @param designSettingsData データベースから取得したJSONB形式のデザイン設定
+ * @returns 適切に処理されたデザイン設定オブジェクト
  */
-export function getSectionTitle(id: string): string {
-  const sectionTitles: Record<string, string> = {
-    'header': 'ヘッダー',
-    'main_visual': 'メインビジュアル',
-    'intro': '紹介文',
-    'benefits': '待遇・メリット',
-    'work_environment': '職場環境',
-    'requirements': '応募条件',
-    'application_info': '応募方法',
-    'faq': 'よくある質問',
-    'gallery': 'ギャラリー',
-    'blog': 'ブログ',
-    'news': 'お知らせ',
-    'campaign': 'キャンペーン',
-    'experience': '体験入店',
-    'footer': 'フッター'
-  };
+export function processDesignSettings(designSettingsData: unknown): DesignSettings {
+  // データが存在しない場合はデフォルト設定を返す
+  if (!designSettingsData) {
+    return getDefaultDesignSettings();
+  }
 
-  return sectionTitles[id] || `セクション: ${id}`;
+  try {
+    // 文字列の場合はJSONとしてパース
+    const parsedData = typeof designSettingsData === 'string'
+      ? JSON.parse(designSettingsData)
+      : designSettingsData;
+
+    // null または undefined の場合はデフォルト設定を返す
+    if (!parsedData) {
+      return getDefaultDesignSettings();
+    }
+
+    // オブジェクトでない場合はデフォルト設定を返す
+    if (typeof parsedData !== 'object') {
+      console.warn('デザイン設定が不正な形式です:', parsedData);
+      return getDefaultDesignSettings();
+    }
+
+    const defaultSettings = getDefaultDesignSettings();
+    
+    // セクションとグローバル設定を確認し、必要に応じてデフォルト値でマージ
+    const settings: DesignSettings = {
+      globalSettings: processGlobalSettings(parsedData.globalSettings, defaultSettings.globalSettings),
+      sections: processSections(parsedData.sections, defaultSettings.sections)
+    };
+
+    return settings;
+
+  } catch (error) {
+    console.error('デザイン設定の処理中にエラーが発生しました:', error);
+    return getDefaultDesignSettings();
+  }
 }
 
 /**
- * 必須セクションがない場合にデフォルト設定を追加する関数
- * @param settings 現在のデザイン設定
+ * グローバル設定を処理する
  */
-export function ensureRequiredSections(settings: DesignSettings): DesignSettings {
-  if (!settings) return getDefaultDesignSettings();
-  
-  // 設定のコピーを作成
-  const processedSettings: DesignSettings = {
-    globalSettings: { ...settings.globalSettings },
-    sections: [...settings.sections]
+function processGlobalSettings(settings: unknown, defaultSettings: GlobalDesignSettings): GlobalDesignSettings {
+  if (!settings || typeof settings !== 'object') {
+    return defaultSettings;
+  }
+
+  // 型アサーション - この時点でオブジェクトであることは確認済み
+  const settingsObj = settings as Record<string, unknown>;
+
+  return {
+    mainColor: typeof settingsObj.mainColor === 'string' ? settingsObj.mainColor : defaultSettings.mainColor,
+    secondaryColor: typeof settingsObj.secondaryColor === 'string' ? settingsObj.secondaryColor : defaultSettings.secondaryColor,
+    accentColor: typeof settingsObj.accentColor === 'string' ? settingsObj.accentColor : defaultSettings.accentColor,
+    backgroundColor: typeof settingsObj.backgroundColor === 'string' ? settingsObj.backgroundColor : defaultSettings.backgroundColor,
+    fontFamily: typeof settingsObj.fontFamily === 'string' ? settingsObj.fontFamily : defaultSettings.fontFamily,
+    borderRadius: typeof settingsObj.borderRadius === 'number' ? settingsObj.borderRadius : defaultSettings.borderRadius,
+    maxWidth: typeof settingsObj.maxWidth === 'number' ? settingsObj.maxWidth : defaultSettings.maxWidth,
+    hideSectionTitles: typeof settingsObj.hideSectionTitles === 'boolean' ? settingsObj.hideSectionTitles : defaultSettings.hideSectionTitles,
   };
-  
-  // 必須セクションのリスト
-  const requiredSections = ['main_visual', 'intro', 'footer'];
-  
-  // 必須セクションの存在確認
-  requiredSections.forEach(sectionId => {
-    const sectionExists = processedSettings.sections.some(section => section.id === sectionId);
-    
-    if (!sectionExists) {
-      console.warn(`必須セクション: ${sectionId} が見つかりません。デフォルト設定を追加します。`);
-      
-      // デフォルト設定からセクションを取得
-      const defaultSettings = getDefaultDesignSettings();
-      const defaultSection = defaultSettings.sections.find(section => section.id === sectionId);
-      
-      if (defaultSection) {
-        // デフォルトセクションを追加
-        processedSettings.sections.push({
-          ...defaultSection,
-          // 順序を調整（既存のセクションの後ろに追加）
-          order: Math.max(...processedSettings.sections.map(s => s.order), 0) + 1
-        });
-      }
-    }
+}
+
+/**
+ * セクションの配列を処理する
+ */
+function processSections(sections: unknown, defaultSections: DesignSection[]): DesignSection[] {
+  if (!sections || !Array.isArray(sections) || sections.length === 0) {
+    return defaultSections;
+  }
+
+  // 各セクションID用のデフォルトセクションのマップを作成
+  const defaultSectionsMap = new Map<string, DesignSection>();
+  defaultSections.forEach(section => {
+    defaultSectionsMap.set(section.id, section);
   });
-  
+
+  // 各セクションを処理
+  return sections.map(section => {
+    if (!section || typeof section !== 'object') {
+      throw new Error('セクションの形式が不正です');
+    }
+
+    // 型アサーション
+    const sectionObj = section as Record<string, unknown>;
+    const id = typeof sectionObj.id === 'string' ? sectionObj.id : '';
+    
+    if (!id) {
+      throw new Error('セクションIDが不正です');
+    }
+
+    // このIDのデフォルトセクションを取得
+    const defaultSection = defaultSectionsMap.get(id);
+    if (!defaultSection) {
+      // IDに対応するデフォルトセクションがない場合は、与えられたセクションをそのまま使用
+      return {
+        id,
+        title: typeof sectionObj.title === 'string' ? sectionObj.title : id,
+        order: typeof sectionObj.order === 'number' ? sectionObj.order : 0,
+        visible: typeof sectionObj.visible === 'boolean' ? sectionObj.visible : true,
+        settings: processSectionSettings(sectionObj.settings, {} as SectionSettings)
+      };
+    }
+
+    // デフォルトセクションとマージ
+    return {
+      id,
+      title: typeof sectionObj.title === 'string' ? sectionObj.title : defaultSection.title,
+      order: typeof sectionObj.order === 'number' ? sectionObj.order : defaultSection.order,
+      visible: typeof sectionObj.visible === 'boolean' ? sectionObj.visible : defaultSection.visible,
+      settings: processSectionSettings(sectionObj.settings, defaultSection.settings || {})
+    };
+  });
+}
+
+/**
+ * セクション設定を処理する
+ */
+function processSectionSettings(settings: unknown, defaultSettings: SectionSettings): SectionSettings {
+  if (!settings || typeof settings !== 'object') {
+    return defaultSettings;
+  }
+
+  // 型アサーション
+  const settingsObj = settings as Record<string, unknown>;
+
+  // 基本設定
+  const processedSettings: SectionSettings = {
+    backgroundColor: typeof settingsObj.backgroundColor === 'string' ? settingsObj.backgroundColor : defaultSettings.backgroundColor,
+    textColor: typeof settingsObj.textColor === 'string' ? settingsObj.textColor : defaultSettings.textColor,
+    borderColor: typeof settingsObj.borderColor === 'string' ? settingsObj.borderColor : defaultSettings.borderColor,
+    titleColor: typeof settingsObj.titleColor === 'string' ? settingsObj.titleColor : defaultSettings.titleColor,
+    fontSize: typeof settingsObj.fontSize === 'number' ? settingsObj.fontSize : defaultSettings.fontSize,
+    padding: typeof settingsObj.padding === 'number' ? settingsObj.padding : defaultSettings.padding,
+    borderRadius: typeof settingsObj.borderRadius === 'number' ? settingsObj.borderRadius : defaultSettings.borderRadius,
+    borderWidth: typeof settingsObj.borderWidth === 'number' ? settingsObj.borderWidth : defaultSettings.borderWidth,
+  };
+
+  // 特殊設定（セクションタイプに応じた設定）
+  if (typeof settingsObj.accentColor === 'string') {
+    processedSettings.accentColor = settingsObj.accentColor;
+  } else if (defaultSettings.accentColor) {
+    processedSettings.accentColor = defaultSettings.accentColor;
+  }
+
+  if (typeof settingsObj.fixed === 'boolean') {
+    processedSettings.fixed = settingsObj.fixed;
+  } else if (defaultSettings.fixed !== undefined) {
+    processedSettings.fixed = defaultSettings.fixed;
+  }
+
+  if (typeof settingsObj.logoWidth === 'number') {
+    processedSettings.logoWidth = settingsObj.logoWidth;
+  } else if (defaultSettings.logoWidth !== undefined) {
+    processedSettings.logoWidth = defaultSettings.logoWidth;
+  }
+
+  if (typeof settingsObj.height === 'number') {
+    processedSettings.height = settingsObj.height;
+  } else if (defaultSettings.height !== undefined) {
+    processedSettings.height = defaultSettings.height;
+  }
+
+  if (typeof settingsObj.imageUrl === 'string') {
+    processedSettings.imageUrl = settingsObj.imageUrl;
+  } else if (defaultSettings.imageUrl !== undefined) {
+    processedSettings.imageUrl = defaultSettings.imageUrl;
+  }
+
+  if (typeof settingsObj.titleText === 'string') {
+    processedSettings.titleText = settingsObj.titleText;
+  } else if (defaultSettings.titleText !== undefined) {
+    processedSettings.titleText = defaultSettings.titleText;
+  }
+
+  if (typeof settingsObj.overlayColor === 'string') {
+    processedSettings.overlayColor = settingsObj.overlayColor;
+  } else if (defaultSettings.overlayColor !== undefined) {
+    processedSettings.overlayColor = defaultSettings.overlayColor;
+  }
+
+  if (typeof settingsObj.columnCount === 'number') {
+    processedSettings.columnCount = settingsObj.columnCount;
+  } else if (defaultSettings.columnCount !== undefined) {
+    processedSettings.columnCount = defaultSettings.columnCount;
+  }
+
+  if (typeof settingsObj.postsToShow === 'number') {
+    processedSettings.postsToShow = settingsObj.postsToShow;
+  } else if (defaultSettings.postsToShow !== undefined) {
+    processedSettings.postsToShow = defaultSettings.postsToShow;
+  }
+
+  if (typeof settingsObj.itemsToShow === 'number') {
+    processedSettings.itemsToShow = settingsObj.itemsToShow;
+  } else if (defaultSettings.itemsToShow !== undefined) {
+    processedSettings.itemsToShow = defaultSettings.itemsToShow;
+  }
+
   return processedSettings;
 }
 
 /**
- * デザイン設定の整合性を確保する関数
- * @param settings 現在のデザイン設定
+ * デザイン設定をデータベースに保存するための形式に変換する
+ * 
+ * @param designSettings フロントエンドで使用されているデザイン設定
+ * @returns データベースに保存可能な形式のデザイン設定
  */
-export function sanitizeDesignSettings(settings: DesignSettings): DesignSettings {
-  if (!settings) return getDefaultDesignSettings();
-  
-  // 設定のコピーを作成
-  const processedSettings: DesignSettings = {
-    globalSettings: { ...settings.globalSettings },
-    sections: [...settings.sections]
-  };
-  
-  // グローバル設定がない場合はデフォルト値を使用
-  if (!processedSettings.globalSettings) {
-    processedSettings.globalSettings = getDefaultDesignSettings().globalSettings;
+export function prepareDesignSettingsForDatabase(designSettings: DesignSettings): unknown {
+  try {
+    // dataUtilsを使用して安全にJSONBとして保存できる形式に変換
+    return dataUtils.prepareObjectForJsonb(designSettings);
+  } catch (error) {
+    console.error('デザイン設定のデータベース保存準備でエラーが発生しました:', error);
+    // エラーの場合はそのまま返す（API側でバリデーションが必要）
+    return designSettings;
   }
-  
-  // セクションがない場合は空配列を使用
-  if (!Array.isArray(processedSettings.sections)) {
-    processedSettings.sections = [];
-  }
-  
-  return ensureRequiredSections(processedSettings);
 }
 
 /**
- * プロフィールデータ内のJSONB型フィールドを処理する関数
- * @param profile 店舗プロフィール
+ * 特定のセクションのデフォルト設定を取得する
+ * 
+ * @param sectionId セクションID
+ * @returns デフォルトのセクション設定、存在しない場合はnull
  */
-export function processProfileJsonFields(profile: any): any {
-  if (!profile) return null;
+export function getDefaultSectionById(sectionId: string): DesignSection | null {
+  const defaultSettings = getDefaultDesignSettings();
+  return defaultSettings.sections.find(section => section.id === sectionId) || null;
+}
+
+/**
+ * 特定のセクションの設定をリセットする
+ * 
+ * @param settings 現在のデザイン設定
+ * @param sectionId リセットするセクションのID
+ * @returns 更新されたデザイン設定
+ */
+export function resetSectionToDefault(settings: DesignSettings, sectionId: string): DesignSettings {
+  const defaultSection = getDefaultSectionById(sectionId);
+  if (!defaultSection) {
+    return settings;
+  }
+
+  // 指定されたセクションをデフォルト値に置き換えた新しい設定を返す
+  return {
+    ...settings,
+    sections: settings.sections.map(section => 
+      section.id === sectionId ? defaultSection : section
+    )
+  };
+}
+
+/**
+ * セクションIDからタイトルを取得する
+ * 
+ * @param sectionId セクションのID
+ * @returns 表示用のタイトル
+ */
+export function getSectionTitle(sectionId: string): string {
+  const sectionTitles: Record<string, string> = {
+    'header': 'ヘッダー',
+    'hero': 'メインビジュアル',
+    'about': '店舗紹介',
+    'features': '特徴・強み',
+    'benefits': '待遇・福利厚生',
+    'gallery': 'ギャラリー',
+    'testimonials': '体験談・口コミ',
+    'requirements': '募集要項',
+    'faq': 'よくある質問',
+    'contact': 'お問い合わせ',
+    'recruiter': '採用担当者',
+    'location': 'アクセス・地図',
+    'campaign': 'キャンペーン',
+    'blog': 'ブログ記事',
+    'statistics': '実績データ',
+    'schedule': '出勤スケジュール',
+    'welcome': '新人歓迎',
+    'experience': '体験入店案内',
+    'security': 'セキュリティ対策',
+    'payment': '給与・報酬',
+    'cta': '応募ボタン',
+    'footer': 'フッター'
+  };
   
-  // 処理済みデータを格納するオブジェクト
-  const processedProfile = { ...profile };
+  return sectionTitles[sectionId] || sectionId;
+}
+
+/**
+ * 必須セクションを含む設定を確保する
+ * 
+ * @param settings 現在のデザイン設定
+ * @returns 必須セクションを含む設定
+ */
+export function ensureRequiredSections(settings: DesignSettings): DesignSettings {
+  if (!settings) {
+    return getDefaultDesignSettings();
+  }
   
-  // requirementsフィールドの処理（オブジェクトまたは配列を想定）
-  if (profile.requirements) {
-    try {
-      // オブジェクトの場合はそのまま使用（APIはJSONB型としてオブジェクト形式で格納）
-      if (typeof profile.requirements === 'object' && !Array.isArray(profile.requirements)) {
-        // そのまま使用（オブジェクトは有効な形式）
-        console.log('requirementsはオブジェクト形式です。', {
-          keys: Object.keys(profile.requirements)
-        });
+  // 必須セクションのID
+  const requiredSectionIds = ['header', 'hero', 'about', 'benefits', 'requirements', 'contact', 'footer'];
+  
+  // デフォルト設定
+  const defaultSettings = getDefaultDesignSettings();
+  const defaultSections = defaultSettings.sections;
+  
+  // 現在のセクションIDのセット
+  const currentSectionIds = new Set(settings.sections.map(s => s.id));
+  
+  // 必須セクションが不足している場合は追加
+  const additionalSections = [];
+  for (const id of requiredSectionIds) {
+    if (!currentSectionIds.has(id)) {
+      const defaultSection = defaultSections.find(s => s.id === id);
+      if (defaultSection) {
+        additionalSections.push(defaultSection);
       }
-      // 文字列の場合はJSONパースを試みる
-      else if (typeof profile.requirements === 'string') {
-        try {
-          const parsed = JSON.parse(profile.requirements);
-          // パースした結果がオブジェクトならそのまま使用
-          if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-            processedProfile.requirements = parsed;
-          } 
-          // 配列の場合は特別処理（本来はオブジェクトを想定）
-          else if (Array.isArray(parsed)) {
-            console.warn('requirementsが配列形式です。この形式は想定外ですが対応します。');
-            // 配列の場合は適切なオブジェクト構造に変換
-            processedProfile.requirements = {
-              age_min: 18,
-              spec_min: 0,
-              other_conditions: parsed,
-              tattoo_acceptance: '',
-              cup_size_conditions: [],
-              preferred_look_types: [],
-              preferred_hair_colors: [],
-              accepts_temporary_workers: false,
-              requires_arrival_day_before: false
-            };
-          } else {
-            // その他の場合はデフォルト値
-            processedProfile.requirements = {
-              age_min: 18,
-              spec_min: 0,
-              other_conditions: [],
-              tattoo_acceptance: '',
-              cup_size_conditions: [],
-              preferred_look_types: [],
-              preferred_hair_colors: [],
-              accepts_temporary_workers: false,
-              requires_arrival_day_before: false
-            };
-          }
-        } catch (e) {
-          console.warn('requirements文字列のJSONパースに失敗しました', e);
-          processedProfile.requirements = {
-            age_min: 18,
-            spec_min: 0,
-            other_conditions: [],
-            tattoo_acceptance: '',
-            cup_size_conditions: [],
-            preferred_look_types: [],
-            preferred_hair_colors: [],
-            accepts_temporary_workers: false,
-            requires_arrival_day_before: false
-          };
-        }
-      }
-    } catch (e) {
-      console.error('requirementsフィールドの処理中にエラーが発生しました', e);
-      processedProfile.requirements = {
-        age_min: 18,
-        spec_min: 0,
-        other_conditions: [],
-        tattoo_acceptance: '',
-        cup_size_conditions: [],
-        preferred_look_types: [],
-        preferred_hair_colors: [],
-        accepts_temporary_workers: false,
-        requires_arrival_day_before: false
-      };
     }
   }
   
-  // security_measuresフィールドの処理（配列を想定）
-  if (profile.security_measures) {
-    try {
-      // 配列の場合はそのまま使用
-      if (Array.isArray(profile.security_measures)) {
-        // 何もしない
-      }
-      // 文字列の場合はJSON解析を試みる
-      else if (typeof profile.security_measures === 'string') {
-        try {
-          const parsed = JSON.parse(profile.security_measures);
-          processedProfile.security_measures = Array.isArray(parsed) ? parsed : [profile.security_measures];
-        } catch (e) {
-          console.warn('JSON文字列のパースに失敗しました', { 
-            value: profile.security_measures,
-            error: e
-          });
-          // JSONとして解析できない場合は、単一の文字列として配列に変換
-          processedProfile.security_measures = [profile.security_measures];
-        }
-      }
-      // その他の型の場合は空配列
-      else {
-        console.warn('フィールド security_measures は配列であるべきですが、配列ではありません。空配列を使用します。');
-        processedProfile.security_measures = [];
-      }
-    } catch (e) {
-      console.error('security_measuresフィールドの処理中にエラーが発生しました', e);
-      processedProfile.security_measures = [];
-    }
+  if (additionalSections.length === 0) {
+    return settings;
   }
   
-  // privacy_measuresフィールドの処理（配列を想定）
-  if (profile.privacy_measures) {
-    try {
-      // 配列の場合はそのまま使用
-      if (Array.isArray(profile.privacy_measures)) {
-        // 各要素が文字列であることを確認
-        processedProfile.privacy_measures = profile.privacy_measures
-          .filter((item: any) => item !== null && item !== undefined)
-          .map((item: any) => typeof item === 'string' ? item : String(item));
-      }
-      // 文字列の場合はJSON解析を試みる
-      else if (typeof profile.privacy_measures === 'string') {
-        try {
-          const parsed = JSON.parse(profile.privacy_measures);
-          processedProfile.privacy_measures = Array.isArray(parsed) ? parsed : [profile.privacy_measures];
-        } catch (e) {
-          // JSONとして解析できない場合は、単一の文字列として配列に変換
-          processedProfile.privacy_measures = [profile.privacy_measures];
-        }
-      }
-      // その他の型の場合は文字列変換して配列に
-      else {
-        processedProfile.privacy_measures = [String(profile.privacy_measures)];
-      }
-    } catch (e) {
-      console.error('privacy_measuresフィールドの処理中にエラーが発生しました', e);
-      processedProfile.privacy_measures = [];
-    }
+  // 必須セクションを追加した新しい設定を返す
+  return {
+    ...settings,
+    sections: [
+      ...settings.sections,
+      ...additionalSections
+    ]
+  };
+}
+
+/**
+ * 店舗プロフィールのJSONフィールドを処理する
+ * 
+ * @param profileData 店舗プロフィールデータ
+ * @returns JSONフィールドが処理された店舗プロフィール
+ */
+export function processProfileJsonFields(profileData: any): any {
+  if (!profileData) {
+    return null;
   }
   
-  // special_offersフィールドの処理（特別なオファー情報、JSONBとして保存）
-  if (profile.special_offers) {
-    try {
-      // オブジェクトの場合はそのまま使用
-      if (typeof profile.special_offers === 'object' && !Array.isArray(profile.special_offers)) {
-        // そのまま使用（オブジェクトは有効な形式）
-        console.log('special_offersはオブジェクト形式です。', {
-          keys: Object.keys(profile.special_offers)
-        });
-      }
-      // 文字列の場合はJSONパースを試みる
-      else if (typeof profile.special_offers === 'string') {
-        try {
-          const parsed = JSON.parse(profile.special_offers);
-          processedProfile.special_offers = parsed;
-        } catch (e) {
-          console.warn('special_offers文字列のJSONパースに失敗しました', e);
-          processedProfile.special_offers = {};
-        }
-      }
-    } catch (e) {
-      console.error('special_offersフィールドの処理中にエラーが発生しました', e);
-      processedProfile.special_offers = {};
-    }
+  try {
+    // dataUtilsを使用して各フィールドを処理
+    return {
+      ...profileData,
+      // JSONBフィールドの正規化
+      gallery_photos: dataUtils.processGalleryPhotos(profileData.gallery_photos),
+      special_offers: dataUtils.processSpecialOffers(profileData.special_offers),
+      requirements: dataUtils.processRequirements(profileData.requirements),
+      design_settings: dataUtils.processDesignSettings(profileData.design_settings),
+      // TEXTフィールドで特別処理が必要なもの
+      privacy_measures: dataUtils.processPrivacyMeasures(profileData.privacy_measures),
+      security_measures: dataUtils.processSecurityMeasures(profileData.security_measures),
+    };
+  } catch (error) {
+    console.error('プロフィールデータの処理中にエラーが発生しました:', error);
+    return profileData;
   }
-  
-  return processedProfile;
 }

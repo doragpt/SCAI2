@@ -7,15 +7,19 @@ import { type DesignSettings } from '@shared/schema';
 export function getDefaultDesignSettings(): DesignSettings {
   return {
     globalSettings: {
-      primaryColor: '#ff4d7d',
+      mainColor: '#ff4d7d',
       secondaryColor: '#7c40ff',
+      accentColor: '#ff1493',
       backgroundColor: '#ffffff',
       fontFamily: 'sans-serif',
-      containerMaxWidth: 1200
+      borderRadius: 8,
+      maxWidth: 1200,
+      hideSectionTitles: false
     },
     sections: [
       {
         id: 'header',
+        title: 'ヘッダー',
         order: 0,
         visible: true,
         settings: {
@@ -28,6 +32,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'main_visual',
+        title: 'メインビジュアル',
         order: 1,
         visible: true,
         settings: {
@@ -42,6 +47,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'intro',
+        title: '店舗紹介',
         order: 2,
         visible: true,
         settings: {
@@ -57,6 +63,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'benefits',
+        title: '待遇・福利厚生',
         order: 3,
         visible: true,
         settings: {
@@ -72,6 +79,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'work_environment',
+        title: '働く環境',
         order: 4,
         visible: true,
         settings: {
@@ -87,6 +95,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'requirements',
+        title: '応募条件',
         order: 5,
         visible: true,
         settings: {
@@ -102,6 +111,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'application_info',
+        title: '応募情報',
         order: 6,
         visible: true,
         settings: {
@@ -117,6 +127,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'faq',
+        title: 'よくある質問',
         order: 7,
         visible: true,
         settings: {
@@ -132,6 +143,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'gallery',
+        title: '写真ギャラリー',
         order: 8,
         visible: true,
         settings: {
@@ -148,6 +160,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'blog',
+        title: 'ブログ',
         order: 9,
         visible: true,
         settings: {
@@ -164,6 +177,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'news',
+        title: 'お知らせ',
         order: 10,
         visible: true,
         settings: {
@@ -180,6 +194,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'campaign',
+        title: 'キャンペーン',
         order: 11,
         visible: false,
         settings: {
@@ -195,6 +210,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'experience',
+        title: '体験談',
         order: 12,
         visible: false,
         settings: {
@@ -210,6 +226,7 @@ export function getDefaultDesignSettings(): DesignSettings {
       },
       {
         id: 'footer',
+        title: 'フッター',
         order: 13,
         visible: true,
         settings: {

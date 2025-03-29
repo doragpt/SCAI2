@@ -21,10 +21,13 @@ import {
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { 
-  ensureRequiredSections, 
-  getSectionTitle, 
-  processProfileJsonFields 
-} from '@/utils/storeDesignUtils';
+  processDesignSettings, 
+  getDefaultSectionById, 
+  resetSectionToDefault,
+  getSectionTitle,
+  ensureRequiredSections,
+  processProfileJsonFields
+} from '../../utils/storeDesignUtils';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 import PreviewRenderer from '@/components/store/PreviewRenderer';
 import { type DesignSettings, type DesignSection, type GlobalDesignSettings } from '@shared/schema';

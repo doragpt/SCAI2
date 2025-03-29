@@ -7,6 +7,148 @@
 
 export const dataUtils = {
   /**
+   * プライバシー対策データ処理特化関数
+   * privacy_measuresフィールド専用の処理ロジック
+   * 常に文字列配列として正規化
+   */
+  processPrivacyMeasures: (value: any): string[] => {
+    if (!value) return [];
+    
+    // 既に配列の場合
+    if (Array.isArray(value)) {
+      return value
+        .filter(item => item !== null && item !== undefined)
+        .map(item => typeof item === 'string' ? item : String(item));
+    }
+    
+    // 文字列の場合
+    if (typeof value === 'string') {
+      try {
+        // JSON文字列として解析を試みる
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          // 配列として解析できた場合は各要素を確認
+          return parsed
+            .filter(item => item !== null && item !== undefined)
+            .map(item => typeof item === 'string' ? item : String(item));
+        }
+        // JSON文字列だが配列ではない場合は単一要素の配列として扱う
+        return [value];
+      } catch (e) {
+        // JSON解析に失敗した場合（通常のテキスト）は単一要素の配列として扱う
+        return [value];
+      }
+    }
+    
+    // オブジェクトまたはその他の型の場合
+    return [String(value)];
+  },
+
+  /**
+   * セキュリティ対策データ処理特化関数
+   * security_measuresフィールド専用の処理ロジック
+   * JSONB型の場合と文字列（TEXT型）の場合の両方に対応
+   */
+  processSecurityMeasures: (value: any): any => {
+    if (!value) return [];
+    
+    // 既に配列の場合
+    if (Array.isArray(value)) {
+      return value
+        .filter(item => item !== null && item !== undefined)
+        .map(item => {
+          // オブジェクトの場合はそのまま
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            return {
+              id: item.id || `security-${Math.random().toString(36).substring(2, 9)}`,
+              title: item.title || String(item.name || ''),
+              description: item.description || '',
+              category: item.category || 'other',
+              level: item.level || 'medium',
+              order: item.order || 0
+            };
+          }
+          // 文字列の場合は最小限の構造を持つオブジェクトに変換
+          return {
+            id: `security-${Math.random().toString(36).substring(2, 9)}`,
+            title: typeof item === 'string' ? item : String(item),
+            description: '',
+            category: 'other',
+            level: 'medium',
+            order: 0
+          };
+        });
+    }
+    
+    // 文字列の場合
+    if (typeof value === 'string') {
+      try {
+        // JSON文字列として解析を試みる
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          // 配列として解析できた場合は各要素を処理
+          return parsed
+            .filter(item => item !== null && item !== undefined)
+            .map((item, index) => {
+              if (item && typeof item === 'object' && !Array.isArray(item)) {
+                return {
+                  id: item.id || `security-${Math.random().toString(36).substring(2, 9)}`,
+                  title: item.title || String(item.name || ''),
+                  description: item.description || '',
+                  category: item.category || 'other',
+                  level: item.level || 'medium',
+                  order: item.order || index
+                };
+              }
+              return {
+                id: `security-${Math.random().toString(36).substring(2, 9)}`,
+                title: typeof item === 'string' ? item : String(item),
+                description: '',
+                category: 'other',
+                level: 'medium',
+                order: index
+              };
+            });
+        }
+        // 単一要素の配列として扱う
+        return [{ 
+          id: `security-${Math.random().toString(36).substring(2, 9)}`,
+          title: value,
+          description: '',
+          category: 'other',
+          level: 'medium',
+          order: 0
+        }];
+      } catch (e) {
+        // JSON解析に失敗した場合（通常のテキスト）
+        return [{ 
+          id: `security-${Math.random().toString(36).substring(2, 9)}`,
+          title: value,
+          description: '',
+          category: 'other',
+          level: 'medium',
+          order: 0
+        }];
+      }
+    }
+    
+    // オブジェクトの場合
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return [{
+        id: value.id || `security-${Math.random().toString(36).substring(2, 9)}`,
+        title: value.title || String(value.name || ''),
+        description: value.description || '',
+        category: value.category || 'other',
+        level: value.level || 'medium',
+        order: value.order || 0
+      }];
+    }
+    
+    // その他の型
+    return [];
+  },
+
+  /**
    * 値を配列として確保する
    * @param value 変換する値
    * @param defaultValue デフォルト値（解析失敗時）
@@ -89,6 +231,26 @@ export const dataUtils = {
    */
   prepareJsonbObject: (value: any, defaultShape: any): any => {
     return dataUtils.ensureObject(value, defaultShape);
+  },
+  
+  /**
+   * JSONB型用の一般オブジェクト処理
+   * PostgreSQLでJSONB型カラムに保存する任意のオブジェクトデータを準備
+   */
+  prepareObjectForJsonb: (value: any): any => {
+    if (!value) return null;
+    
+    // 文字列の場合は既にJSON化されていると仮定
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return value; // パースに失敗した場合は元の値を返す
+      }
+    }
+    
+    // オブジェクトや配列はそのまま返す（SQLリクエスト時に適切に処理される）
+    return value;
   },
 
   /**
@@ -191,6 +353,8 @@ export const dataUtils = {
     // その他の型は文字列化
     return String(value || defaultValue);
   },
+
+
   
   /**
    * ギャラリー写真の処理
