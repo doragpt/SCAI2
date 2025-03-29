@@ -866,17 +866,25 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
     try {
       // privacy_measures処理 - JSONB型フィールド
       if (data.privacy_measures !== undefined) {
-        // 文字列の場合は有効なJSON形式であることを確認
-        if (typeof data.privacy_measures === 'string') {
+        // privacy_measuresは配列であることを保証する
+        if (Array.isArray(data.privacy_measures)) {
+          // すでに配列の場合はそのまま使用
+          cleanedData.privacy_measures = data.privacy_measures;
+        } else if (typeof data.privacy_measures === 'string') {
           // 空の文字列は空の配列に変換
           if (data.privacy_measures.trim() === '') {
             cleanedData.privacy_measures = [];
           } else {
             try {
-              // 文字列をパースしてJSON互換性を確認
+              // 文字列をパースして配列かどうか確認
               const parsed = JSON.parse(data.privacy_measures);
-              // 配列またはオブジェクトとして扱う
-              cleanedData.privacy_measures = parsed;
+              if (Array.isArray(parsed)) {
+                // パースした結果が配列ならそのまま使用
+                cleanedData.privacy_measures = parsed;
+              } else {
+                // 配列でない場合は単一要素の配列にラップ
+                cleanedData.privacy_measures = [data.privacy_measures];
+              }
             } catch (e) {
               // JSONとして解析できない文字列は配列にラップ
               cleanedData.privacy_measures = [data.privacy_measures];
@@ -885,8 +893,16 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         } else if (data.privacy_measures === null) {
           // nullの場合は空の配列に
           cleanedData.privacy_measures = [];
+        } else if (typeof data.privacy_measures === 'object') {
+          // オブジェクトの場合は配列にラップする
+          cleanedData.privacy_measures = [JSON.stringify(data.privacy_measures)];
+        } else {
+          // その他の型（数値や真偽値など）も文字列化して配列にラップ
+          cleanedData.privacy_measures = [String(data.privacy_measures)];
         }
-        // オブジェクト型の場合はそのまま（配列またはオブジェクト）
+      } else {
+        // undefinedの場合は空の配列をセット
+        cleanedData.privacy_measures = [];
       }
 
       // commitment処理

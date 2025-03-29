@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 interface PrivacyMeasuresDisplayProps {
   measures?: z.infer<typeof privacyMeasureSchema>[];
   securityMeasures?: string;
-  privacyMeasures?: string;
+  privacyMeasures?: string[] | string;
   commitment?: string;
   compact?: boolean;
   className?: string;
@@ -111,7 +111,15 @@ export function PrivacyMeasuresDisplay({
                   </div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-base mb-2">プライバシー保護</h4>
-                    <p className="text-sm whitespace-pre-line">{privacyMeasures}</p>
+                    {Array.isArray(privacyMeasures) ? (
+                      <ul className="text-sm space-y-1 list-disc pl-5">
+                        {privacyMeasures.map((measure, index) => (
+                          <li key={index}>{measure}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm whitespace-pre-line">{privacyMeasures}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>

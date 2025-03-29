@@ -541,7 +541,7 @@ export const store_profiles = pgTable("store_profiles", {
   // 新規追加項目
   access_info: text("access_info"), // アクセス情報（最寄り駅・交通手段）
   security_measures: text("security_measures"), // 安全への取り組み
-  privacy_measures: text("privacy_measures"), // プライバシー保護
+  privacy_measures: jsonb("privacy_measures").$type<string[]>().default([]), // プライバシー保護（JSONB型）
   commitment: text("commitment"), // コミットメント
   
   // バニラ風の拡張項目
@@ -907,7 +907,7 @@ export const storeProfileSchema = z.object({
   // 追加項目
   access_info: z.string().max(1000, "アクセス情報は1000文字以内で入力してください").optional(), // アクセス情報
   security_measures: z.string().max(1000, "安全への取り組みは1000文字以内で入力してください").optional(), // 安全への取り組み
-  privacy_measures: z.string().max(1000, "プライバシー保護は1000文字以内で入力してください").optional(), // プライバシー保護
+  privacy_measures: z.array(z.string()).default([]).optional(), // プライバシー保護（JSONB型）
   commitment: z.string().max(1000, "コミットメントは1000文字以内で入力してください").optional(), // コミットメント
   
   // バニラ風の拡張項目
@@ -1428,7 +1428,7 @@ export interface JobResponse {
   // バニラ風の拡張項目
   job_videos?: z.infer<typeof jobVideoSchema>[];       // 求人動画コンテンツ
   salary_examples?: z.infer<typeof salaryExampleSchema>[]; // 給与例・体験保証ケース
-  privacy_measures?: string; // プライバシー保護（TEXT型）
+  privacy_measures?: string[]; // プライバシー保護（JSONB型）
   facility_features?: z.infer<typeof facilityFeatureSchema>[]; // 店舗設備
   testimonials?: {                 // 口コミ・体験談
     user_name: string;
