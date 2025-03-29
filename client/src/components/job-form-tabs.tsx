@@ -533,10 +533,10 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           // 応募要件・アクセス情報
           application_requirements: data.application_requirements || "",
           access_info: data.access_info || "",
-          // セキュリティ対策は配列もしくは空配列に変換する
-          security_measures: Array.isArray(data.security_measures) ? data.security_measures : 
-                            (typeof data.security_measures === 'string' && data.security_measures.trim() !== '' ? 
-                            [data.security_measures] : []),
+          // セキュリティ対策は文字列として扱う
+          security_measures: typeof data.security_measures === 'string' ? data.security_measures : 
+                            (Array.isArray(data.security_measures) ? 
+                            data.security_measures.join(', ') : ''),
           privacy_measures: data.privacy_measures || "",
           commitment: data.commitment || "",
           
@@ -880,7 +880,7 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
         }
       }
 
-      // security_measures処理
+      // security_measures処理 - 必ず文字列として扱う
       if (data.security_measures !== undefined) {
         // オブジェクトや配列が誤って渡された場合に文字列化
         if (typeof data.security_measures === 'object') {
@@ -888,7 +888,12 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
             type: typeof data.security_measures,
             isArray: Array.isArray(data.security_measures)
           });
-          cleanedData.security_measures = JSON.stringify(data.security_measures);
+          // 配列の場合はカンマ区切りの文字列に、それ以外のオブジェクトはJSON文字列に
+          if (Array.isArray(data.security_measures)) {
+            cleanedData.security_measures = data.security_measures.join(', ');
+          } else {
+            cleanedData.security_measures = JSON.stringify(data.security_measures);
+          }
         }
       }
     } catch (error) {
