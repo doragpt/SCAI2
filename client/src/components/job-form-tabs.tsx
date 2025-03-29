@@ -96,7 +96,14 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
       // 追加フィールド
       access_info: initialData?.access_info || "",
       security_measures: initialData?.security_measures || "",
-      privacy_measures: initialData?.privacy_measures || "",
+      // privacy_measuresはJSONB型配列として必ず扱う
+      privacy_measures: Array.isArray(initialData?.privacy_measures) 
+        ? initialData.privacy_measures 
+        : (initialData?.privacy_measures 
+            ? (typeof initialData.privacy_measures === 'string' 
+                ? [initialData.privacy_measures] 
+                : []) 
+            : []),
       commitment: initialData?.commitment || "",
       
       // サポート情報
@@ -542,8 +549,12 @@ export function JobFormTabs({ initialData, onSuccess, onCancel }: JobFormProps) 
           security_measures: typeof data.security_measures === 'string' ? data.security_measures : 
                             (Array.isArray(data.security_measures) ? 
                             data.security_measures.join(', ') : ''),
-          // privacy_measuresはJSONB型として処理
-          privacy_measures: data.privacy_measures || [],
+          // privacy_measuresはJSONB型として処理（確実に配列にする）
+          privacy_measures: Array.isArray(data.privacy_measures) 
+            ? data.privacy_measures 
+            : (typeof data.privacy_measures === 'string' && data.privacy_measures.trim() !== '' 
+                ? [data.privacy_measures] 
+                : []),
           commitment: data.commitment || "",
           
           // 店舗写真ギャラリー

@@ -838,7 +838,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     }
     
     // TEXTタイプのフィールドを文字列に確実に変換
-    const textFields = ['privacy_measures', 'commitment', 'security_measures'];
+    const textFields = ['commitment', 'security_measures']; // privacy_measuresはJSONB型なのでtextFieldsから削除
     
     // キャストしてフィールドへのインデックスアクセスを安全に
     const typedUpdateData = fullUpdateData as StoreProfileData;
@@ -883,7 +883,7 @@ router.patch("/profile", authenticate, authorize("store"), async (req: any, res)
     });
     
     // JSONB型フィールドが文字列の場合、パースして確保
-    const jsonbFields = ['special_offers', 'gallery_photos', 'design_settings', 'requirements'];
+    const jsonbFields = ['privacy_measures', 'special_offers', 'gallery_photos', 'design_settings', 'requirements'];
     
     jsonbFields.forEach(field => {
       const fieldValue = safeGetField(typedUpdateData, field);
