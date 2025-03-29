@@ -155,7 +155,7 @@ export default function StorePreviewNewPage() {
           {/* インラインプレビュー - 新方式 */}
           <PreviewRenderer
             settings={designData || getDefaultDesignSettings()}
-            storeProfile={{ data: storeProfile }}
+            storeProfile={storeProfile}
             deviceView={deviceView}
           />
         </div>

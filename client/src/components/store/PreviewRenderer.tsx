@@ -1,6 +1,7 @@
 import React from 'react';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 import { type DesignSettings, type DesignSection } from '@shared/schema';
+import { dataUtils } from '@/shared/utils/dataTypeUtils';
 
 interface PreviewRendererProps {
   settings: DesignSettings;
@@ -39,18 +40,49 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
     .sort((a, b) => a.order - b.order)
     .filter(section => section.visible);
 
-  // 店舗情報が存在しない場合のフォールバック
-  const profile = storeProfile?.data || {
-    business_name: '店舗情報が読み込めません',
-    catch_phrase: 'プレビュー表示中',
-    description: '店舗情報の取得に失敗しました。ページをリロードしてください。',
-    service_type: 'エステ',
-    location: '東京都',
-    access_info: '最寄り駅から徒歩5分',
-    business_hours: '10:00〜22:00',
-    contact_email: 'contact@example.com',
-    benefits: []
-  };
+  // 店舗情報のデータフォーマットを確認し、安全にアクセスする
+  let profile;
+  
+  // storeProfileデータを適切に解析
+  if (storeProfile) {
+    console.log('PreviewRenderer: storeProfile型とデータ', {
+      type: typeof storeProfile,
+      isObject: typeof storeProfile === 'object',
+      hasData: !!storeProfile.data,
+      keys: storeProfile ? Object.keys(storeProfile) : []
+    });
+    
+    // データがネストされている場合（{ data: {...} }形式）
+    if (storeProfile.data) {
+      profile = dataUtils.processStoreProfile(storeProfile.data);
+      console.log('PreviewRenderer: ネストデータを処理', { 
+        dataType: typeof profile, 
+        keys: Object.keys(profile)
+      });
+    } 
+    // 直接データが格納されている場合（APIレスポンスによる違い）
+    else if (typeof storeProfile === 'object') {
+      profile = dataUtils.processStoreProfile(storeProfile);
+      console.log('PreviewRenderer: 直接オブジェクトを処理', { 
+        keys: Object.keys(profile)
+      });
+    }
+  }
+  
+  // どの形式でもなければフォールバック
+  if (!profile) {
+    profile = {
+      business_name: '店舗情報が読み込めません',
+      catch_phrase: 'プレビュー表示中',
+      description: '店舗情報の取得に失敗しました。ページをリロードしてください。',
+      service_type: 'エステ',
+      location: '東京都',
+      access_info: '最寄り駅から徒歩5分',
+      business_hours: '10:00〜22:00',
+      contact_email: 'contact@example.com',
+      benefits: []
+    };
+  }
 
   // セクションの内容をレンダリングするヘルパー関数
   const renderSectionContent = (section: DesignSection) => {

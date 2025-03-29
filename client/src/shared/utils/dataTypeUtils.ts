@@ -22,11 +22,22 @@ export const dataUtils = {
     // 文字列の場合はJSONオブジェクトに変換を試みる
     if (typeof value === 'string') {
       try {
+        // 空文字列の特別処理
+        if (value.trim() === '') {
+          return [];
+        }
+        
         // 文字列であればパースを試みる
-        return JSON.parse(value);
+        const parsedValue = JSON.parse(value);
+        
+        // パース結果が有効かどうか確認
+        return parsedValue;
       } catch (e) {
         // パースに失敗した場合はそのまま文字列として返す
-        console.warn('JSON文字列のパースに失敗しました', { value });
+        console.warn('JSON文字列のパースに失敗しました', { 
+          value: value.length > 50 ? `${value.substring(0, 50)}...` : value,
+          error: e instanceof Error ? e.message : String(e)
+        });
         return value;
       }
     }
@@ -81,7 +92,7 @@ export const dataUtils = {
 
       // 各セクションの設定フィールドを処理
       if (Array.isArray(processedSettings.sections)) {
-        processedSettings.sections = processedSettings.sections.map(section => {
+        processedSettings.sections = processedSettings.sections.map((section: any) => {
           if (section.settings && typeof section.settings === 'string') {
             try {
               section.settings = JSON.parse(section.settings);
@@ -137,15 +148,59 @@ export const dataUtils = {
       'privacy_measures',
       'testimonials',
       'gallery_images',
-      'sns_links'
+      'sns_links',
+      'sns_urls',
+      'gallery_photos',
+      'job_videos',
+      'salary_examples',
+      'facility_features'
     ];
 
     // 各フィールドを処理
-    jsonbFields.forEach(field => {
+    for (const field of jsonbFields) {
       if (field in processedProfile) {
-        processedProfile[field] = this.convertJsonValue(processedProfile[field]);
+        console.log(`プロフィールフィールド処理: ${field}`, { 
+          type: typeof processedProfile[field],
+          value: processedProfile[field] 
+        });
+
+        try {
+          // 配列が期待されるフィールドで空の文字列や無効な値の場合、空配列にする
+          if (processedProfile[field] === null || 
+              processedProfile[field] === undefined ||
+              processedProfile[field] === '' ||
+              processedProfile[field] === 'null' ||
+              processedProfile[field] === '[]') {
+            
+            processedProfile[field] = [];
+            console.log(`フィールド ${field} を空配列に設定しました`);
+            continue;
+          }
+          
+          // JSONとして処理
+          processedProfile[field] = this.convertJsonValue(processedProfile[field]);
+          
+          // 配列型の場合、値が配列になっていることを確認
+          if (
+            ['special_offers', 'benefits', 'requirements', 'gallery_images', 
+             'sns_links', 'sns_urls', 'gallery_photos', 'security_measures', 
+             'privacy_measures', 'testimonials'].includes(field)
+          ) {
+            if (!Array.isArray(processedProfile[field])) {
+              console.warn(`フィールド ${field} は配列であるべきですが、配列ではありません。空配列を使用します。`);
+              processedProfile[field] = [];
+            }
+          }
+        } catch (e) {
+          console.error(`フィールド ${field} の処理中にエラーが発生しました`, e);
+          // エラーが発生した場合、空配列または空オブジェクトをデフォルト値として使用
+          processedProfile[field] = 
+            ['requirements', 'special_offers', 'sns_links', 'gallery_images'].includes(field) 
+              ? [] 
+              : {};
+        }
       }
-    });
+    }
 
     return processedProfile;
   }
