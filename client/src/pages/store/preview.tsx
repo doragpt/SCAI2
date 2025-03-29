@@ -469,13 +469,12 @@ export default function StoreDesignPreview() {
               デザイン設定データが正しく読み込まれていないか、無効なデータです。
               設定を保存してから再度お試しください。
             </p>
-            <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-32 text-left">
-              {JSON.stringify({
-                settingsExists: !!settings,
-                sectionsCount: settings?.sections?.length || 0,
-                globalSettingsExists: !!settings?.globalSettings
-              }, null, 2)}
-            </pre>
+            <div className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-32 text-left">
+              <p>設定が正しく読み込まれていません。</p>
+              <p>設定: {settings ? '読み込み済み' : '未読み込み'}</p>
+              <p>セクション数: {settings?.sections?.length || 0}</p>
+              <p>グローバル設定: {settings?.globalSettings ? '読み込み済み' : '未読み込み'}</p>
+            </div>
           </div>
         </div>
       );
