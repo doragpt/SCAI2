@@ -2,6 +2,7 @@ import React from 'react';
 import { getDefaultDesignSettings } from '@/shared/defaultDesignSettings';
 import { type DesignSettings, type DesignSection } from '@shared/schema';
 import { dataUtils } from '@/shared/utils/dataTypeUtils';
+import { processSalaryExample, calculateHourlyRate } from '@/utils/salaryUtils';
 
 interface PreviewRendererProps {
   settings: DesignSettings;
@@ -318,9 +319,13 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
           (typeof profile.average_salary === 'number' ? 
             profile.average_salary.toLocaleString() : profile.average_salary) : '';
             
-        // 給与例データの取得
-        const salaryExamples = profile.salary_examples && Array.isArray(profile.salary_examples) ? 
+        // 給与例データの取得と処理
+        const rawSalaryExamples = profile.salary_examples && Array.isArray(profile.salary_examples) ? 
           profile.salary_examples : [];
+          
+        // 給与例データを処理して時給換算情報を追加
+        const salaryExamples = rawSalaryExamples.map((example: any) => 
+          processSalaryExample(example));
         
         return (
           <div>
@@ -354,17 +359,31 @@ const PreviewRenderer: React.FC<PreviewRendererProps> = ({
                   <div className="space-y-3">
                     {salaryExamples.map((example: any, index: number) => (
                       <div key={index} className="bg-white p-3 rounded-lg border shadow-sm">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{example.title || `給与例 ${index + 1}`}</p>
-                            <p className="text-sm text-gray-500">{example.conditions || ''}</p>
+                        <div className="flex flex-col">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{example.title || `給与例 ${index + 1}`}</p>
+                              <p className="text-sm text-gray-500">{example.conditions || ''}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold" style={{ color: mainColor }}>
+                                {typeof example.amount === 'number' ? example.amount.toLocaleString() : example.amount}円
+                              </p>
+                              {example.period && <p className="text-xs text-gray-500">{example.period}</p>}
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold" style={{ color: mainColor }}>
-                              {typeof example.amount === 'number' ? example.amount.toLocaleString() : example.amount}円
-                            </p>
-                            {example.period && <p className="text-xs text-gray-500">{example.period}</p>}
-                          </div>
+                          
+                          {/* 勤務時間と時給換算情報を表示 */}
+                          {example.formatted && (
+                            <div className="mt-2 pt-2 border-t border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm text-gray-600">{example.formatted}</p>
+                                {example.hourlyFormatted && (
+                                  <p className="text-sm font-medium text-green-600">{example.hourlyFormatted}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
